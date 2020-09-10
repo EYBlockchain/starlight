@@ -3,22 +3,26 @@ Parser for lines of Solidity
 */
 
 import logger from './utils/logger.mjs';
-import recogniseGlobals from './recognisers/global.mjs';
-import recogniseAssignment from './recognisers/assignment.mjs';
-import processAssignment from './processors/assignment.mjs';
+import recognisers from './recognisers/index.mjs';
+import processors from './processors/index.mjs';
 
 // main function of this module
 function parse(line) {
   if (!line) return; // this is a line we can ignore
   // run through the various recognisers
-  const global = recogniseGlobals(line);
+  const global = recognisers.recogniseGlobal(line);
+  const assignment = recognisers.recogniseAssignment(line);
+  const func = recognisers.recogniseFunction(line);
+
   if (global) {
-    logger.info(`Found a Global called ${global}`);
-  }
-  const assignment = recogniseAssignment(line);
-  if (assignment) {
+    processors.addGlobal(global); // add the new global to our table
+    logger.info(`added a Global called ${global.name}`);
+  } else if (assignment) {
     logger.info(`${assignment.variable} was assigned value ${assignment.expression}`);
-    processAssignment(assignment);
+    processors.processAssignment(assignment);
+  } else if (func) {
+    logger.info(`Found ${func.type} ${func.name}`);
+    processors.processFunction(func);
   }
   logger.debug(line);
 }

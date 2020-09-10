@@ -2,37 +2,37 @@
 output code for assignement
 */
 import logger from '../utils/logger.mjs';
-import { globals } from '../globals.mjs';
+import { globals, inits, node, solidity, zokrates } from '../state.mjs';
+import { assignNode, assignZokrates, assignSolidity } from '../standardFunctions/assignment.mjs';
+import CompilerError from '../utils/compiler-error.mjs';
 
 function processAssignment(assignment) {
   const { expression, variable } = assignment;
-  logger.debug(expression);
-  if (isNaN(expression)) throw new Error('Only number expressions are supported in assignments');
-  if (!globals[variable]) throw new Error('Only global variables are supported in assignments');
-  logger.info(`Processed assignment\n`)
-  // assignment code for Zokrates
-  const zokrates = `  def assign(field c, private field pk, private field s, field h) -> ():
-    h == hash(c, pk, s)
-    return
-  `;
-  logger.info(`ZOKRATES***********************\n${zokrates}`);
-  // assignment node code
-  const node = `  function assign(variable, value) {
-    const h = hash(value, pk, s);
-    const proof = generateProof(compiledCircuit, h, value, pk, s);
-    shieldInstance.assign(proof, h, value, account );
-  }
-  assign(${variable}, ${expression});
-  `;
-  logger.info(`NODE***********************\n${node}`);
+  // check we know how to process this assignment
+  if (isNaN(expression))
+    throw new CompilerError('Only number expressions are supported in assignments');
+  if (!globals[variable])
+    throw new CompilerError('Only global variables are supported in assignments');
+  logger.silly(`Processing assignment '${variable} = ${expression}'...\n`);
 
-  // Solidity Shield code
-  const solidity = `  function assign(uint256[] proof, uint256 h, uint256 e) {
-    require(verify(proof, e));
-    storeLeaf(h);
+  // if this is the first assignment we've made, we need to import some boilerplate functions to execute a general assignment.
+  if (!inits.assignment) {
+    node.standardFunctions += assignNode;
+    zokrates.standardFunctions += assignZokrates;
+    solidity.standardFunctions += assignSolidity;
+    inits.assignment = true;
   }
-  `;
-  logger.info(`SOLIDITY***********************\n${solidity}`);
+
+  // no assignment code for Solidity, once we've initialised it
+
+  // assignment code for node and Zokrates, this makes the assignment code specific to the variable in question
+  node.src += `
+assign(${variable}, ${expression});`;
+
+  zokrates.src += `
+assign(${variable}, ${variable}_publicKey, ${variable}_salt, ${variable}_hash)`;
+
+  zokrates.mainParams += ` private field ${variable}, field ${variable}_publicKey, private field ${variable}_salt, field ${variable}_hash`;
 }
 
 export default processAssignment;

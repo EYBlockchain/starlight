@@ -1,4 +1,5 @@
 module.exports = {
   GLOBALS: ['uint256', 'mapping'],
-  LOG_LEVEL: 'info',
+  FUNCTIONS: ['function', 'constructor'],
+  LOG_LEVEL: 'debug',
 };

@@ -6,6 +6,7 @@ import fs from 'fs';
 import readline from 'readline';
 import parse from './parser.mjs';
 import logger from './utils/logger.mjs';
+import postProcess from './postProcessor.mjs';
 
 function tidy(_line) {
   // trim whitespace
@@ -30,10 +31,11 @@ async function processLineByLine(file) {
     try {
       parse(tidy(line));
     } catch (err) {
-      logger.error(err);
-      break;
+      console.error(err);
+      process.exit(1);
     }
   }
+  postProcess();
 }
 
 export default processLineByLine;

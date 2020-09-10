@@ -6,7 +6,8 @@
     "no-plusplus": "off",
     "import/extensions": "off",
     "no-restricted-syntax": "off",
-    "no-restricted-globals": "off"
+    "no-restricted-globals": "off",
+    "no-cond-assign": "off"
   },
   "globals": {
     "BigInt": "true"
