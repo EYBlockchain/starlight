@@ -1,17 +1,21 @@
-export const assignNode = `function assign(variable, value) {
-    const h = hash(value, pk, s);
-    const proof = generateProof(compiledCircuit, h, value, pk, s);
-    shieldInstance.assign(proof, h, value, account );
+export const assignNode = `function prove(compiledCircuit, publicParams, privateParams, account) {
+    const publicHash = hash(publicParams)
+    const proof = generateProof(compiledCircuit, privateParams, publicParams, publicHash);
+    shieldInstance.commit(proof, publicParams, publicHash, { account } );
 }
+
+let privateParams = [];
+let publicParams = [];
 `;
 
-export const assignZokrates = `def assign(field c, field pk, field s, field h) -> ():
+export const assignZokrates = `def check_commitment(field c, field pk, field s, field h) -> ():
   h == hash(c, pk, s)
   return
 `;
 
-export const assignSolidity = `function assign(uint256[] proof, uint256 h, uint256 e) {
-    require(verify(proof, e));
-    storeLeaf(h);
+export const assignSolidity = `function commit(uint256[] proof, publicParams, uint256 publicHash) {
+    require(publicHash == hash(publicParams))
+    require(verify(proof, publicHash));
+    storeLeaf(publicParams.commitment);
 }
   `;
