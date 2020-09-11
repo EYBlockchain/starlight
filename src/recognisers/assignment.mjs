@@ -13,7 +13,7 @@ function recogniseAssignment(line) {
     const ln = line.slice(0, -1); // strip ; TODO make this more robust
     const [variable, expression] = ln.split('=').map(el => el.trim());
     process({ variable, expression });
-    logger.info(`${variable} was assigned value ${expression}`);
+    logger.info(`variable '${variable}' committing to a value of ${expression}`);
     return true;
   }
   return false;

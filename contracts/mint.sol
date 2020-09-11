@@ -9,8 +9,8 @@ contract Mint {
   // mapping     (address => uint256) private balances;
 
   function mint(address account, uint256 amount) public {
-    balance = 5 + (t+7);
-    totalSupply = 6;
+    balance = 5 - 6;
+    //balance = 6;
     // balances[account] += amount;
   }
 }
