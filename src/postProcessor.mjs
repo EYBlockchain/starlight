@@ -11,7 +11,6 @@ function postProcess() {
   node.src = node.standardFunctions + node.src;
   // also, we don't know what the Zokrates' main function parameter list is until the end, so add it here
   zokrates.src = zokrates.src.replace(/@main_params/, zokrates.mainParams);
-  zokrates.src += `\nreturn`;
 }
 
 export default postProcess;

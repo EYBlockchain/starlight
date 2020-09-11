@@ -1,8 +1,10 @@
 /**
 Simple recogniser to find global variables
 */
+
 import config from 'config';
-// import logger from '../logger.mjs';
+import logger from '../utils/logger.mjs';
+import process from '../processors/global.mjs';
 
 function recogniseGlobal(line) {
   for (const g of config.GLOBALS) {
@@ -10,7 +12,9 @@ function recogniseGlobal(line) {
       // global found
       const ln = line.slice(0, -1); // strip ; - need to make this more robust
       const [type, visibility, name] = ln.split(' ');
-      return { type, visibility, name };
+      process({ type, visibility, name }); // call the processor
+      logger.info(`added a Global called ${name}`);
+      return true;
     }
   }
   return false;
