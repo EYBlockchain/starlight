@@ -3,7 +3,7 @@
 // TO DO sprinkle with keywords
 
 pragma solidity ^0.6.10;
-import "../access/Ownable.sol";
+import "../contracts/Ownable.sol";
 
 contract MSAPO is Ownable {
 
@@ -37,30 +37,31 @@ contract MSAPO is Ownable {
         selfdestruct(address(uint160(_owner)));
     }
 
-    function createMSA(
-        uint256 id,
-        address supplier,
-        address buyer,
-        bytes32 sku,
-        uint256[] calldata tierBounds,
-        uint256[] calldata pricesByTier,
-        address currency
+    secret function createMSA(
+        secret uint256 id, //id = hash of all the inputs or replace a random number that is it's salt
+        secret address supplier,
+        secret address buyer,
+        secret bytes32 sku,
+        secret uint256[] calldata tierBounds,
+        secret uint256[] calldata pricesByTier,
+        secret address currency
     ) external {
-        require(supplier == msg.sender || buyer == msg.sender);
+        // require(supplier == msg.sender || buyer == msg.sender); // Should MSAlist be secret?
+
         // Missing step: verifySignature of buyer on MSAlist[id]
         // Missing step: verifySignature of supplier on MSAlist[id]
         // Make sure that MSA is added to MSAlist after signatures. Private creation one of variable such as MSA can't be done in steps in ZKP.
-        MSAlist[id] = MSA(supplier, buyer, sku, tierBounds, pricesByTier, currency, 0); //id = hash of all the inputs ?
+        MSAlist[id] = MSA(supplier, buyer, sku, tierBounds, pricesByTier, currency, 0);
     }
 
-    function createPO(
-        uint msaID,
-        uint256 id,
-        address supplier,
-        address buyer,
-        bytes32 sku,
-        uint256 volume,
-        address currency
+    secret function createPO(
+        secret uint msaID,
+        secret uint256 id, //id = hash of all the inputs or replace a random number that is it's salt
+        secret address supplier,
+        secret address buyer,
+        secret bytes32 sku,
+        secret uint256 volume,
+        secret address currency
     ) external {
         require(MSAlist[msaID].supplier == supplier);
         require(MSAlist[msaID].buyer == buyer);
@@ -71,7 +72,7 @@ contract MSAPO is Ownable {
 
         MSAlist[msaID].accumulatedVolumeOrdered = MSAlist[msaID].accumulatedVolumeOrdered + volume;
         uint256 price = calculateAmountOwed(MSAlist[msaID].tierBounds, MSAlist[msaID].pricesByTier, MSAlist[msaID].accumulatedVolumeOrdered, volume);
-        POlist[id] = PO(supplier, buyer, sku, volume, price, currency); //id = hash of all the inputs ?
+        POlist[id] = PO(supplier, buyer, sku, volume, price, currency);
     }
 
     function calculateAmountOwed(

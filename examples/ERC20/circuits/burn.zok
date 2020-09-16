@@ -1,0 +1,95 @@
+ import "hashes/sha256/1536bit.code" as sha256of1536
+import "hashes/sha256/1024bit.code" as sha256of1024
+import "hashes/sha256/512bit.code" as sha256of512
+
+import "./common/concat/concatenate256x256.zok" as concatenate256x256
+import "./common/concat/concatenate256x128x256x256.zok" as concatenate256x128x256x256
+import "./common/concat/concatenate256x256x256x128x256.zok" as concatenate256x256x256x128x256
+
+import "utils/pack/unpack128.code" as unpack128
+import "utils/pack/nonStrictUnpack256.code" as unpack256
+import "./common/packing/unpack2x128To256.zok" as unpack2x128To256
+
+import "./common/hashes/sha256/padding/shaPad256To512.zok" as shaPad256To512
+import "./common/hashes/sha256/padding/shaPad512To1024" as shaPad512To1024
+import "./common/hashes/sha256/padding/shaPad1152To1536" as shaPad1152To1536
+import "./common/hashes/sha256/padding/shaPad896To1024" as shaPad896To1024
+
+import "./common/merkle-tree/sha-root.zok" as sharoot
+
+// Inputs for main are:
+
+// contractAddress: the ERC20 contract
+// payTo: the public Ethereum address to which the burned tokens get paid
+// value: the amount contained in the commitment (public)
+// secretKey: the secret key for the commitment (private)
+// salt: the salt for the commitment (private)
+// path0b-path31b - the Merkle path for the commitment (private)
+
+// nullifier - the nullifier for the commitment (public)
+
+// root - the Merkle root (public)
+
+// publicInputHash = hash(root, nullifier, value, payTo)
+
+// Note - we now use 216 bits for the Merkle tree calculation. This is because 432 is the biggest input we can use for sha256 if we want 432/2 to end on a byte boundary for easier Solidity computation without needing to do full rounds and we need to concatenate the two child hashes. We consider 216 bits to be sufficiently secure. The nullifier, commitment and root retain 256-bit security.
+
+// Each field element passed to main() can be at most 128bits, to make use of unpack128() so most variables occupy two fields (except the publicInputHash, which we maximize as 248-bits)
+
+def main(field publicInputHash, private field contractAddress, private field[2] payTo, private field value, private field[2] secretKey, private field[2] salt, private field[32] path, private field order, private field[2] nullifier, private field[2] root)->():
+
+	// Unpack the inputs of main() to 128 bits. We'll unpack each field to its own 128 bit string for simplicity for now. Later efficiencies could be made by grouping some inputs. We don't need to unpack payTo, because it isn't part of a hash.
+
+	field[256] publicInputHashBits = unpack256(publicInputHash)
+	field[256] contractAddressBits = unpack256(contractAddress)
+	field[256] payToBits = unpack2x128To256(payTo)
+	field[128] valueBits = unpack128(value)
+	field[256] secretKeyBits = unpack2x128To256(secretKey)
+	field[256] saltBits = unpack2x128To256(salt)
+ 	field[256] nullifierBits = unpack2x128To256(nullifier)
+ 	field[256] rootBits = unpack2x128To256(root)
+
+
+ 	// First we construct a proof that the nullifier is correct
+ 	// Concatenate salt|secretKey.
+
+	field[1024] preimage1024 = shaPad512To1024(concatenate256x256(saltBits, secretKeyBits))
+
+	field[256] nullifierBitsCheck = sha256of1024(preimage1024[0..256], preimage1024[256..512], preimage1024[512..768], preimage1024[768..1024])
+
+
+	// Prove that the commitment is in the Merkle tree
+
+	// First, calculate Alice's public key from her private key: publicKey = H(secretKey).
+
+	field[512] secretKeyPadded = shaPad256To512(secretKeyBits)
+ 	field[256] publicKeyBits = sha256of512(secretKeyPadded[0..256], secretKeyPadded[256..512])
+
+
+ 	// Next calculate the commitment = H(contractAddress|value|publicKey|salt)
+
+	field[896] commitmentPreImage = concatenate256x128x256x256(contractAddressBits, valueBits, publicKeyBits, saltBits)
+	field[1024] commitmentPadded = shaPad896To1024(commitmentPreImage)
+	field[256] commitment = sha256of1024(commitmentPadded[0..256], commitmentPadded[256..512], commitmentPadded[512..768], commitmentPadded[768..1024]) // commitment
+
+	// concatenate siblings and hash all the way up to the root:
+	field[256] rootBitsCheck = sharoot(path, order, commitment)
+
+ 	// Now test the proofs
+
+ 	nullifierBits == nullifierBitsCheck
+ 	rootBits == rootBitsCheck
+
+
+	// Check that the 'public inputs' hash to the publicInputHash:
+	// (This also intertwines the 'payTo' input into the proof)
+
+	field[1152] publicHashPreImage = concatenate256x256x256x128x256(contractAddressBits, rootBits, nullifierBits, valueBits, payToBits)
+	field[1536] publicHashPadded = shaPad1152To1536(publicHashPreImage)
+
+	field[256] publicInputHashBitsCheck = sha256of1536(publicHashPadded[0..256], publicHashPadded[256..512], publicHashPadded[512..768], publicHashPadded[768..1024], publicHashPadded[1024..1280], publicHashPadded[1280..1536])
+
+	publicInputHashBits[8..256] == publicInputHashBitsCheck[8..256]
+
+
+ 	return
