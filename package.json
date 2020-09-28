@@ -4,7 +4,7 @@
   "description": "Compiles Zero Knowledge Proofs from Solidity",
   "main": "index.mjs",
   "scripts": {
-    "start": "node src/index.mjs -i contracts/mint.sol"
+    "start": "node src/index.mjs -i examples/cases/uninit_global/assign.sol"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,8 @@
     "truffle": "^5.1.39",
     "web3": "^1.2.11",
     "winston": "^3.3.3",
-    "yargs": "^15.4.1"
+    "yargs": "^15.4.1",
+    "zkp-utils": "^1.0.8"
   },
   "devDependencies": {
     "cod-scripts": "^3.2.0",

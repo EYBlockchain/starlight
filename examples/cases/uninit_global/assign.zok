@@ -1,0 +1,21 @@
+import "utils/hashing/whateverShaHashWeNeed.zok" as shaHash
+import "./common/merkle-tree/height32mimc.zok" as checkRoot
+
+def main(private field value, private field oldSalt, private field oldValue, field root, field nullifier, private field salt, field commitment)->():
+    bool skipNullification = if nullifier == 0 && root == 0 true else false fi
+
+    // old commitment checks
+
+    field nullifierCheck = if skipNullification == true 0 else shaHash(oldSalt) fi
+    field oldCommitment = if skipNullification == true 0 else shaHash(oldValue, oldSalt) fi
+    field rootCheck = if skipNullification == true 0 else checkRoot(oldCommitment, index) fi // forgot about the index - will go back and add in...
+
+    nullifier == nullifierCheck
+    root == rootCheck
+
+    // new commitment checks
+
+    field commitmentCheck = shaHash(value, salt)
+    commitment == commitmentCheck
+
+    return
