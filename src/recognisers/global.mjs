@@ -10,7 +10,8 @@ function recogniseGlobal(line) {
   for (const g of config.GLOBALS) {
     if (line.startsWith(g)) {
       // global found
-      const ln = line.slice(0, -1); // strip ; - need to make this more robust
+      const ln = line.slice(0, -1).replace(/ *\([^)]*\) */g, ' '); // strip and remove brackets ; - need to make this more robust
+      console.log(ln);
       const [type, visibility, name] = ln.split(' ');
       process({ type, visibility, name }); // call the processor
       logger.info(`added a Global called ${name}`);

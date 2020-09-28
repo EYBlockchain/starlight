@@ -7,7 +7,7 @@ import logger from '../utils/logger.mjs';
 import CompilerError from '../utils/compiler-error.mjs';
 import { blockCount } from '../state.mjs';
 
-function recogniseFunction(line) {
+function recogniseFunction(line, rtn = false) {
   for (const g of config.FUNCTIONS) {
     if (line.startsWith(g)) {
       // function (or constructor) found
@@ -39,8 +39,12 @@ function recogniseFunction(line) {
         visibility = rest[rest.indexOf(')') + 1]; // visibility comes after first closing bracket
         logger.info(`Found ${type} ${name} with visibility ${visibility}`);
       }
-      process({ type, visibility, name, rest });
-      return true;
+      if (!rtn) {
+        process({ type, visibility, name, rest });
+        return true;
+      }
+
+      return { type, visibility, name, rest };
     }
   }
   return false;

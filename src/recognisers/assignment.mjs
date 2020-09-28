@@ -12,7 +12,7 @@ function recogniseAssignment(line) {
     // it's an assignement
     const ln = line.slice(0, -1); // strip ; TODO make this more robust
     const [variable, expression] = ln.split('=').map(el => el.trim());
-    process({ variable, expression });
+    // process({ variable, expression }); temp removing
     logger.info(`variable '${variable}' committing to a value of ${expression}`);
     return true;
   }

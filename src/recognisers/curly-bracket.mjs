@@ -10,7 +10,7 @@ function recogniseCurlyBracket(line) {
   if (!increment) return false;
   blockCount.value += increment;
   // the blockCount (scope) has changed so we may need to do something:
-  if (increment === -1 && blockCount.value === 1) processors.processEndOfFunction();
+  // if (increment === -1 && blockCount.value === 1) processors.processEndOfFunction(); temp removed
   return blockCount;
 }
 
