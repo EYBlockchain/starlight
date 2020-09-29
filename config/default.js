@@ -1,6 +1,14 @@
 module.exports = {
-  GLOBALS: ['uint256', 'mapping'],
-  FUNCTIONS: ['function', 'constructor'],
-  SPRINKLES: ['secret', 'owned'],
-  LOG_LEVEL: 'debug',
+  globals: ['uint256', 'mapping'],
+  functions: ['function', 'constructor'],
+  sprinkles: ['secret', 'owned'],
+  log_level: 'debug',
+  account: '0x0',
+  web3: {
+    defaultGas: 10000000,
+    defaultGasPrice: 20000000000,
+  },
+  zokrates: {
+    url: 'http://zokrates:80',
+  },
 };

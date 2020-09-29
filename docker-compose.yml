@@ -1,0 +1,13 @@
+version: '3.5'
+
+services:
+  zokrates:
+    image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.4
+    #command: npm run zok
+    volumes:
+      - ./circuits/:/app/circuits:delegated
+      - ./proving-files/:/app/output:delegated
+    environment:
+      PROVING_SCHEME: 'gm17'
+    ports:
+      - '8080:80'
