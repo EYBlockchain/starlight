@@ -6,3 +6,4 @@ proving-files/
 circuits-user/
 temp-user-files/
 tests/CID
+examples/cases/*/db/*.json

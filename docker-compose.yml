@@ -19,6 +19,7 @@ services:
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
+      LOG_LEVEL: debug
     networks:
       - sprinkles_network
 
