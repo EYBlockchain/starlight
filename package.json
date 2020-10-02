@@ -1,25 +1,30 @@
 {
-  "name": "zkp-compiler",
+  "name": "sprinkles",
   "version": "0.0.1",
-  "description": "Compiles Zero Knowledge Proofs from Solidity",
+  "description": "Compiles Zero Knowledge Protocols from Solidity",
   "main": "index.mjs",
   "scripts": {
-    "start": "node src/index.mjs -i contracts/mint.sol"
+    "start": "node src/index.mjs -i contracts/assign.sol",
+    "sketch": "node src/transformers/sketcher.mjs -i ./sprinkled_ast.json",
+    "demo": "node STC/stc.mjs",
+    "example": "node src/transformers/exampleTransformer.mjs -i ./sprinkled_ast.json"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EYBlockchain/zkp-compiler.git"
+    "url": "git+https://github.com/EYBlockchain/sprinkles.git"
   },
   "keywords": [
     "zkp",
-    "compiler"
+    "compiler",
+    "transpiler",
+    "solidity"
   ],
-  "author": "duncan.westland@uk.ey.com",
+  "author": "iAmMichaelConnor, MirandaWood, ChaitanyaKonda, Westlad",
   "license": "CC0-1.0",
   "bugs": {
-    "url": "https://github.com/EYBlockchain/zkp-compiler/issues"
+    "url": "https://github.com/EYBlockchain/sprinkles/issues"
   },
-  "homepage": "https://github.com/EYBlockchain/zkp-compiler#readme",
+  "homepage": "https://github.com/EYBlockchain/sprinkles#readme",
   "dependencies": {
     "@truffle/contract": "^4.2.21",
     "axios": "^0.19.2",
