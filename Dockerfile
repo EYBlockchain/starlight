@@ -1,1 +1,6 @@
-FROM docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.2
+FROM node:12.18
+
+WORKDIR /app
+
+COPY ./package.json ./package-lock.json ./
+RUN npm ci

@@ -4,7 +4,8 @@
   "description": "Compiles Zero Knowledge Proofs from Solidity",
   "main": "index.mjs",
   "scripts": {
-    "start": "node src/index.mjs -i examples/cases/uninit_global/assign.sol"
+    "start": "node src/index.mjs -i examples/cases/uninit_global/assign.sol",
+    "test": "docker-compose run sprinkles npx mocha --exit --require @babel/register 'test/test.mjs'"
   },
   "repository": {
     "type": "git",
@@ -21,9 +22,11 @@
   },
   "homepage": "https://github.com/EYBlockchain/zkp-compiler#readme",
   "dependencies": {
+    "@babel/register": "^7.11.5",
     "@truffle/contract": "^4.2.21",
     "axios": "^0.19.2",
     "config": "^3.3.1",
+    "general-number": "^1.0.1",
     "replace-in-file": "^6.1.0",
     "solc": "^0.7.1",
     "truffle": "^5.1.39",

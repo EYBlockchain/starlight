@@ -1,7 +1,7 @@
 import axios from 'axios';
 import config from 'config';
 
-import { getContractInstance, getContractAddress } from './contract.mjs';
+import { getContractAddress } from './contract.mjs';
 import logger from './logger.mjs';
 
 // rough draft of timber service - we may not need treeids but kept in just in case
@@ -10,17 +10,19 @@ const { url } = config.merkleTree;
 
 export const startEventFilter = async (functionName, address) => {
   try {
-    const treeId = functionName;
+    // const treeId = functionName;
+    const contractName = `${functionName}Shield`;
     let contractAddress = address;
     if (!contractAddress) {
-      contractAddress = await getContractAddress(`${functionName}Shield`);
+      contractAddress = await getContractAddress(contractName);
     }
-    logger.http(`\nCalling /start for '${treeId}' tree and address '${contractAddress}'`);
+    logger.http(`\nCalling /start for '${functionName}' tree and address '${contractAddress}'`);
     const response = await axios.post(
       `${url}/start`,
       {
         contractAddress,
-        treeId,
+        contractName,
+        // treeId,
       },
       {
         timeout: 3600000,
@@ -37,14 +39,16 @@ export const getLeafIndex = async (functionName, leafValue) => {
   logger.http(`\nCalling /leaf/value for leafValue ${leafValue} of ${functionName} tree`);
   try {
     const value = leafValue.toString();
-    const treeId = functionName;
-    const contractAddress = await await getContractAddress(`${functionName}Shield`);
+    // const treeId = functionName;
+    const contractName = `${functionName}Shield`;
+    const contractAddress = await getContractAddress(contractName);
     const response = await axios.get(
       `${url}/leaf/value`,
       {
         data: {
           contractAddress,
-          treeId,
+          contractName,
+          // treeId,
           value,
         },
       },
@@ -61,18 +65,20 @@ export const getLeafIndex = async (functionName, leafValue) => {
 };
 
 export const getRoot = async (functionName, address) => {
-  const treeId = functionName;
-  logger.http(`\nCalling /update for ${treeId} tree`);
+  // const treeId = functionName;
+  logger.http(`\nCalling /update for ${functionName} tree`);
   try {
     let contractAddress = address;
+    const contractName = `${functionName}Shield`;
     if (!contractAddress) {
-      contractAddress = await getContractAddress(`${functionName}Shield`);
+      contractAddress = await getContractAddress(contractName);
     }
     const response = await axios.patch(
       `${url}/update`,
       {
         contractAddress,
-        treeId,
+        contractName,
+        // treeId,
       },
       {
         timeout: 3600000,
@@ -89,19 +95,21 @@ export const getRoot = async (functionName, address) => {
 export const getSiblingPath = async (functionName, leafIndex, leafValue) => {
   logger.http(`\nCalling /siblingPath/${leafIndex} for ${functionName} tree`);
   try {
-    const treeId = functionName;
-    const contractAddress = await getContractAddress(`${functionName}Shield`);
+    // const treeId = functionName;
+    const contractName = `${functionName}Shield`;
+    const contractAddress = await getContractAddress(contractName);
     if (leafIndex === undefined) {
       if (!leafValue) throw new Error(`No leafIndex xor leafValue specified.`);
       // eslint-disable-next-line no-param-reassign
-      leafIndex = await getLeafIndex(treeId, leafValue);
+      leafIndex = await getLeafIndex(functionName, leafValue);
     }
     const response = await axios.get(
       `${url}/siblingPath/${leafIndex}`, //
       {
         data: {
           contractAddress,
-          treeId,
+          contractName,
+          // treeId,
         },
       },
       {
@@ -111,9 +119,9 @@ export const getSiblingPath = async (functionName, leafIndex, leafValue) => {
     logger.http('Timber Response:', response.data.data);
 
     const siblingPath = response.data.data;
-    const siblingPathValues = siblingPath.map(node => node.value);
+    // const siblingPathValues = siblingPath.map(node => node.value);
     if (siblingPath === null) throw new Error('\nNo record found in Timber');
-    return siblingPathValues;
+    return siblingPath;
   } catch (error) {
     throw new Error(error);
   }
