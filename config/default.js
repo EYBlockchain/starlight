@@ -65,7 +65,7 @@ module.exports = {
     options: {
       defaultAccount: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1',
       defaultBlock: '0', // e.g. the genesis block our blockchain
-      defaultGas: 20000000,
+      defaultGas: 90000000,
       defaultGasPrice: 20000000000,
       transactionBlockTimeout: 50,
       transactionConfirmationBlocks: 15,
