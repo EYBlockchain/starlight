@@ -46,7 +46,7 @@ export const generateProof = async (functionName, inputs) => {
  */
 export const generateKeys = async circuitFileName => {
   const filepath = `./${circuitFileName}`;
-  logger.info('Generating Keys for Circuit: ', circuitFileName);
+  // logger.info('Generating Keys for Circuit: ', circuitFileName);
   try {
     const axiosConfig = {
       method: 'post',
@@ -65,7 +65,8 @@ export const generateKeys = async circuitFileName => {
     const response = await axios(axiosConfig);
     const { vk } = response.data;
     delete vk.raw;
-    logger.info('ZoKrates Microservice generated Keys for circuit: ', circuitFileName, vk);
+    logger.info(`ZoKrates Microservice generated Keys for circuit: ${circuitFileName}`);
+    console.log(vk);
 
     return vk;
   } catch (err) {

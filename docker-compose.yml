@@ -29,6 +29,8 @@ services:
     volumes:
       - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated
+      - ./examples/:/app/examples/:delegated
+      - ./src/utils/write-vk.mjs:/app/write-vk.mjs
     environment:
       PROVING_SCHEME: 'gm17'
     ports:
