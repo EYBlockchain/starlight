@@ -7,7 +7,7 @@
     "start": "node src/index.mjs -i examples/cases/uninit_global/assign.sol",
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
-    "test": "docker-compose run sprinkles npx mocha --exit --require @babel/register 'test/test.mjs'"
+    "test": "./bin/startup && docker-compose run sprinkles npx mocha --exit --require @babel/register 'test/test.mjs'"
   },
   "repository": {
     "type": "git",
