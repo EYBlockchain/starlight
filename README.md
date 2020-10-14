@@ -26,6 +26,8 @@ The `resprinkler` then adds back the sprinkled syntax to the ast, creating `spri
 
 In `examples/cases`, there are collections of example output ZApps depending on the sprinkled contract input. At the moment only an uninitiated global is completed. To test:
 
+- Run `truffle compile`
+- Run `docker-compose build`
 -   Run `./bin/setup` (this runs the trusted setup for the output.zok file, and stores the output vk in `db`)
 -   Run `npm test` (this assigns and reassigns the private global variable)
 
