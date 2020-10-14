@@ -19,7 +19,7 @@ function tidy(_line) {
 function recogniseSprinkles(line, rtn = false) {
   if (!line) return false;
   logger.debug(line);
-  for (const s of config.SPRINKLES) {
+  for (const s of config.sprinkles) {
     if (line.startsWith(s)) {
       // sprinkle found
       const ln = tidy(line.replace(`${s}`, '')); // remove the sprinkled syntax
