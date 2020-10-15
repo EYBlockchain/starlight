@@ -117,8 +117,12 @@ export function getNodeSkeleton(nodeType) {
 
 export function getVisitableKeys(nodeType) {
   switch (nodeType) {
-    case 'AST':
-      return ['ast'];
+    case 'Folder':
+      return ['files'];
+    case 'File':
+      return ['nodes'];
+    case 'ImportStatements':
+      return ['imports'];
     case 'SourceUnit':
     case 'ContractDefinition':
       return ['nodes'];
@@ -150,3 +154,36 @@ export function getVisitableKeys(nodeType) {
       throw new TypeError(nodeType);
   }
 }
+
+export function buildEditableCommitmentParameters(privateStateName) {
+  const EDITABLE_COMMITMENT_PARAMETERS = [
+    ['oldCommitment_privateState', true, 'field'],
+    ['oldCommitment_salt', true, 'field'],
+    ['oldCommitment_commitment', true, 'field'],
+    ['oldCommitment_membershipWitness_index', true, 'field'],
+    ['oldCommitment_membershipWitness_siblingPath', true, 'field'],
+    ['oldCommitment_nullifier', false, 'field'], // PUBLIC
+    ['newCommitment_privateState', true, 'field'],
+    ['newCommitment_salt', true, 'field'],
+    ['newCommitment_commitment', false, 'field'], // PUBLIC'
+  ];
+
+  const parameters = [];
+
+  for (const paramArr of EDITABLE_COMMITMENT_PARAMETERS) {
+    const param = {
+      nodeType: 'VariableDeclaration',
+      name: `${privateStateName}_${paramArr[0]}`,
+      isPrivate: paramArr[1],
+      typeName: {
+        nodeType: 'ElementaryTypeName',
+        name: paramArr[2],
+      },
+    };
+    parameters.push(param);
+  }
+
+  return parameters;
+}
+
+export default { getNodeLocation, buildEditableCommitmentParameters };

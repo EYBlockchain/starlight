@@ -1,4 +1,4 @@
-/* eslint-disable no-use-before-define, no-continue, no-shadow */
+/* eslint-disable no-use-before-define, no-continue, no-shadow, no-param-reassign */
 
 import logger from '../utils/logger.mjs';
 // import * as solidityTypes from '../types/solidity-types.mjs';
@@ -11,7 +11,10 @@ import { getVisitableKeys } from '../types/solidity-types.mjs';
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
-function traverse(node, parent, visitor, state) {
+export default function traverse(node, parent, visitor, state, scope) {
+  if (state.stopTraversal) return;
+  if (state.skipSubNodes) return;
+
   const keys = getVisitableKeys(node.nodeType);
   if (!keys) return;
 
@@ -20,13 +23,13 @@ function traverse(node, parent, visitor, state) {
   // If there is an `enter` method for this node type we'll call it with the
   // `node` and its `parent`.
   if (methods && methods.enter) {
-    // logger.debug('\n\n\n\n************************************************');
-    // logger.debug(`${node.nodeType} before enter`);
-    // logger.debug('node._context:', node._context);
-    // if (parent) logger.debug('parent._context:', parent._context);
-    // logger.debug('state:', state);
+    logger.debug('\n\n\n\n************************************************');
+    logger.debug(`${node.nodeType} before enter`);
+    logger.debug('node._context:', node._context);
+    if (parent) logger.debug('parent._context:', parent._context);
+    logger.debug('state:', state);
 
-    methods.enter(node, parent, state);
+    methods.enter(node, parent, state, scope);
 
     // logger.debug(`\n\n\n\n${node.nodeType} after enter`);
     // logger.debug('node._context:', node._context);
@@ -36,12 +39,10 @@ function traverse(node, parent, visitor, state) {
   }
 
   for (const key of keys) {
-    const subNode = node[key];
-
-    if (Array.isArray(subNode)) {
-      for (let i = 0; i < subNode.length; i++) {
-        const child = subNode[i];
-        if (!child) continue;
+    if (Array.isArray(node[key])) {
+      const subNodes = node[key];
+      for (const subNode of subNodes) {
+        if (!subNode) continue;
 
         // ancestors.push({
         //   node,
@@ -49,21 +50,24 @@ function traverse(node, parent, visitor, state) {
         //   index: i,
         // });
 
-        traverse(child, node, visitor, state);
+        traverse(subNode, node, visitor, state, scope);
 
         // ancestors.pop();
       }
-    } else if (subNode) {
+    } else if (node[key]) {
+      const subNode = node[key];
       // ancestors.push({
       //   node,
       //   key,
       // });
 
-      traverse(subNode, node, visitor, state);
+      traverse(subNode, node, visitor, state, scope);
 
       // ancestors.pop();
     }
   }
+
+  if (state.skipSubNodes) state.skipSubNodes = false;
 
   // If there is an `exit` method for this node type we'll call it with the
   // `node` and its `parent`.
@@ -75,7 +79,7 @@ function traverse(node, parent, visitor, state) {
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
 
-    methods.exit(node, parent, state);
+    methods.exit(node, parent, state, scope);
 
     // logger.debug(`\n\n\n\n${node.nodeType} after exit`);
     // logger.debug('node._context:', node._context);
@@ -84,5 +88,3 @@ function traverse(node, parent, visitor, state) {
     // logger.debug('*************************************************');
   }
 }
-
-export default traverse;

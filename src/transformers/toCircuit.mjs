@@ -6,7 +6,7 @@ import logger from '../utils/logger.mjs';
 import { readJsonFile } from '../utils/filing.mjs';
 import traverse from './traverser.mjs';
 import explode from './visitors/explode.mjs';
-import exampleVisitor from './visitors/exampleVisitor.mjs';
+import toCircuitVisitor from './visitors/toCircuitVisitor.mjs';
 
 /**
  * Inspired by the Transformer
@@ -20,24 +20,22 @@ function transformation1(oldAST) {
   // We'll create a `newAst` which like our previous AST will have a SourceUnit
   // node at the top.
   const newAST = {
-    nodeType: 'SourceUnit',
-    nodes: [], // so-called to match the original ast.
+    nodeType: 'Folder',
+    files: [],
   };
 
-  // Next I'm going to cheat a little and create a bit of a hack. We're going to
-  // use a property named `context` on our parent nodes that we're going to push
-  // nodes to their parent's `context`. Normally you would have a better
-  // abstraction than this, but for our purposes this keeps things simple.
-  //
-  // Just take note that the context is a reference *from* the old ast *to* the
-  // new ast.
-  oldAST._context = newAST.nodes;
+  const state = {
+    scope: {},
+    stopTraversal: false,
+  };
+
+  oldAST._context = newAST.files;
   const dummyParent = {};
   dummyParent._context = newAST;
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  traverse(oldAST, dummyParent, explode(exampleVisitor));
+  traverse(oldAST, dummyParent, explode(toCircuitVisitor), state);
 
   logger.debug('NEW AST:', newAST);
 

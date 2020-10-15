@@ -7,7 +7,8 @@
     "start": "node src/index.mjs -i contracts/assign.sol",
     "sketch": "node src/transformers/sketcher.mjs -i ./sprinkled_ast.json",
     "demo": "node STC/stc.mjs",
-    "example": "node src/transformers/exampleTransformer.mjs -i ./sprinkled_ast.json"
+    "example": "node src/transformers/exampleTransformer.mjs -i ./sprinkled_ast.json",
+    "circuit": "node src/transformers/toCircuit.mjs -i ./sprinkled_ast.json"
   },
   "repository": {
     "type": "git",

@@ -52,10 +52,6 @@ export function getNodeLocation(node, parent, matchKey = 'id') {
 
 export function getNodeSkeleton(nodeType) {
   switch (nodeType) {
-    case 'AST':
-      return {
-        ast: {},
-      };
     case 'SourceUnit':
     case 'ContractDefinition':
       return {
@@ -113,8 +109,6 @@ export function getNodeSkeleton(nodeType) {
 
 export function getVisitableKeys(nodeType) {
   switch (nodeType) {
-    case 'AST':
-      return ['ast'];
     case 'SourceUnit':
     case 'ContractDefinition':
       return ['nodes'];
@@ -146,3 +140,5 @@ export function getVisitableKeys(nodeType) {
       throw new TypeError(nodeType);
   }
 }
+
+export default { getNodeLocation };

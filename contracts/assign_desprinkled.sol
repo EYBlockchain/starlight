@@ -7,8 +7,6 @@ contract Assignment {
   uint256 public a;
 
   function assign(uint256 value) public {
-      uint sq = value ** 2;
-      a = sq;
-      a = sq + 5;
+      a = value;
   }
 }
