@@ -4,7 +4,7 @@ import yargs from 'yargs';
 // import fs from 'fs';
 import logger from '../utils/logger.mjs';
 import { readJsonFile } from '../utils/filing.mjs';
-import traverse from './traverser.mjs';
+import traverse from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import exampleVisitor from './visitors/exampleVisitor.mjs';
 

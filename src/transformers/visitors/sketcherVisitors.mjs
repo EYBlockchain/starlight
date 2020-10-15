@@ -1,21 +1,9 @@
 /* eslint-disable no-param-reassign */
 
 import logger from '../../utils/logger.mjs';
-import { getNodeContext, getSubTreeNames } from '../../types/types.mjs';
-import traverse from '../traverser.mjs';
+import { getNodeLocation } from '../../types/solidity-types.mjs';
+import traverse from '../../traverse/traverse.mjs';
 import explode from './explode.mjs';
-
-// a closure for assigning a variable to an object's property by reference
-function property(object, prop) {
-  return {
-    get value() {
-      return object[prop];
-    },
-    set value(val) {
-      object[prop] = val;
-    },
-  };
-}
 
 export function printSketch(sketch) {
   console.log('****************************************************');
@@ -162,7 +150,7 @@ export const addNodePositionsVisitor = {
     exit(node, parent, state) {
       const newChildNodes = node._context;
 
-      const nodeContext = getNodeContext(node, parent);
+      const nodeContext = getNodeLocation(node, parent);
       const { index } = nodeContext;
 
       const { length } = parent._context[index];
@@ -285,14 +273,14 @@ export const addNodePositionsVisitor = {
         parameters: [],
       };
       node._context = newNode.parameters;
-      const { containerName } = getNodeContext(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
     exit(node, parent, state) {
       const newChildNodes = node._context;
 
-      const nodeContext = getNodeContext(node, parent);
+      const nodeContext = getNodeLocation(node, parent);
       const { containerName } = nodeContext;
 
       const { length } = parent._context[containerName];
@@ -490,14 +478,14 @@ export const addNodePositionsVisitor = {
         rightExpression: {},
       };
       node._context = newNode;
-      const { containerName } = getNodeContext(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
     exit(node, parent, state) {
       const newChildNodes = [node._context.leftExpression, node._context.rightExpression];
 
-      const { containerName } = getNodeContext(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
 
       const { length } = parent._context[containerName];
 
@@ -680,7 +668,7 @@ export const addNodePositionsVisitor = {
       if (Array.isArray(parent._context)) {
         parent._context.push(newNode);
       } else {
-        const { containerName } = getNodeContext(node, parent);
+        const { containerName } = getNodeLocation(node, parent);
         parent._context[containerName].push(newNode);
       }
     },
@@ -695,7 +683,7 @@ export const addNodePositionsVisitor = {
         );
         _newNode = parent._context[index];
       } else {
-        const { containerName } = getNodeContext(node, parent);
+        const { containerName } = getNodeLocation(node, parent);
         const index = parent._context[containerName].findIndex(
           child => child.nodeCount === node._context.nodeCount,
         );
@@ -739,7 +727,7 @@ export const addNodePositionsVisitor = {
         );
         parent._context[index] = newNode;
       } else {
-        const { containerName } = getNodeContext(node, parent);
+        const { containerName } = getNodeLocation(node, parent);
         const index = parent._context[containerName].findIndex(
           child => child.nodeCount === node._context.nodeCount,
         );
@@ -775,7 +763,7 @@ export const addNodePositionsVisitor = {
       };
 
       // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
-      const { containerName } = getNodeContext(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 

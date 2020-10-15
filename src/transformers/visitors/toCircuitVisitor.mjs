@@ -3,7 +3,7 @@
 import logger from '../../utils/logger.mjs';
 import solidityTypes from '../../types/solidity-types.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
-import traverse from '../traverser.mjs';
+import traverse from '../../traverse/traverse.mjs';
 
 // a closure for assigning a variable to an object's property by reference
 function property(object, prop) {

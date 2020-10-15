@@ -1,18 +1,6 @@
 /* eslint-disable no-param-reassign */
 
-import { getNodeLocation, getNodeSkeleton } from '../../types/solidity-types.mjs';
-
-// a closure for assigning a variable to an object's property by reference
-function property(object, prop) {
-  return {
-    get value() {
-      return object[prop];
-    },
-    set value(val) {
-      object[prop] = val;
-    },
-  };
-}
+import { getNodeLocation } from '../../types/solidity-types.mjs';
 
 export default {
   PragmaDirective: {
@@ -160,7 +148,6 @@ export default {
         parent._context.push(newNode);
       } else {
         const { containerName } = getNodeLocation(node, parent);
-        console.log('CONTAINERNAME', containerName)
         parent._context[containerName].push(newNode);
       }
     },

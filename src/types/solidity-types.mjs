@@ -26,7 +26,6 @@ export function isArray(thing) {
  *
  * So overall, the naming is such that the node is always at container[key]
  */
-
 export function getNodeLocation(node, parent, matchKey = 'id') {
   const visitableParentKeys = getVisitableKeys(parent.nodeType);
   for (const key of visitableParentKeys) {
