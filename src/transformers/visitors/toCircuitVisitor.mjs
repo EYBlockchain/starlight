@@ -236,6 +236,7 @@ export default {
     enter(node, parent) {
       const newNode = {
         nodeType: node.nodeType,
+        operator: node.operator,
         leftHandSide: {},
         rightHandSide: {},
       };

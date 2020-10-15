@@ -6,7 +6,8 @@ import logger from '../utils/logger.mjs';
 import { readJsonFile } from '../utils/filing.mjs';
 import traverse from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
-import toCircuitVisitor from './visitors/toCircuitVisitor.mjs';
+import visitor from './visitors/toCircuitVisitor.mjs';
+import codeGenerator from '../codeGenerators/toCircuit.mjs';
 
 /**
  * Inspired by the Transformer
@@ -35,9 +36,7 @@ function transformation1(oldAST) {
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  traverse(oldAST, dummyParent, explode(toCircuitVisitor), state);
-
-  logger.debug('NEW AST:', newAST);
+  traverse(oldAST, dummyParent, explode(visitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
@@ -49,6 +48,10 @@ function transformer() {
   logger.debug('ast', ast);
 
   const newAST = transformation1(ast);
+  logger.debug('NEW AST:', newAST);
+  const circuitCode = codeGenerator(newAST);
+  console.log('Circuit code:');
+  console.log(circuitCode); // don't use the logger, because it outputs escape characters
   return newAST;
 }
 
