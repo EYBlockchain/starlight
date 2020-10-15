@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 
-import { getNodeContext } from '../../types/types.mjs';
+import { getNodeLocation, getNodeSkeleton } from '../../types/solidity-types.mjs';
 
 // a closure for assigning a variable to an object's property by reference
 function property(object, prop) {
@@ -73,7 +73,7 @@ export default {
         parameters: [],
       };
       node._context = newNode.parameters;
-      const { containerName } = getNodeContext(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
@@ -115,7 +115,7 @@ export default {
         rightExpression: {},
       };
       node._context = newNode;
-      const { containerName } = getNodeContext(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
@@ -159,7 +159,7 @@ export default {
       if (Array.isArray(parent._context)) {
         parent._context.push(newNode);
       } else {
-        const { containerName } = getNodeContext(node, parent);
+        const { containerName } = getNodeLocation(node, parent);
         console.log('CONTAINERNAME', containerName)
         parent._context[containerName].push(newNode);
       }
@@ -175,7 +175,7 @@ export default {
       };
 
       // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
-      const { containerName } = getNodeContext(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 

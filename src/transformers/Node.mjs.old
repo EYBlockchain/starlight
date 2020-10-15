@@ -1,0 +1,9 @@
+export default class Node {
+  // Q: replace 'parent' with 'ancestors' array?
+  constructor(node, parent) {
+    this.old = {};
+    this.new = {};
+    this.old.node = node;
+    this.old.parent = parent;
+  }
+}
