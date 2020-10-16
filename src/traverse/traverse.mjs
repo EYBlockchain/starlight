@@ -24,10 +24,10 @@ export default function traverse(node, parent, visitor, state, scope) {
   // `node` and its `parent`.
   if (methods && methods.enter) {
     logger.debug('\n\n\n\n************************************************');
-    // logger.debug(`${node.nodeType} before enter`);
-    // logger.debug('node._context:', node._context);
-    // if (parent) logger.debug('parent._context:', parent._context);
-    // logger.debug('state:', state);
+    logger.debug(`${node.nodeType} before enter`);
+    logger.debug('node._context:', node._context);
+    if (parent) logger.debug('parent._context:', parent._context);
+    logger.debug('state:', state);
 
     methods.enter(node, parent, state, scope);
 
