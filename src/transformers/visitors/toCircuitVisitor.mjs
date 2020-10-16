@@ -1,7 +1,7 @@
-/* eslint-disable no-param-reassign, no-shadow */
+/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
 import logger from '../../utils/logger.mjs';
-import solidityTypes from '../../types/solidity-types.mjs';
+import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import traverse from '../../traverse/traverse.mjs';
 
@@ -183,7 +183,7 @@ export default {
         parameters: [],
       };
       node._context = newNode.parameters;
-      const { containerName } = solidityTypes.getNodeLocation(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
@@ -225,7 +225,7 @@ export default {
         rightExpression: {},
       };
       node._context = newNode;
-      const { containerName } = solidityTypes.getNodeLocation(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
@@ -283,7 +283,7 @@ export default {
       if (Array.isArray(parent._context)) {
         parent._context.push(newNode);
       } else {
-        const { containerName } = solidityTypes.getNodeLocation(node, parent);
+        const { containerName } = getNodeLocation(node, parent);
         parent._context[containerName].push(newNode);
       }
     },
@@ -301,7 +301,7 @@ export default {
       };
 
       // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
-      const { containerName } = solidityTypes.getNodeLocation(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
@@ -316,11 +316,17 @@ export default {
       };
 
       // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
-      const { containerName } = solidityTypes.getNodeLocation(node, parent);
+      const { containerName } = getNodeLocation(node, parent);
       parent._context[containerName] = newNode;
     },
 
-    exit(node, parent) {},
+    exit(node, parent) {
+      // findReferencedDeclaration example placement:
+      // const declaration = findReferencedDeclaration(node, parent);
+      // logger.debug('Found ref dec:');
+      // console.log(declaration.name, declaration.nodeType);
+      // if (dec.sprinkle) console.log(`Which is ${dec.sprinkle}!`);
+    },
   },
 
   Literal: {
