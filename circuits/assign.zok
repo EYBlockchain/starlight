@@ -1,0 +1,40 @@
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256
+from "utils/pack/u32/pack256.zok"  import main as u32_8_to_field
+
+from "./common/merkle-tree/mimc/bn254/verify-membership/height32.zok" import main as checkRoot
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
+
+
+
+struct CommitmentPreimage {
+	u32[8] value
+	u32[8] salt
+}
+
+def main(private CommitmentPreimage oldCommitmentPreimage, private CommitmentPreimage newCommitmentPreimage, private field index, private field[32] path, field root, field nullifier, field commitment)->():
+
+    bool skipNullification = if nullifier == 0 && root == 0 then true else false fi
+
+    // old commitment checks
+
+    u32[8] nullifierCheck = if skipNullification == true then [0x00000000; 8] else sha256of256(oldCommitmentPreimage.salt) fi
+
+    u32[8] oldCommitment = if skipNullification == true then [0x00000000; 8] else sha256of512([...oldCommitmentPreimage.value, ...oldCommitmentPreimage.salt]) fi
+
+	field truncatedCommitment = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(oldCommitment)[8..256]])
+
+    field rootCheck = if skipNullification == true then 0 else checkRoot(path, truncatedCommitment, index) fi
+
+	// assert(nullifier == u32_8_to_field(nullifierCheck))
+    assert(field_to_bool_256(nullifier)[8..256] == u32_8_to_bool_256(nullifierCheck)[8..256])
+    assert(field_to_bool_256(root)[8..256] == field_to_bool_256(rootCheck)[8..256])
+
+    // new commitment checks
+
+    u32[8] commitmentCheck = sha256of512([...newCommitmentPreimage.value, ...newCommitmentPreimage.salt])
+	assert(field_to_bool_256(commitment)[8..256] == u32_8_to_bool_256(commitmentCheck)[8..256])
+
+    return

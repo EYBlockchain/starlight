@@ -7,7 +7,7 @@ import logger from '../utils/logger.mjs';
 import process from '../processors/global.mjs';
 
 function recogniseGlobal(line) {
-  for (const g of config.GLOBALS) {
+  for (const g of config.globals) {
     if (line.startsWith(g)) {
       // global found
       const ln = line.slice(0, -1).replace(/ *\([^)]*\) */g, ' '); // strip and remove brackets ; - need to make this more robust

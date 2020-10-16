@@ -3,6 +3,5 @@ node_modules
 build/
 node_modules/
 proving-files/
-circuits-user/
-temp-user-files/
-tests/CID
+examples/cases/*/db/*.json
+examples/cases/*/db/*.key
