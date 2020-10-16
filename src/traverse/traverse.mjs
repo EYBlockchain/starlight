@@ -12,8 +12,8 @@ import { getVisitableKeys } from '../types/solidity-types.mjs';
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
 export default function traverse(node, parent, visitor, state, scope) {
-  if (state.stopTraversal) return;
-  if (state.skipSubNodes) return;
+  if (state && state.stopTraversal) return;
+  if (state && state.skipSubNodes) return;
 
   const keys = getVisitableKeys(node.nodeType);
   if (!keys) return;
@@ -67,7 +67,7 @@ export default function traverse(node, parent, visitor, state, scope) {
     }
   }
 
-  if (state.skipSubNodes) state.skipSubNodes = false;
+  if (state && state.skipSubNodes) state.skipSubNodes = false;
 
   // If there is an `exit` method for this node type we'll call it with the
   // `node` and its `parent`.
