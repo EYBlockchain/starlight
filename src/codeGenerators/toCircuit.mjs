@@ -80,7 +80,7 @@ function codeGenerator(node) {
       return node.name;
 
     case 'EditableCommitmentStatementsBoilerplate':
-      return EditableCommitmentStatementsBoilerplate(node.privateStateName).join('\n\t');
+      return EditableCommitmentStatementsBoilerplate(node.privateStateName).join('\n\n\t');
 
     // And if we haven't recognized the node, we'll throw an error.
     default:
