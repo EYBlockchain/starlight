@@ -5,3 +5,4 @@ node_modules/
 proving-files/
 examples/cases/*/db/*.json
 examples/cases/*/db/*.key
+zapps/
