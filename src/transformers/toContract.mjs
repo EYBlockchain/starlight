@@ -58,7 +58,7 @@ export default function toContract(ast, options) {
   // transpile to a contract AST:
   logger.info('Transforming the .zsol AST to a solidity AST...');
   const newAST = transformation1(ast);
-  logger.debug('new solidity ast:', newAST);
+  // logger.debug('new solidity ast:', newAST);
   const newASTFilePath = pathjs.join(options.contractsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
