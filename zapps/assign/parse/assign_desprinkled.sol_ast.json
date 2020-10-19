@@ -1,0 +1,171 @@
+{
+    "absolutePath": "input",
+    "exportedSymbols": {
+        "Assign": [
+            14
+        ]
+    },
+    "id": 15,
+    "license": "CC0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+        {
+            "id": 1,
+            "literals": [
+                "solidity",
+                "^",
+                "0.7",
+                ".0"
+            ],
+            "nodeType": "PragmaDirective",
+            "src": "35:23:0"
+        },
+        {
+            "abstract": false,
+            "baseContracts": [],
+            "contractDependencies": [],
+            "contractKind": "contract",
+            "fullyImplemented": true,
+            "id": 14,
+            "linearizedBaseContracts": [
+                14
+            ],
+            "name": "Assign",
+            "nodeType": "ContractDefinition",
+            "nodes": [
+                {
+                    "constant": false,
+                    "id": 3,
+                    "mutability": "mutable",
+                    "name": "a",
+                    "nodeType": "VariableDeclaration",
+                    "scope": 14,
+                    "src": "85:17:0",
+                    "stateVariable": true,
+                    "storageLocation": "default",
+                    "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                    },
+                    "typeName": {
+                        "id": 2,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "85:7:0",
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                        }
+                    },
+                    "visibility": "private"
+                },
+                {
+                    "body": {
+                        "id": 12,
+                        "nodeType": "Block",
+                        "src": "147:22:0",
+                        "statements": [
+                            {
+                                "expression": {
+                                    "id": 10,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "id": 8,
+                                        "name": "a",
+                                        "nodeType": "Identifier",
+                                        "overloadedDeclarations": [],
+                                        "referencedDeclaration": 3,
+                                        "src": "154:1:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "rightHandSide": {
+                                        "id": 9,
+                                        "name": "value",
+                                        "nodeType": "Identifier",
+                                        "overloadedDeclarations": [],
+                                        "referencedDeclaration": 5,
+                                        "src": "158:5:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "src": "154:9:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "id": 11,
+                                "nodeType": "ExpressionStatement",
+                                "src": "154:9:0"
+                            }
+                        ]
+                    },
+                    "functionSelector": "4c081138",
+                    "id": 13,
+                    "implemented": true,
+                    "kind": "function",
+                    "modifiers": [],
+                    "name": "assign",
+                    "nodeType": "FunctionDefinition",
+                    "parameters": {
+                        "id": 6,
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "constant": false,
+                                "id": 5,
+                                "mutability": "mutable",
+                                "name": "value",
+                                "nodeType": "VariableDeclaration",
+                                "scope": 13,
+                                "src": "125:13:0",
+                                "stateVariable": false,
+                                "storageLocation": "default",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                },
+                                "typeName": {
+                                    "id": 4,
+                                    "name": "uint256",
+                                    "nodeType": "ElementaryTypeName",
+                                    "src": "125:7:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "visibility": "internal"
+                            }
+                        ],
+                        "src": "124:15:0"
+                    },
+                    "returnParameters": {
+                        "id": 7,
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "src": "147:0:0"
+                    },
+                    "scope": 14,
+                    "src": "109:60:0",
+                    "stateMutability": "nonpayable",
+                    "virtual": false,
+                    "visibility": "public"
+                }
+            ],
+            "scope": 15,
+            "src": "62:110:0"
+        }
+    ],
+    "src": "35:139:0"
+}
