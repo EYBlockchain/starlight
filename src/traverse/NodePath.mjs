@@ -1,6 +1,6 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, no-shadow */
 
-import { traverse } from './traverse.mjs';
+import { traverse, traverseNodesFast, traversePathsFast } from './traverse.mjs';
 import logger from '../utils/logger.mjs';
 
 /**
@@ -75,6 +75,9 @@ class NodePath {
     traverse(this, visitor, state, scope);
   }
 
+  /**
+   @returns {string} - a human-readable path
+   */
   getLocation() {
     const parts = [];
     let path = this;
@@ -91,6 +94,7 @@ class NodePath {
    * Starting at current `path` and going up the tree, return the first
    * `path` that causes the provided `callback` to return a truthy value,
    * or `null` if the `callback` never returns a truthy value.
+   * @return {NodePath || null}
    */
   findAncestor(callback) {
     let path = this;
@@ -102,6 +106,7 @@ class NodePath {
 
   /**
    * Same as findAncestor, but starting at this path's parent.
+   * @return {NodePath || null}
    */
   findAncestorFromParent(callback) {
     let path = this;
@@ -117,32 +122,42 @@ class NodePath {
    * The callback must return something falsey if it can't find what it's
    * looking for. Otherwise, (if it finds what it's looking for) it can return
    * whatever it wants.
+   * @returns { ? || falsey} - depends on the callback
    */
-  findInAncestors(callback) {
+  queryAncestors(callback) {
     const path = this.parentPath || null;
-    return callback(path) || path.findInAncestors(callback);
+    return callback(path) || path.queryAncestors(callback);
+  }
+
+  /**
+   * Build an array of node paths containing the entire ancestry of the current node path.
+   *
+   * NOTE: The current node path is included in this.
+   * @returns {Array[NodePath]}
+   */
+  getAncestry() {
+    let path = this;
+    const paths = [];
+    do {
+      paths.push(path);
+    } while ((path = path.parentPath));
+    return paths;
+  }
+
+  /**
+   * A helper to find if `this` path is an ancestor of @param {NodePath} maybeDescendant
+   * @returns {Boolean}
+   */
+  isAncestor(maybeDescendant) {
+    return maybeDescendant.isDescendant(this);
   }
 
   /**
    * A helper to find if `this` path is a descendant of @param {NodePath} maybeAncestor
+   * @returns {Boolean}
    */
   isDescendant(maybeAncestor) {
     return !!this.findAncestorFromParent(path => path === maybeAncestor);
-  }
-
-  /**
-   * A helper to find if `this` path is a descendant of a particular nodeType or @param {array} nodeTypes
-   */
-  inType(...nodeTypes) {
-    let path = this;
-    while (path) {
-      for (const nodeType of nodeTypes) {
-        if (path.node.nodeType === nodeType) return true;
-      }
-      path = path.parentPath;
-    }
-
-    return false;
   }
 
   // SIBLINGS
@@ -202,6 +217,157 @@ class NodePath {
 
   // SEARCHES for specific nodeTypes:
 
+  /**
+   * @param {string} nodeType - a valid Solidity nodeType.
+   * Get the first @return {NodePath || null} matching the given nodeType, in which `this` is contained (including `this` in the search).
+   */
+  getAncestorOfType(nodeType) {
+    return this.findAncestor(path => path.node.nodeType === nodeType);
+  }
+
+  /**
+   * @param {string} containerName - e.g. parameters, nodes, statements, declarations, imports, ...
+   * Get the first @return {NodePath || null} whose containerName matches the given containerName (including `this` in the search)
+   */
+  getAncestorContainedWithin(containerName) {
+    return this.findAncestor(path => path.containerName === containerName);
+  }
+
+  /**
+   * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
+   * @returns {Array[NodePath] || null} the parameters of the function.
+   */
+  getFunctionParameters() {
+    const functionDefinition = this.getAncestorOfType('FunctionDefinition');
+    return functionDefinition ? functionDefinition.parameters.parameters : null;
+  }
+
+  /**
+   * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
+   * @returns {Array[NodePath] || null} the parameters of the function.
+   */
+  getFunctionReturnParameters() {
+    const functionDefinition = this.getAncestorOfType('FunctionDefinition');
+    return functionDefinition ? functionDefinition.returnParameters.parameters : null;
+  }
+
+  /**
+   * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
+   * @returns {Array[NodePath] || null} the statements of the function.
+   */
+  getFunctionBodyStatements() {
+    const functionDefinition = this.getAncestorOfType('FunctionDefinition');
+    return functionDefinition && functionDefinition.body
+      ? functionDefinition.body.statements
+      : null;
+  }
+
+  /**
+   * A helper to find if `this` path is a descendant of a particular nodeType or @param {array} nodeTypes
+   * @returns {Boolean}
+   */
+  isInType(...nodeTypes) {
+    let path = this;
+    while (path) {
+      for (const nodeType of nodeTypes) {
+        if (path.node.nodeType === nodeType) return true;
+      }
+      path = path.parentPath;
+    }
+
+    return false;
+  }
+
+  /**
+   * Is this path.node a 'Statement' type?
+   * @returns {Boolean}
+   */
+  isStatement() {
+    const statementNodeTypes = [
+      'ExpressionStatement',
+      'VariableDeclarationStatement',
+      'ImportStatements',
+      'ImportStatement',
+    ];
+    return statementNodeTypes.includes(this.nodeType);
+  }
+
+  /**
+   * Is this path.node a 'Statement' type which is _within_ a function's body?
+   * @returns {Boolean}
+   */
+  isFunctionBodyStatement() {
+    return this.containerName === 'statements';
+  }
+
+  /**
+   * Is this path.node a descendant of a statement which is _within_ a function's body?
+   * @returns {Boolean}
+   */
+  isInFunctionBodyStatement() {
+    return this.queryAncestors(path => path.isFunctionBodyStatement());
+  }
+
+  /**
+   * slower than querying the `scope` object
+   * @return {Array<node>} other nodes which reference the same referencedDeclaration as `this.node`.
+   */
+  getAllNodesWhichReferenceTheSame(beneathNodeType = 'Block') {
+    // We'll search all subnodes for referencedDeclarations.
+    // Later, we'll find nodes `beneathNodeType` which reference the same.
+    const state = {};
+    const ref = this.node.referencedDeclaration;
+    if (ref) {
+      state[ref] = [];
+    } else {
+      const visitor1 = (node, state) => {
+        const ref = node.referencedDeclaration;
+        if (ref) state[ref] = []; // initialise an array to which we'll push nodes which reference the same referencedDeclaration node.
+      };
+      traverseNodesFast(this.node, visitor1, state);
+    }
+    if (Object.keys(state).length === 0) return {}; // no references
+
+    const rootNodePath = this.getAncestorOfType(beneathNodeType);
+    if (!rootNodePath) return {};
+
+    const visitor2 = (node, state) => {
+      for (const ref of Object.keys(state)) {
+        if (node.referencedDeclaration === ref) state[ref].push(node);
+      }
+    };
+    traverseNodesFast(rootNodePath.node, visitor2, state);
+    return state;
+  }
+
+  getAllNodesWhichModifyTheSame(beneathNodeType = 'Block') {
+    // We'll search all subnodes for referencedDeclarations on the LHS.
+    // Later, we'll find nodes `beneathNodeType` which modify the same nodes.
+    const state = {};
+    const ref = this.node.referencedDeclaration;
+    if (ref && this.containerName === 'leftHandSide') {
+      state[ref] = [];
+    } else {
+      const visitor1 = (path, state) => {
+        const ref = path.node.referencedDeclaration;
+        if (ref && path.containerName === 'leftHandSide') state[ref] = []; // initialise an array to which we'll push nodes which modify the same referencedDeclaration node.
+      };
+      traversePathsFast(this, visitor1, state);
+    }
+    if (Object.keys(state).length === 0) return {}; // no references
+
+    const rootNodePath = this.getAncestorOfType(beneathNodeType);
+    if (!rootNodePath) return {};
+
+    const visitor2 = (path, state) => {
+      for (const ref of Object.keys(state)) {
+        if (path.node.referencedDeclaration === ref && path.containerName === 'leftHandSide')
+          state[ref].push(path.node);
+      }
+    };
+    traversePathsFast(rootNodePath, visitor2, state);
+    return state;
+  }
 }
 
 export default NodePath;

@@ -25,32 +25,26 @@ export const updateScope = (path, scope) => {
       return {
         scopeId: parent.id,
         parentScope: scope,
-        bindings: scope.bindings, // inherit the bindings of the upper scope, as they're still valid in here... I think. TODO: consider the implications of this.
+        bindings: [],
         modifiedBindings: [],
         referencedBindings: [],
       };
     case 'VariableDeclaration':
       scope.bindings.push({
         node,
+        path,
         stateVariable: node.stateVariable,
         secretVariable: node.sprinkle === 'secret',
         referenced: false,
         referenceCount: 0,
-        referencingNodes: [],
+        referencingPaths: [],
         modified: false,
         modificationCount: 0,
-        modifyingNodes: [],
+        modifyingPaths: [],
       });
       return scope;
     case 'Identifier': {
-      // define a callback function:
-      const findReferencedBinding = scope => {
-        for (const binding of scope.bindings) {
-          if (binding.node.id === node.referencedDeclaration) return binding;
-        }
-        return false; // not found in the scope
-      };
-      const referencedBinding = findInScopeAncestors(scope, findReferencedBinding);
+      const referencedBinding = findReferencedBinding(scope, node);
       if (!referencedBinding)
         throw new Error(
           `Couldn't find a referencedDeclaration. I.e. couldn't find a node with id ${node.referencedDeclaration}`,
@@ -58,13 +52,13 @@ export const updateScope = (path, scope) => {
 
       referencedBinding.referenced = true;
       ++referencedBinding.referenceCount;
-      referencedBinding.referencingNodes.push(node);
+      referencedBinding.referencingPaths.push(path);
       scope.referencedBindings.push(referencedBinding);
-      const { containerName } = getNodeLocation(node, parent);
-      if (parent.nodeType === 'Assignment' && containerName === 'leftHandSide') {
+
+      if (parent.nodeType === 'Assignment' && path.containerName === 'leftHandSide') {
         referencedBinding.modified = true;
         ++referencedBinding.modificationCount;
-        referencedBinding.modifyingNodes.push(node);
+        referencedBinding.modifyingPaths.push(path);
         scope.modifiedBindings.push(referencedBinding);
       }
       return scope;
@@ -109,10 +103,23 @@ export const findInScopeAncestors = (scope, callback) => {
   return callback(scope) || findInScopeAncestors(scope.parentScope, callback);
 };
 
-export const findReferencedNode = (scope, referencingNode) => {
+export const findReferencedBinding = (scope, referencingNode) => {
   const node = referencingNode;
   if (!node.referencedDeclaration) return null;
   return findInScopeAncestors(scope, s => {
-    return s.bindings.find(binding => binding.node.id === node.referencedDeclaration).node;
+    return s.bindings.find(binding => binding.node.id === node.referencedDeclaration);
   });
+};
+
+export const collectAllAncestorBindings = scope => {
+  let bindings = [];
+  do {
+    if (!scope.bindings) continue;
+    bindings = bindings.concat(scope.bindings);
+  } while ((scope = scope.parentScope));
+  return bindings;
+};
+
+export const collectAllStateVariableBindings = scope => {
+  return collectAllAncestorBindings(scope).filter(binding => binding.stateVariable);
 };

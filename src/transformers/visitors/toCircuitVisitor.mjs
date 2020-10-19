@@ -2,7 +2,11 @@
 
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import { findInScopeAncestors, findReferencedNode } from '../../traverse/scope.mjs';
+import {
+  collectAllStateVariableBindings,
+  findInScopeAncestors,
+  findReferencedBinding,
+} from '../../traverse/scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
@@ -44,7 +48,8 @@ export default {
       // we'll need to create a new circuit file if we find one:
       let newFile = false;
       // state.scope.assignedGlobals = [];
-      const stateVariableBindings = scope.bindings.filter(binding => binding.stateVariable);
+      // const stateVariableBindings = scope.bindings.filter(binding => binding.stateVariable);
+      const stateVariableBindings = collectAllStateVariableBindings(scope);
 
       if (stateVariableBindings) {
         for (const binding of stateVariableBindings) {
@@ -238,13 +243,23 @@ export default {
       const { node, parent } = path;
       let newNode;
       // ExpressionStatements can contain an Assignment node.
-      // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the first such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
+      // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the _first_ such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedNode = findReferencedNode(scope, lhs);
+        const referencedBinding = findReferencedBinding(scope, lhs);
+        const referencedNode = referencedBinding.node;
 
-        if (referencedNode.sprinkle === 'secret') {
+        // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
+        const modifiedBinding = scope.modifiedBindings.find(
+          binding => binding === referencedBinding,
+        );
+
+        // TODO: could we alternatively look in referencedBinding.modifyingPaths? Possibly not, because that might include modifications from other scopes?
+        // TODO: maybe have a 'find within Body' function to go up to the root of the body, and traverse it?
+        // TODO: perhaps we could use the path.getFirstSiblingNode function? Or actually, path.getAllPrevSiblingNodes
+
+        if (!modifiedBinding && referencedNode.sprinkle === 'secret') {
           newNode = {
             nodeType: 'VariableDeclarationStatement',
             declarations: [
