@@ -60,9 +60,26 @@ This will create a symlink to your node.js bin, allowing you to run the commands
 `zappify -i ./path/to/MyZappableContract.zsol`
 Converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
 
-`zappify -i ./path/to/MyZappableContract.zsol -o ./custom/output/dir/`
+#### other options
 
-`zappify -h` for help.
+`-o ./custom/output/dir/`
+`-z customZappName` - otherwise files get output to a folder with name matching that of the input file.
+
+`-h` for help.
+
+## Developer
+
+### Testing outputs
+
+#### circuit
+
+`zappify -i ./examples/cases/uninit_global/assign.zsol`
+
+`cd zapps/assign/circuits`
+
+`docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
+
+`./zokrates compile --light -i code/assign.zok` <-- it should compile
 
 ---
 
