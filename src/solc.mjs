@@ -129,7 +129,8 @@ const compile = (solidityFile, options) => {
       return {
         contents: sources[_import.toString()].contents,
       };
-    } else return { error: 'File not found' };
+    }
+    return { error: 'File not found' };
   }
   const compiled = JSON.parse(solc.compile(JSON.stringify(params), { import: findImports }));
   console.log('compiled', compiled);

@@ -1,11 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '../utils/logger.mjs';
+import logger from '../../../utils/logger.mjs';
 import {
-  boilerplateCircuitsDir,
   EditableCommitmentImportsBoilerplate,
   EditableCommitmentStatementsBoilerplate,
-} from '../boilerplate/circuit/raw/toCircuit.mjs';
+} from '../../../boilerplate/circuit/zokrates/raw/toCircuit.mjs';
+
+const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
 
 /**
  * @param {string} file - a stringified file

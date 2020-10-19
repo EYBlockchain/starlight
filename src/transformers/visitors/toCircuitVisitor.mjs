@@ -4,7 +4,7 @@ import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
 import {
   collectAllStateVariableBindings,
-  findInScopeAncestors,
+  queryScopeAncestors,
   findReferencedBinding,
 } from '../../traverse/scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';

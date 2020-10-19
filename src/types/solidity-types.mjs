@@ -90,7 +90,9 @@ export function getVisitableKeys(nodeType) {
   switch (nodeType) {
     case 'SourceUnit':
     case 'ContractDefinition':
-      return ['nodes'];
+      return ['nodes', 'baseContracts'];
+    case 'InheritanceSpecifier':
+      return ['baseName'];
     case 'FunctionDefinition':
       return ['parameters', 'returnParameters', 'body'];
     case 'ParameterList':
@@ -111,6 +113,7 @@ export function getVisitableKeys(nodeType) {
     case 'ElementaryTypeName':
     case 'Identifier':
     case 'Literal':
+    case 'UserDefinedTypeName':
       return [];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
