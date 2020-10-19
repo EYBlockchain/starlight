@@ -1,8 +1,64 @@
-# sprinkles :doughnut:
+# zappify :zap:
 
-Sprinkling privacy syntax over smart contracts.
+Generate a zApp from a Solidity contract.
 
-Converting 'sprinkled' Solidity into a ZKP protocol.
+_"So good it Hertz."_
+
+_"An electrifying experience."_
+
+_"I was shocked."_
+
+_"Watts up?"_
+
+_"Join the privacy resistance"_
+
+_"Current privacy tech at its best."_
+
+_"Ohm my gosh!"_
+
+_"Free of charge"_
+
+_"A brilliantly conducted project."_
+
+_"Creates circuits; but not electrical ones."_
+
+_"There's a clever pun around secure key vaults and volts to be had..."_
+
+---
+
+## Induction :zap:
+
+zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write.
+
+- Write a Solidity contract
+- Add a few new privacy decorators to the contract (to get a 'zappable' Solidity contract)
+- Zappify that baby
+- Get a fully working zApp in return
+
+Solidity Contract > zappable Solidity Contract > zappify > zApp
+
+### Install
+
+Whilst the package is in early development, it isn't hosted on npm. To install:
+
+`cd zappify`
+`npm i -g ./`
+
+This will create a symlink to your node.js bin, allowing you to run the commands specified in the `"bin":` field of the `package.json`; namely the `zappify` command.
+
+
+### zappify
+
+`zappify -i ./path/to/MyZappableContract.zsol`
+Converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
+
+`zappify -i ./path/to/MyZappableContract.zsol -o ./custom/output/dir/`
+
+`zappify -h` for help.
+
+---
+
+## R&D Notes & Ideas
 
 See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from sprinkled Solidity.
 

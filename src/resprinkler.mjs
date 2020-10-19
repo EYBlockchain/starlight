@@ -3,20 +3,7 @@ Reads an input file line by line and passes each line for further processing
 */
 
 import fs from 'fs';
-import replaceIn from 'replace-in-file';
-import recogniseSprinkles from './recognisers/sprinkles.mjs';
 import logger from './utils/logger.mjs';
-
-function replaceSprinkles(file, replaceArr) {
-  for (const obj of replaceArr) {
-    const options = {
-      files: file,
-      from: obj.oldline,
-      to: obj.newline,
-    };
-    replaceIn.sync(options);
-  }
-}
 
 function findNodeId(ast, type, name) {
   const { nodes } = ast.nodes[1];
@@ -66,8 +53,8 @@ function findNodeId(ast, type, name) {
 
 function addSprinkles(ast, line) {
   // separated out node id and sprinkling for now - will merge later
-  const newAst = ast;
-  const { nodes } = newAst.nodes[1];
+  const newAST = ast;
+  const { nodes } = newAST.nodes[1];
   switch (line.type) {
     default:
       for (const node of nodes) {
@@ -98,16 +85,10 @@ function addSprinkles(ast, line) {
   return ast;
 }
 
-async function resprinkle(file, toResprinkle) {
-  const ast = JSON.parse(
-    fs.readFileSync(file, 'utf-8', err => {
-      console.log(err);
-    }),
-  );
-
+function resprinkle(solAST, toResprinkle, options) {
   logger.info(`Creating sprinkled ast... `);
 
-  let newAst = ast;
+  let newAST = solAST;
 
   for (const line of toResprinkle) {
     // find nodeId
@@ -128,14 +109,16 @@ async function resprinkle(file, toResprinkle) {
         break;
       default:
         // same for function, constructor, and global
-        line.nodeId = findNodeId(ast, line.type, line.name);
+        line.nodeId = findNodeId(solAST, line.type, line.name);
     }
     // sprinkle ast
-    newAst = addSprinkles(newAst, line);
+    newAST = addSprinkles(newAST, line);
   }
-  console.log(toResprinkle);
 
-  return newAst;
+  const zsolASTFilePath = `${options.parseDirPath}/${options.inputFileName}.zsol_ast.json`;
+  fs.writeFileSync(zsolASTFilePath, JSON.stringify(newAST, null, 4));
+
+  return newAST;
 }
 
 export default resprinkle;

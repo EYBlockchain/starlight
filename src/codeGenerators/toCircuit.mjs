@@ -10,20 +10,48 @@ const EditableCommitmentImportsBoilerplate = [
   'from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512',
 ];
 
+// newline / tab beautification for '.zok' files
+const beautify = code => {
+  // can't be bothered writing this yet
+  const lines = code.split('\n');
+  let newCode = '';
+  let tabCount = 0;
+  for (const line of lines) {
+    const chars = line.split('');
+    let newLine = '';
+    for (const char of chars) {
+      switch (char) {
+        case '[':
+          ++tabCount;
+          newLine += `${char}\\\n${'\t'.repeat(tabCount)}`;
+          break;
+        case ']':
+          --tabCount;
+          newLine += `\\\n${'\t'.repeat(tabCount)}${char}`;
+          break;
+        default:
+          newLine += char;
+      }
+    }
+    newCode += newLine;
+  }
+  return newCode;
+};
+
 const EditableCommitmentStatementsBoilerplate = privateStateName => {
   const x = privateStateName;
   return [
     `assert(\\
-    \t\ta == ${x}_oldCommitment_privateState\\
-    \t)`,
+    \ta == ${x}_oldCommitment_privateState\\
+    )`,
     `assert(\\
-    \t\t${x}_oldCommitment_commitment == sha256of512(\\
-    \t\t\t[\\
-    \t\t\t\t...${x}_oldCommitment_privateState,\\
-    \t\t\t\t...${x}_oldCommitment_salt\\
-    \t\t\t]\\
-    \t\t)\\
-    \t)`,
+    \t${x}_oldCommitment_commitment == sha256of512(\\
+    \t\t[\\
+    \t\t\t...${x}_oldCommitment_privateState,\\
+    \t\t\t...${x}_oldCommitment_salt\\
+    \t\t]\\
+    \t)\\
+    )`,
     `field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])`,
     `field rootCheck = checkRoot(${x}_oldCommitment_membershipWitness_siblingPath, ${x}_oldCommitment_commitment_truncated, ${x}_oldCommitment_membershipWitness_index)`,
     'assert(field_to_bool_256(nullifier)[8..256] == u32_8_to_bool_256(nullifierCheck)[8..256])',
@@ -58,8 +86,8 @@ function codeGenerator(node) {
       return node.parameters.map(codeGenerator).join(',\\\n\t');
 
     case 'VariableDeclaration': {
-      const isPrivate = node.isPrivate ? 'private' : '';
-      return `${isPrivate} ${codeGenerator(node.typeName)} ${node.name}`;
+      const isPrivate = node.isPrivate ? 'private ' : '';
+      return `${isPrivate}${codeGenerator(node.typeName)} ${node.name}`;
     }
 
     case 'ElementaryTypeName':
@@ -85,7 +113,7 @@ function codeGenerator(node) {
     // And if we haven't recognized the node, we'll throw an error.
     default:
       return;
-      // throw new TypeError(node.type);
+      // throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
   }
 }
 

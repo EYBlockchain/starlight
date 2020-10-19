@@ -5,18 +5,6 @@ import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity
 import circuitTypes from '../../types/circuit-types.mjs';
 import traverse from '../../traverse/traverse.mjs';
 
-// a closure for assigning a variable to an object's property by reference
-function property(object, prop) {
-  return {
-    get value() {
-      return object[prop];
-    },
-    set value(val) {
-      object[prop] = val;
-    },
-  };
-}
-
 export default {
   PragmaDirective: {
     // we ignore the Pragma Directive; it doesn't aid us in creating a circuit
@@ -117,12 +105,6 @@ export default {
     exit(node, parent, state) {
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
-
-      logger.debug("WASSUP");
-      logger.debug("node._context:", node._context);
-      logger.debug("parent._context:", parent._context);
-
-
       if (state.scope.assignedGlobals) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._context;

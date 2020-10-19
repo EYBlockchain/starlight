@@ -2,72 +2,68 @@
 Reads an input file line by line and passes each line for further processing
 */
 
+/* eslint-disable no-continue */
+
 import fs from 'fs';
-import readline from 'readline';
-import replaceIn from 'replace-in-file';
+import path from 'path';
 import recogniseSprinkles from './recognisers/sprinkles.mjs';
 import recogniseCurlyBracket from './recognisers/curly-bracket.mjs';
 import logger from './utils/logger.mjs';
 
 function tidy(_line) {
-  // trim whitespace
-  const line = _line.replace(/\s+/g, ' ').replace(/^\s/, '');
+  let line = _line;
+  // trim multiple spaces to a single space:
+  line = line.replace(/\s+/g, ' ');
+  // remove spaces from the start of the line:
+  line = line.replace(/^\s/, '');
   // remove comments
   if (line.startsWith('//')) return null;
   return line;
 }
 
-function replaceSprinkles(file, replaceArr) {
-  for (const obj of replaceArr) {
-    const options = {
-      files: file,
-      from: obj.oldline,
-      to: obj.newline,
-    };
-    replaceIn.sync(options);
-  }
-}
+/**
+ * Takes an input '.zsol' file and removes the privacy keywords.
+ * @return {Object} = {
+ *     desprinkledFile // a '.sol' file, stripped of any keywords, so
+ *                        that 'solc' may compile it.
+ *     toResprinkle // an array of objects recording where the
+ *                     sprinkled keywords should be reinstated after
+ *                     running 'solc'.
+ */
+function desprinkle(options) {
+  logger.info(`Parsing sprinkled file ${options.inputFilePath}... `);
+  const sprinkledLines = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
 
-async function desprinkleLineByLine(file) {
-  const fileStream = fs.createReadStream(file);
-  const desprinkledFile = file.replace('.sol', '_desprinkled.sol');
-  let fileWritten = false;
-
-  const rl = readline.createInterface({
-    input: fileStream,
-    crlfDelay: Infinity,
-  });
-  // Note: we use the crlfDelay option to recognize all instances of CR LF
-  // ('\r\n') in input.txt as a single line break.
-  logger.info(`Parsing sprinkled file ${file}... `);
   const toResprinkle = [];
-  for await (const line of rl) {
-    // Each line in input.txt will be successively available here as `line`.
-    const lineObj = { oldline: tidy(line) };
-    try {
-      recogniseCurlyBracket(line); // increases blockCount, checks we are in the correct block
-      if (recogniseSprinkles(tidy(line))) {
-        if (!fileWritten) {
-          fs.copyFile(file, desprinkledFile, fs.constants.COPYFILE_EXCL, err => console.error(err));
-          fileWritten = true;
-        }
-        const { s, type, name, ln } = recogniseSprinkles(tidy(line), true);
-        lineObj.newline = tidy(ln);
-        lineObj.type = type;
-        lineObj.keyword = s;
-        lineObj.name = name;
-        toResprinkle.push(lineObj);
-      }
-    } catch (err) {
-      console.error(err);
-      process.exit(1);
+  const desprinkledLines = sprinkledLines.map(sprinkledLine => {
+    const line = tidy(sprinkledLine);
+    if (!line) return sprinkledLine;
+    recogniseCurlyBracket(line); // increases blockCount, checks we are in the correct block // TODO: is this needed?
+    const { keyword, type, name, desprinkledLine } = recogniseSprinkles(line);
+    if (desprinkledLine) {
+      // record the desprinkling, so that we may add the keywords back to the AST later (after solc compilation):
+      toResprinkle.push({
+        oldline: sprinkledLine,
+        newline: desprinkledLine,
+        type,
+        keyword,
+        name,
+      });
+      return sprinkledLine.replace(line, desprinkledLine);
     }
-  }
-  if (fs.existsSync(desprinkledFile)) {
-    replaceSprinkles(desprinkledFile, toResprinkle);
-    return { desprinkledFile, toResprinkle };
-  }
-  return file;
+    return sprinkledLine;
+  });
+
+  const desprinkledFile = desprinkledLines.join('\r\n');
+
+  const desprinkledFilePath = `${options.parseDirPath}/${options.inputFileName}_desprinkled.sol`;
+  fs.writeFileSync(desprinkledFilePath, desprinkledFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.
+
+  // Let's also copy the original input file to this output dir:
+  const duplicateInputFilePath = `${options.parseDirPath}/${path.basename(options.inputFilePath)}`;
+  fs.copyFileSync(options.inputFilePath, duplicateInputFilePath);
+
+  return { desprinkledFile, toResprinkle };
 }
 
-export default desprinkleLineByLine;
+export default desprinkle;
