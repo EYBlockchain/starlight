@@ -309,48 +309,22 @@ class NodePath {
   }
 
   /**
-   * slower than querying the `scope` object
-   * @return {Array<node>} other nodes which reference the same referencedDeclaration as `this.node`.
+   * Slower than querying the `scope` object.
+   * Suppose this.node refers to some previously-declared variable. Or suppose `this.node` is the _parent_ or _grandparent_ or earlier _ancestor_ of a node which refers to some previously-declared variable (e.g. a 'statement' node will have subNodes which make the references).
+   * This function will collect (within the scope of nodes beneath `beneathNodeType`) all nodePaths which reference the same node(s).
+   * @return {Object} = { refDecId: [path, path, path] }, where the array of paths is all paths which refer to the same referenceDeclaration id.
    */
   getAllNodesWhichReferenceTheSame(beneathNodeType = 'Block') {
     // We'll search all subnodes for referencedDeclarations.
     // Later, we'll find nodes `beneathNodeType` which reference the same.
     const state = {};
-    const ref = this.node.referencedDeclaration;
-    if (ref) {
-      state[ref] = [];
-    } else {
-      const visitor1 = (node, state) => {
-        const ref = node.referencedDeclaration;
-        if (ref) state[ref] = []; // initialise an array to which we'll push nodes which reference the same referencedDeclaration node.
-      };
-      traverseNodesFast(this.node, visitor1, state);
-    }
-    if (Object.keys(state).length === 0) return {}; // no references
-
-    const rootNodePath = this.getAncestorOfType(beneathNodeType);
-    if (!rootNodePath) return {};
-
-    const visitor2 = (node, state) => {
-      for (const ref of Object.keys(state)) {
-        if (node.referencedDeclaration === ref) state[ref].push(node);
-      }
-    };
-    traverseNodesFast(rootNodePath.node, visitor2, state);
-    return state;
-  }
-
-  getAllNodesWhichModifyTheSame(beneathNodeType = 'Block') {
-    // We'll search all subnodes for referencedDeclarations on the LHS.
-    // Later, we'll find nodes `beneathNodeType` which modify the same nodes.
-    const state = {};
-    const ref = this.node.referencedDeclaration;
-    if (ref && this.containerName === 'leftHandSide') {
-      state[ref] = [];
+    const refId = this.node.referencedDeclaration;
+    if (refId) {
+      state[refId] = [];
     } else {
       const visitor1 = (path, state) => {
-        const ref = path.node.referencedDeclaration;
-        if (ref && path.containerName === 'leftHandSide') state[ref] = []; // initialise an array to which we'll push nodes which modify the same referencedDeclaration node.
+        const refId = path.node.referencedDeclaration;
+        if (refId) state[refId] = []; // initialise an array to which we'll push nodes which reference the same referencedDeclaration node.
       };
       traversePathsFast(this, visitor1, state);
     }
@@ -360,9 +334,44 @@ class NodePath {
     if (!rootNodePath) return {};
 
     const visitor2 = (path, state) => {
-      for (const ref of Object.keys(state)) {
-        if (path.node.referencedDeclaration === ref && path.containerName === 'leftHandSide')
-          state[ref].push(path.node);
+      for (const refId of Object.keys(state)) {
+        if (path.node.referencedDeclaration === refId) state[refId].push(path);
+      }
+    };
+    traversePathsFast(rootNodePath, visitor2, state);
+    return state;
+  }
+
+  /**
+   * Slower than querying the `scope` object.
+   * Suppose this.node modifies some previously-declared variable. Or suppose `this.node` is the _parent_ or _grandparent_ or earlier _ancestor_ of a node which modifies some previously-declared variable (e.g. a 'statement' node might have subNodes which make modifications (such as assignment subNodes)).
+   * This function will collect (within the scope of nodes beneath `beneathNodeType`) all nodePaths which modify the same node(s).
+   * @return {Object} = { refDecId: [path, path, path] }, where the array of paths is all paths which _modify_ the same referenceDeclaration id.
+   */
+  getAllNodesWhichModifyTheSame(beneathNodeType = 'Block') {
+    // We'll search all subnodes for referencedDeclarations on the LHS.
+    // Later, we'll find nodes `beneathNodeType` which modify the same nodes.
+    const state = {};
+    const refId = this.node.referencedDeclaration;
+    // TODO: currently, the only 'modification' we care about is a value on the 'leftHandSide' of an assignment node.
+    if (refId && this.containerName === 'leftHandSide') {
+      state[refId] = [];
+    } else {
+      const visitor1 = (path, state) => {
+        const refId = path.node.referencedDeclaration;
+        if (refId && path.containerName === 'leftHandSide') state[refId] = []; // initialise an array to which we'll push nodes which modify the same referencedDeclaration node.
+      };
+      traversePathsFast(this, visitor1, state);
+    }
+    if (Object.keys(state).length === 0) return {}; // no references
+
+    const rootNodePath = this.getAncestorOfType(beneathNodeType);
+    if (!rootNodePath) return {};
+
+    const visitor2 = (path, state) => {
+      for (const refId of Object.keys(state)) {
+        if (path.node.referencedDeclaration === refId && path.containerName === 'leftHandSide')
+          state[refId].push(path);
       }
     };
     traversePathsFast(rootNodePath, visitor2, state);
