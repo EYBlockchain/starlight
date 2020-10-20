@@ -14,7 +14,6 @@ function recogniseGlobal(line) {
       console.log(ln);
       const [type, visibility, name] = ln.split(' ');
       process({ type, visibility, name }); // call the processor
-      logger.info(`added a Global called ${name}`);
       return true;
     }
   }

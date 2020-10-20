@@ -5,18 +5,6 @@ import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity
 import circuitTypes from '../../types/circuit-types.mjs';
 import traverse from '../../traverse/traverse.mjs';
 
-// a closure for assigning a variable to an object's property by reference
-function property(object, prop) {
-  return {
-    get value() {
-      return object[prop];
-    },
-    set value(val) {
-      object[prop] = val;
-    },
-  };
-}
-
 export default {
   PragmaDirective: {
     // we ignore the Pragma Directive; it doesn't aid us in creating a circuit
@@ -72,7 +60,7 @@ export default {
             // then this global is assigned to within this function, and so we need to create a corresponding circuit _file_ for this function. We'll commitment boilerplate for this global to this file.
             newFile = true;
             state.scope.assignedGlobals.push(global);
-            // state.scope.EditableCommitmentCommonFiles = true;
+            // state.scope.EditableCommitmentCommonFilesBoilerplate = true;
           }
         }
       } else {
@@ -117,25 +105,19 @@ export default {
     exit(node, parent, state) {
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
-
-      logger.debug("WASSUP");
-      logger.debug("node._context:", node._context);
-      logger.debug("parent._context:", parent._context);
-
-
       if (state.scope.assignedGlobals) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._context;
-        let editableCommitmentCommonFilesAlreadyExist = false;
+        let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
         for (const file of files) {
-          if (file.nodeType === 'EditableCommitmentCommonFiles') {
-            editableCommitmentCommonFilesAlreadyExist = true;
+          if (file.nodeType === 'EditableCommitmentCommonFilesBoilerplate') {
+            EditableCommitmentCommonFilesBoilerplateAlreadyExists = true;
             break;
           }
         }
-        if (!editableCommitmentCommonFilesAlreadyExist) {
+        if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
           parent._context.push({
-            nodeType: 'EditableCommitmentCommonFiles',
+            nodeType: 'EditableCommitmentCommonFilesBoilerplate',
           });
         }
 
