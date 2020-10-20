@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 
 import fs from 'fs';
+import path from 'path';
 import logger from '../utils/logger.mjs';
 import traverse from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
@@ -40,15 +41,23 @@ function transformation1(oldAST) {
 
 // A transformer function which will accept an ast.
 export default function toCircuit(ast, options) {
-  // logger.debug('ast', ast);
-
+  // transpile to a circuit AST:
+  logger.info('Transforming the .zsol AST to a .zok AST...');
   const newAST = transformation1(ast);
-  const newASTFilePath = `${options.circuitsDirPath}/${options.inputFileName}_ast.json`;
+  const newASTFilePath = path.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
-  const circuitCode = codeGenerator(newAST);
-  console.log('Circuit code:');
-  console.log(circuitCode); // don't use the logger, because it outputs escape characters
-  const circuitCodeFilePath = `${options.circuitsDirPath}/${options.inputFileName}.zok`;
-  fs.writeFileSync(circuitCodeFilePath, circuitCode);
+  // generate the circuit files from the newly created circuit AST:
+  logger.info('Generating files from the .zok AST...');
+  const circuitFileData = codeGenerator(newAST);
+
+  // save the circuit files to the output dir:
+  logger.info(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
+  for (const fileObj of circuitFileData) {
+    const filepath = path.join(options.circuitsDirPath, fileObj.filepath);
+    const dir = path.dirname(filepath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
+    fs.writeFileSync(filepath, fileObj.file);
+  }
+  logger.info('Circuit transpilation complete.');
 }

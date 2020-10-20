@@ -60,7 +60,7 @@ export default {
             // then this global is assigned to within this function, and so we need to create a corresponding circuit _file_ for this function. We'll commitment boilerplate for this global to this file.
             newFile = true;
             state.scope.assignedGlobals.push(global);
-            // state.scope.EditableCommitmentCommonFiles = true;
+            // state.scope.EditableCommitmentCommonFilesBoilerplate = true;
           }
         }
       } else {
@@ -108,16 +108,16 @@ export default {
       if (state.scope.assignedGlobals) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._context;
-        let editableCommitmentCommonFilesAlreadyExist = false;
+        let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
         for (const file of files) {
-          if (file.nodeType === 'EditableCommitmentCommonFiles') {
-            editableCommitmentCommonFilesAlreadyExist = true;
+          if (file.nodeType === 'EditableCommitmentCommonFilesBoilerplate') {
+            EditableCommitmentCommonFilesBoilerplateAlreadyExists = true;
             break;
           }
         }
-        if (!editableCommitmentCommonFilesAlreadyExist) {
+        if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
           parent._context.push({
-            nodeType: 'EditableCommitmentCommonFiles',
+            nodeType: 'EditableCommitmentCommonFilesBoilerplate',
           });
         }
 
