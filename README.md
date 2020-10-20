@@ -24,6 +24,14 @@ _"Creates circuits; but not electrical ones."_
 
 _"There's a clever pun around secure key vaults and volts to be had..."_
 
+_"Do complicated maths, while staying grounded!"_
+
+_"Static, yet moving forward."_
+
+_"Received positively, with thunderous applause!"_
+
+_"Danger, danger! High vault (us)age!"_
+
 ---
 
 ## Induction :zap:
