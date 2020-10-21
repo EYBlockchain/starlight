@@ -1,4 +1,4 @@
-/* eslint-disable prettier/prettier */
+/* eslint-disable prettier/prettier, no-use-before-define */
 import cloneDeep from 'lodash.clonedeep';
 
 const ShieldContractStatementsBoilerplate = stage => {
@@ -30,30 +30,93 @@ const ShieldContractStatementsBoilerplate = stage => {
         "nodeType": "PragmaDirective",
         "src": ''
       };
+    case 'ImportDirective':
+     // nodes for imports - live in sourceUnit.nodes
+     return [{
+           "absolutePath": "merkle-tree/MerkleTree.sol",
+           "file": "./merkle-tree/MerkleTree.sol",
+           "id": '',
+           "nodeType": "ImportDirective",
+           "scope": '',
+           "sourceUnit": '', // 852
+           "src": '',
+           "symbolAliases": [],
+           "unitAlias": ""
+       },
+       {
+           "absolutePath": "verify/Verifier_Interface.sol",
+           "file": "./verify/Verifier_Interface.sol",
+           "id": '',
+           "nodeType": "ImportDirective",
+           "scope": '',
+           "sourceUnit": '',
+           "src": '',
+           "symbolAliases": [],
+           "unitAlias": ""
+       }];
     case 'ContractDefinition':
-      // TODO - make sure 'Contract is MerkleTree'
       return {
         "abstract": false,
-        "baseContracts": [],
+        "baseContracts": [{ // imported contracts which act as a 'base' - ie contract is MerkleTree:
+            "baseName": {
+                "id": '',
+                "name": "MerkleTree",
+                "nodeType": "UserDefinedTypeName",
+                "referencedDeclaration": '',
+                "src": '',
+                "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_MerkleTree_$851", // 851 = referencedDeclaration
+                    // DOESNT refer to an id - but the SU of this is 852
+                    "typeString": "contract MerkleTree"
+                }
+            },
+            "id": 5,
+            "nodeType": "InheritanceSpecifier",
+            "src": "172:10:0"
+        }],
         "contractDependencies": [],
         "contractKind": "contract",
         "fullyImplemented": true,
         "id": dummyId,
-        "linearizedBaseContracts": [
-            dummyId
-        ],
+        "linearizedBaseContracts": [],
         "name": "AssignShield",
         "nodeType": "ContractDefinition",
         "nodes": [], // we push to this
-        "scope": dummyId, // This would be the id of the SourceUnit
+        "scope": '', // This would be the id of the SourceUnit
         "src": '' // line no.
       };
     case 'Globals':
-      // TODO - verifier of type Verifier_Interface
       const mappings = [];
       mappings.push(ShieldContractMappingBoilerplate('nullifiers', 'uint256'));
       mappings.push(ShieldContractMappingBoilerplate('commitmentRoots', 'uint256'));
       mappings.push(ShieldContractMappingBoilerplate('vk', 'uint256', 'uint256[]'));
+      mappings.push({
+        "constant": false,
+        "id": '',
+        "mutability": "mutable",
+        "name": "verifier",
+        "nodeType": "VariableDeclaration",
+        "scope": '',
+        "src": '',
+        "stateVariable": true,
+        "storageLocation": "default",
+        "typeDescriptions": {
+            "typeIdentifier": "t_contract$_Verifier_Interface_$868", // TODO set 868 = referencedDeclaration below
+            "typeString": "contract Verifier_Interface"
+        },
+        "typeName": {
+            "id": '',
+            "name": "Verifier_Interface",
+            "nodeType": "UserDefinedTypeName",
+            "referencedDeclaration": '',
+            "src": '',
+            "typeDescriptions": {
+                "typeIdentifier": "t_contract$_Verifier_Interface_$868",
+                "typeString": "contract Verifier_Interface"
+            }
+        },
+        "visibility": "private"
+    });
       return mappings;
     case 'Constructor':
       return ShieldContractConstructorBoilerplate();
@@ -65,12 +128,6 @@ const ShieldContractStatementsBoilerplate = stage => {
   }
 
 };
-
-
-const ShieldContractImportsBoilerplate = [
-  'import "./merkle-tree/MerkleTree.sol";',
-  'import "./verify/Verifier_Interface.sol";',
-];
 
 const ShieldContractMappingBoilerplate = (name, type1, type2 = type1) => {
   const obj = {
@@ -153,13 +210,59 @@ const ShieldContractConstructorBoilerplate = () => {
                           "referencedDeclaration": '',
                           "src": '',
                           "typeDescriptions": {
-                            // TODO Verifier_Interface type
+                            "typeIdentifier": "t_contract$_Verifier_Interface_$868", // 868 = referencedDeclaration
+                            "typeString": "contract Verifier_Interface"
                           }
                       },
                       "nodeType": "Assignment",
                       "operator": "=",
                       "rightHandSide": {
-                        // TODO Verifier_Interface(verifier) goes here
+                        "arguments": [
+                            {
+                                "id": '',
+                                "name": "verifierAddress",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": '24',
+                                "src": '',
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_address",
+                                    "typeString": "address"
+                                }
+                            }
+                        ],
+                        "expression": {
+                            "argumentTypes": [
+                                {
+                                    "typeIdentifier": "t_address",
+                                    "typeString": "address"
+                                }
+                            ],
+                            "id": '',
+                            "name": "Verifier_Interface",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": '',
+                            "src": '',
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_Verifier_Interface_$868_$",  // 868 = referencedDeclaration
+                                "typeString": "type(contract Verifier_Interface)"
+                            }
+                        },
+                        "id": '',
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": '',
+                        "tryCall": false,
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_contract$_Verifier_Interface_$868", // 868 = referencedDeclaration
+                            "typeString": "contract Verifier_Interface"
+                        }
                       },
                       "src": '',
                       "typeDescriptions": {
@@ -340,7 +443,7 @@ const ShieldContractMainBoilerplate = () => {
       "body": {
           "id": '',
           "nodeType": "Block",
-          "src": "951:708:0",
+          "src": '',
           "statements": [
               {
                   "condition": {
@@ -348,6 +451,7 @@ const ShieldContractMainBoilerplate = () => {
                           "typeIdentifier": "t_bool",
                           "typeString": "bool"
                       },
+                      "id": '',
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -377,8 +481,8 @@ const ShieldContractMainBoilerplate = () => {
                                   "name": "nullifier",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 75,
-                                  "src": "961:9:0",
+                                  "referencedDeclaration": 50,
+                                  "src": '',
                                   "typeDescriptions": {
                                       "typeIdentifier": "t_uint256",
                                       "typeString": "uint256"
@@ -395,14 +499,14 @@ const ShieldContractMainBoilerplate = () => {
                                   "kind": "number",
                                   "lValueRequested": false,
                                   "nodeType": "Literal",
-                                  "src": "974:1:0",
+                                  "src": '',
                                   "typeDescriptions": {
                                       "typeIdentifier": "t_rational_0_by_1",
                                       "typeString": "int_const 0"
                                   },
                                   "value": "0"
                               },
-                              "src": "961:14:0",
+                              "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_bool",
                                   "typeString": "bool"
@@ -425,8 +529,8 @@ const ShieldContractMainBoilerplate = () => {
                                   "name": "root",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 73,
-                                  "src": "979:4:0",
+                                  "referencedDeclaration": 48,
+                                  "src": '',
                                   "typeDescriptions": {
                                       "typeIdentifier": "t_uint256",
                                       "typeString": "uint256"
@@ -443,20 +547,20 @@ const ShieldContractMainBoilerplate = () => {
                                   "kind": "number",
                                   "lValueRequested": false,
                                   "nodeType": "Literal",
-                                  "src": "987:1:0",
+                                  "src": '',
                                   "typeDescriptions": {
                                       "typeIdentifier": "t_rational_0_by_1",
                                       "typeString": "int_const 0"
                                   },
                                   "value": "0"
                               },
-                              "src": "979:9:0",
+                              "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_bool",
                                   "typeString": "bool"
                               }
                           },
-                          "src": "961:27:0",
+                          "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_bool",
                               "typeString": "bool"
@@ -479,8 +583,8 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "latestRoot",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 16,
-                              "src": "992:10:0",
+                              "referencedDeclaration": 22,
+                              "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_uint256",
                                   "typeString": "uint256"
@@ -497,20 +601,20 @@ const ShieldContractMainBoilerplate = () => {
                               "kind": "number",
                               "lValueRequested": false,
                               "nodeType": "Literal",
-                              "src": "1006:1:0",
+                              "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_rational_0_by_1",
                                   "typeString": "int_const 0"
                               },
                               "value": "0"
                           },
-                          "src": "992:15:0",
+                          "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_bool",
                               "typeString": "bool"
                           }
                       },
-                      "src": "961:46:0",
+                      "src": '',
                       "typeDescriptions": {
                           "typeIdentifier": "t_bool",
                           "typeString": "bool"
@@ -532,8 +636,8 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "nullifier",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 75,
-                              "src": "1082:9:0",
+                              "referencedDeclaration": 50,
+                              "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_uint256",
                                   "typeString": "uint256"
@@ -550,14 +654,14 @@ const ShieldContractMainBoilerplate = () => {
                               "kind": "number",
                               "lValueRequested": false,
                               "nodeType": "Literal",
-                              "src": "1095:1:0",
+                              "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_rational_0_by_1",
                                   "typeString": "int_const 0"
                               },
                               "value": "0"
                           },
-                          "src": "1082:14:0",
+                          "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_bool",
                               "typeString": "bool"
@@ -575,7 +679,7 @@ const ShieldContractMainBoilerplate = () => {
                                       "kind": "string",
                                       "lValueRequested": false,
                                       "nodeType": "Literal",
-                                      "src": "1289:45:0",
+                                      "src": '',
                                       "typeDescriptions": {
                                           "typeIdentifier": "t_stringliteral_cb275527d9f77165917a69e805e359593de0688f58e967d3745e566acdf505a3",
                                           "typeString": "literal_string \"Nullifier for latest commitment not defined\""
@@ -598,7 +702,7 @@ const ShieldContractMainBoilerplate = () => {
                                       -19
                                   ],
                                   "referencedDeclaration": -19,
-                                  "src": "1282:6:0",
+                                  "src": '',
                                   "typeDescriptions": {
                                       "typeIdentifier": "t_function_revert_pure$_t_string_memory_ptr_$returns$__$",
                                       "typeString": "function (string memory) pure"
@@ -612,7 +716,7 @@ const ShieldContractMainBoilerplate = () => {
                               "lValueRequested": false,
                               "names": [],
                               "nodeType": "FunctionCall",
-                              "src": "1282:53:0",
+                              "src": '',
                               "tryCall": false,
                               "typeDescriptions": {
                                   "typeIdentifier": "t_tuple$__$",
@@ -621,15 +725,15 @@ const ShieldContractMainBoilerplate = () => {
                           },
                           "id": '',
                           "nodeType": "ExpressionStatement",
-                          "src": "1282:53:0"
+                          "src": "999:53:0"
                       },
                       "id": '',
                       "nodeType": "IfStatement",
-                      "src": "1078:257:0",
+                      "src": '',
                       "trueBody": {
                           "id": '',
                           "nodeType": "Block",
-                          "src": "1098:178:0",
+                          "src": '',
                           "statements": [
                               {
                                   "expression": {
@@ -650,8 +754,8 @@ const ShieldContractMainBoilerplate = () => {
                                                       "name": "nullifiers",
                                                       "nodeType": "Identifier",
                                                       "overloadedDeclarations": [],
-                                                      "referencedDeclaration": 5,
-                                                      "src": "1114:10:0",
+                                                      "referencedDeclaration": 11,
+                                                      "src": '',
                                                       "typeDescriptions": {
                                                           "typeIdentifier": "t_mapping$_t_uint256_$_t_uint256_$",
                                                           "typeString": "mapping(uint256 => uint256)"
@@ -663,8 +767,8 @@ const ShieldContractMainBoilerplate = () => {
                                                       "name": "nullifier",
                                                       "nodeType": "Identifier",
                                                       "overloadedDeclarations": [],
-                                                      "referencedDeclaration": 75,
-                                                      "src": "1125:9:0",
+                                                      "referencedDeclaration": 50,
+                                                      "src": '',
                                                       "typeDescriptions": {
                                                           "typeIdentifier": "t_uint256",
                                                           "typeString": "uint256"
@@ -675,7 +779,7 @@ const ShieldContractMainBoilerplate = () => {
                                                   "isPure": false,
                                                   "lValueRequested": false,
                                                   "nodeType": "IndexAccess",
-                                                  "src": "1114:21:0",
+                                                  "src": '',
                                                   "typeDescriptions": {
                                                       "typeIdentifier": "t_uint256",
                                                       "typeString": "uint256"
@@ -692,14 +796,14 @@ const ShieldContractMainBoilerplate = () => {
                                                   "kind": "number",
                                                   "lValueRequested": false,
                                                   "nodeType": "Literal",
-                                                  "src": "1139:1:0",
+                                                  "src": '',
                                                   "typeDescriptions": {
                                                       "typeIdentifier": "t_rational_0_by_1",
                                                       "typeString": "int_const 0"
                                                   },
                                                   "value": "0"
                                               },
-                                              "src": "1114:26:0",
+                                              "src": '',
                                               "typeDescriptions": {
                                                   "typeIdentifier": "t_bool",
                                                   "typeString": "bool"
@@ -714,7 +818,7 @@ const ShieldContractMainBoilerplate = () => {
                                               "kind": "string",
                                               "lValueRequested": false,
                                               "nodeType": "Literal",
-                                              "src": "1142:26:0",
+                                              "src": '',
                                               "typeDescriptions": {
                                                   "typeIdentifier": "t_stringliteral_c8b26daba8385f98b779801b3ad0821109528d5c73a92c80f9e80122b99cf991",
                                                   "typeString": "literal_string \"Nullifier already exists\""
@@ -741,7 +845,7 @@ const ShieldContractMainBoilerplate = () => {
                                               -18
                                           ],
                                           "referencedDeclaration": -18,
-                                          "src": "1106:7:0",
+                                          "src": '',
                                           "typeDescriptions": {
                                               "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
                                               "typeString": "function (bool,string memory) pure"
@@ -755,7 +859,7 @@ const ShieldContractMainBoilerplate = () => {
                                       "lValueRequested": false,
                                       "names": [],
                                       "nodeType": "FunctionCall",
-                                      "src": "1106:63:0",
+                                      "src": '',
                                       "tryCall": false,
                                       "typeDescriptions": {
                                           "typeIdentifier": "t_tuple$__$",
@@ -764,7 +868,7 @@ const ShieldContractMainBoilerplate = () => {
                                   },
                                   "id": '',
                                   "nodeType": "ExpressionStatement",
-                                  "src": "1106:63:0"
+                                  "src": "820:63:0"
                               },
                               {
                                   "expression": {
@@ -785,8 +889,8 @@ const ShieldContractMainBoilerplate = () => {
                                                       "name": "roots",
                                                       "nodeType": "Identifier",
                                                       "overloadedDeclarations": [],
-                                                      "referencedDeclaration": 9,
-                                                      "src": "1185:5:0",
+                                                      "referencedDeclaration": 15,
+                                                      "src": '',
                                                       "typeDescriptions": {
                                                           "typeIdentifier": "t_mapping$_t_uint256_$_t_uint256_$",
                                                           "typeString": "mapping(uint256 => uint256)"
@@ -798,8 +902,8 @@ const ShieldContractMainBoilerplate = () => {
                                                       "name": "root",
                                                       "nodeType": "Identifier",
                                                       "overloadedDeclarations": [],
-                                                      "referencedDeclaration": 73,
-                                                      "src": "1191:4:0",
+                                                      "referencedDeclaration": 48,
+                                                      "src": '',
                                                       "typeDescriptions": {
                                                           "typeIdentifier": "t_uint256",
                                                           "typeString": "uint256"
@@ -810,7 +914,7 @@ const ShieldContractMainBoilerplate = () => {
                                                   "isPure": false,
                                                   "lValueRequested": false,
                                                   "nodeType": "IndexAccess",
-                                                  "src": "1185:11:0",
+                                                  "src": '',
                                                   "typeDescriptions": {
                                                       "typeIdentifier": "t_uint256",
                                                       "typeString": "uint256"
@@ -823,14 +927,14 @@ const ShieldContractMainBoilerplate = () => {
                                                   "name": "root",
                                                   "nodeType": "Identifier",
                                                   "overloadedDeclarations": [],
-                                                  "referencedDeclaration": 73,
-                                                  "src": "1200:4:0",
+                                                  "referencedDeclaration": 48,
+                                                  "src": '',
                                                   "typeDescriptions": {
                                                       "typeIdentifier": "t_uint256",
                                                       "typeString": "uint256"
                                                   }
                                               },
-                                              "src": "1185:19:0",
+                                              "src": '',
                                               "typeDescriptions": {
                                                   "typeIdentifier": "t_bool",
                                                   "typeString": "bool"
@@ -845,7 +949,7 @@ const ShieldContractMainBoilerplate = () => {
                                               "kind": "string",
                                               "lValueRequested": false,
                                               "nodeType": "Literal",
-                                              "src": "1206:21:0",
+                                              "src": '',
                                               "typeDescriptions": {
                                                   "typeIdentifier": "t_stringliteral_ad7ecf2adb23a091a9c01bdae7fb1b18a3a12c15e41cfafded464e944aa5faec",
                                                   "typeString": "literal_string \"Root does not exist\""
@@ -872,7 +976,7 @@ const ShieldContractMainBoilerplate = () => {
                                               -18
                                           ],
                                           "referencedDeclaration": -18,
-                                          "src": "1177:7:0",
+                                          "src": '',
                                           "typeDescriptions": {
                                               "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
                                               "typeString": "function (bool,string memory) pure"
@@ -886,7 +990,7 @@ const ShieldContractMainBoilerplate = () => {
                                       "lValueRequested": false,
                                       "names": [],
                                       "nodeType": "FunctionCall",
-                                      "src": "1177:51:0",
+                                      "src": '',
                                       "tryCall": false,
                                       "typeDescriptions": {
                                           "typeIdentifier": "t_tuple$__$",
@@ -895,7 +999,7 @@ const ShieldContractMainBoilerplate = () => {
                                   },
                                   "id": '',
                                   "nodeType": "ExpressionStatement",
-                                  "src": "1177:51:0"
+                                  "src": "892:51:0"
                               },
                               {
                                   "expression": {
@@ -910,8 +1014,8 @@ const ShieldContractMainBoilerplate = () => {
                                               "name": "nullifiers",
                                               "nodeType": "Identifier",
                                               "overloadedDeclarations": [],
-                                              "referencedDeclaration": 5,
-                                              "src": "1236:10:0",
+                                              "referencedDeclaration": 11,
+                                              "src": '',
                                               "typeDescriptions": {
                                                   "typeIdentifier": "t_mapping$_t_uint256_$_t_uint256_$",
                                                   "typeString": "mapping(uint256 => uint256)"
@@ -923,8 +1027,8 @@ const ShieldContractMainBoilerplate = () => {
                                               "name": "nullifier",
                                               "nodeType": "Identifier",
                                               "overloadedDeclarations": [],
-                                              "referencedDeclaration": 75,
-                                              "src": "1247:9:0",
+                                              "referencedDeclaration": 50,
+                                              "src": '',
                                               "typeDescriptions": {
                                                   "typeIdentifier": "t_uint256",
                                                   "typeString": "uint256"
@@ -935,7 +1039,7 @@ const ShieldContractMainBoilerplate = () => {
                                           "isPure": false,
                                           "lValueRequested": true,
                                           "nodeType": "IndexAccess",
-                                          "src": "1236:21:0",
+                                          "src": '',
                                           "typeDescriptions": {
                                               "typeIdentifier": "t_uint256",
                                               "typeString": "uint256"
@@ -948,14 +1052,14 @@ const ShieldContractMainBoilerplate = () => {
                                           "name": "nullifier",
                                           "nodeType": "Identifier",
                                           "overloadedDeclarations": [],
-                                          "referencedDeclaration": 75,
-                                          "src": "1260:9:0",
+                                          "referencedDeclaration": 50,
+                                          "src": '',
                                           "typeDescriptions": {
                                               "typeIdentifier": "t_uint256",
                                               "typeString": "uint256"
                                           }
                                       },
-                                      "src": "1236:33:0",
+                                      "src": '',
                                       "typeDescriptions": {
                                           "typeIdentifier": "t_uint256",
                                           "typeString": "uint256"
@@ -963,24 +1067,24 @@ const ShieldContractMainBoilerplate = () => {
                                   },
                                   "id": '',
                                   "nodeType": "ExpressionStatement",
-                                  "src": "1236:33:0"
+                                  "src": "952:33:0"
                               }
                           ]
                       }
                   },
                   "id": '',
                   "nodeType": "IfStatement",
-                  "src": "957:378:0",
+                  "src": '',
                   "trueBody": {
                       "id": '',
                       "nodeType": "Block",
-                      "src": "1009:63:0",
+                      "src": '',
                       "statements": []
                   }
               },
               {
                   "assignments": [
-                      130
+                      105
                   ],
                   "declarations": [
                       {
@@ -1093,7 +1197,7 @@ const ShieldContractMainBoilerplate = () => {
                       }
                   },
                   "nodeType": "VariableDeclarationStatement",
-                  "src": "1342:42:0"
+                  "src": "1061:42:0"
               },
               {
                   "expression": {
@@ -1108,7 +1212,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "inputs",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 130,
+                              "referencedDeclaration": 105,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
@@ -1150,7 +1254,7 @@ const ShieldContractMainBoilerplate = () => {
                           "name": "root",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 73,
+                          "referencedDeclaration": 48,
                           "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_uint256",
@@ -1165,7 +1269,7 @@ const ShieldContractMainBoilerplate = () => {
                   },
                   "id": '',
                   "nodeType": "ExpressionStatement",
-                  "src": "1390:16:0"
+                  "src": "1110:16:0"
               },
               {
                   "expression": {
@@ -1180,7 +1284,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "inputs",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 130,
+                              "referencedDeclaration": 105,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
@@ -1222,7 +1326,7 @@ const ShieldContractMainBoilerplate = () => {
                           "name": "nullifier",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 75,
+                          "referencedDeclaration": 50,
                           "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_uint256",
@@ -1237,7 +1341,7 @@ const ShieldContractMainBoilerplate = () => {
                   },
                   "id": '',
                   "nodeType": "ExpressionStatement",
-                  "src": "1412:21:0"
+                  "src": "1133:21:0"
               },
               {
                   "expression": {
@@ -1252,7 +1356,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "inputs",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 130,
+                              "referencedDeclaration": 105,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
@@ -1294,7 +1398,7 @@ const ShieldContractMainBoilerplate = () => {
                           "name": "commitment",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 77,
+                          "referencedDeclaration": 52,
                           "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_uint256",
@@ -1309,11 +1413,11 @@ const ShieldContractMainBoilerplate = () => {
                   },
                   "id": '',
                   "nodeType": "ExpressionStatement",
-                  "src": "1439:22:0"
+                  "src": "1161:22:0"
               },
               {
                   "assignments": [
-                      156
+                      131
                   ],
                   "declarations": [
                       {
@@ -1351,7 +1455,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "proof",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 71,
+                              "referencedDeclaration": 46,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
@@ -1363,7 +1467,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "inputs",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 130,
+                              "referencedDeclaration": 105,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
@@ -1376,7 +1480,7 @@ const ShieldContractMainBoilerplate = () => {
                                   "name": "vk",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 14,
+                                  "referencedDeclaration": 20,
                                   "src": '',
                                   "typeDescriptions": {
                                       "typeIdentifier": "t_mapping$_t_uint256_$_t_array$_t_uint256_$dyn_storage_$",
@@ -1427,15 +1531,30 @@ const ShieldContractMainBoilerplate = () => {
                                   "typeString": "uint256[] storage ref"
                               }
                           ],
+                          "expression": {
+                              "id": '',
+                              "name": "verifier",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 7,
+                              "src": '',
+                              "typeDescriptions": {
+                                  "typeIdentifier": "t_contract$_Verifier_Interface_$850",
+                                  "typeString": "contract Verifier_Interface"
+                              }
+                          },
                           "id": '',
-                          "name": "verify",
-                          "nodeType": "Identifier",
-                          "overloadedDeclarations": [],
-                          "referencedDeclaration": 54,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "verify",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 849,
                           "src": '',
                           "typeDescriptions": {
-                              "typeIdentifier": "t_function_internal_nonpayable$_t_array$_t_uint256_$dyn_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$returns$_t_bool_$",
-                              "typeString": "function (uint256[] memory,uint256[] memory,uint256[] memory) returns (bool)"
+                              "typeIdentifier": "t_function_external_nonpayable$_t_array$_t_uint256_$dyn_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$returns$_t_bool_$",
+                              "typeString": "function (uint256[] memory,uint256[] memory,uint256[] memory) external returns (bool)"
                           }
                       },
                       "id": '',
@@ -1454,7 +1573,7 @@ const ShieldContractMainBoilerplate = () => {
                       }
                   },
                   "nodeType": "VariableDeclarationStatement",
-                  "src": "1468:39:0"
+                  "src": "1192:48:0"
               },
               {
                   "expression": {
@@ -1464,7 +1583,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "res",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 156,
+                              "referencedDeclaration": 131,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_bool",
@@ -1530,7 +1649,7 @@ const ShieldContractMainBoilerplate = () => {
                   },
                   "id": '',
                   "nodeType": "ExpressionStatement",
-                  "src": "1513:63:0"
+                  "src": "1247:63:0"
               },
               {
                   "expression": {
@@ -1544,7 +1663,7 @@ const ShieldContractMainBoilerplate = () => {
                           "name": "latestRoot",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 16,
+                          "referencedDeclaration": 22,
                           "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_uint256",
@@ -1560,7 +1679,7 @@ const ShieldContractMainBoilerplate = () => {
                                   "name": "commitment",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 77,
+                                  "referencedDeclaration": 52,
                                   "src": '',
                                   "typeDescriptions": {
                                       "typeIdentifier": "t_uint256",
@@ -1579,7 +1698,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "insertLeaf",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 68,
+                              "referencedDeclaration": 461,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_function_internal_nonpayable$_t_uint256_$returns$_t_uint256_$",
@@ -1609,7 +1728,7 @@ const ShieldContractMainBoilerplate = () => {
                   },
                   "id": '',
                   "nodeType": "ExpressionStatement",
-                  "src": "1583:35:0"
+                  "src": "1319:35:0"
               },
               {
                   "expression": {
@@ -1624,7 +1743,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "roots",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 9,
+                              "referencedDeclaration": 15,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_mapping$_t_uint256_$_t_uint256_$",
@@ -1637,7 +1756,7 @@ const ShieldContractMainBoilerplate = () => {
                               "name": "latestRoot",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 16,
+                              "referencedDeclaration": 22,
                               "src": '',
                               "typeDescriptions": {
                                   "typeIdentifier": "t_uint256",
@@ -1662,7 +1781,7 @@ const ShieldContractMainBoilerplate = () => {
                           "name": "latestRoot",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 16,
+                          "referencedDeclaration": 22,
                           "src": '',
                           "typeDescriptions": {
                               "typeIdentifier": "t_uint256",
@@ -1677,7 +1796,7 @@ const ShieldContractMainBoilerplate = () => {
                   },
                   "id": '',
                   "nodeType": "ExpressionStatement",
-                  "src": "1624:30:0"
+                  "src": "1361:30:0"
               }
           ]
       },
@@ -1806,13 +1925,13 @@ const ShieldContractMainBoilerplate = () => {
                   "visibility": "internal"
               }
           ],
-          "src": "866:77:0"
+          "src": "576:77:0"
       },
       "returnParameters": {
           "id": '',
           "nodeType": "ParameterList",
           "parameters": [],
-          "src": "951:0:0"
+          "src": "661:0:0"
       },
       "scope": '',
       "src": '',
@@ -1822,60 +1941,4 @@ const ShieldContractMainBoilerplate = () => {
   };
 };
 
-function codeGenerator(node) {
-  // We'll break things down by the `type` of the `node`.
-  switch (node.nodeType) {
-    case 'Folder':
-      return node.files.map(codeGenerator).join('\n\n');
-
-    case 'File':
-      return node.nodes.map(codeGenerator).join('\n\n');
-
-    case 'ImportStatements':
-      return `${node.imports.map(codeGenerator).join('\n')}`;
-
-    case 'EditableCommitmentImportsBoilerplate':
-      return EditableCommitmentImportsBoilerplate.join('\n');
-
-    case 'FunctionDefinition': {
-      const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
-      const body = codeGenerator(node.body);
-      return `${functionSignature}\n\n\t${body}\n\n\treturn`;
-    }
-
-    case 'ParameterList':
-      return node.parameters.map(codeGenerator).join(',\\\n\t');
-
-    case 'VariableDeclaration': {
-      const isPrivate = node.isPrivate ? 'private ' : '';
-      return `${isPrivate}${codeGenerator(node.typeName)} ${node.name}`;
-    }
-
-    case 'ElementaryTypeName':
-      return node.name;
-
-    case 'Block':
-      return node.statements.map(codeGenerator).join('\n\n\t');
-
-    case 'ExpressionStatement':
-      return codeGenerator(node.expression);
-
-    case 'Assignment':
-      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
-        node.rightHandSide,
-      )}`;
-
-    case 'Identifier':
-      return node.name;
-
-    case 'EditableCommitmentStatementsBoilerplate':
-      return EditableCommitmentStatementsBoilerplate(node.privateStateName).join('\n\n\t');
-
-    // And if we haven't recognized the node, we'll throw an error.
-    default:
-      return;
-      // throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
-  }
-}
-
-export { codeGenerator as default };
+export default ShieldContractStatementsBoilerplate;
