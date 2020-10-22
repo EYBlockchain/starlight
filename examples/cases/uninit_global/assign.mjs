@@ -97,23 +97,23 @@ export async function assign(_value) {
   }
 
   const instance = await getContractInstance('AssignShield');
-  const vk = await instance.methods.getVK().call({
-    from: config.web3.options.defaultAccount,
-  });
-  logger.info(`Vk Stored: ${vk}`);
-  if (!vk || vk === 0 || vk.length < 2) {
-    logger.info(`No vk registered, registering vk...`);
-    const vkJson = JSON.parse(fs.readFileSync(vkPath, 'utf-8'));
-    const vkInput = formatProof(vkJson);
-    vkInput.splice(-1, 1);
-    console.log(vkInput);
-    const vkRes = await instance.methods.registerVk(vkInput).send({
-      from: config.web3.options.defaultAccount,
-      gas: config.web3.options.defaultGas,
-    });
-    logger.info(`Vk Registered:`);
-    console.log(vkRes);
-  }
+  // const vk = await instance.methods.getVK().call({
+  //   from: config.web3.options.defaultAccount,
+  // });
+  // logger.info(`Vk Stored: ${vk}`);
+  // if (!vk || vk === 0 || vk.length < 2) {
+  //   logger.info(`No vk registered, registering vk...`);
+  //   const vkJson = JSON.parse(fs.readFileSync(vkPath, 'utf-8'));
+  //   const vkInput = formatProof(vkJson);
+  //   vkInput.splice(-1, 1);
+  //   console.log(vkInput);
+  //   const vkRes = await instance.methods.registerVk(vkInput).send({
+  //     from: config.web3.options.defaultAccount,
+  //     gas: config.web3.options.defaultGas,
+  //   });
+  //   logger.info(`Vk Registered:`);
+  //   console.log(vkRes);
+  // }
 
   const tx = await instance.methods
     .assign(proof, root.integer, nullifier.integer, newCommitment.integer)

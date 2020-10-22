@@ -11,22 +11,24 @@ contract AssignShield is MerkleTree {
 
   mapping(uint256 => uint256) public nullifiers;
   mapping(uint256 => uint256) public roots;
-  mapping(address => uint256[]) public vk;
+  mapping(uint256 => uint256[]) public vk;
   uint256 public latestRoot;
 
   constructor (
-    address verifierAddress
+    address verifierAddress,
+    uint256[] memory _vk
 ) {
     verifier = Verifier_Interface(verifierAddress);
+    vk[0] = _vk;
 }
 
-  function getVK() public view returns (uint256[] memory) {
-    return vk[msg.sender];
-  }
+  // function getVK() public view returns (uint256[] memory) {
+  //   return vk[msg.sender];
+  // }
 
-  function registerVk(uint256[] calldata _vk) public {
-    vk[msg.sender] = _vk;
-  }
+  // function registerVk(uint256[] calldata _vk) public {
+  //   vk[msg.sender] = _vk;
+  // }
 
   function assign(uint256[] memory proof, uint256 root, uint256 nullifier, uint256 commitment) public {
     if (nullifier == 0 && root == 0 && latestRoot == 0) {
@@ -42,7 +44,7 @@ contract AssignShield is MerkleTree {
     inputs[1] = nullifier;
     inputs[2] = commitment;
 
-    bool res = verifier.verify(proof, inputs, vk[msg.sender]);
+    bool res = verifier.verify(proof, inputs, vk[0]);
     require(res, "The proof has not been verified by the contract");
 
     latestRoot = insertLeaf(commitment);

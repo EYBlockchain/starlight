@@ -4,7 +4,7 @@
   "description": "Compiles Zero Knowledge Protocols from Solidity",
   "main": "index.mjs",
   "scripts": {
-    "start": "node src/index.mjs -i examples/cases/uninit_global/assign.sol",
+    "start": "node src/index.mjs -i examples/cases/uninit_global/assign.zsol",
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
     "test": "./bin/startup && docker-compose run sprinkles npx mocha --exit --require @babel/register 'test/test.mjs'",

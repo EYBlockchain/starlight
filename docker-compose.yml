@@ -92,6 +92,7 @@ services:
       - ./migrations/:/truffle/migrations/:ro
       - ./truffle-config.js:/truffle/truffle-config.js:ro
       - ./build/:/truffle/build/:cached
+      - ./examples/:/app/examples/:delegated
     networks:
       - sprinkles_network
     depends_on:
