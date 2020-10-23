@@ -3,6 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 import commander from 'commander';
+import figlet from 'figlet';
 import zappify from '../src/index.mjs';
 
 const { Command } = commander;
@@ -75,5 +76,7 @@ const options = {
 validateOptions(options);
 
 mkDirs(options);
+
+console.log(figlet.textSync('zappify!'))
 
 zappify(options);

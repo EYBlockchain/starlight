@@ -1,6 +1,6 @@
 // MiMC hashing function for five input fields
 
-import "./mimc-encryption.zok" as mimcpe7
+from "./mimc-encryption.zok" import main as mimcpe7
 
 def main(field[2] a)->(field):
   field r = 0

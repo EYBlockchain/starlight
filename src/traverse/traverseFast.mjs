@@ -3,7 +3,7 @@ import { getVisitableKeys } from '../types/solidity-types.mjs';
 /**
  * Fast traversal function for quick searching of a subtree
  */
-export default function traverseFast(node, enter, state = {}, stop = false) {
+export default function traverseFast(node, enter, state = {}, scope = {}, stop = false) {
   if (!node) return;
 
   const keys = getVisitableKeys(node.nodeType);

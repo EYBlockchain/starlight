@@ -3,17 +3,67 @@ import path from 'path';
 import logger from '../utils/logger.mjs';
 
 // TODO: move to a config?
-const boilerplateCircuitsDir = './circuits';
+const boilerplateCircuitsDir = './circuits'; // relative to process.cwd()
 
 const EditableCommitmentImportsBoilerplate = [
   'from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256',
   'from "utils/pack/bool/pack256.zok" import main as bool_256_to_field',
+  'from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8',
+  'from "utils/pack/u32/pack256.zok" import main as u32_8_to_field',
   'from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256',
-  'from "utils/pack/u32/pack256.zok"  import main as u32_8_to_field',
   'from "./common/merkle-tree/mimc/bn254/verify-membership/height32.zok" import main as checkRoot',
   'from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256',
   'from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512',
 ];
+
+/**
+ * @param {string} file - a stringified file
+ * @param {string} contextDirPath - the import statements of the `file` will be
+ * relative to this dir. This path itself is relative to process.cwd().
+ * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
+ * The filepath will be used when saving the file into the new zApp's dir.
+ */
+const collectImportFiles = (file, contextDirPath = boilerplateCircuitsDir) => {
+  const lines = file.split('\n');
+  const importStatements = lines.filter(line => line.startsWith('from'));
+  let localFiles = [];
+  // parse for imports of local (non-zokrates-stdlib) files:
+  const localFilePaths = importStatements.reduce((acc, line) => {
+    let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
+    importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
+    // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
+    if (
+      !(
+        importFilePath.startsWith('utils') ||
+        importFilePath.startsWith('ecc') ||
+        importFilePath.startsWith('hashes') ||
+        importFilePath.startsWith('signatures')
+      )
+    )
+      acc.push(importFilePath);
+    return acc;
+  }, []);
+
+  // collect the import files and their paths:
+  for (const p of localFilePaths) {
+    const absPath = path.resolve(contextDirPath, p);
+    const relPath = path.relative('.', absPath);
+    const f = fs.readFileSync(relPath, 'utf8');
+    localFiles.push({
+      filepath: relPath, // the path to which we'll copy the file.
+      file: f,
+    });
+
+    localFiles = localFiles.concat(collectImportFiles(f, path.dirname(relPath)));
+  }
+
+  // remove duplicate files after recursion:
+  const uniqueLocalFiles = localFiles.filter((obj, i, self) => {
+    return self.indexOf(obj) === i;
+  });
+
+  return uniqueLocalFiles;
+};
 
 /**
  * Parses the boilerplate import statements, and grabs any common files.
@@ -21,21 +71,7 @@ const EditableCommitmentImportsBoilerplate = [
  * The filepath will be used when saving the file into the new zApp's dir.
  */
 const editableCommitmentCommonFilesBoilerplate = () => {
-  const localCommonFiles = [];
-  const localCommonFilePaths = EditableCommitmentImportsBoilerplate.reduce((acc, line) => {
-    const importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
-    // We need to provide common files which aren't included in the zokrates stdlib. These are identifiable by their relative filepaths (starting with './'):
-    if (importFilePath.startsWith('./')) acc.push(importFilePath);
-    return acc;
-  }, []);
-  for (const p of localCommonFilePaths) {
-    const sourceFilePath = path.join(boilerplateCircuitsDir, p);
-    localCommonFiles.push({
-      filepath: p,
-      file: fs.readFileSync(sourceFilePath, 'utf8'),
-    });
-  }
-  return localCommonFiles;
+  return collectImportFiles(EditableCommitmentImportsBoilerplate.join('\n'));
 };
 
 // newline / tab beautification for '.zok' files
@@ -67,29 +103,11 @@ const beautify = code => {
 };
 
 /**
- * @returns {Array} boilerplate lines of code, named w.r.t. the private state
+ * @returns {Array[string]} boilerplate lines of code, named w.r.t. the private state
  */
 const EditableCommitmentStatementsBoilerplate = privateStateName => {
   const x = privateStateName;
-  return [
-    `assert(\\
-    \ta == ${x}_oldCommitment_privateState\\
-    )`,
-    `assert(\\
-    \t${x}_oldCommitment_commitment == sha256of512(\\
-    \t\t[\\
-    \t\t\t...${x}_oldCommitment_privateState,\\
-    \t\t\t...${x}_oldCommitment_salt\\
-    \t\t]\\
-    \t)\\
-    )`,
-    `field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])`,
-    `field rootCheck = checkRoot(${x}_oldCommitment_membershipWitness_siblingPath, ${x}_oldCommitment_commitment_truncated, ${x}_oldCommitment_membershipWitness_index)`,
-    'assert(field_to_bool_256(nullifier)[8..256] == u32_8_to_bool_256(nullifierCheck)[8..256])',
-    'assert(field_to_bool_256(root)[8..256] == field_to_bool_256(rootCheck)[8..256])',
-    'u32[8] commitmentCheck = sha256of512([...newCommitmentPreimage.a, ...newCommitmentPreimage.salt])',
-    'assert(field_to_bool_256(commitment)[8..256] == u32_8_to_bool_256(commitmentCheck)[8..256])',
-  ];
+  return `// prepare secret states for commitment\n\n\t${x}_newCommitment_privateState = field_to_u32_8(a)\n\n\t// distinguish between the first and subsequent commitments\n\n\tbool skipNullification = if ${x}_oldCommitment_nullifier == 0 && commitmentRoot == 0 then true else false fi\n\n\t// old commitments - nullify\n\n\tu32[8] ${x}_oldCommitment_nullifier_check = if skipNullification == true then [0x00000000; 8] else sha256of256(${x}_oldCommitment_salt) fi\n\n\tassert(\\\n\t\tfield_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(${x}_oldCommitment_nullifier_check)[8..256]\\\n\t)\n\n\t// old commitments - preimage checks\n\n\tu32[8] ${x}_oldCommitment_commitment = if skipNullification == true then [0x00000000; 8] else sha256of512([...${x}_oldCommitment_privateState, ...${x}_oldCommitment_salt]) fi\n\n\t// old commitments - existence checks\n\n\tfield ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])\n\n\tfield commitmentRoot_check = if skipNullification == true then 0 else  checkRoot(${x}_oldCommitment_membershipWitness_siblingPath, ${x}_oldCommitment_commitment_truncated, ${x}_oldCommitment_membershipWitness_index) fi\n\n\tassert(\\\n\t\tfield_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(commitmentRoot_check)[8..256]\\\n\t)\n\n\t// new commitments - preimage checks\n\n\tu32[8] ${x}_newCommitment_commitment_check = sha256of512([...${x}_newCommitment_privateState, ...${x}_newCommitment_salt])\n\n\tassert(\\\n\t\tfield_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\\n\t)`;
 };
 
 function codeGenerator(node) {
@@ -101,7 +119,7 @@ function codeGenerator(node) {
     case 'File':
       return [
         {
-          filepath: `${node.name}.zok`,
+          filepath: path.join(boilerplateCircuitsDir, `${node.name}.zok`),
           file: node.nodes.map(codeGenerator).join('\n\n'),
         },
       ];
@@ -129,6 +147,12 @@ function codeGenerator(node) {
       return `${isPrivate}${codeGenerator(node.typeName)} ${node.name}`;
     }
 
+    case 'VariableDeclarationStatement': {
+      const declarations = node.declarations.map(codeGenerator).join(', ');
+      const initialValue = codeGenerator(node.initialValue);
+      return `${declarations} = ${initialValue}`;
+    }
+
     case 'ElementaryTypeName':
       return node.name;
 
@@ -147,7 +171,7 @@ function codeGenerator(node) {
       return node.name;
 
     case 'EditableCommitmentStatementsBoilerplate':
-      return EditableCommitmentStatementsBoilerplate(node.privateStateName).join('\n\n\t');
+      return EditableCommitmentStatementsBoilerplate(node.privateStateName);
 
     // And if we haven't recognized the node, we'll throw an error.
     default:

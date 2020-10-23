@@ -2,40 +2,36 @@
 
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
+import { findInScopeAncestors, findReferencedNode } from '../../traverse/scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
-import traverse from '../../traverse/traverse.mjs';
+import { traverse } from '../../traverse/traverse.mjs';
 
 export default {
   PragmaDirective: {
     // we ignore the Pragma Directive; it doesn't aid us in creating a circuit
-    enter(node, parent, state) {},
-    exit(node, parent, state) {},
+    enter(path, state, scope) {},
+    exit(path, state, scope) {},
   },
 
   ContractDefinition: {
-    enter(node, parent, state) {
-      // take note that we've entered a contract's scope
-      const contractName = node.name;
-      // wipes the previous scope
-      state.scope = {
-        contractName,
-        globals: [],
-      };
-
+    enter(path, state, scope) {
+      const { node, parent } = path;
       node._context = parent._context;
     },
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 
   FunctionDefinition: {
-    enter(node, parent, state) {
+    enter(path, state, scope) {
+      const { node, parent } = path;
       // define a 'nested' visitor that will traverse the subnodes of this node.
+      // TODO: a simple, fast traversal function sith a single callback?
       const findGlobalAssignmentVisitor = {
         Assignment: {
-          enter(node, parent, state) {
+          enter(path, state, scope) {
             const { name, id } = state.global;
-            const assignee = node.leftHandSide;
+            const assignee = path.node.leftHandSide;
             if (assignee.name === name && assignee.referencedDeclaration === id) {
               state.globalFound = true;
               state.stopTraversal = true;
@@ -47,19 +43,20 @@ export default {
       // check the function for assignments to any global states:
       // we'll need to create a new circuit file if we find one:
       let newFile = false;
-      state.scope.assignedGlobals = [];
+      // state.scope.assignedGlobals = [];
+      const stateVariableBindings = scope.bindings.filter(binding => binding.stateVariable);
 
-      if (state.scope.globals) {
-        for (const global of state.scope.globals) {
+      if (stateVariableBindings) {
+        for (const binding of stateVariableBindings) {
           const nestedState = {
-            global,
+            global: binding.node,
             globalFound: false,
           };
-          traverse(node, parent, findGlobalAssignmentVisitor, nestedState);
+          traverse(path, findGlobalAssignmentVisitor, nestedState);
           if (nestedState.globalFound) {
-            // then this global is assigned to within this function, and so we need to create a corresponding circuit _file_ for this function. We'll commitment boilerplate for this global to this file.
+            // then this global is assigned to within this function, and so we need to create a corresponding circuit _file_ for this function. We'll add commitment boilerplate for this global to this file.
             newFile = true;
-            state.scope.assignedGlobals.push(global);
+            // state.scope.assignedGlobals.push(global);
             // state.scope.EditableCommitmentCommonFilesBoilerplate = true;
           }
         }
@@ -102,10 +99,14 @@ export default {
       }
     },
 
-    exit(node, parent, state) {
+    exit(path, state, scope) {
+      const { node, parent } = path;
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
-      if (state.scope.assignedGlobals) {
+      const modifiedStateVariableBindings = scope.modifiedBindings.filter(
+        binding => binding.stateVariable,
+      );
+      if (modifiedStateVariableBindings) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._context;
         let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
@@ -121,14 +122,26 @@ export default {
           });
         }
 
-        // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
-        for (const global of state.scope.assignedGlobals) {
+        for (const binding of modifiedStateVariableBindings) {
+          const global = binding.node;
+          // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
           const editableCommitmentParameters = circuitTypes.buildEditableCommitmentParameters(
             global.name,
           );
           for (const param of editableCommitmentParameters) {
             node._context.parameters.parameters.push(param);
           }
+
+          // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
+          // - oldCommitment preimage check
+          // - oldCommitment membership & check vs the commitmentRoot
+          // - oldCommitment nullifier preimage check
+          // - newCommitment preimage check
+          // ^^^ do this for each global:
+          node._context.body.statements.push({
+            nodeType: 'EditableCommitmentStatementsBoilerplate',
+            privateStateName: global.name,
+          });
         }
 
         // Add a commitmentRoot parameter (only 1 commitmentRoot param is needed for all globals being committed to)
@@ -141,39 +154,27 @@ export default {
             name: 'field',
           },
         });
-
-        // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
-        // - oldCommitment preimage check
-        // - oldCommitment membership & check vs the commitmentRoot
-        // - oldCommitment nullifier preimage check
-        // - newCommitment preimage check
-        // ^^^ do this for each global:
-        for (const global of state.scope.assignedGlobals) {
-          node._context.body.statements.push({
-            nodeType: 'EditableCommitmentStatementsBoilerplate',
-            privateStateName: global.name,
-          });
-        }
       }
     },
   },
 
   ParameterList: {
-    enter(node, parent) {
+    enter(path) {
+      const { node, parent } = path;
       const newNode = {
         nodeType: node.nodeType,
         parameters: [],
       };
       node._context = newNode.parameters;
-      const { containerName } = getNodeLocation(node, parent);
-      parent._context[containerName] = newNode;
+      parent._context[path.containerName] = newNode;
     },
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 
   Block: {
-    enter(node, parent) {
+    enter(path) {
+      const { node, parent } = path;
       const newNode = {
         nodeType: node.nodeType,
         statements: [],
@@ -182,11 +183,12 @@ export default {
       parent._context.body = newNode;
     },
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 
   VariableDeclarationStatement: {
-    enter(node, parent) {
+    enter(path) {
+      const { node, parent } = path;
       const newNode = {
         nodeType: node.nodeType,
         declarations: [],
@@ -196,26 +198,28 @@ export default {
       parent._context.push(newNode);
     },
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 
   BinaryOperation: {
-    enter(node, parent) {
+    enter(path) {
+      const { node, parent } = path;
       const newNode = {
         nodeType: node.nodeType,
         leftExpression: {},
         rightExpression: {},
       };
       node._context = newNode;
-      const { containerName } = getNodeLocation(node, parent);
-      parent._context[containerName] = newNode;
+      parent._context[path.containerName] = newNode;
     },
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 
   Assignment: {
-    enter(node, parent) {
+    enter(path, state, scope) {
+      const { node, parent } = path;
+
       const newNode = {
         nodeType: node.nodeType,
         operator: node.operator,
@@ -226,12 +230,51 @@ export default {
       parent._context.expression = newNode;
     },
 
-    exit(node, parent) {},
+    exit(path, state, scope) {},
   },
 
   ExpressionStatement: {
-    enter(node, parent) {
-      const newNode = {
+    enter(path, state, scope) {
+      const { node, parent } = path;
+      let newNode;
+      // ExpressionStatements can contain an Assignment node.
+      // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the first such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
+      if (node.expression.nodeType === 'Assignment') {
+        const assignmentNode = node.expression;
+        const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
+        const referencedNode = findReferencedNode(scope, lhs);
+
+        if (referencedNode.sprinkle === 'secret') {
+          newNode = {
+            nodeType: 'VariableDeclarationStatement',
+            declarations: [
+              {
+                nodeType: 'VariableDeclaration',
+                name: lhs.name,
+                isPrivate: false, // despite the original VarDec being 'secret', this VarDec is now within the body of a circuit; hence 'secret' makes no sence. Declaring it as 'false' will help the codeGenerator.
+                typeName: {
+                  name: 'field',
+                  nodeType: 'ElementaryTypeName',
+                },
+              },
+            ],
+            initialValue: {
+              ...rhs,
+            },
+          };
+
+          node._context = newNode;
+          parent._context.push(newNode);
+          state.skipSubNodes = true;
+
+          // Continue scoping subNodes, so that any references / modifications to bindings are collected. We'll require this data when exiting the tree.
+          path.traverse({}, {}, scope);
+
+          return;
+        }
+      }
+
+      newNode = {
         nodeType: node.nodeType,
         expression: {},
       };
@@ -243,12 +286,10 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(node, parent, state) {
+    enter(path, state, scope) {
+      const { node, parent } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable.
-        // Make note of this, for later, but don't add anything new to the newAST
-        state.scope.globals.push(node);
-
         node._context = parent._context;
         state.skipSubNodes = true;
         return;
@@ -265,17 +306,18 @@ export default {
       if (Array.isArray(parent._context)) {
         parent._context.push(newNode);
       } else {
-        const { containerName } = getNodeLocation(node, parent);
-        parent._context[containerName].push(newNode);
+        parent._context[path.containerName].push(newNode);
       }
     },
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 
   ElementaryTypeName: {
-    enter(node, parent) {
-      if (node.name !== 'uint256') throw new Error('Currently, only transpilation of "uint256" types is supported');
+    enter(path) {
+      const { node, parent } = path;
+      if (node.name !== 'uint256')
+        throw new Error('Currently, only transpilation of "uint256" types is supported');
 
       const newNode = {
         nodeType: node.nodeType,
@@ -283,26 +325,25 @@ export default {
       };
 
       // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
-      const { containerName } = getNodeLocation(node, parent);
-      parent._context[containerName] = newNode;
+      parent._context[path.containerName] = newNode;
     },
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 
   Identifier: {
-    enter(node, parent) {
+    enter(path) {
+      const { node, parent } = path;
       const newNode = {
         nodeType: node.nodeType,
         name: node.name,
       };
 
       // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
-      const { containerName } = getNodeLocation(node, parent);
-      parent._context[containerName] = newNode;
+      parent._context[path.containerName] = newNode;
     },
 
-    exit(node, parent) {
+    exit(path) {
       // findReferencedDeclaration example placement:
       // const declaration = findReferencedDeclaration(node, parent);
       // logger.debug('Found ref dec:');
@@ -312,8 +353,8 @@ export default {
   },
 
   Literal: {
-    enter(node, parent) {},
+    enter(path) {},
 
-    exit(node, parent) {},
+    exit(path) {},
   },
 };

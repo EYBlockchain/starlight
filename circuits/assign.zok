@@ -28,7 +28,6 @@ def main(private CommitmentPreimage oldCommitmentPreimage, private CommitmentPre
 
     field rootCheck = if skipNullification == true then 0 else checkRoot(path, truncatedCommitment, index) fi
 
-	// assert(nullifier == u32_8_to_field(nullifierCheck))
     assert(field_to_bool_256(nullifier)[8..256] == u32_8_to_bool_256(nullifierCheck)[8..256])
     assert(field_to_bool_256(root)[8..256] == field_to_bool_256(rootCheck)[8..256])
 

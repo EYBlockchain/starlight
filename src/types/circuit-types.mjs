@@ -156,14 +156,13 @@ export function getVisitableKeys(nodeType) {
 
 export function buildEditableCommitmentParameters(privateStateName) {
   const EDITABLE_COMMITMENT_PARAMETERS = [
-    ['oldCommitment_privateState', true, 'field'],
-    ['oldCommitment_salt', true, 'field'],
-    ['oldCommitment_commitment', true, 'field'],
+    ['oldCommitment_privateState', true, 'u32[8]'],
+    ['oldCommitment_salt', true, 'u32[8]'],
     ['oldCommitment_membershipWitness_index', true, 'field'],
-    ['oldCommitment_membershipWitness_siblingPath', true, 'field'],
+    ['oldCommitment_membershipWitness_siblingPath', true, 'field[32]'], // TODO tree height config
     ['oldCommitment_nullifier', false, 'field'], // PUBLIC
-    ['newCommitment_privateState', true, 'field'],
-    ['newCommitment_salt', true, 'field'],
+    ['newCommitment_privateState', true, 'u32[8]'],
+    ['newCommitment_salt', true, 'u32[8]'],
     ['newCommitment_commitment', false, 'field'], // PUBLIC'
   ];
 
