@@ -1,20 +1,29 @@
 /* eslint-disable no-use-before-define, no-continue, no-shadow, no-param-reassign */
 
 import logger from '../utils/logger.mjs';
+import NodePath from './NodePath.mjs';
 // import * as solidityTypes from '../types/solidity-types.mjs';
 import { getVisitableKeys, setParentPath } from '../types/solidity-types.mjs';
+import { updateScope } from './scope.mjs';
 
-/**
- * Edited from the Super Tiny compiler (updating it to traverse a Solidity ast):
- * https://github.com/jamiebuilds/the-super-tiny-compiler
+/*
+ * Execute a callback on the tree, recursively up the node's ancestors
  */
+export const findInNodeAncestors = (node, callback) => {
+  const result = callback(node);
+  return result === 'false' ? findInNodeAncestors(node._parent, callback) : result;
+};
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
-export default function traverse(node, parent, visitor, state, scope) {
+export function traverse(path, visitor, state = {}, scope = {}) {
+  logger.debug('pathLocation:', `${path.getLocation()} = ${path.node.nodeType}`);
+  scope = updateScope(path, scope);
+
   if (state && state.stopTraversal) return;
   if (state && state.skipSubNodes) return;
 
+  const { node } = path;
   const keys = getVisitableKeys(node.nodeType);
   if (!keys) return;
 
@@ -29,7 +38,7 @@ export default function traverse(node, parent, visitor, state, scope) {
     // if (parent) logger.debug('parent._context:', parent._context);
     // logger.debug('state:', state);
 
-    methods.enter(node, parent, state, scope);
+    methods.enter(path, state, scope);
 
     // parentPath example placement:
     // setParentPath(node, parent);
@@ -45,29 +54,28 @@ export default function traverse(node, parent, visitor, state, scope) {
   for (const key of keys) {
     if (Array.isArray(node[key])) {
       const subNodes = node[key];
-      for (const subNode of subNodes) {
+      for (const [index, subNode] of subNodes.entries()) {
         if (!subNode) continue;
-
-        // ancestors.push({
-        //   node,
-        //   key,
-        //   index: i,
-        // });
-
-        traverse(subNode, node, visitor, state, scope);
-
-        // ancestors.pop();
+        const subNodePath = new NodePath({
+          parent: node,
+          key,
+          container: subNodes,
+          index,
+          node: subNode,
+          parentPath: path,
+        });
+        subNodePath.traverse(visitor, state, scope);
       }
     } else if (node[key]) {
       const subNode = node[key];
-      // ancestors.push({
-      //   node,
-      //   key,
-      // });
-
-      traverse(subNode, node, visitor, state, scope);
-
-      // ancestors.pop();
+      const subNodePath = new NodePath({
+        parent: node,
+        key,
+        container: subNode,
+        node: subNode,
+        parentPath: path,
+      });
+      subNodePath.traverse(visitor, state, scope);
     }
   }
 
@@ -83,7 +91,7 @@ export default function traverse(node, parent, visitor, state, scope) {
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
 
-    methods.exit(node, parent, state, scope);
+    methods.exit(path, state, scope);
 
     // logger.debug(`\n\n\n\n${node.nodeType} after exit`);
     // logger.debug('node._context:', node._context);
