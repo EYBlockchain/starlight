@@ -6,28 +6,6 @@ export function isArray(thing) {
   return Array.isArray(thing);
 }
 
-/**
- * container:
- *     1) If the node is _not_ contained within a list:
- *        parent: {
- *            key: { <-- 'key' is the 'containerName'
- *                // contents of the node
- *            }
- *        }
- *        // the node is at parent[key]
- *
- *     2) If the node _is_ contained within a list:
- *        parent: {
- *            key: [  <-- 'key' is the 'containerName'
- *                {                                <--| this is the node
- *                    // contents of the node      <--| at some 'index' of this
- *                }                                <--| container
- *            ]
- *        }
- *        // the node is at parent[key][index]
- *
- * So overall, the naming is such that the node is always at container[key]
- */
 export function getNodeLocation(node, parent, matchKey = 'id') {
   const visitableParentKeys = getVisitableKeys(parent.nodeType);
   for (const key of visitableParentKeys) {
