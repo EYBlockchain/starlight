@@ -5,7 +5,7 @@ import fs from 'fs';
 
 import { getContractInstance } from '../../../src/utils/contract.mjs';
 import { generateProof } from '../../../src/utils/zokrates.mjs';
-import { getSiblingPath, getLeafIndex } from '../../../src/utils/timber.mjs';
+import { getMembershipWitness } from '../../../src/utils/timber.mjs';
 import logger from '../../../src/utils/logger.mjs';
 
 const { generalise } = GN;
@@ -17,7 +17,8 @@ let preimage;
 let currentSalt;
 let currentValue;
 let currentCommitment;
-let root;
+let commitmentExists;
+let witnessRequired;
 
 const formatProof = proof =>
   generalise(Object.values(proof).flat(Infinity))
@@ -36,33 +37,33 @@ export async function assign(_value) {
     currentCommitment = generalise(preimage.commitment);
     currentValue = generalise(preimage.value);
     currentSalt = generalise(preimage.salt);
+    commitmentExists = true;
+    witnessRequired = true;
     logger.info(
       `Previous commitment: ${currentCommitment.integer} Preimage: ${currentValue.integer}, ${currentSalt.integer}`,
     );
   } else {
     logger.info(`Assigning ${_value} to a variable for the first time`);
+    commitmentExists = false;
+    witnessRequired = false;
   }
 
-  let nullifier = currentSalt ? generalise(utils.shaHash(currentSalt.hex(32))) : generalise(0);
+  let nullifier = commitmentExists ? generalise(utils.shaHash(currentSalt.hex(32))) : generalise(0);
   nullifier = generalise(nullifier.hex(32, 31)); // truncate
 
   const prevValue = currentValue || generalise('0');
   const prevSalt = currentSalt || generalise('0');
-  const leafIndex = undefined;
+  const emptyPath = new Array(32).fill(0);
 
-  let path = currentCommitment
-    ? await getSiblingPath('Assign', leafIndex, currentCommitment.integer)
-    : new Array(33).fill(0); // will be ignored in circuit if no commitment exists
+  const witness = witnessRequired
+    ? await getMembershipWitness('Assign', currentCommitment.integer)
+    : { index: 0, path: emptyPath, root: 0 }; // will be ignored in circuit if no commitment exists
 
-  let index = currentCommitment
-    ? await getLeafIndex('Assign', currentCommitment.integer)
-    : generalise(0);
-  index = generalise(index);
+  const index = generalise(witness.index);
 
-  root = generalise(path[0].value) || generalise(0);
+  const root = generalise(witness.root);
   // root = generalise(root.hex(32, 31));
-  path = currentCommitment ? path.map(node => node.value) : path;
-  path.splice(0, 1);
+  const path = generalise(witness.path).all;
 
   logger.info(`Sibling path array: ${path}`);
 
@@ -76,7 +77,7 @@ export async function assign(_value) {
     value.limbs(32, 8),
     newSalt.limbs(32, 8),
     index.integer,
-    generalise(path).all.integer,
+    path.integer,
     root.integer,
     nullifier.integer,
     newCommitment.integer,
