@@ -121,7 +121,6 @@ const ShieldContractStatementsBoilerplate = stage => {
     case 'Constructor':
       return ShieldContractConstructorBoilerplate();
     case 'Main':
-      // TODO have proper function calls for verify() and insertLeaf() (atm they are dummy fns)
       return ShieldContractMainBoilerplate();
     default:
       return;

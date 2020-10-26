@@ -4,9 +4,9 @@
  * @return {Object} - common statements
  */
 
-const OrchestrationCodeBoilerPlate = options => {
+const OrchestrationCodeBoilerPlate = node => {
   const lines = [];
-  switch (options.stage) {
+  switch (node.stage) {
     case 'Imports':
       // TODO proper db
       return {
@@ -26,18 +26,18 @@ const OrchestrationCodeBoilerPlate = options => {
       };
     case 'FunctionDefinition':
       // the main function
-      options.parameters.forEach(param => {
+      node.parameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         param = `_${param}`;
       });
       return {
-        signature: [`export async function ${options.functionName}(${options.parameters}) {`, `}`],
+        signature: [`export async function ${node.functionName}(${node.parameters}) {`, `}`],
         statements: lines,
       };
     case 'ReadPreimage':
       // please help with this terrible name
       // TODO proper db
-      options.parameters.forEach(param => {
+      node.parameters.forEach(param => {
         lines.push(`\n\tprev${param} = generalise(preimage.${param});`);
         param = `let prev${param};`;
       });
@@ -45,7 +45,7 @@ const OrchestrationCodeBoilerPlate = options => {
         statements: [
           `\nlet preimage;`,
           `\nlet prevSalt;`,
-          options.parameters,
+          node.parameters,
           `\nlet currentCommitment;`,
           `\nlet commitmentExists;`,
           `\nlet witnessRequired;
@@ -70,7 +70,7 @@ const OrchestrationCodeBoilerPlate = options => {
     case 'WritePreimage':
       // please help with this terrible name
       // TODO proper db
-      options.parameters.forEach(param => {
+      node.parameters.forEach(param => {
         lines.push(`\n\t${param}: = ${param}.integer,`);
       });
       return {
@@ -86,14 +86,13 @@ const OrchestrationCodeBoilerPlate = options => {
     case 'MembershipWitness':
       return {
         statements: [
-          `\nlet path = witnessRequired
-            \n\t? await getSiblingPath('${options.contractName}', null, currentCommitment.integer)
-            \n\t: new Array(33).fill(0);`,
-          `\nlet index = witnessRequired ? path[32].node.leafIndex : generalise(0);
-          \nindex = generalise(index);`,
-          `\nconst root = witnessRequired ? generalise(path[0].value) : generalise(0);`,
-          `\npath = witnessRequired ? path.map(node => node.value) : path;
-          \npath.splice(0, 1);`,
+          `\nconst emptyPath = new Array(32).fill(0);
+          \nconst witness = witnessRequired
+            \n\t? await getMembershipWitness('Assign', currentCommitment.integer)
+            \n\t: { index: 0, path: emptyPath, root: 0 };`,
+          `\nconst index = generalise(witness.index);`,
+          `\nconst root = generalise(witness.root);`,
+          `\nconst path = generalise(witness.path).all;`,
         ],
       };
     case 'CalculateNullifier':
@@ -104,7 +103,7 @@ const OrchestrationCodeBoilerPlate = options => {
         ],
       };
     case 'CalculateCommitment':
-      options.parameters.forEach(param => {
+      node.parameters.forEach(param => {
         lines.push(`${param}.hex(32)`);
       });
       return {
@@ -115,10 +114,10 @@ const OrchestrationCodeBoilerPlate = options => {
         ],
       };
     case 'GenerateProof':
-      options.parameters.forEach(param => {
+      node.parameters.forEach(param => {
         lines.push(`\n\tprev${param}.limbs(32, 8),`);
       });
-      options.parameters.forEach(param => {
+      node.parameters.forEach(param => {
         lines.push(`\n\t${param}.limbs(32, 8),`);
       });
       return {
@@ -132,7 +131,7 @@ const OrchestrationCodeBoilerPlate = options => {
           `\n\tnullifier.integer,`,
           `\n\tnewCommitment.integer,`,
           `\n].flat(Infinity);`,
-          `\nconst res = await generateProof(${options.circuitName}, allInputs);`,
+          `\nconst res = await generateProof(${node.circuitName}, allInputs);`,
           `\nconst proof = generalise(Object.values(proof).flat(Infinity))
               \n\t.map(coeff => coeff.integer)
               \n\t.flat(Infinity);`,
@@ -141,9 +140,9 @@ const OrchestrationCodeBoilerPlate = options => {
     case 'SendTransaction':
       return {
         statements: [
-          `\nconst instance = await getContractInstance('${options.contractName}');`,
+          `\nconst instance = await getContractInstance('${node.contractName}');`,
           `\nconst tx = await instance.methods
-            \n\t.${options.functionName}(proof, root.integer, nullifier.integer, newCommitment.integer)
+            \n\t.${node.functionName}(proof, root.integer, nullifier.integer, newCommitment.integer)
             \n\t.send({
               \n\t\tfrom: config.web3.options.defaultAccount,
               \n\t\tgas: config.web3.options.defaultGas,

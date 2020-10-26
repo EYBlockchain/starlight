@@ -5,7 +5,7 @@ import fs from 'fs';
 
 import { getContractInstance } from '../../../src/utils/contract.mjs';
 import { generateProof } from '../../../src/utils/zokrates.mjs';
-import { getSiblingPath } from '../../../src/utils/timber.mjs';
+import { getMembershipWitness } from '../../../src/utils/timber.mjs';
 
 const { generalise } = GN;
 const db = '/app/examples/cases/uninit_global/db/preimage.json';
@@ -43,18 +43,17 @@ export async function assign(_value) {
   let nullifier = commitmentExists ? generalise(utils.shaHash(prevSalt.hex(32))) : generalise(0);
   nullifier = generalise(nullifier.hex(32, 31)); // truncate
 
-  let path = witnessRequired
-    ? await getSiblingPath('Assign', null, currentCommitment.integer)
-    : new Array(33).fill(0); // will be ignored in circuit if no commitment exists
+  const emptyPath = new Array(32).fill(0);
 
-  let index = witnessRequired ? path[32].node.leafIndex : generalise(0);
+  const witness = witnessRequired
+    ? await getMembershipWitness('Assign', currentCommitment.integer)
+    : { index: 0, path: emptyPath, root: 0 }; // will be ignored in circuit if no commitment exists
 
-  index = generalise(index);
+  const index = generalise(witness.index);
 
-  const root = witnessRequired ? generalise(path[0].value) : generalise(0);
-
-  path = witnessRequired ? path.map(node => node.value) : path;
-  path.splice(0, 1);
+  const root = generalise(witness.root);
+  // root = generalise(root.hex(32, 31));
+  const path = generalise(witness.path).all;
 
   const newSalt = generalise(utils.randomHex(32));
   let newCommitment = generalise(utils.shaHash(value.hex(32), newSalt.hex(32)));
