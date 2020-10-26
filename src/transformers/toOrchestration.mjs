@@ -4,10 +4,10 @@ import fs from 'fs';
 import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
-import { traverse } from '../traverse/traverse.mjs';
+import traverse from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
-import visitor from './visitors/toCircuitVisitor.mjs';
-import codeGenerator from '../codeGenerators/toCircuit.mjs';
+import visitor from './visitors/toOrchestrationVisitor.mjs';
+import codeGenerator from '../codeGenerators/toOrchestration.mjs';
 
 /**
  * Inspired by the Transformer
@@ -23,7 +23,6 @@ function transformation1(oldAST) {
   };
 
   const state = {
-    scope: {},
     stopTraversal: false,
     skipSubnodes: false,
   };
@@ -53,26 +52,26 @@ function transformation1(oldAST) {
 }
 
 // A transformer function which will accept an ast.
-export default function toCircuit(ast, options) {
-  // transpile to a circuit AST:
+export default function toOrchestration(ast, options) {
+  // transpile to a node AST:
   logger.info('Transforming the .zsol AST to a .zok AST...');
   const newAST = transformation1(ast);
-  console.log(newAST);
-  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
+  const newASTFilePath = pathjs.join(options.nodeDirPath, `${options.inputFileName}.mjs`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
-  // generate the circuit files from the newly created circuit AST:
-  logger.info('Generating files from the .zok AST...');
-  const circuitFileData = codeGenerator(newAST);
+  // generate the node files from the newly created circuit AST:
+  logger.info('Generating files from the .mjs AST...');
+  const nodeFileData = codeGenerator(newAST);
 
-  // save the circuit files to the output dir:
-  logger.info(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
-  for (const fileObj of circuitFileData) {
+  // save the node files to the output dir:
+  // also, work out the .mjs imports
+  logger.info(`Saving .mjs files to the zApp output directory ${options.nodeDirPath}...`);
+  for (const fileObj of nodeFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
-    console.log(`About to save to ${filepath}...`)
+    console.log(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, fileObj.file);
   }
-  logger.info('Circuit transpilation complete.');
+  logger.info('Node transpilation complete.');
 }

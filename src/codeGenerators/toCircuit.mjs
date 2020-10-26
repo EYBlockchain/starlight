@@ -5,7 +5,7 @@ import {
   boilerplateCircuitsDir,
   EditableCommitmentImportsBoilerplate,
   EditableCommitmentStatementsBoilerplate,
-} from '../boilerplate/circuit/raw/toCircuit.mjs';
+} from '../boilerplate/circuit/zokrates/raw/toCircuit.mjs';
 
 /**
  * @param {string} file - a stringified file
