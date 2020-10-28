@@ -6,93 +6,95 @@
 
 const OrchestrationCodeBoilerPlate = node => {
   const lines = [];
-  switch (node.stage) {
+  const params = [];
+  switch (node.nodeType) {
     case 'Imports':
       // TODO proper db
       return {
         statements: [
+          `/* eslint-disable prettier/prettier, no-use-before-define */`,
           `\nimport config from 'config';`,
           `\nimport utils from 'zkp-utils';`,
           `\nimport GN from 'general-number';`,
           `\nimport fs from 'fs';
           \n`,
-          `\nimport { getContractInstance } from '../../../src/utils/contract.mjs';`,
-          `\nimport { generateProof } from '../../../src/utils/zokrates.mjs';`,
-          `\nimport { getSiblingPath } from '../../../src/utils/timber.mjs';
+          `\nimport { getContractInstance } from './common/contract.mjs';`,
+          `\nimport { generateProof } from './common/zokrates.mjs';`,
+          `\nimport { getMembershipWitness } from './common/timber.mjs';
           \n`,
           `\nconst { generalise } = GN;`,
-          `\nconst db = '/app/examples/cases/uninit_global/db/preimage.json';`,
+          `\nconst db = './common/db/preimage.json';\n\n`,
         ],
       };
     case 'FunctionDefinition':
       // the main function
       node.parameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
-        param = `_${param}`;
+        params.push(`_${param}`);
       });
       return {
-        signature: [`export async function ${node.functionName}(${node.parameters}) {`, `}`],
+        signature: [`export default async function ${node.name}(${params}) {`, `}`],
         statements: lines,
       };
     case 'ReadPreimage':
       // please help with this terrible name
       // TODO proper db
       node.parameters.forEach(param => {
-        lines.push(`\n\tprev${param} = generalise(preimage.${param});`);
-        param = `let prev${param};`;
+        lines.push(`\tprev${param} = generalise(preimage.${param});`);
+        params.push(`let prev${param};`);
       });
       return {
         statements: [
           `\nlet preimage;`,
           `\nlet prevSalt;`,
-          node.parameters,
+          params,
           `\nlet currentCommitment;`,
           `\nlet commitmentExists;`,
           `\nlet witnessRequired;
           \n`,
-          `\nif (fs.existsSync(db)) {
-            \n\tpreimage = JSON.parse(
-            \n\t\tfs.readFileSync(db, 'utf-8', err => {
-                \n\t\t\tconsole.log(err);
-              \n\t\t}),
-            \n\t);
-            \n\tcurrentCommitment = generalise(preimage.commitment);`,
-          lines,
-          `\n\tprevSalt = generalise(preimage.salt);
-            \n\tcommitmentExists = true;
-            \n\twitnessRequired = true;
-          \n} else {
-            \n\tcommitmentExists = false;
-            \n\twitnessRequired = false;
-          \n}`,
+          `if (fs.existsSync(db)) {
+            preimage = JSON.parse(
+              fs.readFileSync(db, 'utf-8', err => {
+                console.log(err);
+              }),
+            );
+            currentCommitment = generalise(preimage.commitment);
+            ${lines.join('  \t')}
+            prevSalt = generalise(preimage.salt);
+            commitmentExists = true;
+            witnessRequired = true;
+          } else {
+            commitmentExists = false;
+            witnessRequired = false;
+          }\n`,
         ],
       };
     case 'WritePreimage':
       // please help with this terrible name
       // TODO proper db
       node.parameters.forEach(param => {
-        lines.push(`\n\t${param}: = ${param}.integer,`);
+        lines.push(`\t${param}: ${param}.integer,`);
       });
       return {
         statements: [
-          `\npreimage = {`,
-          lines,
-          `\n\tsalt: newSalt.integer,
-          \n\tcommitment: newCommitment.integer,
-          \n};`,
+          `\npreimage = {
+          ${lines.join('')}
+          \tsalt: newSalt.integer,
+          \tcommitment: newCommitment.integer,
+          };`,
           `\nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
         ],
       };
     case 'MembershipWitness':
       return {
         statements: [
-          `\nconst emptyPath = new Array(32).fill(0);
-          \nconst witness = witnessRequired
-            \n\t? await getMembershipWitness('Assign', currentCommitment.integer)
-            \n\t: { index: 0, path: emptyPath, root: 0 };`,
-          `\nconst index = generalise(witness.index);`,
-          `\nconst root = generalise(witness.root);`,
-          `\nconst path = generalise(witness.path).all;`,
+          `const emptyPath = new Array(32).fill(0);
+          const witness = witnessRequired
+          \t? await getMembershipWitness('Assign', currentCommitment.integer)
+          \t: { index: 0, path: emptyPath, root: 0 };
+          const index = generalise(witness.index);
+          const root = generalise(witness.root);
+          const path = generalise(witness.path).all;\n`,
         ],
       };
     case 'CalculateNullifier':
@@ -114,27 +116,29 @@ const OrchestrationCodeBoilerPlate = node => {
         ],
       };
     case 'GenerateProof':
-      node.parameters.forEach(param => {
-        lines.push(`\n\tprev${param}.limbs(32, 8),`);
-      });
-      node.parameters.forEach(param => {
-        lines.push(`\n\t${param}.limbs(32, 8),`);
-      });
+      node.parameters
+        .filter(para => para !== node.privateStateName)
+        .forEach(param => {
+          lines.push(`\t${param}.integer,`);
+        });
       return {
         statements: [
-          `\nconst allInputs = [``\n\tprevSalt.limbs(32, 8),`,
-          lines,
-          `\n\tnewSalt.limbs(32, 8),`,
-          `\n\tindex.integer,`,
-          `\n\tgeneralise(path).all.integer,`,
-          `\n\troot.integer,`,
-          `\n\tnullifier.integer,`,
-          `\n\tnewCommitment.integer,`,
-          `\n].flat(Infinity);`,
+          `\nconst allInputs = [
+          ${lines.join('  \t')}
+          \tprev${node.privateStateName}.limbs(32, 8),
+          \tprevSalt.limbs(32, 8),
+          \tindex.integer,
+          \tgeneralise(path).all.integer,
+          \tnullifier.integer,
+          \t${node.privateStateName}.limbs(32, 8),
+          \tnewSalt.limbs(32, 8),
+          \tnewCommitment.integer,
+          \troot.integer,
+        ].flat(Infinity);`,
           `\nconst res = await generateProof(${node.circuitName}, allInputs);`,
-          `\nconst proof = generalise(Object.values(proof).flat(Infinity))
-              \n\t.map(coeff => coeff.integer)
-              \n\t.flat(Infinity);`,
+          `\nconst proof = generalise(Object.values(res).flat(Infinity))
+          .map(coeff => coeff.integer)
+          .flat(Infinity);`,
         ],
       };
     case 'SendTransaction':
@@ -142,11 +146,11 @@ const OrchestrationCodeBoilerPlate = node => {
         statements: [
           `\nconst instance = await getContractInstance('${node.contractName}');`,
           `\nconst tx = await instance.methods
-            \n\t.${node.functionName}(proof, root.integer, nullifier.integer, newCommitment.integer)
-            \n\t.send({
-              \n\t\tfrom: config.web3.options.defaultAccount,
-              \n\t\tgas: config.web3.options.defaultGas,
-            \n\t});`,
+          .${node.functionName}(proof, root.integer, nullifier.integer, newCommitment.integer)
+          .send({
+              from: config.web3.options.defaultAccount,
+              gas: config.web3.options.defaultGas,
+            });\n`,
         ],
       };
     default:

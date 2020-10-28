@@ -74,6 +74,7 @@ export default {
       if (newFile) {
         // If we've not yet added this function as a node to our newAST, let's do that:
         // Our location in the newAST (parent._context) should be Folder.files[].
+        console.log(node.parameters);
         const newNode = {
           nodeType: 'File',
           name: node.name, // the name of this function
@@ -111,6 +112,7 @@ export default {
       const modifiedStateVariableBindings = scope.modifiedBindings.filter(
         binding => binding.stateVariable,
       );
+      console.log(modifiedStateVariableBindings);
       if (modifiedStateVariableBindings) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._context;

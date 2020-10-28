@@ -4,7 +4,7 @@ import fs from 'fs';
 import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
-import traverse from '../traverse/traverse.mjs';
+import { traverse } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toOrchestrationVisitor.mjs';
 import codeGenerator from '../codeGenerators/toOrchestration.mjs';
@@ -25,6 +25,8 @@ function transformation1(oldAST) {
   const state = {
     stopTraversal: false,
     skipSubnodes: false,
+    snarkVerificationRequired: true,
+    commitmentsRequired: true,
   };
 
   const scope = {};
@@ -54,9 +56,12 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toOrchestration(ast, options) {
   // transpile to a node AST:
-  logger.info('Transforming the .zsol AST to a .zok AST...');
+  logger.info('Transforming the .zsol AST to a .mjs AST...');
   const newAST = transformation1(ast);
-  const newASTFilePath = pathjs.join(options.nodeDirPath, `${options.inputFileName}.mjs`);
+  const newASTFilePath = pathjs.join(
+    options.orchestrationDirPath,
+    `${options.inputFileName}-ast.json`,
+  );
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the node files from the newly created circuit AST:
@@ -65,7 +70,7 @@ export default function toOrchestration(ast, options) {
 
   // save the node files to the output dir:
   // also, work out the .mjs imports
-  logger.info(`Saving .mjs files to the zApp output directory ${options.nodeDirPath}...`);
+  logger.info(`Saving .mjs files to the zApp output directory ${options.orchestrationDirPath}...`);
   for (const fileObj of nodeFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);

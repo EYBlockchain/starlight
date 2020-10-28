@@ -2,7 +2,7 @@ import axios from 'axios';
 import config from 'config';
 
 import { getContractAddress } from './contract.mjs';
-import logger from '../../utils/logger.mjs';
+import logger from './logger.mjs';
 
 // rough draft of timber service - we may not need treeids but kept in just in case
 

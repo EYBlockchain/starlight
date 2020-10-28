@@ -2,7 +2,7 @@ import fs from 'fs';
 import config from 'config';
 
 import Web3 from './web3.mjs';
-import logger from '../../utils/logger.mjs';
+import logger from './logger.mjs';
 
 const web3 = Web3.connection();
 

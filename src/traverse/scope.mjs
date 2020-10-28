@@ -35,6 +35,8 @@ export const updateScope = (path, scope) => {
         path,
         stateVariable: node.stateVariable,
         secretVariable: node.sprinkle === 'secret',
+        initialisationRequired: true, // TODO set false then edit later
+        nullifierRequired: true, // TODO set false then edit later
         referenced: false,
         referenceCount: 0,
         referencingPaths: [],

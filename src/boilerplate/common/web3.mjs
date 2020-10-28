@@ -1,7 +1,7 @@
 import Web3 from 'web3';
 import config from 'config';
 
-import logger from '../../utils/logger.mjs';
+import logger from './logger.mjs';
 
 export default {
   connection() {
