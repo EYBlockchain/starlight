@@ -28,7 +28,8 @@ export const writeFile = (filePath, data) => {
 export const writeVK = async functionName => {
   const sourcePath = `/app/output/${functionName}/${functionName}_vk.key`; // won't change
   const destinationPath = `/app/orchestration/common/db/${functionName}_vk.key`; // TODO - change to output of compiler
-
+  if (!fs.existsSync(`/app/orchestration/common/db/`))
+    fs.mkdirSync(`/app/orchestration/common/db/`, { recursive: true });
   const vk = JSON.parse(readFile(sourcePath));
   writeFile(destinationPath, vk);
 };
