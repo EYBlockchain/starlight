@@ -7,7 +7,7 @@ import logger from '../utils/logger.mjs';
 import { traverse } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toCircuitVisitor.mjs';
-import codeGenerator from '../codeGenerators/toCircuit.mjs';
+import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.mjs';
 
 /**
  * Inspired by the Transformer
@@ -15,15 +15,12 @@ import codeGenerator from '../codeGenerators/toCircuit.mjs';
  */
 
 function transformation1(oldAST) {
-  // We'll create a `newAst` which like our previous AST will have a SourceUnit
-  // node at the top.
   const newAST = {
     nodeType: 'Folder',
     files: [],
   };
 
   const state = {
-    scope: {},
     stopTraversal: false,
     skipSubnodes: false,
   };
@@ -32,6 +29,7 @@ function transformation1(oldAST) {
 
   oldAST._context = newAST.files;
   const dummyParent = {
+    id: 0,
     ast: oldAST,
   };
   dummyParent._context = newAST;
@@ -56,7 +54,7 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toCircuit(ast, options) {
   // transpile to a circuit AST:
-  logger.info('Transforming the .zsol AST to a .zok AST...');
+  logger.info('Transforming the .zsol AST to a contract AST...');
   const newAST = transformation1(ast);
   console.log(newAST);
   console.log(newAST.files[0].nodes);
