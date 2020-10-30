@@ -8,6 +8,7 @@ import { traverse } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toOrchestrationVisitor.mjs';
 import codeGenerator from '../codeGenerators/toOrchestration.mjs';
+import { ZappFilesBoilerplate } from '../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
 
 /**
  * Inspired by the Transformer
@@ -69,14 +70,31 @@ export default function toOrchestration(ast, options) {
   const nodeFileData = codeGenerator(newAST);
 
   // save the node files to the output dir:
-  // also, work out the .mjs imports
   logger.info(`Saving .mjs files to the zApp output directory ${options.orchestrationDirPath}...`);
   for (const fileObj of nodeFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
     console.log(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
+    if (fileObj.filepath.includes('preimage.json')) continue;
     fs.writeFileSync(filepath, fileObj.file);
   }
+  const contractName =
+    options.zappName.charAt(0).toUpperCase() + options.zappName.slice(1) + 'Shield';
+
+  logger.info(`Saving backend files to the zApp output directory ${options.outputDirPath}...`);
+  for (const fileObj of ZappFilesBoilerplate) {
+    let file = fs.readFileSync(fileObj.readPath, 'utf8');
+    const filepath = pathjs.join(options.outputDirPath, fileObj.writePath);
+    if (!fileObj.generic) {
+      file = file.replace(/CONTRACT_NAME/g, contractName);
+      file = file.replace(/FUNCTION_NAME/g, options.zappName);
+    }
+    const dir = pathjs.dirname(filepath);
+    console.log(`About to save to ${filepath}...`);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
+    fs.writeFileSync(filepath, file);
+  }
+
   logger.info('Node transpilation complete.');
 }

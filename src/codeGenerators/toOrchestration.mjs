@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger.mjs';
-import OrchestrationCodeBoilerPlate from '../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
+import { OrchestrationCodeBoilerPlate } from '../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
 
 const boilerplateNodeDir = './src/boilerplate/';
+const testReadPath = './src/boilerplate/common/generic-test.mjs';
 
 /**
  * @param {string} file - a stringified file
@@ -15,7 +16,10 @@ const boilerplateNodeDir = './src/boilerplate/';
 const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
   const lines = file.split('\n');
   const importStatements = lines.filter(
-    line => (line.includes(`.mjs`) || line.includes(`.json`)) && !line.includes('return'),
+    line =>
+      (line.includes(`.mjs`) || line.includes(`.json`)) &&
+      !line.includes('return') &&
+      line.includes('import'),
   );
   let localFiles = [];
   // parse for imports of local (non-zokrates-stdlib) files:
@@ -47,6 +51,7 @@ const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
       uniquePaths.push(obj.filepath);
     }
   });
+
   return uniqueLocalFiles;
 };
 
@@ -57,6 +62,28 @@ const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
  */
 const editableCommitmentCommonFilesBoilerplate = () => {
   return collectImportFiles(OrchestrationCodeBoilerPlate({ nodeType: 'Imports' }).statements.join(''));
+};
+
+const testInputsByType = solidityType => {
+  switch (solidityType) {
+    case 'uint256':
+      return Math.floor(Math.random() * Math.floor(20)); // random number between 1 and 20
+    default:
+      return 0; // TODO
+  }
+};
+
+const prepareIntegrationTest = node => {
+  const genericTestFile = fs.readFileSync(testReadPath, 'utf8');
+  let outputTestFile = genericTestFile.replace(/CONTRACT_NAME/g, node.contractName);
+  outputTestFile = outputTestFile.replace(/FUNCTION_NAME/g, node.functionName);
+  console.log(node.parameters);
+  const paramTypes = node.parameters.parameters.map(obj => obj.typeName.name);
+  const inputs1 = paramTypes.map(testInputsByType);
+  const inputs2 = paramTypes.map(testInputsByType);
+  outputTestFile = outputTestFile.replace(/FUNCTION_SIG_1/g, inputs1);
+  outputTestFile = outputTestFile.replace(/FUNCTION_SIG_2/g, inputs2);
+  return outputTestFile;
 };
 
 // newline / tab beautification for '.zok' files
@@ -104,8 +131,17 @@ function codeGenerator(node) {
     case 'EditableCommitmentCommonFilesBoilerplate':
       return editableCommitmentCommonFilesBoilerplate();
 
+    case 'ZokratesSetupCommonFilesBoilerplate':
+      return collectImportFiles(
+        [`import './common/write-vk.mjs'`, `import './common/zkp-setup.mjs'`].join('\n'),
+      );
+
+    case 'IntegrationTestBoilerplate':
+      return prepareIntegrationTest(node);
+
     case 'FunctionDefinition': {
       node.parameters = node.parameters.parameters.map(codeGenerator);
+      node.returnParameters = node.returnParameters.parameters.map(codeGenerator) || [];
       const fn = OrchestrationCodeBoilerPlate(node);
       const statements = codeGenerator(node.body);
       fn.statements.push(statements);

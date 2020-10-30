@@ -1,12 +1,53 @@
+export const ZappFilesBoilerplate = [
+  { readPath: 'src/boilerplate/common/bin/setup', writePath: '/bin/setup', generic: false },
+  { readPath: 'src/boilerplate/common/bin/startup', writePath: '/bin/startup', generic: true },
+  {
+    readPath: 'src/boilerplate/common/config/default.js',
+    writePath: '/config/default.js',
+    generic: false,
+  },
+  {
+    readPath: 'src/boilerplate/common/migrations/1_initial_migration.js',
+    writePath: 'migrations/1_initial_migration.js',
+    generic: true,
+  },
+  {
+    readPath: 'src/boilerplate/common/migrations/2_shield.js',
+    writePath: 'migrations/2_shield.js',
+    generic: false,
+  },
+  {
+    readPath: 'src/boilerplate/common/boilerplate-package.json',
+    writePath: './package.json',
+    generic: true,
+  },
+  {
+    readPath: 'src/boilerplate/common/boilerplate-docker-compose.yml',
+    writePath: './docker-compose.zapp.yml',
+    generic: true,
+  },
+  {
+    readPath: 'src/boilerplate/common/boilerplate-Dockerfile',
+    writePath: './Dockerfile',
+    generic: true,
+  },
+  {
+    readPath: 'src/boilerplate/common/truffle-config.js',
+    writePath: './truffle-config.js',
+    generic: true,
+  },
+];
+
 /**
  * Parses the boilerplate import statements, and grabs any common statements.
  * @param {Object} options - must always include stage, for some cases includes other info
  * @return {Object} - common statements
  */
 
-const OrchestrationCodeBoilerPlate = node => {
+export const OrchestrationCodeBoilerPlate = node => {
   const lines = [];
   const params = [];
+  const rtnparams = [];
   switch (node.nodeType) {
     case 'Imports':
       // TODO proper db
@@ -23,7 +64,7 @@ const OrchestrationCodeBoilerPlate = node => {
           `\nimport { getMembershipWitness } from './common/timber.mjs';
           \n`,
           `\nconst { generalise } = GN;`,
-          `\nconst db = './common/db/preimage.json';\n\n`,
+          `\nconst db = '/app/orchestration/common/db/preimage.json';\n\n`,
         ],
       };
     case 'FunctionDefinition':
@@ -32,8 +73,13 @@ const OrchestrationCodeBoilerPlate = node => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
       });
+      node.returnParameters.forEach(param => rtnparams.push(`, ${param.integer}`));
       return {
-        signature: [`export default async function ${node.name}(${params}) {`, `}`],
+        signature: [
+          `export default async function ${node.name}(${params}) {`,
+          `\nreturn { tx ${rtnparams.join('')}};
+        \n}`,
+        ],
         statements: lines,
       };
     case 'ReadPreimage':
@@ -41,14 +87,14 @@ const OrchestrationCodeBoilerPlate = node => {
       // TODO proper db
       node.parameters.forEach(param => {
         lines.push(`\tprev${param} = generalise(preimage.${param});`);
-        params.push(`let prev${param};`);
+        params.push(`\nlet prev${param} = generalise(0);`);
       });
       return {
         statements: [
           `\nlet preimage;`,
-          `\nlet prevSalt;`,
+          `\nlet prevSalt = generalise(0);`,
           params,
-          `\nlet currentCommitment;`,
+          `\nlet currentCommitment = generalise(0);`,
           `\nlet commitmentExists;`,
           `\nlet witnessRequired;
           \n`,
@@ -90,7 +136,7 @@ const OrchestrationCodeBoilerPlate = node => {
         statements: [
           `const emptyPath = new Array(32).fill(0);
           const witness = witnessRequired
-          \t? await getMembershipWitness('Assign', currentCommitment.integer)
+          \t? await getMembershipWitness('${node.contractName}', currentCommitment.integer)
           \t: { index: 0, path: emptyPath, root: 0 };
           const index = generalise(witness.index);
           const root = generalise(witness.root);
@@ -128,15 +174,15 @@ const OrchestrationCodeBoilerPlate = node => {
           \tprev${node.privateStateName}.limbs(32, 8),
           \tprevSalt.limbs(32, 8),
           \tindex.integer,
-          \tgeneralise(path).all.integer,
+          \tpath.integer,
           \tnullifier.integer,
           \t${node.privateStateName}.limbs(32, 8),
           \tnewSalt.limbs(32, 8),
           \tnewCommitment.integer,
           \troot.integer,
         ].flat(Infinity);`,
-          `\nconst res = await generateProof(${node.circuitName}, allInputs);`,
-          `\nconst proof = generalise(Object.values(res).flat(Infinity))
+          `\nconst res = await generateProof('${node.circuitName}', allInputs);`,
+          `\nconst proof = generalise(Object.values(res.proof).flat(Infinity))
           .map(coeff => coeff.integer)
           .flat(Infinity);`,
         ],
@@ -158,4 +204,4 @@ const OrchestrationCodeBoilerPlate = node => {
   }
 };
 
-export default OrchestrationCodeBoilerPlate;
+export default { OrchestrationCodeBoilerPlate, ZappFilesBoilerplate };

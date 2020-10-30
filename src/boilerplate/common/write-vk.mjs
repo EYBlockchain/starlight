@@ -27,7 +27,7 @@ export const writeFile = (filePath, data) => {
 
 export const writeVK = async functionName => {
   const sourcePath = `/app/output/${functionName}/${functionName}_vk.key`; // won't change
-  const destinationPath = `/app/examples/cases/uninit_global/db/${functionName}_vk.key`; // TODO - change to output of compiler
+  const destinationPath = `/app/orchestration/common/db/${functionName}_vk.key`; // TODO - change to output of compiler
 
   const vk = JSON.parse(readFile(sourcePath));
   writeFile(destinationPath, vk);

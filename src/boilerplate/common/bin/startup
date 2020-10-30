@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+docker-compose -f docker-compose.zapp.yml up -d ganache
+
+sleep 5
+
+docker-compose -f docker-compose.zapp.yml up -d truffle
+
+sleep 10
+
+docker-compose -f docker-compose.zapp.yml up -d timber
+docker-compose -f docker-compose.zapp.yml up -d zapp

@@ -136,6 +136,26 @@ export default {
             nodeType: 'EditableCommitmentCommonFilesBoilerplate',
           });
         }
+        const contractName = `${node.name.charAt(0).toUpperCase() + node.name.slice(1)}Shield`;
+
+        if (state.snarkVerificationRequired) {
+          parent._context.push({
+            nodeType: 'ZokratesSetupCommonFilesBoilerplate',
+          });
+          parent._context.push({
+            nodeType: 'File',
+            name: 'test',
+            fileExtension: '.mjs',
+            nodes: [
+              {
+                nodeType: 'IntegrationTestBoilerplate',
+                contractName: contractName,
+                functionName: node.name,
+                parameters: node.parameters,
+              },
+            ],
+          });
+        }
 
         // assuming one secret state var per commitment
         const secretVariablesToCommit = scope.modifiedBindings.filter(
@@ -166,6 +186,7 @@ export default {
           // - oldCommitment membership & check vs the commitmentRoot
           node._context.body.statements.push({
             nodeType: 'MembershipWitness',
+            contractName: contractName,
           });
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
@@ -204,7 +225,7 @@ export default {
             nodeType: 'SendTransaction',
             privateStateName: global.name,
             functionName: node.name,
-            contractName: `${node.name}Shield`,
+            contractName: contractName,
           });
 
           node._context.body.statements.push({

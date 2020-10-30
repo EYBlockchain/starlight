@@ -8,15 +8,14 @@ import logger from './logger.mjs';
 
 const { url } = config.merkleTree;
 
-export const startEventFilter = async (functionName, address) => {
+export const startEventFilter = async (contractName, address) => {
   try {
     // const treeId = functionName;
-    const contractName = `${functionName}Shield`;
     let contractAddress = address;
     if (!contractAddress) {
       contractAddress = await getContractAddress(contractName);
     }
-    logger.http(`\nCalling /start for '${functionName}' tree and address '${contractAddress}'`);
+    logger.http(`\nCalling /start for '${contractName}' tree and address '${contractAddress}'`);
     const response = await axios.post(
       `${url}/start`,
       {
@@ -35,12 +34,11 @@ export const startEventFilter = async (functionName, address) => {
   }
 };
 
-export const getLeafIndex = async (functionName, leafValue) => {
-  logger.http(`\nCalling /leaf/value for leafValue ${leafValue} of ${functionName} tree`);
+export const getLeafIndex = async (contractName, leafValue) => {
+  logger.http(`\nCalling /leaf/value for leafValue ${leafValue} of ${contractName} tree`);
   try {
     const value = leafValue.toString();
     // const treeId = functionName;
-    const contractName = `${functionName}Shield`;
     const contractAddress = await getContractAddress(contractName);
     const response = await axios.get(
       `${url}/leaf/value`,
@@ -64,12 +62,11 @@ export const getLeafIndex = async (functionName, leafValue) => {
   }
 };
 
-export const getRoot = async (functionName, address) => {
+export const getRoot = async (contractName, address) => {
   // const treeId = functionName;
-  logger.http(`\nCalling /update for ${functionName} tree`);
+  logger.http(`\nCalling /update for ${contractName} tree`);
   try {
     let contractAddress = address;
-    const contractName = `${functionName}Shield`;
     if (!contractAddress) {
       contractAddress = await getContractAddress(contractName);
     }
@@ -92,16 +89,15 @@ export const getRoot = async (functionName, address) => {
   }
 };
 
-export const getSiblingPath = async (functionName, leafIndex, leafValue) => {
-  logger.http(`\nCalling /siblingPath/${leafIndex} for ${functionName} tree`);
+export const getSiblingPath = async (contractName, leafIndex, leafValue) => {
+  logger.http(`\nCalling /siblingPath/${leafIndex} for ${contractName} tree`);
   try {
     // const treeId = functionName;
-    const contractName = `${functionName}Shield`;
     const contractAddress = await getContractAddress(contractName);
     if (leafIndex === undefined) {
       if (!leafValue) throw new Error(`No leafIndex xor leafValue specified.`);
       // eslint-disable-next-line no-param-reassign
-      leafIndex = await getLeafIndex(functionName, leafValue);
+      leafIndex = await getLeafIndex(contractName, leafValue);
     }
     const response = await axios.get(
       `${url}/siblingPath/${leafIndex}`, //
@@ -127,13 +123,14 @@ export const getSiblingPath = async (functionName, leafIndex, leafValue) => {
   }
 };
 
-export const getMembershipWitness = async (functionName, leafValue) => {
-  logger.http(`\nCalling getMembershipWitness for ${functionName} tree`);
+export const getMembershipWitness = async (contractName, leafValue) => {
+  logger.http(`\nCalling getMembershipWitness for ${contractName} tree`);
   try {
-    const leafIndex = await getLeafIndex(functionName, leafValue);
-    let path = await getSiblingPath(functionName, leafIndex);
+    const leafIndex = await getLeafIndex(contractName, leafValue);
+    let path = await getSiblingPath(contractName, leafIndex);
     const root = path[0].value;
-    path = path.map(node => node.value).splice(0, 1);
+    path = path.map(node => node.value);
+    path.splice(0, 1);
     const witness = { index: leafIndex, path: path, root: root };
     return witness;
   } catch (error) {
