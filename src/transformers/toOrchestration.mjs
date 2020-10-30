@@ -28,6 +28,7 @@ function transformation1(oldAST) {
     skipSubnodes: false,
     snarkVerificationRequired: true,
     commitmentsRequired: true,
+    nullifiersRequired: true,
   };
 
   const scope = {};
@@ -79,8 +80,9 @@ export default function toOrchestration(ast, options) {
     if (fileObj.filepath.includes('preimage.json')) continue;
     fs.writeFileSync(filepath, fileObj.file);
   }
-  const contractName =
-    options.zappName.charAt(0).toUpperCase() + options.zappName.slice(1) + 'Shield';
+  const contractName = `${
+    options.zappName.charAt(0).toUpperCase() + options.zappName.slice(1)
+  }Shield`;
 
   logger.info(`Saving backend files to the zApp output directory ${options.outputDirPath}...`);
   for (const fileObj of ZappFilesBoilerplate) {

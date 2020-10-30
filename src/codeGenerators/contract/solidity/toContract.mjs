@@ -34,6 +34,10 @@ const collectImportFiles = (file, contextDirPath = boilerplateContractsDir) => {
 
   // collect the import files and their paths:
   for (const p of localFilePaths) {
+    if (p.includes('Verifier_Interface')) {
+      localFilePaths.push('./verify/Verifier.sol');
+      localFilePaths.push('./Migrations.sol'); // TODO fix bodge
+    }
     const absPath = path.resolve(contextDirPath, p);
     const relPath = path.relative('.', absPath);
     const f = fs.readFileSync(relPath, 'utf8');
@@ -78,7 +82,17 @@ function codeGenerator(node) {
     case 'SourceUnit': {
       const license = node.license ? `// SPDX-License-Identifier: ${node.license}` : '';
       const file = `${license}\n\n${node.nodes.map(codeGenerator).join('\n\n')}`;
-      const filepath = path.join(boilerplateContractsDir, `${node.name}.sol`);
+      let filepath = path.join(boilerplateContractsDir, `${node.name}Shield.sol`);
+
+      if (node.mainPrivateFunctionName) {
+        filepath = path.join(
+          boilerplateContractsDir,
+          `${
+            node.mainPrivateFunctionName.charAt(0).toUpperCase() +
+            node.mainPrivateFunctionName.slice(1)
+          }Shield.sol`,
+        );
+      }
 
       const fileData = [
         {
@@ -98,7 +112,14 @@ function codeGenerator(node) {
       return `import "${node.file}";`;
 
     case 'ContractDefinition': {
-      const contractDeclaration = `contract ${node.name}Shield`;
+      let name = `${node.name}Shield`;
+      if (node.mainPrivateFunctionName) {
+        name = `${
+          node.mainPrivateFunctionName.charAt(0).toUpperCase() +
+          node.mainPrivateFunctionName.slice(1)
+        }Shield`;
+      }
+      const contractDeclaration = `contract ${name}`;
       const inheritanceSpecifiers = node.baseContracts
         ? ` is ${node.baseContracts
             .reduce((acc, cur) => {

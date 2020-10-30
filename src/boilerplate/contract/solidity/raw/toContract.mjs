@@ -124,7 +124,6 @@ export const inputsVariableDeclarationStatementBoilerplate = (node) => {
     `uint256[] memory inputs = new uint256[](${lengthParameter});`,
     'uint k = 0;',
   ];
-  if (oldCommitmentReferencesRequired) inputAssignment.push('inputs[k++] = commitmentRoot;');
   if (nullifiersRequired) inputAssignment = inputAssignment.concat([
     'for (uint i = 0; i < newNullifiers.length; i++) {',
     '\tinputs[k++] = newNullifiers[i];',
@@ -135,5 +134,6 @@ export const inputsVariableDeclarationStatementBoilerplate = (node) => {
     '\tinputs[k++] = newCommitments[i];',
     '}',
   ]);
+  if (oldCommitmentReferencesRequired) inputAssignment.push('inputs[k++] = commitmentRoot;');
   return inputAssignment;
 };

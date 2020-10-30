@@ -80,6 +80,8 @@ export default {
       const { node, parent } = path;
       const sourceUnitNodes = parent._context[0].nodes;
       const contractNodes = node._context;
+      console.log('HERE');
+      console.log(parent._context[0].nodes);
 
       const {
         zkSnarkVerificationRequired,
@@ -138,6 +140,14 @@ export default {
         });
         contractNodes.unshift({
           nodeType: 'ShieldContractVerifierInterfaceBoilerplate',
+        });
+      }
+
+      if (state.mainPrivateFunctionName) {
+        parent._context[0].mainPrivateFunctionName = state.mainPrivateFunctionName; // TODO fix bodge
+        parent._context[0].nodes.forEach(node => {
+          if (node.nodeType === 'ContractDefinition')
+            node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
       }
     },
@@ -207,14 +217,15 @@ export default {
           storageLocation: 'calldata',
           typeDescriptions: { typeString: 'uint256[]' },
         });
-      if (newCommitmentsRequired)
+      if (newCommitmentsRequired) {
         parameters.push({
           nodeType: 'VariableDeclaration',
           name: 'newCommitments',
           storageLocation: 'calldata',
           typeDescriptions: { typeString: 'uint256[]' },
         });
-
+        state.mainPrivateFunctionName = node.name; // TODO fix bodge
+      }
       // body:
       if (nullifiersRequired)
         statements.push({

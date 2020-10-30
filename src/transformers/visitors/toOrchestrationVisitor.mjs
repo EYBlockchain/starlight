@@ -2,11 +2,7 @@
 
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import {
-  collectAllStateVariableBindings,
-  findInScopeAncestors,
-  findReferencedBinding,
-} from '../../traverse/scope.mjs';
+import { collectAllStateVariableBindings, findReferencedBinding } from '../../traverse/scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
@@ -175,7 +171,7 @@ export default {
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
           // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
           // Also do for MembershipWitness
-          if (binding.initialisationRequired) {
+          if (scope.indicators[0].initialisationRequired) {
             node._context.body.statements.push({
               nodeType: 'ReadPreimage',
               privateStateName: global.name,
@@ -192,7 +188,7 @@ export default {
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
 
           // - oldCommitment nullifier preimage check
-          if (binding.nullifierRequired) {
+          if (scope.indicators[0].nullifierRequired) {
             node._context.body.statements.push({
               nodeType: 'CalculateNullifier',
             });

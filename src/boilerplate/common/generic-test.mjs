@@ -1,4 +1,4 @@
-import assign from './assign.mjs';
+import FUNCTION_NAME from './FUNCTION_NAME.mjs';
 import { startEventFilter, getSiblingPath } from './common/timber.mjs';
 import logger from './common/logger.mjs';
 import web3 from './common/web3.mjs';
@@ -21,9 +21,9 @@ describe('FUNCTION_NAME', async function () {
         await startEventFilter('CONTRACT_NAME');
         const { tx } = await FUNCTION_NAME(FUNCTION_SIG_1);
         console.log(tx);
-        leafIndex = tx.events.NewLeaf.returnValues[0];
+        leafIndex = tx.events.NewLeaves.returnValues[0];
         console.log(`Merkle tree event returnValues:`);
-        console.log(tx.events.NewLeaf.returnValues);
+        console.log(tx.events.NewLeaves.returnValues);
         await sleep(10);
       } catch (err) {
         logger.error(err);
@@ -48,7 +48,7 @@ describe('FUNCTION_NAME', async function () {
       try {
         const { tx } = await FUNCTION_NAME(FUNCTION_SIG_2);
         console.log(`Merkle tree event returnValues:`);
-        console.log(tx.events.NewLeaf.returnValues);
+        console.log(tx.events.NewLeaves.returnValues);
       } catch (err) {
         logger.error(err);
         process.exit(1);
