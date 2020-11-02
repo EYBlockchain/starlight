@@ -2,11 +2,7 @@
 
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import {
-  collectAllStateVariableBindings,
-  queryScopeAncestors,
-  findReferencedBinding,
-} from '../../traverse/scope.mjs';
+import { collectAllStateVariableBindings, findReferencedBinding } from '../../traverse/scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
@@ -31,7 +27,7 @@ export default {
       const { node, parent } = path;
       // define a 'nested' visitor that will traverse the subnodes of this node.
       // TODO: a simple, fast traversal function sith a single callback?
-      const findGlobalAssignmentVisitor = {
+      const findSecretGlobalAssignmentVisitor = {
         Assignment: {
           enter(path, state, scope) {
             const { name, id } = state.global;
@@ -53,16 +49,18 @@ export default {
 
       if (stateVariableBindings) {
         for (const binding of stateVariableBindings) {
-          const nestedState = {
-            global: binding.node,
-            globalFound: false,
-          };
-          traverse(path, findGlobalAssignmentVisitor, nestedState);
-          if (nestedState.globalFound) {
-            // then this global is assigned to within this function, and so we need to create a corresponding circuit _file_ for this function. We'll add commitment boilerplate for this global to this file.
-            newFile = true;
-            // state.scope.assignedGlobals.push(global);
-            // state.scope.EditableCommitmentCommonFilesBoilerplate = true;
+          if (binding.node.sprinkle) {
+            const nestedState = {
+              global: binding.node,
+              globalFound: false,
+            };
+            traverse(path, findSecretGlobalAssignmentVisitor, nestedState);
+            if (nestedState.globalFound) {
+              // then this secret global is assigned to within this function, and so we need to create a corresponding orchestration _file_ for this function. We'll add commitment boilerplate for this global to this file.
+              newFile = true;
+              // state.scope.assignedGlobals.push(global);
+              // state.scope.EditableCommitmentCommonFilesBoilerplate = true;
+            }
           }
         }
       } else {
@@ -77,22 +75,17 @@ export default {
         const newNode = {
           nodeType: 'File',
           name: node.name, // the name of this function
-          fileExtension: '.zok',
+          fileExtension: '.mjs',
           nodes: [
             {
-              nodeType: 'ImportStatements',
-              imports: [
-                {
-                  nodeType: 'EditableCommitmentImportsBoilerplate',
-                },
-              ],
+              nodeType: 'Imports',
             },
             {
               // insert this FunctionDefinition node into our newly created circuit file.
               nodeType: node.nodeType, // FunctionDefinition
-              name: 'main',
+              name: node.name,
               body: {},
-              parameters: {},
+              parameters: {}, // node.parameters.parameters,
               // no returnParameters
             },
           ],
@@ -101,6 +94,22 @@ export default {
         parent._context.push(newNode);
       } else {
         // Not sure what to do if we're not creating a file...
+        const newNode = {
+          nodeType: 'NonSecretFunction',
+          name: node.name, // the name of this function
+          nodes: [
+            {
+              // insert this FunctionDefinition node into our newly created circuit file.
+              nodeType: node.nodeType, // FunctionDefinition
+              name: node.name,
+              body: {},
+              parameters: {}, // node.parameters.parameters,
+              returnParameters: {},
+            },
+          ],
+        };
+        node._context = newNode.nodes[0]; // eslint-disable-line prefer-destructuring
+        parent._context.push(newNode);
       }
     },
 
@@ -108,10 +117,7 @@ export default {
       const { node, parent } = path;
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
-      const modifiedStateVariableBindings = scope.modifiedBindings.filter(
-        binding => binding.stateVariable,
-      );
-      if (modifiedStateVariableBindings) {
+      if (state.commitmentsRequired) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._context;
         let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
@@ -126,39 +132,104 @@ export default {
             nodeType: 'EditableCommitmentCommonFilesBoilerplate',
           });
         }
+        const contractName = `${node.name.charAt(0).toUpperCase() + node.name.slice(1)}Shield`;
 
-        for (const binding of modifiedStateVariableBindings) {
-          const global = binding.node;
-          // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
-          const editableCommitmentParameters = circuitTypes.buildEditableCommitmentParameters(
-            global.name,
-          );
-          for (const param of editableCommitmentParameters) {
-            node._context.parameters.parameters.push(param);
-          }
-
-          // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
-          // - oldCommitment preimage check
-          // - oldCommitment membership & check vs the commitmentRoot
-          // - oldCommitment nullifier preimage check
-          // - newCommitment preimage check
-          // ^^^ do this for each global:
-          node._context.body.statements.push({
-            nodeType: 'EditableCommitmentStatementsBoilerplate',
-            privateStateName: global.name,
+        if (state.snarkVerificationRequired) {
+          parent._context.push({
+            nodeType: 'ZokratesSetupCommonFilesBoilerplate',
+          });
+          parent._context.push({
+            nodeType: 'File',
+            name: 'test',
+            fileExtension: '.mjs',
+            nodes: [
+              {
+                nodeType: 'IntegrationTestBoilerplate',
+                contractName: contractName,
+                functionName: node.name,
+                parameters: node.parameters,
+              },
+            ],
           });
         }
 
-        // Add a commitmentRoot parameter (only 1 commitmentRoot param is needed for all globals being committed to)
-        node._context.parameters.parameters.push({
-          nodeType: 'VariableDeclaration',
-          name: 'commitmentRoot',
-          isPrivate: false,
-          typeName: {
-            nodeType: 'ElementaryTypeName',
-            name: 'field',
-          },
-        });
+        // assuming one secret state var per commitment
+        const secretVariablesToCommit = scope.modifiedBindings.filter(
+          binding => binding.stateVariable && binding.secretVariable,
+        );
+
+        for (const binding of secretVariablesToCommit) {
+          const global = binding.node;
+          // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
+          // const editableCommitmentParameters = circuitTypes.buildEditableCommitmentParameters(
+          //   global.name,
+          // );
+          // for (const param of editableCommitmentParameters) {
+          //   node._context.parameters.parameters.push(param);
+          // }
+
+          // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
+          // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
+          // Also do for MembershipWitness
+          if (scope.indicators[0].initialisationRequired) {
+            node._context.body.statements.push({
+              nodeType: 'ReadPreimage',
+              privateStateName: global.name,
+              parameters: [global.name], // TODO this should be the name of the var inside the commitment
+            });
+          }
+          // - oldCommitment preimage check
+          // - oldCommitment membership & check vs the commitmentRoot
+          node._context.body.statements.push({
+            nodeType: 'MembershipWitness',
+            contractName: contractName,
+          });
+
+          // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
+
+          // - oldCommitment nullifier preimage check
+          if (scope.indicators[0].nullifierRequired) {
+            node._context.body.statements.push({
+              nodeType: 'CalculateNullifier',
+            });
+          }
+
+          // - newCommitment preimage check
+          node._context.body.statements.push({
+            nodeType: 'CalculateCommitment',
+            privateStateName: global.name,
+            parameters: [global.name], // TODO this should be the name of the var inside the commitment
+          });
+
+          if (state.snarkVerificationRequired) {
+            const circuitParams = [];
+            // this adds other values we need in the circuit - v simple
+            binding.modifyingPaths.forEach(modifier => {
+              if (modifier.parent.nodeType === 'Assignment')
+                circuitParams.push(modifier.parent.rightHandSide.name);
+            });
+            circuitParams.push(global.name);
+            node._context.body.statements.push({
+              nodeType: 'GenerateProof',
+              privateStateName: global.name,
+              circuitName: node.name,
+              parameters: circuitParams, // TODO this should be the name of the var inside the commitment
+            });
+          }
+
+          node._context.body.statements.push({
+            nodeType: 'SendTransaction',
+            privateStateName: global.name,
+            functionName: node.name,
+            contractName: contractName,
+          });
+
+          node._context.body.statements.push({
+            nodeType: 'WritePreimage',
+            privateStateName: global.name,
+            parameters: [global.name], // TODO this should be the name of the var inside the commitment
+          });
+        }
       }
     },
   },
@@ -266,7 +337,6 @@ export default {
               {
                 nodeType: 'VariableDeclaration',
                 name: lhs.name,
-                isPrivate: false, // despite the original VarDec being 'secret', this VarDec is now within the body of a circuit; hence 'secret' makes no sence. Declaring it as 'false' will help the codeGenerator.
                 typeName: {
                   name: 'field',
                   nodeType: 'ElementaryTypeName',

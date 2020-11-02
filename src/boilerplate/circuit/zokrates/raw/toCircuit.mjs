@@ -1,5 +1,3 @@
-export const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
-
 export const EditableCommitmentImportsBoilerplate = [
   'from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256',
   'from "utils/pack/bool/pack256.zok" import main as bool_256_to_field',

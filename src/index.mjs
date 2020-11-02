@@ -4,6 +4,8 @@ import resprinkle from './resprinkler.mjs';
 import compile from './solc.mjs';
 
 import toCircuit from './transformers/toCircuit.mjs';
+import toContract from './transformers/toContract.mjs';
+import toOrchestration from './transformers/toOrchestration.mjs';
 import logger from './utils/logger.mjs';
 
 // Original funtion before listr - might choose to revert back to this simple function.
@@ -14,7 +16,11 @@ const zappify = options => {
 
   const zsolAST = resprinkle(solAST, toResprinkle, options);
 
+  toOrchestration(zsolAST, options);
+
   toCircuit(zsolAST, options);
+
+  toContract(zsolAST, options);
 };
 
 // const tasks = new Listr([

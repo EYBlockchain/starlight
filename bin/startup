@@ -9,4 +9,5 @@ docker-compose up -d truffle
 
 sleep 10
 
+docker-compose up -d timber
 docker-compose up -d sprinkles

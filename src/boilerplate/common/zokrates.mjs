@@ -1,7 +1,7 @@
 import config from 'config';
 import axios from 'axios';
 
-import logger from '../../utils/logger.mjs';
+import logger from './logger.mjs';
 
 const { url } = config.zokrates;
 

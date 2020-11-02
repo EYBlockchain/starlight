@@ -81,6 +81,22 @@ Converts a zappable Solidity contract into a zApp. By default, the zApp is outpu
 
 `./zokrates compile --light -i code/assign.zok` <-- it should compile
 
+### full zapp
+
+`zappify -i ./examples/cases/uninit_global/assign.zsol`
+
+`cd zapps/assign/`
+
+`npm install`
+
+`./bin/setup` <-- this can take quite a while!
+
+`npm test`
+
+All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
+
+NB: rerunning the test will not work, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/assign/orchestration/common/db/preimage.json` before `npm test`.
+
 ---
 
 ## R&D Notes & Ideas
