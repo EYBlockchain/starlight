@@ -44,7 +44,6 @@ function transformation1(oldAST) {
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
   path.traverse(explode(visitor), state, scope);
-  console.log(scope);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
@@ -56,8 +55,6 @@ export default function toCircuit(ast, options) {
   // transpile to a circuit AST:
   logger.info('Transforming the .zsol AST to a contract AST...');
   const newAST = transformation1(ast);
-  console.log(newAST);
-  console.log(newAST.files[0].nodes);
   const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
