@@ -1,7 +1,7 @@
 module.exports = {
   globals: ['uint256', 'mapping'],
   functions: ['function', 'constructor'],
-  sprinkles: ['secret', 'owned'],
+  sprinkles: ['secret', 'owned', 'known', 'unknown'],
   log_level: 'debug',
   zokrates: {
     url: 'http://zokrates:80',

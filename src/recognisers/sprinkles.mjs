@@ -18,13 +18,14 @@ function tidy(_line) {
 
 function recogniseSprinkles(line) {
   if (!line) return false;
-  for (const keyword of config.sprinkles) {
+  for (let keyword of config.sprinkles) {
     // TODO: this can only handle 1 decorator per line. Might not be true for complex contracts.
     if (line.startsWith(keyword)) {
       // sprinkle found
-      const desprinkledLine = tidy(line.replace(`${keyword}`, '')); // remove the sprinkled syntax
+      let desprinkledLine = tidy(line.replace(`${keyword}`, '')); // remove the sprinkled syntax
       let type;
       let name;
+      let rhs;
       if (recogniseGlobal(desprinkledLine)) {
         type = 'global';
         [, , name] = desprinkledLine.replace(/ *\([^)]*\) */g, ' ').split(' ');
@@ -33,11 +34,17 @@ function recogniseSprinkles(line) {
         ({ type, name } = recogniseFunction(desprinkledLine, true));
       } else if (recogniseAssignment(desprinkledLine)) {
         type = 'assignment';
-        logger.info(`Warning: secret keyword used for assignment after declaration`);
-        [name] = desprinkledLine.split('=').map(el => el.trim());
+        if (keyword === 'secret')
+          logger.info(`Warning: secret keyword used for assignment after declaration`);
+        [name, rhs] = desprinkledLine.split('=').map(el => el.trim());
+      }
+      // below: attempts to capture two keywords e.g. secret known - may not be needed
+      if (recogniseSprinkles(desprinkledLine).keyword) {
+        keyword = [keyword].push(recogniseSprinkles(desprinkledLine).keyword);
+        desprinkledLine = recogniseSprinkles(desprinkledLine).desprinkledFile;
       }
       logger.info(`Desprinkled the line \n${line} \nto \n${desprinkledLine}`);
-      return { keyword, type, name, desprinkledLine };
+      return { keyword, type, name, rhs, desprinkledLine };
     }
   }
   return {};

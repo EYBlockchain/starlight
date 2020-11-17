@@ -39,7 +39,7 @@ function desprinkle(options) {
     const line = tidy(sprinkledLine);
     if (!line) return sprinkledLine;
     recogniseCurlyBracket(line); // increases blockCount, checks we are in the correct block // TODO: is this needed?
-    const { keyword, type, name, desprinkledLine } = recogniseSprinkles(line);
+    const { keyword, type, name, rhs, desprinkledLine } = recogniseSprinkles(line);
     if (desprinkledLine) {
       // record the desprinkling, so that we may add the keywords back to the AST later (after solc compilation):
       toResprinkle.push({
@@ -48,6 +48,7 @@ function desprinkle(options) {
         type,
         keyword,
         name,
+        rhs,
       });
       return sprinkledLine.replace(line, desprinkledLine);
     }
