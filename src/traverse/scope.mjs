@@ -88,7 +88,7 @@ export const updateScope = (path, scope) => {
         path,
         stateVariable: node.stateVariable,
         secretVariable: node.sprinkle === 'secret',
-        incrementingOrAccumulating: 'accumulating',
+        // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
         referenced: false,
         referenceCount: 0,
         referencingPaths: [], // paths which reference this binding
@@ -162,11 +162,11 @@ export const updateScope = (path, scope) => {
 
       return scope;
     }
+    case 'VariableDeclarationStatement':
+    case 'ExpressionStatement':
     case 'PragmaDirective':
     case 'ParameterList':
     case 'Block':
-    case 'VariableDeclarationStatement':
-    case 'ExpressionStatement':
     case 'Assignment':
     case 'BinaryOperation':
     case 'ElementaryTypeName':
@@ -244,4 +244,124 @@ export const collectAllAncestorBindings = scope => {
 
 export const collectAllStateVariableBindings = scope => {
   return collectAllAncestorBindings(scope).filter(binding => binding.stateVariable);
+};
+
+export const isIncremented = (expressionNode, lhsNode, scope) => {
+  // here: flag rewrites and incrementations
+  let isIncrementedBool;
+  // first, check if the LHS node is secret
+  let lhsSecret;
+  if (lhsNode.nodeType === 'Identifier') {
+    const lhsbinding = findReferencedBinding(scope, lhsNode);
+    lhsSecret = !!lhsbinding.secretVariable;
+  }
+  switch (expressionNode.nodeType) {
+    case 'Assignment': {
+      // a += something
+      if (lhsSecret && expressionNode.operator === '+=') {
+        isIncrementedBool = true;
+        break;
+      }
+      // b -= something, b /= something
+      if (expressionNode.operator === '-=' || expressionNode.operator === '/=') {
+        isIncrementedBool = false;
+        break;
+      }
+      const rhsType = expressionNode.rightHandSide.nodeType;
+      if (rhsType === 'BinaryOperation') {
+        const binopNode = expressionNode.rightHandSide;
+        // TODO deal with multiple binops e.g. a + b + 7
+        const params = [binopNode.leftExpression, binopNode.rightExpression];
+        const op = expressionNode.rightHandSide.operator;
+        // TODO deal with binops like a + b - c, c < a + b
+        if (!op.includes('+')) {
+          isIncrementedBool = false;
+          break;
+        }
+        for (const [index, param] of params.entries()) {
+          if (param.nodeType === 'BinaryOperation') {
+            if (!param.operator.includes('+')) {
+              isIncrementedBool = false;
+              break;
+            }
+            params[index] = param.leftExpression;
+            params.push(param.rightExpression);
+          }
+        }
+        for (const param of params) {
+          logger.info(`at param ${param.name}`);
+          if (param.referencedDeclaration) {
+            const isSecret = findReferencedBinding(scope, param).secretVariable;
+            logger.info(`param is secret? ${isSecret}`);
+            // a = a + b
+            if (isSecret && param.name === lhsNode.name) {
+              isIncrementedBool = true;
+              break;
+            }
+            // b = a + something
+            if (!lhsSecret && isSecret) {
+              isIncrementedBool = true;
+              break;
+            }
+            // if none, go to the next param
+          }
+        }
+      } else if (rhsType === 'Identifier') {
+        // c = a + b, a = c
+        // TODO consider cases where c has lots of modifiers, which might cancel out the incrementation of a
+        // TODO consider doing this at the level of c, not a, maybe that works out better
+        const rhsbinding = findReferencedBinding(scope, expressionNode.rightHandSide);
+        const isSecret = rhsbinding.secretVariable;
+        // looking at modifiers of c...
+        if (rhsbinding && rhsbinding.modified) {
+          // for each modifier, replace a with c and see if there are incrementations..
+          for (const path of rhsbinding.modifyingPaths) {
+            const modifyingNode = path.node;
+            // ... and if a xor c are secret, then true
+            if (isIncremented(modifyingNode, lhsNode, scope) && (lhsSecret || isSecret)) {
+              isIncrementedBool = true;
+              break;
+            }
+          }
+        }
+      }
+      if (!isIncrementedBool) isIncrementedBool = false;
+      break;
+    }
+    // TODO are there incrementations which aren't assignments?
+    default:
+      isIncrementedBool = false;
+      break;
+  }
+  console.log(`is incremented? ${isIncrementedBool}`);
+  // 2) Update the indicators of the scope:
+  const referencedBinding = findReferencedBinding(scope, lhsNode);
+  if (referencedBinding.node.stateVariable && isInScopeType(scope, 'FunctionDefinition')) {
+    const fnDefScope = getScopeAncestorOfType(scope, 'FunctionDefinition');
+    const indicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
+    console.log(`previously incremented?`);
+    console.log(indicatorObj.isIncremented);
+    let stateIsIncremented = isIncrementedBool;
+    if (indicatorObj.isIncremented === false) {
+      // TODO move this further up, this part says: if there's an overwriting statement in the same scope, then this is also a rewriting, regardless of how its written
+      stateIsIncremented = false;
+    }
+
+    // TODO is the below needed for an ExpressionStatement?
+    // indicatorObj.referencingPaths.push(path);
+    indicatorObj.isIncremented = stateIsIncremented;
+    if (isIncrementedBool === false) {
+      // statement is an overwrite
+      indicatorObj.isWhole = true;
+      const reason = `Overwritten at ${expressionNode.src}`;
+      console.log(reason);
+      if (indicatorObj.isWholeReason) {
+        indicatorObj.isWholeReason.push(reason);
+      } else {
+        indicatorObj.isWholeReason = [reason];
+      }
+    }
+  }
+
+  return isIncrementedBool;
 };

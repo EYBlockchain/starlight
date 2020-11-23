@@ -1,17 +1,16 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
 import cloneDeep from 'lodash.clonedeep';
-import logger from '../../utils/logger.mjs';
-import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
+import logger from '../../../utils/logger.mjs';
 import {
   collectAllStateVariableBindings,
   queryScopeAncestors,
   findReferencedBinding,
   getScopeAncestorOfType,
-} from '../../traverse/scope.mjs';
-import circuitTypes from '../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
-
+  isIncremented,
+} from '../../../traverse/scope.mjs';
+import circuitTypes from '../../../types/circuit-types.mjs';
+import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -36,7 +35,14 @@ export default {
   FunctionDefinition: {
     enter(path, state, scope) {},
 
-    exit(path, state, scope) {},
+    exit(path, state, scope) {
+      // console.log('scope');
+      // console.log(scope);
+      // scope.referencedBindings.forEach(binding => {
+      //   console.log('binding:');
+      //   console.log(binding.node, binding.referencingPaths);
+      // });
+    },
   },
 
   ParameterList: {
@@ -72,7 +78,13 @@ export default {
   ExpressionStatement: {
     enter(path, state, scope) {},
 
-    exit(node, parent) {},
+    exit(path, state, scope) {
+      // Why here? Because we need the indicatorObj of the individual elts before we decide
+      const { node } = path;
+      const expressionNode = node.expression;
+      const lhsNode = expressionNode.leftHandSide;
+      const isIncrementedBool = isIncremented(expressionNode, lhsNode, scope);
+    },
   },
 
   VariableDeclaration: {
@@ -88,9 +100,9 @@ export default {
   },
 
   Identifier: {
-    enter(path) {},
+    enter(path, state, scope) {},
 
-    exit(path) {},
+    exit(path, state, scope) {},
   },
 
   Literal: {

@@ -8,7 +8,7 @@ import { updateScope } from './scope.mjs';
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
-export function traverse(path, visitor, state = {}, scope = {}) {
+export function traverse(path, visitor, state = {}, scope) {
   logger.debug('pathLocation:', `${path.getLocation()} = ${path.node.nodeType}`);
   scope = updateScope(path, scope);
 
@@ -29,7 +29,6 @@ export function traverse(path, visitor, state = {}, scope = {}) {
     // logger.debug('node._context:', node._context);
     // if (parent) logger.debug('parent._context:', parent._context);
     // logger.debug('state:', state);
-
     methods.enter(path, state, scope);
 
     // parentPath example placement:

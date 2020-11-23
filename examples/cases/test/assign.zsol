@@ -5,10 +5,12 @@ pragma solidity ^0.7.0;
 contract Assign {
 
   secret uint256 private a;
-  uint256 public b;
 
   function assign(uint256 value) public {
     known a = value;
-    unknown b = 2;
+    // uint256 b = value*2;
+    a = a + value;
+    a += value;
+    a = 2 + a + value;
   }
 }

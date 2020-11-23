@@ -3,6 +3,7 @@ import desprinkle from './desprinkler.mjs';
 import resprinkle from './resprinkler.mjs';
 import compile from './solc.mjs';
 
+import checks from './transformers/checks.mjs';
 import toCircuit from './transformers/toCircuit.mjs';
 import toContract from './transformers/toContract.mjs';
 import toOrchestration from './transformers/toOrchestration.mjs';
@@ -16,11 +17,13 @@ const zappify = options => {
 
   const zsolAST = resprinkle(solAST, toResprinkle, options);
 
-  toOrchestration(zsolAST, options);
+  checks(zsolAST, options);
 
-  toCircuit(zsolAST, options);
+  // toOrchestration(zsolAST, options);
 
-  toContract(zsolAST, options);
+  // toCircuit(zsolAST, options);
+
+  // toContract(zsolAST, options);
 };
 
 // const tasks = new Listr([
