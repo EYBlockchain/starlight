@@ -14,6 +14,12 @@ function findNodeId(ast, type, name, rhs) {
         if (node.nodeType === 'VariableDeclaration' && node.name === `${name}`) {
           nodeId = node.id;
           break;
+        } else if (
+          node.nodeType === 'VariableDeclarationStatement' &&
+          node.declarations[0].name === `${name}`
+        ) {
+          nodeId = node.declarations[0].id;
+          break;
         }
       }
       if (!nodeId) logger.debug(`Node Id for ${type} ${name} not found`);
