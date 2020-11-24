@@ -6,11 +6,14 @@ import fs from 'fs';
 import logger from './utils/logger.mjs';
 
 const operators = ['+', '-', '*', '/', '%'];
+const eqOperators = [' = ', '+= ', '-= '];
 
-function findNodeId(ast, type, name, rhs) {
+function findNodeId(ast, line) {
+  const { type, name, rhs, newline } = line;
   const { nodes } = ast.nodes[1];
   let nodeId;
   let op;
+  let eqop;
   switch (type) {
     case 'global':
       for (const node of nodes) {
@@ -28,11 +31,16 @@ function findNodeId(ast, type, name, rhs) {
       if (!nodeId) logger.debug(`Node Id for ${type} ${name} not found`);
       break;
     case 'assignment':
-      // TODO not the case anymore - we can have keywords in from of assignments
-      // logger.debug( `Assignment: need to 1. warn user and 2. check the global exists and return that nodeid`);
+      // TODO functionCalls, MemberAccess, IndexAccess
       for (const operator of operators) {
         if (rhs.includes(operator)) {
           op = operator;
+          break;
+        }
+      }
+      for (const eqOperator of eqOperators) {
+        if (newline.includes(eqOperator)) {
+          eqop = eqOperator.trim();
           break;
         }
       }
@@ -40,7 +48,7 @@ function findNodeId(ast, type, name, rhs) {
         if (node.nodeType === 'FunctionDefinition') {
           const fnScope = { nodes: [{}, {}] };
           fnScope.nodes[1].nodes = node.body.statements;
-          nodeId = findNodeId(fnScope, type, name, rhs);
+          nodeId = findNodeId(fnScope, line);
         }
         if (nodeId) break;
         if (
@@ -49,32 +57,29 @@ function findNodeId(ast, type, name, rhs) {
           node.expression.leftHandSide.name === name
         ) {
           // TODO change how this works so we can accurately match assignments - may get the wrong id here for anything but identifiers and lierals
-          if (
-            node.expression.rightHandSide.nodeType === 'Identifier' &&
-            !rhs.includes(node.expression.rightHandSide.name)
-          )
-            break;
-          if (
-            node.expression.rightHandSide.nodeType === 'Literal' &&
-            !rhs.includes(node.expression.rightHandSide.value)
-          )
-            break;
-          if (node.expression.rightHandSide.nodeType === 'BinaryOperation' && !op) break;
+          if (node.expression.rightHandSide.nodeType === 'Identifier') {
+            if (rhs.replace(';', '') !== node.expression.rightHandSide.name) {
+              continue;
+            } else if (node.expression.operator === eqop) {
+              nodeId = node.expression.leftHandSide.id;
+              break;
+            }
+            if (nodeId) break;
+          }
+          if (node.expression.rightHandSide.nodeType === 'Literal') {
+            if (!rhs.includes(node.expression.rightHandSide.value)) {
+              continue;
+            } else {
+              nodeId = node.expression.leftHandSide.id;
+              break;
+            }
+          }
+          if (node.expression.rightHandSide.nodeType === 'BinaryOperation' && !op) continue;
           if (
             node.expression.rightHandSide.nodeType === 'BinaryOperation' &&
             op &&
             node.expression.rightHandSide.operator.includes(op)
           ) {
-            nodeId = node.expression.leftHandSide.id;
-            break;
-          }
-          // if (
-          //   op &&
-          //   node.expression.rightHandSide.operator &&
-          //   node.expression.rightHandSide.operator.includes(op)
-          // )
-          //   nodeId = node.expression.leftHandSide.id;
-          if (!op) {
             nodeId = node.expression.leftHandSide.id;
             break;
           }
@@ -117,7 +122,18 @@ function addSprinkles(ast, line) {
     default:
       for (const node of nodes) {
         if (node.id === line.nodeId) {
-          node.sprinkle = line.keyword;
+          switch (line.keyword) {
+            case 'secret':
+              node.isSecret = true;
+              break;
+            case 'unknown':
+              node.isUnknown = true;
+              break;
+            case 'known':
+              node.isKnown = true;
+              break;
+            default:
+          }
           break;
         }
       }
@@ -140,7 +156,18 @@ function addSprinkles(ast, line) {
           node.nodeType === 'ExpressionStatement' &&
           node.expression.leftHandSide.id === line.nodeId
         ) {
-          node.expression.leftHandSide.sprinkle = line.keyword;
+          switch (line.keyword) {
+            case 'secret':
+              node.expression.leftHandSide.isSecret = true;
+              break;
+            case 'unknown':
+              node.expression.leftHandSide.isUnknown = true;
+              break;
+            case 'known':
+              node.expression.leftHandSide.isKnown = true;
+              break;
+            default:
+          }
           break;
         }
         if (node.nodeType === 'FunctionDefinition') {
@@ -182,11 +209,11 @@ function resprinkle(solAST, toResprinkle, options) {
             }
           }
         }
-        line.nodeId = findNodeId(solAST, line.type, line.name, line.rhs);
+        line.nodeId = findNodeId(solAST, line);
         break;
       default:
         // same for function, constructor, and global
-        line.nodeId = findNodeId(solAST, line.type, line.name, '');
+        line.nodeId = findNodeId(solAST, line);
     }
     // sprinkle ast
     newAST = addSprinkles(newAST, line);

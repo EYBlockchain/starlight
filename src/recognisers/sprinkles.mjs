@@ -8,6 +8,8 @@ import recogniseGlobal from './global.mjs';
 import recogniseAssignment from './assignment.mjs';
 import recogniseFunction from './function.mjs';
 
+const operators = [' = ', '+= ', '-= '];
+
 function tidy(_line) {
   // trim whitespace
   const line = _line.replace(/\s+/g, ' ').replace(/^\s/, '');
@@ -36,7 +38,11 @@ function recogniseSprinkles(line) {
         type = 'assignment';
         if (keyword === 'secret')
           logger.info(`Warning: secret keyword used for assignment after declaration`);
-        [name, rhs] = desprinkledLine.split('=').map(el => el.trim());
+        for (const operator of operators) {
+          if (line.includes(operator)) {
+            [name, rhs] = desprinkledLine.split(operator).map(el => el.trim());
+          }
+        }
       }
       // below: attempts to capture two keywords e.g. secret known - may not be needed
       if (recogniseSprinkles(desprinkledLine).keyword) {
