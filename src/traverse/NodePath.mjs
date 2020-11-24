@@ -2,6 +2,7 @@
 
 import { traverse, traverseNodesFast, traversePathsFast } from './traverse.mjs';
 import logger from '../utils/logger.mjs';
+import { path as pathCache } from './cache.mjs';
 
 /**
 A NodePath is required as a way of 'connecting' a node to its parent (and its parent, and so on...). We can't assign a `.parent` to a `node` (to create `node.parent`), because we'd end up with a cyclic reference; the parent already contains the node, so the node can't then contain the parent!
@@ -53,6 +54,25 @@ class NodePath {
     this.nodeType = this.node.nodeType;
   }
 
+  // init({ node, parent, key, container, index, parentPath }) {
+  //   NodePath.validateConstructorArgs({ node, parent, container, key, index, parentPath });
+  //
+  //   const cachedPath = this.get(node);
+  //   if (cachedPath) return cachedPath;
+  //
+  //   this.node = node;
+  //   this.parent = parent;
+  //   this.key = key;
+  //   this.container = container;
+  //   this.parentPath = parentPath || null;
+  //
+  //   this.inList = Array.isArray(container);
+  //   this.index = this.inList ? index : null;
+  //
+  //   this.containerName = this.key; // synonym
+  //   this.nodeType = this.node.nodeType;
+  // }
+
   static validateConstructorArgs({ node, parent, key, container, index, parentPath }) {
     if (!parent) throw new Error(`Can't create a path without a parent`);
     if (!node) throw new Error(`Can't create a path without a node`);
@@ -69,6 +89,17 @@ class NodePath {
       }
       if (node !== container) throw new Error(`container !== node for a non-array container`);
     }
+  }
+
+  // returns a cached nodePath instance, if one exists
+  // otherwise it creates a new nodePath instance
+  static get({ node, parent, key, container, index, parentPath }) {
+    const cachedPath = pathCache.get(node);
+    if (pathCache.has(node)) return cachedPath;
+
+    const path = new NodePath({ node, parent, key, container, index, parentPath });
+    pathCache.set(node, path);
+    return path;
   }
 
   traverse(visitor, state, scope) {

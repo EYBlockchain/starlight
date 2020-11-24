@@ -48,7 +48,7 @@ export function traverse(path, visitor, state = {}, scope = {}) {
       const subNodes = node[key];
       for (const [index, subNode] of subNodes.entries()) {
         if (!subNode) continue;
-        const subNodePath = new NodePath({
+        const subNodePath = NodePath.get({
           parent: node,
           key,
           container: subNodes,
@@ -60,7 +60,7 @@ export function traverse(path, visitor, state = {}, scope = {}) {
       }
     } else if (node[key]) {
       const subNode = node[key];
-      const subNodePath = new NodePath({
+      const subNodePath = NodePath.get({
         parent: node,
         key,
         container: subNode,
