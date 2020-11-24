@@ -5,9 +5,12 @@ Reads an input file line by line and passes each line for further processing
 import fs from 'fs';
 import logger from './utils/logger.mjs';
 
+const operators = ['+', '-', '*', '/', '%'];
+
 function findNodeId(ast, type, name, rhs) {
   const { nodes } = ast.nodes[1];
   let nodeId;
+  let op;
   switch (type) {
     case 'global':
       for (const node of nodes) {
@@ -27,6 +30,12 @@ function findNodeId(ast, type, name, rhs) {
     case 'assignment':
       // TODO not the case anymore - we can have keywords in from of assignments
       // logger.debug( `Assignment: need to 1. warn user and 2. check the global exists and return that nodeid`);
+      for (const operator of operators) {
+        if (rhs.includes(operator)) {
+          op = operator;
+          break;
+        }
+      }
       for (const node of nodes) {
         if (node.nodeType === 'FunctionDefinition') {
           const fnScope = { nodes: [{}, {}] };
@@ -50,8 +59,25 @@ function findNodeId(ast, type, name, rhs) {
             !rhs.includes(node.expression.rightHandSide.value)
           )
             break;
-          nodeId = node.expression.leftHandSide.id;
-          break;
+          if (node.expression.rightHandSide.nodeType === 'BinaryOperation' && !op) break;
+          if (
+            node.expression.rightHandSide.nodeType === 'BinaryOperation' &&
+            op &&
+            node.expression.rightHandSide.operator.includes(op)
+          ) {
+            nodeId = node.expression.leftHandSide.id;
+            break;
+          }
+          // if (
+          //   op &&
+          //   node.expression.rightHandSide.operator &&
+          //   node.expression.rightHandSide.operator.includes(op)
+          // )
+          //   nodeId = node.expression.leftHandSide.id;
+          if (!op) {
+            nodeId = node.expression.leftHandSide.id;
+            break;
+          }
         }
       }
       break;
