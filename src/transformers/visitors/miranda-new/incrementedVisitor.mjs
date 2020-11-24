@@ -84,6 +84,11 @@ export default {
       const expressionNode = node.expression;
       const lhsNode = expressionNode.leftHandSide;
       const isIncrementedBool = isIncremented(expressionNode, lhsNode, scope);
+      if (lhsNode.sprinkle === 'unknown' && expressionNode.isDecremented === true) {
+        throw new Error(
+          "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
+        );
+      }
     },
   },
 

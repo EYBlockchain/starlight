@@ -36,6 +36,14 @@ export default {
     exit(path, state, scope) {},
   },
 
+  WhileStatement: {
+    enter(path, state, scope) {
+      throw new Error('Unsupported Solidity');
+    },
+
+    exit(path, state, scope) {},
+  },
+
   SourceUnit: {
     enter(path, state, scope) {},
 

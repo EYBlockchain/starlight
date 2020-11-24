@@ -50,18 +50,14 @@ function transformation1(oldAST) {
   // TODO - think about starting with a blank scope or using the prev one. Using the prev one could mean more efficient, but currently adds duplicates.
   path.traverse(explode(unsupportedVisitor), state, scope);
   logger.info('No unsupported Solidity');
-  console.log(path);
   path.traverse(explode(externalCallVisitor), state, scope);
   logger.info('No unsupported external calls');
-  console.log(path);
   path.traverse(explode(decoratorVisitor), state, scope);
   logger.info('No conflicting known/unknown decorators');
-  console.log(path);
   path.traverse(explode(incrementedVisitor), state, scope);
   logger.info('Incrementations marked');
-  console.log(path);
-  path.traverse(explode(referencedVisitor), state, scope);
-  logger.info('References marked');
+  // path.traverse(explode(referencedVisitor), state, scope);
+  // logger.info('References marked');
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.

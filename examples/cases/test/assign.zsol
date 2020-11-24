@@ -12,5 +12,7 @@ contract Assign {
     a = a + value;
     a += value;
     a = 2 + a + value;
+    a -= value;
+    a = a - value;
   }
 }
