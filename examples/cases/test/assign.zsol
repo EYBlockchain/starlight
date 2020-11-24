@@ -9,7 +9,7 @@ contract Assign {
   function assign(uint256 value) public {
     known a = value;
     // uint256 b = value*2;
-    unknown a = a + value;
+    a = a + value;
     known a += value;
     a = 2 + a + value;
     a -= value;

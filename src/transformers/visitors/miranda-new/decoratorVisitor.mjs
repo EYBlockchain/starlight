@@ -77,7 +77,7 @@ export default {
   VariableDeclaration: {
     enter(path, state, scope) {},
 
-    exit(path) {},
+    exit(path, state, scope) {},
   },
 
   ElementaryTypeName: {
@@ -92,11 +92,11 @@ export default {
     exit(path, state, scope) {
       const { node, parent } = path;
       const varDec = findReferencedBinding(scope, node);
-      if (node.sprinkle && varDec.stateVariable) {
+      if (varDec.stateVariable) {
         // node is decorated
-        if (!varDec.secretVariable && node.sprinkle === 'unknown')
+        if (!varDec.secretVariable && node.isUnknown)
           throw new Error(`Identifier ${node.name} is marked as unknown but is not secret.`);
-        if (!varDec.secretVariable && node.sprinkle === 'known')
+        if (!varDec.secretVariable && node.isKnown)
           logger.warn(
             `PEDANTIC: a conventional smart contract state variable (${node.name}) is 'known' by default`,
           );

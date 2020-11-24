@@ -87,7 +87,7 @@ export const updateScope = (path, scope) => {
         node,
         path,
         stateVariable: node.stateVariable,
-        secretVariable: node.sprinkle === 'secret',
+        secretVariable: node.isSecret === true,
         // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
         referenced: false,
         referenceCount: 0,
@@ -97,7 +97,7 @@ export const updateScope = (path, scope) => {
         modifyingPaths: [], // paths which reference this binding
       });
 
-      if (scope.scopeType === 'ContractDefinition' && node.sprinkle === 'secret') {
+      if (scope.scopeType === 'ContractDefinition' && node.isSecret) {
         scope.indicators.commitmentsRequired = true;
         scope.indicators.zkSnarkVerificationRequired = true;
       }
@@ -155,6 +155,14 @@ export const updateScope = (path, scope) => {
           indicatorObj.nullifierRequired = null; // we don't know yet
           contractDefScope.indicators.nullifiersRequired = true;
           indicatorObj.initialisationRequired = true;
+          if (node.isKnown) indicatorObj.isKnown = true;
+          if (node.isUnknown) indicatorObj.isUnknown = true;
+        }
+
+        if (indicatorObj.isKnown && indicatorObj.isUnknown) {
+          throw new Error(
+            `Secret state ${node.name} cannot be marked as known and unknown in the same scope`,
+          );
         }
 
         if (!indicatorForStateVarExists) fnDefScope.indicators.push(indicatorObj);
@@ -162,8 +170,8 @@ export const updateScope = (path, scope) => {
 
       return scope;
     }
-    case 'VariableDeclarationStatement':
     case 'ExpressionStatement':
+    case 'VariableDeclarationStatement':
     case 'PragmaDirective':
     case 'ParameterList':
     case 'Block':
@@ -364,6 +372,7 @@ export const isIncremented = (expressionNode, lhsNode, scope) => {
   const referencedBinding = findReferencedBinding(scope, lhsNode);
   if (referencedBinding.node.stateVariable && isInScopeType(scope, 'FunctionDefinition')) {
     const fnDefScope = getScopeAncestorOfType(scope, 'FunctionDefinition');
+    // console.log(fnDefScope);
     const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
     console.log(`state has ONLY incrementations in this scope (so far)?`);
     console.log(fnIndicatorObj.isIncremented);
