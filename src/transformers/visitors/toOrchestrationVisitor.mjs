@@ -2,7 +2,7 @@
 
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import { collectAllStateVariableBindings, findReferencedBinding } from '../../traverse/scope.mjs';
+import { collectAllStateVariableBindings, findReferencedBinding } from '../../traverse/Scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 

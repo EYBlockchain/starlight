@@ -6,7 +6,7 @@ import {
   collectAllStateVariableBindings,
   queryScopeAncestors,
   findReferencedBinding,
-} from '../../traverse/scope.mjs';
+} from '../../traverse/Scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 

@@ -4,7 +4,7 @@ import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
 // import * as solidityTypes from '../types/solidity-types.mjs';
 import { getVisitableKeys, setParentPath } from '../types/solidity-types.mjs';
-import { updateScope } from './scope.mjs';
+import { updateScope } from './Scope.mjs';
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
@@ -48,7 +48,7 @@ export function traverse(path, visitor, state = {}, scope = {}) {
       const subNodes = node[key];
       for (const [index, subNode] of subNodes.entries()) {
         if (!subNode) continue;
-        const subNodePath = NodePath.get({
+        const subNodePath = new NodePath({
           parent: node,
           key,
           container: subNodes,
@@ -60,7 +60,7 @@ export function traverse(path, visitor, state = {}, scope = {}) {
       }
     } else if (node[key]) {
       const subNode = node[key];
-      const subNodePath = NodePath.get({
+      const subNodePath = new NodePath({
         parent: node,
         key,
         container: subNode,

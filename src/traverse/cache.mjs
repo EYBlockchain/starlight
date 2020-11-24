@@ -1,15 +1,15 @@
 export let path = new WeakMap();
 export let scope = new WeakMap();
 
-export function clearPath() {
+export function clearPathCache() {
   path = new WeakMap();
 }
 
-export function clearScope() {
+export function clearScopeCache() {
   scope = new WeakMap();
 }
 
-export function clear() {
-  clearPath();
-  clearScope();
+export function clearCaches() {
+  clearPathCache();
+  clearScopeCache();
 }

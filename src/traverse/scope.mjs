@@ -2,6 +2,12 @@
 
 import logger from '../utils/logger.mjs';
 
+class Scope {
+  constructor() {
+
+  }
+}
+
 // TODO: better scope handling
 export const updateScope = (path, scope) => {
   const { node, parent } = path;
@@ -245,3 +251,5 @@ export const collectAllAncestorBindings = scope => {
 export const collectAllStateVariableBindings = scope => {
   return collectAllAncestorBindings(scope).filter(binding => binding.stateVariable);
 };
+
+export default Scope;

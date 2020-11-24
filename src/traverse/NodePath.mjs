@@ -39,6 +39,9 @@ class NodePath {
    *        // the node is at parent[key][index] = container[index]
    */
   constructor({ node, parent, key, container, index, parentPath }) {
+    const cachedPath = pathCache.get(node);
+    if (pathCache.has(node)) return cachedPath;
+
     NodePath.validateConstructorArgs({ node, parent, container, key, index, parentPath });
 
     this.node = node;
@@ -52,26 +55,9 @@ class NodePath {
 
     this.containerName = this.key; // synonym
     this.nodeType = this.node.nodeType;
-  }
 
-  // init({ node, parent, key, container, index, parentPath }) {
-  //   NodePath.validateConstructorArgs({ node, parent, container, key, index, parentPath });
-  //
-  //   const cachedPath = this.get(node);
-  //   if (cachedPath) return cachedPath;
-  //
-  //   this.node = node;
-  //   this.parent = parent;
-  //   this.key = key;
-  //   this.container = container;
-  //   this.parentPath = parentPath || null;
-  //
-  //   this.inList = Array.isArray(container);
-  //   this.index = this.inList ? index : null;
-  //
-  //   this.containerName = this.key; // synonym
-  //   this.nodeType = this.node.nodeType;
-  // }
+    pathCache.set(node, this);
+  }
 
   static validateConstructorArgs({ node, parent, key, container, index, parentPath }) {
     if (!parent) throw new Error(`Can't create a path without a parent`);
@@ -89,17 +75,6 @@ class NodePath {
       }
       if (node !== container) throw new Error(`container !== node for a non-array container`);
     }
-  }
-
-  // returns a cached nodePath instance, if one exists
-  // otherwise it creates a new nodePath instance
-  static get({ node, parent, key, container, index, parentPath }) {
-    const cachedPath = pathCache.get(node);
-    if (pathCache.has(node)) return cachedPath;
-
-    const path = new NodePath({ node, parent, key, container, index, parentPath });
-    pathCache.set(node, path);
-    return path;
   }
 
   traverse(visitor, state, scope) {
@@ -407,6 +382,19 @@ class NodePath {
     };
     traversePathsFast(rootNodePath, visitor2, state);
     return state;
+  }
+
+  // SCOPE
+
+  setScope() {
+    let path = this.parentPath;
+    let nearestAncestorScope;
+    // move up the path 'tree', until a scope is found
+    while (path && !nearestAncestorScope) {
+      nearestAncestorScope = path.scope;
+      path = path.parentPath;
+    }
+    this.scope = Scope.getOrCreate(nearestAncestorScope);
   }
 }
 
