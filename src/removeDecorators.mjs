@@ -6,7 +6,7 @@ Reads an input file line by line and passes each line for further processing
 
 import fs from 'fs';
 import path from 'path';
-import recogniseSprinkles from './recognisers/sprinkles.mjs';
+import recogniseDecorators from './recognisers/decorators.mjs';
 import recogniseCurlyBracket from './recognisers/curly-bracket.mjs';
 import logger from './utils/logger.mjs';
 
@@ -26,45 +26,45 @@ function tidy(_line) {
  * @return {Object} = {
  *     desprinkledFile // a '.sol' file, stripped of any keywords, so
  *                        that 'solc' may compile it.
- *     toResprinkle // an array of objects recording where the
+ *     toRedecorate // an array of objects recording where the
  *                     sprinkled keywords should be reinstated after
  *                     running 'solc'.
  */
-function desprinkle(options) {
-  logger.info(`Parsing sprinkled file ${options.inputFilePath}... `);
-  const sprinkledLines = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
+function removeDecorators(options) {
+  logger.info(`Parsing dectorated file ${options.inputFilePath}... `);
+  const decLines = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
 
-  const toResprinkle = [];
-  const desprinkledLines = sprinkledLines.map(sprinkledLine => {
-    const line = tidy(sprinkledLine);
-    if (!line) return sprinkledLine;
+  const toRedecorate = [];
+  const deDecledLines = decLines.map(decLine => {
+    const line = tidy(decLine);
+    if (!line) return decLine;
     recogniseCurlyBracket(line); // increases blockCount, checks we are in the correct block // TODO: is this needed?
-    const { keyword, type, name, rhs, desprinkledLine } = recogniseSprinkles(line);
-    if (desprinkledLine) {
+    const { keyword, type, name, rhs, deDecLine } = recogniseDecorators(line);
+    if (deDecLine) {
       // record the desprinkling, so that we may add the keywords back to the AST later (after solc compilation):
-      toResprinkle.push({
-        oldline: sprinkledLine,
-        newline: desprinkledLine,
+      toRedecorate.push({
+        oldline: decLine,
+        newline: deDecLine,
         type,
         keyword,
         name,
         rhs,
       });
-      return sprinkledLine.replace(line, desprinkledLine);
+      return decLine.replace(line, deDecLine);
     }
-    return sprinkledLine;
+    return decLine;
   });
 
-  const desprinkledFile = desprinkledLines.join('\r\n');
+  const deDecFile = deDecledLines.join('\r\n');
 
-  const desprinkledFilePath = `${options.parseDirPath}/${options.inputFileName}_desprinkled.sol`;
-  fs.writeFileSync(desprinkledFilePath, desprinkledFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.
+  const deDecFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol`;
+  fs.writeFileSync(deDecFilePath, deDecFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.
 
   // Let's also copy the original input file to this output dir:
   const duplicateInputFilePath = `${options.parseDirPath}/${path.basename(options.inputFilePath)}`;
   fs.copyFileSync(options.inputFilePath, duplicateInputFilePath);
 
-  return { desprinkledFile, toResprinkle };
+  return { deDecFile, toRedecorate };
 }
 
-export default desprinkle;
+export default removeDecorators;

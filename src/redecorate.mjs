@@ -114,7 +114,7 @@ function findNodeId(ast, line) {
   return nodeId;
 }
 
-function addSprinkles(ast, line) {
+function addDecorators(ast, line) {
   // separated out node id and sprinkling for now - will merge later
   const newAST = ast;
   const { nodes } = newAST.nodes[1];
@@ -173,7 +173,7 @@ function addSprinkles(ast, line) {
         if (node.nodeType === 'FunctionDefinition') {
           const fnScope = { nodes: [{}, {}] };
           fnScope.nodes[1].nodes = node.body.statements;
-          addSprinkles(fnScope, line);
+          addDecorators(fnScope, line);
         }
       }
       break;
@@ -183,19 +183,19 @@ function addSprinkles(ast, line) {
   return ast;
 }
 
-function resprinkle(solAST, toResprinkle, options) {
-  logger.info(`Creating sprinkled ast... `);
+function redecorate(solAST, toRedecorate, options) {
+  logger.info(`Creating decorated ast... `);
 
   let newAST = solAST;
 
-  for (const line of toResprinkle) {
+  for (const line of toRedecorate) {
     // find nodeId
     switch (line.type) {
       case 'assignment':
         // TODO remove this error/ change it
         if (line.keyword === 'secret') {
           logger.info(`Warning: secret keyword used for assignment after declaration...`);
-          for (const check of toResprinkle) {
+          for (const check of toRedecorate) {
             if (check.type === 'global' && check.name === line.name) {
               logger.info(
                 `...but the declaration has correctly been marked as secret, so that's ok`,
@@ -216,7 +216,7 @@ function resprinkle(solAST, toResprinkle, options) {
         line.nodeId = findNodeId(solAST, line);
     }
     // sprinkle ast
-    newAST = addSprinkles(newAST, line);
+    newAST = addDecorators(newAST, line);
   }
 
   const zsolASTFilePath = `${options.parseDirPath}/${options.inputFileName}.zsol_ast.json`;
@@ -225,4 +225,4 @@ function resprinkle(solAST, toResprinkle, options) {
   return newAST;
 }
 
-export default resprinkle;
+export default redecorate;

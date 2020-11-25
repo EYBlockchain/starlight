@@ -18,42 +18,42 @@ function tidy(_line) {
   return line;
 }
 
-function recogniseSprinkles(line) {
+function recogniseDecorators(line) {
   if (!line) return false;
-  for (let keyword of config.sprinkles) {
+  for (let keyword of config.decorators) {
     // TODO: this can only handle 1 decorator per line. Might not be true for complex contracts.
     if (line.startsWith(keyword)) {
       // sprinkle found
-      let desprinkledLine = tidy(line.replace(`${keyword}`, '')); // remove the sprinkled syntax
+      let deDecLine = tidy(line.replace(`${keyword}`, '')); // remove the sprinkled syntax
       let type;
       let name;
       let rhs;
-      if (recogniseGlobal(desprinkledLine)) {
+      if (recogniseGlobal(deDecLine)) {
         type = 'global';
-        [, , name] = desprinkledLine.replace(/ *\([^)]*\) */g, ' ').split(' ');
+        [, , name] = deDecLine.replace(/ *\([^)]*\) */g, ' ').split(' ');
         name = name.replace(';', '');
-      } else if (recogniseFunction(desprinkledLine)) {
-        ({ type, name } = recogniseFunction(desprinkledLine, true));
-      } else if (recogniseAssignment(desprinkledLine)) {
+      } else if (recogniseFunction(deDecLine)) {
+        ({ type, name } = recogniseFunction(deDecLine, true));
+      } else if (recogniseAssignment(deDecLine)) {
         type = 'assignment';
         if (keyword === 'secret')
           logger.info(`Warning: secret keyword used for assignment after declaration`);
         for (const operator of operators) {
           if (line.includes(operator)) {
-            [name, rhs] = desprinkledLine.split(operator).map(el => el.trim());
+            [name, rhs] = deDecLine.split(operator).map(el => el.trim());
           }
         }
       }
       // below: attempts to capture two keywords e.g. secret known - may not be needed
-      if (recogniseSprinkles(desprinkledLine).keyword) {
-        keyword = [keyword].push(recogniseSprinkles(desprinkledLine).keyword);
-        desprinkledLine = recogniseSprinkles(desprinkledLine).desprinkledFile;
+      if (recogniseDecorators(deDecLine).keyword) {
+        keyword = [keyword].push(recogniseDecorators(deDecLine).keyword);
+        deDecLine = recogniseDecorators(deDecLine).deDecLine;
       }
-      logger.info(`Desprinkled the line \n${line} \nto \n${desprinkledLine}`);
-      return { keyword, type, name, rhs, desprinkledLine };
+      logger.info(`Removed decorators from the line \n${line} \nto \n${deDecLine}`);
+      return { keyword, type, name, rhs, deDecLine };
     }
   }
   return {};
 }
 
-export default recogniseSprinkles;
+export default recogniseDecorators;

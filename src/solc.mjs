@@ -137,7 +137,7 @@ const compile = (solidityFile, options) => {
 
   const { ast } = compiled.sources.input;
 
-  const astFilePath = `${options.parseDirPath}/${options.inputFileName}_desprinkled.sol_ast.json`;
+  const astFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol_ast.json`;
 
   console.log('filepath', astFilePath);
   fs.writeFileSync(astFilePath, JSON.stringify(ast, null, 4));

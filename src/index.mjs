@@ -1,6 +1,6 @@
 import Listr from 'listr';
-import desprinkle from './desprinkler.mjs';
-import resprinkle from './resprinkler.mjs';
+import removeDecorators from './removeDecorators.mjs';
+import redecorate from './redecorate.mjs';
 import compile from './solc.mjs';
 
 import checks from './transformers/checks.mjs';
@@ -11,11 +11,11 @@ import logger from './utils/logger.mjs';
 
 // Original funtion before listr - might choose to revert back to this simple function.
 const zappify = options => {
-  const { desprinkledFile, toResprinkle } = desprinkle(options);
+  const { deDecFile, toRedecorate } = removeDecorators(options);
 
-  const solAST = compile(desprinkledFile, options);
+  const solAST = compile(deDecFile, options);
 
-  const zsolAST = resprinkle(solAST, toResprinkle, options);
+  const zsolAST = redecorate(solAST, toRedecorate, options);
 
   checks(zsolAST, options);
 
