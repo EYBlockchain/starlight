@@ -10,7 +10,7 @@ import {
   isIncremented,
 } from '../../../traverse/scope.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
+import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -93,21 +93,38 @@ export default {
       // 2) Check if NOT incrementing
       const { node, parent } = path;
       const referencedBinding = findReferencedBinding(scope, node);
-      if (referencedBinding.secretVariable) {
+      const parentExpression = path.getAncestorOfType('ExpressionStatement');
+      if (parentExpression && referencedBinding.secretVariable) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const indicatorObj = scope.indicators.find(obj => obj.binding === referencedBinding);
-        if (rightAncestor && !indicatorObj.isIncremented) {
+        if (rightAncestor && !parentExpression.node.expression.isIncremented) {
           console.log('Found a reference');
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
           const reason = `Referenced at ${node.src}`;
           indicatorObj.isWhole = true;
           if (indicatorObj.isWholeReason) {
-            console.log(indicatorObj.isWholeReason);
             indicatorObj.isWholeReason.push(reason);
           } else {
             indicatorObj.isWholeReason = [reason];
           }
-          console.log(indicatorObj.isWholeReason);
+          // TODO remove this - this is testing stuff for not using scope
+
+          const referencedId = node.referencedDeclaration;
+          let varDec;
+          const varDecFinder = (thisPath, state) => {
+            if (thisPath.node.id === referencedId) {
+              varDec = thisPath.node;
+            }
+          };
+          const inputPath = path.getAncestorOfType('ContractDefinition');
+          traversePathsFast(inputPath, varDecFinder, {});
+          // statement is an overwrite
+          if (varDec.isWholeReason) {
+            varDec.isWholeReason.push(reason);
+          } else {
+            varDec.isWholeReason = [reason];
+          }
+          console.log(varDec.isWholeReason);
         }
       }
     },

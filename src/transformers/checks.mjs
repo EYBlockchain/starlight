@@ -56,8 +56,8 @@ function transformation1(oldAST) {
   logger.info('No conflicting known/unknown decorators');
   path.traverse(explode(incrementedVisitor), state, scope);
   logger.info('Incrementations marked');
-  // path.traverse(explode(referencedVisitor), state, scope);
-  // logger.info('References marked');
+  path.traverse(explode(referencedVisitor), state, scope);
+  logger.info('References marked');
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
