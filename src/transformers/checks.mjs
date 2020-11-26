@@ -6,11 +6,11 @@ import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
 import { traverse } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
-import unsupportedVisitor from './visitors/miranda-new/unsupportedVisitor.mjs';
-import externalCallVisitor from './visitors/miranda-new/externalCallVisitor.mjs';
-import decoratorVisitor from './visitors/miranda-new/decoratorVisitor.mjs';
-import incrementedVisitor from './visitors/miranda-new/incrementedVisitor.mjs';
-import referencedVisitor from './visitors/miranda-new/referencedVisitor.mjs';
+import unsupportedVisitor from './visitors/checks/unsupportedVisitor.mjs';
+import externalCallVisitor from './visitors/checks/externalCallVisitor.mjs';
+import decoratorVisitor from './visitors/checks/decoratorVisitor.mjs';
+import incrementedVisitor from './visitors/checks/incrementedVisitor.mjs';
+import referencedVisitor from './visitors/checks/referencedVisitor.mjs';
 import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.mjs';
 
 /**
