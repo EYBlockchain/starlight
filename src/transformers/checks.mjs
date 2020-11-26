@@ -11,6 +11,7 @@ import externalCallVisitor from './visitors/checks/externalCallVisitor.mjs';
 import decoratorVisitor from './visitors/checks/decoratorVisitor.mjs';
 import incrementedVisitor from './visitors/checks/incrementedVisitor.mjs';
 import referencedVisitor from './visitors/checks/referencedVisitor.mjs';
+import wholeVisitor from './visitors/checks/wholeVisitor.mjs';
 import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.mjs';
 
 /**
@@ -58,6 +59,7 @@ function transformation1(oldAST) {
   logger.info('Incrementations marked');
   path.traverse(explode(referencedVisitor), state, scope);
   logger.info('References marked');
+  path.traverse(explode(wholeVisitor), state, scope);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.

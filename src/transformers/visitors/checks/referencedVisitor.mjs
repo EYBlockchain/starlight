@@ -125,6 +125,10 @@ export default {
             varDec.isWholeReason = [reason];
           }
           console.log(varDec.isWholeReason);
+          if (varDec.mutability !== 'mutable')
+            logger.warn(
+              `WARN: By referring to the secret value a, it must be proven that its current value has not been nullified, revealing the nullifier.`,
+            );
         }
       }
     },
