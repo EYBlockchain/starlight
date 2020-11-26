@@ -2,6 +2,12 @@
 
 import logger from '../utils/logger.mjs';
 
+class Scope {
+  constructor() {
+
+  }
+}
+
 // TODO: better scope handling
 export const updateScope = (path, scope) => {
   const { node, parent } = path;
@@ -400,3 +406,5 @@ export const isIncremented = (expressionNode, lhsNode, scope) => {
 
   return isIncrementedBool;
 };
+
+export default Scope;

@@ -4,7 +4,7 @@ import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
 // import * as solidityTypes from '../types/solidity-types.mjs';
 import { getVisitableKeys, setParentPath } from '../types/solidity-types.mjs';
-import { updateScope } from './scope.mjs';
+import { updateScope } from './Scope.mjs';
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...

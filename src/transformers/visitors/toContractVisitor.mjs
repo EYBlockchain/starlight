@@ -8,7 +8,7 @@ import {
   queryScopeAncestors,
   findReferencedBinding,
   getScopeAncestorOfType,
-} from '../../traverse/scope.mjs';
+} from '../../traverse/Scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
@@ -80,8 +80,6 @@ export default {
       const { node, parent } = path;
       const sourceUnitNodes = parent._context[0].nodes;
       const contractNodes = node._context;
-      console.log('HERE');
-      console.log(parent._context[0].nodes);
 
       const {
         zkSnarkVerificationRequired,

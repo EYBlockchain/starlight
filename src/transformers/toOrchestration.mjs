@@ -5,6 +5,7 @@ import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
 import { traverse } from '../traverse/traverse.mjs';
+import { clearCaches } from '../traverse/cache.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toOrchestrationVisitor.mjs';
 import codeGenerator from '../codeGenerators/toOrchestration.mjs';
@@ -38,6 +39,8 @@ function transformation1(oldAST) {
     ast: oldAST,
   };
   dummyParent._context = newAST;
+
+  clearCaches(); // Clearing the cache removes all node / scope data stored in memory. Notably, it deletes (resets) the `._context` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
 
   const path = new NodePath({
     parent: dummyParent,
