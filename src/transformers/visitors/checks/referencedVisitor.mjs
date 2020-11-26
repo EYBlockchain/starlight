@@ -2,7 +2,6 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import { isIncremented } from '../../../traverse/Scope.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
@@ -101,28 +100,6 @@ export default {
           } else {
             indicatorObj.isWholeReason = [reason];
           }
-          // TODO remove this - this is testing stuff for not using scope
-
-          const referencedId = node.referencedDeclaration;
-          let varDec;
-          const varDecFinder = (thisPath, state) => {
-            if (thisPath.node.id === referencedId) {
-              varDec = thisPath.node;
-            }
-          };
-          const inputPath = path.getAncestorOfType('ContractDefinition');
-          traversePathsFast(inputPath, varDecFinder, {});
-          // statement is an overwrite
-          if (varDec.isWholeReason) {
-            varDec.isWholeReason.push(reason);
-          } else {
-            varDec.isWholeReason = [reason];
-          }
-          console.log(varDec.isWholeReason);
-          if (varDec.mutability !== 'mutable')
-            logger.warn(
-              `WARN: By referring to the secret value a, it must be proven that its current value has not been nullified, revealing the nullifier.`,
-            );
         }
       }
     },

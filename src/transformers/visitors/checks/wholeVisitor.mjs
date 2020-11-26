@@ -2,40 +2,66 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import {
-  collectAllStateVariableBindings,
-  queryScopeAncestors,
-  findReferencedBinding,
-  getScopeAncestorOfType,
-  isIncremented,
-} from '../../../traverse/scope.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   PragmaDirective: {
     // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path, state, scope) {},
-    exit(path, state, scope) {},
+    enter(path, state) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {
+      // why here? Because we are looking for whether the secret state is incremented per function scope
+      const { node, scope } = path;
+      const fnDefScopes = [];
+      const secretVarsInScope = [];
+      const indicatorObjs = [];
+      // we find each secret variable which has been modified in this scope
+      scope.referencedBindings.forEach(binding => {
+        if (binding.secretVariable && !secretVarsInScope.includes(binding))
+          secretVarsInScope.push(binding);
+      });
+      // we find the indicators for each secret variable
+      secretVarsInScope.forEach(binding => {
+        indicatorObjs.push(scope.indicators.find(obj => obj.binding === binding));
+      });
+      // console.log(secretVarsInScope);
+      // console.log(indicatorObjs);
+      // some checks
+      indicatorObjs.forEach(secretVar => {
+        if (secretVar.isKnown && secretVar.isWhole)
+          logger.warn(
+            `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,
+          );
+        if (secretVar.isIncremented && secretVar.isWhole === undefined) {
+          // check for known/unknown decorators, if none throw error
+          // look for duplicates: PEDANTIC: Unnecessary duplicate 'unknown' decorator for secret state `a`.
+        }
+        if (secretVar.isWhole && secretVar.isUnknown)
+          throw new Error(
+            `Can't nullify (that is, edit with knowledge of the state) a whole state. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
+          );
+        if (secretVar.isUnknown && secretVar.isIncremented) secretVar.isWhole = false;
+      });
+    },
   },
 
   ParameterList: {
@@ -53,9 +79,7 @@ export default {
   VariableDeclarationStatement: {
     enter(path) {},
 
-    exit(path) {
-      console.log(path.node);
-    },
+    exit(path) {},
   },
 
   BinaryOperation: {
@@ -65,23 +89,21 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path) {
-      console.log(path.node);
-    },
+    exit(path) {},
   },
 
   ElementaryTypeName: {
@@ -91,9 +113,9 @@ export default {
   },
 
   Identifier: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   Literal: {

@@ -2,7 +2,6 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import { isIncremented } from '../../../traverse/Scope.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
@@ -77,33 +76,11 @@ export default {
       const { node } = path;
       const expressionNode = node.expression;
       const lhsNode = expressionNode.leftHandSide;
-      const isIncrementedBool = isIncremented(expressionNode, lhsNode, path.scope);
+      const isIncrementedBool = path.scope.isIncremented(expressionNode, lhsNode);
       if (lhsNode.isUnknown && expressionNode.isDecremented === true) {
         throw new Error(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
         );
-      }
-      // TODO remove this - this is testing stuff for not using scope
-
-      const referencedId = lhsNode.nodeType === 'Identifier' ? lhsNode.referencedDeclaration : null;
-      let varDec;
-      const varDecFinder = (thisPath, state) => {
-        if (thisPath.node.id === referencedId) {
-          varDec = thisPath.node;
-        }
-      };
-      const inputPath = path.getAncestorOfType('ContractDefinition');
-      traversePathsFast(inputPath, varDecFinder, {});
-      if (isIncrementedBool === false) {
-        // statement is an overwrite
-        varDec.isWhole = true;
-        const reason = `Overwritten at ${expressionNode.src}`;
-        console.log(reason);
-        if (varDec.isWholeReason) {
-          varDec.isWholeReason.push(reason);
-        } else {
-          varDec.isWholeReason = [reason];
-        }
       }
     },
   },
