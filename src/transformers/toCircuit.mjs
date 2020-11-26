@@ -26,8 +26,6 @@ function transformation1(oldAST) {
     skipSubnodes: false,
   };
 
-  const scope = {};
-
   oldAST._context = newAST.files;
   const dummyParent = {
     id: 0,
@@ -46,7 +44,7 @@ function transformation1(oldAST) {
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  path.traverse(explode(visitor), state, scope);
+  path.traverse(explode(visitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
@@ -70,7 +68,7 @@ export default function toCircuit(ast, options) {
   for (const fileObj of circuitFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
-    console.log(`About to save to ${filepath}...`)
+    console.log(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, fileObj.file);
   }

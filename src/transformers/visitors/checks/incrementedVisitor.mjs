@@ -2,40 +2,34 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import {
-  collectAllStateVariableBindings,
-  queryScopeAncestors,
-  findReferencedBinding,
-  getScopeAncestorOfType,
-  isIncremented,
-} from '../../../traverse/scope.mjs';
+import { isIncremented } from '../../../traverse/Scope.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   PragmaDirective: {
     // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path, state, scope) {},
-    exit(path, state, scope) {},
+    enter(path, state) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {
+    exit(path, state) {
       // console.log('scope');
       // console.log(scope);
       // scope.referencedBindings.forEach(binding => {
@@ -70,20 +64,20 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {
+    exit(path, state) {
       // Why here? Because we need the indicatorObj of the individual elts before we decide
       const { node } = path;
       const expressionNode = node.expression;
       const lhsNode = expressionNode.leftHandSide;
-      const isIncrementedBool = isIncremented(expressionNode, lhsNode, scope);
+      const isIncrementedBool = isIncremented(expressionNode, lhsNode, path.scope);
       if (lhsNode.isUnknown && expressionNode.isDecremented === true) {
         throw new Error(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
@@ -115,7 +109,7 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
     exit(path) {},
   },
@@ -127,9 +121,9 @@ export default {
   },
 
   Identifier: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   Literal: {

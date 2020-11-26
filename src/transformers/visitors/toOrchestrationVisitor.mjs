@@ -2,19 +2,18 @@
 
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import { collectAllStateVariableBindings, findReferencedBinding } from '../../traverse/Scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
 export default {
   PragmaDirective: {
     // we ignore the Pragma Directive; it doesn't aid us in creating a circuit
-    enter(path, state, scope) {},
-    exit(path, state, scope) {},
+    enter(path, state) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       node._context = parent._context;
     },
@@ -23,13 +22,13 @@ export default {
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       // define a 'nested' visitor that will traverse the subnodes of this node.
       // TODO: a simple, fast traversal function sith a single callback?
       const findSecretGlobalAssignmentVisitor = {
         Assignment: {
-          enter(path, state, scope) {
+          enter(path, state) {
             const { name, id } = state.global;
             const assignee = path.node.leftHandSide;
             if (assignee.name === name && assignee.referencedDeclaration === id) {
@@ -45,7 +44,7 @@ export default {
       let newFile = false;
       // state.scope.assignedGlobals = [];
       // const stateVariableBindings = scope.bindings.filter(binding => binding.stateVariable);
-      const stateVariableBindings = collectAllStateVariableBindings(scope);
+      const stateVariableBindings = path.scope.collectAllStateVariableBindings();
 
       if (stateVariableBindings) {
         for (const binding of stateVariableBindings) {
@@ -113,7 +112,7 @@ export default {
       }
     },
 
-    exit(path, state, scope) {
+    exit(path, state) {
       const { node, parent } = path;
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
@@ -154,7 +153,7 @@ export default {
         }
 
         // assuming one secret state var per commitment
-        const secretVariablesToCommit = scope.modifiedBindings.filter(
+        const secretVariablesToCommit = path.scope.modifiedBindings.filter(
           binding => binding.stateVariable && binding.secretVariable,
         );
 
@@ -171,7 +170,7 @@ export default {
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
           // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
           // Also do for MembershipWitness
-          if (scope.indicators[0].initialisationRequired) {
+          if (path.scope.indicators[0].initialisationRequired) {
             node._context.body.statements.push({
               nodeType: 'ReadPreimage',
               privateStateName: global.name,
@@ -188,7 +187,7 @@ export default {
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
 
           // - oldCommitment nullifier preimage check
-          if (scope.indicators[0].nullifierRequired) {
+          if (path.scope.indicators[0].nullifierRequired) {
             node._context.body.statements.push({
               nodeType: 'CalculateNullifier',
             });
@@ -293,7 +292,7 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
 
       const newNode = {
@@ -306,11 +305,11 @@ export default {
       parent._context.expression = newNode;
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       let newNode;
       // ExpressionStatements can contain an Assignment node.
@@ -318,11 +317,11 @@ export default {
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedBinding = findReferencedBinding(scope, lhs);
+        const referencedBinding = path.scope.findReferencedBinding(lhs);
         const referencedNode = referencedBinding.node;
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
-        const modifiedBinding = scope.modifiedBindings.find(
+        const modifiedBinding = path.scope.modifiedBindings.find(
           binding => binding === referencedBinding,
         );
 
@@ -353,7 +352,7 @@ export default {
           state.skipSubNodes = true;
 
           // Continue scoping subNodes, so that any references / modifications to bindings are collected. We'll require this data when exiting the tree.
-          path.traverse({}, {}, scope);
+          path.traverse({}, {});
 
           return;
         }
@@ -371,7 +370,7 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable.

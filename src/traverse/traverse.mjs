@@ -4,13 +4,11 @@ import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
 // import * as solidityTypes from '../types/solidity-types.mjs';
 import { getVisitableKeys, setParentPath } from '../types/solidity-types.mjs';
-import { updateScope } from './Scope.mjs';
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
-export function traverse(path, visitor, state = {}, scope) {
+export function traverse(path, visitor, state = {}) {
   logger.debug('pathLocation:', `${path.getLocation()} = ${path.node.nodeType}`);
-  scope = updateScope(path, scope);
 
   if (state && state.stopTraversal) return;
   if (state && state.skipSubNodes) return;
@@ -29,7 +27,7 @@ export function traverse(path, visitor, state = {}, scope) {
     // logger.debug('node._context:', node._context);
     // if (parent) logger.debug('parent._context:', parent._context);
     // logger.debug('state:', state);
-    methods.enter(path, state, scope);
+    methods.enter(path, state);
 
     // parentPath example placement:
     // setParentPath(node, parent);
@@ -55,7 +53,7 @@ export function traverse(path, visitor, state = {}, scope) {
           node: subNode,
           parentPath: path,
         });
-        subNodePath.traverse(visitor, state, scope);
+        subNodePath.traverse(visitor, state);
       }
     } else if (node[key]) {
       const subNode = node[key];
@@ -66,7 +64,7 @@ export function traverse(path, visitor, state = {}, scope) {
         node: subNode,
         parentPath: path,
       });
-      subNodePath.traverse(visitor, state, scope);
+      subNodePath.traverse(visitor, state);
     }
   }
 
@@ -82,7 +80,7 @@ export function traverse(path, visitor, state = {}, scope) {
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
 
-    methods.exit(path, state, scope);
+    methods.exit(path, state);
 
     // logger.debug(`\n\n\n\n${node.nodeType} after exit`);
     // logger.debug('node._context:', node._context);
