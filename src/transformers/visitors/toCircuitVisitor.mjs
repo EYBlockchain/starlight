@@ -2,23 +2,18 @@
 
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import {
-  collectAllStateVariableBindings,
-  queryScopeAncestors,
-  findReferencedBinding,
-} from '../../traverse/scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
 export default {
   PragmaDirective: {
     // we ignore the Pragma Directive; it doesn't aid us in creating a circuit
-    enter(path, state, scope) {},
-    exit(path, state, scope) {},
+    enter(path, state) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       node._context = parent._context;
     },
@@ -27,13 +22,13 @@ export default {
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       // define a 'nested' visitor that will traverse the subnodes of this node.
       // TODO: a simple, fast traversal function sith a single callback?
       const findGlobalAssignmentVisitor = {
         Assignment: {
-          enter(path, state, scope) {
+          enter(path, state) {
             const { name, id } = state.global;
             const assignee = path.node.leftHandSide;
             if (assignee.name === name && assignee.referencedDeclaration === id) {
@@ -104,11 +99,11 @@ export default {
       }
     },
 
-    exit(path, state, scope) {
+    exit(path, state) {
       const { node, parent } = path;
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
-      const modifiedStateVariableBindings = scope.modifiedBindings.filter(
+      const modifiedStateVariableBindings = path.scope.modifiedBindings.filter(
         binding => binding.stateVariable,
       );
       if (modifiedStateVariableBindings) {
@@ -222,7 +217,7 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
 
       const newNode = {
@@ -235,11 +230,11 @@ export default {
       parent._context.expression = newNode;
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       let newNode;
       // ExpressionStatements can contain an Assignment node.
@@ -247,11 +242,11 @@ export default {
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedBinding = findReferencedBinding(scope, lhs);
+        const referencedBinding = path.scope.findReferencedBinding(lhs);
         const referencedNode = referencedBinding.node;
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
-        const modifiedBinding = scope.modifiedBindings.find(
+        const modifiedBinding = path.scope.modifiedBindings.find(
           binding => binding === referencedBinding,
         );
 
@@ -283,7 +278,7 @@ export default {
           state.skipSubNodes = true;
 
           // Continue scoping subNodes, so that any references / modifications to bindings are collected. We'll require this data when exiting the tree.
-          path.traverse({}, {}, scope);
+          path.traverse({}, {});
 
           return;
         }
@@ -301,7 +296,7 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable.

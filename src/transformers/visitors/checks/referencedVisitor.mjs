@@ -2,40 +2,34 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import {
-  collectAllStateVariableBindings,
-  queryScopeAncestors,
-  findReferencedBinding,
-  getScopeAncestorOfType,
-  isIncremented,
-} from '../../../traverse/scope.mjs';
+import { isIncremented } from '../../../traverse/Scope.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   PragmaDirective: {
     // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path, state, scope) {},
-    exit(path, state, scope) {},
+    enter(path, state) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ParameterList: {
@@ -63,19 +57,19 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
     exit(path) {},
   },
@@ -87,16 +81,16 @@ export default {
   },
 
   Identifier: {
-    enter(path, state, scope) {
+    enter(path, state) {
       // Here, if secret:
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
       const { node, parent } = path;
-      const referencedBinding = findReferencedBinding(scope, node);
+      const referencedBinding = path.scope.findReferencedBinding(node);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
       if (parentExpression && referencedBinding.secretVariable) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
-        const indicatorObj = scope.indicators.find(obj => obj.binding === referencedBinding);
+        const indicatorObj = path.scope.indicators.find(obj => obj.binding === referencedBinding);
         if (rightAncestor && !parentExpression.node.expression.isIncremented) {
           console.log('Found a reference');
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
@@ -133,7 +127,7 @@ export default {
       }
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   Literal: {

@@ -2,40 +2,34 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import {
-  collectAllStateVariableBindings,
-  queryScopeAncestors,
-  findReferencedBinding,
-  getScopeAncestorOfType,
-} from '../../../traverse/scope.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
 
 
 export default {
   SourceUnit: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   PragmaDirective: {
     // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path, state, scope) {},
-    exit(path, state, scope) {},
+    enter(path, state) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ParameterList: {
@@ -63,21 +57,21 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
     exit(node, parent) {},
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ElementaryTypeName: {
@@ -87,11 +81,11 @@ export default {
   },
 
   Identifier: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {
+    exit(path, state) {
       const { node, parent } = path;
-      const varDec = findReferencedBinding(scope, node);
+      const varDec = path.scope.findReferencedBinding(node);
       if (varDec.stateVariable) {
         // node is decorated
         if (!varDec.secretVariable && node.isUnknown)

@@ -30,8 +30,6 @@ function transformation1(oldAST) {
     skipSubnodes: false,
   };
 
-  const scope = {};
-
   oldAST._context = newAST.files;
   const dummyParent = {
     id: 0,
@@ -48,16 +46,15 @@ function transformation1(oldAST) {
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  // TODO - think about starting with a blank scope or using the prev one. Using the prev one could mean more efficient, but currently adds duplicates.
-  path.traverse(explode(unsupportedVisitor), state, scope);
+  path.traverse(explode(unsupportedVisitor), state);
   logger.info('No unsupported Solidity');
-  path.traverse(explode(externalCallVisitor), state, scope);
+  path.traverse(explode(externalCallVisitor), state);
   logger.info('No unsupported external calls');
-  path.traverse(explode(decoratorVisitor), state, scope);
+  path.traverse(explode(decoratorVisitor), state);
   logger.info('No conflicting known/unknown decorators');
-  path.traverse(explode(incrementedVisitor), state, scope);
+  path.traverse(explode(incrementedVisitor), state);
   logger.info('Incrementations marked');
-  path.traverse(explode(referencedVisitor), state, scope);
+  path.traverse(explode(referencedVisitor), state);
   logger.info('References marked');
   path.traverse(explode(wholeVisitor), state, scope);
 

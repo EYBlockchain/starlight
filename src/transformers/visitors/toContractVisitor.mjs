@@ -3,19 +3,12 @@
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../utils/logger.mjs';
 import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import {
-  collectAllStateVariableBindings,
-  queryScopeAncestors,
-  findReferencedBinding,
-  getScopeAncestorOfType,
-} from '../../traverse/scope.mjs';
 import circuitTypes from '../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
-
 export default {
   SourceUnit: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
 
       // Figure out a sensible fileName:
@@ -43,13 +36,13 @@ export default {
       parent._context.push(newNode);
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   PragmaDirective: {
     // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       const newNode = {
         literals: node.literals,
@@ -58,11 +51,11 @@ export default {
       parent._context[0].nodes.push(newNode);
       // node._context = parent._context; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {
+    enter(path, state) {
       const { node, parent } = path;
       const newNode = {
         name: node.name,
@@ -75,20 +68,18 @@ export default {
       parent._context[0].nodes.push(newNode);
     },
 
-    exit(path, state, scope) {
+    exit(path, state) {
       // We populate much of the contractDefinition upon exit, having populated the ContractDefinition's scope by this point.
       const { node, parent } = path;
       const sourceUnitNodes = parent._context[0].nodes;
       const contractNodes = node._context;
-      console.log('HERE');
-      console.log(parent._context[0].nodes);
 
       const {
         zkSnarkVerificationRequired,
         oldCommitmentReferencesRequired,
         nullifiersRequired,
         commitmentsRequired,
-      } = scope.indicators;
+      } = path.scope.indicators;
 
       // base contracts (`contract MyContract is BaseContract`)
       sourceUnitNodes[1].baseContracts.push({
@@ -154,9 +145,9 @@ export default {
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {
+    exit(path, state) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, parent } = path;
 
@@ -187,13 +178,13 @@ export default {
       //     return acc;
       //   }, 0);
 
-      const contractDefScope = getScopeAncestorOfType(scope, 'ContractDefinition');
+      const contractDefScope = path.scope.getAncestorOfScopeType('ContractDefinition');
       const { zkSnarkVerificationRequired } = contractDefScope.indicators;
-      const oldCommitmentReferencesRequired = scope.indicators.some(
+      const oldCommitmentReferencesRequired = path.scope.indicators.some(
         i => i.oldCommitmentReferenceRequired,
       );
-      const nullifiersRequired = scope.indicators.some(i => i.nullifierRequired);
-      const newCommitmentsRequired = scope.indicators.some(i => i.newCommitmentRequired);
+      const nullifiersRequired = path.scope.indicators.some(i => i.nullifierRequired);
+      const newCommitmentsRequired = path.scope.indicators.some(i => i.newCommitmentRequired);
       // For the 'toContract' transformation, we don't need to consider the initialisationRequired indicator; although it's important in the other transformations.
 
       // Parameters:
@@ -281,19 +272,19 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
     exit(node, parent) {},
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
     exit(path) {},
   },

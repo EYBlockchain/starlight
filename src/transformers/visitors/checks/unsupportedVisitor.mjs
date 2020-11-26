@@ -4,67 +4,67 @@ import cloneDeep from 'lodash.clonedeep';
 
 export default {
   StructuredDocumentation: {
-    enter(path, state, scope) {
+    enter(path, state) {
       throw new Error('Unsupported Solidity');
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   InlineAssembly: {
-    enter(path, state, scope) {
+    enter(path, state) {
       throw new Error('Unsupported Solidity');
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   EnumDefinition: {
     // TODO we can work on this later
-    enter(path, state, scope) {
+    enter(path, state) {
       throw new Error('Unsupported Solidity');
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   StructDefinition: {
-    enter(path, state, scope) {
+    enter(path, state) {
       throw new Error('Unsupported Solidity');
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   WhileStatement: {
-    enter(path, state, scope) {
+    enter(path, state) {
       throw new Error('Unsupported Solidity');
     },
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   SourceUnit: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   PragmaDirective: {
-    enter(path, state, scope) {},
-    exit(path, state, scope) {},
+    enter(path, state) {},
+    exit(path, state) {},
   },
 
   ContractDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   FunctionDefinition: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ParameterList: {
@@ -92,19 +92,19 @@ export default {
   },
 
   Assignment: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
-    exit(path, state, scope) {},
+    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
     exit(node, parent) {},
   },
 
   VariableDeclaration: {
-    enter(path, state, scope) {},
+    enter(path, state) {},
 
     exit(path) {},
   },

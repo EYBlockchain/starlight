@@ -77,7 +77,7 @@ const prepareIntegrationTest = node => {
   const genericTestFile = fs.readFileSync(testReadPath, 'utf8');
   let outputTestFile = genericTestFile.replace(/CONTRACT_NAME/g, node.contractName);
   outputTestFile = outputTestFile.replace(/FUNCTION_NAME/g, node.functionName);
-  console.log(node.parameters);
+  // console.log(node.parameters);
   const paramTypes = node.parameters.parameters.map(obj => obj.typeName.name);
   const inputs1 = paramTypes.map(testInputsByType);
   const inputs2 = paramTypes.map(testInputsByType);

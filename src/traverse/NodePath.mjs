@@ -2,6 +2,8 @@
 
 import { traverse, traverseNodesFast, traversePathsFast } from './traverse.mjs';
 import logger from '../utils/logger.mjs';
+import { pathCache } from './cache.mjs';
+import { Scope } from './Scope.mjs';
 
 /**
 A NodePath is required as a way of 'connecting' a node to its parent (and its parent, and so on...). We can't assign a `.parent` to a `node` (to create `node.parent`), because we'd end up with a cyclic reference; the parent already contains the node, so the node can't then contain the parent!
@@ -38,6 +40,9 @@ class NodePath {
    *        // the node is at parent[key][index] = container[index]
    */
   constructor({ node, parent, key, container, index, parentPath }) {
+    const cachedPath = pathCache.get(node);
+    if (pathCache.has(node)) return cachedPath;
+
     NodePath.validateConstructorArgs({ node, parent, container, key, index, parentPath });
 
     this.node = node;
@@ -51,6 +56,10 @@ class NodePath {
 
     this.containerName = this.key; // synonym
     this.nodeType = this.node.nodeType;
+
+    this.setScope();
+
+    pathCache.set(node, this);
   }
 
   static validateConstructorArgs({ node, parent, key, container, index, parentPath }) {
@@ -71,8 +80,8 @@ class NodePath {
     }
   }
 
-  traverse(visitor, state, scope) {
-    traverse(this, visitor, state, scope);
+  traverse(visitor, state) {
+    traverse(this, visitor, state);
   }
 
   /**
@@ -126,6 +135,7 @@ class NodePath {
    */
   queryAncestors(callback) {
     const path = this.parentPath || null;
+    if (!path) return null; // No more paths to look at. So not found anywhere.
     return callback(path) || path.queryAncestors(callback);
   }
 
@@ -376,6 +386,39 @@ class NodePath {
     };
     traversePathsFast(rootNodePath, visitor2, state);
     return state;
+  }
+
+  // SCOPE
+
+  // checks whether this path's nodeType is one which signals the beginning of a new scope
+  isScopable() {
+    switch (this.node.nodeType) {
+      case 'SourceUnit':
+      case 'ContractDefinition':
+      case 'FunctionDefinition':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  setScope() {
+    if (this.node.nodeType === 'SourceUnit') {
+      this.scope = new Scope(this);
+      return;
+    }
+
+    let path = this.parentPath;
+    let nearestAncestorScope;
+    // move up the path 'tree', until a scope is found
+    while (path && !nearestAncestorScope) {
+      nearestAncestorScope = path.scope;
+      path = path.parentPath;
+    }
+
+    nearestAncestorScope.update(this);
+
+    this.scope = this.isScopable() ? new Scope(this) : nearestAncestorScope;
   }
 }
 

@@ -5,6 +5,7 @@ import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
 import { traverse } from '../traverse/traverse.mjs';
+import { clearCaches } from '../traverse/cache.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toContractVisitor.mjs';
 import codeGenerator from '../codeGenerators/contract/solidity/toContract.mjs';
@@ -30,12 +31,12 @@ function transformation1(oldAST) {
     skipSubnodes: false,
   };
 
-  const scope = {};
-
   const dummyParent = {
     ast: oldAST,
   };
   dummyParent._context = newAST.files;
+
+  clearCaches(); // Clearing the cache removes all node / scope data stored in memory. Notably, it deletes (resets) the `._context` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
 
   const path = new NodePath({
     parent: dummyParent,
@@ -46,7 +47,7 @@ function transformation1(oldAST) {
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  path.traverse(explode(visitor), state, scope);
+  path.traverse(explode(visitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
@@ -63,7 +64,7 @@ export default function toContract(ast, options) {
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the contract files from the newly created contract AST:
-  logger.info('Generating files from the .zok AST...');
+  logger.info('Generating files from the .sol AST...');
   const contractFileData = codeGenerator(newAST);
 
   // console.log('contract file data:', contractFileData)
