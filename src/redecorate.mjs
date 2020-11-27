@@ -152,23 +152,22 @@ function addDecorators(ast, line) {
         //     throw new Error(`... the declaration for ${node.name} hasn't been sprinkled!`);
         //   }
         // }
-        if (
-          node.nodeType === 'ExpressionStatement' &&
-          node.expression.leftHandSide.id === line.nodeId
-        ) {
-          switch (line.keyword) {
-            case 'secret':
-              node.expression.leftHandSide.isSecret = true;
-              break;
-            case 'unknown':
-              node.expression.leftHandSide.isUnknown = true;
-              break;
-            case 'known':
-              node.expression.leftHandSide.isKnown = true;
-              break;
-            default:
+        if (node.nodeType === 'ExpressionStatement') {
+          if (node.expression.leftHandSide.id === line.nodeId) {
+            switch (line.keyword) {
+              case 'secret':
+                node.expression.leftHandSide.isSecret = true;
+                break;
+              case 'unknown':
+                node.expression.leftHandSide.isUnknown = true;
+                break;
+              case 'known':
+                node.expression.leftHandSide.isKnown = true;
+                break;
+              default:
+            }
+            break;
           }
-          break;
         }
         if (node.nodeType === 'FunctionDefinition') {
           const fnScope = { nodes: [{}, {}] };

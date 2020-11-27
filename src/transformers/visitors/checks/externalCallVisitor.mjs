@@ -13,8 +13,6 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {},
     exit(path, state) {},
   },

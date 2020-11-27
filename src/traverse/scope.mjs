@@ -385,35 +385,6 @@ export class Scope {
     console.log(`statement is decremented? ${isDecrementedBool}`);
     expressionNode.isIncremented = isIncrementedBool;
     expressionNode.isDecremented = isDecrementedBool;
-    // 2) Update the indicators of the scope:
-    const referencedBinding = scope.findReferencedBinding(lhsNode);
-    if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
-      const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
-      // console.log(fnDefScope);
-      const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
-      console.log(`state has ONLY incrementations in this scope (so far)?`);
-      console.log(fnIndicatorObj.isIncremented);
-      let stateIsIncremented = isIncrementedBool;
-      if (fnIndicatorObj.isIncremented === false) {
-        // TODO move this further up, this part says: if there's an overwriting statement in the same scope, then this is also a rewriting, regardless of how its written
-        stateIsIncremented = false;
-      }
-
-      // TODO is the below needed for an ExpressionStatement?
-      // indicatorObj.referencingPaths.push(path);
-      fnIndicatorObj.isIncremented = stateIsIncremented;
-      if (isIncrementedBool === false) {
-        // statement is an overwrite
-        fnIndicatorObj.isWhole = true;
-        const reason = `Overwritten at ${expressionNode.src}`;
-        console.log(reason);
-        if (fnIndicatorObj.isWholeReason) {
-          fnIndicatorObj.isWholeReason.push(reason);
-        } else {
-          fnIndicatorObj.isWholeReason = [reason];
-        }
-      }
-    }
 
     return isIncrementedBool;
   }

@@ -90,7 +90,12 @@ export default {
       if (parentExpression && referencedBinding.secretVariable) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const indicatorObj = path.scope.indicators.find(obj => obj.binding === referencedBinding);
-        if (rightAncestor && !parentExpression.node.expression.isIncremented) {
+        if (
+          rightAncestor &&
+          (!parentExpression.node.expression.isIncremented ||
+            (parentExpression.node.expression.isIncremented &&
+              parentExpression.node.expression.leftHandSide.name !== node.name))
+        ) {
           console.log('Found a reference');
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
           const reason = `Referenced at ${node.src}`;

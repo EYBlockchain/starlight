@@ -13,8 +13,6 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {},
     exit(path, state) {},
   },
@@ -73,14 +71,41 @@ export default {
 
     exit(path, state) {
       // Why here? Because we need the indicatorObj of the individual elts before we decide
-      const { node } = path;
+      const { node, scope } = path;
       const expressionNode = node.expression;
       const lhsNode = expressionNode.leftHandSide;
-      const isIncrementedBool = path.scope.isIncremented(expressionNode, lhsNode);
+      const isIncrementedBool = scope.isIncremented(expressionNode, lhsNode);
       if (lhsNode.isUnknown && expressionNode.isDecremented === true) {
         throw new Error(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
         );
+      }
+
+      // 2) Update the indicators of the scope:
+      const referencedBinding = scope.findReferencedBinding(lhsNode);
+      if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
+        const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
+        const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
+        // console.log(fnIndicatorObj.referencingPaths);
+        // console.log(`state has ONLY incrementations in this scope (so far)?`);
+        // console.log(fnIndicatorObj.isIncremented);
+        // let stateIsIncremented = isIncrementedBool;
+        // if (fnIndicatorObj.isIncremented === false) {
+        //   stateIsIncremented = false;
+        // }
+        //
+        // fnIndicatorObj.isIncremented = stateIsIncremented;
+        if (isIncrementedBool === false) {
+          // statement is an overwrite
+          fnIndicatorObj.isWhole = true;
+          const reason = `Overwritten at ${expressionNode.src}`;
+          console.log(reason);
+          if (fnIndicatorObj.isWholeReason) {
+            fnIndicatorObj.isWholeReason.push(reason);
+          } else {
+            fnIndicatorObj.isWholeReason = [reason];
+          }
+        }
       }
     },
   },
