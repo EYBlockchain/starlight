@@ -386,7 +386,7 @@ export class Scope {
     expressionNode.isIncremented = isIncrementedBool;
     expressionNode.isDecremented = isDecrementedBool;
 
-    return isIncrementedBool;
+    return { isIncrementedBool, isDecrementedBool };
   }
 }
 

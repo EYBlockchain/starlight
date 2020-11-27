@@ -74,7 +74,7 @@ export default {
       const { node, scope } = path;
       const expressionNode = node.expression;
       const lhsNode = expressionNode.leftHandSide;
-      const isIncrementedBool = scope.isIncremented(expressionNode, lhsNode);
+      const { isIncrementedBool, isDecrementedBool } = scope.isIncremented(expressionNode, lhsNode);
       if (lhsNode.isUnknown && expressionNode.isDecremented === true) {
         throw new Error(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
@@ -86,15 +86,13 @@ export default {
       if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
-        // console.log(fnIndicatorObj.referencingPaths);
-        // console.log(`state has ONLY incrementations in this scope (so far)?`);
-        // console.log(fnIndicatorObj.isIncremented);
-        // let stateIsIncremented = isIncrementedBool;
-        // if (fnIndicatorObj.isIncremented === false) {
-        //   stateIsIncremented = false;
-        // }
-        //
-        // fnIndicatorObj.isIncremented = stateIsIncremented;
+
+        // if its incremented anywhere, isIncremented = true
+
+        fnIndicatorObj.isIncremented =
+          fnIndicatorObj.isIncremented === true ? true : isIncrementedBool;
+        fnIndicatorObj.isDecremented =
+          fnIndicatorObj.isDecremented === true ? true : isDecrementedBool;
         if (isIncrementedBool === false) {
           // statement is an overwrite
           fnIndicatorObj.isWhole = true;
