@@ -87,7 +87,7 @@ export default {
       const { node, parent } = path;
       const referencedBinding = path.scope.findReferencedBinding(node);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
-      if (parentExpression && referencedBinding.secretVariable) {
+      if (parentExpression && referencedBinding.isSecret) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const indicatorObj = path.scope.indicators.find(obj => obj.binding === referencedBinding);
         if (rightAncestor && !parentExpression.node.expression.isIncremented) {

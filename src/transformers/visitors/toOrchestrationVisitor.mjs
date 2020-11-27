@@ -154,7 +154,7 @@ export default {
 
         // assuming one secret state var per commitment
         const secretVariablesToCommit = path.scope.modifiedBindings.filter(
-          binding => binding.stateVariable && binding.secretVariable,
+          binding => binding.stateVariable && binding.isSecret,
         );
 
         for (const binding of secretVariablesToCommit) {

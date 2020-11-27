@@ -5,7 +5,6 @@ import logger from '../../../utils/logger.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
 
-
 export default {
   SourceUnit: {
     enter(path, state) {},
@@ -88,9 +87,9 @@ export default {
       const varDec = path.scope.findReferencedBinding(node);
       if (varDec.stateVariable) {
         // node is decorated
-        if (!varDec.secretVariable && node.isUnknown)
+        if (!varDec.isSecret && node.isUnknown)
           throw new Error(`Identifier ${node.name} is marked as unknown but is not secret.`);
-        if (!varDec.secretVariable && node.isKnown)
+        if (!varDec.isSecret && node.isKnown)
           logger.warn(
             `PEDANTIC: a conventional smart contract state variable (${node.name}) is 'known' by default`,
           );

@@ -100,7 +100,7 @@ export class Scope {
           path,
           scope: this,
           stateVariable: node.stateVariable,
-          secretVariable: node.isSecret === true,
+          isSecret: node.isSecret,
           // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
           referenced: false,
           referenceCount: 0,
@@ -279,7 +279,7 @@ export class Scope {
     let lhsSecret;
     if (lhsNode.nodeType === 'Identifier') {
       const lhsbinding = scope.findReferencedBinding(lhsNode);
-      lhsSecret = !!lhsbinding.secretVariable;
+      lhsSecret = !!lhsbinding.isSecret;
     }
     switch (expressionNode.nodeType) {
       case 'Assignment': {

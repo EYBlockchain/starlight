@@ -36,7 +36,7 @@ export default {
       const indicatorObjs = [];
       // we find each secret variable which has been modified in this scope
       scope.referencedBindings.forEach(binding => {
-        if (binding.secretVariable && !secretVarsInScope.includes(binding))
+        if (binding.isSecret && !secretVarsInScope.includes(binding))
           secretVarsInScope.push(binding);
       });
       // we find the indicators for each secret variable
