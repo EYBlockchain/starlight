@@ -373,12 +373,16 @@ export class Scope {
             }
           }
         }
-        if (!isIncrementedBool) isIncrementedBool = false;
+        if (!isIncrementedBool) {
+          isIncrementedBool = false;
+          isDecrementedBool = false;
+        }
         break;
       }
       // TODO are there incrementations which aren't assignments?
       default:
         isIncrementedBool = false;
+        isDecrementedBool = false;
         break;
     }
     console.log(`statement is incremented? ${isIncrementedBool}`);

@@ -50,9 +50,9 @@ export default {
           logger.warn(
             `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,
           );
-        if (secretVar.isUnknown && secretVar.isWhole)
+        if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole)
           throw new Error(
-            `Can't nullify (that is, edit with knowledge of the state) a whole state. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
+            `Can't mark a whole state as unknown. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
           );
         if (secretVar.isUnknown && secretVar.isIncremented && !secretVar.isWhole) {
           secretVar.isWhole = false;
@@ -106,6 +106,11 @@ export default {
         }
         console.log(`Contract level binding for state:`);
         console.dir(topScope, { depth: 0 });
+        if (topScope.isWholeReason) {
+          console.log(topScope.isWholeReason);
+        } else {
+          console.log(topScope.isPartitionedReason);
+        }
       });
     },
   },

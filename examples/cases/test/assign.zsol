@@ -5,15 +5,16 @@ pragma solidity ^0.7.0;
 contract Assign {
 
   secret uint256 private a;
+  // secret address private admin;
 
-  function assign(uint256 value) public {
-    known a = value;
+  function assign(secret uint256 value) public {
+    // require(msg.sender == admin);
+    // admin = value;
     // uint256 b = value*2;
-    a = a + value;
-    a = 2*a;
-    known a += value;
+    // a = 2*a;
+    unknown a += value;
     a = 2 + a + value;
-    a -= value;
-    a = a - value;
+    // a -= value;
+    // a = a - value;
   }
 }

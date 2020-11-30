@@ -74,7 +74,10 @@ export default {
       const { node, scope } = path;
       const expressionNode = node.expression;
       const lhsNode = expressionNode.leftHandSide;
-      const { isIncrementedBool, isDecrementedBool } = scope.isIncremented(expressionNode, lhsNode);
+      const { isIncrementedBool, isDecrementedBool } =
+        lhsNode.typeDescriptions.typeString !== 'address'
+          ? scope.isIncremented(expressionNode, lhsNode)
+          : { isIncrementedBool: false, isDecrementedBool: false };
       if (lhsNode.isUnknown && expressionNode.isDecremented === true) {
         throw new Error(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
@@ -85,6 +88,7 @@ export default {
       const referencedBinding = scope.findReferencedBinding(lhsNode);
       if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
+        console.log(fnDefScope);
         const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
 
         // if its incremented anywhere, isIncremented = true
@@ -96,7 +100,10 @@ export default {
         if (isIncrementedBool === false) {
           // statement is an overwrite
           fnIndicatorObj.isWhole = true;
-          const reason = `Overwritten at ${expressionNode.src}`;
+          const reason =
+            lhsNode.typeDescriptions.typeString !== 'address'
+              ? `Overwritten at ${expressionNode.src}`
+              : `Address`;
           console.log(reason);
           if (fnIndicatorObj.isWholeReason) {
             fnIndicatorObj.isWholeReason.push(reason);

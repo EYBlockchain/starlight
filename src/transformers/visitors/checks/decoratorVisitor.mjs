@@ -92,6 +92,8 @@ export default {
           logger.warn(
             `PEDANTIC: a conventional smart contract state variable (${node.name}) is 'known' by default`,
           );
+        if (node.isKnown) varDec.isKnown = node.isKnown;
+        if (node.isUnknown) varDec.isUnknown = node.isUnknown;
       }
     },
   },

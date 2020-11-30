@@ -9,6 +9,7 @@ const operators = ['+', '-', '*', '/', '%'];
 const eqOperators = [' = ', '+= ', '-= '];
 
 function findNodeId(ast, line) {
+  console.log('line', line);
   const { type, name, rhs, newline } = line;
   const { nodes } = ast.nodes[1];
   let nodeId;
