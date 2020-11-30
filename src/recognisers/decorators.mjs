@@ -7,6 +7,7 @@ import logger from '../utils/logger.mjs';
 import recogniseGlobal from './global.mjs';
 import recogniseAssignment from './assignment.mjs';
 import recogniseFunction from './function.mjs';
+import recogniseParameters from './parameters.mjs';
 
 const operators = [' = ', '+= ', '-= '];
 
@@ -51,6 +52,24 @@ function recogniseDecorators(line) {
       }
       logger.info(`Removed decorators from the line \n${line} \nto \n${deDecLine}`);
       return { keyword, type, name, rhs, deDecLine };
+    }
+    if (line.includes(keyword)) {
+      // if the function is secret, then all the params are secret, and that's a TODO
+      // if the fn isn't secret, but the param(s) are then we do the below
+      let deDecLine = tidy(line.replace(`${keyword}`, '')); // remove the sprinkled syntax
+      let type;
+      let name;
+      let rhs;
+      // we use line, not dedecline, because we may have more than one secret param
+      if (recogniseParameters(line)) {
+        // {fn, fn name}
+        const { keywords, types, names, deDecLines } = recogniseParameters(line);
+        keyword = keywords;
+        type = types;
+        name = names;
+        deDecLine = deDecLines;
+        return { keyword, type, name, rhs, deDecLine };
+      }
     }
   }
   return {};

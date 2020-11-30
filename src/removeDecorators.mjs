@@ -40,7 +40,9 @@ function removeDecorators(options) {
     if (!line) return decLine;
     recogniseCurlyBracket(line); // increases blockCount, checks we are in the correct block // TODO: is this needed?
     const { keyword, type, name, rhs, deDecLine } = recogniseDecorators(line);
-    if (deDecLine) {
+    console.log('deDecLine', deDecLine);
+    if (deDecLine) console.log('is array:', Array.isArray(deDecLine));
+    if (deDecLine && !Array.isArray(deDecLine)) {
       // record the desprinkling, so that we may add the keywords back to the AST later (after solc compilation):
       toRedecorate.push({
         oldline: decLine,
@@ -51,6 +53,20 @@ function removeDecorators(options) {
         rhs,
       });
       return decLine.replace(line, deDecLine);
+    }
+    if (deDecLine && Array.isArray(deDecLine)) {
+      // we have secret params
+      for (let i = 0; i < deDecLine.length; i++) {
+        toRedecorate.push({
+          oldline: decLine,
+          newline: deDecLine,
+          type: type[i],
+          keyword: keyword[i],
+          name: name[i],
+          rhs,
+        });
+      }
+      return decLine.replace(/secret/g, '');
     }
     return decLine;
   });

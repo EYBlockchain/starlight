@@ -88,7 +88,6 @@ export default {
       const referencedBinding = scope.findReferencedBinding(lhsNode);
       if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
-        console.log(fnDefScope);
         const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
 
         // if its incremented anywhere, isIncremented = true

@@ -9,7 +9,6 @@ const operators = ['+', '-', '*', '/', '%'];
 const eqOperators = [' = ', '+= ', '-= '];
 
 function findNodeId(ast, line) {
-  console.log('line', line);
   const { type, name, rhs, newline } = line;
   const { nodes } = ast.nodes[1];
   let nodeId;
@@ -109,6 +108,20 @@ function findNodeId(ast, line) {
       }
       if (!nodeId) logger.debug(`Node Id for ${type} ${name} not found`);
       break;
+    case 'param':
+      for (const node of nodes) {
+        if (node.nodeType === 'FunctionDefinition') {
+          const fnScope = { nodes: [{}, {}] };
+          fnScope.nodes[1].nodes = node.parameters.parameters;
+          line.inFnParams = true;
+          nodeId = findNodeId(fnScope, line);
+        } else if (node.nodeType === 'VariableDeclaration') {
+          if (node.name === name && line.inFnParams) nodeId = node.id;
+        }
+        if (nodeId) break;
+        line.inFnParams = false;
+      }
+      break;
     default:
       logger.debug('This shouldnt happen');
   }
@@ -174,6 +187,30 @@ function addDecorators(ast, line) {
           const fnScope = { nodes: [{}, {}] };
           fnScope.nodes[1].nodes = node.body.statements;
           addDecorators(fnScope, line);
+        }
+      }
+      break;
+    case 'param':
+      for (const node of nodes) {
+        if (node.nodeType === 'FunctionDefinition') {
+          const fnScope = { nodes: [{}, {}] };
+          fnScope.nodes[1].nodes = node.parameters.parameters;
+          addDecorators(fnScope, line);
+        } else if (node.nodeType === 'VariableDeclaration') {
+          if (node.id === line.nodeId) {
+            switch (line.keyword) {
+              case 'secret':
+                node.isSecret = true;
+                break;
+              case 'unknown':
+                node.isUnknown = true;
+                break;
+              case 'known':
+                node.isKnown = true;
+                break;
+              default:
+            }
+          }
         }
       }
       break;
