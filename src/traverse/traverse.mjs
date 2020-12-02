@@ -1,14 +1,17 @@
-/* eslint-disable no-use-before-define, no-continue, no-shadow, no-param-reassign */
+/* eslint-disable import/no-cycle, no-use-before-define, no-continue, no-shadow, no-param-reassign */
 
 import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
 // import * as solidityTypes from '../types/solidity-types.mjs';
-import { getVisitableKeys, setParentPath } from '../types/solidity-types.mjs';
+import { getVisitableKeys } from '../types/solidity-types.mjs';
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
 export function traverse(path, visitor, state = {}) {
-  logger.debug('pathLocation:', `${path.getLocation()} = ${path.node.nodeType}`);
+  logger.debug(
+    'pathLocation:',
+    `${path.getLocation()} = ${path.node.nodeType} ${path.node.name || ''}`,
+  );
 
   if (state && state.stopTraversal) return;
   if (state && state.skipSubNodes) return;
@@ -24,8 +27,8 @@ export function traverse(path, visitor, state = {}) {
   if (methods && methods.enter) {
     // logger.debug('\n\n\n\n************************************************');
     // logger.debug(`${node.nodeType} before enter`);
-    // logger.debug('node._context:', node._context);
-    // if (parent) logger.debug('parent._context:', parent._context);
+    // logger.debug('node._newASTPointer:', node._newASTPointer);
+    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
     // logger.debug('state:', state);
     methods.enter(path, state);
 
@@ -34,8 +37,8 @@ export function traverse(path, visitor, state = {}) {
     // logger.debug('path', node.parentPath);
 
     // logger.debug(`\n\n\n\n${node.nodeType} after enter`);
-    // logger.debug('node._context:', node._context);
-    // if (parent) logger.debug('parent._context:', parent._context);
+    // logger.debug('node._newASTPointer:', node._newASTPointer);
+    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
   }
@@ -75,16 +78,16 @@ export function traverse(path, visitor, state = {}) {
   if (methods && methods.exit) {
     // logger.debug('\n\n\n\n*************************************************');
     // logger.debug(`${node.nodeType} before exit`);
-    // logger.debug('node._context:', node._context);
-    // if (parent) logger.debug('parent._context:', parent._context);
+    // logger.debug('node._newASTPointer:', node._newASTPointer);
+    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
 
     methods.exit(path, state);
 
     // logger.debug(`\n\n\n\n${node.nodeType} after exit`);
-    // logger.debug('node._context:', node._context);
-    // if (parent) logger.debug('parent._context:', parent._context);
+    // logger.debug('node._newASTPointer:', node._newASTPointer);
+    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
   }
@@ -110,7 +113,7 @@ export function traverseNodesFast(node, enter, state = {}) {
       for (const subNode of subNodes) {
         traverseNodesFast(subNode, enter, state);
       }
-    } else {
+    } else if (node[key]) {
       const subNode = node[key];
       traverseNodesFast(subNode, enter, state);
     }
@@ -134,6 +137,7 @@ export function traversePathsFast(path, enter, state = {}) {
   enter(path, state);
 
   const { node } = path;
+
   for (const key of keys) {
     if (Array.isArray(node[key])) {
       const subNodes = node[key];
@@ -149,7 +153,7 @@ export function traversePathsFast(path, enter, state = {}) {
         });
         traversePathsFast(subNodePath, enter, state);
       }
-    } else {
+    } else if (node[key]) {
       const subNode = node[key];
       const subNodePath = new NodePath({
         parent: node,

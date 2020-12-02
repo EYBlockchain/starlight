@@ -19,11 +19,11 @@ const zappify = options => {
 
   checks(zsolAST, options);
 
-  // toOrchestration(zsolAST, options);
+  toOrchestration(zsolAST, options);
 
-  // toCircuit(zsolAST, options);
+  toCircuit(zsolAST, options);
 
-  // toContract(zsolAST, options);
+  toContract(zsolAST, options);
 };
 
 // const tasks = new Listr([

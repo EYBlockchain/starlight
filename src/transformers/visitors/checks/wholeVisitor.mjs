@@ -1,9 +1,7 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow */
+// no-unused-vars <-- to reinstate eventually
 
-import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import circuitTypes from '../../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -13,8 +11,6 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {},
     exit(path, state) {},
   },
@@ -30,23 +26,13 @@ export default {
 
     exit(path, state) {
       // why here? Because we are looking for whether the secret state is incremented per function scope
-      const { node, scope } = path;
-      const fnDefScopes = [];
-      const secretVarsInScope = [];
-      const indicatorObjs = [];
-      // we find each secret variable which has been modified in this scope
-      scope.referencedBindings.forEach(binding => {
-        if (binding.isSecret && !secretVarsInScope.includes(binding))
-          secretVarsInScope.push(binding);
-      });
-      // we find the indicators for each secret variable
-      secretVarsInScope.forEach(binding => {
-        indicatorObjs.push(scope.indicators.find(obj => obj.binding === binding));
-      });
-      // console.log(secretVarsInScope);
-      // console.log(indicatorObjs);
-      // some checks
-      indicatorObjs.forEach(secretVar => {
+      const { scope } = path;
+
+      const secretModifiedIndicators = scope.filterIndicators(
+        ind => ind.binding.isSecret && ind.isModified,
+      );
+      Object.keys(secretModifiedIndicators).forEach(stateVarId => {
+        const secretVar = secretModifiedIndicators[stateVarId];
         if (secretVar.isKnown && secretVar.isWhole)
           logger.warn(
             `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,

@@ -1,9 +1,6 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow */
 
-import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import circuitTypes from '../../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -13,8 +10,6 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {},
     exit(path, state) {},
   },
@@ -96,7 +91,7 @@ export default {
       const { node, parent } = path;
       const args = node.arguments;
       args.forEach(arg => {
-        const binding = arg.referencedDeclaration ? path.scope.findReferencedBinding(arg) : {};
+        const binding = arg.referencedDeclaration ? path.scope.getReferencedBinding(arg) : {};
         if (binding.isSecret)
           throw new Error(
             `Cannot use a secret state (${binding.name}) in an external function call.`,

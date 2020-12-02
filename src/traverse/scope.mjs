@@ -3,6 +3,14 @@
 import logger from '../utils/logger.mjs';
 import { scopeCache } from './cache.mjs';
 
+const filterObject = (obj, callback) => {
+  const filteredObject = Object.keys(obj).reduce((acc, key) => {
+    if (!callback(obj[key])) delete acc[key];
+    return acc;
+  }, obj);
+  return filteredObject;
+};
+
 export class Scope {
   /**
    * @param {NodePath} path - the nodePath of the node around which we're
@@ -16,10 +24,10 @@ export class Scope {
     this.scopeId = node.id;
     this.scopeType = node.nodeType;
     this.path = path;
-    this.bindings = [];
-    this.referencedBindings = [];
-    this.modifiedBindings = [];
-    this.indicators = [];
+    this.bindings = {}; // keys are AST node `id`s
+    this.referencedBindings = {}; // keys are AST node `id`s
+    this.modifiedBindings = {}; // keys are AST node `id`s
+    this.indicators = {}; // keys are stateVariable names
 
     scopeCache.set(node, this); // mapping from a node to its scope.
 
@@ -43,25 +51,29 @@ export class Scope {
         };
         break;
       case 'FunctionDefinition':
-        this.indicators = [
-          // {
+        this.indicators = {
+          // id: { // Although state variables have unique names, id is more consistent with other objects
           //   id: state_var_node_id
           //   name: state_var_name,
           //   binding: { binding_of_var_decl },
-          //   referenced: true,
-          //   referencingPaths: [
-          //     {path_of_identifier}, {path_of_identifier},...
-          //   ],
-          //   modified: true,
-          //   modifyingPaths: [
-          //     {path_of_identifier}, {path_of_identifier},...
-          //   ], // a subset of referencingPaths
+          //   isReferenced: true,
+          //   referencingPaths: { // indexed by AST id
+          //     id0: path_of_identifier,
+          //     id1: path_of_identifier,
+          //     ...
+          //   },
+          //   isModified: true,
+          //   modifyingPaths: { // indexed by AST id
+          //     id0: path_of_identifier,
+          //     id1: path_of_identifier,
+          //     ...
+          //   }, // a subset of referencingPaths
           //   oldCommitmentReferenceRequired: true,
           //   nullifierRequired: true,
           //   initialisationRequired: true,
           //   newCommitmentRequired: true,
           // }
-        ];
+        };
         break;
       default:
     }
@@ -71,9 +83,9 @@ export class Scope {
     const { node, parent } = path;
     const { name, id, nodeType } = node;
 
-    if (this.bindings[name])
+    if (this.bindings[id])
       throw new Error(
-        `Whilst updating scope for nodeType ${nodeType}, expected this.bindings[${name}] to be undefined, but found binding: ${this.bindings[name]} for this scope: ${this}`,
+        `Whilst updating scope for nodeType ${nodeType}, expected this.bindings[${id}] to be undefined, but found binding: ${this.bindings[id]} for this scope: ${this}`,
       );
 
     switch (nodeType) {
@@ -81,18 +93,18 @@ export class Scope {
       case 'FunctionDefinition':
         // a 'ContractDefinition' is a declaration (binding) within a SourceUnit scope.
         // a 'FunctionDefinition' is a declaration (binding) within a ContractDefinition scope.
-        this.bindings.push({
+        this.bindings[id] = this.bindings[id] || {
           kind: nodeType,
           id,
           name,
           node,
           path,
           scope: this,
-        });
+        };
         break;
 
       case 'VariableDeclaration':
-        this.bindings.push({
+        this.bindings[id] = this.bindings[id] || {
           kind: nodeType, // TODO: make 'kind' more specific, e.g. 'param'?
           id,
           name,
@@ -102,13 +114,13 @@ export class Scope {
           stateVariable: node.stateVariable,
           isSecret: node.isSecret,
           // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
-          referenced: false,
+          isReferenced: false,
           referenceCount: 0,
-          referencingPaths: [], // paths which reference this binding
-          modified: false,
+          referencingPaths: {}, // paths which reference this binding
+          isModified: false,
           modificationCount: 0,
-          modifyingPaths: [], // paths which reference this binding
-        });
+          modifyingPaths: {}, // paths which reference this binding
+        };
 
         if (this.scopeType === 'ContractDefinition' && node.isSecret) {
           this.indicators.commitmentsRequired = true;
@@ -118,66 +130,78 @@ export class Scope {
 
       case 'Identifier': {
         // 1) Update the binding this Identifier node is referencing:
-        const referencedBinding = this.findReferencedBinding(node);
+        const referencedBinding = this.getReferencedBinding(node);
         if (!referencedBinding)
           throw new Error(
             `Couldn't find a referencedDeclaration. I.e. couldn't find a node with id ${node.referencedDeclaration}`,
           );
 
-        referencedBinding.referenced = true;
+        const referencedNode = referencedBinding.node;
+        const referencedId = referencedBinding.id;
+        const referencedName = referencedBinding.name;
+
+        // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
+        referencedBinding.isReferenced = true;
         ++referencedBinding.referenceCount;
-        referencedBinding.referencingPaths.push(path);
-        this.referencedBindings.push(referencedBinding);
+        referencedBinding.referencingPaths[id] = path;
+        // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
+        this.referencedBindings[referencedId] = referencedBinding;
 
         // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
         if (parent.nodeType === 'Assignment' && path.containerName === 'leftHandSide') {
-          referencedBinding.modified = true;
+          // update the referenced binding, to say "this variable has been modified by this node (`node`)"
+          referencedBinding.isModified = true;
           ++referencedBinding.modificationCount;
-          referencedBinding.modifyingPaths.push(path);
-          this.modifiedBindings.push(referencedBinding);
+          referencedBinding.modifyingPaths[id] = path;
+
+          // update this scope, to say "the code in this scope 'modifies' a variable declared elsewhere"
+          this.modifiedBindings[referencedId] = referencedBinding;
         }
 
-        // 2) Update the indicators of the scope:
-        const referencedNode = referencedBinding.node;
+        // 2) Update the indicators of this scope:
         if (referencedNode.stateVariable && this.isInScopeType('FunctionDefinition')) {
-          const fnDefScope = this.getAncestorOfScopeType('FunctionDefinition');
+          const functionDefScope = this.getAncestorOfScopeType('FunctionDefinition');
           const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
-          let indicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
-          const indicatorForStateVarExists = !!indicatorObj;
+
+          let referencedIndicator = functionDefScope.indicators[referencedId];
+          const indicatorForStateVarExists = !!referencedIndicator;
           if (!indicatorForStateVarExists)
-            indicatorObj = {
-              id: referencedNode.id,
-              name: referencedNode.name,
+            referencedIndicator = {
+              id: referencedId,
+              name: referencedName,
               binding: referencedBinding,
               referencingPaths: [],
               modifyingPaths: [],
             };
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
-          indicatorObj.referenced = true;
-          indicatorObj.referencingPaths.push(path);
-          indicatorObj.oldCommitmentReferenceRequired = true;
+          referencedIndicator.isReferenced = true;
+          referencedIndicator.referencingPaths[id] = path; // might overwrite, but that's ok.
+          referencedIndicator.oldCommitmentReferenceRequired = true;
+
           contractDefScope.indicators.oldCommitmentReferencesRequired = true;
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
           if (parent.nodeType === 'Assignment' && path.containerName === 'leftHandSide') {
-            indicatorObj.modified = true;
-            indicatorObj.modifyingPaths.push(path);
-            indicatorObj.newCommitmentRequired = true;
-            indicatorObj.nullifierRequired = null; // we don't know yet
+            referencedIndicator.isModified = true;
+            referencedIndicator.modifyingPaths[id] = path; // might overwrite, but that's ok.
+            referencedIndicator.newCommitmentRequired = true;
+            referencedIndicator.nullifierRequired = null; // we don't know yet
+            referencedIndicator.initialisationRequired = true;
+            if (node.isKnown) referencedIndicator.isKnown = true;
+            if (node.isUnknown) referencedIndicator.isUnknown = true;
+
             contractDefScope.indicators.nullifiersRequired = true;
-            indicatorObj.initialisationRequired = true;
-            if (node.isKnown) indicatorObj.isKnown = true;
-            if (node.isUnknown) indicatorObj.isUnknown = true;
           }
 
-          if (indicatorObj.isKnown && indicatorObj.isUnknown) {
+          if (referencedIndicator.isKnown && referencedIndicator.isUnknown) {
             throw new Error(
               `Secret state ${node.name} cannot be marked as known and unknown in the same scope`,
             );
           }
 
-          if (!indicatorForStateVarExists) fnDefScope.indicators.push(indicatorObj);
+          if (!indicatorForStateVarExists)
+            functionDefScope.indicators[referencedNode.id] = referencedIndicator;
         }
         break;
       }
@@ -221,7 +245,9 @@ export class Scope {
   queryAncestors(callback) {
     const scope = this;
     if (!scope) return null; // No more scope to look at. So not found anywhere.
-    return callback(scope) || scope.parentScope.queryAncestors(callback);
+    return (
+      callback(scope) || (scope.parentScope ? scope.parentScope.queryAncestors(callback) : null)
+    );
   }
 
   /**
@@ -246,29 +272,207 @@ export class Scope {
     return this.findAncestor(scope => scope.scopeType === scopeType);
   }
 
-  findReferencedBinding(referencingNode) {
+  /**
+   * @returns {Binding} - the binding of the node being referred-to by the input referencingNode.
+   */
+  getReferencedBinding(referencingNode) {
     const node = referencingNode;
-    if (!node.referencedDeclaration) return null; // if the node doesn't refer to another variable
+    const id = node.referencedDeclaration;
+    if (!id) return null; // if the node doesn't refer to another variable
     return this.queryAncestors(s => {
-      return s.bindings.find(binding => binding.node.id === node.referencedDeclaration);
+      return s.bindings[id];
     });
   }
 
-  collectAllAncestorBindings() {
+  /**
+   * @returns {Binding} - the node being referred-to by the input referencingNode.
+   */
+  getReferencedNode(referencingNode) {
+    const binding = this.getReferencedBinding(referencingNode);
+    return binding ? binding.node : binding;
+  }
+
+  /**
+   * @returns {Object} - all bindings from all ancestor scopes.
+   */
+  getAncestorBindings() {
     let scope = this;
-    let bindingsArray = [];
+    let result = {};
     do {
       const { bindings } = scope;
       if (!bindings) continue;
-      bindingsArray = bindingsArray.concat(bindings);
-      // bindingsArray = bindingsArray.concat(Object.keys(bindings).map(key => bindings[key]));
+      result = Object.assign(bindings, result);
     } while ((scope = scope.parentScope));
-    return bindingsArray;
+    return result;
   }
 
-  collectAllStateVariableBindings() {
-    return this.collectAllAncestorBindings().filter(binding => binding.stateVariable);
+  /**
+   * @param {Array<string>} booleanKeys - an array of strings of the boolean keys of a binding object. NOTE: only filters `this` scope. Use filterAncestorBindings to filter all bindings from `this` and higher scopes.
+   * @returns {Object} - a set of bindings, filtered according to the booleanKeys
+   */
+  filterBindingsByBooleans(booleanKeys) {
+    let result = {};
+    if (!Array.isArray(booleanKeys)) throw new Error('booleanKeys param must be an array.');
+    const validBooleanKeys = [
+      'stateVariable',
+      'isSecret',
+      'isRefenced',
+      'isModified',
+      'isWhole',
+      'isPartitioned',
+      'isIncremented',
+    ];
+    booleanKeys.forEach(str => {
+      if (!validBooleanKeys.includes(str))
+        throw new Error(`Invalid indicatorString ${str}. Must be one of ${validBooleanKeys}`);
+    });
+    const { bindings } = this;
+    result = Object.keys(bindings).reduce((acc, id) => {
+      booleanKeys.forEach(str => {
+        if (!bindings[id][str]) delete acc[id];
+      });
+      return acc;
+    }, bindings);
+    return result;
   }
+
+  /**
+   * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
+   * @returns {Object} - a set of bindings from this scope, filtered according to the callback
+   */
+  filterBindings(callback) {
+    const { bindings } = this;
+    const result = filterObject(bindings, callback);
+    return result;
+  }
+
+  /**
+   * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
+   * @returns {Object} - a set of bindings from this scope, filtered according to the callback
+   */
+  filterAncestorBindings(callback) {
+    const ancestorBindings = this.getAncestorBindings();
+    const result = filterObject(ancestorBindings, callback);
+    return result;
+  }
+
+  /**
+   * @returns {Boolean} - if a stateVariable is modified within the scope (of a FunctionDefinition scope).
+   */
+  modifiesSecretState() {
+    if (this.scopeType !== 'FunctionDefinition') return false;
+    const { indicators } = this;
+    for (const stateVarId of Object.keys(indicators)) {
+      const indicator = indicators[stateVarId];
+      if (indicator.isModified && indicator.binding.isSecret) return true;
+    }
+    return false;
+  }
+
+  /**
+   * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
+   * @returns {Object} - a set of modifiedBindings from this scope, filtered according to the callback
+   */
+  filterModifiedBindings(callback) {
+    const { modifiedBindings } = this;
+    const result = filterObject(modifiedBindings, callback);
+    return result;
+  }
+
+  /**
+   * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
+   * @returns {Object} - a set of modifiedBindings from this scope, filtered according to the callback
+   */
+  filterReferencedBindings(callback) {
+    const { referencedBindings } = this;
+    const result = filterObject(referencedBindings, callback);
+    return result;
+  }
+
+  /**
+   * @param {Array<string>} booleanKeys - an array of strings of the boolean keys of a FunctionDefition scope's indicator object.
+   * @returns {Object} - a FunctionDefition scope's indicators, filtered according to the booleanKeys
+   */
+  filterIndicatorsByBooleans(booleanKeys) {
+    let result = {};
+    if (!Array.isArray(booleanKeys)) throw new Error('booleanKeys param must be an array.');
+    let validBooleanKeys;
+    switch (this.scopeType) {
+      case 'FunctionDefinition':
+        validBooleanKeys = [
+          'isReferenced',
+          'isModified',
+          'oldCommitmentRequired',
+          'nullifierRequired',
+          'initialisationRequired',
+          'newCommitmentRequired',
+          'isIncremented',
+          'isDecremented',
+          'isWhole',
+          // TODO: include all boolean keys from a binding in this indicator as well! But be careful; a boolean being true in a binding doesn't mean it's true in a FunctionDefniition scope's indicators.
+        ];
+        break;
+      case 'ContractDefinition':
+        validBooleanKeys = [
+          'zkSnarkVerificationRequired',
+          'oldCommitmentReferencesRequired',
+          'nullifiersRequired',
+          'commitmentsRequired',
+        ];
+        break;
+      default:
+        throw new Error(
+          `filterIndicators is only supported for scopeTypes 'FunctionDefinition and ContractDefinition`,
+        );
+    }
+
+    booleanKeys.forEach(str => {
+      if (!validBooleanKeys.includes(str))
+        throw new Error(`Invalid indicatorString ${str}. Must be one of ${validBooleanKeys}`);
+    });
+    const { indicators } = this;
+    result = Object.keys(indicators).reduce((acc, id) => {
+      booleanKeys.forEach(str => {
+        if (!indicators[id][str]) delete acc[id];
+      });
+      return acc;
+    }, indicators);
+    return result;
+  }
+
+  /**
+   * @param {Function} callback - a callback which takes an indicator object as input and returns a boolean (same as the Array.filter prototype)
+   * @returns {Object} - a FunctionDefition scope's indicators, filtered according to the callback
+   */
+  filterIndicators(callback) {
+    const { indicators } = this;
+    const result = filterObject(indicators, callback);
+    return result;
+  }
+
+  /**
+   * Gets a Function Definition scope's indicator object for a particular state variable.
+   * @param {Number} id - an AST node's id.
+   * @returns {Indicator Object || null}
+   */
+  getIndicatorById(id) {
+    return this.indicators[id] || {};
+  }
+
+  /**
+   * Gets a Function Definition scope's indicator object for a particular state variable.
+   * @param {Number} id - an AST node's id.
+   * @returns {Indicator Object || null}
+   */
+  getIndicatorByName(name) {
+    const { indicators } = this;
+    Object.keys(indicators).forEach(id => {
+      if (indicators[id].name === name) return indicators[id];
+    });
+    return null;
+  }
+
+  // TODO: one for 'uses' secret state?
 
   isIncremented(expressionNode, lhsNode) {
     const scope = this;
@@ -278,7 +482,7 @@ export class Scope {
     // first, check if the LHS node is secret
     let lhsSecret;
     if (lhsNode.nodeType === 'Identifier') {
-      const lhsbinding = scope.findReferencedBinding(lhsNode);
+      const lhsbinding = scope.getReferencedBinding(lhsNode);
       lhsSecret = !!lhsbinding.isSecret;
     }
     switch (expressionNode.nodeType) {
@@ -326,7 +530,7 @@ export class Scope {
           for (const param of params) {
             logger.info(`at param ${param.name}`);
             if (param.referencedDeclaration) {
-              const isSecret = scope.findReferencedBinding(param).secretVariable;
+              const isSecret = scope.getReferencedBinding(param).secretVariable;
               logger.info(`param is secret? ${isSecret}`);
               // a = a + b
               if (isSecret && param.name === lhsNode.name && op.includes('+')) {
@@ -358,10 +562,10 @@ export class Scope {
           // c = a + b, a = c
           // TODO consider cases where c has lots of modifiers, which might cancel out the incrementation of a
           // TODO consider doing this at the level of c, not a, maybe that works out better
-          const rhsbinding = scope.findReferencedBinding(expressionNode.rightHandSide);
+          const rhsbinding = scope.getReferencedBinding(expressionNode.rightHandSide);
           const isSecret = rhsbinding.secretVariable;
           // looking at modifiers of c...
-          if (rhsbinding && rhsbinding.modified) {
+          if (rhsbinding && rhsbinding.isModified) {
             // for each modifier, replace a with c and see if there are incrementations..
             for (const path of rhsbinding.modifyingPaths) {
               const modifyingNode = path.node;
@@ -386,11 +590,11 @@ export class Scope {
     expressionNode.isIncremented = isIncrementedBool;
     expressionNode.isDecremented = isDecrementedBool;
     // 2) Update the indicators of the scope:
-    const referencedBinding = scope.findReferencedBinding(lhsNode);
+    const referencedBinding = scope.getReferencedBinding(lhsNode);
     if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
       const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
       // console.log(fnDefScope);
-      const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
+      const fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
       console.log(`state has ONLY incrementations in this scope (so far)?`);
       console.log(fnIndicatorObj.isIncremented);
       let stateIsIncremented = isIncrementedBool;

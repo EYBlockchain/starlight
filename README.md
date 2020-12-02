@@ -89,7 +89,7 @@ Converts a zappable Solidity contract into a zApp. By default, the zApp is outpu
 
 `npm install`
 
-(At this stage, you might need to run `chmod +x ./bin/setup` and `chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
+(At this stage, you might need to run `chmod +x ./bin/setup && chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
 
 `./bin/setup` <-- this can take quite a while!
 
@@ -103,7 +103,7 @@ NB: rerunning the test will not work, as the test script restarts the containers
 
 ## R&D Notes & Ideas
 
-See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from sprinkled Solidity.
+See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from decorated Solidity.
 
 ---
 
@@ -111,14 +111,14 @@ See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a
 
 To use this branch:
 
-### Testing resprinkler
+### Testing `removeDecorators`
 
--   Point the start command in `package.json` to your sprinkled contract
+-   Point the start command in `package.json` to your decorated contract
 -   Run `npm start`
 
-This first runs the `desprinkler`, which removes and stores the sprinkled syntax in your contract. The desprinkled solidity file is saved as `my_contract_desprinkled.sol` in the `contracts` folder. Its compiled ast is saved as `ast.json` in the root (for now).
+This first runs the `dedecorator`, which removes and stores the decorated syntax in your contract. The decorated solidity file is saved as `my_contract_dedecorated.sol` in the `contracts` folder. Its compiled ast is saved as `ast.json` in the root (for now).
 
-The `resprinkler` then adds back the sprinkled syntax to the ast, creating `sprinkled_ast.json`, also saved to root. Search for `sprinkle` in that new ast to find the syntax.
+The `redecorator` then adds back the decorated syntax to the ast, creating `my_contract_ast.json`, also saved to root.
 
 ### Testing compiler output
 
@@ -131,3 +131,8 @@ In `examples/cases`, there are collections of example output ZApps depending on 
 -   Run `npm test` (this assigns and reassigns the private global variable)
 
 Once assigned, the variable's private information is stored in `db/preimage.json`. Any further assignments use this information to nullify the last commitment. So if you have closed the containers or want to test the initial assignment, be sure to delete this file.
+
+
+## Acknowledgements
+
+- [Babel](https://babeljs.io)

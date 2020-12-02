@@ -23,8 +23,8 @@ function recogniseDecorators(line) {
   for (let keyword of config.decorators) {
     // TODO: this can only handle 1 decorator per line. Might not be true for complex contracts.
     if (line.startsWith(keyword)) {
-      // sprinkle found
-      let deDecLine = tidy(line.replace(`${keyword}`, '')); // remove the sprinkled syntax
+      // decorator found
+      let deDecLine = tidy(line.replace(`${keyword}`, '')); // remove the decorator syntax
       let type;
       let name;
       let rhs;

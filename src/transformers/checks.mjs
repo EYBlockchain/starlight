@@ -4,7 +4,6 @@ import fs from 'fs';
 import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
-import { traverse } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import unsupportedVisitor from './visitors/checks/unsupportedVisitor.mjs';
 import externalCallVisitor from './visitors/checks/externalCallVisitor.mjs';
@@ -12,7 +11,6 @@ import decoratorVisitor from './visitors/checks/decoratorVisitor.mjs';
 import incrementedVisitor from './visitors/checks/incrementedVisitor.mjs';
 import referencedVisitor from './visitors/checks/referencedVisitor.mjs';
 import wholeVisitor from './visitors/checks/wholeVisitor.mjs';
-import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.mjs';
 
 /**
  * Inspired by the Transformer
@@ -30,12 +28,11 @@ function transformation1(oldAST) {
     skipSubnodes: false,
   };
 
-  oldAST._context = newAST.files;
+  oldAST._newASTPointer = newAST.files;
   const dummyParent = {
-    id: 0,
     ast: oldAST,
   };
-  dummyParent._context = newAST;
+  dummyParent._newASTPointer = newAST;
 
   const path = new NodePath({
     parent: dummyParent,

@@ -4,8 +4,8 @@ import fs from 'fs';
 import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
-import { traverse } from '../traverse/traverse.mjs';
-import { clearCaches } from '../traverse/cache.mjs';
+import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.mjs';
+import { pathCache } from '../traverse/cache.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toContractVisitor.mjs';
 import codeGenerator from '../codeGenerators/contract/solidity/toContract.mjs';
@@ -34,16 +34,18 @@ function transformation1(oldAST) {
   const dummyParent = {
     ast: oldAST,
   };
-  dummyParent._context = newAST.files;
-
-  clearCaches(); // Clearing the cache removes all node / scope data stored in memory. Notably, it deletes (resets) the `._context` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
 
   const path = new NodePath({
     parent: dummyParent,
     key: 'ast', // since parent.ast = node
     container: oldAST,
     node: oldAST,
-  });
+  }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
+
+  // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
+  traversePathsFast(path, p => delete p.node._newASTPointer);
+
+  path.parent._newASTPointer = newAST.files;
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
