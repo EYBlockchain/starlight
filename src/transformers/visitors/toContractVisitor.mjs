@@ -151,7 +151,7 @@ export default {
 
     exit(path, state) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
 
       const newNode = {
         // insert this FunctionDefinition node into our ContractDefinition node.
@@ -180,14 +180,15 @@ export default {
       //     if (cur === name) ++acc;
       //     return acc;
       //   }, 0);
+      // OR... don't do things by name? Use id?
 
-      const contractDefScope = path.scope.getAncestorOfScopeType('ContractDefinition');
+      const contractDefScope = scope.getAncestorOfScopeType('ContractDefinition');
       const { zkSnarkVerificationRequired } = contractDefScope.indicators;
-      const oldCommitmentReferencesRequired = path.scope.indicators.some(
+      const oldCommitmentReferencesRequired = scope.someIndicators(
         i => i.oldCommitmentReferenceRequired,
       );
-      const nullifiersRequired = path.scope.indicators.some(i => i.nullifierRequired);
-      const newCommitmentsRequired = path.scope.indicators.some(i => i.newCommitmentRequired);
+      const nullifiersRequired = scope.someIndicators(i => i.nullifierRequired);
+      const newCommitmentsRequired = scope.someIndicators(i => i.newCommitmentRequired);
       // For the 'toContract' transformation, we don't need to consider the initialisationRequired indicator; although it's important in the other transformations.
 
       // Parameters:

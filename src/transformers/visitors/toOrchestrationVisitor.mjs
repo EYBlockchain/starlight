@@ -123,20 +123,13 @@ export default {
         }
 
         // assuming one secret state var per commitment
-        const commitableStateBindings = scope.filterModifiedBindings(
+        const modifiedStateVariableBindings = scope.filterModifiedBindings(
           binding => binding.stateVariable && binding.isSecret,
         );
 
-        for (const [id, binding] of commitableStateBindings) {
+        for (const [id, binding] of Object.entries(modifiedStateVariableBindings)) {
           const indicator = scope.indicators[id];
-          const global = binding.node;
-          // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
-          // const editableCommitmentParameters = circuitTypes.buildEditableCommitmentParameters(
-          //   global.name,
-          // );
-          // for (const param of editableCommitmentParameters) {
-          //   node._newASTPointer.parameters.parameters.push(param);
-          // }
+          const stateVarName = binding.node.name;
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
           // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
@@ -145,8 +138,8 @@ export default {
           if (indicator.initialisationRequired) {
             node._newASTPointer.body.statements.push({
               nodeType: 'ReadPreimage',
-              privateStateName: global.name,
-              parameters: [global.name], // TODO this should be the name of the var inside the commitment
+              privateStateName: stateVarName,
+              parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
             });
           }
           // - oldCommitment preimage check
@@ -168,21 +161,21 @@ export default {
           // - newCommitment preimage check
           node._newASTPointer.body.statements.push({
             nodeType: 'CalculateCommitment',
-            privateStateName: global.name,
-            parameters: [global.name], // TODO this should be the name of the var inside the commitment
+            privateStateName: stateVarName,
+            parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
           });
 
           if (state.snarkVerificationRequired) {
             const circuitParams = [];
             // this adds other values we need in the circuit - v simple
-            binding.modifyingPaths.forEach(modifier => {
+            for (const modifier of Object.values(binding.modifyingPaths)) {
               if (modifier.parent.nodeType === 'Assignment')
                 circuitParams.push(modifier.parent.rightHandSide.name);
-            });
-            circuitParams.push(global.name);
+            }
+            circuitParams.push(stateVarName);
             node._newASTPointer.body.statements.push({
               nodeType: 'GenerateProof',
-              privateStateName: global.name,
+              privateStateName: stateVarName,
               circuitName: node.name,
               parameters: circuitParams, // TODO this should be the name of the var inside the commitment
             });
@@ -190,15 +183,15 @@ export default {
 
           node._newASTPointer.body.statements.push({
             nodeType: 'SendTransaction',
-            privateStateName: global.name,
+            privateStateName: stateVarName,
             functionName: node.name,
             contractName: contractName,
           });
 
           node._newASTPointer.body.statements.push({
             nodeType: 'WritePreimage',
-            privateStateName: global.name,
-            parameters: [global.name], // TODO this should be the name of the var inside the commitment
+            privateStateName: stateVarName,
+            parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
           });
         }
       }

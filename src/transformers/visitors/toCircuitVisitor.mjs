@@ -71,12 +71,14 @@ export default {
     },
 
     exit(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
+
       // Now let's add some commitment-related boilerplate!
-      const modifiedStateVariableBindings = path.scope.modifiedBindings.filter(
-        binding => binding.stateVariable,
+      const modifiedStateVariableBindings = scope.filterModifiedBindings(
+        binding => binding.stateVariable && binding.isSecret,
       );
+
       if (modifiedStateVariableBindings) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._newASTPointer;
@@ -93,12 +95,11 @@ export default {
           });
         }
 
-        for (const binding of modifiedStateVariableBindings) {
-          const global = binding.node;
+        for (const binding of Object.values(modifiedStateVariableBindings)) {
+          const stateVarName = binding.node.name
+
           // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
-          const editableCommitmentParameters = circuitTypes.buildEditableCommitmentParameters(
-            global.name,
-          );
+          const editableCommitmentParameters = circuitTypes.buildEditableCommitmentParameters(stateVarName);
           for (const param of editableCommitmentParameters) {
             node._newASTPointer.parameters.parameters.push(param);
           }
@@ -111,7 +112,7 @@ export default {
           // ^^^ do this for each global:
           node._newASTPointer.body.statements.push({
             nodeType: 'EditableCommitmentStatementsBoilerplate',
-            privateStateName: global.name,
+            privateStateName: stateVarName,
           });
         }
 
@@ -207,20 +208,18 @@ export default {
 
   ExpressionStatement: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       let newNode;
       // ExpressionStatements can contain an Assignment node.
       // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the _first_ such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedBinding = path.scope.getReferencedBinding(lhs);
+        const referencedBinding = scope.getReferencedBinding(lhs);
         const referencedNode = referencedBinding.node;
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
-        const modifiedBinding = path.scope.modifiedBindings.find(
-          binding => binding === referencedBinding,
-        );
+        const modifiedBinding = scope.modifiedBindings[referencedBinding.id];
 
         // TODO: could we alternatively look in referencedBinding.modifyingPaths? Possibly not, because that might include modifications from other scopes?
         // TODO: maybe have a 'find within Body' function to go up to the root of the body, and traverse it?
