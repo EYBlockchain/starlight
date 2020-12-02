@@ -85,7 +85,12 @@ export default {
       }
 
       // 2) Update the indicators of the scope:
-      const referencedBinding = scope.findReferencedBinding(lhsNode);
+      let referencedBinding;
+      if (lhsNode.nodeType === 'Identifier') {
+        referencedBinding = scope.findReferencedBinding(lhsNode);
+      } else if (lhsNode.nodeType === 'IndexAccess') {
+        referencedBinding = scope.findReferencedBinding(lhsNode.baseExpression); // returns the binding of the mapping TODO per index
+      }
       if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);

@@ -83,7 +83,11 @@ export default {
 
     exit(path, state) {
       const { node, parent } = path;
-      const varDec = path.scope.findReferencedBinding(node);
+      const varDec =
+        node.referencedDeclaration > 0
+          ? path.scope.findReferencedBinding(node)
+          : path.scope.findReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+      if (node.referencedDeclaration < 0) return; // this means we have msg.sender
       if (varDec.stateVariable) {
         // node is decorated
         if (!varDec.secretVariable && node.isUnknown)
@@ -94,6 +98,9 @@ export default {
           );
         if (node.isKnown) varDec.isKnown = node.isKnown;
         if (node.isUnknown) varDec.isUnknown = node.isUnknown;
+      } else if (varDec.secretVariable && path.getAncestorContainedWithin('leftHandSide')) {
+        // we have a parameter (at least, for now a secret non state var is a param)
+        throw new Error(`Cannot reassign secret function parameter ${node.name}.`);
       }
     },
   },

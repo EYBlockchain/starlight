@@ -73,6 +73,19 @@ export function getNodeSkeleton(nodeType) {
       return {
         typeName: {},
       };
+    case 'Mapping':
+      return {
+        keyType: {},
+        valueType: {},
+      };
+    case 'IndexAccess':
+      return {
+        indexExpression: {},
+      };
+    case 'MemberAccess':
+      return {
+        expression: {},
+      };
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -109,6 +122,12 @@ export function getVisitableKeys(nodeType) {
       return ['leftExpression', 'rightExpression'];
     case 'VariableDeclaration':
       return ['typeName'];
+    case 'Mapping':
+      return ['keyType', 'valueType'];
+    case 'IndexAccess':
+      return ['indexExpression'];
+    case 'MemberAccess':
+      return ['expression'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':

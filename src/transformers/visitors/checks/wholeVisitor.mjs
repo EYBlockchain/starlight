@@ -35,7 +35,7 @@ export default {
       const contractDefScope = scope.getAncestorOfScopeType('ContractDefinition');
       // we find each secret variable which has been modified in this scope
       scope.referencedBindings.forEach(binding => {
-        if (binding.secretVariable && !secretVarsInScope.includes(binding))
+        if (binding.secretVariable && !secretVarsInScope.includes(binding) && binding.stateVariable)
           secretVarsInScope.push(binding);
       });
       // we find the indicators for each secret variable
@@ -46,6 +46,7 @@ export default {
       // console.log(indicatorObjs);
       // some checks (marking the variable's scope obj)
       indicatorObjs.forEach(secretVar => {
+        // if (secretVar.stateVariable)
         if (secretVar.isKnown && secretVar.isWhole)
           logger.warn(
             `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,

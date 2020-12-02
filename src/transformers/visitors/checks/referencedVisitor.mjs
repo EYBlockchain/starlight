@@ -85,18 +85,41 @@ export default {
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
       const { node, parent } = path;
-      const referencedBinding = path.scope.findReferencedBinding(node);
+      const referencedBinding =
+        node.referencedDeclaration > 0
+          ? path.scope.findReferencedBinding(node)
+          : path.scope.findReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
       if (parentExpression && referencedBinding.secretVariable) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const indicatorObj = path.scope.indicators.find(obj => obj.binding === referencedBinding);
+        const lhsNode = parentExpression.node.expression.leftHandSide;
         if (
           rightAncestor &&
           (!parentExpression.node.expression.isIncremented ||
-            (parentExpression.node.expression.isIncremented &&
-              parentExpression.node.expression.leftHandSide.name !== node.name))
+            (parentExpression.node.expression.isIncremented && lhsNode.name !== node.name))
         ) {
           console.log('Found a reference');
+          const lhs =
+            lhsNode.nodeType === 'Identifier'
+              ? path.scope.findReferencedBinding(lhsNode)
+              : path.scope.findReferencedBinding(lhsNode.baseExpression);
+          if (!node.stateVariable) {
+            // we have a secret parameter on the RHS
+            if (!lhs.secretVariable)
+              throw new Error(
+                `Secret parameter ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
+              );
+            if (!lhs.stateVariable)
+              logger.warn(
+                `Secret parameter ${node.name} is being used to assign a non-global state. Is this intended?`,
+              );
+            return;
+          }
+          if (!lhs.secretVariable)
+            throw new Error(
+              `Secret state ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
+            );
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
           const reason = `Referenced at ${node.src}`;
           indicatorObj.isWhole = true;

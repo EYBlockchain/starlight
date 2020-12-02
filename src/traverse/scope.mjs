@@ -118,7 +118,10 @@ export class Scope {
 
       case 'Identifier': {
         // 1) Update the binding this Identifier node is referencing:
-        const referencedBinding = this.findReferencedBinding(node);
+        const referencedBinding =
+          node.referencedDeclaration > 0
+            ? this.findReferencedBinding(node)
+            : this.findReferencedBinding(path.parentPath.parentPath.node.baseExpression);
         if (!referencedBinding)
           throw new Error(
             `Couldn't find a referencedDeclaration. I.e. couldn't find a node with id ${node.referencedDeclaration}`,
@@ -191,6 +194,9 @@ export class Scope {
       case 'BinaryOperation':
       case 'ElementaryTypeName':
       case 'Literal':
+      case 'IndexAccess':
+      case 'MemberAccess':
+      case 'Mapping': // TODO
         break;
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.
