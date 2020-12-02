@@ -87,13 +87,13 @@ export default {
       // 2) Update the indicators of the scope:
       let referencedBinding;
       if (lhsNode.nodeType === 'Identifier') {
-        referencedBinding = scope.findReferencedBinding(lhsNode);
+        referencedBinding = scope.getReferencedBinding(lhsNode);
       } else if (lhsNode.nodeType === 'IndexAccess') {
-        referencedBinding = scope.findReferencedBinding(lhsNode.baseExpression); // returns the binding of the mapping TODO per index
+        referencedBinding = scope.getReferencedBinding(lhsNode.baseExpression); // returns the binding of the mapping TODO per index
       }
-      if (referencedBinding.node.stateVariable && scope.isInScopeType('FunctionDefinition')) {
+      if (referencedBinding.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
-        const fnIndicatorObj = fnDefScope.indicators.find(obj => obj.binding === referencedBinding);
+        const fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
 
         // if its incremented anywhere, isIncremented = true
 

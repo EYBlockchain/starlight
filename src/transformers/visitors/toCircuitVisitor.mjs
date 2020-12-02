@@ -242,7 +242,7 @@ export default {
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedBinding = path.scope.findReferencedBinding(lhs);
+        const referencedBinding = path.scope.getReferencedBinding(lhs);
         const referencedNode = referencedBinding.node;
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:

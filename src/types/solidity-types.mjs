@@ -81,6 +81,7 @@ export function getNodeSkeleton(nodeType) {
     case 'IndexAccess':
       return {
         indexExpression: {},
+        baseExpression:{},
       };
     case 'MemberAccess':
       return {
@@ -125,7 +126,7 @@ export function getVisitableKeys(nodeType) {
     case 'Mapping':
       return ['keyType', 'valueType'];
     case 'IndexAccess':
-      return ['indexExpression'];
+      return ['indexExpression', 'baseExpression'];
     case 'MemberAccess':
       return ['expression'];
     case 'PragmaDirective':

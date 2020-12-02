@@ -94,7 +94,7 @@ export default {
       const { node, parent } = path;
       const args = node.arguments;
       args.forEach(arg => {
-        const binding = arg.referencedDeclaration ? path.scope.findReferencedBinding(arg) : {};
+        const binding = arg.referencedDeclaration ? path.scope.getReferencedBinding(arg) : {};
         if (binding.secretVariable)
           throw new Error(
             `Cannot use a secret state (${binding.name}) in an external function call.`,

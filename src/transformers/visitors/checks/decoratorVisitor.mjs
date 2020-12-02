@@ -5,7 +5,6 @@ import logger from '../../../utils/logger.mjs';
 import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
 
-
 export default {
   SourceUnit: {
     enter(path, state) {},
@@ -85,8 +84,8 @@ export default {
       const { node, parent } = path;
       const varDec =
         node.referencedDeclaration > 0
-          ? path.scope.findReferencedBinding(node)
-          : path.scope.findReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+          ? path.scope.getReferencedBinding(node)
+          : path.scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       if (node.referencedDeclaration < 0) return; // this means we have msg.sender
       if (varDec.stateVariable) {
         // node is decorated

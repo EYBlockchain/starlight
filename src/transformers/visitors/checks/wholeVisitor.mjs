@@ -34,18 +34,22 @@ export default {
       const indicatorObjs = [];
       const contractDefScope = scope.getAncestorOfScopeType('ContractDefinition');
       // we find each secret variable which has been modified in this scope
-      scope.referencedBindings.forEach(binding => {
-        if (binding.secretVariable && !secretVarsInScope.includes(binding) && binding.stateVariable)
-          secretVarsInScope.push(binding);
-      });
-      // we find the indicators for each secret variable
-      secretVarsInScope.forEach(binding => {
-        indicatorObjs.push(scope.indicators.find(obj => obj.binding === binding));
-      });
+      // scope.referencedBindings.forEach(binding => {
+      //   if (binding.secretVariable && !secretVarsInScope.includes(binding) && binding.stateVariable)
+      //     secretVarsInScope.push(binding);
+      // });
+      // // we find the indicators for each secret variable
+      // secretVarsInScope.forEach(binding => {
+      //   indicatorObjs.push(scope.indicators.find(obj => obj.binding === binding));
+      // });
+      const secretModifiedIndicators = scope.filterIndicators(
+        ind => ind.binding.isSecret && ind.isModified,
+      );
       // console.log(secretVarsInScope);
-      // console.log(indicatorObjs);
+      console.log(contractDefScope);
       // some checks (marking the variable's scope obj)
-      indicatorObjs.forEach(secretVar => {
+      Object.keys(secretModifiedIndicators).forEach(stateVarId => {
+        const secretVar = secretModifiedIndicators[stateVarId];
         // if (secretVar.stateVariable)
         if (secretVar.isKnown && secretVar.isWhole)
           logger.warn(
@@ -89,7 +93,7 @@ export default {
           contractDefScope.indicators.nullifiersRequired = true;
         }
         // here - mark the contract obj
-        const topScope = contractDefScope.bindings.find(obj => obj.id === secretVar.id);
+        const topScope = contractDefScope.bindings[secretVar.id];
         if (topScope.isWhole && !secretVar.isWhole)
           throw new Error(
             `State ${secretVar.name} must be whole because: ${topScope.isWholeReason}`,

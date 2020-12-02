@@ -87,8 +87,8 @@ export default {
       const { node, parent } = path;
       const referencedBinding =
         node.referencedDeclaration > 0
-          ? path.scope.findReferencedBinding(node)
-          : path.scope.findReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+          ? path.scope.getReferencedBinding(node)
+          : path.scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
       if (parentExpression && referencedBinding.secretVariable) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
@@ -102,8 +102,8 @@ export default {
           console.log('Found a reference');
           const lhs =
             lhsNode.nodeType === 'Identifier'
-              ? path.scope.findReferencedBinding(lhsNode)
-              : path.scope.findReferencedBinding(lhsNode.baseExpression);
+              ? path.scope.getReferencedBinding(lhsNode)
+              : path.scope.getReferencedBinding(lhsNode.baseExpression);
           if (!node.stateVariable) {
             // we have a secret parameter on the RHS
             if (!lhs.secretVariable)
