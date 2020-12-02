@@ -80,7 +80,7 @@ export default {
       // Here, if secret:
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
-      const { node, parent } = path;
+      const { node } = path;
       const referencedBinding =
         node.referencedDeclaration > 0
           ? path.scope.getReferencedBinding(node)
@@ -88,7 +88,9 @@ export default {
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
       if (parentExpression && referencedBinding.isSecret) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
-        const indicatorObj = path.scope.indicators.find(obj => obj.binding === referencedBinding);
+        const functionDefScope = path.scope.getAncestorOfScopeType('FunctionDefinition');
+        if (!functionDefScope) return;
+        const referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
         if (
           rightAncestor &&
@@ -102,7 +104,7 @@ export default {
               : path.scope.getReferencedBinding(lhsNode.baseExpression);
           if (!node.stateVariable) {
             // we have a secret parameter on the RHS
-            if (!lhs.secretVariable)
+            if (!lhs.isSecret)
               throw new Error(
                 `Secret parameter ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
               );
@@ -112,7 +114,7 @@ export default {
               );
             return;
           }
-          if (!lhs.secretVariable)
+          if (!lhs.isSecret)
             throw new Error(
               `Secret state ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
             );
