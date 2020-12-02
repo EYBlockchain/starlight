@@ -167,7 +167,7 @@ defineType('VariableDeclaration', {
     'typeDescriptions',
     'typeName',
     'visibility',
-    'sprinkle',
+    'isSecret',
   ],
   visitor: ['typeName'],
   aliases: ['Declaration'],

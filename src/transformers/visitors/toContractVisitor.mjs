@@ -1,10 +1,7 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow */
 
-import cloneDeep from 'lodash.clonedeep';
 import logger from '../../utils/logger.mjs';
-import { getNodeLocation, findReferencedDeclaration } from '../../types/solidity-types.mjs';
-import circuitTypes from '../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
+import { traverseNodesFast } from '../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -26,14 +23,16 @@ export default {
         throw new Error('Only 1 contract per solidity file is currently supported');
 
       // Create a 'File' node and a 'SourceUnit' subNode.
+      // NODEBUILDING
       const newNode = {
         name: contractNames[0],
         nodeType: 'SourceUnit',
         license: node.license,
         nodes: [],
       };
-      node._context = parent._context;
-      parent._context.push(newNode);
+
+      node._newASTPointer = parent._newASTPointer;
+      parent._newASTPointer.push(newNode);
     },
 
     exit(path, state) {},
@@ -48,8 +47,8 @@ export default {
         literals: node.literals,
         nodeType: node.nodeType, // 'PragmaDirective'
       };
-      parent._context[0].nodes.push(newNode);
-      // node._context = parent._context; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
+      parent._newASTPointer[0].nodes.push(newNode);
+      // node._newASTPointer = parent._newASTPointer; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
     exit(path, state) {},
   },
@@ -64,15 +63,15 @@ export default {
         baseContracts: [],
         nodes: [],
       };
-      node._context = newNode.nodes;
-      parent._context[0].nodes.push(newNode);
+      node._newASTPointer = newNode.nodes;
+      parent._newASTPointer[0].nodes.push(newNode);
     },
 
     exit(path, state) {
       // We populate much of the contractDefinition upon exit, having populated the ContractDefinition's scope by this point.
       const { node, parent } = path;
-      const sourceUnitNodes = parent._context[0].nodes;
-      const contractNodes = node._context;
+      const sourceUnitNodes = parent._newASTPointer[0].nodes;
+      const contractNodes = node._newASTPointer;
 
       const {
         zkSnarkVerificationRequired,
@@ -82,15 +81,18 @@ export default {
       } = path.scope.indicators;
 
       // base contracts (`contract MyContract is BaseContract`)
+      // NODEBUILDING
       sourceUnitNodes[1].baseContracts.push({
         nodeType: 'InheritanceSpecifier',
         baseName: {
           nodeType: 'UserDefinedTypeName',
           name: 'MerkleTree',
         },
-      }); // TODO: other things might have been pushed / spliced into the containing array that is 'parent._context', so we might need a more intelligent lookup to ensure we're editing the correct array index. For now, we'll assume the ContractDefinition node is still at index 1.
+      }); // TODO: other things might have been pushed / spliced into the containing array that is 'parent._newASTPointer', so we might need a more intelligent lookup to ensure we're editing the correct array index. For now, we'll assume the ContractDefinition node is still at index 1.
 
       // Imports
+      // TODO: probably need more intelligent insertions of nodes than splicing / unshifting into fixed positions. This looks over-fitted to the October example-case.
+      // NODEBUILDING
       if (zkSnarkVerificationRequired)
         sourceUnitNodes.splice(1, 0, {
           nodeType: 'ImportDirective',
@@ -135,8 +137,8 @@ export default {
       }
 
       if (state.mainPrivateFunctionName) {
-        parent._context[0].mainPrivateFunctionName = state.mainPrivateFunctionName; // TODO fix bodge
-        parent._context[0].nodes.forEach(node => {
+        parent._newASTPointer[0].mainPrivateFunctionName = state.mainPrivateFunctionName; // TODO fix bodge
+        parent._newASTPointer[0].nodes.forEach(node => {
           if (node.nodeType === 'ContractDefinition')
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
@@ -149,10 +151,11 @@ export default {
 
     exit(path, state) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
 
       const newNode = {
         // insert this FunctionDefinition node into our ContractDefinition node.
+        // NODEBUILDING
         nodeType: node.nodeType, // FunctionDefinition
         name: node.name,
         visibility: 'external',
@@ -177,17 +180,19 @@ export default {
       //     if (cur === name) ++acc;
       //     return acc;
       //   }, 0);
+      // OR... don't do things by name? Use id?
 
-      const contractDefScope = path.scope.getAncestorOfScopeType('ContractDefinition');
+      const contractDefScope = scope.getAncestorOfScopeType('ContractDefinition');
       const { zkSnarkVerificationRequired } = contractDefScope.indicators;
-      const oldCommitmentReferencesRequired = path.scope.indicators.some(
+      const oldCommitmentReferencesRequired = scope.someIndicators(
         i => i.oldCommitmentReferenceRequired,
       );
-      const nullifiersRequired = path.scope.indicators.some(i => i.nullifierRequired);
-      const newCommitmentsRequired = path.scope.indicators.some(i => i.newCommitmentRequired);
+      const nullifiersRequired = scope.someIndicators(i => i.nullifierRequired);
+      const newCommitmentsRequired = scope.someIndicators(i => i.newCommitmentRequired);
       // For the 'toContract' transformation, we don't need to consider the initialisationRequired indicator; although it's important in the other transformations.
 
       // Parameters:
+      // NODEBUILDING
       if (zkSnarkVerificationRequired)
         parameters.push({
           nodeType: 'VariableDeclaration',
@@ -242,8 +247,8 @@ export default {
           nodeType: 'insertLeavesBoilerplate',
         });
 
-      // no node._context assignment yet, because we're not yet considering public smart contract code that might need to be 'copied over' to the shield contract's AST.
-      parent._context.push(newNode);
+      // no node._newASTPointer assignment yet, because we're not yet considering public smart contract code that might need to be 'copied over' to the shield contract's AST.
+      parent._newASTPointer.push(newNode);
     },
   },
 
@@ -280,7 +285,7 @@ export default {
   ExpressionStatement: {
     enter(path, state) {},
 
-    exit(node, parent) {},
+    exit(path, parent) {},
   },
 
   VariableDeclaration: {

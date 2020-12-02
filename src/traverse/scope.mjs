@@ -3,12 +3,51 @@
 import logger from '../utils/logger.mjs';
 import { scopeCache } from './cache.mjs';
 
+/**
+ * Analogue of Array.filter, but for objects.
+ * The callback will take as input each 'value' of the input obj.
+ */
 const filterObject = (obj, callback) => {
   const filteredObject = Object.keys(obj).reduce((acc, key) => {
     if (!callback(obj[key])) delete acc[key];
     return acc;
   }, obj);
   return filteredObject;
+};
+
+/**
+ * Analogue of Array.some, but for objects.
+ * The callback will take as input each 'value' of the input obj.
+ */
+const someObject = (obj, callback) => {
+  for (const value of Object.values(obj)) {
+    if (callback(value)) return true;
+  }
+  return false;
+};
+
+/**
+ * Analogue of Array.every, but for objects.
+ * The callback will take as input each 'value' of the input obj.
+ */
+const everyObject = (obj, callback) => {
+  let result = true;
+  for (const value of Object.values(obj)) {
+    result = !!callback(value);
+    if (result === false) return result;
+  }
+  return result;
+};
+
+/**
+ * Analogue of Array.includes, but for objects.
+ * The callback will take as input each 'value' of the input obj.
+ */
+const includesObject = (obj, valueToFind) => {
+  for (const value of Object.values(obj)) {
+    if (value === valueToFind) return true;
+  }
+  return false;
 };
 
 export class Scope {
@@ -461,8 +500,16 @@ export class Scope {
    * @returns {Object} - a FunctionDefition scope's indicators, filtered according to the callback
    */
   filterIndicators(callback) {
-    const { indicators } = this;
-    const result = filterObject(indicators, callback);
+    const result = filterObject(this.indicators, callback);
+    return result;
+  }
+
+  /**
+   * @param {Function} callback - a callback which takes an indicator object as input and returns a boolean (same as the Array.some prototype)
+   * @returns {Boolean} - true if all values of the object are evaluated as 'true' by the callback
+   */
+  someIndicators(callback) {
+    const result = someObject(this.indicators, callback);
     return result;
   }
 
@@ -481,10 +528,9 @@ export class Scope {
    * @returns {Indicator Object || null}
    */
   getIndicatorByName(name) {
-    const { indicators } = this;
-    Object.keys(indicators).forEach(id => {
-      if (indicators[id].name === name) return indicators[id];
-    });
+    for (const indicator of Object.values(this.indicators)) {
+      if (indicator.name === name) return indicator;
+    }
     return null;
   }
 

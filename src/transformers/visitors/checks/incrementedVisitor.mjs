@@ -1,9 +1,6 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow */
 
-import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import circuitTypes from '../../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {

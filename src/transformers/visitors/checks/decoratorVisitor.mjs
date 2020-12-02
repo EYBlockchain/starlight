@@ -1,9 +1,6 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow */
 
-import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import circuitTypes from '../../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -89,9 +86,9 @@ export default {
       if (node.referencedDeclaration < 0) return; // this means we have msg.sender
       if (varDec.stateVariable) {
         // node is decorated
-        if (!varDec.secretVariable && node.isUnknown)
+        if (!varDec.isSecret && node.isUnknown)
           throw new Error(`Identifier ${node.name} is marked as unknown but is not secret.`);
-        if (!varDec.secretVariable && node.isKnown)
+        if (!varDec.isSecret && node.isKnown)
           logger.warn(
             `PEDANTIC: a conventional smart contract state variable (${node.name}) is 'known' by default`,
           );

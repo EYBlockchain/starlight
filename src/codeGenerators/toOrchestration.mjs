@@ -61,7 +61,9 @@ const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
  * The filepath will be used when saving the file into the new zApp's dir.
  */
 const editableCommitmentCommonFilesBoilerplate = () => {
-  return collectImportFiles(OrchestrationCodeBoilerPlate({ nodeType: 'Imports' }).statements.join(''));
+  return collectImportFiles(
+    OrchestrationCodeBoilerPlate({ nodeType: 'Imports' }).statements.join(''),
+  );
 };
 
 const testInputsByType = solidityType => {
@@ -117,8 +119,11 @@ const beautify = code => {
 function codeGenerator(node) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
-    case 'Folder':
-      return node.files.flatMap(codeGenerator);
+    case 'Folder': {
+      const check = node.files.flatMap(codeGenerator);
+      // console.log("\n\n\n\n\n\n\n\n\ncheck FOLDER:", check)
+      return check;
+    }
 
     case 'File':
       return [
@@ -128,16 +133,25 @@ function codeGenerator(node) {
         },
       ];
 
-    case 'EditableCommitmentCommonFilesBoilerplate':
-      return editableCommitmentCommonFilesBoilerplate();
+    case 'EditableCommitmentCommonFilesBoilerplate': {
+      const check = editableCommitmentCommonFilesBoilerplate();
+      // console.log("\n\n\n\n\n\n\n\n\ncheck EditableCommitmentCommonFilesBoilerplate:", check);
+      return check;
+    }
 
-    case 'ZokratesSetupCommonFilesBoilerplate':
-      return collectImportFiles(
+    case 'ZokratesSetupCommonFilesBoilerplate': {
+      const check = collectImportFiles(
         [`import './common/write-vk.mjs'`, `import './common/zkp-setup.mjs'`].join('\n'),
       );
+      // console.log("\n\n\n\n\n\n\n\n\ncheck ZokratesSetupCommonFilesBoilerplate:", check);
+      return check;
+    }
 
-    case 'IntegrationTestBoilerplate':
-      return prepareIntegrationTest(node);
+    case 'IntegrationTestBoilerplate': {
+      const check = prepareIntegrationTest(node);
+      // console.log("\n\n\n\n\n\n\n\n\ncheck IntegrationTestBoilerplate:", check);
+      return check;
+    }
 
     case 'FunctionDefinition': {
       node.parameters = node.parameters.parameters.map(codeGenerator);

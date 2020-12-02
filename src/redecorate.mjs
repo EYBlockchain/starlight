@@ -156,14 +156,14 @@ function addDecorators(ast, line) {
       for (const node of nodes) {
         // if (node.id === line.parentNodeId && line.keyword === 'secret') {
         //   // TODO remove this error/ change it
-        //   logger.info(`Unnecessary assignment sprinkle for ${node.name}...`);
-        //   if (node.sprinkle === 'secret') {
+        //   logger.info(`Unnecessary assignment decorator for ${node.name}...`);
+        //   if (node.isSecret) {
         //     logger.info(
-        //       `...but the declaration has correctly been sprinkled as secret, so that's ok`,
+        //       `...but the declaration has correctly been decorated as secret, so that's ok`,
         //     );
         //     break;
         //   } else {
-        //     throw new Error(`... the declaration for ${node.name} hasn't been sprinkled!`);
+        //     throw new Error(`... the declaration for ${node.name} hasn't been decorated!`);
         //   }
         // }
         if (node.nodeType === 'ExpressionStatement') {
@@ -252,7 +252,7 @@ function redecorate(solAST, toRedecorate, options) {
         // same for function, constructor, and global
         line.nodeId = findNodeId(solAST, line);
     }
-    // sprinkle ast
+    // decorate ast
     newAST = addDecorators(newAST, line);
   }
 

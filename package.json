@@ -7,9 +7,8 @@
     "start": "node src/index.mjs -i examples/cases/uninit_global/assign.zsol",
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
-    "test": "./bin/startup && docker-compose run sprinkles npx mocha --exit --require @babel/register 'test/test.mjs'",
+    "test": "./bin/startup && docker-compose run zappify npx mocha --exit --require @babel/register 'test/test.mjs'",
     "create-ast": "node src/index.mjs -i contracts/assign.sol",
-    "sketch": "node src/transformers/sketcher.mjs -i ./sprinkled_ast.json",
     "demo": "node STC/stc.mjs",
     "example": "node src/transformers/exampleTransformer.mjs -i ./sprinkled_ast.json"
   },

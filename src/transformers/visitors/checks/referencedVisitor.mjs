@@ -1,9 +1,7 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow */
+// no-unused-vars <-- to reinstate eventually
 
-import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import circuitTypes from '../../../types/circuit-types.mjs';
-import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -13,8 +11,6 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {},
     exit(path, state) {},
   },
@@ -90,7 +86,7 @@ export default {
           ? path.scope.getReferencedBinding(node)
           : path.scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
-      if (parentExpression && referencedBinding.secretVariable) {
+      if (parentExpression && referencedBinding.isSecret) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const indicatorObj = path.scope.indicators.find(obj => obj.binding === referencedBinding);
         const lhsNode = parentExpression.node.expression.leftHandSide;
@@ -122,11 +118,11 @@ export default {
             );
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
           const reason = `Referenced at ${node.src}`;
-          indicatorObj.isWhole = true;
-          if (indicatorObj.isWholeReason) {
-            indicatorObj.isWholeReason.push(reason);
+          referencedIndicator.isWhole = true;
+          if (referencedIndicator.isWholeReason) {
+            referencedIndicator.isWholeReason.push(reason);
           } else {
-            indicatorObj.isWholeReason = [reason];
+            referencedIndicator.isWholeReason = [reason];
           }
         }
       }

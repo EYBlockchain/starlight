@@ -24,10 +24,10 @@ function tidy(_line) {
 /**
  * Takes an input '.zsol' file and removes the privacy keywords.
  * @return {Object} = {
- *     desprinkledFile // a '.sol' file, stripped of any keywords, so
+ *     deDecFile // a '.sol' file, stripped of any keywords, so
  *                        that 'solc' may compile it.
  *     toRedecorate // an array of objects recording where the
- *                     sprinkled keywords should be reinstated after
+ *                     decorator keywords should be reinstated after
  *                     running 'solc'.
  */
 function removeDecorators(options) {

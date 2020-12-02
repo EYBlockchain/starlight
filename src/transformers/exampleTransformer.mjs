@@ -31,9 +31,9 @@ function transformation1(oldAST) {
   //
   // Just take note that the context is a reference *from* the old ast *to* the
   // new ast.
-  oldAST._context = newAST.nodes;
+  oldAST._newASTPointer = newAST.nodes;
   const dummyParent = {};
-  dummyParent._context = newAST;
+  dummyParent._newASTPointer = newAST;
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
