@@ -81,7 +81,7 @@ export function getNodeSkeleton(nodeType) {
     case 'IndexAccess':
       return {
         indexExpression: {},
-        baseExpression:{},
+        baseExpression: {},
       };
     case 'MemberAccess':
       return {

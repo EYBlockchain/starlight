@@ -90,7 +90,11 @@ export default {
       }
       if (referencedBinding.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
-        const fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
+        let fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
+        if (lhsNode.nodeType === 'IndexAccess') {
+          const keyNode = lhsNode.indexExpression.expression || lhsNode.indexExpression;
+          fnIndicatorObj = fnIndicatorObj.mappingKey[keyNode.name];
+        }
 
         // if its incremented anywhere, isIncremented = true
 

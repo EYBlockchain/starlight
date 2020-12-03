@@ -83,6 +83,28 @@ function findNodeId(ast, line) {
             nodeId = node.expression.leftHandSide.id;
             break;
           }
+        } else if (
+          node.nodeType === 'ExpressionStatement' &&
+          node.expression.nodeType === 'Assignment' &&
+          node.expression.leftHandSide.nodeType === 'IndexAccess'
+        ) {
+          const key =
+            node.expression.leftHandSide.indexExpression.expression ||
+            node.expression.leftHandSide.indexExpression;
+          if (
+            name.includes(node.expression.leftHandSide.baseExpression.name) &&
+            name.includes(key.name)
+          ) {
+            if (node.expression.rightHandSide.nodeType === 'Identifier') {
+              if (rhs.replace(';', '') !== node.expression.rightHandSide.name) {
+                continue;
+              } else if (node.expression.operator === eqop) {
+                nodeId = node.expression.leftHandSide.id;
+                break;
+              }
+              if (nodeId) break;
+            }
+          }
         }
       }
       break;

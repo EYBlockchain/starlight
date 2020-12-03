@@ -165,6 +165,9 @@ export class Scope {
           this.indicators.commitmentsRequired = true;
           this.indicators.zkSnarkVerificationRequired = true;
         }
+        if (node.typeDescriptions.typeString.includes('mapping')) {
+          this.bindings[id].mappingKey = {};
+        }
         break;
 
       case 'Identifier': {
@@ -174,7 +177,7 @@ export class Scope {
         // we have a mapping with key msg.sender
         // ... we stop, because this identifier just represents the key, we account for this
 
-        const referencedBinding = this.getReferencedBinding(node);
+        let referencedBinding = this.getReferencedBinding(node);
 
         if (!referencedBinding)
           throw new Error(
@@ -185,15 +188,32 @@ export class Scope {
         const referencedId = referencedBinding.id;
         const referencedName = referencedBinding.name;
 
+        const isMapping = node.typeDescriptions.typeString.includes('mapping');
+
+        if (isMapping) {
+          const keyNode = parent.indexExpression.expression || parent.indexExpression;
+          const bindingExists = !!referencedBinding.mappingKey[keyNode.name];
+          if (!bindingExists)
+            referencedBinding.mappingKey[keyNode.name] = {
+              isReferenced: false,
+              referenceCount: 0,
+              referencingPaths: {}, // paths which reference this binding
+              isModified: false,
+              modificationCount: 0,
+              modifyingPaths: {}, // paths which reference this binding};
+            };
+          referencedBinding = referencedBinding.mappingKey[keyNode.name];
+        }
+
         // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
         referencedBinding.isReferenced = true;
         ++referencedBinding.referenceCount;
         referencedBinding.referencingPaths[id] = path;
+
         // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
         this.referencedBindings[referencedId] = referencedBinding;
 
         // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
-        console.log(this);
         if (
           path.getAncestorContainedWithin('leftHandSide') &&
           path.getAncestorOfType('Assignment')
@@ -203,8 +223,12 @@ export class Scope {
           ++referencedBinding.modificationCount;
           referencedBinding.modifyingPaths[id] = path;
 
+          if (isMapping) {
+            this.getReferencedBinding(node).isModified = true;
+          }
+
           // update this scope, to say "the code in this scope 'modifies' a variable declared elsewhere"
-          this.modifiedBindings[referencedId] = referencedBinding;
+          this.modifiedBindings[referencedId] = this.getReferencedBinding(node);
         }
 
         // 2) Update the indicators of this scope:
@@ -213,15 +237,33 @@ export class Scope {
           const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
 
           let referencedIndicator = functionDefScope.indicators[referencedId];
+
           const indicatorForStateVarExists = !!referencedIndicator;
           if (!indicatorForStateVarExists)
             referencedIndicator = {
               id: referencedId,
               name: referencedName,
-              binding: referencedBinding,
+              binding: this.getReferencedBinding(node),
               referencingPaths: [],
               modifyingPaths: [],
             };
+
+          const parentIndicator = referencedIndicator;
+          if (isMapping) {
+            const keyNode = parent.indexExpression.expression || parent.indexExpression;
+            if (!referencedIndicator.mappingKey) {
+              referencedIndicator.mappingKey = {};
+            }
+            if (!referencedIndicator.mappingKey[keyNode.name]) {
+              referencedIndicator.mappingKey[keyNode.name] = {
+                isReferenced: false,
+                referencingPaths: {}, // paths which reference this binding
+                isModified: false,
+                modifyingPaths: {}, // paths which reference this binding};
+              };
+            }
+            referencedIndicator = referencedIndicator.mappingKey[keyNode.name];
+          }
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
           referencedIndicator.isReferenced = true;
@@ -236,12 +278,14 @@ export class Scope {
             path.getAncestorOfType('Assignment')
           ) {
             referencedIndicator.isModified = true;
+            if (isMapping) parentIndicator.isModified = true;
             referencedIndicator.modifyingPaths[id] = path; // might overwrite, but that's ok.
             referencedIndicator.newCommitmentRequired = true;
             referencedIndicator.nullifierRequired = null; // we don't know yet
             referencedIndicator.initialisationRequired = true;
-            if (node.isKnown) referencedIndicator.isKnown = true;
-            if (node.isUnknown) referencedIndicator.isUnknown = true;
+            if (node.isKnown || (isMapping && parent.isKnown)) referencedIndicator.isKnown = true;
+            if (node.isUnknown || (isMapping && parent.isUnknown))
+              referencedIndicator.isUnknown = true;
 
             contractDefScope.indicators.nullifiersRequired = true;
           }
@@ -252,8 +296,14 @@ export class Scope {
             );
           }
 
+          referencedIndicator = parentIndicator;
           if (!indicatorForStateVarExists)
             functionDefScope.indicators[referencedNode.id] = referencedIndicator;
+
+          // console.log(this.getReferencedBinding(node));
+          // console.log(functionDefScope.indicators);
+          // console.log('---------');
+          // console.log(functionDefScope.indicators[5].mappingKey);
         }
         break;
       }
@@ -546,6 +596,9 @@ export class Scope {
     if (lhsNode.nodeType === 'Identifier') {
       const lhsbinding = scope.getReferencedBinding(lhsNode);
       lhsSecret = !!lhsbinding.isSecret;
+    } else if (lhsNode.nodeType === 'IndexAccess') {
+      const lhsbinding = scope.getReferencedBinding(lhsNode.baseExpression);
+      lhsSecret = !!lhsbinding.isSecret;
     }
     switch (expressionNode.nodeType) {
       case 'Assignment': {
@@ -576,6 +629,7 @@ export class Scope {
           // TODO deal with binops like a + b - c, c < a + b
           if (!op.includes('+') && !op.includes('-')) {
             isIncrementedBool = false;
+            isDecrementedBool = false;
             break;
           }
           for (const [index, param] of params.entries()) {
@@ -658,6 +712,78 @@ export class Scope {
 
     return { isIncrementedBool, isDecrementedBool };
   }
+
+  indicatorChecks(secretVar) {
+    const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
+    if (secretVar.isKnown && secretVar.isWhole)
+      logger.warn(
+        `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,
+      );
+    if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole)
+      throw new Error(
+        `Can't mark a whole state as unknown. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
+      );
+    if (secretVar.isUnknown && secretVar.isIncremented && !secretVar.isWhole) {
+      secretVar.isWhole = false;
+      secretVar.isWholeReason = [`Incremented and marked as unknown`];
+    }
+    if (secretVar.isIncremented && secretVar.isWhole === undefined) {
+      if (!secretVar.isKnown && !secretVar.isUnknown)
+        throw new Error(
+          `Secret value assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
+        );
+      if (secretVar.isUnknown) throw new Error(`This should be unreachable code!`);
+      if (secretVar.isKnown) {
+        secretVar.isWhole = true;
+        secretVar.isWholeReason = [`Marked as known`];
+      } else {
+        logger.warn(
+          `State ${secretVar.name} will be treated as a whole state, because there are no unknown decorators`,
+        );
+        secretVar.isWhole = true;
+        secretVar.isWholeReason = [`No unknown decorator or overwrites`];
+      }
+      // look for duplicates: PEDANTIC: Unnecessary duplicate 'unknown' decorator for secret state `a`.
+    }
+    if (secretVar.isWhole === false && secretVar.isDecremented) {
+      // partitioned/decremented state
+      secretVar.nullifierRequired = true;
+      contractDefScope.indicators.nullifiersRequired = true;
+    }
+    if (secretVar.isWhole === false && secretVar.isIncremented) {
+      secretVar.nullifierRequired = false;
+    } else {
+      secretVar.nullifierRequired = true;
+      contractDefScope.indicators.nullifiersRequired = true;
+    }
+    // here - mark the contract obj
+    const topScope = contractDefScope.bindings[secretVar.id];
+    if (topScope.isWhole && !secretVar.isWhole)
+      throw new Error(`State ${secretVar.name} must be whole because: ${topScope.isWholeReason}`);
+    if (topScope.isPartitioned && secretVar.isWhole)
+      throw new Error(
+        `State ${secretVar.name} must be whole because: ${secretVar.isWholeReason}, but is partitioned: ${topScope.isPartitionedReason}`,
+      );
+    topScope.isWhole = secretVar.isWhole;
+    if (topScope.isWhole === false && !topScope.isPartitionedReason) {
+      topScope.isPartitioned = true;
+      topScope.isPartitionedReason = secretVar.isWholeReason;
+    } else if (topScope.isWhole === false && !topScope.isPartitionedReason) {
+      secretVar.isWholeReason.forEach(reason => topScope.isPartitionedReason.push(reason));
+    } else if (!topScope.isWholeReason) {
+      topScope.isWholeReason = secretVar.isWholeReason;
+    } else {
+      secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
+    }
+    console.log(`Contract level binding for state:`);
+    console.dir(topScope, { depth: 0 });
+    if (topScope.isWholeReason) {
+      console.log(topScope.isWholeReason);
+    } else {
+      console.log(topScope.isPartitionedReason);
+    }
+  }
+
 }
 
 export default Scope;
