@@ -87,6 +87,10 @@ export function getNodeSkeleton(nodeType) {
       return {
         expression: {},
       };
+    case 'UnaryOperation':
+      return {
+        subExpression: {},
+      };
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -129,6 +133,8 @@ export function getVisitableKeys(nodeType) {
       return ['indexExpression', 'baseExpression'];
     case 'MemberAccess':
       return ['expression'];
+    case 'UnaryOperation':
+      return ['subExpression'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':

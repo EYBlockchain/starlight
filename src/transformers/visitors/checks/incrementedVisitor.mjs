@@ -70,7 +70,7 @@ export default {
       // Why here? Because we need the indicatorObj of the individual elts before we decide
       const { node, scope } = path;
       const expressionNode = node.expression;
-      const lhsNode = expressionNode.leftHandSide;
+      const lhsNode = expressionNode.leftHandSide || expressionNode.subExpression;
       const { isIncrementedBool, isDecrementedBool } =
         lhsNode.typeDescriptions.typeString !== 'address'
           ? scope.isIncremented(expressionNode, lhsNode)
@@ -91,9 +91,23 @@ export default {
       if (referencedBinding.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         let fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
+
+        // a mapping:
+
         if (lhsNode.nodeType === 'IndexAccess') {
           const keyNode = lhsNode.indexExpression.expression || lhsNode.indexExpression;
-          fnIndicatorObj = fnIndicatorObj.mappingKey[keyNode.name];
+          let keyName = keyNode.name;
+          if (scope.getReferencedBinding(keyNode).isModified) {
+            const keyBinding = scope.getReferencedBinding(keyNode);
+            let i = 0;
+            for (const modPathId of Object.keys(keyBinding.modifyingPaths)) {
+              if (node.id < modPathId && i === 0) break;
+              i++;
+              if (modPathId < node.id && node.id < Object.keys(keyBinding.modifyingPaths)[i]) break;
+            }
+            if (i > 0) keyName = `${keyNode.name}_${i}`;
+          }
+          fnIndicatorObj = fnIndicatorObj.mappingKey[keyName];
         }
 
         // if its incremented anywhere, isIncremented = true

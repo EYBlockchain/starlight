@@ -34,6 +34,7 @@ export default {
       Object.keys(secretModifiedIndicators).forEach(stateVarId => {
         const secretVar = secretModifiedIndicators[stateVarId];
         if (secretVar.mappingKey) {
+          console.log(secretVar);
           Object.keys(secretVar.mappingKey).forEach(key => {
             secretVar.mappingKey[key].binding = secretVar.binding.mappingKey[key];
             secretVar.mappingKey[key].id = secretVar.id;

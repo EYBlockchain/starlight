@@ -192,9 +192,12 @@ export class Scope {
 
         if (isMapping) {
           const keyNode = parent.indexExpression.expression || parent.indexExpression;
-          const bindingExists = !!referencedBinding.mappingKey[keyNode.name];
+          let keyName = keyNode.name;
+          if (this.getReferencedBinding(keyNode).isModified)
+            keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
+          const bindingExists = !!referencedBinding.mappingKey[keyName];
           if (!bindingExists)
-            referencedBinding.mappingKey[keyNode.name] = {
+            referencedBinding.mappingKey[keyName] = {
               isReferenced: false,
               referenceCount: 0,
               referencingPaths: {}, // paths which reference this binding
@@ -202,7 +205,7 @@ export class Scope {
               modificationCount: 0,
               modifyingPaths: {}, // paths which reference this binding};
             };
-          referencedBinding = referencedBinding.mappingKey[keyNode.name];
+          referencedBinding = referencedBinding.mappingKey[keyName];
         }
 
         // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
@@ -215,8 +218,10 @@ export class Scope {
 
         // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
         if (
-          path.getAncestorContainedWithin('leftHandSide') &&
-          path.getAncestorOfType('Assignment')
+          (path.containerName !== 'indexExpression' &&
+            path.getAncestorContainedWithin('leftHandSide') &&
+            path.getAncestorOfType('Assignment')) ||
+          (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
         ) {
           // update the referenced binding, to say "this variable has been modified by this node (`node`)"
           referencedBinding.isModified = true;
@@ -254,15 +259,18 @@ export class Scope {
             if (!referencedIndicator.mappingKey) {
               referencedIndicator.mappingKey = {};
             }
-            if (!referencedIndicator.mappingKey[keyNode.name]) {
-              referencedIndicator.mappingKey[keyNode.name] = {
+            let keyName = keyNode.name;
+            if (this.getReferencedBinding(keyNode).isModified)
+              keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
+            if (!referencedIndicator.mappingKey[keyName]) {
+              referencedIndicator.mappingKey[keyName] = {
                 isReferenced: false,
                 referencingPaths: {}, // paths which reference this binding
                 isModified: false,
                 modifyingPaths: {}, // paths which reference this binding};
               };
             }
-            referencedIndicator = referencedIndicator.mappingKey[keyNode.name];
+            referencedIndicator = referencedIndicator.mappingKey[keyName];
           }
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
@@ -274,8 +282,10 @@ export class Scope {
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
           if (
-            path.getAncestorContainedWithin('leftHandSide') &&
-            path.getAncestorOfType('Assignment')
+            (path.containerName !== 'indexExpression' &&
+              path.getAncestorContainedWithin('leftHandSide') &&
+              path.getAncestorOfType('Assignment')) ||
+            (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
           ) {
             referencedIndicator.isModified = true;
             if (isMapping) parentIndicator.isModified = true;
@@ -319,7 +329,8 @@ export class Scope {
       case 'Literal':
       case 'IndexAccess':
       case 'MemberAccess':
-      case 'Mapping': // TODO
+      case 'Mapping':
+      case 'UnaryOperation':
         break;
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.
@@ -645,11 +656,25 @@ export class Scope {
           }
           for (const param of params) {
             logger.info(`at param ${param.name}`);
-            if (param.referencedDeclaration) {
-              const isSecret = scope.getReferencedBinding(param).secretVariable;
+            if (param.referencedDeclaration || param.baseExpression) {
+              const isSecret = param.baseExpression
+                ? scope.getReferencedBinding(param.baseExpression).isSecret
+                : scope.getReferencedBinding(param).isSecret;
               logger.info(`param is secret? ${isSecret}`);
               // a = a + b
               if (isSecret && param.name === lhsNode.name && op.includes('+')) {
+                isIncrementedBool = true;
+                isDecrementedBool = false;
+                break;
+              }
+
+              if (
+                isSecret &&
+                param.nodeType === 'IndexAccess' &&
+                param.baseExpression.name === lhsNode.baseExpression.name &&
+                param.indexExpression.name === lhsNode.indexExpression.name &&
+                op.includes('+')
+              ) {
                 isIncrementedBool = true;
                 isDecrementedBool = false;
                 break;
@@ -775,15 +800,16 @@ export class Scope {
     } else {
       secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
     }
-    console.log(`Contract level binding for state:`);
-    console.dir(topScope, { depth: 0 });
+    console.log('Indicator:');
+    console.dir(secretVar, { depth: 0 });
+    // console.log(`Contract level binding for state:`);
+    // console.dir(topScope, { depth: 0 });
     if (topScope.isWholeReason) {
       console.log(topScope.isWholeReason);
     } else {
       console.log(topScope.isPartitionedReason);
     }
   }
-
 }
 
 export default Scope;

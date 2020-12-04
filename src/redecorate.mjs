@@ -56,7 +56,7 @@ function findNodeId(ast, line) {
           node.expression.nodeType === 'Assignment' &&
           node.expression.leftHandSide.name === name
         ) {
-          // TODO change how this works so we can accurately match assignments - may get the wrong id here for anything but identifiers and lierals
+          // TODO change how this works so we can accurately match assignments - may get the wrong id here for anything but identifiers and literals
           if (node.expression.rightHandSide.nodeType === 'Identifier') {
             if (rhs.replace(';', '') !== node.expression.rightHandSide.name) {
               continue;
@@ -103,6 +103,18 @@ function findNodeId(ast, line) {
                 break;
               }
               if (nodeId) break;
+            } else if (node.expression.rightHandSide.nodeType === 'BinaryOperation' && !op) {
+              continue;
+            } else if (
+              node.expression.rightHandSide.nodeType === 'BinaryOperation' &&
+              op &&
+              node.expression.rightHandSide.operator.includes(op) &&
+              rhs.includes(node.expression.rightHandSide.rightExpression.name) &&
+              rhs.includes(node.expression.rightHandSide.leftExpression.baseExpression.name) &&
+              rhs.includes(node.expression.rightHandSide.leftExpression.indexExpression.name)
+            ) {
+              nodeId = node.expression.leftHandSide.id;
+              break;
             }
           }
         }
@@ -189,7 +201,7 @@ function addDecorators(ast, line) {
         //   }
         // }
         if (node.nodeType === 'ExpressionStatement') {
-          if (node.expression.leftHandSide.id === line.nodeId) {
+          if (node.expression.leftHandSide && node.expression.leftHandSide.id === line.nodeId) {
             switch (line.keyword) {
               case 'secret':
                 node.expression.leftHandSide.isSecret = true;
