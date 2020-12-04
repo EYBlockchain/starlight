@@ -96,17 +96,17 @@ export class Scope {
           //   name: state_var_name,
           //   binding: { binding_of_var_decl },
           //   isReferenced: true,
-          //   referencingPaths: { // indexed by AST id
-          //     id0: path_of_identifier,
-          //     id1: path_of_identifier,
+          //   referencingPaths: [
+          //     path_of_identifier,
+          //     path_of_identifier,
           //     ...
-          //   },
+          //   ], // we use an array to preserve the order of references
           //   isModified: true,
-          //   modifyingPaths: { // indexed by AST id
-          //     id0: path_of_identifier,
-          //     id1: path_of_identifier,
+          //   modifyingPaths: [
+          //     path_of_identifier,
+          //     path_of_identifier,
           //     ...
-          //   }, // a subset of referencingPaths
+          //   ], // a subset of referencingPaths. // we use an array to preserve the order of references
           //   oldCommitmentReferenceRequired: true,
           //   nullifierRequired: true,
           //   initialisationRequired: true,
@@ -155,10 +155,10 @@ export class Scope {
           // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
           isReferenced: false,
           referenceCount: 0,
-          referencingPaths: {}, // paths which reference this binding
+          referencingPaths: [], // paths which reference this binding
           isModified: false,
           modificationCount: 0,
-          modifyingPaths: {}, // paths which reference this binding
+          modifyingPaths: [], // paths which reference this binding
         };
 
         if (this.scopeType === 'ContractDefinition' && node.isSecret) {
@@ -187,6 +187,7 @@ export class Scope {
         const referencedNode = referencedBinding.node;
         const referencedId = referencedBinding.id;
         const referencedName = referencedBinding.name;
+        const parentBinding = referencedBinding;
 
         const isMapping = node.typeDescriptions.typeString.includes('mapping');
 
@@ -200,19 +201,21 @@ export class Scope {
             referencedBinding.mappingKey[keyName] = {
               isReferenced: false,
               referenceCount: 0,
-              referencingPaths: {}, // paths which reference this binding
+              referencingPaths: [], // paths which reference this binding
               isModified: false,
               modificationCount: 0,
-              modifyingPaths: {}, // paths which reference this binding};
+              modifyingPaths: [], // paths which reference this binding};
             };
           referencedBinding = referencedBinding.mappingKey[keyName];
         }
 
         // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
-        referencedBinding.isReferenced = true;
-        ++referencedBinding.referenceCount;
-        referencedBinding.referencingPaths[id] = path;
-
+        if (!referencedBinding.referencingPaths.includes(path)) {
+          referencedBinding.isReferenced = true;
+          if (isMapping) parentBinding.isReferenced = true;
+          ++referencedBinding.referenceCount;
+          referencedBinding.referencingPaths.push(path);
+        }
         // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
         this.referencedBindings[referencedId] = referencedBinding;
 
@@ -224,9 +227,11 @@ export class Scope {
           (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
         ) {
           // update the referenced binding, to say "this variable has been modified by this node (`node`)"
-          referencedBinding.isModified = true;
-          ++referencedBinding.modificationCount;
-          referencedBinding.modifyingPaths[id] = path;
+          if (!referencedBinding.modifyingPaths.some(p => p.node.id === path.node.id)) {
+            referencedBinding.isModified = true;
+            ++referencedBinding.modificationCount;
+            referencedBinding.modifyingPaths.push(path);
+          }
 
           if (isMapping) {
             this.getReferencedBinding(node).isModified = true;
@@ -265,19 +270,21 @@ export class Scope {
             if (!referencedIndicator.mappingKey[keyName]) {
               referencedIndicator.mappingKey[keyName] = {
                 isReferenced: false,
-                referencingPaths: {}, // paths which reference this binding
+                referencingPaths: [], // paths which reference this binding
                 isModified: false,
-                modifyingPaths: {}, // paths which reference this binding};
+                modifyingPaths: [], // paths which reference this binding};
               };
             }
             referencedIndicator = referencedIndicator.mappingKey[keyName];
           }
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
-          referencedIndicator.isReferenced = true;
-          referencedIndicator.referencingPaths[id] = path; // might overwrite, but that's ok.
-          referencedIndicator.oldCommitmentReferenceRequired = true;
-
+          if (!referencedBinding.referencingPaths.includes(path)) {
+            referencedIndicator.isReferenced = true;
+            ++referencedIndicator.referenceCount;
+            referencedIndicator.referencingPaths.push(path); // might overwrite, but that's ok.
+            referencedIndicator.oldCommitmentReferenceRequired = true;
+          }
           contractDefScope.indicators.oldCommitmentReferencesRequired = true;
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
@@ -287,9 +294,12 @@ export class Scope {
               path.getAncestorOfType('Assignment')) ||
             (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
           ) {
-            referencedIndicator.isModified = true;
-            if (isMapping) parentIndicator.isModified = true;
-            referencedIndicator.modifyingPaths[id] = path; // might overwrite, but that's ok.
+            if (!referencedIndicator.modifyingPaths.some(p => p.node.id === path.node.id)) {
+              referencedIndicator.isModified = true;
+              if (isMapping) parentIndicator.isModified = true;
+              ++referencedIndicator.modificationCount;
+              referencedIndicator.modifyingPaths.push(path);
+            }
             referencedIndicator.newCommitmentRequired = true;
             referencedIndicator.nullifierRequired = null; // we don't know yet
             referencedIndicator.initialisationRequired = true;
@@ -302,7 +312,7 @@ export class Scope {
 
           if (referencedIndicator.isKnown && referencedIndicator.isUnknown) {
             throw new Error(
-              `Secret state ${node.name} cannot be marked as known and unknown in the same scope`,
+              `Secret state ${node.name} cannot be marked as both known and unknown in the same ${this.scopeType} scope`,
             );
           }
 

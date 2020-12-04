@@ -100,10 +100,15 @@ export default {
           if (scope.getReferencedBinding(keyNode).isModified) {
             const keyBinding = scope.getReferencedBinding(keyNode);
             let i = 0;
-            for (const modPathId of Object.keys(keyBinding.modifyingPaths)) {
-              if (node.id < modPathId && i === 0) break;
+            for (const modPath of keyBinding.modifyingPaths) {
+              if (node.id < modPath.node.id && i === 0) break;
               i++;
-              if (modPathId < node.id && node.id < Object.keys(keyBinding.modifyingPaths)[i]) break;
+              if (
+                modPath.node.id < node.id &&
+                keyBinding.modifyingPaths[i] &&
+                node.id < keyBinding.modifyingPaths[i].node.id
+              )
+                break;
             }
             if (i > 0) keyName = `${keyNode.name}_${i}`;
           }
