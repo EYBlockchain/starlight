@@ -91,6 +91,8 @@ Converts a zappable Solidity contract into a zApp. By default, the zApp is outpu
 
 (At this stage, you might need to run `chmod +x ./bin/setup && chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
 
+Start docker.
+
 `./bin/setup` <-- this can take quite a while!
 
 `npm test`

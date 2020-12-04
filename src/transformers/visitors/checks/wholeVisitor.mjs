@@ -43,8 +43,6 @@ export default {
       const secretModifiedIndicators = scope.filterIndicators(
         ind => ind.binding.isSecret && ind.isModified,
       );
-      // console.log(secretVarsInScope);
-      console.log(contractDefScope);
       // some checks (marking the variable's scope obj)
       Object.keys(secretModifiedIndicators).forEach(stateVarId => {
         const secretVar = secretModifiedIndicators[stateVarId];
@@ -107,13 +105,12 @@ export default {
         } else {
           topScope.isWholeReason = secretVar.isWholeReason;
         }
-        console.log(`Contract level binding for state:`);
-        console.dir(topScope, { depth: 0 });
-        if (topScope.isWholeReason) {
-          console.log(topScope.isWholeReason);
-        } else {
-          console.log(topScope.isPartitionedReason);
-        }
+        // console.dir(topScope, { depth: 0 });
+        // if (topScope.isWholeReason) {
+        //   console.log(topScope.isWholeReason);
+        // } else {
+        //   console.log(topScope.isPartitionedReason);
+        // }
       });
     },
   },

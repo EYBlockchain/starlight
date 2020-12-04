@@ -296,7 +296,7 @@ class NodePath {
     const statementNodeTypes = [
       'ExpressionStatement',
       'VariableDeclarationStatement',
-      'ImportStatements',
+      'ImportStatementList',
       'ImportStatement',
     ];
     return statementNodeTypes.includes(this.nodeType);

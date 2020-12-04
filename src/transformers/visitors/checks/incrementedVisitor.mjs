@@ -23,14 +23,7 @@ export default {
   FunctionDefinition: {
     enter(path, state) {},
 
-    exit(path, state) {
-      // console.log('scope');
-      // console.log(scope);
-      // scope.referencedBindings.forEach(binding => {
-      //   console.log('binding:');
-      //   console.log(binding.node, binding.referencingPaths);
-      // });
-    },
+    exit(path, state) {},
   },
 
   ParameterList: {

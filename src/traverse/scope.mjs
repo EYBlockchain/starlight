@@ -96,17 +96,19 @@ export class Scope {
           //   name: state_var_name,
           //   binding: { binding_of_var_decl },
           //   isReferenced: true,
-          //   referencingPaths: { // indexed by AST id
-          //     id0: path_of_identifier,
-          //     id1: path_of_identifier,
+          //   referenceCount: 3,
+          //   referencingPaths: [
+          //     path_of_identifier,
+          //     path_of_identifier,
           //     ...
-          //   },
+          //   ], // we use an array to preserve the order of references
           //   isModified: true,
-          //   modifyingPaths: { // indexed by AST id
-          //     id0: path_of_identifier,
-          //     id1: path_of_identifier,
+          //   modificationCount: 1,
+          //   modifyingPaths: [
+          //     path_of_identifier,
+          //     path_of_identifier,
           //     ...
-          //   }, // a subset of referencingPaths
+          //   ], // a subset of referencingPaths. // we use an array to preserve the order of references
           //   oldCommitmentReferenceRequired: true,
           //   nullifierRequired: true,
           //   initialisationRequired: true,
@@ -155,10 +157,10 @@ export class Scope {
           // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
           isReferenced: false,
           referenceCount: 0,
-          referencingPaths: {}, // paths which reference this binding
+          referencingPaths: [], // paths which reference this binding
           isModified: false,
           modificationCount: 0,
-          modifyingPaths: {}, // paths which reference this binding
+          modifyingPaths: [], // paths which reference this binding
         };
 
         if (this.scopeType === 'ContractDefinition' && node.isSecret) {
@@ -185,23 +187,27 @@ export class Scope {
         const referencedId = referencedBinding.id;
         const referencedName = referencedBinding.name;
 
-        // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
-        referencedBinding.isReferenced = true;
-        ++referencedBinding.referenceCount;
-        referencedBinding.referencingPaths[id] = path;
-        // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
+        // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
+        if (!referencedBinding.referencingPaths.includes(path)) {
+          referencedBinding.isReferenced = true;
+          ++referencedBinding.referenceCount;
+          referencedBinding.referencingPaths.push(path);
+        }
+
+        // update this scope, to say "the code in this scope 'refers to' a variable (i.e. a binding) declared elsewhere"
         this.referencedBindings[referencedId] = referencedBinding;
 
         // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
-        console.log(this);
         if (
           path.getAncestorContainedWithin('leftHandSide') &&
           path.getAncestorOfType('Assignment')
         ) {
-          // update the referenced binding, to say "this variable has been modified by this node (`node`)"
-          referencedBinding.isModified = true;
-          ++referencedBinding.modificationCount;
-          referencedBinding.modifyingPaths[id] = path;
+          // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
+          if (!referencedBinding.modifyingPaths.includes(path)) {
+            referencedBinding.isModified = true;
+            ++referencedBinding.modificationCount;
+            referencedBinding.modifyingPaths.push(path);
+          }
 
           // update this scope, to say "the code in this scope 'modifies' a variable declared elsewhere"
           this.modifiedBindings[referencedId] = referencedBinding;
@@ -224,10 +230,14 @@ export class Scope {
             };
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
-          referencedIndicator.isReferenced = true;
-          referencedIndicator.referencingPaths[id] = path; // might overwrite, but that's ok.
-          referencedIndicator.oldCommitmentReferenceRequired = true;
+          if (!referencedIndicator.referencingPaths.includes(path)) {
+            referencedIndicator.isReferenced = true;
+            ++referencedIndicator.referenceCount;
+            referencedIndicator.referencingPaths.push(path);
+            referencedIndicator.oldCommitmentReferenceRequired = true;
+          }
 
+          // TODO: is this in a sensible place?
           contractDefScope.indicators.oldCommitmentReferencesRequired = true;
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
@@ -235,8 +245,11 @@ export class Scope {
             path.getAncestorContainedWithin('leftHandSide') &&
             path.getAncestorOfType('Assignment')
           ) {
-            referencedIndicator.isModified = true;
-            referencedIndicator.modifyingPaths[id] = path; // might overwrite, but that's ok.
+            if (!referencedIndicator.modifyingPaths.includes(path)) {
+              referencedIndicator.isModified = true;
+              ++referencedIndicator.modificationCount;
+              referencedIndicator.modifyingPaths.push(path);
+            }
             referencedIndicator.newCommitmentRequired = true;
             referencedIndicator.nullifierRequired = null; // we don't know yet
             referencedIndicator.initialisationRequired = true;
@@ -248,7 +261,7 @@ export class Scope {
 
           if (referencedIndicator.isKnown && referencedIndicator.isUnknown) {
             throw new Error(
-              `Secret state ${node.name} cannot be marked as known and unknown in the same scope`,
+              `Secret state ${node.name} cannot be marked as both known and unknown in the same ${this.scopeType} scope`,
             );
           }
 

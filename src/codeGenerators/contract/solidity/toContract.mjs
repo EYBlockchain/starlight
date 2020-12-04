@@ -22,10 +22,10 @@ export const boilerplateContractsDir = './contracts'; // relative to process.cwd
  */
 const collectImportFiles = (file, contextDirPath = boilerplateContractsDir) => {
   const lines = file.split('\n');
-  const importStatements = lines.filter(line => line.startsWith('import'));
+  const ImportStatementList = lines.filter(line => line.startsWith('import'));
   let localFiles = [];
   // parse for imports of local files:
-  const localFilePaths = importStatements.reduce((acc, line) => {
+  const localFilePaths = ImportStatementList.reduce((acc, line) => {
     let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
     importFilePath += path.extname(importFilePath) === '.sol' ? '' : '.sol'; // ensure file extension.
     if (importFilePath) acc.push(importFilePath);

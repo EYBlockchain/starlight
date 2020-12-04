@@ -1,13 +1,18 @@
-/* eslint-disable consistent-return, no-param-reassign */
-
-import cloneDeep from 'lodash.clonedeep';
+/* eslint-disable consistent-return */
 
 export function getNodeSkeleton(nodeType) {
   switch (nodeType) {
-    case 'SourceUnit':
-    case 'ContractDefinition':
+    case 'Folder':
+      return {
+        files: [],
+      };
+    case 'File':
       return {
         nodes: [],
+      };
+    case 'ImportList':
+      return {
+        imports: [],
       };
     case 'FunctionDefinition':
       return {
@@ -46,25 +51,12 @@ export function getNodeSkeleton(nodeType) {
       return {
         typeName: {},
       };
-    case 'Mapping':
-      return {
-        keyType: {},
-        valueType: {},
-      };
-    case 'IndexAccess':
-      return {
-        indexExpression: {},
-        baseExpression:{},
-      };
-    case 'MemberAccess':
-      return {
-        expression: {},
-      };
-    case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
     case 'Literal':
       return {};
+    case 'UpdatableCommitment':
+      return {}; // how do we add the 'name' of the commitment's state etc?
 
     // And again, if we haven't recognized the nodeType then we'll throw an
     // error.
@@ -75,11 +67,15 @@ export function getNodeSkeleton(nodeType) {
 
 export function getVisitableKeys(nodeType) {
   switch (nodeType) {
+    case 'Folder':
+      return ['files'];
+    case 'File':
+      return ['nodes'];
+    case 'ImportStatementList':
+      return ['imports'];
     case 'SourceUnit':
     case 'ContractDefinition':
-      return ['nodes', 'baseContracts'];
-    case 'InheritanceSpecifier':
-      return ['baseName'];
+      return ['nodes'];
     case 'FunctionDefinition':
       return ['parameters', 'returnParameters', 'body'];
     case 'ParameterList':
@@ -96,17 +92,10 @@ export function getVisitableKeys(nodeType) {
       return ['leftExpression', 'rightExpression'];
     case 'VariableDeclaration':
       return ['typeName'];
-    case 'Mapping':
-      return ['keyType', 'valueType'];
-    case 'IndexAccess':
-      return ['indexExpression', 'baseExpression'];
-    case 'MemberAccess':
-      return ['expression'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
     case 'Literal':
-    case 'UserDefinedTypeName':
       return [];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
@@ -120,7 +109,7 @@ export function getVisitableKeys(nodeType) {
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
-export function buildNode(nodeType, fields) {
+export function buildNode(nodeType, fields = {}) {
   switch (nodeType) {
     case 'File': {
       const { fileName, nodes = [] } = fields;
@@ -131,13 +120,6 @@ export function buildNode(nodeType, fields) {
         nodes,
       };
     }
-    case 'PragmaDirective': {
-      const { literals } = fields;
-      return {
-        nodeType,
-        literals,
-      };
-    }
     case 'ImportStatementList': {
       const { imports = [] } = fields;
       return {
@@ -145,57 +127,37 @@ export function buildNode(nodeType, fields) {
         imports,
       };
     }
-    case 'ImportDirective': {
-      const { file } = fields;
-      return {
-        nodeType,
-        file,
-      };
-    }
-    case 'ContractDefinition': {
-      const { name, baseContracts = [], nodes = [], isShieldContract } = fields;
-      return {
-        nodeType,
-        name,
-        baseContracts,
-        nodes,
-        isShieldContract,
-      };
-    }
     case 'FunctionDefinition': {
-      const {
-        name,
-        visibility,
-        body = { nodeType: 'Block', statements: [] },
-        parameters = { nodeType: 'ParameterList', parameters: [] },
-        returnParameters = { nodeType: 'ParameterList', parameters: [] },
-      } = fields;
+      const { name, body = {}, parameters = {} } = fields;
       return {
         nodeType,
         name,
-        visibility,
         body,
         parameters,
-        returnParameters,
+        // Notice no return parameters. Whilst zokrates can return parameters, we've chosen to transpile in such a way that all parameters are _input_ parameters to the circuit.
+      };
+    }
+    case 'ParameterList': {
+      const { parameters = [] } = fields;
+      return {
+        nodeType,
+        parameters,
+      };
+    }
+    case 'Block': {
+      const { statements = [] } = fields;
+      return {
+        nodeType,
+        statements,
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, visibility, storageLocation } = fields;
+      const { name, type, isPrivate = false } = fields;
       return {
         nodeType,
         name,
-        visibility,
-        storageLocation,
-        typeDescriptions: { typeString: type },
-      };
-    }
-    case 'MappingDeclaration': {
-      const { name, fromType, toType } = fields;
-      return {
-        nodeType,
-        name,
-        fromType,
-        toType,
+        isPrivate,
+        typeName: buildNode('ElementaryTypeName', { name: type }),
       };
     }
     case 'VariableDeclarationStatement': {
@@ -206,29 +168,73 @@ export function buildNode(nodeType, fields) {
         initialValue,
       };
     }
-    // Boilerplate nodeTypes will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-    case 'ShieldContractConstructorBoilerplate': {
-      return { nodeType };
+    case 'BinaryOperation': {
+      const { leftExpression = {}, rightExpression = {} } = fields;
+      return {
+        nodeType,
+        leftExpression,
+        rightExpression,
+      };
     }
-    case 'ShieldContractVerifierInterfaceBoilerplate': {
-      return { nodeType };
+    case 'Assignment': {
+      const { operator, leftHandSide = {}, rightHandSide = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        leftHandSide,
+        rightHandSide,
+      };
     }
-    case 'requireNewNullifiersNotInNullifiersThenAddThemBoilerplate': {
-      return { nodeType };
+    case 'ExpressionStatement': {
+      const { expression = {} } = fields;
+      return {
+        nodeType,
+        expression,
+      };
     }
-    case 'requireCommitmentRootInCommitmentRootsBoilerplate': {
-      return { nodeType };
+    case 'Identifier': {
+      const { name } = fields;
+      return {
+        nodeType,
+        name,
+      };
     }
-    case 'verifyBoilerplate': {
-      return { nodeType };
+    case 'ElementaryTypeName': {
+      const { name } = fields;
+      return {
+        nodeType,
+        name,
+      };
     }
-    case 'insertLeavesBoilerplate': {
-      return { nodeType };
+    case 'EditableCommitmentImportStatementsBoilerplate': {
+      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      return {
+        nodeType,
+      };
+    }
+    case 'EditableCommitmentCommonFilesBoilerplate': {
+      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      return {
+        nodeType,
+      };
+    }
+    case 'EditableCommitmentParametersBoilerplate': {
+      const { privateStateName } = fields;
+      // We'll build an array of parameters (each parameter being a VariableDeclaration AST node)
+      return {
+        nodeType,
+        privateStateName,
+      };
+    }
+    case 'EditableCommitmentStatementsBoilerplate': {
+      const { privateStateName } = fields;
+      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      return {
+        nodeType,
+        privateStateName,
+      };
     }
     default:
       throw new TypeError(nodeType);
   }
 }
-
-
-export default { buildNode };

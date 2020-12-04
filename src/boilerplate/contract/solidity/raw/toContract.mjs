@@ -8,7 +8,7 @@ const ShieldContractStatementsBoilerplate = node => {
         `// SPDX-License-Identifier: CC0`,
         `\npragma solidity ^0.7.0;`,
       ];
-    case 'ImportStatements':
+    case 'ImportStatementList':
      return [
        '\nimport "./merkle-tree/MerkleTree.sol";',
        '\nimport "./verify/Verifier_Interface.sol";',

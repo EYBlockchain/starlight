@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 import logger from '../../utils/logger.mjs';
-import circuitTypes from '../../types/circuit-types.mjs';
+import { buildNode } from '../../types/zokrates-types.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
 export default {
@@ -40,29 +40,17 @@ export default {
         // If we've not yet added this function as a node to our newAST, let's do that:
         // Our location in the newAST (parent._newASTPointer) should be Folder.files[].
         // NODEBUILDING
-        const newNode = {
-          nodeType: 'File',
-          name: node.name, // the name of this function
-          fileExtension: '.zok',
+        // TODO: why is the decision to add import statements separate from adding the nodes of the files which get imported by these statements?
+        const newNode = buildNode('File', {
+          fileName: node.name,
           nodes: [
-            {
-              nodeType: 'ImportStatements',
-              imports: [
-                {
-                  nodeType: 'EditableCommitmentImportsBoilerplate',
-                },
-              ],
-            },
-            {
-              // insert this FunctionDefinition node into our newly created circuit file.
-              nodeType: node.nodeType, // FunctionDefinition
-              name: 'main',
-              body: {},
-              parameters: {},
-              // no returnParameters
-            },
+            buildNode('ImportStatementList', {
+              imports: [buildNode('EditableCommitmentImportStatementsBoilerplate')],
+            }),
+            buildNode('FunctionDefinition', { name: 'main' }),
           ],
-        };
+        });
+
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
       } else {
@@ -90,19 +78,18 @@ export default {
           }
         }
         if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
-          parent._newASTPointer.push({
-            nodeType: 'EditableCommitmentCommonFilesBoilerplate',
-          });
+          parent._newASTPointer.push(buildNode('EditableCommitmentCommonFilesBoilerplate'));
         }
 
         for (const binding of Object.values(modifiedStateVariableBindings)) {
-          const stateVarName = binding.node.name
+          const privateStateName = binding.node.name;
 
           // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
-          const editableCommitmentParameters = circuitTypes.buildEditableCommitmentParameters(stateVarName);
-          for (const param of editableCommitmentParameters) {
-            node._newASTPointer.parameters.parameters.push(param);
-          }
+          node._newASTPointer.parameters.parameters.push(
+            buildNode('EditableCommitmentParametersBoilerplate', {
+              privateStateName,
+            }),
+          );
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
           // - oldCommitment preimage check
@@ -110,23 +97,21 @@ export default {
           // - oldCommitment nullifier preimage check
           // - newCommitment preimage check
           // ^^^ do this for each global:
-          node._newASTPointer.body.statements.push({
-            nodeType: 'EditableCommitmentStatementsBoilerplate',
-            privateStateName: stateVarName,
-          });
+          node._newASTPointer.body.statements.push(
+            buildNode('EditableCommitmentStatementsBoilerplate', {
+              privateStateName,
+            }),
+          );
         }
 
         // Add a commitmentRoot parameter (only 1 commitmentRoot param is needed for all globals being committed to)
         // NODEBUILDING
-        node._newASTPointer.parameters.parameters.push({
-          nodeType: 'VariableDeclaration',
-          name: 'commitmentRoot',
-          isPrivate: false,
-          typeName: {
-            nodeType: 'ElementaryTypeName',
-            name: 'field',
-          },
-        });
+        node._newASTPointer.parameters.parameters.push(
+          buildNode('VariableDeclaration', {
+            name: 'commitmentRoot',
+            type: 'field',
+          }),
+        );
       }
     },
   },
@@ -134,10 +119,7 @@ export default {
   ParameterList: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = {
-        nodeType: node.nodeType,
-        parameters: [],
-      };
+      const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -148,10 +130,7 @@ export default {
   Block: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = {
-        nodeType: node.nodeType,
-        statements: [],
-      };
+      const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
     },
@@ -162,11 +141,7 @@ export default {
   VariableDeclarationStatement: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = {
-        nodeType: node.nodeType,
-        declarations: [],
-        initialValue: {},
-      };
+      const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -177,11 +152,7 @@ export default {
   BinaryOperation: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = {
-        nodeType: node.nodeType,
-        leftExpression: {},
-        rightExpression: {},
-      };
+      const newNode = buildNode('BinaryOperation');
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -192,13 +163,8 @@ export default {
   Assignment: {
     enter(path, state) {
       const { node, parent } = path;
-
-      const newNode = {
-        nodeType: node.nodeType,
-        operator: node.operator,
-        leftHandSide: {},
-        rightHandSide: {},
-      };
+      const { operator } = node;
+      const newNode = buildNode('Assignment', { operator });
       node._newASTPointer = newNode;
       parent._newASTPointer.expression = newNode;
     },
@@ -218,32 +184,15 @@ export default {
         const referencedBinding = scope.getReferencedBinding(lhs);
         const referencedNode = referencedBinding.node;
 
-        // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
-        const modifiedBinding = scope.modifiedBindings[referencedBinding.id];
+        // We should only replace the _first_ node in this scope which modifies the referencedNode. Let's look at the scope's modifiedBindings for the first modifyingNode.
+        const modifiedBinding = scope.modifiedBindings[referencedNode.id];
 
-        // TODO: could we alternatively look in referencedBinding.modifyingPaths? Possibly not, because that might include modifications from other scopes?
-        // TODO: maybe have a 'find within Body' function to go up to the root of the body, and traverse it?
-        // TODO: perhaps we could use the path.getFirstSiblingNode function? Or actually, path.getAllPrevSiblingNodes
-
-        if (!modifiedBinding && referencedNode.isSecret) {
+        if (lhs === modifiedBinding.modifyingPaths[0].node && referencedNode.isSecret) {
           // NODEBUILDING
-          newNode = {
-            nodeType: 'VariableDeclarationStatement',
-            declarations: [
-              {
-                nodeType: 'VariableDeclaration',
-                name: lhs.name,
-                isPrivate: false, // despite the original VarDec being 'secret', this VarDec is now within the body of a circuit; hence 'secret' makes no sence. Declaring it as 'false' will help the codeGenerator.
-                typeName: {
-                  name: 'field',
-                  nodeType: 'ElementaryTypeName',
-                },
-              },
-            ],
-            initialValue: {
-              ...rhs,
-            },
-          };
+          newNode = buildNode('VariableDeclarationStatement', {
+            declarations: [buildNode('VariableDeclaration', { name: lhs.name, type: 'field' })],
+            initialValue: { ...rhs },
+          });
 
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
@@ -256,10 +205,7 @@ export default {
         }
       }
 
-      newNode = {
-        nodeType: node.nodeType,
-        expression: {},
-      };
+      newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -278,12 +224,7 @@ export default {
       }
 
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
-      const newNode = {
-        nodeType: node.nodeType,
-        name: node.name,
-        isPrivate: true, // for the zokrates code generator.
-        typeName: {},
-      };
+      const newNode = buildNode('VariableDeclaration', { name: node.name, isPrivate: true });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
@@ -301,13 +242,10 @@ export default {
       if (node.name !== 'uint256')
         throw new Error('Currently, only transpilation of "uint256" types is supported');
 
-      const newNode = {
-        nodeType: node.nodeType,
-        name: 'field', // convert uint types to 'field', for now.
-      };
-
       // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = newNode;
+      parent._newASTPointer[path.containerName] = buildNode('ElementaryTypeName', {
+        name: 'field', // convert uint types to 'field', for now.
+      });
     },
 
     exit(path) {},
@@ -316,22 +254,12 @@ export default {
   Identifier: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = {
-        nodeType: node.nodeType,
-        name: node.name,
-      };
-
+      const { name } = node;
       // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = newNode;
+      parent._newASTPointer[path.containerName] = buildNode('Identifier', { name });
     },
 
-    exit(path) {
-      // findReferencedDeclaration example placement:
-      // const declaration = findReferencedDeclaration(node, parent);
-      // logger.debug('Found ref dec:');
-      // console.log(declaration.name, declaration.nodeType);
-      // if (dec.sprinkle) console.log(`Which is ${dec.sprinkle}!`);
-    },
+    exit(path) {},
   },
 
   Literal: {

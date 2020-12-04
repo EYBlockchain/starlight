@@ -2,7 +2,6 @@
 
 import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
-// import * as solidityTypes from '../types/solidity-types.mjs';
 import { getVisitableKeys } from '../types/solidity-types.mjs';
 
 // So we define a traverser function which accepts an AST and a
@@ -31,10 +30,6 @@ export function traverse(path, visitor, state = {}) {
     // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
     // logger.debug('state:', state);
     methods.enter(path, state);
-
-    // parentPath example placement:
-    // setParentPath(node, parent);
-    // logger.debug('path', node.parentPath);
 
     // logger.debug(`\n\n\n\n${node.nodeType} after enter`);
     // logger.debug('node._newASTPointer:', node._newASTPointer);

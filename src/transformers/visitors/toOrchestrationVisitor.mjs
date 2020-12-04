@@ -168,7 +168,7 @@ export default {
           if (state.snarkVerificationRequired) {
             const circuitParams = [];
             // this adds other values we need in the circuit - v simple
-            for (const modifier of Object.values(binding.modifyingPaths)) {
+            for (const modifier of binding.modifyingPaths) {
               if (modifier.parent.nodeType === 'Assignment')
                 circuitParams.push(modifier.parent.rightHandSide.name);
             }
@@ -387,13 +387,7 @@ export default {
       parent._newASTPointer[path.containerName] = newNode;
     },
 
-    exit(path) {
-      // findReferencedDeclaration example placement:
-      // const declaration = findReferencedDeclaration(node, parent);
-      // logger.debug('Found ref dec:');
-      // console.log(declaration.name, declaration.nodeType);
-      // if (dec.sprinkle) console.log(`Which is ${dec.sprinkle}!`);
-    },
+    exit(path) {},
   },
 
   Literal: {
