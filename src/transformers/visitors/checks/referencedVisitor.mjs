@@ -80,29 +80,30 @@ export default {
       // Here, if secret:
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
-      const { node } = path;
+      const { node, scope } = path;
       const referencedBinding =
         node.referencedDeclaration > 0
-          ? path.scope.getReferencedBinding(node)
-          : path.scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+          ? scope.getReferencedBinding(node)
+          : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
       if (parentExpression && referencedBinding.isSecret) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
-        const functionDefScope = path.scope.getAncestorOfScopeType('FunctionDefinition');
+        const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         if (!functionDefScope) return;
-        const referencedIndicator = functionDefScope.indicators[referencedBinding.id];
+        let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
+        const lhsName = lhsNode.name || lhsNode.baseExpression.name;
         if (
           rightAncestor &&
           (!parentExpression.node.expression.isIncremented ||
-            (parentExpression.node.expression.isIncremented && lhsNode.name !== node.name))
+            (parentExpression.node.expression.isIncremented && lhsName !== node.name))
         ) {
           console.log('Found a reference');
           const lhs =
             lhsNode.nodeType === 'Identifier'
-              ? path.scope.getReferencedBinding(lhsNode)
-              : path.scope.getReferencedBinding(lhsNode.baseExpression);
-          if (!node.stateVariable) {
+              ? scope.getReferencedBinding(lhsNode)
+              : scope.getReferencedBinding(lhsNode.baseExpression);
+          if (!node.stateVariable && !scope.getReferencedBinding(node).stateVariable) {
             // we have a secret parameter on the RHS
             if (!lhs.isSecret)
               throw new Error(
@@ -120,6 +121,10 @@ export default {
             );
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
           const reason = `Referenced at ${node.src}`;
+          if (lhsNode.nodeType === 'IndexAccess') {
+            const keyName = scope.getMappingKeyIndicator(lhsNode);
+            referencedIndicator = referencedIndicator.mappingKey[keyName];
+          }
           referencedIndicator.isWhole = true;
           if (referencedIndicator.isWholeReason) {
             referencedIndicator.isWholeReason.push(reason);

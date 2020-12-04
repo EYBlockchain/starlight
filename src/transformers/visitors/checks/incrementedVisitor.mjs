@@ -95,23 +95,7 @@ export default {
         // a mapping:
 
         if (lhsNode.nodeType === 'IndexAccess') {
-          const keyNode = lhsNode.indexExpression.expression || lhsNode.indexExpression;
-          let keyName = keyNode.name;
-          if (scope.getReferencedBinding(keyNode).isModified) {
-            const keyBinding = scope.getReferencedBinding(keyNode);
-            let i = 0;
-            for (const modPath of keyBinding.modifyingPaths) {
-              if (node.id < modPath.node.id && i === 0) break;
-              i++;
-              if (
-                modPath.node.id < node.id &&
-                keyBinding.modifyingPaths[i] &&
-                node.id < keyBinding.modifyingPaths[i].node.id
-              )
-                break;
-            }
-            if (i > 0) keyName = `${keyNode.name}_${i}`;
-          }
+          const keyName = scope.getMappingKeyIndicator(lhsNode);
           fnIndicatorObj = fnIndicatorObj.mappingKey[keyName];
         }
 

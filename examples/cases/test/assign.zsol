@@ -11,6 +11,6 @@ contract Assign {
     param1++;
     a[param1] = param2*2;
     param1 = param1 + 7;
-    known a[param1] = a[param1] + param2;
+    known a[param1] = a[param1]*2;
   }
 }

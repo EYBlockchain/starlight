@@ -210,7 +210,7 @@ export class Scope {
         }
 
         // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
-        if (!referencedBinding.referencingPaths.includes(path)) {
+        if (!referencedBinding.referencingPaths.some(p => p.node.id === path.node.id)) {
           referencedBinding.isReferenced = true;
           if (isMapping) parentBinding.isReferenced = true;
           ++referencedBinding.referenceCount;
@@ -255,7 +255,9 @@ export class Scope {
               name: referencedName,
               binding: this.getReferencedBinding(node),
               referencingPaths: [],
+              referenceCount: 0,
               modifyingPaths: [],
+              modificationCount: 0,
             };
 
           const parentIndicator = referencedIndicator;
@@ -270,8 +272,10 @@ export class Scope {
             if (!referencedIndicator.mappingKey[keyName]) {
               referencedIndicator.mappingKey[keyName] = {
                 isReferenced: false,
+                referenceCount: 0,
                 referencingPaths: [], // paths which reference this binding
                 isModified: false,
+                modificationCount: 0,
                 modifyingPaths: [], // paths which reference this binding};
               };
             }
@@ -279,7 +283,7 @@ export class Scope {
           }
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
-          if (!referencedBinding.referencingPaths.includes(path)) {
+          if (!referencedIndicator.referencingPaths.some(p => p.node.id === path.node.id)) {
             referencedIndicator.isReferenced = true;
             ++referencedIndicator.referenceCount;
             referencedIndicator.referencingPaths.push(path); // might overwrite, but that's ok.
@@ -606,6 +610,27 @@ export class Scope {
   }
 
   // TODO: one for 'uses' secret state?
+
+  getMappingKeyIndicator(indexAccessNode) {
+    const keyNode = indexAccessNode.indexExpression.expression || indexAccessNode.indexExpression;
+    let keyName = keyNode.name;
+    if (this.getReferencedBinding(keyNode).isModified) {
+      const keyBinding = this.getReferencedBinding(keyNode);
+      let i = 0;
+      for (const modPath of keyBinding.modifyingPaths) {
+        if (indexAccessNode.id < modPath.node.id && i === 0) break;
+        i++;
+        if (
+          modPath.node.id < indexAccessNode.id &&
+          keyBinding.modifyingPaths[i] &&
+          indexAccessNode.id < keyBinding.modifyingPaths[i].node.id
+        )
+          break;
+      }
+      if (i > 0) keyName = `${keyNode.name}_${i}`;
+    }
+    return keyName;
+  }
 
   isIncremented(expressionNode, lhsNode) {
     const scope = this;
