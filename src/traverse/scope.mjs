@@ -836,7 +836,9 @@ export class Scope {
       secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
     }
     console.log('Indicator:');
-    console.dir(secretVar, { depth: 0 });
+    // console.dir(this.indicators);
+    // console.log(`Indicator.mappingKey[${secretVar.name}]`);
+    console.dir(secretVar, { depth: 1 });
     // console.log(`Contract level binding for state:`);
     // console.dir(topScope, { depth: 0 });
     if (topScope.isWholeReason) {

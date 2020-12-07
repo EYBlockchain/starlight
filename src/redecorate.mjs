@@ -108,13 +108,25 @@ function findNodeId(ast, line) {
             } else if (
               node.expression.rightHandSide.nodeType === 'BinaryOperation' &&
               op &&
-              node.expression.rightHandSide.operator.includes(op) &&
-              rhs.includes(node.expression.rightHandSide.rightExpression.name) &&
-              rhs.includes(node.expression.rightHandSide.leftExpression.baseExpression.name) &&
-              rhs.includes(node.expression.rightHandSide.leftExpression.indexExpression.name)
+              node.expression.rightHandSide.operator.includes(op)
             ) {
-              nodeId = node.expression.leftHandSide.id;
-              break;
+              if (
+                rhs.includes(node.expression.rightHandSide.rightExpression.name) &&
+                rhs.includes(node.expression.rightHandSide.leftExpression.baseExpression.name) &&
+                rhs.includes(node.expression.rightHandSide.leftExpression.indexExpression.name)
+              ) {
+                nodeId = node.expression.leftHandSide.id;
+                break;
+              }
+              if (
+                node.expression.rightHandSide.leftExpression.baseExpression &&
+                rhs.includes(node.expression.rightHandSide.rightExpression.value) &&
+                rhs.includes(node.expression.rightHandSide.leftExpression.baseExpression.name) &&
+                rhs.includes(node.expression.rightHandSide.leftExpression.indexExpression.name)
+              ) {
+                nodeId = node.expression.leftHandSide.id;
+                break;
+              }
             }
           }
         }
