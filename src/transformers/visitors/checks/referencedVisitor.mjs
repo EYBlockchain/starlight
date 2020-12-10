@@ -90,8 +90,10 @@ export default {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         if (!functionDefScope) return;
+        if (parentExpression.node.expression.nodeType === 'UnaryOperation') return;
         let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
+        console.log(parentExpression);
         const lhsName = lhsNode.name || lhsNode.baseExpression.name;
         if (
           rightAncestor &&
@@ -120,12 +122,13 @@ export default {
               `Secret state ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
             );
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
-          const reason = `Referenced at ${node.src}`;
+          const reason = `Consulted at ${node.src}`;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyIndicator(lhsNode);
             referencedIndicator = referencedIndicator.mappingKey[keyName];
           }
           referencedIndicator.isWhole = true;
+          referencedIndicator.isConsulted = true;
           if (referencedIndicator.isWholeReason) {
             referencedIndicator.isWholeReason.push(reason);
           } else {
