@@ -33,13 +33,13 @@ export default {
       } else {
         // Not sure what to do 'else', yet.
         // If there are no global state modifications / 'references', then (currently) a circuit isn't needed for this function. In future, this could be a helper function which supports some other state-editing function, in which case a circuit would be needed.
+        // I suppose other functions for which newFile = true (i.e. functions which actually modify secret state) will need to include any helper functions they reference within the circuit file (or import them).
         return;
       }
 
       if (newFile) {
         // If we've not yet added this function as a node to our newAST, let's do that:
         // Our location in the newAST (parent._newASTPointer) should be Folder.files[].
-        // NODEBUILDING
         // TODO: why is the decision to add import statements separate from adding the nodes of the files which get imported by these statements?
         const newNode = buildNode('File', {
           fileName: node.name,
@@ -52,7 +52,13 @@ export default {
         });
 
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
-        parent._newASTPointer.push(newNode);
+        const files = parent._newASTPointer;
+        files.push(newNode);
+
+        // Add a placeholder for common circuit files within the circuits Folder:
+        if (!files.some(file => file.nodeType === 'EditableCommitmentCommonFilesBoilerplate')) {
+          files.push(buildNode('EditableCommitmentCommonFilesBoilerplate'));
+        }
       } else {
         // Not sure what to do if we're not creating a file...
       }
@@ -60,59 +66,45 @@ export default {
 
     exit(path, state) {
       const { node, parent, scope } = path;
-      // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
+      // By this point, we've added a body and parameters to the skeleton functionDefinition node created during 'enter'. Let's populate the body and paramters with some boilerplate...
+
+      const newFunctionDefinitionNode = node._newASTPointer;
 
       // Now let's add some commitment-related boilerplate!
       const modifiedStateVariableBindings = scope.filterModifiedBindings(
         binding => binding.stateVariable && binding.isSecret,
       );
 
-      if (modifiedStateVariableBindings) {
-        // Add a placeholder for common circuit files within the circuits Folder:
-        const files = parent._newASTPointer;
-        let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
-        for (const file of files) {
-          if (file.nodeType === 'EditableCommitmentCommonFilesBoilerplate') {
-            EditableCommitmentCommonFilesBoilerplateAlreadyExists = true;
-            break;
-          }
-        }
-        if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
-          parent._newASTPointer.push(buildNode('EditableCommitmentCommonFilesBoilerplate'));
-        }
+      for (const binding of Object.values(modifiedStateVariableBindings)) {
+        const privateStateName = binding.node.name;
 
-        for (const binding of Object.values(modifiedStateVariableBindings)) {
-          const privateStateName = binding.node.name;
+        // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
+        newFunctionDefinitionNode.parameters.parameters.push(
+          buildNode('EditableCommitmentParametersBoilerplate', {
+            privateStateName,
+          }),
+        );
 
-          // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
-          node._newASTPointer.parameters.parameters.push(
-            buildNode('EditableCommitmentParametersBoilerplate', {
-              privateStateName,
-            }),
-          );
-
-          // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
-          // - oldCommitment preimage check
-          // - oldCommitment membership & check vs the commitmentRoot
-          // - oldCommitment nullifier preimage check
-          // - newCommitment preimage check
-          // ^^^ do this for each global:
-          node._newASTPointer.body.statements.push(
-            buildNode('EditableCommitmentStatementsBoilerplate', {
-              privateStateName,
-            }),
-          );
-        }
-
-        // Add a commitmentRoot parameter (only 1 commitmentRoot param is needed for all globals being committed to)
-        // NODEBUILDING
-        node._newASTPointer.parameters.parameters.push(
-          buildNode('VariableDeclaration', {
-            name: 'commitmentRoot',
-            type: 'field',
+        // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
+        // - oldCommitment preimage check
+        // - oldCommitment membership & check vs the commitmentRoot
+        // - oldCommitment nullifier preimage check
+        // - newCommitment preimage check
+        // ^^^ do this for each global:
+        newFunctionDefinitionNode.body.statements.push(
+          buildNode('EditableCommitmentStatementsBoilerplate', {
+            privateStateName,
           }),
         );
       }
+
+      // Add a commitmentRoot parameter (only 1 commitmentRoot param is needed for all globals being committed to)
+      newFunctionDefinitionNode.parameters.parameters.push(
+        buildNode('VariableDeclaration', {
+          name: 'commitmentRoot',
+          type: 'field',
+        }),
+      );
     },
   },
 
@@ -181,14 +173,12 @@ export default {
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedBinding = scope.getReferencedBinding(lhs);
-        const referencedNode = referencedBinding.node;
+        const referencedNode = scope.getReferencedNode(lhs);
 
         // We should only replace the _first_ node in this scope which modifies the referencedNode. Let's look at the scope's modifiedBindings for the first modifyingNode.
         const modifiedBinding = scope.modifiedBindings[referencedNode.id];
 
         if (lhs === modifiedBinding.modifyingPaths[0].node && referencedNode.isSecret) {
-          // NODEBUILDING
           newNode = buildNode('VariableDeclarationStatement', {
             declarations: [buildNode('VariableDeclaration', { name: lhs.name, type: 'field' })],
             initialValue: { ...rhs },
@@ -197,9 +187,6 @@ export default {
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
           state.skipSubNodes = true;
-
-          // Continue scoping subNodes, so that any references / modifications to bindings are collected. We'll require this data when exiting the tree.
-          path.traverse({}, {});
 
           return;
         }

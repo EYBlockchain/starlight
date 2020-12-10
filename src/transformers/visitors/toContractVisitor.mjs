@@ -23,14 +23,9 @@ export default {
       if (contractNames.length > 1)
         throw new Error('Only 1 contract per solidity file is currently supported');
 
-      // Create a 'File' node and a 'SourceUnit' subNode.
+      // Create a 'SourceUnit' node.
       // NODEBUILDING
-      const newNode = {
-        name: contractNames[0],
-        nodeType: 'SourceUnit',
-        license: node.license,
-        nodes: [],
-      };
+      const newNode = buildNode('SourceUnit', { name: contractNames[0], license: node.license });
 
       node._newASTPointer = parent._newASTPointer;
       parent._newASTPointer.push(newNode);
@@ -45,10 +40,7 @@ export default {
     enter(path, state) {
       const { node, parent } = path;
       const { literals } = node;
-      // const newNode = {
-      //   literals: node.literals,
-      //   nodeType: node.nodeType, // 'PragmaDirective'
-      // };
+
       parent._newASTPointer[0].nodes.push(buildNode('PragmaDirective', { literals }));
       // node._newASTPointer = parent._newASTPointer; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },

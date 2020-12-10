@@ -52,7 +52,7 @@ function transformation1(oldAST) {
   path.traverse(explode(incrementedVisitor), state);
   logger.info('Incrementations marked');
   path.traverse(explode(referencedVisitor), state);
-  logger.info('References marked');
+  logger.info(`'Consultations' marked`);
   path.traverse(explode(wholeVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we

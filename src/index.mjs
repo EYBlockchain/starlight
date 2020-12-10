@@ -17,13 +17,13 @@ const zappify = options => {
 
   const zsolAST = redecorate(solAST, toRedecorate, options);
 
-  checks(zsolAST, options);
-
-  toOrchestration(zsolAST, options);
-
-  toCircuit(zsolAST, options);
-
-  toContract(zsolAST, options);
+  // checks(zsolAST, options);
+  //
+  // toOrchestration(zsolAST, options);
+  //
+  // toCircuit(zsolAST, options);
+  //
+  // toContract(zsolAST, options);
 };
 
 // const tasks = new Listr([

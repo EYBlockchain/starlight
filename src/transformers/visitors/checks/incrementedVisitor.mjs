@@ -63,6 +63,7 @@ export default {
       // Why here? Because we need the indicatorObj of the individual elts before we decide
       const { node, scope } = path;
       const expressionNode = node.expression;
+      // TODO: EspressionStatement.expression isn't necessarily a node with a leftHandSide.
       const lhsNode = expressionNode.leftHandSide;
       const { isIncrementedBool, isDecrementedBool } =
         lhsNode.typeDescriptions.typeString !== 'address'

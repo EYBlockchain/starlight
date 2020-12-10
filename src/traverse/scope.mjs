@@ -188,7 +188,7 @@ export class Scope {
         const referencedName = referencedBinding.name;
 
         // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
-        if (!referencedBinding.referencingPaths.includes(path)) {
+        if (!referencedBinding.referencingPaths.some(p => p.node.id === path.node.id)) {
           referencedBinding.isReferenced = true;
           ++referencedBinding.referenceCount;
           referencedBinding.referencingPaths.push(path);
@@ -203,7 +203,7 @@ export class Scope {
           path.getAncestorOfType('Assignment')
         ) {
           // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
-          if (!referencedBinding.modifyingPaths.includes(path)) {
+          if (!referencedBinding.modifyingPaths.some(p => p.node.id === path.node.id)) {
             referencedBinding.isModified = true;
             ++referencedBinding.modificationCount;
             referencedBinding.modifyingPaths.push(path);
@@ -230,7 +230,7 @@ export class Scope {
             };
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
-          if (!referencedIndicator.referencingPaths.includes(path)) {
+          if (!referencedIndicator.referencingPaths.some(p => p.node.id === path.node.id)) {
             referencedIndicator.isReferenced = true;
             ++referencedIndicator.referenceCount;
             referencedIndicator.referencingPaths.push(path);
@@ -245,7 +245,7 @@ export class Scope {
             path.getAncestorContainedWithin('leftHandSide') &&
             path.getAncestorOfType('Assignment')
           ) {
-            if (!referencedIndicator.modifyingPaths.includes(path)) {
+            if (!referencedIndicator.modifyingPaths.some(p => p.node.id === path.node.id)) {
               referencedIndicator.isModified = true;
               ++referencedIndicator.modificationCount;
               referencedIndicator.modifyingPaths.push(path);
@@ -659,6 +659,7 @@ export class Scope {
         break;
       }
       // TODO are there incrementations which aren't assignments?
+      // Yes - unary operators
       default:
         isIncrementedBool = false;
         isDecrementedBool = false;

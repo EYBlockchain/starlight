@@ -80,33 +80,40 @@ export default {
       // Here, if secret:
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
-      const { node } = path;
+      const { node, scope } = path;
+
       const referencedBinding =
         node.referencedDeclaration > 0
-          ? path.scope.getReferencedBinding(node)
-          : path.scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
-      const parentExpression = path.getAncestorOfType('ExpressionStatement');
-      if (parentExpression && referencedBinding.isSecret) {
+          ? scope.getReferencedBinding(node)
+          : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression); // msg.sender reference?
+
+      const parentExpressionNode = path.getAncestorOfType('ExpressionStatement').node;
+
+      if (parentExpressionNode && referencedBinding.isSecret) {
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
-        const functionDefScope = path.scope.getAncestorOfScopeType('FunctionDefinition');
+        const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
+
         if (!functionDefScope) return;
+
         const referencedIndicator = functionDefScope.indicators[referencedBinding.id];
-        const lhsNode = parentExpression.node.expression.leftHandSide;
+        const lhsNode = parentExpressionNode.expression.leftHandSide;
+
         if (
           rightAncestor &&
-          (!parentExpression.node.expression.isIncremented ||
-            (parentExpression.node.expression.isIncremented && lhsNode.name !== node.name))
+          (!parentExpressionNode.expression.isIncremented ||
+            (parentExpressionNode.expression.isIncremented && lhsNode.name !== node.name))
         ) {
-          console.log('Found a reference');
+          console.log(`Found a 'consultation'`);
           const lhs =
             lhsNode.nodeType === 'Identifier'
-              ? path.scope.getReferencedBinding(lhsNode)
-              : path.scope.getReferencedBinding(lhsNode.baseExpression);
+              ? scope.getReferencedBinding(lhsNode)
+              : scope.getReferencedBinding(lhsNode.baseExpression);
+
           if (!node.stateVariable) {
-            // we have a secret parameter on the RHS
+            // we have a secret _parameter_ on the RHS
             if (!lhs.isSecret)
               throw new Error(
-                `Secret parameter ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
+                `A secret parameter (${node.name}) should not be used to assign to a non-secret variable (${lhs.name}). The secret could be deduced by observing how the non-secret variable changes.`,
               );
             if (!lhs.stateVariable)
               logger.warn(
@@ -114,12 +121,15 @@ export default {
               );
             return;
           }
+
+          // Henceforth `node` must be a stateVariable on the RHS
           if (!lhs.isSecret)
             throw new Error(
-              `Secret state ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
+              `Secret state ${node.name} should not be used to assign to a non-secret variable (${lhs.name}). The secret could be deduced by observing how the non-secret variable changes.`,
             );
+
           // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
-          const reason = `Referenced at ${node.src}`;
+          const reason = `'Consulted' at ${node.src}`;
           referencedIndicator.isWhole = true;
           if (referencedIndicator.isWholeReason) {
             referencedIndicator.isWholeReason.push(reason);

@@ -32,6 +32,10 @@ export function getNodeSkeleton(nodeType) {
       return {
         expression: {},
       };
+    case 'UnaryOperation':
+      return {
+        subExpression: {},
+      };
     case 'Assignment':
       return {
         leftHandSide: {},
@@ -90,6 +94,8 @@ export function getVisitableKeys(nodeType) {
       return ['declarations', 'initialValue'];
     case 'ExpressionStatement':
       return ['expression'];
+    case 'UnaryOperation':
+      return ['subExpression'];
     case 'Assignment':
       return ['leftHandSide', 'rightHandSide'];
     case 'BinaryOperation':
@@ -122,6 +128,15 @@ export function getVisitableKeys(nodeType) {
  */
 export function buildNode(nodeType, fields) {
   switch (nodeType) {
+    case 'SourceUnit': {
+      const { name, license, nodes = [] } = fields;
+      return {
+        nodeType,
+        name,
+        license,
+        nodes,
+      };
+    }
     case 'File': {
       const { fileName, nodes = [] } = fields;
       return {
@@ -180,23 +195,50 @@ export function buildNode(nodeType, fields) {
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, visibility, storageLocation } = fields;
+      const { name, type, visibility, storageLocation, typeName } = fields;
       return {
         nodeType,
         name,
         visibility,
         storageLocation,
         typeDescriptions: { typeString: type },
+        typeName,
       };
     }
-    case 'MappingDeclaration': {
-      const { name, fromType, toType } = fields;
+    case 'Mapping': {
+      const { keyType = {}, valueType = {}, typeDescriptions = {} } = fields;
       return {
         nodeType,
-        name,
-        fromType,
-        toType,
+        keyType,
+        valueType,
+        typeDescriptions,
       };
+    }
+    // 'MappingDeclaration' is a made-up nodeType, for convenient creation of a Mapping node within a VariableDeclaration node
+    case 'MappingDeclaration': {
+      const { name, fromType, toType, visibility, storageLocation } = fields;
+      return buildNode('VariableDeclaration', {
+        name,
+        visibility,
+        storageLocation,
+        typeName: buildNode('Mapping', {
+          keyType: buildNode('ElementaryTypeName', {
+            name: fromType,
+            typeDescriptions: {
+              typeString: fromType,
+            },
+          }),
+          valueType: buildNode('ElementaryTypeName', {
+            name: toType,
+            typeDescriptions: {
+              typeString: toType,
+            },
+          }),
+          typeDescriptions: {
+            typeString: `mapping(${fromType} => ${toType})`,
+          },
+        }),
+      });
     }
     case 'VariableDeclarationStatement': {
       const { declarations = [], initialValue = {} } = fields;
@@ -204,6 +246,15 @@ export function buildNode(nodeType, fields) {
         nodeType,
         declarations,
         initialValue,
+      };
+    }
+    case 'UnaryOperation': {
+      const { operator, prefix, subExpression = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        prefix,
+        subExpression,
       };
     }
     // Boilerplate nodeTypes will be understood by the codeGenerator, where raw boilerplate code will be inserted.
@@ -229,6 +280,5 @@ export function buildNode(nodeType, fields) {
       throw new TypeError(nodeType);
   }
 }
-
 
 export default { buildNode };
