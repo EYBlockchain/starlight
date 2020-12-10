@@ -57,15 +57,15 @@ function transformation1(oldAST) {
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
-  return newAST;
+  return path;
 }
 
 // A transformer function which will accept an ast.
 export default function checks(ast, options) {
   logger.info('Performing checks on the zsol AST...');
-  const newAST = transformation1(ast);
-  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
-  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
+  const newPath = transformation1(ast);
+  //  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
+  //  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the circuit files from the newly created circuit AST:
   // logger.info('Generating files from the .zok AST...');
@@ -80,5 +80,7 @@ export default function checks(ast, options) {
   //   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
   //   fs.writeFileSync(filepath, fileObj.file);
   // }
-  logger.info('Circuit transpilation complete.');
+  logger.info('Checks complete.');
+  console.log(newPath);
+  return newPath;
 }

@@ -785,7 +785,8 @@ export class Scope {
       );
     if (secretVar.isUnknown && secretVar.isIncremented && !secretVar.isWhole) {
       secretVar.isWhole = false;
-      secretVar.isWholeReason = [`Incremented and marked as unknown`];
+      secretVar.isPartitioned = true;
+      secretVar.isPartitionedReason = [`Incremented and marked as unknown`];
     }
     if (secretVar.isIncremented && secretVar.isWhole === undefined) {
       if (!secretVar.isKnown && !secretVar.isUnknown)
@@ -827,18 +828,19 @@ export class Scope {
     topScope.isWhole = secretVar.isWhole;
     if (topScope.isWhole === false && !topScope.isPartitionedReason) {
       topScope.isPartitioned = true;
-      topScope.isPartitionedReason = secretVar.isWholeReason;
-    } else if (topScope.isWhole === false && !topScope.isPartitionedReason) {
-      secretVar.isWholeReason.forEach(reason => topScope.isPartitionedReason.push(reason));
+      topScope.isPartitionedReason = secretVar.isPartitionedReason;
+    } else if (topScope.isWhole === false && topScope.isPartitionedReason) {
+      secretVar.isPartitionedReason.forEach(reason => topScope.isPartitionedReason.push(reason));
     } else if (!topScope.isWholeReason) {
       topScope.isWholeReason = secretVar.isWholeReason;
     } else {
       secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
     }
     console.log('Indicator:');
-    // console.dir(this.indicators);
+    console.dir(this, { depth: 0 });
+    console.dir(this.indicators);
     // console.log(`Indicator.mappingKey[${secretVar.name}]`);
-    console.dir(secretVar, { depth: 1 });
+    // console.dir(secretVar, { depth: 1 });
     // console.log(`Contract level binding for state:`);
     // console.dir(topScope, { depth: 0 });
     if (topScope.isWholeReason) {
