@@ -26,7 +26,7 @@ path.scope.indicators has (among other fields):
     modificationCount: 1,
     oldCommitmentReferenceRequired: true,
     isModified: true,
-    isConsulted: true, // field to be added
+    isConsulted: true,
     newCommitmentRequired: true,
     nullifierRequired: true,
     initialisationRequired: true,

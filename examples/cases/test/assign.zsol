@@ -4,13 +4,14 @@ pragma solidity ^0.7.0;
 
 contract Assign {
 
-  secret mapping(uint256 => uint256) private a;
+  secret uint256 private a;
 
   function assign(secret uint256 param1, uint256 param2) public {
-    a[param1] = param2;
-    param1++;
-    a[param1] = param2*2;
-    param1 = param1 + 7;
-    known a[param1] = a[param1]*2;
+    a = param1*(param2 + a);
+    // a[param1] = param2;
+    // param1++;
+    // a[param1] = param2*2;
+    // param1 = param1 + 7;
+    // known a[param1] = a[param1]*2;
   }
 }
