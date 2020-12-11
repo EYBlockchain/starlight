@@ -129,6 +129,7 @@ export default {
           }
           referencedIndicator.isWhole = true;
           referencedIndicator.isConsulted = true;
+          referencedBinding.isConsulted = true;
           if (referencedIndicator.isWholeReason) {
             referencedIndicator.isWholeReason.push(reason);
           } else {

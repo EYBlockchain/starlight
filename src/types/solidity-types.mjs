@@ -91,6 +91,10 @@ export function getNodeSkeleton(nodeType) {
       return {
         subExpression: {},
       };
+    case 'TupleExpression':
+      return {
+        components: [],
+      };
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -135,6 +139,8 @@ export function getVisitableKeys(nodeType) {
       return ['expression'];
     case 'UnaryOperation':
       return ['subExpression'];
+    case 'TupleExpression':
+      return ['components'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':

@@ -345,6 +345,7 @@ export class Scope {
       case 'MemberAccess':
       case 'Mapping':
       case 'UnaryOperation':
+      case 'TupleExpression':
         break;
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.
