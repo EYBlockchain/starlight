@@ -2,36 +2,6 @@
 
 Generate a zApp from a Solidity contract.
 
-_"So good it Hertz."_
-
-_"An electrifying experience."_
-
-_"I was shocked."_
-
-_"Watts up?"_
-
-_"Join the privacy resistance"_
-
-_"Current privacy tech at its best."_
-
-_"Ohm my gosh!"_
-
-_"Free of charge"_
-
-_"A brilliantly conducted project."_
-
-_"Creates circuits; but not electrical ones."_
-
-_"There's a clever pun around secure key vaults and volts to be had..."_
-
-_"Do complicated maths, while staying grounded!"_
-
-_"Static, yet moving forward."_
-
-_"Received positively, with thunderous applause!"_
-
-_"Danger, danger! High vault (us)age!"_
-
 ---
 
 ## Induction :zap:
@@ -45,89 +15,146 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 
 Solidity Contract > zappable Solidity Contract > zappify > zApp
 
-### Install
+### Overview
 
-Whilst the package is in early development, it isn't hosted on npm. To install:
+From the user's perspective, they write a 'normal' smart contract, like this one:
 
-`cd zappify`
-`npm i -g ./`
+```
+// SPDX-License-Identifier: CC0
 
-This will create a symlink to your node.js bin, allowing you to run the commands specified in the `"bin":` field of the `package.json`; namely the `zappify` command.
+pragma solidity ^0.7.0;
 
+contract Assign {
 
-### zappify
+  uint256 private a;
 
-`zappify -i ./path/to/MyZappableContract.zsol`
-Converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
+  function assign(uint256 value) public {
+    a = value;
+  }
+}
 
-#### other options
+```
+Then add decorators to tell the compiler which variables they want to keep secret:
+```
+// SPDX-License-Identifier: CC0
 
-`-o ./custom/output/dir/`
-`-z customZappName` - otherwise files get output to a folder with name matching that of the input file.
+pragma solidity ^0.7.0;
 
-`-h` for help.
+contract Assign {
 
-## Developer
+  secret uint256 private a;
 
-### Testing outputs
+  function assign(secret uint256 value) public {
+    a = value;
+  }
+}
 
-#### circuit
+```
+They run `zappify -i <path/to/file>` and get an entire standalone zapp in return:
 
-`zappify -i ./examples/cases/uninit_global/assign.zsol`
+![zapp directories](doc/zappdir.png)
 
-`cd zapps/assign/circuits`
+Easy!
 
-`docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
+(Not for us though...)
 
-`./zokrates compile --light -i code/assign.zok` <-- it should compile
+### Compiler
 
-### full zapp
+To `zappify`, the compiler must take the decorated solidity file (a `.zsol` file) and complete the following (simplified) steps:
+-   **parse**, takes the `zsol` code and analyses it
+-   **transform**, changes the code into an abstract syntax tree (AST)
+-   **transform** (again*), changes that AST into our special purpose ASTs
+-   **generate code**, generates code for the output zApp
 
-`zappify -i ./examples/cases/uninit_global/assign.zsol`
+\* *since we are taking already working code and converting it into more working code of different language(s), this is technically a transpiler, not a compiler*
 
-`cd zapps/assign/`
+#### Parse
 
-`npm install`
+In this case, when we first transform the `.zsol` file into an AST, we're actually using `solc` to compile it as if it were a normal `.sol` file. However, `solc` would throw a hundred errors at us if we kept the special decorators like `secret` in there.
 
-(At this stage, you might need to run `chmod +x ./bin/setup` and `chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
+So the parsing stage (unlike a 'normal' compiler) looks through the code line by line and identifies decorators. It removes those decorators, saving their place, to output a working `.sol` file. We can then use `solc compile` to get a nice, ready-made Solidity AST! Here's a (very abridged) version of what the AST for the above example looks like:
 
-`./bin/setup` <-- this can take quite a while!
+```json
+{
+    "absolutePath": "input",
+    "id": 15,
+    "license": "CC0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+        {
+            "id": 1,
+            "literals": [
+                "solidity",
+                "^",
+                "0.7",
+                ".0"
+            ],
+            "nodeType": "PragmaDirective",
+        },
+        {
+            "contractKind": "contract",
+            "id": 14,
+            "name": "Assign",
+            "nodeType": "ContractDefinition",
+            "nodes": [
+                {
+                    "id": 3,
+                    "mutability": "mutable",
+                    "name": "a",
+                    "nodeType": "VariableDeclaration",
+                    "stateVariable": true,
+                    "visibility": "private",
+                },
+                {
+                    "body": {
+                        "id": 12,
+                        "nodeType": "Block",
+                        "statements": [
+                            {
+                                "expression": {
+                                    "id": 10,
+                                    "leftHandSide": {
+                                        "id": 8,
+                                        "name": "a",
+                                        "nodeType": "Identifier"
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "rightHandSide": {
+                                        "id": 9,
+                                        "name": "value",
+                                        "nodeType": "Identifier",
+                                    },
+                                },
+                                "id": 11,
+                                "nodeType": "ExpressionStatement",
+                            }
+                        ]
+                    },
+                    "id": 13,
+                    "kind": "function",
+                    "name": "assign",
+                    "nodeType": "FunctionDefinition",
+                    "parameters": {
+                        "id": 6,
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "id": 5,
+                                "name": "value",
+                                "nodeType": "VariableDeclaration",
+                            }
+                        ],
+                    },
+                    "returnParameters": {
+                    },
+                }
+            ],
+        }
+    ],
+}
+```
 
-`npm test`
+This is the JSON way of saying:
 
-All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
-
-NB: rerunning the test will not work, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/assign/orchestration/common/db/preimage.json` before `npm test`.
-
----
-
-## R&D Notes & Ideas
-
-See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from sprinkled Solidity.
-
----
-
-## Miranda's test branch
-
-To use this branch:
-
-### Testing resprinkler
-
--   Point the start command in `package.json` to your sprinkled contract
--   Run `npm start`
-
-This first runs the `desprinkler`, which removes and stores the sprinkled syntax in your contract. The desprinkled solidity file is saved as `my_contract_desprinkled.sol` in the `contracts` folder. Its compiled ast is saved as `ast.json` in the root (for now).
-
-The `resprinkler` then adds back the sprinkled syntax to the ast, creating `sprinkled_ast.json`, also saved to root. Search for `sprinkle` in that new ast to find the syntax.
-
-### Testing compiler output
-
-
-In `examples/cases`, there are collections of example output ZApps depending on the sprinkled contract input. At the moment only an uninitiated global is completed. To test:
-
-- Run `truffle compile`
-- Run `docker-compose build`
--   Run `./bin/setup` (this runs the trusted setup for the output.zok file, and stores the output vk in `db`)
--   Run `npm test` (this assigns and reassigns the private global variable)
-
-Once assigned, the variable's private information is stored in `db/preimage.json`. Any further assignments use this information to nullify the last commitment. So if you have closed the containers or want to test the initial assignment, be sure to delete this file.
+![ast](doc/ast.png)
