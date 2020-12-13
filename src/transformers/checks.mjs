@@ -53,17 +53,17 @@ function transformation1(oldAST) {
   logger.info('Incrementations marked');
   path.traverse(explode(referencedVisitor), state);
   logger.info('References marked');
-  path.traverse(explode(wholeVisitor), state);
+  return path.traverse(explode(wholeVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
-  return path;
+  // return path;
 }
 
 // A transformer function which will accept an ast.
 export default function checks(ast, options) {
   logger.info('Performing checks on the zsol AST...');
-  const newPath = transformation1(ast);
+  const indicator = transformation1(ast);
   //  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   //  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
@@ -81,6 +81,5 @@ export default function checks(ast, options) {
   //   fs.writeFileSync(filepath, fileObj.file);
   // }
   logger.info('Checks complete.');
-  console.log(newPath);
-  return newPath;
+  return indicator;
 }

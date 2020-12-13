@@ -850,6 +850,10 @@ export class Scope {
       console.log(topScope.isPartitionedReason);
     }
   }
+
+  getIndicator() {
+    return this.indicators;
+  }
 }
 
 export default Scope;

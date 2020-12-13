@@ -8,6 +8,7 @@
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
     "test": "./bin/startup && docker-compose run zappify npx mocha --exit --require @babel/register 'test/test.mjs'",
+    "test-zsol": "mocha --require @babel/register ./test/test-zsols/index.mjs",
     "create-ast": "node src/index.mjs -i contracts/assign.sol",
     "demo": "node STC/stc.mjs",
     "example": "node src/transformers/exampleTransformer.mjs -i ./sprinkled_ast.json"
@@ -38,6 +39,7 @@
     "@babel/register": "^7.11.5",
     "@truffle/contract": "^4.2.21",
     "axios": "^0.19.2",
+    "chai": "^4.2.0",
     "chalk": "^4.1.0",
     "commander": "^6.1.0",
     "config": "^3.3.1",
@@ -46,6 +48,7 @@
     "general-number": "^1.0.1",
     "listr": "^0.14.3",
     "lodash.clonedeep": "^4.5.0",
+    "mocha": "^8.2.1",
     "solc": "0.7.1",
     "truffle": "^5.1.49",
     "web3": "^1.2.11",
