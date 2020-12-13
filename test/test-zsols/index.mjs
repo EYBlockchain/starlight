@@ -43,15 +43,18 @@ mkDirs(options);
 describe('Test suits', function() {
   const expect = chai.expect;
 
-   for (const zol of testData.errorZols) {
+  describe('Incorrect zols testing', function() {
+    for (const zol of testData.errorZols) {
       it(`test zol:- ${zol.contract}`, function() {
         fs.writeFileSync(options.inputFilePath, zol.contract);
         const willTrrow = function() { zappify(options) };
         expect(willTrrow).to.throw(zol.errorMessage);
      });
    }
+  });
 
-   for (const zol of testData.correctZols) {
+  describe('Correct zols testing', function() {
+    for (const zol of testData.correctZols) {
       it(`test zol:- ${zol.contract}`, function() {
         fs.writeFileSync(options.inputFilePath, zol.contract);
         const resultIndicators = zappify(options);
@@ -82,4 +85,5 @@ describe('Test suits', function() {
         }
      });
    }
+  });
 });
