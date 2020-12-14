@@ -145,6 +145,82 @@ Below is a flow guide up to this step!
 ### What we done did so far
 
 #### Commitment structure
+
+We hide the value of secret states in commitments of structure:
+
+```
+h(stateVarId, value, ownerPublicKey, salt)
+```
+
+To identify which secret state this commitment is referring to, we use a unique state variable ID (discussed below). The `value` field refers to the value of the entire state if it is whole, or the part of the state owned by `ownerPublicKey` if partitioned. The `salt` is a random integer chosen to (among other things) prevent duplicates.
+
+If the state is a mapping, the `stateVarId` field becomes `h(stateVarId, key)`.
+
+These commitments have nullifiers of structure:
+
+```
+h(ownerSecretKey, salt)
+```
+
+##### To PK or not to PK
+
+We spent a lot of time thinking about whether to *always* include an owner public key in the commitment, or *sometimes*, or *never*.
+-   *Always*: Ensures a nice uniform commitment structure for every state and forces us/the dev to think about who the secret is secret to. However, this means more hashing and having to infer who the owner of a state is with code, which may not be right.
+-   *Sometimes*: We can add a public key whenever it is needed and save on hashing and complexity when it's not, but lose the uniform commitment structure.
+-   *Never*: Less hashing and complexity everywhere, and introduces the rule of 'you know the salt, so you are the owner'. This has a few complicated problems (discussed below).
+
+Even considering never having a PK in the commitment might seem silly. But it's not that silly. In many examples we discovered that if the secret state is tied to some identity, then the PK naturally turns up in the commitment as a mapping key anyway.
+
+```
+secret mapping(address => uint256) balances;
+<...>
+balances[msg.sender] += value;
+```
+
+This secret state would have commitments (if we weren't including a PK by default):
+
+```
+h( h(balancesID, key = address), value, salt)
+```
+
+The protocol would convert an Ethereum address to a public key anyway. We'd need a PoKoSK whenever we see `msg.sender` because a Zokrates circuit doesn't have a concept of owning an address - so proving that you are `msg.sender` (which happens in the background of calling a contract) becomes proving that you own the secret key corresponding to whatever public key is in the commitment.
+
+In short: whenever we see `msg.sender` in the `.zsol` contract, we probably need a PoKoSK in the circuit. 'Probably' becomes 'definitely' if that code block deals with secret states.
+
+That observation lead to the question: if we need a PK in the commitment, would they be added as a mapping key *anyway*? So do we need to bother with a separate PK field?
+
+For example:
+
+```
+secret mapping(uint256 => uint256) myMapping;
+fn1(value1, value2) {
+  (known) myMapping[value1] = value2;
+}
+```
+
+Since we are overwriting a value, we need to nullify a previous commitment to call `fn1`. So, the user would need to provide the correct salt to the circuit to update `mymapping[value1]`, which does the same job as a PK would.
+
+If the `.zsol` developer wanted to restrict who can edit this state, they would add:
+```
+require(msg.sender === someAddress);
+```
+Which would translate to a PoKoSK in the circuit, again doing the same job as a PK in the commitment. In the example of a Nightfall-like zApp, the owner's PK would be added to the mapping key field, and would not be needed.
+
+However, there is one key (haha) problem with never having a PK in the commitment - transferring of ownership. With Nightfall, the mapping key would be changed to the receiver's address, so the PoKoSK in the circuit would change accordingly - great! What about other secrets?
+
+Let's say we have a secret state `a` which is represented by a commitment `h(aVarId, value, salt)`. The dev wants a user of the zApp to be able to transfer ownership (i.e. nullification rights) to an other user. That's fine - and a good use of the zApp - so we should allow it. With the 'no PK in the commitment' rule, ownership is transferred by messaging the new user the salt. This seems ok, because this is how Nightfall's token transfer happens, but the previous owner *still knows the preimage to the nullifer*, meaning they can nullify it at any time, including after transferring ownership. Even if they don't, they still know when the new owner nullifies the commitment.
+
+*Never* adding a public key to the commitment means that the 'owner' of a secret owns it forever. This removes nice transferability from any secret state (which doesn't include a key in its commitment as a mapping key), and there are plenty of states like that which (reasonably) should be transferable.
+
+Adding a public key *sometimes* does solve this. It does mean that the compiler needs to detect when:
+-   There is no PoKoSK for a `msg.sender` check
+-   There is no address mapping key which restricts state editors*
+
+\*Looking for any address as a mapping key isn't enough here - there could be a zApp which secretly stores customer information by their address, but is editable by (and owned by) a system admin.
+
+*Sometimes* also means that commitment structures are not uniform, which could be confusing to a Solidity dev who isn't familiar with zkp (and it's not as pretty). Plus, it implies that some secrets are owned and some are not - which is even more confusing, because a secret has to be secret to *someone*, or it's not secret! If we don't specify that someone, then the secret state is nullifiable by anyone who knows the salt, which could be a long list of previous owners.
+
+This is a long explanation of why we eventually went with *always*. Another good reason for always adding a PK to the commitment is 'Zexe does it'.
 #### State variable IDs
 #### Whole vs Partitioned states
 ##### Limitations
