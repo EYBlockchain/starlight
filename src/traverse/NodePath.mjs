@@ -81,7 +81,7 @@ class NodePath {
   }
 
   traverse(visitor, state) {
-    traverse(this, visitor, state);
+    return traverse(this, visitor, state);
   }
 
   /**

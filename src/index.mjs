@@ -17,7 +17,9 @@ const zappify = options => {
 
   const zsolAST = redecorate(solAST, toRedecorate, options);
 
-  checks(zsolAST, options);
+  const indicators = checks(zsolAST, options);
+
+  if (options.isTest) return indicators;
 
   // toOrchestration(zsolAST, options);
   //

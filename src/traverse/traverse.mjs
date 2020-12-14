@@ -8,6 +8,7 @@ import { getVisitableKeys } from '../types/solidity-types.mjs';
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
 export function traverse(path, visitor, state = {}) {
+  let indicators;
   logger.debug(
     'pathLocation:',
     `${path.getLocation()} = ${path.node.nodeType} ${path.node.name || ''}`,
@@ -56,7 +57,8 @@ export function traverse(path, visitor, state = {}) {
           node: subNode,
           parentPath: path,
         });
-        subNodePath.traverse(visitor, state);
+        const nodeIndicators = subNodePath.traverse(visitor, state);
+        if (nodeIndicators) indicators = nodeIndicators;
       }
     } else if (node[key]) {
       const subNode = node[key];
@@ -67,7 +69,8 @@ export function traverse(path, visitor, state = {}) {
         node: subNode,
         parentPath: path,
       });
-      subNodePath.traverse(visitor, state);
+      const nodeIndicators = subNodePath.traverse(visitor, state);
+      if (nodeIndicators) indicators = nodeIndicators;
     }
   }
 
@@ -83,7 +86,8 @@ export function traverse(path, visitor, state = {}) {
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
 
-    methods.exit(path, state);
+    const nodeIndicators = methods.exit(path, state);
+    if (nodeIndicators) indicators = nodeIndicators;
 
     // logger.debug(`\n\n\n\n${node.nodeType} after exit`);
     // logger.debug('node._newASTPointer:', node._newASTPointer);
@@ -91,6 +95,8 @@ export function traverse(path, visitor, state = {}) {
     // logger.debug('state:', state);
     // logger.debug('*************************************************');
   }
+
+  return indicators;
 }
 
 /**
