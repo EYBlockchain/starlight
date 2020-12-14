@@ -183,7 +183,7 @@ This secret state would have commitments (if we weren't including a PK by defaul
 h( h(balancesID, key = address), value, salt)
 ```
 
-The protocol would convert an Ethereum address to a public key anyway. We'd need a PoKoSK whenever we see `msg.sender` because a Zokrates circuit doesn't have a concept of owning an address - so proving that you are `msg.sender` (which happens in the background of calling a contract) becomes proving that you own the secret key corresponding to whatever public key is in the commitment.
+The protocol would convert an Ethereum address (the mapping key) to the owner's public key anyway. We'd need a PoKoSK whenever we see `msg.sender` because a Zokrates circuit doesn't have a concept of owning an address - so proving that you are `msg.sender` (which happens in the background of calling a contract) becomes proving that you own the secret key corresponding to whatever public key is in the commitment.
 
 In short: whenever we see `msg.sender` in the `.zsol` contract, we probably need a PoKoSK in the circuit. 'Probably' becomes 'definitely' if that code block deals with secret states.
 
@@ -212,7 +212,7 @@ Let's say we have a secret state `a` which is represented by a commitment `h(aVa
 
 *Never* adding a public key to the commitment means that the 'owner' of a secret owns it forever. This removes nice transferability from any secret state (which doesn't include a key in its commitment as a mapping key), and there are plenty of states like that which (reasonably) should be transferable.
 
-Adding a public key *sometimes* does solve this. It does mean that the compiler needs to detect when:
+Adding a public key *sometimes* solves this. It does mean that the compiler needs to detect when:
 -   There is no PoKoSK for a `msg.sender` check
 -   There is no address mapping key which restricts state editors*
 
@@ -220,9 +220,94 @@ Adding a public key *sometimes* does solve this. It does mean that the compiler 
 
 *Sometimes* also means that commitment structures are not uniform, which could be confusing to a Solidity dev who isn't familiar with zkp (and it's not as pretty). Plus, it implies that some secrets are owned and some are not - which is even more confusing, because a secret has to be secret to *someone*, or it's not secret! If we don't specify that someone, then the secret state is nullifiable by anyone who knows the salt, which could be a long list of previous owners.
 
-This is a long explanation of why we eventually went with *always*. Another good reason for always adding a PK to the commitment is 'Zexe does it'.
+This is a long explanation of why we eventually went with *always*. We infer ownership by looking for who can initialise and nullify the state (discussed below).
+
+Another good reason for always adding a PK to the commitment is 'Zexe does it'.
+
 #### State variable IDs
+
+How do we ensure that commitments refer to the correct secret variable? We may have many secret states with values hidden in many commitments, so we don't want a user to be able to edit state `b` by proving they own state `a`. There are a few choices:
+
+-   Store the state name in the commitment
+-   Store the variable id
+-   Add a check inside the circuit
+
+The latter point requires some complexity (especially when representing functions which edit more than one state) to get working and is unnecessarily messy. Meanwhile, names may not be unique (a bad developer might name a function and a variable `x`) and require more coding to extract and hash.
+
+Using unique variable IDs mirrors Ethereum's state storage and are easily found from the solc AST. They also allow us to have secret mappings with commitments `h( h(stateVarId, mappingKey), value, ownerPublicKey, salt)`.
+
+Each node in our AST has an id.
+```json
+{
+    "id": 3,
+    "mutability": "mutable",
+    "name": "a",
+    "nodeType": "VariableDeclaration",
+    "stateVariable": true,
+    "visibility": "private",
+    "isSecret": true,
+}
+```
+Every other node that references this node has a field `referencedDeclarition: 3`.
+
 #### Whole vs Partitioned states
+
+Secret states are either *whole* or *partitioned*.
+
+Whole states are overwritten each time they are edited. This means that only one commitment referencing its value can exist at once, and so the previous commitment must be nullified.
+
+```py
+secret uint256 a;
+
+function fn1(secret uint256 value) {
+    a = value;
+}
+```
+Here, `a` is overwritten each time `fn1` is called, so whoever calls this function must show that they can nullify the previous commitment.
+
+Partitioned states can be incremented by users who do not own or know its value. An example of this is lots of users contributing to a charity pot; nobody needs to know how much money is in the pot to add to it.
+
+```py
+secret uint pot;
+address admin;
+
+function add(secret uint value) {
+  unknown pot = pot + value;
+}
+
+function withdraw(secret uint value) {
+  require(msg.sender === admin);
+  pot = pot - value;
+}
+```
+
+We know that the dev doesn't want the secret value `pot` to be overwritten by `pot + value` every time, because they have specified our keyword `unknown`. This signifies that the caller of `add()` doesn't have to know the value of `pot` and doesn't have to provide a nullifier, so the secret state is partitioned.
+
+This zApp will have many commitments of the form `h(potVarId, value, ownerPublicKey, salt)` where all the `value`s add up to the total of the `pot`. Only the admin can remove money from the pot, so theirs is the PK we add to the commitment (more on this in the ownership section). The admin removes money by providing a nullifier/nullifiers in `withdraw`.
+
+##### (Un)Known
+
+The new decorators introduced here are *known* and *unknown*. While we wanted the compiler's `zsol` code to be as close to normal Solidity as possible, we needed a way for the dev to tell us whether the state would be whole or partitioned.
+
+Consider this example:
+```py
+secret uint a;
+
+function fn1(secret uint value) {
+  a = a + value;
+}
+```
+
+The dev writing this `.zsol` could feasibly want either of these:
+-   `a` is whole and overwritten by `fn1()`, requiring a nullifier and new commitment hiding `a + value`
+-   `a` is partitioned and incremented by `fn1()`, requiring no nullifier, creating a new commitment on each call hiding `value`
+
+To distinguish between these two cases, the known/unknown decorators refer to whether the caller knows the value of the state. A dev may not know what we mean by whole or partitioned (and they don't have to), but they should have an idea in mind of what the caller of each function wants to (and is allowed to) do.
+
+-   `known a = a + value` - the caller must know the value of `a` and therefore knows what `a + value` is, so we hide it in one commitment which belongs to them
+-   `unknown a = a + value` - the caller doesn't have to know `a` and so wants to increment it by some `value`, so we create a new commitment each time the function is called
+
+These decorators are only required on incrementing (`a += something`) statements
 ##### Limitations
 ##### Identification
 ##### Examples
