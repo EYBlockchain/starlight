@@ -19,9 +19,8 @@ Generate a zApp from a Solidity contract.
     - [To PK or not to PK](#to-pk-or-not-to-pk)
   - [State variable IDs](#state-variable-ids)
   - [Whole vs Partitioned states](#whole-vs-partitioned-states)
-    - [(Un)Known](#unknown)
+    - [Identification with (Un)Known](#identification-with-unknown)
     - [Limitations](#limitations)
-    - [Identification](#identification)
     - [Examples](#examples)
   - [Ownership](#ownership)
     - [Partitioned states](#partitioned-states)
@@ -315,7 +314,7 @@ We know that the dev doesn't want the secret value `pot` to be overwritten by `p
 
 This zApp will have many commitments of the form `h(potVarId, value, ownerPublicKey, salt)` where all the `value`s add up to the total of the `pot`. Only the admin can remove money from the pot, so theirs is the PK we add to the commitment (more on this in the ownership section). The admin removes money by providing a nullifier/nullifiers in `withdraw`.
 
-#### (Un)Known
+#### Identification with (Un)Known
 
 The new decorators introduced here are *known* and *unknown*. While we wanted the compiler's `zsol` code to be as close to normal Solidity as possible, we needed a way for the dev to tell us whether the state would be whole or partitioned.
 
@@ -343,7 +342,7 @@ These decorators are only required on incrementing (`a += something`) statements
 
 Both whole and partitioned states have complexities we need to consider.
 
-The main issue with whole states is initialisation. Consider this (very simple) example:
+The main issue with whole states is **initialisation**. Consider this (very simple) example:
 ```py
 contract Assign {
 
@@ -363,13 +362,141 @@ Initialisation of a whole state *does* need a nullifier. Otherwise, any two peop
 
 Using our nice, uniform commitment structure, `h(stateVarId, value, ownerPublicKey, salt)`, it follows that nullifiers should contain the owner's secret key: `h(ownerSecretKey, salt)`. But, we again have the rival commitment problem - anyone two users could initialise `a` with this structure and submit *both* nullifiers. The shield contract would allow this because both could correctly prove ownership of their public keys, preimage of the new commitment, and that the nullifier doesn't already exist.
 
-So, we can't have a 'normal' nullifier for initialisation. In some cases, we may be able to. For example, if a publicly known admin owns a state (and is known to own it before deployment), then the first submitted nullifier *can* have the corresponding admin's secret key. But this is an edge case - the state must have the same, pre-decided owner throughout its life hardcoded into the contract. (I think this admin address *could* be changed, but it would then lead to complications if the address was changed and two admins submitted rival nullifiers...)
-#### Identification
+So, it looks like we can't have a 'normal' nullifier for initialisation. But in some cases, we may be able to. For example, if a publicly known admin owns a state (and is known to own it before deployment), then the first submitted nullifier *can* have the corresponding admin's secret key. But this is an edge case - the state must have the same, pre-decided owner throughout its life hardcoded into the contract. (I think this admin address *could* be changed, but it would then lead to complications if the address was changed and two admins submitted rival nullifiers...).
+
+We came up with three options to this first nullifier problem:
+
+-   The example above, where an admin/preordained owner will initialise the state: `h(ownerSecretKey, salt)`
+-   A deterministic dummy nullifier which can only be submitted once: `h(stateVarId, ownerSecretKey = 0, salt = 0)`
+-   The 'Zexe approach', using a randomly generated state variable ID
+
+This Zexe approach is best used for mappings, where the user doesn't care about the mapping key (i.e. it has no real world meaning). If the zApp stored information under some user ID in a mapping, then this method would work, because the initialisation step assigns an ID which is not in use.
+
+The randomness comes from hashing the input and output commitments for each transaction.
+```
+stateVarId = h(j, N1, N2...);
+j = number of output commitments being created by tx;
+N = nullifier to input commitment;
+```
+When we have a mapping, this method is used for the mapping key, then `stateVarId = h(originalID, mappingKey)`.
+
+But - we're interested in initialisation, so no commitments exist for us to nullify yet! Worry not, we specify random dummy nullifiers which are checked to not belong to the nullifier set as usual. A valid example would be `mappingKey = h(j=1, N0)` with `N0` random, so it's very unlikely it already exists in the set. This nullifier and the first commitment `h( h(stateVarId, mappingKey), value, ownerPublicKey, salt)` are submitted to the contract. Now, nobody can initialise the same state, since the `mappingKey` is linked to a submitted nullifier.
+
+The Zexe approach works great for mappings indexed by ID, but less great for non-mappings and any keys with real world meaning. There are cases where we can't just pick a random ID (address, national insurance number, email address) so the method doesn't apply. Meanwhile, states like integers would still have the same problem of rival first commitments. The one variable could exist with infinite variable IDs chosen randomly by different users!
+
+With options 1 and 3 only useful in certain cases, we decided to go for option 2: deterministic dummy nullifiers. The downside of this is that **everyone observing the contract knows when a state has been initialised**, since we must allow everyone to know what the dummy nullifier looks like.
+
+Inside the circuit we enforce that the first nullifier is `h(stateVarId, ownerSecretKey = 0, salt = 0)`. If the user inputs a previous commitment, SK, and salt of value 0, the circuit knows it's initialising a state and skips any old commitment checks.
+
+What if someone tries to trick the circuit into skipping the checks when the state has already been initialised? Well, that's ok, because the contract will see that the dummy nullifier is already in the set and reject the transaction.
+
+While not ideal, since anyone can see when a state was initialised, the dummy nullifier works. It also has the problem of being a 'race' to see who can first call the function and claim ownership of the secret. But only if the dev decides to let anyone call the function. They can prevent this by initialising the state with a constructor, or specifying ownership of the state with address restrictions (see Ownership section below).
+
+Partitioned states don't suffer from this problem, but they do have two main limitations. Firstly, unless the dev has been explicit, we can't avoid ending up with multiple owners of one state. Without any restriction on who can call a function which increments some unknown value, the caller can add any public key they want to the part they create.
+
+Secondly, if there is a clear owner, we have to implement a messaging system to broadcast state changes to them. We discuss this latter point in more detail below ('Sharing private data').
+
 #### Examples
 
+Hooray, examples! The below are snippets of functions, and won't necessarily work on their own (for example, we need a state to be nullifiable, otherwise it just exists in floaty nothingness).
+
+```py
+secret uint a;
+
+function fn1(uint value) {
+    known a = a + value;
+}
+```
+This example makes use of our known/unknown decorators. Since the dev has marked the incrementation of `a` as known, then `a` is a whole state and is represented by one commitment: `h(aVarId, valuea, ownerPublicKey, salt)`. To change `a`, the caller must nullify the previous commitment and create a new one with value `a + value`.
+
+```py
+secret uint a;
+
+function fn1(uint value) {
+    unknown a = a + value;
+}
+```
+
+Here, `a` is a partitioned state. Anyone can call `fn1` and so anyone can increment `a` with some `value`.
+
+```py
+secret mapping(address -> uint) myMapping;
+address admin;
+
+constructor() {
+    admin = msg.sender;
+}
+
+fn1(value2) {
+   unknown myMapping[msg.sender] += value2;
+}
+
+fn2(value3, addr) {
+  require(msg.sender = admin)
+  myMapping[addr] -= value3;
+}
+```
+
+This is like the charity pot example we looked at above. Anyone can add their share to `myMapping`, indexed by their address (converted to a public key in zkp land), but only the admin can decrement from the pot. The admin has the right to remove value from *anyone's* share and is the only one allowed to do so. Though the caller of `fn1` would actually know how much they had previously added to their share, they may not know how much the admin has taken away, so the value of `myMapping[msg.sender]` is indeed unknown.
+
+```py
+secret mapping(address -> uint) customerInfo;
+address admin;
+
+constructor() {
+    admin = msg.sender;
+}
+
+fn1(info, addr) {
+  require(msg.sender = admin)
+  customerInfo[addr] = info;
+}
+```
+A similar example with whole states - this mapping contains customer information rather than a balance, so it can't be incremented. The function overwrites the information anyway, so we know that it's whole without the need for more decorators.
+
 ### Ownership
+
+Ownership of secret states is a difficult problem to solve. However, we need to solve it to work out which public key to put inside the commitment hiding the state's value.
+
+If we allow the caller to add any public key they wish, that might prevent an admin from being able to access some needed value. Meanwhile, if we fix a public key, then we lose transferability and any flexibility the dev wanted.
+
+A general rule: **the owner of a state must be able to nullify it wherever nullification happens**.
+
+Nullification is any overwrite for whole states and any decrement for partitioned states. Another way of saying this is: we can't allow an owner to be 'locked out' of editing their state. So, we look at wherever a state is nullified and if there are any restrictions on who can access that nullification.
+
+Since there are use cases for anyone being able to increment some partitioned state, we have to consider both whole and partitioned states.
+
+Some of the decisions below are tentative, and there are still some questions over which approach is best!
+
 #### Partitioned states
+
+The traversal goes like this:
+
+For each secret state, we traverse the contract and wherever we see a `msg.sender` restriction on a **decrement**:
+-   If there is the same user restriction on each nullification of the state (e.g. `require(msg.sender == admin)`) then this user is the owner. We have two choices:
+    -   Maintain the require statements in the shield contract, allow the user to add any PK they want (if they lock themselves out from editing by adding a different PK, then that's their fault)
+    -   Add a static 'admin' PK to every new commitment
+-   If `msg.sender` is a mapping key everywhere the state is nullified, then the PK belongs to the caller of the nullification function
+-   If there's no clear owner of the state, then the incrementer can add any PK they wish. We throw a warning to the dev that the state can have many concurrent owners.
+
 #### Whole states
+
+The traversal goes like this:
+
+For each secret state, we traverse the contract and wherever we see a `msg.sender` restriction on an **overwrite**:
+-   If there is the same user restriction on each nullification of the state (e.g. `require(msg.sender == admin)`) then this user is the owner. We maintain the require statements in the shield contract, allow the user to add any PK they want (if they lock themselves out from editing by adding a different PK, then that's their fault)\*
+-   If `msg.sender` is a mapping key everywhere the state is nullified, then the PK belongs to the caller of the nullification function
+-   If there's no clear owner of the state, then the initialiser can add any PK they wish. We throw a warning to the dev that the state can have many concurrent owners.
+
+\* You may be thinking - why do we have two options for partitioned states, and one for whole? If we have a whole state and a clear owner, then we allow them to initialise the state, whether through the same contract requirements the dev wrote or through the circuit. Then once that state exists, only that single user can edit it.
+
+However, partitioned states can have many different incrementers who edit without nullifying. Like the charity pot example, the dev could reasonably write a contributing function with no caller restrictions. So if we allow the commitment creator to add any PK they want, they could lock out the admin. In some cases, we might be able to allow the caller to add any PK and hardcode an admin PoKoSK in the circuit (but that feels messy). In other cases, having a static PK (perhaps that is never checked inside the circuit which deals with nullification) would work.
+
+Going back to whole states, we allow that user to add any PK they want. In most cases they would add their own, and it is possible they could add some silly value which means that commitment can never be spent. At the moment our stance is: that's your own silly fault, and we'll allow it.
+
+Another method we considered is adding a *transferable* decorator in front of nullifying statements. Perhaps the developer wants a state to be as flexible as possible, with the current owner able to change the PK in the commitment with a nullification whenever they like. Or maybe they want a state to always belong to one person. The new decorator would allow this distinction.
+
+But, through many examples and discussions, it seems like wanting a *non*-transferable state is pretty rare. Plus, if you are the owner of a state and don't want to transfer editing rights then... just don't! You can keep it and do nothing. So, as long as we get the initial ownership of a state correct, the need for a *transferable* decorator mostly disappears.
 
 ### Sharing private data
 
