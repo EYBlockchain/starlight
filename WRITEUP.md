@@ -307,8 +307,33 @@ To distinguish between these two cases, the known/unknown decorators refer to wh
 -   `known a = a + value` - the caller must know the value of `a` and therefore knows what `a + value` is, so we hide it in one commitment which belongs to them
 -   `unknown a = a + value` - the caller doesn't have to know `a` and so wants to increment it by some `value`, so we create a new commitment each time the function is called
 
-These decorators are only required on incrementing (`a += something`) statements
+These decorators are only required on incrementing (`a += something`) statements. Other statements (overwrites or decrements) all require nullifiers, and so can only be called by the owner. Overwrites automatically count as known, whole states whereas decrements don't tell us enough about the state. We need to look at where the state is initialised when we see a decrement.
+
 ##### Limitations
+
+Both whole and partitioned states have complexities we need to consider.
+
+The main issue with whole states is initialisation. Consider this (very simple) example:
+```py
+contract Assign {
+
+  secret uint256 private a;
+
+  function assign(secret uint256 value) public {
+    a = value;
+  }
+}
+```
+
+In normal Solidity land, anyone could call `assign()` and change the value of `a`. It would be a mental free for all. Since, in zkp land, `a` is secret, we can't have anyone calling the function and changing it to whatever they want (meaning that `a` is secret for however many minutes until the next person comes along and changes it to their secret). This is probably not what the dev wanted.
+
+We have already decided that overwritten states need a nullifier and a new commitment on each edit. But how do we first edit such a state?
+
+Initialisation of a whole state *does* need a nullifier. Otherwise, any two people could submit two rival 'first' commitments, creating two versions of the secret state. We don't have this problem with partitioned states because, there, it's okay for many different commitments to represent one state. 
+
+Using our nice, uniform commitment structure, `h(stateVarId, value, ownerPublicKey, salt)`, it follows that nullifiers should contain the owner's secret key: `h(ownerSecretKey, salt)`. But, we again have the rival commitment problem - anyone two users could initialise `a` with this structure and submit *both* nullifiers. The shield contract would allow this because both could correctly prove ownership of their public keys, preimage of the new commitment, and that the nullifier doesn't already exist.
+
+So, we can't have a 'normal' nullifier for initialisation. In some cases, we may be able to. For example, if a publicly known admin owns a state (and is known to own it before deployment), then the first submitted nullifier *can* have the corresponding admin's secret key. But this is an edge case - the state must have the same, pre-decided owner throughout its life hardcoded into the contract. (I think this admin address *could* be changed, but it would then lead to complications if the address was changed and two admins submitted rival nullifiers...)
 ##### Identification
 ##### Examples
 
