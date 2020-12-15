@@ -4,6 +4,35 @@ Generate a zApp from a Solidity contract.
 
 ---
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Induction :zap:](#induction-zap)
+- [Overview](#overview)
+- [Compiler](#compiler)
+  - [Parse](#parse)
+  - [Transform](#transform)
+  - [Code Generation](#code-generation)
+- [What we done did so far](#what-we-done-did-so-far)
+  - [Commitment structure](#commitment-structure)
+    - [To PK or not to PK](#to-pk-or-not-to-pk)
+  - [State variable IDs](#state-variable-ids)
+  - [Whole vs Partitioned states](#whole-vs-partitioned-states)
+    - [Identification with (Un)Known](#identification-with-unknown)
+    - [Limitations](#limitations)
+    - [Examples](#examples)
+  - [Ownership](#ownership)
+    - [Partitioned states](#partitioned-states)
+    - [Whole states](#whole-states)
+  - [Sharing private data](#sharing-private-data)
+    - [`share <secret> with <address / placeholder>`](#share-secret-with-address--placeholder)
+    - [Placeholders](#placeholders)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+---
+
 ## Induction :zap:
 
 zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write.
@@ -15,7 +44,7 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 
 Solidity Contract > zappable Solidity Contract > zappify > zApp
 
-### Overview
+## Overview
 
 From the user's perspective, they write a 'normal' smart contract, like this one:
 
@@ -58,7 +87,7 @@ Easy!
 
 (Not for us though...)
 
-### Compiler
+## Compiler
 
 To `zappify`, the compiler must take the decorated solidity file (a `.zsol` file) and complete the following (simplified) steps:
 -   **parse**, takes the `zsol` code and analyses it
@@ -68,7 +97,7 @@ To `zappify`, the compiler must take the decorated solidity file (a `.zsol` file
 
 \* *since we are taking already working code and converting it into more working code of different language(s), this is technically a transpiler, not a compiler*
 
-#### Parse
+### Parse
 
 In this case, when we first transform the `.zsol` file into an AST, we're actually using `solc` to compile it as if it were a normal `.sol` file. However, `solc` would throw a hundred errors at us if we kept the special decorators like `secret` in there.
 
@@ -103,7 +132,7 @@ To:
 ```
 For each decorated variable, statement, parameter, and function. This output `zsol` AST is then *traversed*.
 
-#### Transform
+### Transform
 
 Now onto the transform (again) step, we look at every node in the custom `zsol` AST and collect all the information we need for our zApp. Which variables are secret? How many functions are there? What should our commitments look like? Has the user written something really stupid?
 
@@ -138,13 +167,13 @@ Below is a flow guide up to this step!
 
 ![guide](doc/guide.png)
 
-#### Code Generation
+### Code Generation
 
 `TODO`
 
-### What we done did so far
+## What we done did so far
 
-#### Commitment structure
+### Commitment structure
 
 We hide the value of secret states in commitments of structure:
 
@@ -162,7 +191,7 @@ These commitments have nullifiers of structure:
 h(ownerSecretKey, salt)
 ```
 
-##### To PK or not to PK
+#### To PK or not to PK
 
 We spent a lot of time thinking about whether to *always* include an owner public key in the commitment, or *sometimes*, or *never*.
 -   *Always*: Ensures a nice uniform commitment structure for every state and forces us/the dev to think about who the secret is secret to. However, this means more hashing and having to infer who the owner of a state is with code, which may not be right.
@@ -224,7 +253,7 @@ This is a long explanation of why we eventually went with *always*. We infer own
 
 Another good reason for always adding a PK to the commitment is 'Zexe does it'.
 
-#### State variable IDs
+### State variable IDs
 
 How do we ensure that commitments refer to the correct secret variable? We may have many secret states with values hidden in many commitments, so we don't want a user to be able to edit state `b` by proving they own state `a`. There are a few choices:
 
@@ -250,7 +279,7 @@ Each node in our AST has an id.
 ```
 Every other node that references this node has a field `referencedDeclarition: 3`.
 
-#### Whole vs Partitioned states
+### Whole vs Partitioned states
 
 Secret states are either *whole* or *partitioned*.
 
@@ -285,7 +314,7 @@ We know that the dev doesn't want the secret value `pot` to be overwritten by `p
 
 This zApp will have many commitments of the form `h(potVarId, value, ownerPublicKey, salt)` where all the `value`s add up to the total of the `pot`. Only the admin can remove money from the pot, so theirs is the PK we add to the commitment (more on this in the ownership section). The admin removes money by providing a nullifier/nullifiers in `withdraw`.
 
-##### Identification with (Un)Known
+#### Identification with (Un)Known
 
 The new decorators introduced here are *known* and *unknown*. While we wanted the compiler's `zsol` code to be as close to normal Solidity as possible, we needed a way for the dev to tell us whether the state would be whole or partitioned.
 
@@ -309,7 +338,7 @@ To distinguish between these two cases, the known/unknown decorators refer to wh
 
 These decorators are only required on incrementing (`a += something`) statements. Other statements (overwrites or decrements) all require nullifiers, and so can only be called by the owner. Overwrites automatically count as known, whole states whereas decrements don't tell us enough about the state. We need to look at where the state is initialised when we see a decrement.
 
-##### Limitations
+#### Limitations
 
 Both whole and partitioned states have complexities we need to consider.
 
@@ -367,7 +396,7 @@ Partitioned states don't suffer from this problem, but they do have two main lim
 
 Secondly, if there is a clear owner, we have to implement a messaging system to broadcast state changes to them. We discuss this latter point in more detail below ('Sharing private data').
 
-##### Examples
+#### Examples
 
 Hooray, examples! The below are snippets of functions, and won't necessarily work on their own (for example, we need a state to be nullifiable, otherwise it just exists in floaty nothingness).
 
@@ -425,7 +454,7 @@ fn1(info, addr) {
 ```
 A similar example with whole states - this mapping contains customer information rather than a balance, so it can't be incremented. The function overwrites the information anyway, so we know that it's whole without the need for more decorators.
 
-#### Ownership
+### Ownership
 
 Ownership of secret states is a difficult problem to solve. However, we need to solve it to work out which public key to put inside the commitment hiding the state's value.
 
@@ -439,7 +468,7 @@ Since there are use cases for anyone being able to increment some partitioned st
 
 Some of the decisions below are tentative, and there are still some questions over which approach is best!
 
-##### Partitioned states
+#### Partitioned states
 
 The traversal goes like this:
 
@@ -450,7 +479,7 @@ For each secret state, we traverse the contract and wherever we see a `msg.sende
 -   If `msg.sender` is a mapping key everywhere the state is nullified, then the PK belongs to the caller of the nullification function
 -   If there's no clear owner of the state, then the incrementer can add any PK they wish. We throw a warning to the dev that the state can have many concurrent owners.
 
-##### Whole states
+#### Whole states
 
 The traversal goes like this:
 
@@ -469,4 +498,138 @@ Another method we considered is adding a *transferable* decorator in front of nu
 
 But, through many examples and discussions, it seems like wanting a *non*-transferable state is pretty rare. Plus, if you are the owner of a state and don't want to transfer editing rights then... just don't! You can keep it and do nothing. So, as long as we get the initial ownership of a state correct, the need for a *transferable* decorator mostly disappears.
 
-#### Sharing private data
+### Sharing private data
+
+Most meaningful blockchain transactions require data to be transmitted to one or more people. 'Transfers' are a good example; a sender must transmit details of the amount they've paid to a particular recipient. Of course, the blockchain takes care of this data transmission for us, because it _stores_ such data publicly in the ledger for all to see (be it as proper 'storage' or as cheaper event logs). The recipient can just 'lookup' what they need.
+If we start to think about zApp transactions, we now don't want secret state variables or parameters to be revealed on-chain. How, then, does a transactor  transmit secret data to a counterparty (or counterparties)?
+
+We have two main options:
+1. Use an off-chain end-to-end encrypted messaging service.
+1. Encrypt the secret data and submit the encrypted message to the blockchain, for the counterparty to decrypt.
+
+Option 1 includes solutions like the now-deprecated Whisper and its descendants. The main problems with this approach are:
+- message delivery is not guaranteed (e.g. if a server crashes);
+- the transactor is not _forced_ to send the information (and so may never do so).
+
+Option 2 can be achieved by encrypting the data _within_ the transaction's snark circuit, thereby forcing the transactor to share an encrypted message containing the correct secret data. An often-claimed downside to this approach is that such messages might be decryptable long in the future, but the same is true for all encrypted messages, and they're still used everywhere.
+
+#### `share <secret> with <address / placeholder>`
+
+Zappify will generate zApp code in line with data sharing Option 2; submission of encrypted secret data to the blockchain.
+
+To this end, we find we need some new `zsol` syntax...
+
+Consider the below examples:
+
+```Solidity
+secret mapping(address => uint) balances;
+
+function transfer(secret uint value, secret address recipient) {
+  balances[msg.sender] -= value;
+  unknown balances[recipient] += value;
+}
+```
+
+To a human brain, we can fairly quickly realise that the secret `value` and its associated `salt` should be transmitted to the owner of the `recipient` address. And, indeed, the compiler _will_ be able to realise this without any new syntax, through several complex traversals:
+- The mapping is secret;
+- The mapping maps from an address;
+- Seeing that whenever ths secret mapping is nullified, its key is `msg.sender`;
+- Inferring from this that the owner of a commitment to such a mapping's value must be the mapping's key. I.e. that `comm = h(h(0, key = addr), value, ownerPK = addr, salt)`
+
+Here, the compiler would generate zApp code to enforce the sharing of the secrets `value` and `salt` with the messaging public key of the `recipient`. (SEE <INSERT LINK TO SUBHEADING> SECTION ON LINKING ETH ADDRESSES, COMMITMENT OWNERSHIP PUBLIC KEYS, AND MESSAGING PUBLIC KEYS... a difficult topic in itself).
+
+But in the below example, we see that a dev's intentions might not match the default inferences that the compiler would make:
+
+```Solidity
+secret mapping(address => uint) balances;
+address admin;
+
+function transfer(secret uint value, secret address recipient) {
+  balances[msg.sender] -= value;
+  unknown balances[recipient] += value;
+}
+```
+
+Here, the compiler would make the same inference as the first example; to share secret data with the `recipient`'s messaging public key. But suppose the developer _also_ wanted to share data with the `admin`'s messaging public key? There's no Solidity syntax which is analogous to this concept of sharing data, because _all_ data is _always_ shared with vanilla Solidity.
+
+We therefore introduce new syntax:
+
+`share <secret> with <address / placeholder>` (the 'placeholder' concept will be discussed later).
+
+So for the developer to convey their intentions (for the `value` and corresponding `salt` to be shared with the `admin`*), they would add:
+
+`share value with admin;`:
+
+```Solidity
+secret mapping(address => uint) balances;
+address admin;
+
+function transfer(secret uint value, secret address recipient) {
+  balances[msg.sender] -= value;
+  unknown balances[recipient] += value;
+  share value with admin;
+}
+```
+
+*Note: the compiler will still include code for the secret to be shared with the `recipient` address, due to the layout of this code snippet.
+
+Note, if the dev wrote something like `share balances[recipient] with admin`, an error must be thrown, because `balances[recipient]` is `unknown` to the transactor.
+
+
+#### Placeholders
+
+Note: this section is pretty complicated, and it's so niche that it'll probably be on the backlog for ages.
+
+To ensure we're not over-fitting to nightfall, consider this partial code snippet, which doesn't use a `mapping(address => ...)`:
+
+```
+// balls in buckets, indexed by bucketId
+secret mapping(uint256 => uint256) numberOfBalls;
+
+function moveBallsToThreePlaces(
+    secret uint256 bucketId1,
+    secret uint256 bucketId2,
+    secret uint256 bucketId3,
+    secret uint256 bucketId4,
+    secret uint256 amount2,
+    secret uint256 amount3,
+    secret uint256 amount4
+) {
+    numberOfBalls[bucketId1] -= ( amount2 + amount3 + amount4 );
+    unknown numberOfBalls[bucketId2] += amount2;
+    unknown numberOfBalls[bucketId3] += amount3;
+    unknown numberOfBalls[bucketId4] += amount4;
+}
+```
+
+Here, instead of transferring money between addresses, we're transferring balls between buckets. Ignore the fact that this code doesn't include a function to initialise a bucket of balls; we're being lazy.
+
+Since we don't have the neat case of a mapping from an address (`mappng(address => ...)`) the compiler won't be able to infer who it should share secret data with without some syntactic help.
+The dev should therefore add `share <secret> with <address>` syntax. But since there are no addresses whatsoever in this contract, the dev can adopt 'placeholder' syntax instead:
+
+```
+// balls in buckets, indexed by bucketId
+secret mapping(uint256 => uint256) numberOfBalls;
+
+function moveBallsToThreePlaces(
+    secret uint256 bucketId1,
+    secret uint256 bucketId2,
+    secret uint256 bucketId3,
+    secret uint256 bucketId4,
+    secret uint256 amount2,
+    secret uint256 amount3,
+    secret uint256 amount4
+) {
+    numberOfBalls[bucketId1] -= ( amount2 + amount3 + amount4 );
+    unknown numberOfBalls[bucketId2] += amount2;
+    unknown numberOfBalls[bucketId3] += amount3;
+    unknown numberOfBalls[bucketId4] += amount4;
+    share amount2 with 'a
+    share amount3 with 'b
+    share amount4 with 'b
+}
+```
+
+Here, the dev is saying "Permit the caller of this function to share `amount2` with anyone. Permit the caller of this function to share `amount3` with anyone, but force them to also share `amount4` with that same person."
+
+Pretty obscure example.
