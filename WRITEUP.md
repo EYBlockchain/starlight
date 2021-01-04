@@ -25,6 +25,7 @@ Generate a zApp from a Solidity contract.
   - [Ownership](#ownership)
     - [Partitioned states](#partitioned-states)
     - [Whole states](#whole-states)
+  - [Consulting private states](#consulting-private-states)
   - [Sharing private data](#sharing-private-data)
     - [`share <secret> with <address / placeholder>`](#share-secret-with-address--placeholder)
     - [Placeholders](#placeholders)
@@ -277,7 +278,7 @@ Each node in our AST has an id.
     "isSecret": true,
 }
 ```
-Every other node that references this node has a field `referencedDeclarition: 3`.
+Every other node that references this node has a field `referencedDeclaration: 3`.
 
 ### Whole vs Partitioned states
 
@@ -497,6 +498,58 @@ Going back to whole states, we allow that user to add any PK they want. In most 
 Another method we considered is adding a *transferable* decorator in front of nullifying statements. Perhaps the developer wants a state to be as flexible as possible, with the current owner able to change the PK in the commitment with a nullification whenever they like. Or maybe they want a state to always belong to one person. The new decorator would allow this distinction.
 
 But, through many examples and discussions, it seems like wanting a *non*-transferable state is pretty rare. Plus, if you are the owner of a state and don't want to transfer editing rights then... just don't! You can keep it and do nothing. So, as long as we get the initial ownership of a state correct, the need for a *transferable* decorator mostly disappears.
+
+### Consulting private states
+
+Previously, we mentioned an `isConsulted` indicator in the `scope` object, used during the transformation stage. When a private state is *consulted*, its secret value is accessed to either assign a different private state or check some requirement.
+
+```py
+secret uint a;
+
+function fn1(secret uint value) {
+    require(value > 10);
+    a = value;
+}
+```
+
+In the above example, we have a secret value `a` which must be greater than 10. So the user's secret input `value` must be checked - but since it's secret, we can't allow the user to submit it directly to the contract. Since for `value`, `isConsulted: true`, we **implement the require statement in the circuit, not the contract**.
+
+```py
+secret uint a;
+secret uint b;
+
+function fn1(secret uint value) {
+    a = value;
+}
+
+function fn2() {
+    b = a**2;
+}
+```
+
+Here is a more complex example. The value of the secret state `a` is consulted to assign state `b`. This means we must consider:
+-   how to 'open' the commitment representing `a`, and...
+-   how to use the value of `a` without revealing it.
+
+We can make a few initial conclusions. Firstly, `a` must be a whole state, since all of its value must be contained in one place and owned by one user or entity. In general, if a state `isConsulted`, then it must be whole.
+
+The caller of `fn2()` must also own `a`, since nobody knows the value of `a` except for its owner. In this case that means the owner of `a` also owns `b`. In fact, any state which is updated with the value of another private state must have the same owner.
+
+Once we have the value of `a`, we have to assign `a**2` to `b` without revealing it. Therefore, `b` must also be secret (which, here, it is!).
+
+The only way to access such a value is to prove preimage of the corresponding commitment. So whenever we see a consulted state, we have to add code to the circuit which proves preimage (just like when nullifying a commitment, but without adding the nullifier to the set).
+
+Equivalently, the owner must show that they **can nullify** the consulted state. However, to avoid a previous owner being able to consult `a`, they must also prove that the state hasn't yet been nullified.
+
+This leads to a tricky problem - a set non-membership proof.
+
+An 'easy' way around this problem is to have the owner of `a` submit its nullifier as a public input to the circuit, prove they know its preimage within the circuit, and have the contract check that `nullifiers[nullifier] == 0`. However, this reveals to the world what the nullifier of `a` is *before* it's submitted. So now everyone would know when `a` is nullified.
+
+For now, we are coding this solution, with a warning given that the nullifier would be leaked.
+
+In the future we'd need to consider an **accumulator** which supports a zero-knowledge non-membership proof. A couple of examples are ordered merkle trees and polynomial commitments.
+
+`TODO` more on accumulators (help me Mike!)     
 
 ### Sharing private data
 
