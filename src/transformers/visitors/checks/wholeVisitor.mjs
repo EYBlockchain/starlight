@@ -35,9 +35,21 @@ export default {
       Object.keys(secretModifiedIndicators).forEach(stateVarId => {
         const secretVar = secretModifiedIndicators[stateVarId];
         if (secretVar.mappingKey) {
+          let isWhole;
+          let isPartitioned;
+          if (secretVar.binding.isWhole) {
+            isWhole = true;
+            isPartitioned = false;
+          }
+          if (secretVar.binding.isPartitioned) {
+            isPartitioned = true;
+            isWhole = false;
+          }
           Object.keys(secretVar.mappingKey).forEach(key => {
             secretVar.mappingKey[key].binding = secretVar.binding.mappingKey[key];
             secretVar.mappingKey[key].id = secretVar.id;
+            secretVar.mappingKey[key].isWhole = isWhole;
+            secretVar.mappingKey[key].isPartitioned = isPartitioned;
             secretVar.mappingKey[key].name = `${secretVar.name}[${key}]`;
             scope.indicatorChecks(secretVar.mappingKey[key]);
           });

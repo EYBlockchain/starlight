@@ -789,10 +789,10 @@ export class Scope {
       secretVar.isPartitioned = true;
       secretVar.isPartitionedReason = [`Incremented and marked as unknown`];
     }
-    if (secretVar.isIncremented && secretVar.isWhole === undefined) {
+    if (secretVar.isIncremented && secretVar.isWhole === undefined && !secretVar.isDecremented) {
       if (!secretVar.isKnown && !secretVar.isUnknown)
         throw new Error(
-          `Secret value assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
+          `Secret value ${secretVar.name} assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
         );
       if (secretVar.isUnknown) throw new Error(`This should be unreachable code!`);
       if (secretVar.isKnown) {
@@ -831,10 +831,12 @@ export class Scope {
       topScope.isPartitioned = true;
       topScope.isPartitionedReason = secretVar.isPartitionedReason;
     } else if (topScope.isWhole === false && topScope.isPartitionedReason) {
+      if (!secretVar.isPartitionedReason) secretVar.isPartitionedReason = [];
       secretVar.isPartitionedReason.forEach(reason => topScope.isPartitionedReason.push(reason));
     } else if (!topScope.isWholeReason) {
       topScope.isWholeReason = secretVar.isWholeReason;
     } else {
+      if (!secretVar.isWholeReason) secretVar.isWholeReason = [];
       secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
     }
     console.log('Indicator:');
