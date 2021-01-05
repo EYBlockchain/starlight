@@ -27,7 +27,7 @@ export default {
     exit(path, state) {
       // why here? Because we are looking for whether the secret state is incremented per function scope
       const { node, scope } = path;
-      console.dir(path, { depth: 0 });
+      // console.dir(path, { depth: 0 });
       const secretModifiedIndicators = scope.filterIndicators(
         ind => ind.binding.isSecret && ind.isModified,
       );
