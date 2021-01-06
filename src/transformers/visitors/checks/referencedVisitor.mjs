@@ -93,7 +93,6 @@ export default {
         if (parentExpression.node.expression.nodeType === 'UnaryOperation') return;
         let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
-        console.log(parentExpression);
         const lhsName = lhsNode.name || lhsNode.baseExpression.name;
         if (
           rightAncestor &&
