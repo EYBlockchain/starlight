@@ -14,8 +14,6 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {},
     exit(path, state) {},
   },
@@ -155,6 +153,7 @@ export default {
             }
             for (const eqOperator of eqOperators) {
               if (line.newline.includes(eqOperator)) {
+                // TODO more than one operator e.g. a = b + 7 - c;
                 eqop = eqOperator.trim();
                 break;
               }
@@ -167,7 +166,7 @@ export default {
                 case 'Identifier':
                   if (line.rhs.replace(';', '') !== node.rightHandSide.name) {
                     break;
-                  } else if (node.expression.operator === eqop) {
+                  } else if (node.operator === eqop) {
                     line.nodeId = node.leftHandSide.id;
                     break;
                   }
@@ -182,7 +181,7 @@ export default {
                 case 'BinaryOperation':
                   if (!op) break;
                   if (op && node.rightHandSide.operator.includes(op)) {
-                    line.nodeId = node.expression.leftHandSide.id;
+                    line.nodeId = node.leftHandSide.id;
                     break;
                   }
                   break;
