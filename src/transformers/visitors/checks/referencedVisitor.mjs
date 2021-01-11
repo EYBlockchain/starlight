@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign, no-shadow */
+/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 // no-unused-vars <-- to reinstate eventually
 
 import logger from '../../../utils/logger.mjs';
@@ -104,7 +104,7 @@ export default {
             lhsNode.nodeType === 'Identifier'
               ? scope.getReferencedBinding(lhsNode)
               : scope.getReferencedBinding(lhsNode.baseExpression);
-          if (!node.stateVariable && !scope.getReferencedBinding(node).stateVariable) {
+          if (!node.stateVariable && !referencedBinding.stateVariable) {
             // we have a secret parameter on the RHS
             if (!lhs.isSecret)
               throw new Error(
@@ -135,6 +135,24 @@ export default {
             referencedIndicator.isWholeReason = [reason];
           }
         }
+      } else if (parentExpression) {
+        // In an expression, not secret
+        // Find non-secret params used for assigning secret states
+        const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
+        const indexExpression = path.getAncestorContainedWithin('indexExpression');
+        const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
+        if (!functionDefScope) return;
+        if (indexExpression) return; // TODO do we allow non secret params to be used as mapping keys?
+        const lhsNode = parentExpression.node.expression.leftHandSide;
+        const lhsName = lhsNode.name || lhsNode.baseExpression.name;
+        const lhs =
+          lhsNode.nodeType === 'Identifier'
+            ? scope.getReferencedBinding(lhsNode)
+            : scope.getReferencedBinding(lhsNode.baseExpression);
+        if (lhs.isSecret && rightAncestor && !referencedBinding.stateVariable)
+          throw new Error(
+            `Non-secret parameter ${node.name} cannot be used to assign secret variable ${lhsName}`,
+          );
       }
     },
 
