@@ -31,7 +31,7 @@ function tidy(_line) {
  *                     running 'solc'.
  */
 function removeDecorators(options) {
-  logger.info(`Parsing dectorated file ${options.inputFilePath}... `);
+  logger.info(`Parsing decorated file ${options.inputFilePath}... `);
   const decLines = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
 
   const toRedecorate = [];

@@ -96,7 +96,7 @@ export function traverse(path, visitor, state = {}) {
     // logger.debug('*************************************************');
   }
 
-  return indicators;
+  // return indicators;
 }
 
 /**

@@ -194,11 +194,21 @@ export class Scope {
         if (isMapping) {
           const keyNode = parent.indexExpression.expression || parent.indexExpression;
           let keyName = keyNode.name;
-          if (this.getReferencedBinding(keyNode).isModified)
+          if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
             keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
           const bindingExists = !!referencedBinding.mappingKey[keyName];
+          const isParam =
+            keyNode.referencedDeclaration < 0
+              ? `msg`
+              : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
           if (!bindingExists)
             referencedBinding.mappingKey[keyName] = {
+              referencedKey: keyNode.referenceDeclaration || keyNode.id,
+              referencedKeyNodeType:
+                isParam === `msg`
+                  ? keyNode.typeDescriptions.typeIdentifier
+                  : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
+              referencedKeyisParam: isParam,
               isReferenced: false,
               referenceCount: 0,
               referencingPaths: [], // paths which reference this binding
@@ -267,10 +277,21 @@ export class Scope {
               referencedIndicator.mappingKey = {};
             }
             let keyName = keyNode.name;
-            if (this.getReferencedBinding(keyNode).isModified)
+
+            if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
               keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
+            const isParam =
+              keyNode.referencedDeclaration < 0
+                ? `msg`
+                : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
             if (!referencedIndicator.mappingKey[keyName]) {
               referencedIndicator.mappingKey[keyName] = {
+                referencedKey: keyNode.referenceDeclaration || keyNode.id,
+                referencedKeyNodeType:
+                  isParam === `msg`
+                    ? keyNode.typeDescriptions.typeIdentifier
+                    : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
+                referencedKeyisParam: isParam,
                 isReferenced: false,
                 referenceCount: 0,
                 referencingPaths: [], // paths which reference this binding
@@ -615,7 +636,7 @@ export class Scope {
   getMappingKeyIndicator(indexAccessNode) {
     const keyNode = indexAccessNode.indexExpression.expression || indexAccessNode.indexExpression;
     let keyName = keyNode.name;
-    if (this.getReferencedBinding(keyNode).isModified) {
+    if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified) {
       const keyBinding = this.getReferencedBinding(keyNode);
       let i = 0;
       for (const modPath of keyBinding.modifyingPaths) {
@@ -839,17 +860,52 @@ export class Scope {
       if (!secretVar.isWholeReason) secretVar.isWholeReason = [];
       secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
     }
-    console.log('Indicator:');
+    console.log(`Indicator: (at ${secretVar.name})`);
+    console.log('----------');
     console.dir(this, { depth: 0 });
+    console.log('----------');
     console.dir(this.indicators);
-    // console.log(`Indicator.mappingKey[${secretVar.name}]`);
-    // console.dir(secretVar, { depth: 1 });
+    console.log('----------');
+    if (this.indicators[secretVar.id].mappingKey) {
+      console.log(`Indicator.mappingKey[${secretVar.name}]`);
+      console.dir(secretVar, { depth: 1 });
+      console.log('----------');
+    }
     // console.log(`Contract level binding for state:`);
     // console.dir(topScope, { depth: 0 });
-    if (topScope.isWholeReason) {
-      console.log(topScope.isWholeReason);
-    } else {
-      console.log(topScope.isPartitionedReason);
+    // if (topScope.isWholeReason) {
+    //   console.log(topScope.isWholeReason);
+    // } else {
+    //   console.log(topScope.isPartitionedReason);
+    // }
+  }
+
+  isNullifiable() {
+    for (const stateVarId of Object.keys(this.indicators)) {
+      // only modified states live in the indicators object, so we don't have to worry about filtering out secret params here
+      // TODO if the key is msg.sender this 'counts' as a parameter, can we do this?
+      const stateVar = this.indicators[stateVarId];
+      if (!stateVar.binding.isSecret) continue;
+      if (this.indicators[stateVarId].mappingKey) {
+        for (const key of Object.keys(stateVar.mappingKey)) {
+          if (
+            stateVar.mappingKey[key].nullifierRequired === true &&
+            stateVar.mappingKey[key].referencedKeyisParam
+          )
+            break; // this means any mapping[key] is nullifiable - good!
+          if (
+            stateVar.mappingKey[key].nullifierRequired !== true &&
+            !stateVar.mappingKey[key].referencedKeyisParam
+          )
+            throw new Error(
+              `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable.`,
+            );
+        }
+      } else if (stateVar.nullifierRequired !== true) {
+        throw new Error(
+          `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable.`,
+        );
+      }
     }
   }
 

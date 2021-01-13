@@ -2,16 +2,24 @@
 
 pragma solidity ^0.7.0;
 
-contract Assign {
+contract MyContract {
 
-  secret uint256 private a;
+  secret mapping(address => uint256) private a;
+  secret uint256 private b;
+  secret address admin;
 
-  function assign(secret uint256 param1, uint256 param2) public {
-    a = param1*(param2 + a);
-    // a[param1] = param2;
-    // param1++;
-    // a[param1] = param2*2;
-    // param1 = param1 + 7;
-    // known a[param1] = a[param1]*2;
+  function assign(secret address param1, secret uint256 param2) public {
+    unknown a[param1] = a[param1] + param2;
+  }
+
+  function assign2(secret uint256 param3) public {
+    a[msg.sender] = a[msg.sender] - param3;
+    known b = b + param3;
+  }
+
+  function assign3(secret address param4, secret uint256 param5) public {
+    require(msg.sender === admin);
+    a[param4] = a[param4] - param3;
+    known b = b + param5;
   }
 }

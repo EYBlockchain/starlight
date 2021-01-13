@@ -4,6 +4,7 @@ import redecorate from './redecorate.mjs';
 import compile from './solc.mjs';
 
 import checks from './transformers/checks.mjs';
+import ownership from './transformers/ownership.mjs';
 import toCircuit from './transformers/toCircuit.mjs';
 import toContract from './transformers/toContract.mjs';
 import toOrchestration from './transformers/toOrchestration.mjs';
@@ -17,9 +18,13 @@ const zappify = options => {
 
   const zsolAST = redecorate(solAST, toRedecorate, options);
 
-  const indicators = checks(zsolAST, options);
+  const path = checks(zsolAST, options);
 
-  if (options.isTest) return indicators;
+  ownership(path, options);
+
+  if (options.isTest) return path.scope.indicators;
+
+  return path;
 
   // toOrchestration(zsolAST, options);
   //
