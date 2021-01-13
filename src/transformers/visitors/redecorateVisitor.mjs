@@ -181,7 +181,22 @@ export default {
                 case 'BinaryOperation':
                   if (!op) break;
                   if (op && node.rightHandSide.operator.includes(op)) {
-                    line.nodeId = node.leftHandSide.id;
+                    if (
+                      node.rightHandSide.rightExpression.name &&
+                      line.rhs.includes(node.rightHandSide.rightExpression.name) &&
+                      line.rhs.includes(node.rightHandSide.leftExpression.name)
+                    ) {
+                      line.nodeId = node.leftHandSide.id;
+                      break;
+                    }
+                    if (
+                      node.rightHandSide.rightExpression.name &&
+                      line.rhs.includes(node.rightHandSide.rightExpression.value) &&
+                      line.rhs.includes(node.rightHandSide.leftExpression.name)
+                    ) {
+                      line.nodeId = node.leftHandSide.id;
+                      break;
+                    }
                     break;
                   }
                   break;
