@@ -95,6 +95,11 @@ export function getNodeSkeleton(nodeType) {
       return {
         components: [],
       };
+    case 'FunctionCall':
+      return {
+        expression: {},
+        arguments: [],
+      };
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -147,6 +152,8 @@ export function getVisitableKeys(nodeType) {
     case 'Literal':
     case 'UserDefinedTypeName':
       return [];
+    case 'FunctionCall':
+      return ['expression, arguments'];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
     // error.

@@ -352,7 +352,14 @@ export class Scope {
         }
         break;
       }
-
+      case 'FunctionCall':
+        if (node.expression.name !== 'require') {
+          throw new TypeError(
+            `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
+          );
+        } else {
+          break;
+        }
       case 'ExpressionStatement':
       case 'VariableDeclarationStatement':
       case 'PragmaDirective':

@@ -70,6 +70,7 @@ export default {
       // Why here? Because we need the indicatorObj of the individual elts before we decide
       const { node, scope } = path;
       const expressionNode = node.expression;
+      if (expressionNode.nodeType === 'FunctionCall') return;
       const lhsNode = expressionNode.leftHandSide || expressionNode.subExpression;
       const { isIncrementedBool, isDecrementedBool } =
         lhsNode.typeDescriptions.typeString !== 'address'

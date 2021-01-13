@@ -71,6 +71,7 @@ export default {
     exit(path, state) {
       const { node } = path;
       // Here we look at each statement and decide whether it's a nullification
+      if (node.expression.nodeType === 'FunctionCall') return;
       switch (node.expression.isIncremented) {
         case true:
           if (node.expression.isDecremented) {
