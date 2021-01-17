@@ -37,14 +37,15 @@ Generate a zApp from a Solidity contract.
     - [Initialisation of whole states](#initialisation-of-whole-states)
     - [Examples](#examples)
   - [Ownership](#ownership)
-    - [Partitioned states](#partitioned-states-1)
-    - [Whole states](#whole-states-1)
+    - [whole vs partitioned states](#whole-vs-partitioned-states)
   - [Consulting private states](#consulting-private-states)
-  - [Sharing private data](#sharing-private-data)
     - [Summary](#summary-4)
+  - [Sharing private data](#sharing-private-data)
+    - [Summary](#summary-5)
     - [Details](#details)
     - [Placeholders](#placeholders)
   - [Key management](#key-management)
+- [Overflow / underflow checks](#overflow--underflow-checks)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
