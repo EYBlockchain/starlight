@@ -748,20 +748,22 @@ The Solidity above suggests _anyone_ should be able to come along and edit `a`, 
 
 We arrive at quite a difficult dilemma: either we can support this function as the dev clearly intended (a chaotic "free for all" in this example); or we can respect our intuition for how 'whole' secrets should be edited; only by the owner.
 
-It turns out that the first option - of enabling a contract with 'special' whole states which may be nullified by anyone - isn't _possible_ if we wish to retain zero-knowledge. Why?
+It turns out that the first option - of enabling a contract with 'special' whole states which may be nullified by anyone - isn't _possible_ if we wish to retain complete zero-knowledge. Why?
 
-In order for the compiler to support "free for all" edits - like the above example, where anyone can nullify a whole state (if a clear owner of the state can't be inferred from other functions) - by changing the _structure_ of such states' nullifiers to something wich can be derived by _anyone_. With such a nullifier structure, _anyone_ would be able to come along and _replace_ someone else's secret `a` with a their own new secret for `a` (in line with the intentions of the developer's code). But in order for such a theoretical nullifier to nullify the original owner's commitment (and _only_ that commitment), the nullifier will need to be _linked_ to the original commitment in some way. But to that would mean the person nullifying would need to know unique, identifying details about the preimage of the commitment, and this would violate zero-knowledge. Furthermore, if _anyone_ is able to come along and nullify a particular commitment, then the unique nullifier for that commitment _must_ be derivable by anyone. And therefore when the nullifier gets submitted, everyone will know what it represents and what is being nullified! These are pretty convincing arguments to suggest that:
-- **The above example must not compile, because its intentions contradict zero-knowledge protocols.**
+In order for the compiler to support "free for all" edits - like the above example, where anyone can nullify a whole state (if a clear owner of the state can't be inferred from other functions) - by changing the _structure_ of such states' nullifiers to something which can be derived by _anyone_. With such a nullifier structure, _anyone_ would be able to come along and _replace_ someone else's secret `a` with a their own new secret for `a` (in line with the intentions of the developer's code). But in order for such a theoretical nullifier to nullify the original owner's commitment (and _only_ that commitment), the nullifier will need to be _linked_ to the original commitment in some way.
+
+But to that would mean the person nullifying would need to know unique, identifying details about the preimage of the commitment, and this would violate zero-knowledge. Furthermore, if _anyone_ is able to come along and nullify a particular commitment, then the unique nullifier for that commitment _must_ be derivable by anyone. And therefore when the nullifier gets submitted, everyone will know what it represents and what is being nullified! These are pretty convincing arguments to suggest that the above example must not compile, because its intentions contradict zero-knowledge protocols.
 
 It's an interesting discovery. We've found that not all developers' intentions are translatable into a zk protocol.
 
 It leads us to a transpilation rule:
 
 - **The transpiler must enforce that whole states must have a clearly inferrable owner, and can only be nullified by that owner.**
-- **O.e. In order to edit a 'whole' secret state, you _must_ be able to produce a nullifier for it, as its _owner_.**
+- **I.e. In order to edit a 'whole' secret state, you _must_ be able to produce a nullifier for it, as its _owner_.**
 
+Note that the above _does not_ apply in general to **initialising states**. Once we have an owned state with a commitment representing its value, only the owner can edit it by proving they own the public key inside it. So that indeed follows the rule above - but if we have an uninitialised state with no preset owner, we have to bend this rule a bit to initialise it.
 
-Notice that we didn't mention 'partitioned' states in that decision. Incrementation of a partitioned state (by design) does not require a nullifier. **For _decrementation_ of a partitioned state, however, we reach a similar conclusion to the above - that in order to decrement a partitioned state, you _must_ be able to produce a nullifier for it, as its owner.**
+Also notice that we didn't mention 'partitioned' states in that decision. Incrementation of a partitioned state (by design) does not require a nullifier. **For _decrementation_ of a partitioned state, however, we reach a similar conclusion to the above - that in order to decrement a partitioned state, you _must_ be able to produce a nullifier for it, as its owner.**
 
 ---
 
@@ -812,7 +814,7 @@ But since there is no 'prior' commitment to nullify when initialising a whole st
 
 **"Initialisation of a whole state requires a dummy nullifier. Otherwise, any two people could submit two rival 'first' commitments, creating two versions of the secret state. We don't have this problem with partitioned states, because there, it's okay for many different commitments to represent one state."**
 
-Our nice, uniform commitment structure, `h(stateVarId, value, ownerPublicKey, salt)`, has a correspinding nullifier structure `h(stateVarId, ownerSecretKey, salt)`.
+Our nice, uniform commitment structure, `h(stateVarId, value, ownerPublicKey, salt)`, has a corresponding nullifier structure `h(stateVarId, ownerSecretKey, salt)`.
 
 But if our dummy nullifiers were to use this structure, we would again have the "rival first commitments" problem - any two users could initialise rival commitments for `a` with this structure, and both would be able to derive different, but equally-valid nullifiers which correctly correspond to their commitments. The shield contract would allow both submissions, because both would correctly prove ownership of their public key, preimage of their new commitment, and that their nullifier doesn't already exist.
 
