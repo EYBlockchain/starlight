@@ -69,16 +69,34 @@ export default {
     enter(path, state) {},
 
     exit(path, state) {
-      const { node } = path;
+      const { node, scope } = path;
       // Here we look at each statement and decide whether it's a nullification
       if (node.expression.nodeType === 'FunctionCall') return;
+      let referencedBinding;
+      switch (node.expression.leftHandSide.nodeType) {
+        case 'Identifier':
+          referencedBinding = scope.getReferencedBinding(node.expression.leftHandSide);
+          if (!referencedBinding.nullifyingPaths) referencedBinding.nullifyingPaths = [];
+          break;
+        case 'IndexAccess':
+          referencedBinding = scope.getReferencedBinding(
+            node.expression.leftHandSide.baseExpression,
+          ).mappingKey[scope.getMappingKeyIndicator(node.expression.leftHandSide)];
+          if (!referencedBinding.nullifyingPaths) referencedBinding.nullifyingPaths = [];
+          break;
+        default:
+          referencedBinding = {};
+          break;
+      }
       switch (node.expression.isIncremented) {
         case true:
           if (node.expression.isDecremented) {
             node.expression.isNullification = true;
+            referencedBinding.nullifyingPaths.push(path);
             break;
           } else if (node.expression.leftHandSide.isKnown || node.expression.leftHandSide.isWhole) {
             node.expression.isNullification = true;
+            referencedBinding.nullifyingPaths.push(path);
             break;
           } else {
             node.expression.isNullification = false;
@@ -86,13 +104,12 @@ export default {
           }
         case false:
           node.expression.isNullification = true;
+          referencedBinding.nullifyingPaths.push(path);
           break;
         default:
-          // everything should be marked
+          // everything should be marked as true/false
           throw new Error(`Expression id ${node.expression.id} not marked as incremented.`);
       }
-      console.log('ExpressionStatement');
-      console.log(node);
     },
   },
 

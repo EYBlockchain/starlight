@@ -209,6 +209,7 @@ export class Scope {
                   ? keyNode.typeDescriptions.typeIdentifier
                   : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
               referencedKeyisParam: isParam,
+              isSecret: referencedBinding.isSecret,
               isReferenced: false,
               referenceCount: 0,
               referencingPaths: [], // paths which reference this binding
@@ -357,9 +358,57 @@ export class Scope {
           throw new TypeError(
             `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
           );
-        } else {
+        } else if (
+          node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
+            't_magic_message' ||
+          node.arguments[0].rightExpression.expression.typeDescriptions.typeIdentifier ===
+            't_magic_message'
+        ) {
+          // TODO  check if admin = state variable
+          const functionDefScope = this.getAncestorOfScopeType('FunctionDefinition');
+          const { operator } = node.arguments[0];
+          const ownerNode =
+            node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
+            't_magic_message'
+              ? node.arguments[0].rightExpression
+              : node.arguments[0].leftExpression;
+          switch (operator) {
+            case '==':
+              functionDefScope.callerRestriction = 'match'; // TODO - names? match = user must match some address
+              functionDefScope.callerRestrictionNode = ownerNode;
+              if (!this.getReferencedBinding(ownerNode).stateVariable)
+                throw new Error(`Cannot require msg.sender to be an input param!`);
+              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
+              break;
+            case '!=':
+              functionDefScope.callerRestriction = 'notMatch';
+              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
+              // functionDefScope.callerRestrictionNode = node.id;
+              break;
+            default:
+              throw new Error(`This kind of restriction on msg.sender isn't implemented yet!`);
+          }
           break;
+        } else {
+          for (const arg of node.arguments) {
+            switch (arg.nodeType) {
+              case 'BinaryOperation':
+                [arg.leftExpression, arg.rightExpression].forEach(exp => {
+                  if (exp.nodeType === 'Identifier') {
+                    node.requireStatementPrivate = !!this.getReferencedBinding(exp).isSecret;
+                  } else if (node.requireStatementPrivate !== true) {
+                    node.requireStatementPrivate = false;
+                  }
+                });
+                break;
+              default:
+                throw new Error(
+                  `This kind of expression (${arg.nodeType}) in a require statement isn't implemented yet!`,
+                );
+            }
+          }
         }
+        break;
       case 'ExpressionStatement':
       case 'VariableDeclarationStatement':
       case 'PragmaDirective':
@@ -643,6 +692,7 @@ export class Scope {
   getMappingKeyIndicator(indexAccessNode) {
     const keyNode = indexAccessNode.indexExpression.expression || indexAccessNode.indexExpression;
     let keyName = keyNode.name;
+    // TODO does the below work when we are traversing again and already have modified paths?
     if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified) {
       const keyBinding = this.getReferencedBinding(keyNode);
       let i = 0;

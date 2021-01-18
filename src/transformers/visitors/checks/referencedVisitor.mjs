@@ -94,12 +94,19 @@ export default {
         let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
         const lhsName = lhsNode.name || lhsNode.baseExpression.name;
+        const nodeName = path.getAncestorContainedWithin('baseExpression')
+          ? path.getAncestorContainedWithin('baseExpression').node.name
+          : node.name;
         if (
           rightAncestor &&
           (!parentExpression.node.expression.isIncremented ||
-            (parentExpression.node.expression.isIncremented && lhsName !== node.name))
+            (parentExpression.node.expression.isIncremented &&
+              lhsName !== nodeName &&
+              nodeName !== 'msg'))
         ) {
           console.log('Found a reference');
+          console.log(lhsName, nodeName);
+          console.log(path.getAncestorContainedWithin('baseExpression'));
           const lhs =
             lhsNode.nodeType === 'Identifier'
               ? scope.getReferencedBinding(lhsNode)

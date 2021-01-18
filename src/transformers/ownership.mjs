@@ -6,6 +6,7 @@ import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
 import explode from './visitors/explode.mjs';
 import nullifiedVisitor from './visitors/ownership/nullifiedVisitor.mjs';
+import ownershipVisitor from './visitors/ownership/ownershipVisitor.mjs';
 
 /**
  * Inspired by the Transformer
@@ -22,6 +23,7 @@ function transformation1(ast) {
   // The newAST will be mutated through this traversal process.
   ast.traverse(explode(nullifiedVisitor), state);
   logger.info('All states nullifiable and nullifications marked');
+  ast.traverse(explode(ownershipVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
