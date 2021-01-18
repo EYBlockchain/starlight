@@ -671,7 +671,7 @@ In summary, a partitioned state will have many commitments of the form `h(stateV
 
 In the above example, only the `admin` can remove money from the `pot`, so theirs is the PK we add to the commitment (more on this in the [ownership section](#ownership)). The `admin` removes money by providing a nullifier/nullifiers in `withdraw`.
 
-*Notice that the type of 'edit' in the above example is an 'incrementation'. It turns out incrementations (`a = a + something`, `a += something`, `a++`, `++a`) are the _only_ operations that a third party can actually perform on a secret state, given that they don't _know_ the state's entire value. And such incrementations are only possible if the state is 'partitioned' (not 'whole').
+\*Notice that the type of 'edit' in the above example is an 'incrementation'. It turns out incrementations (`a = a + something`, `a += something`, `a++`, `++a`) are the _only_ operations that a third party can actually perform on a secret state, given that they don't _know_ the state's entire value. And such incrementations are only possible if the state is 'partitioned' (not 'whole').
 
 You could argue that a decrementation `a -= b` could be applied by someone not privy to to `a`, by creating a _negative_ 'part' for `a` equal to `-b`; but negative values lead to lots of complications.
 
@@ -704,13 +704,12 @@ What does the transpiler _do_ with these decorators?
   - The state must be partitioned.
   - The caller of any function which includes an `unknown` decorator needn't provide knowledge of the preimage of any 'part' of the state (because they don't 'know' it).
 - `known`
-  - The state may or may not be whole/partitioned.
-    - If the state is decorated as `unknown` elsewhere, then it's partitioned; otherwise, it's simplest to treat it as whole.
-  - The caller of any function which includes a `known` decorator must provide proof of knowledge of the preimage of the commitment (if whole) or proof of knowledge of the preimages of _some_ 'part' commitments (if partitioned).
+  - The state must be whole.
+  - The caller of any function which includes a `known` decorator must provide proof of knowledge of the preimage of the commitment.
 
 These `known`/`unknown` decorators are only required before 'incrementing statements' (`a = a + b`, `a += b`, `a++`, `++a`), because an 'incrementation' is the only type of operation which can be performed by someone who doesn't _know_ or _own_ the _entire_ state. (See earlier explanations in the 'whole' and 'partitioned' sections).
 
-*You might argue that the _owner_ of a secret state `a` might not be the _only_ person who _knows_ the secret `a`. For example, in a private transaction protocol, a 'sender' will create a commitment for a 'recipient'. So two parties would actually 'know' the secret (the contents of the preimage), whilst only one party (the recipient) would 'own' the secret (i.e. be able to nullify it).
+\*You might argue that the _owner_ of a secret state `a` might not be the _only_ person who _knows_ the secret `a`. For example, in a private transaction protocol, a 'sender' will create a commitment for a 'recipient'. So two parties would actually 'know' the secret (the contents of the preimage), whilst only one party (the recipient) would 'own' the secret (i.e. be able to nullify it).
 
 You might then argue that the word `known` is therefore misleading, if the eventual protocol which is created enforces the caller to provide proof of _ownership_, which is a stronger requirement than proof of _knowledge_. However, if the protocol were to enforce the weaker requirement that the caller need only provide proof of _knowledge_ of the secret, the caller would also need to provide proof of the 'currency' of the secret; that it hasn't already been nullified. And to provide proof that something hasn't been nullified, requires knowledge of the nullifier in order to show non-inclusion in the nullifier set. And so we find that one cannot provide a weaker proof of _knowledge_ of a secret, without actually being the _owner_ of the secret. And so to decorate a state change as `known` has unambiguous consequences.
 
@@ -848,7 +847,7 @@ Recall that this entire section deals with the case of a 'whole' state for which
 The "Zexe approach" only really works for mappings, where the contract developer doesn't care about the mapping key (i.e. the key has no real world meaning).
 E.g. if a mapping's keys represented Ethereum addresses or National Insurance numbers or telephone numbers or anything meaningful _outside_ the scope of the contract, then this approach is **not** appropriate. But if a mapping's keys can simply be random, uid's which exist solely within the scope of the contract (e.g. ERC721 tokenId's), then this approach **is** appropriate (and applicable).
 
-One of the aims of Zexe is to make all function executions look as indistinguishable as possible, and so their 'example protocols' arrive at similar conclusions to ours above; that initialisation of a [whole*] state requires a dummy nullifier. (*Not that they discuss the idea of 'whole' states).
+One of the aims of Zexe is to make all function executions look as indistinguishable as possible, and so their 'example protocols' arrive at similar conclusions to ours above; that initialisation of a [whole*] state requires a dummy nullifier. (\*Not that they discuss the idea of 'whole' states).
 
 If we apply one of their examples to our nomenclature, if we're happy for a mapping key to be random, and not to mirror any 'real world' value, then we can initialise a state in the following way:
 
@@ -888,8 +887,6 @@ If a clear owner (for a whole state) _can_ be inferred from the original Solidit
 Partitioned states don't suffer from this problem, but they do have two main limitations. Firstly, unless the dev has been explicit, we can't avoid ending up with multiple owners of one state. Without any restriction on who can call a function which increments some unknown value, the caller can add any public key they want to the part they create.
 
 TODO ^^^ expand on this final point (if we haven't already) in a section of its own.
-
-TODO: also talk about how a Nightfall-like contract is a nice edge case which means the public key and mapping key coincide.
 
 
 #### Examples
@@ -1042,7 +1039,6 @@ Some of the decisions below are tentative, and there are still some questions ov
 A traversal to determine ownership goes like this:
 
 For each secret state, we traverse the contract for nullifications and associated `msg.sender` restrictions:
--   ~~If there is the same user restriction on each nullification of the state (e.g. `require(msg.sender == admin)`) then this user is the owner.~~
 
 1. If, throughout the contract, for a particular secret state `a`, for all functions where `a` is nullified, we find that `msg.sender` is restricted to be precisely _one_ `address` (e.g. `require(msg.sender == someAddress);`) - then the owner of this address must be the owner of the commitment for `a`.
     - If `someAddress` is a public state, retain the `require` statements in the shield contract. Allow the owner of `someAddress` to add any `zkpPK` they want to the commitment for `a`. (If they lock themselves out from editing by adding a different PK, then "that's their own fault").
@@ -1172,7 +1168,7 @@ _We use the term 'consult' because the word 'refer' already has meaning in a con
   - used in a 'require' statement.
 - Assigning to a secret state is _not_ considered a 'consultation', but an assignment.
 - Only 'whole' states can be consulted.*
-  *(A partitioned state `a` could probably be consulted, but only if asserting `a > b` or `a >= b`)
+  \*(A partitioned state `a` could probably be consulted, but only if asserting `a > b` or `a >= b`)
 - If a state is consulted within a function, only the _owner_ of that state can successfully call the function... Why? Well...
   - To 'consult' a state is to know its current value.
   - A state's value can only be proven to be 'current' if:
@@ -1206,7 +1202,7 @@ Clearly, `a` must be a whole state, and the caller of `fn1()` must own `a`.
 
 Secondly, the caller of `fn1()` must own `b`, since nobody knows the value of `b` except for its owner. In this case that means the owner of `b` also owns `a`. In fact, any state which is updated by consulting the value of another private state must have the same owner.
 
-Secondly, `b` _must_ be a whole state; a partitioned state cannot* be 'consulted', because it's impossible* for the owner to convince us they've gethered all 'parts' of the state (see an informal proof of this [above](#whole-states)).
+Finally, `b` _must_ be a whole state; a partitioned state cannot* be 'consulted', because it's impossible\* for the owner to convince us they've gathered all 'parts' of the state (see an informal proof of this [above](#whole-states)).
 \*Unless demonstrating that the partitioned state is _greater than_ some value; then sufficiently many 'parts' can be collected together and proven to exist.
 
 Once we have the value of `b`, we have to assign `b ** 2` to `a` without revealing it. Therefore, `a` must also be secret (which, here, it is!).
@@ -1319,7 +1315,7 @@ We therefore introduce new syntax:
 
 `share <secret> with <address / placeholder>` (the 'placeholder' concept will be discussed later).
 
-So for the developer to convey their intentions (for the `value` and corresponding `salt` to be shared with the `admin`*), they would add:
+So for the developer to convey their intentions (for the `value` and corresponding `salt` to be shared with the `admin`\*), they would add:
 
 `share value with admin;`:
 
@@ -1334,7 +1330,7 @@ function transfer(secret uint value, secret address recipient) {
 }
 ```
 
-*Note: the compiler will still include code for the secret to be shared with the `recipient` address, due to the layout of this code snippet.
+\*Note: the compiler will still include code for the secret to be shared with the `recipient` address, due to the layout of this code snippet.
 
 Note, if the dev wrote something like `share balances[recipient] with admin`, an error must be thrown, because `balances[recipient]` is `unknown` to the transactor.
 
