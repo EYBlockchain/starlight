@@ -4,7 +4,7 @@ The intention is for other 'derived' contracts to import this contract, and for 
 @Author iAmMichaelConnor
 */
 
-pragma solidity ^0.6.10;
+pragma solidity ^0.8.0;
 
 
 contract MerkleTree {

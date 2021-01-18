@@ -6,7 +6,7 @@ The intention is for other 'derived' contracts to import this contract, and for 
 @Author iAmMichaelConnor
 */
 
-pragma solidity ^0.7.0;
+pragma solidity ^0.8.0;
 
 import "./MiMC.sol"; // import contract with MiMC function
 // import "../access/Ownable.sol";

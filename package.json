@@ -46,7 +46,7 @@
     "general-number": "^1.0.1",
     "listr": "^0.14.3",
     "lodash.clonedeep": "^4.5.0",
-    "solc": "0.7.1",
+    "solc": "0.8.0",
     "truffle": "^5.1.49",
     "web3": "^1.2.11",
     "winston": "^3.3.3",

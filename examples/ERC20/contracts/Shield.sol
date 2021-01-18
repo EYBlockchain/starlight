@@ -3,7 +3,7 @@ Contract to enable the management of private fungible token (ERC-20) transaction
 @Author Westlad, Chaitanya-Konda, iAmMichaelConnor
 */
 
-pragma solidity ^0.5.8;
+pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 import "./MerkleTree.sol";
@@ -34,7 +34,7 @@ contract FTokenShield is Ownable, MerkleTree {
   bytes32 public latestRoot; // holds the index for the latest root so that the prover can provide it later and this contract can look up the relevant root
 
   // FUNCTIONS:
-  constructor(address _verifier) public {
+  constructor(address _verifier) {
       _owner = msg.sender;
       verifier = Verifier_Interface(_verifier);
   }
