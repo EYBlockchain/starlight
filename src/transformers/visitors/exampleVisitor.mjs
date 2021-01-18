@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 
-import { getNodeLocation } from '../../types/solidity-types.mjs';
+const getNodeLocation = () => {}; // dummy - the original getNodeLocation has been removed.
 
 export default {
   PragmaDirective: {
@@ -8,8 +8,8 @@ export default {
       const newNode = {
         nodeType: node.nodeType,
       };
-      // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
-      parent._context.push(newNode);
+      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer.push(newNode);
     },
 
     exit(node, parent) {},
@@ -21,8 +21,8 @@ export default {
         nodeType: node.nodeType,
         nodes: [],
       };
-      node._context = newNode.nodes;
-      parent._context.push(newNode);
+      node._newASTPointer = newNode.nodes;
+      parent._newASTPointer.push(newNode);
     },
 
     exit(node, parent) {},
@@ -37,18 +37,18 @@ export default {
         body: {},
       };
 
-      // node._context = {};
-      // node._context.parameters = newNode.parameters;
-      // node._context.returnParameters = newNode.returnParameters;
-      // node._context.body = newNode.body;
+      // node._newASTPointer = {};
+      // node._newASTPointer.parameters = newNode.parameters;
+      // node._newASTPointer.returnParameters = newNode.returnParameters;
+      // node._newASTPointer.body = newNode.body;
 
-      // node._context = {};
-      // node._context.parameters = property(newNode, 'parameters');
-      // node._context.returnParameters = property(newNode, 'returnParameters');
-      // node._context.body = property(newNode, 'body');
+      // node._newASTPointer = {};
+      // node._newASTPointer.parameters = property(newNode, 'parameters');
+      // node._newASTPointer.returnParameters = property(newNode, 'returnParameters');
+      // node._newASTPointer.body = property(newNode, 'body');
 
-      node._context = newNode;
-      parent._context.push(newNode);
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
 
     exit(node, parent) {},
@@ -60,9 +60,9 @@ export default {
         nodeType: node.nodeType,
         parameters: [],
       };
-      node._context = newNode.parameters;
+      node._newASTPointer = newNode.parameters;
       const { containerName } = getNodeLocation(node, parent);
-      parent._context[containerName] = newNode;
+      parent._newASTPointer[containerName] = newNode;
     },
 
     exit(node, parent) {},
@@ -74,8 +74,8 @@ export default {
         nodeType: node.nodeType,
         statements: [],
       };
-      node._context = newNode.statements;
-      parent._context.body = newNode;
+      node._newASTPointer = newNode.statements;
+      parent._newASTPointer.body = newNode;
     },
 
     exit(node, parent) {},
@@ -88,8 +88,8 @@ export default {
         declarations: [],
         initialValue: {},
       };
-      node._context = newNode;
-      parent._context.push(newNode);
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
 
     exit(node, parent) {},
@@ -102,9 +102,9 @@ export default {
         leftExpression: {},
         rightExpression: {},
       };
-      node._context = newNode;
+      node._newASTPointer = newNode;
       const { containerName } = getNodeLocation(node, parent);
-      parent._context[containerName] = newNode;
+      parent._newASTPointer[containerName] = newNode;
     },
 
     exit(node, parent) {},
@@ -117,8 +117,8 @@ export default {
         leftHandSide: {},
         rightHandSide: {},
       };
-      node._context = newNode;
-      parent._context.expression = newNode;
+      node._newASTPointer = newNode;
+      parent._newASTPointer.expression = newNode;
     },
 
     exit(node, parent) {},
@@ -130,8 +130,8 @@ export default {
         nodeType: node.nodeType,
         expression: {},
       };
-      node._context = newNode;
-      parent._context.push(newNode);
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
 
     exit(node, parent) {},
@@ -143,12 +143,12 @@ export default {
         nodeType: node.nodeType,
         typeName: {},
       };
-      node._context = newNode;
-      if (Array.isArray(parent._context)) {
-        parent._context.push(newNode);
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
       } else {
         const { containerName } = getNodeLocation(node, parent);
-        parent._context[containerName].push(newNode);
+        parent._newASTPointer[containerName].push(newNode);
       }
     },
 
@@ -161,9 +161,9 @@ export default {
         nodeType: node.nodeType,
       };
 
-      // node._context = // no context needed, because this is a leaf, so we won't be recursing any further.
+      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
       const { containerName } = getNodeLocation(node, parent);
-      parent._context[containerName] = newNode;
+      parent._newASTPointer[containerName] = newNode;
     },
 
     exit(node, parent) {},

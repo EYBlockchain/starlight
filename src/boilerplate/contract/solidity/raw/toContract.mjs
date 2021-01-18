@@ -6,9 +6,9 @@ const ShieldContractStatementsBoilerplate = node => {
       // Although the visitor currently inherits the Pragma of the original contract, we might (in future) choose to hard-code the Pragma by using this boilerplate.
       return [
         `// SPDX-License-Identifier: CC0`,
-        `\npragma solidity ^0.7.0;`,
+        `\npragma solidity ^0.8.0;`,
       ];
-    case 'ImportStatements':
+    case 'ImportStatementList':
      return [
        '\nimport "./merkle-tree/MerkleTree.sol";',
        '\nimport "./verify/Verifier_Interface.sol";',

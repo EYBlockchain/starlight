@@ -4,8 +4,7 @@ import fs from 'fs';
 import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
-import { traverse } from '../traverse/traverse.mjs';
-import { clearCaches } from '../traverse/cache.mjs';
+import { traversePathsFast } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toCircuitVisitor.mjs';
 import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.mjs';
@@ -26,27 +25,26 @@ function transformation1(oldAST) {
     skipSubnodes: false,
   };
 
-  const scope = {};
-
-  oldAST._context = newAST.files;
   const dummyParent = {
-    id: 0,
     ast: oldAST,
   };
-  dummyParent._context = newAST;
-
-  clearCaches(); // Clearing the cache removes all node / scope data stored in memory. Notably, it deletes (resets) the `._context` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
 
   const path = new NodePath({
     parent: dummyParent,
     key: 'ast', // since parent.ast = node
     container: oldAST,
     node: oldAST,
-  });
+  }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
+
+  // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
+  traversePathsFast(path, p => delete p.node._newASTPointer);
+
+  path.parent._newASTPointer = newAST;
+  path.node._newASTPointer = newAST.files;
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  path.traverse(explode(visitor), state, scope);
+  path.traverse(explode(visitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
@@ -70,7 +68,7 @@ export default function toCircuit(ast, options) {
   for (const fileObj of circuitFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
-    console.log(`About to save to ${filepath}...`)
+    console.log(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, fileObj.file);
   }

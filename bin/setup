@@ -13,7 +13,7 @@ sleep 5
 
 printf "\n${GREEN}*** Running setup for your ZApp... ***${NC}\n"
 
-docker-compose run sprinkles node /app/src/utils/zkp-setup.mjs -i assign
+docker-compose run zappify node /app/src/utils/zkp-setup.mjs -i assign
 
 printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}\n"
 

@@ -1,12 +1,15 @@
-export let path = new WeakMap();
-export let scope = new WeakMap();
+/* eslint-disable no-mutable-exports */
+let pathCache = new WeakMap(); // keep as mutable.
+let scopeCache = new WeakMap(); // keep as mutable.
+
+export { pathCache, scopeCache };
 
 export function clearPathCache() {
-  path = new WeakMap();
+  pathCache = new WeakMap();
 }
 
 export function clearScopeCache() {
-  scope = new WeakMap();
+  scopeCache = new WeakMap();
 }
 
 export function clearCaches() {

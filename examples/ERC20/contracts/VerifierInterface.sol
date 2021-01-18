@@ -4,7 +4,7 @@
 @notice Do not use this example in any production code!
 */
 
-pragma solidity ^0.6.10;
+pragma solidity ^0.8.0;
 
 
 interface VerifierInterface {

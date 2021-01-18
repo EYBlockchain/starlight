@@ -11,7 +11,7 @@ const program = new Command();
 
 program
   .version('0.0.1')
-  .description('Generate a zApp from a sprinkled solidity file');
+  .description('Generate a zApp from a decorated solidity file');
 
 program
   .option('-v, --verbose', 'verbose console logging')

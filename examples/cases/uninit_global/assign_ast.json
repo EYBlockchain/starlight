@@ -7,10 +7,10 @@
             "fileExtension": ".zok",
             "nodes": [
                 {
-                    "nodeType": "ImportStatements",
+                    "nodeType": "ImportStatementList",
                     "imports": [
                         {
-                            "nodeType": "EditableCommitmentImportsBoilerplate"
+                            "nodeType": "EditableCommitmentImportStatementsBoilerplate"
                         }
                     ]
                 },

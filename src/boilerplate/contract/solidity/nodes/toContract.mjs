@@ -24,7 +24,7 @@ const ShieldContractStatementsBoilerplate = stage => {
         "literals": [
             "solidity",
             "^",
-            "0.7",
+            "0.8",
             ".0"
         ],
         "nodeType": "PragmaDirective",

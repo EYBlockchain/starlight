@@ -1,7 +1,7 @@
 version: '3.5'
 
 services:
-  sprinkles:
+  zappify:
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,7 +21,7 @@ services:
       BLOCKCHAIN_PORT: 8545
       LOG_LEVEL: debug
     networks:
-      - sprinkles_network
+      - zappify_network
 
   zokrates:
     image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.4
@@ -36,7 +36,7 @@ services:
     ports:
       - '8080:80'
     networks:
-      - sprinkles_network
+      - zappify_network
 
   timber:
     image: eyblockchain/timber:v3.0.3
@@ -63,7 +63,7 @@ services:
       MONGO_USERNAME: admin
       MONGO_PASSWORD: admin
     networks:
-      - sprinkles_network
+      - zappify_network
 
   #The database storing the merkle tree
   timber-mongo:
@@ -75,7 +75,7 @@ services:
     volumes:
       - timber-mongo-volume:/data/db
     networks:
-      - sprinkles_network
+      - zappify_network
 
   ganache:
     image: trufflesuite/ganache-cli:latest
@@ -83,7 +83,7 @@ services:
     ports:
       - '8545:8545'
     networks:
-      - sprinkles_network
+      - zappify_network
 
   truffle:
     image: docker.io/westlad/contract_deployer:v1.0
@@ -94,7 +94,7 @@ services:
       - ./build/:/truffle/build/:cached
       - ./examples/:/app/examples/:delegated
     networks:
-      - sprinkles_network
+      - zappify_network
     depends_on:
       - ganache
     command: ["truffle", "migrate", "--reset", "--network", "development_ganache"]
@@ -103,5 +103,5 @@ volumes:
   timber-mongo-volume: {}
 
 networks:
-  sprinkles_network:
-    name: sprinkles_network
+  zappify_network:
+    name: zappify_network

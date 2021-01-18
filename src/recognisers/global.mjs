@@ -10,9 +10,13 @@ function recogniseGlobal(line) {
   for (const g of config.globals) {
     if (line.startsWith(g)) {
       // global found
-      const ln = line.slice(0, -1).replace(/ *\([^)]*\) */g, ' '); // strip and remove brackets ; - need to make this more robust
+      const ln = line.replace(/ *\([^)]*\) */g, ' ').replace(';', '');
       console.log(ln);
-      const [type, visibility, name] = ln.split(' ');
+      let [type, visibility, name] = ln.split(' ');
+      if (name.includes('=')) {
+        [type, name] = ln.split(' ');
+        visibility = '';
+      }
       process({ type, visibility, name }); // call the processor
       return true;
     }

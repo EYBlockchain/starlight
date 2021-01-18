@@ -8,7 +8,7 @@ import CompilerError from '../utils/compiler-error.mjs';
 import { blockCount } from '../state.mjs';
 
 function recogniseFunction(line, rtn = false) {
-  for (const g of config.FUNCTIONS) {
+  for (const g of config.functions) {
     if (line.startsWith(g)) {
       // function (or constructor) found
 
