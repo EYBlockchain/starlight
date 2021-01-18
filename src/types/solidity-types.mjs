@@ -257,6 +257,13 @@ export function buildNode(nodeType, fields) {
         subExpression,
       };
     }
+    case 'ElementaryTypeName': {
+      const { typeDescriptions } = fields;
+      return {
+        nodeType,
+        typeDescriptions,
+      };
+    }
     // Boilerplate nodeTypes will be understood by the codeGenerator, where raw boilerplate code will be inserted.
     case 'ShieldContractConstructorBoilerplate': {
       return { nodeType };
