@@ -45,6 +45,8 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 
 Solidity Contract --> zappable Solidity Contract --> zappify --> zApp
 
+See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
+
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
