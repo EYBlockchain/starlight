@@ -232,7 +232,10 @@ export default {
                     if (
                       line.rhs.includes(node.rightHandSide.rightExpression.name) &&
                       line.rhs.includes(node.rightHandSide.leftExpression.baseExpression.name) &&
-                      line.rhs.includes(node.rightHandSide.leftExpression.indexExpression.name)
+                      (line.rhs.includes(node.rightHandSide.leftExpression.indexExpression.name) ||
+                        line.rhs.includes(
+                          node.rightHandSide.leftExpression.indexExpression.expression.name,
+                        ))
                     ) {
                       line.nodeId = node.leftHandSide.id;
                       break;

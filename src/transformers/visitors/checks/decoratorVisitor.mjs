@@ -74,6 +74,16 @@ export default {
     exit(path) {},
   },
 
+  IndexAccess: {
+    enter(path, state) {
+      const { node, parent } = path;
+      if (node.isUnknown) node.baseExpression.isUnknown = true;
+      if (node.isKnown) node.baseExpression.isKnown = true;
+    },
+
+    exit(node, parent) {},
+  },
+
   Identifier: {
     enter(path, state) {},
 
@@ -92,6 +102,21 @@ export default {
           logger.warn(
             `PEDANTIC: a conventional smart contract state variable (${node.name}) is 'known' by default`,
           );
+        let refPaths;
+        if (varDec.mappingKey) {
+          refPaths = [];
+          Object.keys(varDec.mappingKey).forEach(key => {
+            varDec.mappingKey[key].referencingPaths.forEach(referencingPath => {
+              refPaths.push(referencingPath);
+            });
+          });
+        } else {
+          refPaths = varDec.referencingPaths;
+        }
+        refPaths.forEach(path => {
+          if ((path.node.isKnown && node.isUnknown) || (path.node.isUnknown && node.isKnown))
+            throw new Error(`Identifier ${node.name} is marked as unknown and known.`);
+        });
         if (node.isKnown) varDec.isKnown = node.isKnown;
         if (node.isUnknown) varDec.isUnknown = node.isUnknown;
       } else if (varDec.secretVariable && path.getAncestorContainedWithin('leftHandSide')) {

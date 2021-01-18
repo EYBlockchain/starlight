@@ -125,7 +125,6 @@ export default {
           )
             break;
           if (lhsbinding.referencedKeyisParam === 'msg') {
-            // msg.sender key
             let msgSenderEverywhere = true;
             for (const nullPath of lhsbinding.nullifyingPaths) {
               // skip current node
