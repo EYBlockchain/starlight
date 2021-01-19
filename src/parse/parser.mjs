@@ -3,8 +3,8 @@ Parser for lines of Solidity
 This is the connection point between Recognisers and Parsers.
 */
 
-import logger from './utils/logger.mjs';
-import recognisers from './recognisers/index.mjs';
+import logger from '../utils/logger.mjs';
+import recognisers from '../recognisers/index.mjs';
 
 // main function of this module
 function parse(line) {

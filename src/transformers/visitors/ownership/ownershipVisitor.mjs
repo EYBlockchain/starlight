@@ -2,8 +2,6 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import { getNodeLocation, findReferencedDeclaration } from '../../../types/solidity-types.mjs';
-import circuitTypes from '../../../types/circuit-types.mjs';
 import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {

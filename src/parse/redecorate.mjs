@@ -1,10 +1,10 @@
 /* eslint-disable no-param-reassign */
 
 import fs from 'fs';
-import NodePath from './traverse/NodePath.mjs';
-import logger from './utils/logger.mjs';
-import explode from './transformers/visitors/explode.mjs';
-import redecorateVisitor from './transformers/visitors/redecorateVisitor.mjs';
+import NodePath from '../traverse/NodePath.mjs';
+import logger from '../utils/logger.mjs';
+import explode from '../transformers/visitors/explode.mjs';
+import redecorateVisitor from '../transformers/visitors/redecorateVisitor.mjs';
 
 /**
  * Inspired by the Transformer

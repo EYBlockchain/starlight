@@ -1,6 +1,6 @@
 import Listr from 'listr';
-import removeDecorators from './removeDecorators.mjs';
-import redecorate from './redecorate.mjs';
+import removeDecorators from './parse/removeDecorators.mjs';
+import redecorate from './parse/redecorate.mjs';
 import compile from './solc.mjs';
 
 import checks from './transformers/checks.mjs';

@@ -6,7 +6,7 @@ contract MyContract {
 
   secret mapping(address => uint256) private a;
   secret uint256 private b;
-  secret address admin;
+  secret address private admin;
 
   function assign(secret address param1, secret uint256 param2) public {
     unknown a[param1] = a[param1] + param2;
@@ -18,8 +18,8 @@ contract MyContract {
   }
 
   function assign3(secret address param4, secret uint256 param5) public {
-    require(msg.sender === admin);
-    a[param4] = a[param4] - param3;
+    require(msg.sender == admin);
+    // a[param4] = a[param4] - param3;
     known b = b + param5;
   }
 }
