@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign, no-shadow */
+/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 // no-unused-vars <-- to reinstate eventually
 
 import logger from '../../../utils/logger.mjs';
@@ -81,36 +81,42 @@ export default {
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
       const { node, scope } = path;
-
       const referencedBinding =
         node.referencedDeclaration > 0
           ? scope.getReferencedBinding(node)
-          : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression); // msg.sender reference?
+          : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+      const parentExpression = path.getAncestorOfType('ExpressionStatement');
 
-      const parentExpressionNode = path.getAncestorOfType('ExpressionStatement').node;
-
-      if (parentExpressionNode && referencedBinding.isSecret) {
+      if (parentExpression && referencedBinding.isSecret) {
+        // here: we are in a line which modifies a secret state
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
 
         if (!functionDefScope) return;
+        if (parentExpression.node.expression.nodeType === 'UnaryOperation') return;
 
-        const referencedIndicator = functionDefScope.indicators[referencedBinding.id];
-        const lhsNode = parentExpressionNode.expression.leftHandSide;
+        let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
+        const lhsNode = parentExpression.node.expression.leftHandSide;
+        const lhsName = lhsNode.name || lhsNode.baseExpression.name;
+        const nodeName = path.getAncestorContainedWithin('baseExpression')
+          ? path.getAncestorContainedWithin('baseExpression').node.name
+          : node.name;
 
+        // below: check if the identifier is on the RHS and is NOT an incrementation OR is an incrementation which requires the RHS value to be accessed
         if (
           rightAncestor &&
-          (!parentExpressionNode.expression.isIncremented ||
-            (parentExpressionNode.expression.isIncremented && lhsNode.name !== node.name))
+          (!parentExpression.node.expression.isIncremented ||
+            (parentExpression.node.expression.isIncremented &&
+              lhsName !== nodeName &&
+              nodeName !== 'msg'))
         ) {
-          console.log(`Found a 'consultation'`);
+          console.log('Found an accessed secret state');
           const lhs =
             lhsNode.nodeType === 'Identifier'
               ? scope.getReferencedBinding(lhsNode)
               : scope.getReferencedBinding(lhsNode.baseExpression);
-
-          if (!node.stateVariable) {
-            // we have a secret _parameter_ on the RHS
+          if (!node.stateVariable && !referencedBinding.stateVariable) {
+            // we have a secret parameter on the RHS
             if (!lhs.isSecret)
               throw new Error(
                 `A secret parameter (${node.name}) should not be used to assign to a non-secret variable (${lhs.name}). The secret could be deduced by observing how the non-secret variable changes.`,
@@ -127,16 +133,38 @@ export default {
             throw new Error(
               `Secret state ${node.name} should not be used to assign to a non-secret variable (${lhs.name}). The secret could be deduced by observing how the non-secret variable changes.`,
             );
-
-          // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
-          const reason = `'Consulted' at ${node.src}`;
+          const reason = `Accessed at ${node.src}`;
+          if (lhsNode.nodeType === 'IndexAccess') {
+            const keyName = scope.getMappingKeyIndicator(lhsNode);
+            referencedIndicator = referencedIndicator.mappingKey[keyName];
+          }
           referencedIndicator.isWhole = true;
+          referencedIndicator.isAccessed = true;
+          referencedBinding.isAccessed = true;
           if (referencedIndicator.isWholeReason) {
             referencedIndicator.isWholeReason.push(reason);
           } else {
             referencedIndicator.isWholeReason = [reason];
           }
         }
+      } else if (parentExpression) {
+        // In an expression, not secret
+        // Find non-secret params used for assigning secret states
+        const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
+        const indexExpression = path.getAncestorContainedWithin('indexExpression');
+        const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
+        if (!functionDefScope) return;
+        if (indexExpression) return; // TODO do we allow non secret params to be used as mapping keys?
+        const lhsNode = parentExpression.node.expression.leftHandSide;
+        const lhsName = lhsNode.name || lhsNode.baseExpression.name;
+        const lhs =
+          lhsNode.nodeType === 'Identifier'
+            ? scope.getReferencedBinding(lhsNode)
+            : scope.getReferencedBinding(lhsNode.baseExpression);
+        if (lhs.isSecret && rightAncestor && !referencedBinding.stateVariable)
+          throw new Error(
+            `Non-secret parameter ${node.name} cannot be used to assign secret variable ${lhsName}`,
+          );
       }
     },
 

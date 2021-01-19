@@ -58,11 +58,24 @@ export function getNodeSkeleton(nodeType) {
     case 'IndexAccess':
       return {
         indexExpression: {},
-        baseExpression:{},
+        baseExpression: {},
       };
     case 'MemberAccess':
       return {
         expression: {},
+      };
+    case 'UnaryOperation':
+      return {
+        subExpression: {},
+      };
+    case 'TupleExpression':
+      return {
+        components: [],
+      };
+    case 'FunctionCall':
+      return {
+        expression: {},
+        arguments: [],
       };
     case 'PragmaDirective':
     case 'ElementaryTypeName':
@@ -108,12 +121,18 @@ export function getVisitableKeys(nodeType) {
       return ['indexExpression', 'baseExpression'];
     case 'MemberAccess':
       return ['expression'];
+    case 'UnaryOperation':
+      return ['subExpression'];
+    case 'TupleExpression':
+      return ['components'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
     case 'Literal':
     case 'UserDefinedTypeName':
       return [];
+    case 'FunctionCall':
+      return ['expression, arguments'];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
     // error.

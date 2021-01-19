@@ -6,9 +6,9 @@ Reads an input file line by line and passes each line for further processing
 
 import fs from 'fs';
 import path from 'path';
-import recogniseDecorators from './recognisers/decorators.mjs';
-import recogniseCurlyBracket from './recognisers/curly-bracket.mjs';
-import logger from './utils/logger.mjs';
+import recogniseDecorators from '../recognisers/decorators.mjs';
+import recogniseCurlyBracket from '../recognisers/curly-bracket.mjs';
+import logger from '../utils/logger.mjs';
 
 function tidy(_line) {
   let line = _line;
@@ -31,7 +31,7 @@ function tidy(_line) {
  *                     running 'solc'.
  */
 function removeDecorators(options) {
-  logger.info(`Parsing dectorated file ${options.inputFilePath}... `);
+  logger.info(`Parsing decorated file ${options.inputFilePath}... `);
   const decLines = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
 
   const toRedecorate = [];

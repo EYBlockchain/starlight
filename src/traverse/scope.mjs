@@ -167,6 +167,9 @@ export class Scope {
           this.indicators.commitmentsRequired = true;
           this.indicators.zkSnarkVerificationRequired = true;
         }
+        if (node.typeDescriptions.typeString.includes('mapping')) {
+          this.bindings[id].mappingKey = {};
+        }
         break;
 
       case 'Identifier': {
@@ -176,7 +179,7 @@ export class Scope {
         // we have a mapping with key msg.sender
         // ... we stop, because this identifier just represents the key, we account for this
 
-        const referencedBinding = this.getReferencedBinding(node);
+        let referencedBinding = this.getReferencedBinding(node);
 
         if (!referencedBinding)
           throw new Error(
@@ -186,21 +189,55 @@ export class Scope {
         const referencedNode = referencedBinding.node;
         const referencedId = referencedBinding.id;
         const referencedName = referencedBinding.name;
+        const parentBinding = referencedBinding;
 
-        // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
+        const isMapping = node.typeDescriptions.typeString.includes('mapping');
+
+        if (isMapping) {
+          const keyNode = parent.indexExpression.expression || parent.indexExpression;
+          let keyName = keyNode.name;
+          if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
+            keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
+          const bindingExists = !!referencedBinding.mappingKey[keyName];
+          const isParam =
+            keyNode.referencedDeclaration < 0
+              ? `msg`
+              : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
+          if (!bindingExists)
+            referencedBinding.mappingKey[keyName] = {
+              referencedKey: keyNode.referenceDeclaration || keyNode.id,
+              referencedKeyNodeType:
+                isParam === `msg`
+                  ? keyNode.typeDescriptions.typeIdentifier
+                  : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
+              referencedKeyisParam: isParam,
+              isSecret: referencedBinding.isSecret,
+              isReferenced: false,
+              referenceCount: 0,
+              referencingPaths: [], // paths which reference this binding
+              isModified: false,
+              modificationCount: 0,
+              modifyingPaths: [], // paths which reference this binding};
+            };
+          referencedBinding = referencedBinding.mappingKey[keyName];
+        }
+
+        // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
         if (!referencedBinding.referencingPaths.some(p => p.node.id === path.node.id)) {
           referencedBinding.isReferenced = true;
+          if (isMapping) parentBinding.isReferenced = true;
           ++referencedBinding.referenceCount;
           referencedBinding.referencingPaths.push(path);
         }
-
-        // update this scope, to say "the code in this scope 'refers to' a variable (i.e. a binding) declared elsewhere"
+        // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
         this.referencedBindings[referencedId] = referencedBinding;
 
         // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
         if (
-          path.getAncestorContainedWithin('leftHandSide') &&
-          path.getAncestorOfType('Assignment')
+          (path.containerName !== 'indexExpression' &&
+            path.getAncestorContainedWithin('leftHandSide') &&
+            path.getAncestorOfType('Assignment')) ||
+          (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
         ) {
           // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
           if (!referencedBinding.modifyingPaths.some(p => p.node.id === path.node.id)) {
@@ -209,8 +246,12 @@ export class Scope {
             referencedBinding.modifyingPaths.push(path);
           }
 
+          if (isMapping) {
+            this.getReferencedBinding(node).isModified = true;
+          }
+
           // update this scope, to say "the code in this scope 'modifies' a variable declared elsewhere"
-          this.modifiedBindings[referencedId] = referencedBinding;
+          this.modifiedBindings[referencedId] = this.getReferencedBinding(node);
         }
 
         // 2) Update the indicators of this scope:
@@ -219,42 +260,80 @@ export class Scope {
           const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
 
           let referencedIndicator = functionDefScope.indicators[referencedId];
+
           const indicatorForStateVarExists = !!referencedIndicator;
           if (!indicatorForStateVarExists)
             referencedIndicator = {
               id: referencedId,
               name: referencedName,
-              binding: referencedBinding,
+              binding: this.getReferencedBinding(node),
               referencingPaths: [],
+              referenceCount: 0,
               modifyingPaths: [],
+              modificationCount: 0,
             };
+
+          const parentIndicator = referencedIndicator;
+          if (isMapping) {
+            const keyNode = parent.indexExpression.expression || parent.indexExpression;
+            if (!referencedIndicator.mappingKey) {
+              referencedIndicator.mappingKey = {};
+            }
+            let keyName = keyNode.name;
+
+            if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
+              keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
+            const isParam =
+              keyNode.referencedDeclaration < 0
+                ? `msg`
+                : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
+            if (!referencedIndicator.mappingKey[keyName]) {
+              referencedIndicator.mappingKey[keyName] = {
+                referencedKey: keyNode.referenceDeclaration || keyNode.id,
+                referencedKeyNodeType:
+                  isParam === `msg`
+                    ? keyNode.typeDescriptions.typeIdentifier
+                    : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
+                referencedKeyisParam: isParam,
+                isReferenced: false,
+                referenceCount: 0,
+                referencingPaths: [], // paths which reference this binding
+                isModified: false,
+                modificationCount: 0,
+                modifyingPaths: [], // paths which reference this binding};
+              };
+            }
+            referencedIndicator = referencedIndicator.mappingKey[keyName];
+          }
 
           // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
           if (!referencedIndicator.referencingPaths.some(p => p.node.id === path.node.id)) {
             referencedIndicator.isReferenced = true;
             ++referencedIndicator.referenceCount;
-            referencedIndicator.referencingPaths.push(path);
+            referencedIndicator.referencingPaths.push(path); // might overwrite, but that's ok.
             referencedIndicator.oldCommitmentReferenceRequired = true;
           }
-
-          // TODO: is this in a sensible place?
           contractDefScope.indicators.oldCommitmentReferencesRequired = true;
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
           if (
-            path.getAncestorContainedWithin('leftHandSide') &&
-            path.getAncestorOfType('Assignment')
+            (path.containerName !== 'indexExpression' &&
+              path.getAncestorContainedWithin('leftHandSide') &&
+              path.getAncestorOfType('Assignment')) ||
+            (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
           ) {
             if (!referencedIndicator.modifyingPaths.some(p => p.node.id === path.node.id)) {
               referencedIndicator.isModified = true;
+              if (isMapping) parentIndicator.isModified = true;
               ++referencedIndicator.modificationCount;
               referencedIndicator.modifyingPaths.push(path);
             }
             referencedIndicator.newCommitmentRequired = true;
             referencedIndicator.nullifierRequired = null; // we don't know yet
             referencedIndicator.initialisationRequired = true;
-            if (node.isKnown) referencedIndicator.isKnown = true;
-            if (node.isUnknown) referencedIndicator.isUnknown = true;
+            if (node.isKnown || (isMapping && parent.isKnown)) referencedIndicator.isKnown = true;
+            if (node.isUnknown || (isMapping && parent.isUnknown))
+              referencedIndicator.isUnknown = true;
 
             contractDefScope.indicators.nullifiersRequired = true;
           }
@@ -265,12 +344,82 @@ export class Scope {
             );
           }
 
+          referencedIndicator = parentIndicator;
           if (!indicatorForStateVarExists)
             functionDefScope.indicators[referencedNode.id] = referencedIndicator;
+
+          // console.log(this.getReferencedBinding(node));
+          // console.log(functionDefScope.indicators);
+          // console.log('---------');
+          // console.log(functionDefScope.indicators[5].mappingKey);
         }
         break;
       }
+      case 'FunctionCall':
+        // here: we look for require statements and add any indicators
+        if (node.expression.name !== 'require') {
+          // TODO add external function calls which use non-secret vars
+          throw new TypeError(
+            `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
+          );
+        } else if (
+          node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
+            't_magic_message' ||
+          node.arguments[0].rightExpression.expression.typeDescriptions.typeIdentifier ===
+            't_magic_message'
+        ) {
+          // here: either lhs or rhs of require statement includes msg.sender
+          // TODO  check if admin = state variable
+          const functionDefScope = this.getAncestorOfScopeType('FunctionDefinition');
+          const { operator } = node.arguments[0];
+          const ownerNode =
+            node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
+            't_magic_message'
+              ? node.arguments[0].rightExpression
+              : node.arguments[0].leftExpression;
 
+          switch (operator) {
+            // either have a 'msg.sender ==' or '!='
+            case '==':
+              // if ==, we store the restriction node
+              functionDefScope.callerRestriction = 'match';
+              functionDefScope.callerRestrictionNode = ownerNode;
+              if (!this.getReferencedBinding(ownerNode).stateVariable)
+                throw new Error(`Cannot require msg.sender to be an input param!`);
+              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
+              break;
+            case '!=':
+              // if != we store the 'blacklistedNode'
+              functionDefScope.callerRestriction = 'notMatch';
+              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
+              // functionDefScope.callerRestrictionNode = node.id;
+              break;
+            default:
+              throw new Error(`This kind of restriction on msg.sender isn't implemented yet!`);
+          }
+          break;
+          // otherwise, we have a require statement NOT on msg.sender
+        } else {
+          for (const arg of node.arguments) {
+            switch (arg.nodeType) {
+              // if we have a restriction on a secret state, we note that this require statement is private and should be copied over to the zok file
+              case 'BinaryOperation':
+                [arg.leftExpression, arg.rightExpression].forEach(exp => {
+                  if (exp.nodeType === 'Identifier') {
+                    node.requireStatementPrivate = !!this.getReferencedBinding(exp).isSecret;
+                  } else if (node.requireStatementPrivate !== true) {
+                    node.requireStatementPrivate = false;
+                  }
+                });
+                break;
+              default:
+                throw new Error(
+                  `This kind of expression (${arg.nodeType}) in a require statement isn't implemented yet!`,
+                );
+            }
+          }
+        }
+        break;
       case 'ExpressionStatement':
       case 'VariableDeclarationStatement':
       case 'PragmaDirective':
@@ -282,7 +431,9 @@ export class Scope {
       case 'Literal':
       case 'IndexAccess':
       case 'MemberAccess':
-      case 'Mapping': // TODO
+      case 'Mapping':
+      case 'UnaryOperation':
+      case 'TupleExpression':
         break;
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.
@@ -549,9 +700,41 @@ export class Scope {
 
   // TODO: one for 'uses' secret state?
 
+  /**
+   * Gets a mapping's indicator object for a particular key.
+   * @param {Object} - the mapping's index access node.
+   * @returns {String} - the name under which the mapping[key]'s indicator is stored
+   */
+  getMappingKeyIndicator(indexAccessNode) {
+    const keyNode = indexAccessNode.indexExpression.expression || indexAccessNode.indexExpression;
+    let keyName = keyNode.name;
+    // TODO does the below work when we are traversing again and already have modified paths?
+    if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified) {
+      const keyBinding = this.getReferencedBinding(keyNode);
+      let i = 0;
+      for (const modPath of keyBinding.modifyingPaths) {
+        if (indexAccessNode.id < modPath.node.id && i === 0) break;
+        i++;
+        if (
+          modPath.node.id < indexAccessNode.id &&
+          keyBinding.modifyingPaths[i] &&
+          indexAccessNode.id < keyBinding.modifyingPaths[i].node.id
+        )
+          break;
+      }
+      if (i > 0) keyName = `${keyNode.name}_${i}`;
+    }
+    return keyName;
+  }
+
+  /**
+   * Decides whether a statement is an incrementation.
+   * @param {Object} expressionNode - the line's expression node, usually an Assignment.
+   * @param {Object} lhsNode - the left hand side node, usually an Identifier.
+   * @returns {Object {bool, bool}} - isIncremented and isDecremented
+   */
   isIncremented(expressionNode, lhsNode) {
     const scope = this;
-    // here: flag rewrites and incrementations
     let isIncrementedBool;
     let isDecrementedBool;
     // first, check if the LHS node is secret
@@ -559,7 +742,11 @@ export class Scope {
     if (lhsNode.nodeType === 'Identifier') {
       const lhsbinding = scope.getReferencedBinding(lhsNode);
       lhsSecret = !!lhsbinding.isSecret;
+    } else if (lhsNode.nodeType === 'IndexAccess') {
+      const lhsbinding = scope.getReferencedBinding(lhsNode.baseExpression);
+      lhsSecret = !!lhsbinding.isSecret;
     }
+    // look at the assignment
     switch (expressionNode.nodeType) {
       case 'Assignment': {
         // a += something, -= something
@@ -581,18 +768,22 @@ export class Scope {
           isIncrementedBool = false;
           break;
         }
+        // move to more complicated cases
         const rhsType = expressionNode.rightHandSide.nodeType;
         if (rhsType === 'BinaryOperation') {
           const binopNode = expressionNode.rightHandSide;
           const params = [binopNode.leftExpression, binopNode.rightExpression];
           const op = expressionNode.rightHandSide.operator;
           // TODO deal with binops like a + b - c, c < a + b
+          // if we dont have any + or -, can't be an incrementation
           if (!op.includes('+') && !op.includes('-')) {
             isIncrementedBool = false;
+            isDecrementedBool = false;
             break;
           }
+          // recursively checks for binop + binop
+          // fills an array of params
           for (const [index, param] of params.entries()) {
-            // recursively checks for binop + binop
             if (param.nodeType === 'BinaryOperation') {
               if (!param.operator.includes('+')) {
                 isIncrementedBool = false;
@@ -602,13 +793,26 @@ export class Scope {
               params.push(param.rightExpression);
             }
           }
+          // goes through each param and checks whether its the lhs param and whether its +/- anything
           for (const param of params) {
-            logger.info(`at param ${param.name}`);
-            if (param.referencedDeclaration) {
-              const isSecret = scope.getReferencedBinding(param).secretVariable;
-              logger.info(`param is secret? ${isSecret}`);
+            if (param.referencedDeclaration || param.baseExpression) {
+              const isSecret = param.baseExpression
+                ? scope.getReferencedBinding(param.baseExpression).isSecret
+                : scope.getReferencedBinding(param).isSecret;
               // a = a + b
               if (isSecret && param.name === lhsNode.name && op.includes('+')) {
+                isIncrementedBool = true;
+                isDecrementedBool = false;
+                break;
+              }
+              // a = a + b (mapping)
+              if (
+                isSecret &&
+                param.nodeType === 'IndexAccess' &&
+                param.baseExpression.name === lhsNode.baseExpression.name &&
+                param.indexExpression.name === lhsNode.indexExpression.name &&
+                op.includes('+')
+              ) {
                 isIncrementedBool = true;
                 isDecrementedBool = false;
                 break;
@@ -671,6 +875,149 @@ export class Scope {
     expressionNode.isDecremented = isDecrementedBool;
 
     return { isIncrementedBool, isDecrementedBool };
+  }
+
+  /**
+   * Completes final checks on initial traversal:
+   * - ensures all secret states are either whole or partitioned
+   * - ensures no conflicting indicators
+   * - looks for missing/bad syntax which couldn't be picked up before
+   * @param {Object} secretVar - indicator object (fnDefScope) for secret state
+   */
+  indicatorChecks(secretVar) {
+    const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
+    // warning: state is clearly whole, don't need known decorator
+    if (secretVar.isKnown && secretVar.isWhole)
+      logger.warn(
+        `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,
+      );
+    // error: conflicting unknown/whole state
+    if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole)
+      throw new Error(
+        `Can't mark a whole state as unknown. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
+      );
+    // mark a state as partitioned (isIncremented and isUnknown)
+    if (secretVar.isUnknown && secretVar.isIncremented && !secretVar.isWhole) {
+      secretVar.isWhole = false;
+      secretVar.isPartitioned = true;
+      secretVar.isPartitionedReason = [`Incremented and marked as unknown`];
+    }
+    if (secretVar.isIncremented && secretVar.isWhole === undefined && !secretVar.isDecremented) {
+      // state isIncremented, not isDecremented, and not yet marked as whole/partitioned
+      // error: no known/unknown syntax at all
+      if (!secretVar.isKnown && !secretVar.isUnknown)
+        throw new Error(
+          `Secret value ${secretVar.name} assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
+        );
+      // error: this should have been picked up in previous block (isIncremented and isUnknown)
+      if (secretVar.isUnknown) throw new Error(`This should be unreachable code!`);
+      // mark a known state as whole
+      if (secretVar.isKnown) {
+        secretVar.isWhole = true;
+        secretVar.isWholeReason = [`Marked as known`];
+      } else {
+        // warning: its whole by default, may not be dev intention
+        logger.warn(
+          `State ${secretVar.name} will be treated as a whole state, because there are no unknown decorators`,
+        );
+        secretVar.isWhole = true;
+        secretVar.isWholeReason = [`No unknown decorator or overwrites`];
+      }
+      // look for duplicates: PEDANTIC: Unnecessary duplicate 'unknown' decorator for secret state `a`.
+    }
+    if (secretVar.isWhole === false && secretVar.isDecremented) {
+      // partitioned/decremented state needs nullifiers
+      secretVar.nullifierRequired = true;
+      contractDefScope.indicators.nullifiersRequired = true;
+    }
+    if (secretVar.isWhole === false && secretVar.isIncremented) {
+      // partitioned/incremented state doesn't need nullifiers (in this function)
+      secretVar.nullifierRequired = false;
+    } else {
+      // otherwise, we have a whole state which needs nullifiers at every edit
+      secretVar.nullifierRequired = true;
+      contractDefScope.indicators.nullifiersRequired = true;
+    }
+    // here - mark the contract obj and check for conflicting indicators
+    const topScope = contractDefScope.bindings[secretVar.id];
+    // errors: contract and function scopes conflict
+    if (topScope.isWhole && !secretVar.isWhole)
+      throw new Error(`State ${secretVar.name} must be whole because: ${topScope.isWholeReason}`);
+    if (topScope.isPartitioned && secretVar.isWhole)
+      throw new Error(
+        `State ${secretVar.name} must be whole because: ${secretVar.isWholeReason}, but is partitioned: ${topScope.isPartitionedReason}`,
+      );
+    // update contract scope with whole/partitioned reasons
+    topScope.isWhole = secretVar.isWhole;
+    if (topScope.isWhole === false && !topScope.isPartitionedReason) {
+      topScope.isPartitioned = true;
+      topScope.isPartitionedReason = secretVar.isPartitionedReason;
+    } else if (topScope.isWhole === false && topScope.isPartitionedReason) {
+      if (!secretVar.isPartitionedReason) secretVar.isPartitionedReason = [];
+      secretVar.isPartitionedReason.forEach(reason => topScope.isPartitionedReason.push(reason));
+    } else if (!topScope.isWholeReason) {
+      topScope.isWholeReason = secretVar.isWholeReason;
+    } else {
+      if (!secretVar.isWholeReason) secretVar.isWholeReason = [];
+      secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
+    }
+    // logging
+    console.log(`Indicator: (at ${secretVar.name})`);
+    console.log('----------');
+    console.dir(this, { depth: 0 });
+    console.log('----------');
+    console.dir(this.indicators);
+    console.log('----------');
+    if (this.indicators[secretVar.id].mappingKey) {
+      console.log(`Indicator.mappingKey[${secretVar.name}]`);
+      console.dir(secretVar, { depth: 1 });
+      console.log('----------');
+    }
+    // console.log(`Contract level binding for state:`);
+    // console.dir(topScope, { depth: 0 });
+    // if (topScope.isWholeReason) {
+    //   console.log(topScope.isWholeReason);
+    // } else {
+    //   console.log(topScope.isPartitionedReason);
+    // }
+  }
+
+  /**
+   * Decides whether each state in this scope is nullifiable
+   */
+  isNullifiable() {
+    // for each state variable in the function def scope
+    for (const stateVarId of Object.keys(this.indicators)) {
+      // only modified states live in the indicators object, so we don't have to worry about filtering out secret params here (they're allowed to be non-nullified)
+      const stateVar = this.indicators[stateVarId];
+      if (!stateVar.binding.isSecret) continue;
+      // go through each mapping key, if mapping
+      if (this.indicators[stateVarId].mappingKey) {
+        for (const key of Object.keys(stateVar.mappingKey)) {
+          // if the key is a parameter, then it can be any (user defined) key, so as long as nullifierRequired = true, any key can be nullified
+          if (
+            stateVar.mappingKey[key].nullifierRequired === true &&
+            stateVar.mappingKey[key].referencedKeyisParam
+          )
+            break; // this means any mapping[key] is nullifiable - good!
+          if (
+            stateVar.mappingKey[key].nullifierRequired !== true &&
+            !stateVar.mappingKey[key].referencedKeyisParam
+          )
+            throw new Error(
+              `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable.`,
+            );
+        }
+      } else if (stateVar.nullifierRequired !== true) {
+        throw new Error(
+          `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable.`,
+        );
+      }
+    }
+  }
+
+  getIndicator() {
+    return this.indicators;
   }
 }
 
