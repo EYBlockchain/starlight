@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 
-import { getNodeLocation } from '../../types/solidity-types.mjs';
+const getNodeLocation = () => {}; // dummy - the original getNodeLocation has been removed.
 
 export default {
   PragmaDirective: {

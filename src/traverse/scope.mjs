@@ -96,12 +96,14 @@ export class Scope {
           //   name: state_var_name,
           //   binding: { binding_of_var_decl },
           //   isReferenced: true,
+          //   referenceCount: 3,
           //   referencingPaths: [
           //     path_of_identifier,
           //     path_of_identifier,
           //     ...
           //   ], // we use an array to preserve the order of references
           //   isModified: true,
+          //   modificationCount: 1,
           //   modifyingPaths: [
           //     path_of_identifier,
           //     path_of_identifier,
@@ -237,7 +239,7 @@ export class Scope {
             path.getAncestorOfType('Assignment')) ||
           (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
         ) {
-          // update the referenced binding, to say "this variable has been modified by this node (`node`)"
+          // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
           if (!referencedBinding.modifyingPaths.some(p => p.node.id === path.node.id)) {
             referencedBinding.isModified = true;
             ++referencedBinding.modificationCount;
@@ -860,6 +862,8 @@ export class Scope {
         }
         break;
       }
+      // TODO are there incrementations which aren't assignments?
+      // Yes - unary operators
       default:
         isIncrementedBool = false;
         isDecrementedBool = false;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1
+
 /**
 CREDITS:
 
@@ -19,7 +21,7 @@ Harry R
 @notice Do not use this example in any production code!
 */
 
-pragma solidity ^0.7.1;
+pragma solidity ^0.8.0;
 
 interface Verifier_Interface {
 

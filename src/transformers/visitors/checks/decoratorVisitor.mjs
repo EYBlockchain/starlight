@@ -88,19 +88,21 @@ export default {
     enter(path, state) {},
 
     exit(path, state) {
-      const { node, parent } = path;
+      const { node, scope, parent } = path;
       const varDec =
         node.referencedDeclaration > 0
-          ? path.scope.getReferencedBinding(node)
-          : path.scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+          ? scope.getReferencedBinding(node)
+          : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+
       if (node.referencedDeclaration < 0) return; // this means we have msg.sender
+
       if (varDec.stateVariable) {
         // node is decorated
         if (!varDec.isSecret && node.isUnknown)
           throw new Error(`Identifier ${node.name} is marked as unknown but is not secret.`);
         if (!varDec.isSecret && node.isKnown)
           logger.warn(
-            `PEDANTIC: a conventional smart contract state variable (${node.name}) is 'known' by default`,
+            `PEDANTIC: Superfluous 'known' decorator. A conventional smart contract state variable (${node.name}) is 'known' by its very nature.`,
           );
         let refPaths;
         if (varDec.mappingKey) {

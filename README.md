@@ -30,7 +30,11 @@ _"Static, yet moving forward."_
 
 _"Received positively, with thunderous applause!"_
 
-_"Danger, danger! High vault (us)age!"_
+_"Danger, danger! High vault (us)age!"_ ...there it is
+
+_"Contains a battery of new ideas!"_
+
+_"An easy cell to developers that increases their capacity to develop Zero Knowledge solutions."_"
 
 ---
 
@@ -43,7 +47,32 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 - Zappify that baby
 - Get a fully working zApp in return
 
-Solidity Contract > zappable Solidity Contract > zappify > zApp
+Solidity Contract --> zappable Solidity Contract --> zappify --> zApp
+
+See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
+
+---
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Contents**
+
+  - [Install](#install)
+  - [Run](#run)
+    - [other options](#other-options)
+- [Developer](#developer)
+  - [Testing outputs](#testing-outputs)
+    - [circuit](#circuit)
+    - [full zapp](#full-zapp)
+  - [R&D Notes & Ideas](#rd-notes--ideas)
+  - [Miranda's test branch](#mirandas-test-branch)
+    - [Testing `removeDecorators`](#testing-removedecorators)
+    - [Testing compiler output](#testing-compiler-output)
+- [Acknowledgements](#acknowledgements)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+---
 
 ### Install
 
@@ -52,20 +81,22 @@ Whilst the package is in early development, it isn't hosted on npm. To install:
 `cd zappify`
 `npm i -g ./`
 
-This will create a symlink to your node.js bin, allowing you to run the commands specified in the `"bin":` field of the `package.json`; namely the `zappify` command.
+This will create a symlink to your node.js bin, allowing you to run the commands specified in the '`"bin":`' field of the `package.json`; namely the `zappify` command.
 
 
-### zappify
+### Run
 
 `zappify -i ./path/to/MyZappableContract.zsol`
-Converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
+
+... converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
 
 #### other options
 
-`-o ./custom/output/dir/`
-`-z customZappName` - otherwise files get output to a folder with name matching that of the input file.
+- `-o ./custom/output/dir/` - specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.
+- `-z customZappName` - otherwise files get output to a folder with name matching that of the input file.
+- `-h` for help.
 
-`-h` for help.
+---
 
 ## Developer
 
@@ -81,7 +112,7 @@ Converts a zappable Solidity contract into a zApp. By default, the zApp is outpu
 
 `./zokrates compile --light -i code/assign.zok` <-- it should compile
 
-### full zapp
+#### full zapp
 
 `zappify -i ./examples/cases/uninit_global/assign.zsol`
 
@@ -90,6 +121,8 @@ Converts a zappable Solidity contract into a zApp. By default, the zApp is outpu
 `npm install`
 
 (At this stage, you might need to run `chmod +x ./bin/setup && chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
+
+Start docker.
 
 `./bin/setup` <-- this can take quite a while!
 
@@ -101,17 +134,17 @@ NB: rerunning the test will not work, as the test script restarts the containers
 
 ---
 
-## R&D Notes & Ideas
+### R&D Notes & Ideas
 
 See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from decorated Solidity.
 
 ---
 
-## Miranda's test branch
+### Miranda's test branch
 
 To use this branch:
 
-### Testing `removeDecorators`
+#### Testing `removeDecorators`
 
 -   Point the start command in `package.json` to your decorated contract
 -   Run `npm start`
@@ -120,7 +153,7 @@ This first runs the `dedecorator`, which removes and stores the decorated syntax
 
 The `redecorator` then adds back the decorated syntax to the ast, creating `my_contract_ast.json`, also saved to root.
 
-### Testing compiler output
+#### Testing compiler output
 
 
 In `examples/cases`, there are collections of example output ZApps depending on the sprinkled contract input. At the moment only an uninitiated global is completed. To test:
@@ -132,7 +165,10 @@ In `examples/cases`, there are collections of example output ZApps depending on 
 
 Once assigned, the variable's private information is stored in `db/preimage.json`. Any further assignments use this information to nullify the last commitment. So if you have closed the containers or want to test the initial assignment, be sure to delete this file.
 
+---
 
 ## Acknowledgements
 
 - [Babel](https://babeljs.io)
+- solc
+- zokrates

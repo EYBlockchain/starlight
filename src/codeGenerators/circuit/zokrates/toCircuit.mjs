@@ -2,8 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import logger from '../../../utils/logger.mjs';
 import {
-  EditableCommitmentImportsBoilerplate,
-  EditableCommitmentStatementsBoilerplate,
+  EditableCommitmentImportStatementsBoilerplate,
+  editableCommitmentStatementsBoilerplate,
+  editableCommitmentParametersBoilerplate,
 } from '../../../boilerplate/circuit/zokrates/raw/toCircuit.mjs';
 
 const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
@@ -17,10 +18,10 @@ const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TOD
  */
 const collectImportFiles = (file, contextDirPath = boilerplateCircuitsDir) => {
   const lines = file.split('\n');
-  const importStatements = lines.filter(line => line.startsWith('from'));
+  const ImportStatementList = lines.filter(line => line.startsWith('from'));
   let localFiles = [];
   // parse for imports of local (non-zokrates-stdlib) files:
-  const localFilePaths = importStatements.reduce((acc, line) => {
+  const localFilePaths = ImportStatementList.reduce((acc, line) => {
     let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
     importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
     // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
@@ -63,7 +64,7 @@ const collectImportFiles = (file, contextDirPath = boilerplateCircuitsDir) => {
  * The filepath will be used when saving the file into the new zApp's dir.
  */
 const editableCommitmentCommonFilesBoilerplate = () => {
-  return collectImportFiles(EditableCommitmentImportsBoilerplate.join('\n'));
+  return collectImportFiles(EditableCommitmentImportStatementsBoilerplate.join('\n'));
 };
 
 // newline / tab beautification for '.zok' files
@@ -103,7 +104,7 @@ function codeGenerator(node) {
     case 'File':
       return [
         {
-          filepath: path.join(boilerplateCircuitsDir, `${node.name}.zok`),
+          filepath: path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`),
           file: node.nodes.map(codeGenerator).join('\n\n'),
         },
       ];
@@ -111,11 +112,11 @@ function codeGenerator(node) {
     case 'EditableCommitmentCommonFilesBoilerplate':
       return editableCommitmentCommonFilesBoilerplate();
 
-    case 'ImportStatements':
+    case 'ImportStatementList':
       return `${node.imports.map(codeGenerator).join('\n')}`;
 
-    case 'EditableCommitmentImportsBoilerplate':
-      return EditableCommitmentImportsBoilerplate.join('\n');
+    case 'EditableCommitmentImportStatementsBoilerplate':
+      return EditableCommitmentImportStatementsBoilerplate.join('\n');
 
     case 'FunctionDefinition': {
       const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
@@ -155,7 +156,10 @@ function codeGenerator(node) {
       return node.name;
 
     case 'EditableCommitmentStatementsBoilerplate':
-      return EditableCommitmentStatementsBoilerplate(node.privateStateName);
+      return editableCommitmentStatementsBoilerplate(node.privateStateName);
+
+    case 'EditableCommitmentParametersBoilerplate':
+      return editableCommitmentParametersBoilerplate(node.privateStateName).join(',\\\n\t');
 
     // And if we haven't recognized the node, we'll throw an error.
     default:

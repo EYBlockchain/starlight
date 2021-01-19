@@ -119,7 +119,7 @@ export default {
             // we have a secret parameter on the RHS
             if (!lhs.isSecret)
               throw new Error(
-                `Secret parameter ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
+                `A secret parameter (${node.name}) should not be used to assign to a non-secret variable (${lhs.name}). The secret could be deduced by observing how the non-secret variable changes.`,
               );
             if (!lhs.stateVariable)
               logger.warn(
@@ -127,9 +127,11 @@ export default {
               );
             return;
           }
+
+          // Henceforth `node` must be a stateVariable on the RHS
           if (!lhs.isSecret)
             throw new Error(
-              `Secret state ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
+              `Secret state ${node.name} should not be used to assign to a non-secret variable (${lhs.name}). The secret could be deduced by observing how the non-secret variable changes.`,
             );
           const reason = `Accessed at ${node.src}`;
           if (lhsNode.nodeType === 'IndexAccess') {

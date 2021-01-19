@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 import logger from '../../utils/logger.mjs';
+import { buildNode } from '../../types/solidity-types.mjs';
 import { traverseNodesFast } from '../../traverse/traverse.mjs';
 
 export default {
@@ -22,14 +23,9 @@ export default {
       if (contractNames.length > 1)
         throw new Error('Only 1 contract per solidity file is currently supported');
 
-      // Create a 'File' node and a 'SourceUnit' subNode.
+      // Create a 'SourceUnit' node.
       // NODEBUILDING
-      const newNode = {
-        name: contractNames[0],
-        nodeType: 'SourceUnit',
-        license: node.license,
-        nodes: [],
-      };
+      const newNode = buildNode('SourceUnit', { name: contractNames[0], license: node.license });
 
       node._newASTPointer = parent._newASTPointer;
       parent._newASTPointer.push(newNode);
@@ -43,11 +39,9 @@ export default {
     // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {
       const { node, parent } = path;
-      const newNode = {
-        literals: node.literals,
-        nodeType: node.nodeType, // 'PragmaDirective'
-      };
-      parent._newASTPointer[0].nodes.push(newNode);
+      const { literals } = node;
+
+      parent._newASTPointer[0].nodes.push(buildNode('PragmaDirective', { literals }));
       // node._newASTPointer = parent._newASTPointer; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
     exit(path, state) {},
@@ -56,13 +50,11 @@ export default {
   ContractDefinition: {
     enter(path, state) {
       const { node, parent } = path;
-      const newNode = {
+      const isShieldContract = true; // TODO: infer this by traversing for 'secret' keyword, or upon exit by querying 'secret' in scope.bindings? OR, just throw an error when _no_ special syntax is used, and tell the user it's just a regular contract?
+      const newNode = buildNode('ContractDefinition', {
         name: node.name,
-        nodeType: node.nodeType, // 'ContractDefinition'
-        isShieldContract: true, // TODO: infer this by traversing for 'secret' keyword, or upon exit by querying 'secret' in scope.bindings? OR, just throw an error when _no_ special syntax is used, and tell the user it's just a regular contract?
-        baseContracts: [],
-        nodes: [],
-      };
+        isShieldContract,
+      });
       node._newASTPointer = newNode.nodes;
       parent._newASTPointer[0].nodes.push(newNode);
     },
@@ -94,46 +86,54 @@ export default {
       // TODO: probably need more intelligent insertions of nodes than splicing / unshifting into fixed positions. This looks over-fitted to the October example-case.
       // NODEBUILDING
       if (zkSnarkVerificationRequired)
-        sourceUnitNodes.splice(1, 0, {
-          nodeType: 'ImportDirective',
-          file: './verify/Verifier_Interface.sol',
-        });
+        sourceUnitNodes.splice(
+          1,
+          0,
+          buildNode('ImportDirective', { file: './verify/Verifier_Interface.sol' }),
+        );
       if (commitmentsRequired)
-        sourceUnitNodes.splice(1, 0, {
-          nodeType: 'ImportDirective',
-          file: './merkle-tree/MerkleTree.sol',
-        });
+        sourceUnitNodes.splice(
+          1,
+          0,
+          buildNode('ImportDirective', { file: './merkle-tree/MerkleTree.sol' }),
+        );
 
       // VariableDeclarations:
       if (zkSnarkVerificationRequired)
-        contractNodes.unshift({
-          nodeType: 'ShieldContractConstructorBoilerplate',
-        });
+        contractNodes.unshift(buildNode('ShieldContractConstructorBoilerplate'));
       if (nullifiersRequired)
-        contractNodes.unshift({
-          nodeType: 'ShieldContractMappingBoilerplate',
-          args: ['nullifiers', 'uint256', 'uint256'],
-        });
+        contractNodes.unshift(
+          buildNode('MappingDeclaration', {
+            name: 'nullifiers',
+            fromType: 'uint256',
+            toType: 'uint256',
+          }),
+        );
       if (oldCommitmentReferencesRequired) {
-        contractNodes.unshift({
-          nodeType: 'VariableDeclaration',
-          name: 'latestRoot',
-          typeDescriptions: { typeString: 'uint256' },
-          visibility: 'public',
-        });
-        contractNodes.unshift({
-          nodeType: 'ShieldContractMappingBoilerplate',
-          args: ['commitmentRoots', 'uint256', 'uint256'],
-        });
+        contractNodes.unshift(
+          buildNode('VariableDeclaration', {
+            name: 'latestRoot',
+            type: 'uint256',
+            visibility: 'public',
+          }),
+        );
+        contractNodes.unshift(
+          buildNode('MappingDeclaration', {
+            name: 'commitmentRoots',
+            fromType: 'uint256',
+            toType: 'uint256',
+          }),
+        );
       }
       if (zkSnarkVerificationRequired) {
-        contractNodes.unshift({
-          nodeType: 'ShieldContractMappingBoilerplate',
-          args: ['vks', 'uint256', 'uint256[]'],
-        });
-        contractNodes.unshift({
-          nodeType: 'ShieldContractVerifierInterfaceBoilerplate',
-        });
+        contractNodes.unshift(
+          buildNode('MappingDeclaration', {
+            name: 'vks',
+            fromType: 'uint256',
+            toType: 'uint256[]',
+          }),
+        );
+        contractNodes.unshift(buildNode('ShieldContractVerifierInterfaceBoilerplate'));
       }
 
       if (state.mainPrivateFunctionName) {
@@ -153,22 +153,23 @@ export default {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, parent, scope } = path;
 
-      const newNode = {
-        // insert this FunctionDefinition node into our ContractDefinition node.
-        // NODEBUILDING
-        nodeType: node.nodeType, // FunctionDefinition
-        name: node.name,
-        visibility: 'external',
-        body: {
-          nodeType: 'Block',
-          statements: [],
-        },
-        parameters: {
-          nodeType: 'ParameterList',
-          parameters: [],
-        },
-        // no returnParameters
-      };
+      const newNode = buildNode('FunctionDefinition', { name: node.name, visibility: 'external' });
+      // const newNode = {
+      //   // insert this FunctionDefinition node into our ContractDefinition node.
+      //   // NODEBUILDING
+      //   nodeType: node.nodeType, // FunctionDefinition
+      //   name: node.name,
+      //   visibility: 'external',
+      //   body: {
+      //     nodeType: 'Block',
+      //     statements: [],
+      //   },
+      //   parameters: {
+      //     nodeType: 'ParameterList',
+      //     parameters: [],
+      //   },
+      //   // no returnParameters
+      // };
       // Let's populate the `parameters` and `body`:
       const { parameters } = newNode.parameters;
       const { statements } = newNode.body;
@@ -194,43 +195,43 @@ export default {
       // Parameters:
       // NODEBUILDING
       if (zkSnarkVerificationRequired)
-        parameters.push({
-          nodeType: 'VariableDeclaration',
-          name: 'proof',
-          storageLocation: 'calldata',
-          typeDescriptions: { typeString: 'uint256[]' },
-        });
+        parameters.push(
+          buildNode('VariableDeclaration', {
+            name: 'proof',
+            type: 'uint256[]',
+            storageLocation: 'calldata',
+          }),
+        );
       if (oldCommitmentReferencesRequired)
-        parameters.push({
-          nodeType: 'VariableDeclaration',
-          name: 'commitmentRoot',
-          typeDescriptions: { typeString: 'uint256' },
-        });
+        parameters.push(
+          buildNode('VariableDeclaration', {
+            name: 'commitmentRoot',
+            type: 'uint256',
+          }),
+        );
       if (nullifiersRequired)
-        parameters.push({
-          nodeType: 'VariableDeclaration',
-          name: 'newNullifiers',
-          storageLocation: 'calldata',
-          typeDescriptions: { typeString: 'uint256[]' },
-        });
+        parameters.push(
+          buildNode('VariableDeclaration', {
+            name: 'newNullifiers',
+            type: 'uint256[]',
+            storageLocation: 'calldata',
+          }),
+        );
       if (newCommitmentsRequired) {
-        parameters.push({
-          nodeType: 'VariableDeclaration',
-          name: 'newCommitments',
-          storageLocation: 'calldata',
-          typeDescriptions: { typeString: 'uint256[]' },
-        });
+        parameters.push(
+          buildNode('VariableDeclaration', {
+            name: 'newCommitments',
+            type: 'uint256[]',
+            storageLocation: 'calldata',
+          }),
+        );
         state.mainPrivateFunctionName = node.name; // TODO fix bodge
       }
       // body:
       if (nullifiersRequired)
-        statements.push({
-          nodeType: 'requireNewNullifiersNotInNullifiersThenAddThemBoilerplate',
-        });
+        statements.push(buildNode('requireNewNullifiersNotInNullifiersThenAddThemBoilerplate'));
       if (oldCommitmentReferencesRequired)
-        statements.push({
-          nodeType: 'requireCommitmentRootInCommitmentRootsBoilerplate',
-        });
+        statements.push(buildNode('requireCommitmentRootInCommitmentRootsBoilerplate'));
       if (zkSnarkVerificationRequired) {
         statements.push({
           nodeType: 'InputsVariableDeclarationStatementBoilerplate',
@@ -238,14 +239,9 @@ export default {
           nullifiersRequired,
           newCommitmentsRequired,
         });
-        statements.push({
-          nodeType: 'verifyBoilerplate',
-        });
+        statements.push(buildNode('verifyBoilerplate'));
       }
-      if (newCommitmentsRequired)
-        statements.push({
-          nodeType: 'insertLeavesBoilerplate',
-        });
+      if (newCommitmentsRequired) statements.push(buildNode('insertLeavesBoilerplate'));
 
       // no node._newASTPointer assignment yet, because we're not yet considering public smart contract code that might need to be 'copied over' to the shield contract's AST.
       parent._newASTPointer.push(newNode);

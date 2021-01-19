@@ -31,11 +31,13 @@ def main(\
 
 	a_newCommitment_value = field_to_u32_8(a)
 
+	// Distinguish between the first and subsequent commitments:
+	// If oldCommitment_isDummy == true, then generate a dummy nullifier.
+	// Note: even if the user is _initialising_ a state with a dummy oldCommitment and dummy nullifier, the commitmentRoot MUST be valid, because the shield contract will check it.
+
 	// old commitments - nullify
 
-	// Note: If oldCommitment_isDummy == true, then generate a dummy nullifier.
-	// Note: even if the user is _initialising_ a state with a dummy oldCommitment and dummy nullifier, the commitmentRoot MUST be valid, because the shield contract will check it.
-	// Note: The dummy nullifier for a whole state is h(stateVarId, 0, 0).
+	// The dummy nullifier for a whole state is h(stateVarId, 0, 0).
 
 	a_oldCommitment_owner_secretKey = if a_oldCommitment_isDummy then [0x00000000; 8] else a_oldCommitment_owner_secretKey fi
 
@@ -55,7 +57,7 @@ def main(\
 
 	field a_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(a_oldCommitment_commitment)[8..256]])
 
-	// Note: Don't bother checking existence, if the oldCommitment is a dummy:
+	// Don't bother checking existence, if the oldCommitment is a dummy:
 	field a_commitmentRoot_check = if a_oldCommitment_isDummy == true then commitmentRoot else  checkRoot(a_oldCommitment_membershipWitness_siblingPath, a_oldCommitment_commitment_truncated, a_oldCommitment_membershipWitness_index) fi
 
 	assert(\

@@ -15,7 +15,7 @@ const testReadPath = './src/boilerplate/common/generic-test.mjs';
  */
 const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
   const lines = file.split('\n');
-  const importStatements = lines.filter(
+  const ImportStatementList = lines.filter(
     line =>
       (line.includes(`.mjs`) || line.includes(`.json`)) &&
       !line.includes('return') &&
@@ -23,7 +23,7 @@ const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
   );
   let localFiles = [];
   // parse for imports of local (non-zokrates-stdlib) files:
-  const localFilePaths = importStatements.reduce((acc, line) => {
+  const localFilePaths = ImportStatementList.reduce((acc, line) => {
     const importFilePath = line.match(/'(.*?)'/g)[0].replace(/'/g, ''); // get text between quotes; i.e. the import filepaths
     acc.push(importFilePath);
     return acc;

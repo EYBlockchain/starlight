@@ -94,7 +94,7 @@ export default {
         const binding = arg.referencedDeclaration ? path.scope.getReferencedBinding(arg) : {};
         if (binding.isSecret)
           throw new Error(
-            `Cannot use a secret state (${binding.name}) in an external function call.`,
+            `Cannot pass a secret state (${binding.name}) to an external function call.`,
           );
       });
     },
