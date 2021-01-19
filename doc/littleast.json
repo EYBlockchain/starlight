@@ -1,0 +1,78 @@
+{
+    "absolutePath": "input",
+    "id": 15,
+    "license": "CC0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+        {
+            "id": 1,
+            "literals": [
+                "solidity",
+                "^",
+                "0.7",
+                ".0"
+            ],
+            "nodeType": "PragmaDirective",
+        },
+        {
+            "contractKind": "contract",
+            "id": 14,
+            "name": "Assign",
+            "nodeType": "ContractDefinition",
+            "nodes": [
+                {
+                    "id": 3,
+                    "mutability": "mutable",
+                    "name": "a",
+                    "nodeType": "VariableDeclaration",
+                    "stateVariable": true,
+                    "visibility": "private",
+                },
+                {
+                    "body": {
+                        "id": 12,
+                        "nodeType": "Block",
+                        "statements": [
+                            {
+                                "expression": {
+                                    "id": 10,
+                                    "leftHandSide": {
+                                        "id": 8,
+                                        "name": "a",
+                                        "nodeType": "Identifier"
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "rightHandSide": {
+                                        "id": 9,
+                                        "name": "value",
+                                        "nodeType": "Identifier",
+                                    },
+                                },
+                                "id": 11,
+                                "nodeType": "ExpressionStatement",
+                            }
+                        ]
+                    },
+                    "id": 13,
+                    "kind": "function",
+                    "name": "assign",
+                    "nodeType": "FunctionDefinition",
+                    "parameters": {
+                        "id": 6,
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "id": 5,
+                                "name": "value",
+                                "nodeType": "VariableDeclaration",
+                            }
+                        ],
+                    },
+                    "returnParameters": {
+                    },
+                }
+            ],
+        }
+    ],
+}

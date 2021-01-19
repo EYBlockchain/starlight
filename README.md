@@ -30,7 +30,11 @@ _"Static, yet moving forward."_
 
 _"Received positively, with thunderous applause!"_
 
-_"Danger, danger! High vault (us)age!"_
+_"Danger, danger! High vault (us)age!"_ ...there it is
+
+_"Contains a battery of new ideas!"_
+
+_"An easy cell to developers that increases their capacity to develop Zero Knowledge solutions."_"
 
 ---
 
