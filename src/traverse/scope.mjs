@@ -354,7 +354,9 @@ export class Scope {
         break;
       }
       case 'FunctionCall':
+        // here: we look for require statements and add any indicators
         if (node.expression.name !== 'require') {
+          // TODO add external function calls which use non-secret vars
           throw new TypeError(
             `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
           );
@@ -364,6 +366,7 @@ export class Scope {
           node.arguments[0].rightExpression.expression.typeDescriptions.typeIdentifier ===
             't_magic_message'
         ) {
+          // here: either lhs or rhs of require statement includes msg.sender
           // TODO  check if admin = state variable
           const functionDefScope = this.getAncestorOfScopeType('FunctionDefinition');
           const { operator } = node.arguments[0];
@@ -372,15 +375,19 @@ export class Scope {
             't_magic_message'
               ? node.arguments[0].rightExpression
               : node.arguments[0].leftExpression;
+
           switch (operator) {
+            // either have a 'msg.sender ==' or '!='
             case '==':
-              functionDefScope.callerRestriction = 'match'; // TODO - names? match = user must match some address
+              // if ==, we store the restriction node
+              functionDefScope.callerRestriction = 'match';
               functionDefScope.callerRestrictionNode = ownerNode;
               if (!this.getReferencedBinding(ownerNode).stateVariable)
                 throw new Error(`Cannot require msg.sender to be an input param!`);
               node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
               break;
             case '!=':
+              // if != we store the 'blacklistedNode'
               functionDefScope.callerRestriction = 'notMatch';
               node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
               // functionDefScope.callerRestrictionNode = node.id;
@@ -389,9 +396,11 @@ export class Scope {
               throw new Error(`This kind of restriction on msg.sender isn't implemented yet!`);
           }
           break;
+          // otherwise, we have a require statement NOT on msg.sender
         } else {
           for (const arg of node.arguments) {
             switch (arg.nodeType) {
+              // if we have a restriction on a secret state, we note that this require statement is private and should be copied over to the zok file
               case 'BinaryOperation':
                 [arg.leftExpression, arg.rightExpression].forEach(exp => {
                   if (exp.nodeType === 'Identifier') {
@@ -689,6 +698,11 @@ export class Scope {
 
   // TODO: one for 'uses' secret state?
 
+  /**
+   * Gets a mapping's indicator object for a particular key.
+   * @param {Object} - the mapping's index access node.
+   * @returns {String} - the name under which the mapping[key]'s indicator is stored
+   */
   getMappingKeyIndicator(indexAccessNode) {
     const keyNode = indexAccessNode.indexExpression.expression || indexAccessNode.indexExpression;
     let keyName = keyNode.name;
@@ -711,9 +725,14 @@ export class Scope {
     return keyName;
   }
 
+  /**
+   * Decides whether a statement is an incrementation.
+   * @param {Object} expressionNode - the line's expression node, usually an Assignment.
+   * @param {Object} lhsNode - the left hand side node, usually an Identifier.
+   * @returns {Object {bool, bool}} - isIncremented and isDecremented
+   */
   isIncremented(expressionNode, lhsNode) {
     const scope = this;
-    // here: flag rewrites and incrementations
     let isIncrementedBool;
     let isDecrementedBool;
     // first, check if the LHS node is secret
@@ -725,6 +744,7 @@ export class Scope {
       const lhsbinding = scope.getReferencedBinding(lhsNode.baseExpression);
       lhsSecret = !!lhsbinding.isSecret;
     }
+    // look at the assignment
     switch (expressionNode.nodeType) {
       case 'Assignment': {
         // a += something, -= something
@@ -746,19 +766,22 @@ export class Scope {
           isIncrementedBool = false;
           break;
         }
+        // move to more complicated cases
         const rhsType = expressionNode.rightHandSide.nodeType;
         if (rhsType === 'BinaryOperation') {
           const binopNode = expressionNode.rightHandSide;
           const params = [binopNode.leftExpression, binopNode.rightExpression];
           const op = expressionNode.rightHandSide.operator;
           // TODO deal with binops like a + b - c, c < a + b
+          // if we dont have any + or -, can't be an incrementation
           if (!op.includes('+') && !op.includes('-')) {
             isIncrementedBool = false;
             isDecrementedBool = false;
             break;
           }
+          // recursively checks for binop + binop
+          // fills an array of params
           for (const [index, param] of params.entries()) {
-            // recursively checks for binop + binop
             if (param.nodeType === 'BinaryOperation') {
               if (!param.operator.includes('+')) {
                 isIncrementedBool = false;
@@ -768,20 +791,19 @@ export class Scope {
               params.push(param.rightExpression);
             }
           }
+          // goes through each param and checks whether its the lhs param and whether its +/- anything
           for (const param of params) {
-            logger.info(`at param ${param.name}`);
             if (param.referencedDeclaration || param.baseExpression) {
               const isSecret = param.baseExpression
                 ? scope.getReferencedBinding(param.baseExpression).isSecret
                 : scope.getReferencedBinding(param).isSecret;
-              logger.info(`param is secret? ${isSecret}`);
               // a = a + b
               if (isSecret && param.name === lhsNode.name && op.includes('+')) {
                 isIncrementedBool = true;
                 isDecrementedBool = false;
                 break;
               }
-
+              // a = a + b (mapping)
               if (
                 isSecret &&
                 param.nodeType === 'IndexAccess' &&
@@ -838,7 +860,6 @@ export class Scope {
         }
         break;
       }
-      // TODO are there incrementations which aren't assignments?
       default:
         isIncrementedBool = false;
         isDecrementedBool = false;
@@ -852,31 +873,46 @@ export class Scope {
     return { isIncrementedBool, isDecrementedBool };
   }
 
+  /**
+   * Completes final checks on initial traversal:
+   * - ensures all secret states are either whole or partitioned
+   * - ensures no conflicting indicators
+   * - looks for missing/bad syntax which couldn't be picked up before
+   * @param {Object} secretVar - indicator object (fnDefScope) for secret state
+   */
   indicatorChecks(secretVar) {
     const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
+    // warning: state is clearly whole, don't need known decorator
     if (secretVar.isKnown && secretVar.isWhole)
       logger.warn(
         `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,
       );
+    // error: conflicting unknown/whole state
     if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole)
       throw new Error(
         `Can't mark a whole state as unknown. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
       );
+    // mark a state as partitioned (isIncremented and isUnknown)
     if (secretVar.isUnknown && secretVar.isIncremented && !secretVar.isWhole) {
       secretVar.isWhole = false;
       secretVar.isPartitioned = true;
       secretVar.isPartitionedReason = [`Incremented and marked as unknown`];
     }
     if (secretVar.isIncremented && secretVar.isWhole === undefined && !secretVar.isDecremented) {
+      // state isIncremented, not isDecremented, and not yet marked as whole/partitioned
+      // error: no known/unknown syntax at all
       if (!secretVar.isKnown && !secretVar.isUnknown)
         throw new Error(
           `Secret value ${secretVar.name} assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
         );
+      // error: this should have been picked up in previous block (isIncremented and isUnknown)
       if (secretVar.isUnknown) throw new Error(`This should be unreachable code!`);
+      // mark a known state as whole
       if (secretVar.isKnown) {
         secretVar.isWhole = true;
         secretVar.isWholeReason = [`Marked as known`];
       } else {
+        // warning: its whole by default, may not be dev intention
         logger.warn(
           `State ${secretVar.name} will be treated as a whole state, because there are no unknown decorators`,
         );
@@ -886,24 +922,28 @@ export class Scope {
       // look for duplicates: PEDANTIC: Unnecessary duplicate 'unknown' decorator for secret state `a`.
     }
     if (secretVar.isWhole === false && secretVar.isDecremented) {
-      // partitioned/decremented state
+      // partitioned/decremented state needs nullifiers
       secretVar.nullifierRequired = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
     if (secretVar.isWhole === false && secretVar.isIncremented) {
+      // partitioned/incremented state doesn't need nullifiers (in this function)
       secretVar.nullifierRequired = false;
     } else {
+      // otherwise, we have a whole state which needs nullifiers at every edit
       secretVar.nullifierRequired = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
-    // here - mark the contract obj
+    // here - mark the contract obj and check for conflicting indicators
     const topScope = contractDefScope.bindings[secretVar.id];
+    // errors: contract and function scopes conflict
     if (topScope.isWhole && !secretVar.isWhole)
       throw new Error(`State ${secretVar.name} must be whole because: ${topScope.isWholeReason}`);
     if (topScope.isPartitioned && secretVar.isWhole)
       throw new Error(
         `State ${secretVar.name} must be whole because: ${secretVar.isWholeReason}, but is partitioned: ${topScope.isPartitionedReason}`,
       );
+    // update contract scope with whole/partitioned reasons
     topScope.isWhole = secretVar.isWhole;
     if (topScope.isWhole === false && !topScope.isPartitionedReason) {
       topScope.isPartitioned = true;
@@ -917,6 +957,7 @@ export class Scope {
       if (!secretVar.isWholeReason) secretVar.isWholeReason = [];
       secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
     }
+    // logging
     console.log(`Indicator: (at ${secretVar.name})`);
     console.log('----------');
     console.dir(this, { depth: 0 });
@@ -937,14 +978,19 @@ export class Scope {
     // }
   }
 
+  /**
+   * Decides whether each state in this scope is nullifiable
+   */
   isNullifiable() {
+    // for each state variable in the function def scope
     for (const stateVarId of Object.keys(this.indicators)) {
-      // only modified states live in the indicators object, so we don't have to worry about filtering out secret params here
-      // TODO if the key is msg.sender this 'counts' as a parameter, can we do this?
+      // only modified states live in the indicators object, so we don't have to worry about filtering out secret params here (they're allowed to be non-nullified)
       const stateVar = this.indicators[stateVarId];
       if (!stateVar.binding.isSecret) continue;
+      // go through each mapping key, if mapping
       if (this.indicators[stateVarId].mappingKey) {
         for (const key of Object.keys(stateVar.mappingKey)) {
+          // if the key is a parameter, then it can be any (user defined) key, so as long as nullifierRequired = true, any key can be nullified
           if (
             stateVar.mappingKey[key].nullifierRequired === true &&
             stateVar.mappingKey[key].referencedKeyisParam
