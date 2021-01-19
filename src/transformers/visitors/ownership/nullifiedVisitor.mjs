@@ -73,6 +73,7 @@ export default {
       // Here we look at each statement and decide whether it's a nullification
       if (node.expression.nodeType === 'FunctionCall') return;
       let referencedBinding;
+      // we get the relevant bindings of the lhs and initialise binding.nullifyingPaths (if doesnt exist)
       switch (node.expression.leftHandSide.nodeType) {
         case 'Identifier':
           referencedBinding = scope.getReferencedBinding(node.expression.leftHandSide);
@@ -88,6 +89,8 @@ export default {
           referencedBinding = {};
           break;
       }
+      // then look at the node.expression to see if its incremented and/or the lhs to see if the state is whole
+      // whole or decrement: we have a nullification
       switch (node.expression.isIncremented) {
         case true:
           if (node.expression.isDecremented) {
@@ -107,7 +110,7 @@ export default {
           referencedBinding.nullifyingPaths.push(path);
           break;
         default:
-          // everything should be marked as true/false
+          // everything should be marked as isIncremented: true/false
           throw new Error(`Expression id ${node.expression.id} not marked as incremented.`);
       }
     },
