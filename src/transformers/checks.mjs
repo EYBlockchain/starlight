@@ -9,7 +9,7 @@ import unsupportedVisitor from './visitors/checks/unsupportedVisitor.mjs';
 import externalCallVisitor from './visitors/checks/externalCallVisitor.mjs';
 import decoratorVisitor from './visitors/checks/decoratorVisitor.mjs';
 import incrementedVisitor from './visitors/checks/incrementedVisitor.mjs';
-import referencedVisitor from './visitors/checks/referencedVisitor.mjs';
+import accessedVisitor from './visitors/checks/referencedVisitor.mjs';
 import wholeVisitor from './visitors/checks/wholeVisitor.mjs';
 
 /**
@@ -51,8 +51,8 @@ function transformation1(oldAST) {
   logger.info('No conflicting known/unknown decorators');
   path.traverse(explode(incrementedVisitor), state);
   logger.info('Incrementations marked');
-  path.traverse(explode(referencedVisitor), state);
-  logger.info('References marked');
+  path.traverse(explode(accessedVisitor), state);
+  logger.info('Accessed values marked');
   path.traverse(explode(wholeVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we

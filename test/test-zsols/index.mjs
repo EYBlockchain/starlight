@@ -79,8 +79,8 @@ describe('Test suits', function() {
           if (indicator.hasOwnProperty('isPartitioned')) {
             expect(indicator.isPartitioned).to.be.equal(testIndicator.isPartitioned);
           }
-          if (indicator.hasOwnProperty('isConsulted')) {
-            expect(indicator.isConsulted).to.be.equal(testIndicator.isConsulted);
+          if (indicator.hasOwnProperty('isAccessed')) {
+            expect(indicator.isAccessed).to.be.equal(testIndicator.isAccessed);
           }
         }
      });

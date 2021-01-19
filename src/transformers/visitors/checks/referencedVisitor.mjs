@@ -86,17 +86,23 @@ export default {
           ? scope.getReferencedBinding(node)
           : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
+
       if (parentExpression && referencedBinding.isSecret) {
+        // here: we are in a line which modifies a secret state
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
         const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
+
         if (!functionDefScope) return;
         if (parentExpression.node.expression.nodeType === 'UnaryOperation') return;
+
         let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
         const lhsName = lhsNode.name || lhsNode.baseExpression.name;
         const nodeName = path.getAncestorContainedWithin('baseExpression')
           ? path.getAncestorContainedWithin('baseExpression').node.name
           : node.name;
+
+        // below: check if the identifier is on the RHS and is NOT an incrementation OR is an incrementation which requires the RHS value to be accessed
         if (
           rightAncestor &&
           (!parentExpression.node.expression.isIncremented ||
@@ -104,9 +110,7 @@ export default {
               lhsName !== nodeName &&
               nodeName !== 'msg'))
         ) {
-          console.log('Found a reference');
-          console.log(lhsName, nodeName);
-          console.log(path.getAncestorContainedWithin('baseExpression'));
+          console.log('Found an accessed secret state');
           const lhs =
             lhsNode.nodeType === 'Identifier'
               ? scope.getReferencedBinding(lhsNode)
@@ -127,15 +131,14 @@ export default {
             throw new Error(
               `Secret state ${node.name} cannot be used to assign non secret variable ${lhs.name}`,
             );
-          // TODO should we add this reason each time a state is referenced, even if the expression is one that looks like an increment? (but the state is whole for another reason)
-          const reason = `Consulted at ${node.src}`;
+          const reason = `Accessed at ${node.src}`;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyIndicator(lhsNode);
             referencedIndicator = referencedIndicator.mappingKey[keyName];
           }
           referencedIndicator.isWhole = true;
-          referencedIndicator.isConsulted = true;
-          referencedBinding.isConsulted = true;
+          referencedIndicator.isAccessed = true;
+          referencedBinding.isAccessed = true;
           if (referencedIndicator.isWholeReason) {
             referencedIndicator.isWholeReason.push(reason);
           } else {
