@@ -109,6 +109,11 @@ export class Scope {
           //     path_of_identifier,
           //     ...
           //   ], // a subset of referencingPaths. // we use an array to preserve the order of references
+          //   nullifyingPaths: [
+          //     path_of_identifier,
+          //     path_of_identifier,
+          //     ...
+          //   ], // a subset of modifyingPaths. // we use an array to preserve the order of references
           //   oldCommitmentReferenceRequired: true,
           //   nullifierRequired: true,
           //   initialisationRequired: true,
