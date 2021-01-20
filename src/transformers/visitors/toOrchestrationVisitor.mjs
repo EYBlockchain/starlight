@@ -152,7 +152,7 @@ export default {
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
 
           // - oldCommitment nullifier preimage check
-          if (indicator.nullifierRequired) {
+          if (indicator.isNullified) {
             node._newASTPointer.body.statements.push({
               nodeType: 'CalculateNullifier',
             });

@@ -22,7 +22,7 @@ export default {
           isModified: true,
           isAccessed: true,
           newCommitmentRequired: true,
-          nullifierRequired: true,
+          isNullified: true,
           initialisationRequired: true,
           isKnown: true,
           isIncremented: true,
@@ -39,7 +39,7 @@ export default {
           isModified: true,
           isAccessed: false,
           newCommitmentRequired: true,
-          nullifierRequired: true,
+          isNullified: true,
           initialisationRequired: true,
           isKnown: true, // true/undef, (prefer true)
           isIncremented: false,

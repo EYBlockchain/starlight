@@ -188,7 +188,7 @@ export default {
       const oldCommitmentReferencesRequired = scope.someIndicators(
         i => i.oldCommitmentReferenceRequired,
       );
-      const nullifiersRequired = scope.someIndicators(i => i.nullifierRequired);
+      const nullifiersRequired = scope.someIndicators(i => i.isNullified);
       const newCommitmentsRequired = scope.someIndicators(i => i.newCommitmentRequired);
       // For the 'toContract' transformation, we don't need to consider the initialisationRequired indicator; although it's important in the other transformations.
 

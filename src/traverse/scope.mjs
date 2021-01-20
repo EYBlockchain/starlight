@@ -115,7 +115,7 @@ export class Scope {
           //     ...
           //   ], // a subset of modifyingPaths. // we use an array to preserve the order of references
           //   oldCommitmentReferenceRequired: true,
-          //   nullifierRequired: true,
+          //   isNullified: true,
           //   initialisationRequired: true,
           //   newCommitmentRequired: true,
           // }
@@ -334,7 +334,7 @@ export class Scope {
               referencedIndicator.modifyingPaths.push(path);
             }
             referencedIndicator.newCommitmentRequired = true;
-            referencedIndicator.nullifierRequired = null; // we don't know yet
+            referencedIndicator.isNullified = null; // we don't know yet
             referencedIndicator.initialisationRequired = true;
             if (node.isKnown || (isMapping && parent.isKnown)) referencedIndicator.isKnown = true;
             if (node.isUnknown || (isMapping && parent.isUnknown))
@@ -627,7 +627,7 @@ export class Scope {
           'isReferenced',
           'isModified',
           'oldCommitmentRequired',
-          'nullifierRequired',
+          'isNullified',
           'initialisationRequired',
           'newCommitmentRequired',
           'isIncremented',
@@ -932,15 +932,15 @@ export class Scope {
     }
     if (secretVar.isWhole === false && secretVar.isDecremented) {
       // partitioned/decremented state needs nullifiers
-      secretVar.nullifierRequired = true;
+      secretVar.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
     if (secretVar.isWhole === false && secretVar.isIncremented) {
       // partitioned/incremented state doesn't need nullifiers (in this function)
-      secretVar.nullifierRequired = false;
+      secretVar.isNullified = false;
     } else {
       // otherwise, we have a whole state which needs nullifiers at every edit
-      secretVar.nullifierRequired = true;
+      secretVar.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
     // here - mark the contract obj and check for conflicting indicators
@@ -999,21 +999,21 @@ export class Scope {
       // go through each mapping key, if mapping
       if (this.indicators[stateVarId].mappingKey) {
         for (const key of Object.keys(stateVar.mappingKey)) {
-          // if the key is a parameter, then it can be any (user defined) key, so as long as nullifierRequired = true, any key can be nullified
+          // if the key is a parameter, then it can be any (user defined) key, so as long as isNullified = true, any key can be nullified
           if (
-            stateVar.mappingKey[key].nullifierRequired === true &&
+            stateVar.mappingKey[key].isNullified === true &&
             stateVar.mappingKey[key].referencedKeyisParam
           )
             break; // this means any mapping[key] is nullifiable - good!
           if (
-            stateVar.mappingKey[key].nullifierRequired !== true &&
+            stateVar.mappingKey[key].isNullified !== true &&
             !stateVar.mappingKey[key].referencedKeyisParam
           )
             throw new Error(
               `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable.`,
             );
         }
-      } else if (stateVar.nullifierRequired !== true) {
+      } else if (stateVar.isNullified !== true) {
         throw new Error(
           `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable.`,
         );

@@ -251,7 +251,7 @@ A `VariableDeclaration` `binding` looks something like this:
   isModified: true,
   modificationCount: 1,
   modifyingPaths: [<path>], // paths which modify this binding
-  nullifierRequired: true,
+  isNullified: true,
   isKnown: true,
   isWhole: true,
   isPartitioned: false,
@@ -296,7 +296,7 @@ For each stateVariable within the function, its indicator object is:
     path_of_identifier,
     ...
   ], // a subset of referencingPaths. // we use an array to preserve the order of references
-  nullifierRequired: true,
+  isNullified: true,
   nullifyingPaths: [
     path_of_identifier,
     path_of_identifier,
@@ -327,7 +327,7 @@ For each stateVariable within the function, its indicator object is:
 | `isWhole` | whether the stateVar is whole or partitioned |
 | `isOwned` | whether the stateVar has an owner we can deduce |
 
-We also have these indicators for stateVariables at the function scope level (such as `oldCommitmentReferenceRequired` and `nullifierRequired`), because secret states might need to be nullified in one function (e.g. Nightfall burn), but not another (e.g. Nightfall mint).
+We also have these indicators for stateVariables at the function scope level (such as `oldCommitmentReferenceRequired` and `isNullified`), because secret states might need to be nullified in one function (e.g. Nightfall burn), but not another (e.g. Nightfall mint).
 
 #### Preliminary traversals
 
