@@ -251,6 +251,12 @@ A `VariableDeclaration` `binding` looks something like this:
   isModified: true,
   modificationCount: 1,
   modifyingPaths: [<path>], // paths which modify this binding
+  nullifierRequired: true,
+  isKnown: true,
+  isWhole: true,
+  isPartitioned: false,
+  isOwned: true,
+  owner,
 };
 ```
 
@@ -290,10 +296,20 @@ For each stateVariable within the function, its indicator object is:
     path_of_identifier,
     ...
   ], // a subset of referencingPaths. // we use an array to preserve the order of references
-  oldCommitmentReferenceRequired: true,
   nullifierRequired: true,
+  nullifyingPaths: [
+    path_of_identifier,
+    path_of_identifier,
+    ...
+  ], // a subset of modifyingPaths. // we use an array to preserve the order of references
+  oldCommitmentReferenceRequired: true
   initialisationRequired: true,
   newCommitmentRequired: true,
+  isIncremented: false,
+  isDecremented: false,
+  isWhole: true, // or isPartitioned: true,
+  isOwned: true,
+  owner: { binding_of_owner_var_decl },
 }
 ```
 
@@ -301,11 +317,15 @@ For each stateVariable within the function, its indicator object is:
 |:-|:--|
 | `isReferenced` | whether the stateVar is referenced (mentioned anywhere) within the function |
 | `isModified` | whether the stateVar's value is modified within the function |
-| `isConsulted` | whether the stateVar is consulted ('looked up') on the RHS of any assignment statements. Not to be confused with isReferenced. |
+| `isAccessed` | whether the stateVar is accessed ('looked up') on the RHS of any assignment statements. Not to be confused with isReferenced. |
 | `oldCommitmentReferencesRequired` | whether to import set membership boilerplate for this stateVar within this function |
 | `nullifiersRequired` | whether to import nullifier calculation and/or set non-membership boilerplate for this stateVar within this function |
 | `initialisationRequired` | ????????? |
 | `newCommitmentRequired` | whether to import commitment calculation boilerplate for this stateVar within this function |
+| `isIncremented` | whether the stateVar is is incremented within the function |
+| `isIncremented` | whether the stateVar is is decremented within the function |
+| `isWhole` | whether the stateVar is whole or partitioned |
+| `isOwned` | whether the stateVar has an owner we can deduce |
 
 We also have these indicators for stateVariables at the function scope level (such as `oldCommitmentReferenceRequired` and `nullifierRequired`), because secret states might need to be nullified in one function (e.g. Nightfall burn), but not another (e.g. Nightfall mint).
 
@@ -366,7 +386,7 @@ Some of the terminology in this summary will only make sense after reading every
 - A whole state cannot be initialised, without revealing _which_ state variable has just been initialised. I.e. its `stateVarId` is revealed to the blockchain.
   - The only exception to this is if the `stateVarId` may be a randomly assigned uniqueId, and bears no 'meaning' for the protocol.
 - Thereafter (after initialisation) proper privacy resumes.
-- A non-constant secret state cannot be 'consulted' without revealing its nullifier to the blockchain.
+- A non-constant secret state cannot be 'accessed' without revealing its nullifier to the blockchain.
 - A public state cannot be edited with reference to a `secret` state, without leaking information about that secret state, or possibly leaking the secret value completely.
 I.e. you can't include a secret state on the RHS of an assignment statement, if a public state is on the LHS. The public change in the LHS reveals the likely value of the secret RHS.
 
@@ -620,7 +640,7 @@ Two things:
 
 Why whole? Well, we haven't covered the alternative of 'partitioned' states yet, but feels like the best place to tackle this question...
 
-Let's argue why a secret state _cannot_ be a 'partitioned state' if (somewhere within the contract) it is operated on in such a way that would "require knowledge of the _entire_ state". It's simply because it's impossible to reliably ['consult'](#consulting-private-states) (refer to) the _entirety_ of a _partitioned_ state. Why? Well, if a secret state is partitioned across lots of commitments, then in order to refer to its total value, the state's owner must collect all parts of that partitioned state and 'sum' them. But how can the owner convince a smart contract that he has reliably summed _all_ parts, and hasn't omitted one? He can't. There's no way to prove that the 'consulted' value comprises the entire partition of 'parts', without unwrapping all commitments in the commitment tree - which is impossible to do, because they're mostly owned by other people.
+Let's argue why a secret state _cannot_ be a 'partitioned state' if (somewhere within the contract) it is operated on in such a way that would "require knowledge of the _entire_ state". It's simply because it's impossible to reliably ['consult'](#consulting-private-states) (refer to) the _entirety_ of a _partitioned_ state. Why? Well, if a secret state is partitioned across lots of commitments, then in order to refer to its total value, the state's owner must collect all parts of that partitioned state and 'sum' them. But how can the owner convince a smart contract that he has reliably summed _all_ parts, and hasn't omitted one? He can't. There's no way to prove that the 'accessed' value comprises the entire partition of 'parts', without unwrapping all commitments in the commitment tree - which is impossible to do, because they're mostly owned by other people.
 
 What kind of operations _don't_ require knowledge of the entire state?
 
@@ -704,8 +724,9 @@ What does the transpiler _do_ with these decorators?
   - The state must be partitioned.
   - The caller of any function which includes an `unknown` decorator needn't provide knowledge of the preimage of any 'part' of the state (because they don't 'know' it).
 - `known`
-  - The state must be whole.
-  - The caller of any function which includes a `known` decorator must provide proof of knowledge of the preimage of the commitment.
+  - The state may or may not be whole/partitioned.
+    - If the state is decorated as `unknown` elsewhere, then it's partitioned; otherwise, it's simplest to treat it as whole.
+  - The caller of any function which includes a `known` decorator must provide proof of knowledge of the preimage of the commitment (if whole) or proof of knowledge of the preimages of _some_ 'part' commitments (if partitioned).
 
 These `known`/`unknown` decorators are only required before 'incrementing statements' (`a = a + b`, `a += b`, `a++`, `++a`), because an 'incrementation' is the only type of operation which can be performed by someone who doesn't _know_ or _own_ the _entire_ state. (See earlier explanations in the 'whole' and 'partitioned' sections).
 
@@ -748,22 +769,20 @@ The Solidity above suggests _anyone_ should be able to come along and edit `a`, 
 
 We arrive at quite a difficult dilemma: either we can support this function as the dev clearly intended (a chaotic "free for all" in this example); or we can respect our intuition for how 'whole' secrets should be edited; only by the owner.
 
-It turns out that the first option - of enabling a contract with 'special' whole states which may be nullified by anyone - isn't _possible_ if we wish to retain complete zero-knowledge. Why?
+It turns out that the first option - of enabling a contract with 'special' whole states which may be nullified by anyone - isn't _possible_ if we wish to retain zero-knowledge. Why?
 
-In order for the compiler to support "free for all" edits - like the above example, where anyone can nullify a whole state (if a clear owner of the state can't be inferred from other functions) - by changing the _structure_ of such states' nullifiers to something which can be derived by _anyone_. With such a nullifier structure, _anyone_ would be able to come along and _replace_ someone else's secret `a` with a their own new secret for `a` (in line with the intentions of the developer's code). But in order for such a theoretical nullifier to nullify the original owner's commitment (and _only_ that commitment), the nullifier will need to be _linked_ to the original commitment in some way.
-
-But to that would mean the person nullifying would need to know unique, identifying details about the preimage of the commitment, and this would violate zero-knowledge. Furthermore, if _anyone_ is able to come along and nullify a particular commitment, then the unique nullifier for that commitment _must_ be derivable by anyone. And therefore when the nullifier gets submitted, everyone will know what it represents and what is being nullified! These are pretty convincing arguments to suggest that the above example must not compile, because its intentions contradict zero-knowledge protocols.
+In order for the compiler to support "free for all" edits - like the above example, where anyone can nullify a whole state (if a clear owner of the state can't be inferred from other functions) - by changing the _structure_ of such states' nullifiers to something wich can be derived by _anyone_. With such a nullifier structure, _anyone_ would be able to come along and _replace_ someone else's secret `a` with a their own new secret for `a` (in line with the intentions of the developer's code). But in order for such a theoretical nullifier to nullify the original owner's commitment (and _only_ that commitment), the nullifier will need to be _linked_ to the original commitment in some way. But to that would mean the person nullifying would need to know unique, identifying details about the preimage of the commitment, and this would violate zero-knowledge. Furthermore, if _anyone_ is able to come along and nullify a particular commitment, then the unique nullifier for that commitment _must_ be derivable by anyone. And therefore when the nullifier gets submitted, everyone will know what it represents and what is being nullified! These are pretty convincing arguments to suggest that:
+- **The above example must not compile, because its intentions contradict zero-knowledge protocols.**
 
 It's an interesting discovery. We've found that not all developers' intentions are translatable into a zk protocol.
 
 It leads us to a transpilation rule:
 
 - **The transpiler must enforce that whole states must have a clearly inferrable owner, and can only be nullified by that owner.**
-- **I.e. In order to edit a 'whole' secret state, you _must_ be able to produce a nullifier for it, as its _owner_.**
+- **O.e. In order to edit a 'whole' secret state, you _must_ be able to produce a nullifier for it, as its _owner_.**
 
-Note that the above _does not_ apply in general to **initialising states**. Once we have an owned state with a commitment representing its value, only the owner can edit it by proving they own the public key inside it. So that indeed follows the rule above - but if we have an uninitialised state with no preset owner, we have to bend this rule a bit to initialise it.
 
-Also notice that we didn't mention 'partitioned' states in that decision. Incrementation of a partitioned state (by design) does not require a nullifier. **For _decrementation_ of a partitioned state, however, we reach a similar conclusion to the above - that in order to decrement a partitioned state, you _must_ be able to produce a nullifier for it, as its owner.**
+Notice that we didn't mention 'partitioned' states in that decision. Incrementation of a partitioned state (by design) does not require a nullifier. **For _decrementation_ of a partitioned state, however, we reach a similar conclusion to the above - that in order to decrement a partitioned state, you _must_ be able to produce a nullifier for it, as its owner.**
 
 ---
 
@@ -814,7 +833,7 @@ But since there is no 'prior' commitment to nullify when initialising a whole st
 
 **"Initialisation of a whole state requires a dummy nullifier. Otherwise, any two people could submit two rival 'first' commitments, creating two versions of the secret state. We don't have this problem with partitioned states, because there, it's okay for many different commitments to represent one state."**
 
-Our nice, uniform commitment structure, `h(stateVarId, value, ownerPublicKey, salt)`, has a corresponding nullifier structure `h(stateVarId, ownerSecretKey, salt)`.
+Our nice, uniform commitment structure, `h(stateVarId, value, ownerPublicKey, salt)`, has a correspinding nullifier structure `h(stateVarId, ownerSecretKey, salt)`.
 
 But if our dummy nullifiers were to use this structure, we would again have the "rival first commitments" problem - any two users could initialise rival commitments for `a` with this structure, and both would be able to derive different, but equally-valid nullifiers which correctly correspond to their commitments. The shield contract would allow both submissions, because both would correctly prove ownership of their public key, preimage of their new commitment, and that their nullifier doesn't already exist.
 
@@ -889,6 +908,8 @@ If a clear owner (for a whole state) _can_ be inferred from the original Solidit
 Partitioned states don't suffer from this problem, but they do have two main limitations. Firstly, unless the dev has been explicit, we can't avoid ending up with multiple owners of one state. Without any restriction on who can call a function which increments some unknown value, the caller can add any public key they want to the part they create.
 
 TODO ^^^ expand on this final point (if we haven't already) in a section of its own.
+
+TODO: also talk about how a Nightfall-like contract is a nice edge case which means the public key and mapping key coincide.
 
 
 #### Examples
@@ -1041,6 +1062,7 @@ Some of the decisions below are tentative, and there are still some questions ov
 A traversal to determine ownership goes like this:
 
 For each secret state, we traverse the contract for nullifications and associated `msg.sender` restrictions:
+-   ~~If there is the same user restriction on each nullification of the state (e.g. `require(msg.sender == admin)`) then this user is the owner.~~
 
 1. If, throughout the contract, for a particular secret state `a`, for all functions where `a` is nullified, we find that `msg.sender` is restricted to be precisely _one_ `address` (e.g. `require(msg.sender == someAddress);`) - then the owner of this address must be the owner of the commitment for `a`.
     - If `someAddress` is a public state, retain the `require` statements in the shield contract. Allow the owner of `someAddress` to add any `zkpPK` they want to the commitment for `a`. (If they lock themselves out from editing by adding a different PK, then "that's their own fault").
@@ -1159,19 +1181,19 @@ But, through many examples and discussions, it seems like wanting a *non*-transf
 
 ### Consulting private states
 
-[Previously](#indicators), we mentioned an `isConsulted` indicator, used during the transformation stage. When a secret state is *'consulted'*, its secret value is 'looked up' or 'accessed'.
+[Previously](#indicators), we mentioned an `isAccessed` indicator, used during the transformation stage. When a secret state is *'accessed'*, its secret value is 'looked up' or 'accessed'.
 
 _We use the term 'consult' because the word 'refer' already has meaning in a conventional Solidity AST... Although as I write this, 'access' is looking like an attractive word too. 'Lookup' is a bit clunky because 'looked up', 'lookupping' aren't pretty within code. Or maybe 'open' is the word to use (because commitments)._
 
 #### Summary
 
-- A secret state is `consulted` if it's 'looked up'.
+- A secret state is `accessed` if it's 'looked up'.
   - E.g. used on the RHS of an assignment; or
   - used in a 'require' statement.
 - Assigning to a secret state is _not_ considered a 'consultation', but an assignment.
-- Only 'whole' states can be consulted.*
-  \*(A partitioned state `a` could probably be consulted, but only if asserting `a > b` or `a >= b`)
-- If a state is consulted within a function, only the _owner_ of that state can successfully call the function... Why? Well...
+- Only 'whole' states can be accessed.*
+  \*(A partitioned state `a` could probably be accessed, but only if asserting `a > b` or `a >= b`)
+- If a state is accessed within a function, only the _owner_ of that state can successfully call the function... Why? Well...
   - To 'consult' a state is to know its current value.
   - A state's value can only be proven to be 'current' if:
     - the state's commitment's preimage is known;
@@ -1194,7 +1216,7 @@ function fn1() {
 }
 ```
 
-Here, the value of the secret state `b` must be 'consulted' in order to assign to state `a`. This means we must consider:
+Here, the value of the secret state `b` must be 'accessed' in order to assign to state `a`. This means we must consider:
 -   how to 'open' the commitment representing `b`; and
 -   how to use the value of `b` without revealing it.
 
@@ -1204,12 +1226,12 @@ Clearly, `a` must be a whole state, and the caller of `fn1()` must own `a`.
 
 Secondly, the caller of `fn1()` must own `b`, since nobody knows the value of `b` except for its owner. In this case that means the owner of `b` also owns `a`. In fact, any state which is updated by consulting the value of another private state must have the same owner.
 
-Finally, `b` _must_ be a whole state; a partitioned state cannot* be 'consulted', because it's impossible\* for the owner to convince us they've gathered all 'parts' of the state (see an informal proof of this [above](#whole-states)).
+Finally, `b` _must_ be a whole state; a partitioned state cannot* be 'accessed', because it's impossible\* for the owner to convince us they've gathered all 'parts' of the state (see an informal proof of this [above](#whole-states)).
 \*Unless demonstrating that the partitioned state is _greater than_ some value; then sufficiently many 'parts' can be collected together and proven to exist.
 
 Once we have the value of `b`, we have to assign `b ** 2` to `a` without revealing it. Therefore, `a` must also be secret (which, here, it is!).
 
-The only way to access such a value is to prove knowledge of the preimage of the corresponding commitment. So whenever we see a consulted state, we have to add code to the circuit which proves knowledge of the preimage.
+The only way to access such a value is to prove knowledge of the preimage of the corresponding commitment. So whenever we see a accessed state, we have to add code to the circuit which proves knowledge of the preimage.
 
 Furthermore, we must prove that the commitment has not-yet been nullified, to prevent someone from referring to some 'old' value of the secret. So the correct nullifier must be derived within the circuit (just like when nullifying a commitment), but without adding the nullifier to the on-chain nullifier set.
 
@@ -1241,7 +1263,7 @@ function fn2() {
 ```
 
 `b` must be known, and whole.
-`a` is `unknown`, and hence partitioned. But looking at `fn2`, `a` is being consulted. It's not possible to consult a partitioned state; hence this contract must throw an error at transpilation.
+`a` is `unknown`, and hence partitioned. But looking at `fn2`, `a` is being accessed. It's not possible to consult a partitioned state; hence this contract must throw an error at transpilation.
 
 ---
 
