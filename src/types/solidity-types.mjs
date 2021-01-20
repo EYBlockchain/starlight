@@ -1,95 +1,5 @@
 /* eslint-disable consistent-return, no-param-reassign */
 
-import cloneDeep from 'lodash.clonedeep';
-
-export function getNodeSkeleton(nodeType) {
-  switch (nodeType) {
-    case 'SourceUnit':
-    case 'ContractDefinition':
-      return {
-        nodes: [],
-      };
-    case 'FunctionDefinition':
-      return {
-        body: {},
-        parameters: {},
-        returnParameters: {},
-      };
-    case 'ParameterList':
-      return {
-        parameters: [],
-      };
-    case 'Block':
-      return {
-        statements: [],
-      };
-    case 'VariableDeclarationStatement':
-      return {
-        declarations: [],
-        initialValue: {},
-      };
-    case 'ExpressionStatement':
-      return {
-        expression: {},
-      };
-    case 'UnaryOperation':
-      return {
-        subExpression: {},
-      };
-    case 'Assignment':
-      return {
-        leftHandSide: {},
-        rightHandSide: {},
-      };
-    case 'BinaryOperation':
-      return {
-        leftExpression: {},
-        rightExpression: {},
-      };
-    case 'VariableDeclaration':
-      return {
-        typeName: {},
-      };
-    case 'Mapping':
-      return {
-        keyType: {},
-        valueType: {},
-      };
-    case 'IndexAccess':
-      return {
-        indexExpression: {},
-        baseExpression: {},
-      };
-    case 'MemberAccess':
-      return {
-        expression: {},
-      };
-    case 'UnaryOperation':
-      return {
-        subExpression: {},
-      };
-    case 'TupleExpression':
-      return {
-        components: [],
-      };
-    case 'FunctionCall':
-      return {
-        expression: {},
-        arguments: [],
-      };
-    case 'PragmaDirective':
-    case 'ElementaryTypeName':
-    case 'Identifier':
-    case 'Literal':
-      return {};
-
-    // And again, if we haven't recognized the nodeType then we'll throw an
-    // error.
-    default:
-      throw new TypeError(nodeType);
-  }
-}
-
 export function getVisitableKeys(nodeType) {
   switch (nodeType) {
     case 'SourceUnit':
@@ -107,8 +17,6 @@ export function getVisitableKeys(nodeType) {
       return ['declarations', 'initialValue'];
     case 'ExpressionStatement':
       return ['expression'];
-    case 'UnaryOperation':
-      return ['subExpression'];
     case 'Assignment':
       return ['leftHandSide', 'rightHandSide'];
     case 'BinaryOperation':
@@ -274,6 +182,24 @@ export function buildNode(nodeType, fields) {
         operator,
         prefix,
         subExpression,
+      };
+    }
+    // Not an actual solc AST node type. This is just a convenient method for building a `require` statement.
+    case 'require': {
+      const { name, subExpression = {} } = fields;
+      return {
+        nodeType: 'Identifier',
+        referencedDeclaration: 4294967278,
+        typeDescriptions: {
+          typeIdentifier: 't_function_require_pure$_t_bool_$returns$__$',
+          typeString: 'function (bool) pure',
+        },
+        argumentTypes: [
+          {
+            typeIdentifier: 't_bool',
+            typeString: 'bool',
+          }
+        ],
       };
     }
     case 'ElementaryTypeName': {

@@ -21,11 +21,12 @@ export default {
   },
 
   FunctionDefinition: {
+    // parent._newASTPointer location is Folder.files[].
     enter(path, state) {
       const { node, parent, scope } = path;
 
-      // Check the function for modifications to any global states:
-      // we'll need to create a new circuit file if we find one:
+      // Check the function for modifications to any stateVariables.
+      // We'll need to create a new circuit file if we find a modification.
       // TODO: will we also need a new circuit file even if we're merely 'referring to' a secret state (because then a nullifier might be needed?)
       let newFile = false;
       if (scope.modifiesSecretState()) {
@@ -38,8 +39,7 @@ export default {
       }
 
       if (newFile) {
-        // If we've not yet added this function as a node to our newAST, let's do that:
-        // Our location in the newAST (parent._newASTPointer) should be Folder.files[].
+        // Let's add this function as a node to our newAST.
         // TODO: why is the decision to add import statements separate from adding the nodes of the files which get imported by these statements?
         const newNode = buildNode('File', {
           fileName: node.name,
@@ -56,6 +56,7 @@ export default {
         files.push(newNode);
 
         // Add a placeholder for common circuit files within the circuits Folder:
+        // TODO: no need for a placeholder here. Remove. At the end of codeGeneration of this single file of code, the codeGenerator should then parse all import statements and add the files which need to be imported.
         if (!files.some(file => file.nodeType === 'EditableCommitmentCommonFilesBoilerplate')) {
           files.push(buildNode('EditableCommitmentCommonFilesBoilerplate'));
         }
@@ -170,6 +171,7 @@ export default {
       let newNode;
       // ExpressionStatements can contain an Assignment node.
       // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the _first_ such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
+      // TODO: we'll need to do similar for a unary operator, or any other assignment-like node which modifies a secret state.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
@@ -180,8 +182,16 @@ export default {
 
         if (lhs === modifiedBinding.modifyingPaths[0].node && referencedNode.isSecret) {
           newNode = buildNode('VariableDeclarationStatement', {
-            declarations: [buildNode('VariableDeclaration', { name: lhs.name, type: 'field' })],
-            initialValue: { ...rhs },
+            declarations: [
+              //
+              buildNode('VariableDeclaration', {
+                name: lhs.name,
+                type: 'field',
+              }),
+            ],
+            initialValue: {
+              ...rhs,
+            },
           });
 
           node._newASTPointer = newNode;
@@ -192,6 +202,7 @@ export default {
         }
       }
 
+      // Otherwise, copy this ExpressionStatement into the circuit's language.
       newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
@@ -204,13 +215,15 @@ export default {
     enter(path, state) {
       const { node, parent } = path;
       if (node.stateVariable) {
-        // then the node represents assignment of a state variable.
+        // Then the node represents assignment of a state variable.
+        // State variables don't get declared within a circuit;
+        // their old/new values are passed in as parameters.
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
         return;
       }
 
-      // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
+      // If it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', { name: node.name, isPrivate: true });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
@@ -218,6 +231,8 @@ export default {
       } else {
         parent._newASTPointer[path.containerName].push(newNode);
       }
+
+      // TODO: what about declaration of local stack variables; they'll need to be copied over into the circuit!!
     },
 
     exit(path) {},

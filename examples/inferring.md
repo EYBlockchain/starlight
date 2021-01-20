@@ -2,10 +2,10 @@ Indicators – how to decide...
 
 GLOBAL SCOPE
 
-commitmentsRequired:
+newCommitmentsRequired:
 - Declaration of a `secret` stateVariable.
 
-oldCommitmentReferencesRequired:
+oldCommitmentAccessRequired:
 - If nullifiersRequired === ‘true’.
 - A secret state appears (on the RHS of an argument? In any statement? In a binary operator?)
 
@@ -22,7 +22,7 @@ FUNCTION SCOPE
 newCommitmentsRequired:
 - A secret state on the LHS of a `=, +=, -=, \*=, /=, %=`, operator.
 
-oldCommitmentReferencesRequired:
+oldCommitmentAccessRequired:
 - If nullifiersRequired === ‘true’.
 - A secret state is ‘referred to’. I.e. is on the RHS of an expression/assignment? Is in any statement? Is in a binary operator?
 

@@ -3,14 +3,14 @@ from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
 from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256
-from "./common/merkle-tree/mimc/bn254/verify-membership/height32.zok" import main as checkRoot
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
 from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768
 from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
 
 def main(\
 	private field value,\
-	private bool a_oldCommitment_isDummy,\
 	private u32[8] a_stateVarId,\
+	private bool a_oldCommitment_isDummy,\
 	private u32[8] a_oldCommitment_value,\
 	private u32[8] a_oldCommitment_owner_publicKey,\
 	private u32[8] a_oldCommitment_salt,\
@@ -22,7 +22,7 @@ def main(\
 	private u32[8] a_newCommitment_owner_publicKey,\
 	private u32[8] a_newCommitment_salt,\
 	public field a_newCommitment_commitment,\
-	field commitmentRoot\
+	public field commitmentRoot\
 ) -> ():
 
 	field a = value
@@ -55,8 +55,10 @@ def main(\
 
 	field a_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(a_oldCommitment_commitment)[8..256]])
 
+	field a_commitmentRoot_check = checkRoot(a_oldCommitment_membershipWitness_siblingPath, a_oldCommitment_commitment_truncated, a_oldCommitment_membershipWitness_index)
+
 	// Note: Don't bother checking existence, if the oldCommitment is a dummy:
-	field a_commitmentRoot_check = if a_oldCommitment_isDummy == true then commitmentRoot else  checkRoot(a_oldCommitment_membershipWitness_siblingPath, a_oldCommitment_commitment_truncated, a_oldCommitment_membershipWitness_index) fi
+	field a_commitmentRoot_check = if a_oldCommitment_isDummy == true then commitmentRoot else a_commitmentRoot_check fi
 
 	assert(\
 		field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_commitmentRoot_check)[8..256]\

@@ -24,7 +24,7 @@ function transformation1(oldAST) {
   const state = {
     // TODO: cleverer traversal to decide whether we need nullifiers / commitments / incremental commitments / etc. Perhaps an initial traversal to discover these things before all 3 transformations begin.
     snarkVerificationRequired: true,
-    commitmentsRequired: true,
+    newCommitmentsRequired: true,
     nullifiersRequired: true,
 
     stopTraversal: false,

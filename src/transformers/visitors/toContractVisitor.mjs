@@ -67,9 +67,9 @@ export default {
 
       const {
         zkSnarkVerificationRequired,
-        oldCommitmentReferencesRequired,
+        oldCommitmentAccessRequired,
         nullifiersRequired,
-        commitmentsRequired,
+        newCommitmentsRequired,
       } = path.scope.indicators;
 
       // base contracts (`contract MyContract is BaseContract`)
@@ -91,7 +91,7 @@ export default {
           0,
           buildNode('ImportDirective', { file: './verify/Verifier_Interface.sol' }),
         );
-      if (commitmentsRequired)
+      if (newCommitmentsRequired)
         sourceUnitNodes.splice(
           1,
           0,
@@ -109,7 +109,7 @@ export default {
             toType: 'uint256',
           }),
         );
-      if (oldCommitmentReferencesRequired) {
+      if (oldCommitmentAccessRequired) {
         contractNodes.unshift(
           buildNode('VariableDeclaration', {
             name: 'latestRoot',
@@ -185,8 +185,8 @@ export default {
 
       const contractDefScope = scope.getAncestorOfScopeType('ContractDefinition');
       const { zkSnarkVerificationRequired } = contractDefScope.indicators;
-      const oldCommitmentReferencesRequired = scope.someIndicators(
-        i => i.oldCommitmentReferenceRequired,
+      const oldCommitmentAccessRequired = scope.someIndicators(
+        i => i.oldCommitmentAccessRequired,
       );
       const nullifiersRequired = scope.someIndicators(i => i.isNullified);
       const newCommitmentsRequired = scope.someIndicators(i => i.newCommitmentRequired);
@@ -202,7 +202,7 @@ export default {
             storageLocation: 'calldata',
           }),
         );
-      if (oldCommitmentReferencesRequired)
+      if (oldCommitmentAccessRequired)
         parameters.push(
           buildNode('VariableDeclaration', {
             name: 'commitmentRoot',
@@ -230,12 +230,12 @@ export default {
       // body:
       if (nullifiersRequired)
         statements.push(buildNode('requireNewNullifiersNotInNullifiersThenAddThemBoilerplate'));
-      if (oldCommitmentReferencesRequired)
+      if (oldCommitmentAccessRequired)
         statements.push(buildNode('requireCommitmentRootInCommitmentRootsBoilerplate'));
       if (zkSnarkVerificationRequired) {
         statements.push({
           nodeType: 'InputsVariableDeclarationStatementBoilerplate',
-          oldCommitmentReferencesRequired,
+          oldCommitmentAccessRequired,
           nullifiersRequired,
           newCommitmentsRequired,
         });

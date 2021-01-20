@@ -269,9 +269,9 @@ Indicators attached to a `ContractDefinition` `scopeType` inform the transformer
 | Indicator | what it indicates |
 |:-|:--|
 | `zkSnarkVerificationRequired` | whether to import zk-snark verification boilerplate |
-| `oldCommitmentReferencesRequired` | whether to import set membership boilerplate  |
+| `oldCommitmentAccessRequired` | whether to import set membership boilerplate  |
 | `nullifiersRequired` | whether to import nullifier calculation and/or set non-membership boilerplate |
-| `commitmentsRequired` | whether to import commitment calculation boilerplate |
+| `newCommitmentsRequired` | whether to import commitment calculation boilerplate |
 
 Indicators attached to a `FunctionDefinition` `scopeType` (not an exhaustive list of object properties) are actually assigned for each state variable mentioned in the function's scope:
 
@@ -302,12 +302,13 @@ For each stateVariable within the function, its indicator object is:
     path_of_identifier,
     ...
   ], // a subset of modifyingPaths. // we use an array to preserve the order of references
-  oldCommitmentReferenceRequired: true
+  oldCommitmentAccessRequired: true
   initialisationRequired: true,
   newCommitmentRequired: true,
   isIncremented: false,
   isDecremented: false,
-  isWhole: true, // or isPartitioned: true,
+  isWhole: true,
+  isPartitioned: false,
   isOwned: true,
   owner: { binding_of_owner_var_decl },
 }
@@ -318,16 +319,16 @@ For each stateVariable within the function, its indicator object is:
 | `isReferenced` | whether the stateVar is referenced (mentioned anywhere) within the function |
 | `isModified` | whether the stateVar's value is modified within the function |
 | `isAccessed` | whether the stateVar is accessed ('looked up') on the RHS of any assignment statements. Not to be confused with isReferenced. |
-| `oldCommitmentReferencesRequired` | whether to import set membership boilerplate for this stateVar within this function |
+| `oldCommitmentAccessRequired` | whether to import set membership boilerplate for this stateVar within this function |
 | `nullifiersRequired` | whether to import nullifier calculation and/or set non-membership boilerplate for this stateVar within this function |
-| `initialisationRequired` | ????????? |
 | `newCommitmentRequired` | whether to import commitment calculation boilerplate for this stateVar within this function |
 | `isIncremented` | whether the stateVar is is incremented within the function |
 | `isIncremented` | whether the stateVar is is decremented within the function |
 | `isWhole` | whether the stateVar is whole or partitioned |
+| `isPartitioned` | whether the stateVar is whole or partitioned |
 | `isOwned` | whether the stateVar has an owner we can deduce |
 
-We also have these indicators for stateVariables at the function scope level (such as `oldCommitmentReferenceRequired` and `isNullified`), because secret states might need to be nullified in one function (e.g. Nightfall burn), but not another (e.g. Nightfall mint).
+We also have these indicators for stateVariables at the function scope level (such as `oldCommitmentAccessRequired` and `isNullified`), because secret states might need to be nullified in one function (e.g. Nightfall burn), but not another (e.g. Nightfall mint).
 
 #### Preliminary traversals
 

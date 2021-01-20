@@ -27,7 +27,7 @@ function transformation1(oldAST) {
     stopTraversal: false,
     skipSubnodes: false,
     snarkVerificationRequired: true,
-    commitmentsRequired: true,
+    newCommitmentsRequired: true,
     nullifiersRequired: true,
   };
 

@@ -84,9 +84,9 @@ export class Scope {
       case 'ContractDefinition':
         this.indicators = {
           zkSnarkVerificationRequired: false,
-          oldCommitmentReferencesRequired: false,
+          oldCommitmentAccessRequired: false,
           nullifiersRequired: false,
-          commitmentsRequired: false,
+          newCommitmentsRequired: false,
         };
         break;
       case 'FunctionDefinition':
@@ -114,7 +114,7 @@ export class Scope {
           //     path_of_identifier,
           //     ...
           //   ], // a subset of modifyingPaths. // we use an array to preserve the order of references
-          //   oldCommitmentReferenceRequired: true,
+          //   oldCommitmentAccessRequired: true,
           //   isNullified: true,
           //   initialisationRequired: true,
           //   newCommitmentRequired: true,
@@ -162,27 +162,45 @@ export class Scope {
           // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
           isReferenced: false,
           referenceCount: 0,
-          referencingPaths: [], // paths which reference this binding
+          referencingPaths: [], // paths of `Identifier` nodes which reference this variable
           isModified: false,
           modificationCount: 0,
-          modifyingPaths: [], // paths which reference this binding
+          modifyingPaths: [], // paths of `Identifier` nodes which modify this variable
+          // Note: modification _is_ nullification, unless it's a partitioned state being incremented (in which case there's no nullifier).
+          // So nullifyingPaths is a subset of modifyingPaths.
+          // TODO: MIKE: suggestion only. populate these nullifier fields later in this function:
+          isNullified: false,
+          nullificationCount: 0,
+          nullifyingPaths: [], // paths of `Identifier` nodes which nullify this binding
+          isMapping: false,
+          mappingKey: null,
+          isKnown: false,
+          isWhole: false,
+          isPartitioned: false,
+          isOwned: false,
+          owner: null,
         };
 
         if (this.scopeType === 'ContractDefinition' && node.isSecret) {
-          this.indicators.commitmentsRequired = true;
+          // indicators used to construct import statements for the shield contract AST:
+          this.indicators.newCommitmentsRequired = true;
           this.indicators.zkSnarkVerificationRequired = true;
         }
+        // TODO: MIKE: see isMapping decl below - use that instead?
         if (node.typeDescriptions.typeString.includes('mapping')) {
+          this.bindings[id].isMapping = true;
           this.bindings[id].mappingKey = {};
         }
         break;
 
       case 'Identifier': {
         // 1) Update the binding this Identifier node is referencing:
-
+        // TODO: consider just how 'negative' these values can be. `> 2^32 / 2`, perhaps?
         if (node.referencedDeclaration > 4294967200) break;
-        // we have a mapping with key msg.sender
-        // ... we stop, because this identifier just represents the key, we account for this
+        // TODO: understand the significance of -15, and whether other values are possible for a msg.sender referencedDeclaration id.
+        // node.referencedDeclaration is the `id` of the AST node which this `Identifier` `node` refers to. `-15` is a special id meaning "msg.sender" (we think).
+        // So we have a mapping with key msg.sender
+        // ... we stop, because this identifier just represents the key, we account for this.
 
         let referencedBinding = this.getReferencedBinding(node);
 
@@ -237,7 +255,9 @@ export class Scope {
         // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
         this.referencedBindings[referencedId] = referencedBinding;
 
-        // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
+        // Currently, the only state variable 'modifications' we're aware of are:
+        //   - when a state variable is referenced on the LHS of an assignment;
+        //   - a unary operator
         if (
           (path.containerName !== 'indexExpression' &&
             path.getAncestorContainedWithin('leftHandSide') &&
@@ -316,9 +336,9 @@ export class Scope {
             referencedIndicator.isReferenced = true;
             ++referencedIndicator.referenceCount;
             referencedIndicator.referencingPaths.push(path); // might overwrite, but that's ok.
-            referencedIndicator.oldCommitmentReferenceRequired = true;
+            referencedIndicator.oldCommitmentAccessRequired = true;
           }
-          contractDefScope.indicators.oldCommitmentReferencesRequired = true;
+          contractDefScope.indicators.oldCommitmentAccessRequired = true;
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
           if (
@@ -581,9 +601,24 @@ export class Scope {
   }
 
   /**
-   * @returns {Boolean} - if a stateVariable is modified within the scope (of a FunctionDefinition scope).
+   * @returns {Boolean} - if some stateVariable is modified within the scope (of a FunctionDefinition scope).
    */
   modifiesSecretState() {
+    if (this.scopeType !== 'FunctionDefinition') return false;
+    const { indicators } = this;
+    for (const stateVarId of Object.keys(indicators)) {
+      const indicator = indicators[stateVarId];
+      if (indicator.isModified && indicator.binding.isSecret) return true;
+    }
+    return false;
+  }
+
+  /**
+   * @returns {Boolean} - if some stateVariable is nullified within the scope (of a FunctionDefinition scope).
+   */
+  // TODO: HOW TO SEE IF A FUNCTION NULLIFIES A STATE?
+  // TODO: YOU HAVEN'T WRITTEN THIS FUNCTION YET, MIKE
+  nullifiesSecretState() {
     if (this.scopeType !== 'FunctionDefinition') return false;
     const { indicators } = this;
     for (const stateVarId of Object.keys(indicators)) {
@@ -626,7 +661,7 @@ export class Scope {
         validBooleanKeys = [
           'isReferenced',
           'isModified',
-          'oldCommitmentRequired',
+          'oldCommitmentAccessRequired',
           'isNullified',
           'initialisationRequired',
           'newCommitmentRequired',
@@ -639,9 +674,9 @@ export class Scope {
       case 'ContractDefinition':
         validBooleanKeys = [
           'zkSnarkVerificationRequired',
-          'oldCommitmentReferencesRequired',
+          'oldCommitmentAccessRequired',
           'nullifiersRequired',
-          'commitmentsRequired',
+          'newCommitmentsRequired',
         ];
         break;
       default:
@@ -989,6 +1024,8 @@ export class Scope {
 
   /**
    * Decides whether each state in this scope is nullifiable
+   * This function exists solely to catch errors.
+   * If no errors are found, the calling code will simply carry on.
    */
   isNullifiable() {
     // for each state variable in the function def scope

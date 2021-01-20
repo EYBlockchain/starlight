@@ -17,7 +17,7 @@
 
 from "utils/pack/bool/unpack128.zok" import main as unpack128
 
-from "../../../../hashes/mimc/bn254/mimc2.zok" import main as mimc2 // can swap with other hash function
+from "../../../../hashes/mimc/altbn254/mimc2.zok" import main as mimc2 // can swap with other hash function
 from "../../../../concatenate/order-left-right-1x1.zok" import main as orderLeftRight
 
 

@@ -64,7 +64,7 @@ describe('Test suits', function() {
 
           expect(indicator.referenceCount).to.be.equal(testIndicator.referenceCount);
           expect(indicator.modificationCount).to.be.equal(testIndicator.modificationCount);
-          expect(indicator.oldCommitmentReferenceRequired).to.be.equal(testIndicator.oldCommitmentReferenceRequired);
+          expect(indicator.oldCommitmentAccessRequired).to.be.equal(testIndicator.oldCommitmentAccessRequired);
           expect(indicator.isModified).to.be.equal(testIndicator.isModified);
           expect(indicator.newCommitmentRequired).to.be.equal(testIndicator.newCommitmentRequired);
           expect(indicator.isNullified).to.be.equal(testIndicator.isNullified);

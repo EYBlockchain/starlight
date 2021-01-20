@@ -113,10 +113,10 @@ export const insertLeavesBoilerplate = [
 ];
 
 export const inputsVariableDeclarationStatementBoilerplate = (node) => {
-  const { oldCommitmentReferencesRequired, nullifiersRequired, newCommitmentsRequired } = node;
-  if (!oldCommitmentReferencesRequired && !nullifiersRequired && !newCommitmentsRequired) throw new Error(`It appears this function's zk-SNARK circuit doesn't take any parameters...`);
+  const { oldCommitmentAccessRequired, nullifiersRequired, newCommitmentsRequired } = node;
+  if (!oldCommitmentAccessRequired && !nullifiersRequired && !newCommitmentsRequired) throw new Error(`It appears this function's zk-SNARK circuit doesn't take any parameters...`);
   const lengthParameters = [];
-  if (oldCommitmentReferencesRequired) lengthParameters.push('1');
+  if (oldCommitmentAccessRequired) lengthParameters.push('1');
   if (nullifiersRequired) lengthParameters.push('newNullifiers.length');
   if (newCommitmentsRequired) lengthParameters.push('newCommitments.length');
   const lengthParameter = lengthParameters.join(' + ');
@@ -134,6 +134,6 @@ export const inputsVariableDeclarationStatementBoilerplate = (node) => {
     '\tinputs[k++] = newCommitments[i];',
     '}',
   ]);
-  if (oldCommitmentReferencesRequired) inputAssignment.push('inputs[k++] = commitmentRoot;');
+  if (oldCommitmentAccessRequired) inputAssignment.push('inputs[k++] = commitmentRoot;');
   return inputAssignment;
 };

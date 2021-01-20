@@ -85,7 +85,7 @@ export default {
       const { node, parent, scope } = path;
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
-      if (state.commitmentsRequired) {
+      if (state.newCommitmentsRequired) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._newASTPointer;
         let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
