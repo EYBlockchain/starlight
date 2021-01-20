@@ -162,8 +162,6 @@ export default {
           break;
       }
       console.log(scope.getReferencedBinding(lhsIdentifier));
-      console.log('------');
-      console.log(scope.indicators);
     },
   },
 
