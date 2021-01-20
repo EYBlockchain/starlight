@@ -384,14 +384,19 @@ export class Scope {
         // here: we look for require statements and add any indicators
         if (node.expression.name !== 'require') {
           // TODO add external function calls which use non-secret vars
-          throw new TypeError(
-            `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
-          );
+          node.arguments.forEach(arg => {
+            if (arg.nodeType === 'Identifier' && this.getReferencedBinding(arg).isSecret) {
+              throw new TypeError(
+                `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
+              );
+            }
+          });
         } else if (
-          node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
+          node.arguments[0].nodeType === 'BinaryOperation' &&
+          (node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
             't_magic_message' ||
-          node.arguments[0].rightExpression.expression.typeDescriptions.typeIdentifier ===
-            't_magic_message'
+            node.arguments[0].rightExpression.expression.typeDescriptions.typeIdentifier ===
+              't_magic_message')
         ) {
           // here: either lhs or rhs of require statement includes msg.sender
           // TODO  check if admin = state variable
@@ -437,6 +442,10 @@ export class Scope {
                   }
                 });
                 break;
+              case 'Identifier':
+              case 'Literal':
+                // here we probably have a bool, which can't be secret anyway
+                break;
               default:
                 throw new Error(
                   `This kind of expression (${arg.nodeType}) in a require statement isn't implemented yet!`,
@@ -459,6 +468,8 @@ export class Scope {
       case 'Mapping':
       case 'UnaryOperation':
       case 'TupleExpression':
+      case 'ImportDirective':
+      case 'UserDefinedTypeName':
         break;
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.

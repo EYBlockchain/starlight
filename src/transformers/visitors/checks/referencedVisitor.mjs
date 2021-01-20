@@ -81,8 +81,9 @@ export default {
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
       const { node, scope } = path;
+      if (node.referencedDeclaration > 4294967200) return; // this means we have msg.sender
       const referencedBinding =
-        node.referencedDeclaration < 4294967200
+        path.parentPath.node.nodeType !== 'MemberAccess'
           ? scope.getReferencedBinding(node)
           : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');
@@ -162,8 +163,8 @@ export default {
             ? scope.getReferencedBinding(lhsNode)
             : scope.getReferencedBinding(lhsNode.baseExpression);
         if (lhs.isSecret && rightAncestor && !referencedBinding.stateVariable)
-          throw new Error(
-            `Non-secret parameter ${node.name} cannot be used to assign secret variable ${lhsName}`,
+          logger.warn(
+            `Non-secret parameter ${node.name} used to assign secret variable ${lhsName}`,
           );
       }
     },

@@ -6,8 +6,8 @@ import "./IERC20.sol";
 
 contract Escrow {
 
-    address owner;
-    secret mapping(address => uint256) balances;
+    address public owner;
+    secret mapping(address => uint256) public balances;
     IERC20 public erc20;
 
     constructor(address _erc20) {
@@ -15,20 +15,20 @@ contract Escrow {
         erc20 = IERC20(_erc20);
     }
 
-    function deposit(uint amount) public {
-        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+    function deposit(uint amountDeposit) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amountDeposit);
         require(hasBalance);
-        balances[msg.sender] += amount;
+        unknown balances[msg.sender] += amountDeposit;
     }
 
-    function transfer(secret address recipient, secret uint256 amount) public {
-        balances[msg.sender] -= amount;
-        unknown balances[recipient] += amount;
+    function transfer(secret address recipient, secret uint256 amountTransfer) public {
+        balances[msg.sender] -= amountTransfer;
+        unknown balances[recipient] += amountTransfer;
     }
 
-    function withdraw(uint256 amount) public {
-        balances[msg.sender] -= amount;
-        bool success = erc20.transfer(msg.sender, amount);
+    function withdraw(uint256 amountWithdraw) public {
+        balances[msg.sender] -= amountWithdraw;
+        bool success = erc20.transfer(msg.sender, amountWithdraw);
         require(success, "ERC20 transfer failed");
     }
 }

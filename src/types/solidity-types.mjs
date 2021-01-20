@@ -38,6 +38,7 @@ export function getVisitableKeys(nodeType) {
     case 'Identifier':
     case 'Literal':
     case 'UserDefinedTypeName':
+    case 'ImportDirective':
       return [];
     case 'FunctionCall':
       return ['expression, arguments'];

@@ -89,12 +89,11 @@ export default {
 
     exit(path, state) {
       const { node, scope, parent } = path;
+      if (node.referencedDeclaration > 4294967200) return; // this means we have msg.sender
       const varDec =
-        node.referencedDeclaration < 4294967200
+        path.parentPath.node.nodeType !== 'MemberAccess'
           ? scope.getReferencedBinding(node)
           : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
-
-      if (node.referencedDeclaration < 0) return; // this means we have msg.sender
 
       if (varDec.stateVariable) {
         // node is decorated
