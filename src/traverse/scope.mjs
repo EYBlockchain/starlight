@@ -180,7 +180,7 @@ export class Scope {
       case 'Identifier': {
         // 1) Update the binding this Identifier node is referencing:
 
-        if (node.referencedDeclaration < 0) break;
+        if (node.referencedDeclaration > 4294967200) break;
         // we have a mapping with key msg.sender
         // ... we stop, because this identifier just represents the key, we account for this
 
@@ -205,7 +205,7 @@ export class Scope {
             keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
           const bindingExists = !!referencedBinding.mappingKey[keyName];
           const isParam =
-            keyNode.referencedDeclaration < 0
+            keyNode.referencedDeclaration > 4294967200
               ? `msg`
               : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
           if (!bindingExists)
@@ -289,7 +289,7 @@ export class Scope {
             if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
               keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
             const isParam =
-              keyNode.referencedDeclaration < 0
+              keyNode.referencedDeclaration > 4294967200
                 ? `msg`
                 : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
             if (!referencedIndicator.mappingKey[keyName]) {

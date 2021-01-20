@@ -82,7 +82,7 @@ export default {
       // 2) Check if NOT incrementing
       const { node, scope } = path;
       const referencedBinding =
-        node.referencedDeclaration > 0
+        node.referencedDeclaration < 4294967200
           ? scope.getReferencedBinding(node)
           : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
       const parentExpression = path.getAncestorOfType('ExpressionStatement');

@@ -90,7 +90,7 @@ export default {
     exit(path, state) {
       const { node, scope, parent } = path;
       const varDec =
-        node.referencedDeclaration > 0
+        node.referencedDeclaration < 4294967200
           ? scope.getReferencedBinding(node)
           : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
 
