@@ -71,20 +71,40 @@ export default {
       // Here we look at each statement and decide whether it's a nullification
       if (node.expression.nodeType === 'FunctionCall') return;
       let referencedBinding;
+      let referencedIndicator;
       // we get the relevant bindings of the lhs and initialise binding.nullifyingPaths (if doesnt exist)
       switch (node.expression.leftHandSide.nodeType) {
         case 'Identifier':
           referencedBinding = scope.getReferencedBinding(node.expression.leftHandSide);
-          if (!referencedBinding.nullifyingPaths) referencedBinding.nullifyingPaths = [];
+          referencedIndicator =
+            scope.indicators[node.expression.leftHandSide.referencedDeclaration];
+          if (!referencedBinding.nullifyingPaths) {
+            referencedBinding.nullifyingPaths = [];
+            referencedIndicator.nullifyingPaths = [];
+          } else if (!referencedIndicator.nullifyingPaths) {
+            // we have a separate statement for init just the indicator obj, since indicators are per function, while bindings are per contract
+            referencedIndicator.nullifyingPaths = [];
+          }
           break;
         case 'IndexAccess':
+          const mappingKey = scope.getMappingKeyIndicator(node.expression.leftHandSide);
           referencedBinding = scope.getReferencedBinding(
             node.expression.leftHandSide.baseExpression,
-          ).mappingKey[scope.getMappingKeyIndicator(node.expression.leftHandSide)];
-          if (!referencedBinding.nullifyingPaths) referencedBinding.nullifyingPaths = [];
+          ).mappingKey[mappingKey];
+          referencedIndicator =
+            scope.indicators[node.expression.leftHandSide.baseExpression.referencedDeclaration]
+              .mappingKey[mappingKey];
+          if (!referencedBinding.nullifyingPaths) {
+            referencedBinding.nullifyingPaths = [];
+            referencedIndicator.nullifyingPaths = [];
+          } else if (!referencedIndicator.nullifyingPaths) {
+            // we have a separate statement for init just the indicator obj, since indicators are per function, while bindings are per contract
+            referencedIndicator.nullifyingPaths = [];
+          }
           break;
         default:
           referencedBinding = {};
+          referencedIndicator = {};
           break;
       }
       // then look at the node.expression to see if its incremented and/or the lhs to see if the state is whole
@@ -94,10 +114,12 @@ export default {
           if (node.expression.isDecremented) {
             node.expression.isNullification = true;
             referencedBinding.nullifyingPaths.push(path);
+            referencedIndicator.nullifyingPaths.push(path);
             break;
           } else if (node.expression.leftHandSide.isKnown || node.expression.leftHandSide.isWhole) {
             node.expression.isNullification = true;
             referencedBinding.nullifyingPaths.push(path);
+            referencedIndicator.nullifyingPaths.push(path);
             break;
           } else {
             node.expression.isNullification = false;
@@ -106,6 +128,7 @@ export default {
         case false:
           node.expression.isNullification = true;
           referencedBinding.nullifyingPaths.push(path);
+          referencedIndicator.nullifyingPaths.push(path);
           break;
         default:
           // everything should be marked as isIncremented: true/false

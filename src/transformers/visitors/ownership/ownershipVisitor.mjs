@@ -103,6 +103,7 @@ export default {
                 );
               lhsbinding.owner = scope.getReferencedBinding(ownerNode);
               lhsbinding.isOwned = true;
+              scope.indicators[lhsIdentifier.referencedDeclaration].isOwned = true;
               break;
             case 'Literal':
               if (lhsbinding.owner && lhsbinding.owner.value !== ownerNode.value)
@@ -156,10 +157,13 @@ export default {
             lhsbinding.isOwned = true;
             scope.getReferencedBinding(lhsIdentifier).owner = lhsNode.indexExpression.expression;
             scope.getReferencedBinding(lhsIdentifier).isOwned = true;
+            scope.indicators[lhsIdentifier.referencedDeclaration].isOwned = true;
           }
           break;
       }
       console.log(scope.getReferencedBinding(lhsIdentifier));
+      console.log('------');
+      console.log(scope.indicators);
     },
   },
 
