@@ -939,6 +939,7 @@ export class Scope {
    */
   indicatorChecks(secretVar) {
     const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
+    const topScope = contractDefScope.bindings[secretVar.id];
     // warning: state is clearly whole, don't need known decorator
     if (secretVar.isKnown && secretVar.isWhole)
       logger.warn(
@@ -950,25 +951,38 @@ export class Scope {
         `Can't mark a whole state as unknown. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
       );
     // mark a state as partitioned (isIncremented and isUnknown)
-    if (secretVar.isUnknown && secretVar.isIncremented && !secretVar.isWhole) {
+    if (
+      (topScope.isUnknown || secretVar.isUnknown) &&
+      secretVar.isIncremented &&
+      !secretVar.isWhole
+    ) {
       secretVar.isWhole = false;
       secretVar.isPartitioned = true;
       secretVar.isPartitionedReason = [`Incremented and marked as unknown`];
+      if (
+        topScope.isPartitionedReason &&
+        !topScope.isPartitionedReason.includes(secretVar.isPartitionedReason[0])
+      ) {
+        topScope.isPartitionedReason.push(secretVar.isPartitionedReason[0]);
+      } else if (!topScope.isPartitionedReason) {
+        topScope.isPartitionedReason = secretVar.isPartitionedReason;
+      }
     }
     if (secretVar.isIncremented && secretVar.isWhole === undefined && !secretVar.isDecremented) {
       // state isIncremented, not isDecremented, and not yet marked as whole/partitioned
-      // error: no known/unknown syntax at all
-      if (!secretVar.isKnown && !secretVar.isUnknown)
+      if (!secretVar.isKnown && !secretVar.isUnknown) {
+        // error: no known/unknown syntax at all
         throw new Error(
           `Secret value ${secretVar.name} assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
         );
+      }
       // error: this should have been picked up in previous block (isIncremented and isUnknown)
       if (secretVar.isUnknown) throw new Error(`This should be unreachable code!`);
       // mark a known state as whole
       if (secretVar.isKnown) {
         secretVar.isWhole = true;
         secretVar.isWholeReason = [`Marked as known`];
-      } else {
+      } else if (!topScope.isUnknown) {
         // warning: its whole by default, may not be dev intention
         logger.warn(
           `State ${secretVar.name} will be treated as a whole state, because there are no unknown decorators`,
@@ -992,7 +1006,6 @@ export class Scope {
       contractDefScope.indicators.nullifiersRequired = true;
     }
     // here - mark the contract obj and check for conflicting indicators
-    const topScope = contractDefScope.bindings[secretVar.id];
     // errors: contract and function scopes conflict
     if (topScope.isWhole && !secretVar.isWhole)
       throw new Error(`State ${secretVar.name} must be whole because: ${topScope.isWholeReason}`);
@@ -1007,12 +1020,17 @@ export class Scope {
       topScope.isPartitionedReason = secretVar.isPartitionedReason;
     } else if (topScope.isWhole === false && topScope.isPartitionedReason) {
       if (!secretVar.isPartitionedReason) secretVar.isPartitionedReason = [];
-      secretVar.isPartitionedReason.forEach(reason => topScope.isPartitionedReason.push(reason));
+      secretVar.isPartitionedReason.forEach(reason => {
+        if (!topScope.isPartitionedReason.includes(reason))
+          topScope.isPartitionedReason.push(reason);
+      });
     } else if (!topScope.isWholeReason) {
       topScope.isWholeReason = secretVar.isWholeReason;
     } else {
       if (!secretVar.isWholeReason) secretVar.isWholeReason = [];
-      secretVar.isWholeReason.forEach(reason => topScope.isWholeReason.push(reason));
+      secretVar.isWholeReason.forEach(reason => {
+        if (!topScope.isWholeReason.includes(reason)) topScope.isWholeReason.push(reason);
+      });
     }
     // logging
     console.log(`Indicator: (at ${secretVar.name})`);

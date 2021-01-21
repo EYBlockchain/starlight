@@ -63,12 +63,13 @@ export default {
   ParameterList: {
     enter(path, state) {
       const { node } = path;
+      const functionName = path.parent.name;
       for (const line of state) {
         switch (line.type) {
           case 'param':
             if (line.nodeId) break;
             for (const param of node.parameters) {
-              if (param.name === line.name) {
+              if (param.name === line.name && line.oldline.includes(functionName)) {
                 line.nodeId = param.id;
                 if (line.keyword === 'secret') {
                   param.isSecret = true;
