@@ -217,23 +217,24 @@ export class Scope {
         const isMapping = node.typeDescriptions.typeString.includes('mapping');
 
         if (isMapping) {
+          // here - initialise binding for mapping[key]
           const keyNode = parent.indexExpression.expression || parent.indexExpression;
           let keyName = keyNode.name;
           if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
             keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
           const bindingExists = !!referencedBinding.mappingKey[keyName];
-          const isParam =
-            keyNode.referencedDeclaration > 4294967200
-              ? `msg`
-              : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
+          const isParam = this.getReferencedBinding(keyNode)
+            ? !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList')
+            : false;
+          const isMsg = keyNode.referencedDeclaration > 4294967200;
           if (!bindingExists)
             referencedBinding.mappingKey[keyName] = {
               referencedKey: keyNode.referenceDeclaration || keyNode.id,
-              referencedKeyNodeType:
-                isParam === `msg`
-                  ? keyNode.typeDescriptions.typeIdentifier
-                  : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
-              referencedKeyisParam: isParam,
+              referencedKeyNodeType: isMsg
+                ? keyNode.typeDescriptions.typeIdentifier
+                : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
+              referencedKeyisParam: isParam, // is a function parameter - used for finding owner
+              referencedKeyisMsg: isMsg, // is msg.sender - used for finding owner
               isSecret: referencedBinding.isSecret,
               isReferenced: false,
               referenceCount: 0,
@@ -300,6 +301,7 @@ export class Scope {
 
           const parentIndicator = referencedIndicator;
           if (isMapping) {
+            // here: initialise indicator for mapping[key]
             const keyNode = parent.indexExpression.expression || parent.indexExpression;
             if (!referencedIndicator.mappingKey) {
               referencedIndicator.mappingKey = {};
@@ -308,18 +310,18 @@ export class Scope {
 
             if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
               keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
-            const isParam =
-              keyNode.referencedDeclaration > 4294967200
-                ? `msg`
-                : !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList');
+            const isParam = this.getReferencedBinding(keyNode)
+              ? !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList')
+              : false;
+            const isMsg = keyNode.referencedDeclaration > 4294967200;
             if (!referencedIndicator.mappingKey[keyName]) {
               referencedIndicator.mappingKey[keyName] = {
                 referencedKey: keyNode.referenceDeclaration || keyNode.id,
-                referencedKeyNodeType:
-                  isParam === `msg`
-                    ? keyNode.typeDescriptions.typeIdentifier
-                    : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
-                referencedKeyisParam: isParam,
+                referencedKeyNodeType: isMsg
+                  ? keyNode.typeDescriptions.typeIdentifier
+                  : this.getReferencedNode(keyNode).nodeType || keyNode.nodeType,
+                referencedKeyisParam: isParam, // key is a function parameter - used for finding owner
+                referencedKeyisMsg: isMsg, // key is msg.sender - used for finding owner
                 isReferenced: false,
                 referenceCount: 0,
                 referencingPaths: [], // paths which reference this binding
@@ -1050,12 +1052,14 @@ export class Scope {
           // if the key is a parameter, then it can be any (user defined) key, so as long as isNullified = true, any key can be nullified
           if (
             stateVar.mappingKey[key].isNullified === true &&
-            stateVar.mappingKey[key].referencedKeyisParam
+            (stateVar.mappingKey[key].referencedKeyisParam ||
+              stateVar.mappingKey[key].referencedKeyisMsg)
           )
             break; // this means any mapping[key] is nullifiable - good!
           if (
             stateVar.mappingKey[key].isNullified !== true &&
-            !stateVar.mappingKey[key].referencedKeyisParam
+            !stateVar.mappingKey[key].referencedKeyisParam &&
+            !stateVar.mappingKey[key].referencedKeyisMsg
           )
             throw new Error(
               `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable.`,

@@ -260,6 +260,65 @@ A `VariableDeclaration` `binding` looks something like this:
 };
 ```
 
+If the variable is a mapping, we additionally hold some of these fields in `binding.mappingKey[key]`. This is to separate out states like `myMapping[a]` and `myMapping[b]`, since they may have different properties.
+
+```js
+{
+  kind: `VariableDeclaration`, // TODO: make 'kind' more specific, e.g. 'param'?
+  id: 16,
+  name: 'myVarName',
+  node,
+  path,
+  scope,
+  stateVariable: true,
+  isSecret: true,
+  isReferenced: true,
+  referenceCount: 2,
+  referencingPaths: [<path>, <path>], // paths which reference this binding
+  isModified: true,
+  modificationCount: 1,
+  modifyingPaths: [<path>], // paths which modify this binding
+  isNullified: true,
+  isMapping: true,
+  mappingKey: {
+    a: {
+      referencedKey: 51,
+      referencedKeyNodeType: 'VariableDeclaration',
+      referencedKeyisParam: false,
+      referencedKeyisMsg: false,
+      isSecret: true,
+      isReferenced: true,
+      referenceCount: 1,
+      referencingPaths: [Array],
+      isModified: true,
+      modificationCount: 1,
+      modifyingPaths: [Array],
+      nullifyingPaths: [Array],
+      owner: [Object],
+      isOwned: true
+    },
+    b: {
+      referencedKey: 73,
+      referencedKeyNodeType: 'VariableDeclaration',
+      referencedKeyisParam: false,
+      referencedKeyisMsg: false,
+      isSecret: true,
+      isReferenced: true,
+      referenceCount: 1,
+      referencingPaths: [Array],
+      isModified: false,
+      modificationCount: 0,
+      modifyingPaths: [Array],
+      nullifyingPaths: []
+    }
+},
+  isKnown: true,
+  isWhole: true,
+  isPartitioned: false,
+  isOwned: true,
+  owner,
+};
+```
 ##### Indicators
 
 Not a Babel concept. We add objects called `indicators` to `scope` class instances and `path` class instances. Indicators are often booleans which describe certain zApp-related properties of state variables within a particular scopeType or within a particular nodeType. These indicators will be used by visitor functions in later traversals, when deciding how to build the new ASTs.
@@ -302,6 +361,7 @@ For each stateVariable within the function, its indicator object is:
     path_of_identifier,
     ...
   ], // a subset of modifyingPaths. // we use an array to preserve the order of references
+  isMapping: false,
   oldCommitmentAccessRequired: true
   initialisationRequired: true,
   newCommitmentRequired: true,
@@ -327,6 +387,9 @@ For each stateVariable within the function, its indicator object is:
 | `isWhole` | whether the stateVar is whole or partitioned |
 | `isPartitioned` | whether the stateVar is whole or partitioned |
 | `isOwned` | whether the stateVar has an owner we can deduce |
+| `isMapping` | whether the stateVar is a mapping |
+
+If `isMapping`, we again have a `mappingKey[key]` field for each key which appears in this function. This is so that, for example, the `modifyingPaths` for `myMapping[a]` are stored separately from the `modifyingPaths` for `myMapping[b]`.
 
 We also have these indicators for stateVariables at the function scope level (such as `oldCommitmentAccessRequired` and `isNullified`), because secret states might need to be nullified in one function (e.g. Nightfall burn), but not another (e.g. Nightfall mint).
 

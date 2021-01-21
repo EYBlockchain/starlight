@@ -131,7 +131,7 @@ export default {
           )
             break;
           // if the mapping key for THIS identifier is msg.sender...
-          if (lhsbinding.referencedKeyisParam === 'msg') {
+          if (lhsbinding.referencedKeyisMsg) {
             let msgSenderEverywhere = true;
             // we look through each nullifying path of this mapping[msg.sender]
             for (const nullPath of lhsbinding.nullifyingPaths) {
@@ -165,6 +165,8 @@ export default {
           break;
       }
       console.log(scope.getReferencedBinding(lhsIdentifier));
+      console.log('------');
+      console.log(scope.indicators[lhsIdentifier.referencedDeclaration]);
     },
   },
 
