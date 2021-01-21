@@ -1,0 +1,75 @@
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768
+from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
+
+def main(\
+	private field value,\
+	private u32[8] a_stateVarId,\
+	private bool a_oldCommitment_isDummy,\
+	private u32[8] a_oldCommitment_value,\
+	private u32[8] a_oldCommitment_owner_publicKey,\
+	private u32[8] a_oldCommitment_salt,\
+	private field a_oldCommitment_membershipWitness_index,\
+	private field[32] a_oldCommitment_membershipWitness_siblingPath,\
+	private u32[8] a_oldCommitment_owner_secretKey,\
+	public field a_oldCommitment_nullifier,\
+	private u32[8] a_newCommitment_value,\
+	private u32[8] a_newCommitment_owner_publicKey,\
+	private u32[8] a_newCommitment_salt,\
+	public field a_newCommitment_commitment,\
+	public field commitmentRoot\
+) -> ():
+
+	field a = value
+
+	// prepare secret states for commitment
+
+	a_newCommitment_value = field_to_u32_8(a)
+
+	// old commitments - nullify
+
+	// Note: If oldCommitment_isDummy == true, then generate a dummy nullifier.
+	// Note: even if the user is _initialising_ a state with a dummy oldCommitment and dummy nullifier, the commitmentRoot MUST be valid, because the shield contract will check it.
+	// Note: The dummy nullifier for a whole state is h(stateVarId, 0, 0).
+
+	a_oldCommitment_owner_secretKey = if a_oldCommitment_isDummy then [0x00000000; 8] else a_oldCommitment_owner_secretKey fi
+
+	a_oldCommitment_salt = if a_oldCommitment_isDummy then [0x00000000; 8] else a_oldCommitment_salt fi
+
+	u32[8] a_oldCommitment_nullifier_check = sha256of768([...a_stateVarId, ...a_oldCommitment_owner_secretKey, ...a_oldCommitment_salt])
+
+	assert(\
+		field_to_bool_256(a_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(a_oldCommitment_nullifier_check)[8..256]\
+	)
+
+	// old commitments - preimage checks
+
+	u32[8] a_oldCommitment_commitment = sha256of1024([...a_stateVarId, ...a_oldCommitment_value, ...a_oldCommitment_owner_publicKey, ...a_oldCommitment_salt])
+
+	// old commitments - existence checks
+
+	field a_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(a_oldCommitment_commitment)[8..256]])
+
+	field a_commitmentRoot_check = checkRoot(a_oldCommitment_membershipWitness_siblingPath, a_oldCommitment_commitment_truncated, a_oldCommitment_membershipWitness_index)
+
+	// Note: Don't bother checking existence, if the oldCommitment is a dummy:
+	field a_commitmentRoot_check = if a_oldCommitment_isDummy == true then commitmentRoot else a_commitmentRoot_check fi
+
+	assert(\
+		field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_commitmentRoot_check)[8..256]\
+	)
+
+	// new commitments - preimage checks
+
+	u32[8] a_newCommitment_commitment_check = sha256of1024([...a_stateVarId, ...a_newCommitment_value, ...a_newCommitment_owner_publicKey, ...a_newCommitment_salt])
+
+	assert(\
+		field_to_bool_256(a_newCommitment_commitment)[8..256] == u32_8_to_bool_256(a_newCommitment_commitment_check)[8..256]\
+	)
+
+	return
