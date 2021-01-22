@@ -22,15 +22,15 @@ const zappify = options => {
 
   ownership(path, options);
 
-  if (options.isTest) return path.scope.indicators;
-
-  return path;
-
-  // toOrchestration(zsolAST, options);
+  toOrchestration(zsolAST, options);
   //
   // toCircuit(zsolAST, options);
   //
   // toContract(zsolAST, options);
+
+  if (options.isTest) return path.scope.indicators;
+
+  return path;
 };
 
 // const tasks = new Listr([

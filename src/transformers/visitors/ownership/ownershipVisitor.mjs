@@ -19,7 +19,17 @@ export default {
   ContractDefinition: {
     enter(path, state) {},
 
-    exit(path, state) {},
+    exit(path, state) {
+      console.log(path.scope);
+      Object.keys(path.scope.bindings).forEach(id => {
+        const binding = path.scope.bindings[id];
+        if (binding.isSecret && !binding.isOwned) {
+          logger.warn(
+            `Warning: secret state ${binding.name} is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.`,
+          );
+        }
+      });
+    },
   },
 
   FunctionDefinition: {
@@ -164,9 +174,9 @@ export default {
           }
           break;
       }
-      console.log(scope.getReferencedBinding(lhsIdentifier));
-      console.log('------');
-      console.log(scope.indicators[lhsIdentifier.referencedDeclaration]);
+      // console.log(scope.getReferencedBinding(lhsIdentifier));
+      // console.log('------');
+      // console.log(scope.indicators[lhsIdentifier.referencedDeclaration]);
     },
   },
 
