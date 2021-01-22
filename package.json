@@ -4,14 +4,11 @@
   "description": "Compiles Zero Knowledge Protocols from Solidity",
   "main": "index.mjs",
   "scripts": {
-    "start": "node src/index.mjs -i examples/cases/uninit_global/assign.zsol",
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
     "test": "./bin/startup && docker-compose run zappify npx mocha --exit --require @babel/register 'test/test.mjs'",
-    "test-zsol": "mocha --require @babel/register ./test/test-zsols/index.mjs",
-    "create-ast": "node src/index.mjs -i contracts/assign.sol",
-    "demo": "node STC/stc.mjs",
-    "example": "node src/transformers/exampleTransformer.mjs -i ./sprinkled_ast.json"
+    "test-prelim-traversals": "mocha --require @babel/register ./test/prelim-traversals/index.mjs",
+    "stc-demo": "node STC/stc.mjs"
   },
   "bin": {
     "zappify": "bin/index.mjs"
@@ -39,6 +36,7 @@
     "@babel/register": "^7.11.5",
     "@truffle/contract": "^4.2.21",
     "axios": "^0.19.2",
+    "chai": "^4.2.0",
     "chalk": "^4.1.0",
     "commander": "^6.1.0",
     "config": "^3.3.1",
@@ -47,6 +45,7 @@
     "general-number": "^1.0.1",
     "listr": "^0.14.3",
     "lodash.clonedeep": "^4.5.0",
+    "mocha": "^8.2.1",
     "solc": "0.8.0",
     "truffle": "^5.1.49",
     "web3": "^1.2.11",
@@ -55,12 +54,11 @@
     "zkp-utils": "^1.0.8"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
     "cod-scripts": "^3.2.0",
     "eslint": "^5.16.0",
+    "esm": "^3.2.25",
     "husky": "^4.2.5",
     "mocha": "^8.2.1",
-    "prettier": "^2.0.5",
-    "prettier-plugin-solidity": "^1.0.0-alpha.54"
+    "prettier": "^2.0.5"
   }
 }

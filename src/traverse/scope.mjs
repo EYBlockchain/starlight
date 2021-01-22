@@ -125,6 +125,11 @@ export class Scope {
     }
   }
 
+  /**
+   * Updates the current scope (`this`) by adding details of a new NodePath (`path`) (newly discovered during AST traversal).
+   *  - Creates a binding if this is a new declaration of a contract/function/variable.
+   *  - Updates the indicators for `this` scope, based on the nature of the `path`.
+   */
   update(path) {
     const { node, parent } = path;
     const { name, id, nodeType } = node;
@@ -186,7 +191,7 @@ export class Scope {
           this.indicators.newCommitmentsRequired = true;
           this.indicators.zkSnarkVerificationRequired = true;
         }
-        // TODO: MIKE: see isMapping decl below - use that instead?
+
         if (node.typeDescriptions.typeString.includes('mapping')) {
           this.bindings[id].isMapping = true;
           this.bindings[id].mappingKey = {};
@@ -198,10 +203,12 @@ export class Scope {
         // TODO: consider just how 'negative' these values can be. `> 2^32 / 2`, perhaps?
         if (node.referencedDeclaration > 4294967200) break;
         // TODO: understand the significance of -15, and whether other values are possible for a msg.sender referencedDeclaration id.
+        // TODO: OR... replace with node.typeDescriptions.typeString == 'msg', because that's a more 'sturdy' thing.
         // node.referencedDeclaration is the `id` of the AST node which this `Identifier` `node` refers to. `-15` is a special id meaning "msg.sender" (we think).
         // So we have a mapping with key msg.sender
         // ... we stop, because this identifier just represents the key, we account for this.
 
+        // `Identifier` nodes _refer_ to already-declared variables. We grab the binding for that referenced variable:
         let referencedBinding = this.getReferencedBinding(node);
 
         if (!referencedBinding)
@@ -214,14 +221,22 @@ export class Scope {
         const referencedName = referencedBinding.name;
         const parentBinding = referencedBinding;
 
+        // Is this node an Identifier for a mapping?
         const isMapping = node.typeDescriptions.typeString.includes('mapping');
 
         if (isMapping) {
           // here - initialise binding for mapping[key]
           const keyNode = parent.indexExpression.expression || parent.indexExpression;
+          // TODO: key might be a literal node (not an identifier node), in which case it won't be referring to a binding. We'll need to edit this code when we come to that. For now, here's an error to remind ourselves:
+          if (keyNode.nodeType !== 'Identifier') {
+            throw new Error(
+              `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
+            );
+          }
           let keyName = keyNode.name;
-          if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified)
-            keyName = `${keyName}_${this.getReferencedBinding(keyNode).modificationCount}`;
+          const keyBinding = this.getReferencedBinding(keyNode);
+          if (keyBinding && keyBinding.isModified)
+            keyName = `${keyName}_${keyBinding.modificationCount}`;
           const bindingExists = !!referencedBinding.mappingKey[keyName];
           const isParam = this.getReferencedBinding(keyNode)
             ? !!this.getReferencedBinding(keyNode).path.getAncestorOfType('ParameterList')
@@ -260,10 +275,16 @@ export class Scope {
         //   - when a state variable is referenced on the LHS of an assignment;
         //   - a unary operator
         if (
-          (path.containerName !== 'indexExpression' &&
+          // prettier-ignore
+          (
+            path.containerName !== 'indexExpression' &&
             path.getAncestorContainedWithin('leftHandSide') &&
-            path.getAncestorOfType('Assignment')) ||
-          (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
+            path.getAncestorOfType('Assignment')
+          ) ||
+          (
+            path.getAncestorOfType('UnaryOperation') &&
+            path.containerName !== 'indexExpression'
+          )
         ) {
           // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
           if (!referencedBinding.modifyingPaths.some(p => p.node.id === path.node.id)) {
@@ -344,10 +365,16 @@ export class Scope {
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
           if (
-            (path.containerName !== 'indexExpression' &&
+            // prettier-ignore
+            (
+              path.containerName !== 'indexExpression' &&
               path.getAncestorContainedWithin('leftHandSide') &&
-              path.getAncestorOfType('Assignment')) ||
-            (path.getAncestorOfType('UnaryOperation') && path.containerName !== 'indexExpression')
+              path.getAncestorOfType('Assignment')
+            ) ||
+            (
+              path.getAncestorOfType('UnaryOperation') &&
+              path.containerName !== 'indexExpression'
+            )
           ) {
             if (!referencedIndicator.modifyingPaths.some(p => p.node.id === path.node.id)) {
               referencedIndicator.isModified = true;
@@ -530,7 +557,7 @@ export class Scope {
   }
 
   /**
-   * @returns {Binding} - the binding of the node being referred-to by the input referencingNode.
+   * @returns {Binding || null} - the binding of the node being referred-to by the input referencingNode.
    */
   getReferencedBinding(referencingNode) {
     const node = referencingNode;
@@ -542,7 +569,7 @@ export class Scope {
   }
 
   /**
-   * @returns {Binding} - the node being referred-to by the input referencingNode.
+   * @returns {Binding || null} - the node being referred-to by the input referencingNode.
    */
   getReferencedNode(referencingNode) {
     const binding = this.getReferencedBinding(referencingNode);

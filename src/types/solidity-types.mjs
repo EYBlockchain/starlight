@@ -185,24 +185,6 @@ export function buildNode(nodeType, fields) {
         subExpression,
       };
     }
-    // Not an actual solc AST node type. This is just a convenient method for building a `require` statement.
-    case 'require': {
-      const { name, subExpression = {} } = fields;
-      return {
-        nodeType: 'Identifier',
-        referencedDeclaration: 4294967278,
-        typeDescriptions: {
-          typeIdentifier: 't_function_require_pure$_t_bool_$returns$__$',
-          typeString: 'function (bool) pure',
-        },
-        argumentTypes: [
-          {
-            typeIdentifier: 't_bool',
-            typeString: 'bool',
-          }
-        ],
-      };
-    }
     case 'ElementaryTypeName': {
       const { typeDescriptions } = fields;
       return {

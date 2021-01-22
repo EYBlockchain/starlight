@@ -12,25 +12,25 @@ import logger from './utils/logger.mjs';
 
 // Original funtion before listr - might choose to revert back to this simple function.
 const zappify = options => {
-  const { deDecFile, toRedecorate } = removeDecorators(options);
+  const { deDecoratedFile, toRedecorate } = removeDecorators(options);
 
-  const solAST = compile(deDecFile, options);
+  const solAST = compile(deDecoratedFile, options);
 
   const zsolAST = redecorate(solAST, toRedecorate, options);
 
-  const path = checks(zsolAST, options);
+  let path = checks(zsolAST, options);
 
-  ownership(path, options);
+  path = ownership(path, options);
 
-  if (options.isTest) return path.scope.indicators;
-
-  return path;
+  if (options.isTest && options.testType === 'prelim') return path;
 
   // toOrchestration(zsolAST, options);
   //
   // toCircuit(zsolAST, options);
   //
   // toContract(zsolAST, options);
+
+  return path;
 };
 
 // const tasks = new Listr([

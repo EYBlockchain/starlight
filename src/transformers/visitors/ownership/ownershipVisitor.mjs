@@ -139,11 +139,15 @@ export default {
               if (nullPath.node.id === node.id) continue;
               // break out if we find a key =/= msg.sender
               if (
-                (nullPath.node.expression.leftHandSide.leftExpression &&
-                  nullPath.node.expression.leftHandSide.leftExpression.indexExpression.expression
-                    .name !== 'msg') ||
-                (nullPath.node.expression.leftHandSide.indexExpression &&
-                  nullPath.node.expression.leftHandSide.indexExpression.expression.name !== 'msg')
+                // prettier-ignore
+                (
+                  nullPath.node.expression.leftHandSide.leftExpression &&
+                  nullPath.node.expression.leftHandSide.leftExpression.indexExpression.expression.name !== 'msg'
+                ) ||
+                (
+                  nullPath.node.expression.leftHandSide.indexExpression &&
+                  nullPath.node.expression.leftHandSide.indexExpression.expression.name !== 'msg'
+                )
               ) {
                 msgSenderEverywhere = false;
                 break;

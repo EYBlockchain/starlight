@@ -88,7 +88,7 @@ export default {
             referencedIndicator.nullifyingPaths = [];
           }
           break;
-        case 'IndexAccess':
+        case 'IndexAccess': {
           const mappingKey = scope.getMappingKeyIndicator(node.expression.leftHandSide);
           referencedBinding = scope.getReferencedBinding(
             node.expression.leftHandSide.baseExpression,
@@ -104,6 +104,7 @@ export default {
             referencedIndicator.nullifyingPaths = [];
           }
           break;
+        }
         default:
           referencedBinding = {};
           referencedIndicator = {};

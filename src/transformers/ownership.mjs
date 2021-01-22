@@ -31,9 +31,9 @@ function transformation1(ast) {
 }
 
 // A transformer function which will accept an ast.
-export default function ownership(ast, options) {
+export default function ownership(astPath, options) {
   logger.info('Performing ownership checks on the zsol AST...');
-  const newAST = transformation1(ast);
+  const updatedASTPath = transformation1(astPath);
   //  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   //  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
@@ -51,5 +51,5 @@ export default function ownership(ast, options) {
   //   fs.writeFileSync(filepath, fileObj.file);
   // }
   logger.info('Owners assigned.');
-  return newAST;
+  return updatedASTPath;
 }

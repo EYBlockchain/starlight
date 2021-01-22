@@ -63,7 +63,7 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function checks(ast, options) {
   logger.info('Performing checks on the zsol AST...');
-  const indicator = transformation1(ast);
+  const path = transformation1(ast);
   //  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   //  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
@@ -81,5 +81,5 @@ export default function checks(ast, options) {
   //   fs.writeFileSync(filepath, fileObj.file);
   // }
   logger.info('Checks complete.');
-  return indicator;
+  return path;
 }
