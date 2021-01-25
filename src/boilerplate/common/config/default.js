@@ -39,6 +39,7 @@ module.exports = {
     },
   },
   // mongodb:
+  // TODO: The latest Timber image has been edited... not sure how to create a 'user' for Timber anymore...
   mongo: {
     host: 'timber-mongo',
     port: '27017',

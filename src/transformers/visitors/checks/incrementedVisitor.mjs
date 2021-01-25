@@ -106,7 +106,7 @@ export default {
             lhsNode.typeDescriptions.typeString !== 'address'
               ? `Overwritten at ${expressionNode.src}`
               : `Address`;
-          console.log(reason);
+          logger.debug('reason:', reason);
           if (fnIndicatorObj.isWholeReason) {
             fnIndicatorObj.isWholeReason.push(reason);
           } else {

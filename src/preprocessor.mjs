@@ -25,7 +25,7 @@ async function processLineByLine(file) {
   });
   // Note: we use the crlfDelay option to recognize all instances of CR LF
   // ('\r\n') in input.txt as a single line break.
-  logger.info(`Parsing file ${file}... `);
+  logger.verbose(`Parsing file ${file}... `);
   for await (const line of rl) {
     // Each line in input.txt will be successively available here as `line`.
     try {

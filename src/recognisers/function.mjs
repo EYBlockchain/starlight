@@ -4,7 +4,7 @@ recognise a function definition
 import config from 'config';
 import process from '../processors/function.mjs';
 import logger from '../utils/logger.mjs';
-import CompilerError from '../utils/compiler-error.mjs';
+import { ParseError } from '../utils/errors.mjs';
 import { blockCount } from '../state.mjs';
 
 function recogniseFunction(line, rtn = false) {
@@ -14,8 +14,8 @@ function recogniseFunction(line, rtn = false) {
 
       // we don't support nested functions
       if (blockCount.value !== 2)
-        throw new CompilerError(
-          `Nested functions  or functions outside of a contract are not allowed: currently inside nested block ${blockCount.value}`,
+        throw new ParseError(
+          `Nested functions or functions outside of a contract are not allowed: currently inside nested block ${blockCount.value}`,
         );
 
       const ln = line
@@ -33,11 +33,11 @@ function recogniseFunction(line, rtn = false) {
       if (type === 'constructor') {
         name = 'constructor';
         visibility = 'private';
-        logger.info(`Found ${type}`);
+        logger.debug(`Found ${type}`);
       } else {
         [name, ...rest] = rest;
         visibility = rest[rest.indexOf(')') + 1]; // visibility comes after first closing bracket
-        logger.info(`Found ${type} ${name} with visibility ${visibility}`);
+        logger.debug(`Found ${type} ${name} with visibility ${visibility}`);
       }
       if (!rtn) {
         process({ type, visibility, name, rest });

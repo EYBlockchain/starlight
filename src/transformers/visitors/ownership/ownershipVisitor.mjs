@@ -172,9 +172,9 @@ export default {
           }
           break;
       }
-      // console.log(scope.getReferencedBinding(lhsIdentifier));
-      // console.log('------');
-      // console.log(scope.indicators[lhsIdentifier.referencedDeclaration]);
+      // logger.debug(scope.getReferencedBinding(lhsIdentifier));
+      // logger.debug('------');
+      // logger.debug(scope.indicators[lhsIdentifier.referencedDeclaration]);
     },
   },
 

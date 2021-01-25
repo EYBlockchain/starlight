@@ -44,15 +44,15 @@ function transformation1(oldAST) {
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
   path.traverse(explode(unsupportedVisitor), state);
-  logger.info('No unsupported Solidity');
+  logger.verbose('No unsupported Solidity');
   path.traverse(explode(externalCallVisitor), state);
-  logger.info('No unsupported external calls');
+  logger.verbose('No unsupported external calls');
   path.traverse(explode(decoratorVisitor), state);
-  logger.info('No conflicting known/unknown decorators');
+  logger.verbose('No conflicting known/unknown decorators');
   path.traverse(explode(incrementedVisitor), state);
-  logger.info('Incrementations marked');
+  logger.verbose('Incrementations marked');
   path.traverse(explode(accessedVisitor), state);
-  logger.info('Accessed values marked');
+  logger.verbose('Accessed values marked');
   path.traverse(explode(wholeVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
@@ -62,24 +62,24 @@ function transformation1(oldAST) {
 
 // A transformer function which will accept an ast.
 export default function checks(ast, options) {
-  logger.info('Performing checks on the zsol AST...');
-  const indicator = transformation1(ast);
+  logger.verbose('Performing checks on the zsol AST...');
+  const path = transformation1(ast);
   //  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   //  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the circuit files from the newly created circuit AST:
-  // logger.info('Generating files from the .zok AST...');
+  // logger.verbose('Generating files from the .zok AST...');
   // const circuitFileData = codeGenerator(newAST);
   //
   // // save the circuit files to the output dir:
-  // logger.info(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
+  // logger.verbose(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
   // for (const fileObj of circuitFileData) {
   //   const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
   //   const dir = pathjs.dirname(filepath);
-  //   console.log(`About to save to ${filepath}...`)
+  //   logger.debug(`About to save to ${filepath}...`)
   //   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
   //   fs.writeFileSync(filepath, fileObj.file);
   // }
-  logger.info('Checks complete.');
-  return indicator;
+  logger.verbose('Checks complete.');
+  return path;
 }

@@ -24,14 +24,14 @@ function tidy(_line) {
 /**
  * Takes an input '.zsol' file and removes the privacy keywords.
  * @return {Object} = {
- *     deDecFile // a '.sol' file, stripped of any keywords, so
+ *     deDecoratedFile // a '.sol' file, stripped of any keywords, so
  *                        that 'solc' may compile it.
  *     toRedecorate // an array of objects recording where the
  *                     decorator keywords should be reinstated after
  *                     running 'solc'.
  */
 function removeDecorators(options) {
-  logger.info(`Parsing decorated file ${options.inputFilePath}... `);
+  logger.verbose(`Parsing decorated file ${options.inputFilePath}... `);
   const decLines = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
 
   const toRedecorate = [];
@@ -69,16 +69,16 @@ function removeDecorators(options) {
     return decLine;
   });
 
-  const deDecFile = deDecledLines.join('\r\n');
+  const deDecoratedFile = deDecledLines.join('\r\n');
 
-  const deDecFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol`;
-  fs.writeFileSync(deDecFilePath, deDecFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.
+  const deDecoratedFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol`;
+  fs.writeFileSync(deDecoratedFilePath, deDecoratedFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.
 
   // Let's also copy the original input file to this output dir:
   const duplicateInputFilePath = `${options.parseDirPath}/${path.basename(options.inputFilePath)}`;
   fs.copyFileSync(options.inputFilePath, duplicateInputFilePath);
 
-  return { deDecFile, toRedecorate };
+  return { deDecoratedFile, toRedecorate };
 }
 
 export default removeDecorators;

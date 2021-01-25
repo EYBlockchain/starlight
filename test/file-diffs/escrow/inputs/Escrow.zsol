@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+import "./IERC20.sol";
+
+contract Escrow {
+
+    address public owner;
+    secret mapping(address => uint256) public balances;
+    IERC20 public erc20;
+
+    constructor(address _erc20) {
+        owner = msg.sender;
+        erc20 = IERC20(_erc20);
+    }
+
+    function deposit(uint amountDeposit) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amountDeposit);
+        require(hasBalance);
+        unknown balances[msg.sender] += amountDeposit;
+    }
+
+    function transfer(secret address recipient, secret uint256 amountTransfer) public {
+        balances[msg.sender] -= amountTransfer;
+        unknown balances[recipient] += amountTransfer;
+    }
+
+    function withdraw(uint256 amountWithdraw) public {
+        balances[msg.sender] -= amountWithdraw;
+        bool success = erc20.transfer(msg.sender, amountWithdraw);
+        require(success, "ERC20 transfer failed");
+    }
+}

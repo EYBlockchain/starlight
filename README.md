@@ -57,40 +57,38 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Contents**
 
-  - [Install](#install)
-  - [Run](#run)
-    - [other options](#other-options)
+- [Troubleshooting](#troubleshooting)
 - [Developer](#developer)
-  - [Testing outputs](#testing-outputs)
-    - [circuit](#circuit)
+  - [Testing](#testing)
     - [full zapp](#full-zapp)
+    - [preliminary traversals](#preliminary-traversals)
+      - [Adding new test cases](#adding-new-test-cases)
+      - [Updating test cases](#updating-test-cases)
+    - [circuit](#circuit)
   - [R&D Notes & Ideas](#rd-notes--ideas)
-  - [Miranda's test branch](#mirandas-test-branch)
-    - [Testing `removeDecorators`](#testing-removedecorators)
-    - [Testing compiler output](#testing-compiler-output)
 - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ---
 
-### Install
+## Install
 
 Whilst the package is in early development, it isn't hosted on npm. To install:
 
 `cd zappify`
+`npm i`
 `npm i -g ./`
 
 This will create a symlink to your node.js bin, allowing you to run the commands specified in the '`"bin":`' field of the `package.json`; namely the `zappify` command.
 
-
-### Run
+## Run
 
 `zappify -i ./path/to/MyZappableContract.zsol`
 
 ... converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
 
-#### other options
+### other options
 
 - `-o ./custom/output/dir/` - specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.
 - `-z customZappName` - otherwise files get output to a folder with name matching that of the input file.
@@ -98,72 +96,92 @@ This will create a symlink to your node.js bin, allowing you to run the commands
 
 ---
 
+## Troubleshooting
+
+If the `zappify` command isn't working, try the [Install](#install) steps again. You might need to try `npm i --force -g ./`.
+
+In very rare cases, you might need to navigate to your node.js innards and delete zappify from the `bin` and `lib/node_modules`.
+To find where your npm lib is, type `npm` and it will tell you the path.
+
+E.g.:
+```
+~/.nvm/versions/node/v15.0.1/lib/node_modules/npm
+                              ^
+                              lib
+                              ^
+                              bin is also at this level
+```
+
+
+
+---
+
 ## Developer
 
-### Testing outputs
-
-#### circuit
-
-`zappify -i ./examples/cases/uninit_global/assign.zsol`
-
-`cd zapps/assign/circuits`
-
-`docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
-
-`./zokrates compile --light -i code/assign.zok` <-- it should compile
+### Testing
 
 #### full zapp
 
-`zappify -i ./examples/cases/uninit_global/assign.zsol`
+To test an entire output zApp:
 
-`cd zapps/assign/`
+Having already run `zappify`, the newly-created zApp will be located in the output dir you specified (or in a dir called `./zapps`, by default). Step into that directory:
+
+`cd zapps/MyContract/`
+
+Install dependencies:
 
 `npm install`
 
-(At this stage, you might need to run `chmod +x ./bin/setup && chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
-
 Start docker.
 
+(At this stage, you might need to run `chmod +x ./bin/setup && chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
+
+Run trusted setups on all circuit files:
+
 `./bin/setup` <-- this can take quite a while!
+
+Finally, run a test, which executes the function privately, using some test parameters:
 
 `npm test`
 
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
-NB: rerunning the test will not work, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/assign/orchestration/common/db/preimage.json` before `npm test`.
+**NB: rerunning the test will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
+
+#### preliminary traversals
+
+Preliminary traversals populate the `binding` and `indicator` objects. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
+
+`npm run test-prelim`
+
+##### Adding new test cases
+
+You can automate the creation of 'expected outputs' for these tests.
+
+1. Create a `.zsol` file, around which you'd like a test to be created. For this example, suppose it's called `example-1.zsol`.
+1. Save it in `./test/prelim-traversals/test-data`.
+1. Run `npm run-script test-prelim -- --write example-1`. This will run `zappify` on the file, and write output data to a file called `example-1.json`.
+1. Future tests will use `example-1.json` as the 'expected' outcome of the test.
+
+##### Updating test cases
+
+Run the steps above. Warning: this will overwrite existing 'expected' data with new data.
+
+#### circuit
+
+`cd ./path/to/myCircuit.zok`
+
+`docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
+
+`./zokrates compile --light -i code/assign.zok` <-- it should compile
+
+
 
 ---
 
 ### R&D Notes & Ideas
 
 See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from decorated Solidity.
-
----
-
-### Miranda's test branch
-
-To use this branch:
-
-#### Testing `removeDecorators`
-
--   Point the start command in `package.json` to your decorated contract
--   Run `npm start`
-
-This first runs the `dedecorator`, which removes and stores the decorated syntax in your contract. The decorated solidity file is saved as `my_contract_dedecorated.sol` in the `contracts` folder. Its compiled ast is saved as `ast.json` in the root (for now).
-
-The `redecorator` then adds back the decorated syntax to the ast, creating `my_contract_ast.json`, also saved to root.
-
-#### Testing compiler output
-
-
-In `examples/cases`, there are collections of example output ZApps depending on the sprinkled contract input. At the moment only an uninitiated global is completed. To test:
-
-- Run `truffle compile`
-- Run `docker-compose build`
--   Run `./bin/setup` (this runs the trusted setup for the output.zok file, and stores the output vk in `db`)
--   Run `npm test` (this assigns and reassigns the private global variable)
-
-Once assigned, the variable's private information is stored in `db/preimage.json`. Any further assignments use this information to nullify the last commitment. So if you have closed the containers or want to test the initial assignment, be sure to delete this file.
 
 ---
 

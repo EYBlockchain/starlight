@@ -57,7 +57,6 @@ export default {
           scope.indicatorChecks(secretVar);
         }
       });
-      return scope.getIndicator();
     },
   },
 

@@ -1,18 +1,18 @@
 export default {
-  correctZols: [
-    {
-      contract: `pragma solidity ^0.7.0;
+      contract: `
+        pragma solidity ^0.8.0;
 
-      contract MyContract {
+        contract MyContract {
 
-        secret uint256 private a;
-        secret uint256 private b;
+          secret uint256 private a;
+          secret uint256 private b;
 
-        function assign(uint256 param1, uint256 param2) public {
-          known a = a + param1;
-          b = param2;
+          function assign(uint256 param1, uint256 param2) public {
+            known a = a + param1;
+            b = param2;
+          }
         }
-      }`,
+      `,
       indicators: {
         a: {
           name: 'a',

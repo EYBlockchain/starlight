@@ -4,7 +4,7 @@ output code for assignement
 import logger from '../utils/logger.mjs';
 import { globals, inits, node, solidity, zokrates } from '../state.mjs';
 import { assignNode, assignZokrates, assignSolidity } from '../standardFunctions/assignment.mjs';
-import CompilerError from '../utils/compiler-error.mjs';
+import { UnsupportedSyntaxError, TODOError } from '../utils/errors.mjs';
 import processExpression from './expression.mjs';
 
 function processAssignment(assignment) {
@@ -24,15 +24,15 @@ function processAssignment(assignment) {
   for (const term of terms) {
     // check we know how to process this assignment
     if (isNaN(term))
-      throw new CompilerError('Only number expressions are supported in assignments');
+      throw new UnsupportedSyntaxError('Only number expressions are supported in assignments');
     if (!globals[variable])
-      throw new CompilerError('Only global variables are supported in assignments');
+      throw new UnsupportedSyntaxError('Only global variables are supported in assignments');
 
     if (!globals[variable].initialised) {
       // the global has been defined but has no initial value, so we can just
       // add a commitment: there's nothing to nullify
       globals[variable].initialised = true; // but from now on a commitment exist, so we will have to nullify
-      logger.info(`Committing to a value of ${term} for variable '${variable}'`);
+      logger.debug(`Committing to a value of ${term} for variable '${variable}'`);
 
       // no assignment code for Solidity, once we've initialised it
 
@@ -45,7 +45,7 @@ function processAssignment(assignment) {
       zokrates.mainParams += ` private field ${variable}, field ${variable}_publicKey, private field ${variable}_salt, field ${variable}_hash`;
     } else {
       // must nullify the previous commitment
-      throw new CompilerError(
+      throw new TODOError(
         `A commitment already exists but I don't know how to nullify it yet.  However, if I did know, I'd nullify it and then create a new commitment, equal to the old commitment plus ${term}`,
       );
     }

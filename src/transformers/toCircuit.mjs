@@ -54,21 +54,21 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toCircuit(ast, options) {
   // transpile to a circuit AST:
-  logger.info('Transforming the .zsol AST to a contract AST...');
+  logger.verbose('Transforming the .zsol AST to a contract AST...');
   const newAST = transformation1(ast);
   const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the circuit files from the newly created circuit AST:
-  logger.info('Generating files from the .zok AST...');
+  logger.verbose('Generating files from the .zok AST...');
   const circuitFileData = codeGenerator(newAST);
 
   // save the circuit files to the output dir:
-  logger.info(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
+  logger.verbose(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
   for (const fileObj of circuitFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
-    console.log(`About to save to ${filepath}...`);
+    logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, fileObj.file);
   }

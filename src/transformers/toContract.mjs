@@ -59,24 +59,24 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toContract(ast, options) {
   // transpile to a contract AST:
-  logger.info('Transforming the .zsol AST to a solidity AST...');
+  logger.debug('Transforming the .zsol AST to a solidity AST...');
   const newAST = transformation1(ast);
   // logger.debug('new solidity ast:', newAST);
   const newASTFilePath = pathjs.join(options.contractsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the contract files from the newly created contract AST:
-  logger.info('Generating files from the .sol AST...');
+  logger.verbose('Generating files from the .sol AST...');
   const contractFileData = codeGenerator(newAST);
 
-  // console.log('contract file data:', contractFileData)
+  // logger.debug('contract file data:', contractFileData)
 
   // save the contract files to the output dir:
-  logger.info(`Saving .sol files to the zApp output directory ${options.contractsDirPath}...`);
+  logger.verbose(`Saving .sol files to the zApp output directory ${options.contractsDirPath}...`);
   for (const fileObj of contractFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
-    console.log(`About to save to ${filepath}...`);
+    logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, fileObj.file);
   }

@@ -11,7 +11,7 @@ function recogniseGlobal(line) {
     if (line.startsWith(g)) {
       // global found
       const ln = line.replace(/ *\([^)]*\) */g, ' ').replace(';', '');
-      console.log(ln);
+      logger.debug(ln);
       let [type, visibility, name] = ln.split(' ');
       if (name.includes('=')) {
         [type, name] = ln.split(' ');

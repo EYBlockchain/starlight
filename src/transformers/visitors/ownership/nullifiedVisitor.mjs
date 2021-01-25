@@ -116,6 +116,7 @@ export default {
             referencedIndicator.nullifyingPaths = [];
           }
           break;
+        }
         default:
           referencedBinding = {};
           referencedIndicator = {};

@@ -38,7 +38,7 @@ function recogniseDecorators(line) {
       } else if (recogniseAssignment(deDecLine)) {
         type = 'assignment';
         if (keyword === 'secret')
-          logger.info(`Warning: secret keyword used for assignment after declaration`);
+          logger.warn(`Warning: secret keyword used for assignment after declaration`);
         for (const operator of operators) {
           if (line.includes(operator)) {
             [name, rhs] = deDecLine.split(operator).map(el => el.trim());
@@ -50,7 +50,7 @@ function recogniseDecorators(line) {
         keyword = [keyword].push(recogniseDecorators(deDecLine).keyword);
         deDecLine = recogniseDecorators(deDecLine).deDecLine;
       }
-      logger.info(`Removed decorators from the line \n${line} \nto \n${deDecLine}`);
+      logger.debug(`Removed decorators from the line \n${line} \nto \n${deDecLine}`);
       return { keyword, type, name, rhs, deDecLine };
     }
     if (line.includes(keyword)) {

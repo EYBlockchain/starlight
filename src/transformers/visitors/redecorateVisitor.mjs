@@ -262,10 +262,10 @@ export default {
                 default:
                   break;
                 case 'secret':
-                  logger.info(`Warning: secret keyword used for assignment after declaration...`);
+                  logger.warn(`Warning: secret keyword used for assignment after declaration...`);
                   for (const check of state) {
                     if (check.type === 'global' && check.name === line.name) {
-                      logger.info(
+                      logger.warn(
                         `...but the declaration has correctly been marked as secret, so that's ok`,
                       );
                       line.parentNodeId = check.nodeId;

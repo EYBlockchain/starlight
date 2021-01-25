@@ -111,7 +111,7 @@ export default {
               lhsName !== nodeName &&
               nodeName !== 'msg'))
         ) {
-          console.log('Found an accessed secret state');
+          logger.debug('Found an accessed secret state');
           const lhs =
             lhsNode.nodeType === 'Identifier'
               ? scope.getReferencedBinding(lhsNode)

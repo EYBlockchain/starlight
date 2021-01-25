@@ -81,7 +81,15 @@ class NodePath {
   }
 
   traverse(visitor, state) {
-    return traverse(this, visitor, state);
+    traverse(this, visitor, state);
+  }
+
+  traversePathsFast(enter, state) {
+    traversePathsFast(this, enter, state);
+  }
+
+  traverseNodesFast(enter, state) {
+    traverseNodesFast(this.node, enter, state);
   }
 
   /**
