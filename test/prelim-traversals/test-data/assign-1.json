@@ -256,5 +256,8 @@
     }
   ],
   "errorType": null,
-  "errorMessage": null
+  "errorMessage": null,
+  "warningMessages": [
+    "Warning: secret state a is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
+  ]
 }
