@@ -12,6 +12,7 @@
       },
       "referencedBindings": {},
       "modifiedBindings": {},
+      "nullifiedBindings": {},
       "indicators": {}
     },
     {
@@ -34,10 +35,10 @@
           "modifyingPaths": [
             8
           ],
-          "isNullified": false,
+          "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [
-            11
+            8
           ],
           "isMapping": false,
           "mappingKey": null,
@@ -58,6 +59,7 @@
       },
       "referencedBindings": {},
       "modifiedBindings": {},
+      "nullifiedBindings": {},
       "indicators": {
         "zkSnarkVerificationRequired": true,
         "oldCommitmentAccessRequired": true,
@@ -112,10 +114,10 @@
           "modifyingPaths": [
             8
           ],
-          "isNullified": false,
+          "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [
-            11
+            8
           ],
           "isMapping": false,
           "mappingKey": null,
@@ -171,10 +173,44 @@
           "modifyingPaths": [
             8
           ],
-          "isNullified": false,
+          "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [
-            11
+            8
+          ],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Overwritten at 168:10:0"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "3": {
+          "kind": "VariableDeclaration",
+          "id": 3,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            8
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            8
+          ],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [
+            8
           ],
           "isMapping": false,
           "mappingKey": null,
@@ -213,7 +249,7 @@
             "Overwritten at 168:10:0"
           ],
           "nullifyingPaths": [
-            11
+            8
           ]
         }
       }
