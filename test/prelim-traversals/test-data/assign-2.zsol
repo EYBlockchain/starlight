@@ -8,5 +8,6 @@ contract MyContract {
 
     function assign(secret uint256 param1) public {
         a = param1;
+        unknown a = a + param1;
     }
 }

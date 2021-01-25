@@ -16,7 +16,7 @@ function recogniseAssignment(line) {
       const ln = line.replace(';', '');
       const [variable, expression] = ln.split(operator).map(el => el.trim());
       // process({ variable, expression }); temp removing
-      logger.info(`variable '${variable}' committing to a value of ${expression}`);
+      logger.debug(`variable '${variable}' committing to a value of ${expression}`);
       return true;
     }
   }

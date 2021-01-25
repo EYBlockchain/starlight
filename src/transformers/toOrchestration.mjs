@@ -60,7 +60,7 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toOrchestration(ast, options) {
   // transpile to a node AST:
-  logger.info('Transforming the .zsol AST to a .mjs AST...');
+  logger.debug('Transforming the .zsol AST to a .mjs AST...');
   const newAST = transformation1(ast);
   const newASTFilePath = pathjs.join(
     options.orchestrationDirPath,
@@ -69,17 +69,19 @@ export default function toOrchestration(ast, options) {
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the node files from the newly created circuit AST:
-  logger.info('Generating files from the .mjs AST...');
+  logger.verbose('Generating files from the .mjs AST...');
   const nodeFileData = codeGenerator(newAST);
 
-  // console.log('nodeFileData:', nodeFileData)
+  // logger.debug('nodeFileData:', nodeFileData)
 
   // save the node files to the output dir:
-  logger.info(`Saving .mjs files to the zApp output directory ${options.orchestrationDirPath}...`);
+  logger.verbose(
+    `Saving .mjs files to the zApp output directory ${options.orchestrationDirPath}...`,
+  );
   for (const fileObj of nodeFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
-    console.log(`About to save to ${filepath}...`);
+    logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     if (fileObj.filepath.includes('preimage.json')) continue;
     fs.writeFileSync(filepath, fileObj.file);
@@ -88,7 +90,7 @@ export default function toOrchestration(ast, options) {
     options.zappName.charAt(0).toUpperCase() + options.zappName.slice(1)
   }Shield`;
 
-  logger.info(`Saving backend files to the zApp output directory ${options.outputDirPath}...`);
+  logger.verbose(`Saving backend files to the zApp output directory ${options.outputDirPath}...`);
   for (const fileObj of ZappFilesBoilerplate) {
     let file = fs.readFileSync(fileObj.readPath, 'utf8');
     const filepath = pathjs.join(options.outputDirPath, fileObj.writePath);
@@ -97,7 +99,7 @@ export default function toOrchestration(ast, options) {
       file = file.replace(/FUNCTION_NAME/g, options.zappName);
     }
     const dir = pathjs.dirname(filepath);
-    console.log(`About to save to ${filepath}...`);
+    logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, file);
   }

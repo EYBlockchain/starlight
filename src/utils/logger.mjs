@@ -17,7 +17,7 @@ function formatWithInspect(val) {
 }
 
 export default createLogger({
-  level: config.LOG_LEVEL || 'debug',
+  level: config.log_level || 'info', // can be also edited using CLI option --log-level
   format: winston.format.combine(
     format.errors({ stack: true }),
     format.colorize(),

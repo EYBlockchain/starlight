@@ -1,6 +1,7 @@
 import solc from 'solc';
 import fs from 'fs';
 import path from 'path';
+import logger from './utils/logger.mjs';
 // import config from 'config';
 // import { releases } from './solc-versions-list';
 
@@ -124,7 +125,7 @@ const compile = (solidityFile, options) => {
   const sources = buildSources(solidityFile, options);
   const params = createSolcInput(solidityFile);
   function findImports(_import) {
-    console.log(_import);
+    logger.debug(_import);
     if (sources[_import.toString()]) {
       return {
         contents: sources[_import.toString()].contents,
@@ -133,13 +134,13 @@ const compile = (solidityFile, options) => {
     return { error: 'File not found' };
   }
   const compiled = JSON.parse(solc.compile(JSON.stringify(params), { import: findImports }));
-  console.log('compiled', compiled);
+  logger.debug('compiled', compiled);
 
   const { ast } = compiled.sources.input;
 
   const astFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol_ast.json`;
 
-  console.log('filepath', astFilePath);
+  logger.debug('filepath', astFilePath);
   fs.writeFileSync(astFilePath, JSON.stringify(ast, null, 4));
 
   return ast;

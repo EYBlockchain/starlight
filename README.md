@@ -120,39 +120,54 @@ E.g.:
 
 ## Developer
 
-### Testing outputs
+### Testing
 
 #### full zapp
 
-`zappify -i ./path/to/MyContract.zsol`
+To test an entire output zApp:
+
+Having already run `zappify`, the newly-created zApp will be located in the output dir you specified (or in a dir called `./zapps`, by default). Step into that directory:
 
 `cd zapps/MyContract/`
 
-`npm install`
+Install dependencies:
 
-(At this stage, you might need to run `chmod +x ./bin/setup && chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
+`npm install`
 
 Start docker.
 
+(At this stage, you might need to run `chmod +x ./bin/setup && chmod +x ./bin/startup` for permission to execute the newly created shell scripts)
+
+Run trusted setups on all circuit files:
+
 `./bin/setup` <-- this can take quite a while!
+
+Finally, run a test, which executes the function privately, using some test parameters:
 
 `npm test`
 
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
-NB: rerunning the test will not work, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
+**NB: rerunning the test will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
 
 #### preliminary traversals
 
-Preliminary traversals populate the `binding` and `indicator` objects. To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts.
+Preliminary traversals populate the `binding` and `indicator` objects. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
 
-`npm run test-prelim-traversals`
+`npm run test-prelim`
 
-`zappify dev-test --prelim` (or `-p`)
+##### Adding new test cases
 
-#### test example cases
+You can automate the creation of 'expected outputs' for these tests.
 
-`zappify dev-test --diff` (or `-d`)
+1. Create a `.zsol` file, around which you'd like a test to be created. For this example, suppose it's called `example-1.zsol`.
+1. Save it in `./test/prelim-traversals/test-data`.
+1. Run `npm run-script test-prelim -- --write example-1`. This will run `zappify` on the file, and write output data to a file called `example-1.json`.
+1. Future tests will use `example-1.json` as the 'expected' outcome of the test.
+
+##### Updating test cases
+
+Run the steps above. Warning: this will overwrite existing 'expected' data with new data.
 
 #### circuit
 

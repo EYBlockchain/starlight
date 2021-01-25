@@ -22,7 +22,7 @@ function transformation1(ast) {
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
   ast.traverse(explode(nullifiedVisitor), state);
-  logger.info('All states nullifiable and nullifications marked');
+  logger.verbose('All states nullifiable and nullifications marked');
   ast.traverse(explode(ownershipVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
@@ -32,24 +32,24 @@ function transformation1(ast) {
 
 // A transformer function which will accept an ast.
 export default function ownership(astPath, options) {
-  logger.info('Performing ownership checks on the zsol AST...');
+  logger.verbose('Performing ownership checks on the zsol AST...');
   const updatedASTPath = transformation1(astPath);
   //  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   //  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the circuit files from the newly created circuit AST:
-  // logger.info('Generating files from the .zok AST...');
+  // logger.verbose('Generating files from the .zok AST...');
   // const circuitFileData = codeGenerator(newAST);
   //
   // // save the circuit files to the output dir:
-  // logger.info(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
+  // logger.verbose(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
   // for (const fileObj of circuitFileData) {
   //   const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
   //   const dir = pathjs.dirname(filepath);
-  //   console.log(`About to save to ${filepath}...`)
+  //   logger.debug(`About to save to ${filepath}...`)
   //   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
   //   fs.writeFileSync(filepath, fileObj.file);
   // }
-  logger.info('Owners assigned.');
+  logger.verbose('Owners assigned.');
   return updatedASTPath;
 }

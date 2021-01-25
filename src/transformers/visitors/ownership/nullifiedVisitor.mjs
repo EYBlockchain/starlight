@@ -75,7 +75,7 @@ export default {
       // we get the relevant bindings of the lhs and initialise binding.nullifyingPaths (if doesnt exist)
       switch (node.expression.leftHandSide.nodeType) {
         case 'Identifier':
-          console.log(scope);
+          logger.debug(scope);
           referencedBinding = scope.getReferencedBinding(node.expression.leftHandSide);
           referencedIndicator =
             scope.indicators[node.expression.leftHandSide.referencedDeclaration];

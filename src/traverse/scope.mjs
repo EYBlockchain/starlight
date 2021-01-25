@@ -402,10 +402,10 @@ export class Scope {
           if (!indicatorForStateVarExists)
             functionDefScope.indicators[referencedNode.id] = referencedIndicator;
 
-          // console.log(this.getReferencedBinding(node));
-          // console.log(functionDefScope.indicators);
-          // console.log('---------');
-          // console.log(functionDefScope.indicators[5].mappingKey);
+          // logger.debug(this.getReferencedBinding(node));
+          // logger.debug(functionDefScope.indicators);
+          // logger.debug('---------');
+          // logger.debug(functionDefScope.indicators[5].mappingKey);
         }
         break;
       }
@@ -949,8 +949,8 @@ export class Scope {
         isDecrementedBool = false;
         break;
     }
-    console.log(`statement is incremented? ${isIncrementedBool}`);
-    console.log(`statement is decremented? ${isDecrementedBool}`);
+    logger.debug(`statement is incremented? ${isIncrementedBool}`);
+    logger.debug(`statement is decremented? ${isDecrementedBool}`);
     expressionNode.isIncremented = isIncrementedBool;
     expressionNode.isDecremented = isDecrementedBool;
 
@@ -1060,23 +1060,23 @@ export class Scope {
       });
     }
     // logging
-    console.log(`Indicator: (at ${secretVar.name})`);
-    console.log('----------');
-    console.dir(this, { depth: 0 });
-    console.log('----------');
-    console.dir(this.indicators);
-    console.log('----------');
+    logger.debug(`Indicator: (at ${secretVar.name})`);
+    logger.debug('----------');
+    if (logger.level === 'debug') console.dir(this, { depth: 0 });
+    logger.debug('----------');
+    if (logger.level === 'debug') console.dir(this.indicators);
+    logger.debug('----------');
     if (this.indicators[secretVar.id].mappingKey) {
-      console.log(`Indicator.mappingKey[${secretVar.name}]`);
-      console.dir(secretVar, { depth: 1 });
-      console.log('----------');
+      logger.debug(`Indicator.mappingKey[${secretVar.name}]`);
+      if (logger.level === 'debug') console.dir(secretVar, { depth: 1 });
+      logger.debug('----------');
     }
-    // console.log(`Contract level binding for state:`);
-    // console.dir(topScope, { depth: 0 });
+    // logger.debug(`Contract level binding for state:`);
+    // if (logger.level === 'debug') console.dir(topScope, { depth: 0 });
     // if (topScope.isWholeReason) {
-    //   console.log(topScope.isWholeReason);
+    //   logger.debug(topScope.isWholeReason);
     // } else {
-    //   console.log(topScope.isPartitionedReason);
+    //   logger.debug(topScope.isPartitionedReason);
     // }
   }
 
