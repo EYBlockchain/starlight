@@ -37,6 +37,7 @@ function rmDir(dirPath) {
   try {
     fs.rmdirSync(dirPath, {
       recursive: true, // rm subdirectories too
+      force: true,
     });
   } catch (err) {
     throw new Error(`Failed to remove the directory ${dirPath}`);
@@ -121,32 +122,32 @@ const formatScopesForTesting = scopes => {
 function itShouldCompareScopes(options, expected, actual) {
   const fileName = options.inputFileName;
   it(`${fileName}: indicators & bindings should be as expected`, () => {
-    try {
-      const path = zappify(options);
-      rmDir(options.outputDirPath); // clean up
+    // try {
+    const path = zappify(options);
+    rmDir(options.outputDirPath); // clean up
 
-      const scopes = [];
-      path.traversePathsFast(collectScopesIntoArray, scopes);
-      formatScopesForTesting(scopes);
-      // `eql` tests for _deep_ object equality.
-      actual = {
-        scopes,
-        errorType: null,
-        errorMessage: null,
-      };
+    const scopes = [];
+    path.traversePathsFast(collectScopesIntoArray, scopes);
+    formatScopesForTesting(scopes);
+    // `eql` tests for _deep_ object equality.
+    actual = {
+      scopes,
+      errorType: null,
+      errorMessage: null,
+    };
 
-      if (args.includes('--json')) {
-        // User is requesting the JSON be output to the console.
-        console.log(`${fileName}: scopes, JSON-formatted:`);
-        console.log(JSON.stringify(actual, null, 2));
-      }
-
-      expect(actual).to.eql(expected);
-    } catch (err) {
-      rmDir(options.outputDirPath); // clean up
-      console.log(`Did not expect to get an error for file ${fileName}`);
-      console.error(err);
+    if (args.includes('--json')) {
+      // User is requesting the JSON be output to the console.
+      console.log(`${fileName}: scopes, JSON-formatted:`);
+      console.log(JSON.stringify(actual, null, 2));
     }
+
+    expect(actual).to.eql(expected);
+    // } catch (err) {
+    //   rmDir(options.outputDirPath); // clean up
+    //   console.log(`Did not expect to get an error for file ${fileName}`);
+    //   console.error(err);
+    // }
   });
 }
 
