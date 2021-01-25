@@ -2,7 +2,7 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.mjs';
-import { traverse, traverseNodesFast } from '../../../traverse/traverse.mjs';
+import { traverse, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
@@ -72,10 +72,20 @@ export default {
       if (node.expression.nodeType === 'FunctionCall') return;
       let referencedBinding;
       let referencedIndicator;
+      // a small visitor to get the correct identifier to add to nullifyingPaths (differs for mapping vs uint)
+      const getIdentifierPath = (thisPath, newState) => {
+        if (thisPath.node.nodeType === 'Identifier' && thisPath.node.id === newState.id) {
+          newState.stopTraversal = true;
+          newState.path = thisPath;
+        }
+      };
+      const newState = {};
+      traversePathsFast(path, getIdentifierPath, newState);
       // we get the relevant bindings of the lhs and initialise binding.nullifyingPaths (if doesnt exist)
       switch (node.expression.leftHandSide.nodeType) {
         case 'Identifier':
-          logger.debug(scope);
+          newState.id = node.expression.leftHandSide.id;
+          traversePathsFast(path, getIdentifierPath, newState);
           referencedBinding = scope.getReferencedBinding(node.expression.leftHandSide);
           referencedIndicator =
             scope.indicators[node.expression.leftHandSide.referencedDeclaration];
@@ -88,7 +98,9 @@ export default {
             referencedIndicator.nullifyingPaths = [];
           }
           break;
-        case 'IndexAccess': {
+        case 'IndexAccess':
+          newState.id = node.expression.leftHandSide.baseExpression.id;
+          traversePathsFast(path, getIdentifierPath, newState);
           const mappingKey = scope.getMappingKeyIndicator(node.expression.leftHandSide);
           referencedBinding = scope.getReferencedBinding(
             node.expression.leftHandSide.baseExpression,
@@ -112,17 +124,22 @@ export default {
       }
       // then look at the node.expression to see if its incremented and/or the lhs to see if the state is whole
       // whole or decrement: we have a nullification
+
       switch (node.expression.isIncremented) {
         case true:
           if (node.expression.isDecremented) {
             node.expression.isNullification = true;
-            referencedBinding.nullifyingPaths.push(path);
-            referencedIndicator.nullifyingPaths.push(path);
+            referencedBinding.isNullified = true;
+            referencedBinding.nullifyingPaths.push(newState.path);
+            referencedIndicator.nullifyingPaths.push(newState.path);
+            scope.addNullifyingPath(newState.path);
             break;
           } else if (node.expression.leftHandSide.isKnown || node.expression.leftHandSide.isWhole) {
             node.expression.isNullification = true;
-            referencedBinding.nullifyingPaths.push(path);
-            referencedIndicator.nullifyingPaths.push(path);
+            referencedBinding.isNullified = true;
+            referencedBinding.nullifyingPaths.push(newState.path);
+            referencedIndicator.nullifyingPaths.push(newState.path);
+            scope.addNullifyingPath(newState.path);
             break;
           } else {
             node.expression.isNullification = false;
@@ -130,8 +147,10 @@ export default {
           }
         case false:
           node.expression.isNullification = true;
-          referencedBinding.nullifyingPaths.push(path);
-          referencedIndicator.nullifyingPaths.push(path);
+          referencedBinding.isNullified = true;
+          referencedBinding.nullifyingPaths.push(newState.path);
+          referencedIndicator.nullifyingPaths.push(newState.path);
+          scope.addNullifyingPath(newState.path);
           break;
         default:
           // everything should be marked as isIncremented: true/false

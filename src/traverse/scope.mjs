@@ -66,6 +66,7 @@ export class Scope {
     this.bindings = {}; // keys are AST node `id`s
     this.referencedBindings = {}; // keys are AST node `id`s
     this.modifiedBindings = {}; // keys are AST node `id`s
+    this.nullifiedBindings = {};
     this.indicators = {}; // keys are stateVariable names
 
     scopeCache.set(node, this); // mapping from a node to its scope.
@@ -663,7 +664,7 @@ export class Scope {
     const { indicators } = this;
     for (const stateVarId of Object.keys(indicators)) {
       const indicator = indicators[stateVarId];
-      if (indicator.isModified && indicator.binding.isSecret) return true;
+      if (indicator.isNullified && indicator.binding.isSecret) return true;
     }
     return false;
   }
@@ -1078,6 +1079,37 @@ export class Scope {
     // } else {
     //   logger.debug(topScope.isPartitionedReason);
     // }
+  }
+
+  /**
+   * Adds nullifyingPaths to the scope's nullifiedBindings (a subset of modifiedBindings)
+   * @param {Object} - the NodePath of the left hand side identifier node
+   */
+  addNullifyingPath(identifierPath) {
+    const { node, parent } = identifierPath;
+    const isMapping = node.typeDescriptions.typeString.includes('mapping');
+    let referencedBinding = this.getReferencedBinding(node);
+
+    if (isMapping) {
+      // we instead use the mapping[key] binding for most cases
+      const keyName = this.getMappingKeyIndicator(parent);
+      referencedBinding = referencedBinding.mappingKey[keyName];
+    }
+
+    if (!referencedBinding.nullifyingPaths.some(p => p.node.id === identifierPath.node.id)) {
+      // if the path hasn't been added - possibly not needed
+      referencedBinding.isNullified = true;
+      referencedBinding.nullifyingPaths.push(identifierPath);
+    }
+
+    if (isMapping) {
+      this.getReferencedBinding(node).isNullified = true; // mark the parent mapping
+    }
+
+    // update this scope, to say "the code in this scope 'nullifies' a variable declared elsewhere"
+    this.nullifiedBindings[identifierPath.node.referencedDeclaration] = this.getReferencedBinding(
+      identifierPath.node,
+    );
   }
 
   /**

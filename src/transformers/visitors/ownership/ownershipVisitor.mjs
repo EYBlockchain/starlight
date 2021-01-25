@@ -19,7 +19,16 @@ export default {
   ContractDefinition: {
     enter(path, state) {},
 
-    exit(path, state) {},
+    exit(path, state) {
+      Object.keys(path.scope.bindings).forEach(id => {
+        const binding = path.scope.bindings[id];
+        if (binding.isSecret && !binding.isOwned) {
+          logger.warn(
+            `Warning: secret state ${binding.name} is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.`,
+          );
+        }
+      });
+    },
   },
 
   FunctionDefinition: {
@@ -136,18 +145,13 @@ export default {
             // we look through each nullifying path of this mapping[msg.sender]
             for (const nullPath of lhsbinding.nullifyingPaths) {
               // skip current node
-              if (nullPath.node.id === node.id) continue;
+              if (nullPath.parentPath.parentPath.node.id === node.id) continue;
               // break out if we find a key =/= msg.sender
               if (
-                // prettier-ignore
-                (
-                  nullPath.node.expression.leftHandSide.leftExpression &&
-                  nullPath.node.expression.leftHandSide.leftExpression.indexExpression.expression.name !== 'msg'
-                ) ||
-                (
-                  nullPath.node.expression.leftHandSide.indexExpression &&
-                  nullPath.node.expression.leftHandSide.indexExpression.expression.name !== 'msg'
-                )
+                (nullPath.parent.leftExpression &&
+                  nullPath.parent.leftExpression.indexExpression.expression.name !== 'msg') ||
+                (nullPath.parent.indexExpression &&
+                  nullPath.parent.indexExpression.expression.name !== 'msg')
               ) {
                 msgSenderEverywhere = false;
                 break;
@@ -168,9 +172,9 @@ export default {
           }
           break;
       }
-      logger.debug(scope.getReferencedBinding(lhsIdentifier));
-      logger.debug('------');
-      logger.debug(scope.indicators[lhsIdentifier.referencedDeclaration]);
+      // logger.debug(scope.getReferencedBinding(lhsIdentifier));
+      // logger.debug('------');
+      // logger.debug(scope.indicators[lhsIdentifier.referencedDeclaration]);
     },
   },
 

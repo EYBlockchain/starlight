@@ -29,6 +29,8 @@ const zappify = options => {
   //
   // toContract(zsolAST, options);
 
+  if (options.isTest) return path.scope.indicators;
+
   return path;
 };
 
