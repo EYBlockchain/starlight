@@ -1,0 +1,1501 @@
+{
+  "scopes": [
+    {
+      "scopeId": 108,
+      "scopeType": "SourceUnit",
+      "bindings": {
+        "107": {
+          "kind": "ContractDefinition",
+          "id": 107,
+          "name": "Escrow"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {}
+    },
+    {
+      "scopeId": 107,
+      "scopeType": "ContractDefinition",
+      "bindings": {
+        "4": {
+          "kind": "VariableDeclaration",
+          "id": 4,
+          "name": "owner",
+          "stateVariable": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            16
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            16
+          ],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "8": {
+          "kind": "VariableDeclaration",
+          "id": 8,
+          "name": "balances",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 51,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                50,
+                65,
+                84
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                50,
+                65,
+                84
+              ],
+              "nullifyingPaths": [
+                65,
+                84
+              ],
+              "isNullified": true,
+              "owner": {
+                "id": 85,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "818:3:1",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            },
+            "recipient": {
+              "referencedKey": 73,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                72
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                72
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        },
+        "11": {
+          "kind": "VariableDeclaration",
+          "id": 11,
+          "name": "erc20",
+          "stateVariable": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            21
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            21
+          ],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "28": {
+          "kind": "FunctionDefinition",
+          "id": 28,
+          "name": ""
+        },
+        "58": {
+          "kind": "FunctionDefinition",
+          "id": 58,
+          "name": "deposit"
+        },
+        "79": {
+          "kind": "FunctionDefinition",
+          "id": 79,
+          "name": "transfer"
+        },
+        "106": {
+          "kind": "FunctionDefinition",
+          "id": 106,
+          "name": "withdraw"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {
+        "zkSnarkVerificationRequired": true,
+        "oldCommitmentAccessRequired": true,
+        "nullifiersRequired": true,
+        "newCommitmentsRequired": true
+      }
+    },
+    {
+      "scopeId": 28,
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "13": {
+          "kind": "VariableDeclaration",
+          "id": 13,
+          "name": "_erc20",
+          "stateVariable": false,
+          "isReferenced": false,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "4": {
+          "kind": "VariableDeclaration",
+          "id": 4,
+          "name": "owner",
+          "stateVariable": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            16
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            16
+          ],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "11": {
+          "kind": "VariableDeclaration",
+          "id": 11,
+          "name": "erc20",
+          "stateVariable": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            21
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            21
+          ],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "4": {
+          "kind": "VariableDeclaration",
+          "id": 4,
+          "name": "owner",
+          "stateVariable": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            16
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            16
+          ],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "11": {
+          "kind": "VariableDeclaration",
+          "id": 11,
+          "name": "erc20",
+          "stateVariable": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            21
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            21
+          ],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "nullifiedBindings": {},
+      "indicators": {}
+    },
+    {
+      "scopeId": 58,
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "30": {
+          "kind": "VariableDeclaration",
+          "id": 30,
+          "name": "amountDeposit",
+          "stateVariable": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            54
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "34": {
+          "kind": "VariableDeclaration",
+          "id": 34,
+          "name": "hasBalance",
+          "stateVariable": false,
+          "isReferenced": false,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "8": {
+          "referencedKey": 51,
+          "referencedKeyNodeType": "t_magic_message",
+          "referencedKeyisParam": false,
+          "referencedKeyisMsg": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 3,
+          "referencingPaths": [
+            50,
+            65,
+            84
+          ],
+          "isModified": true,
+          "modificationCount": 3,
+          "modifyingPaths": [
+            50,
+            65,
+            84
+          ],
+          "nullifyingPaths": [
+            65,
+            84
+          ],
+          "isNullified": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isOwned": true
+        },
+        "30": {
+          "kind": "VariableDeclaration",
+          "id": 30,
+          "name": "amountDeposit",
+          "stateVariable": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            54
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "8": {
+          "kind": "VariableDeclaration",
+          "id": 8,
+          "name": "balances",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 51,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                50,
+                65,
+                84
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                50,
+                65,
+                84
+              ],
+              "nullifyingPaths": [
+                65,
+                84
+              ],
+              "isNullified": true,
+              "owner": {
+                "id": 85,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "818:3:1",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            },
+            "recipient": {
+              "referencedKey": 73,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                72
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                72
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "nullifiedBindings": {},
+      "indicators": {
+        "8": {
+          "id": 8,
+          "name": "balances",
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 51,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                50
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                50
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": false,
+              "initialisationRequired": true,
+              "isUnknown": true,
+              "isIncremented": true,
+              "isDecremented": false,
+              "binding": {
+                "referencedKey": 51,
+                "referencedKeyNodeType": "t_magic_message",
+                "referencedKeyisParam": false,
+                "referencedKeyisMsg": true,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 3,
+                "referencingPaths": [
+                  50,
+                  65,
+                  84
+                ],
+                "isModified": true,
+                "modificationCount": 3,
+                "modifyingPaths": [
+                  50,
+                  65,
+                  84
+                ],
+                "nullifyingPaths": [
+                  65,
+                  84
+                ],
+                "isNullified": true,
+                "owner": {
+                  "id": 85,
+                  "name": "msg",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 4294967281,
+                  "src": "818:3:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_magic_message",
+                    "typeString": "msg"
+                  }
+                },
+                "isOwned": true
+              },
+              "id": 8,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "balances[msg]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isModified": true
+        }
+      }
+    },
+    {
+      "scopeId": 79,
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "60": {
+          "kind": "VariableDeclaration",
+          "id": 60,
+          "name": "recipient",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            73
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "62": {
+          "kind": "VariableDeclaration",
+          "id": 62,
+          "name": "amountTransfer",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 2,
+          "referencingPaths": [
+            69,
+            75
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "8": {
+          "referencedKey": 73,
+          "referencedKeyNodeType": "VariableDeclaration",
+          "referencedKeyisParam": true,
+          "referencedKeyisMsg": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            72
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            72
+          ],
+          "nullifyingPaths": []
+        },
+        "60": {
+          "kind": "VariableDeclaration",
+          "id": 60,
+          "name": "recipient",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            73
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "62": {
+          "kind": "VariableDeclaration",
+          "id": 62,
+          "name": "amountTransfer",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 2,
+          "referencingPaths": [
+            69,
+            75
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "8": {
+          "kind": "VariableDeclaration",
+          "id": 8,
+          "name": "balances",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 51,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                50,
+                65,
+                84
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                50,
+                65,
+                84
+              ],
+              "nullifyingPaths": [
+                65,
+                84
+              ],
+              "isNullified": true,
+              "owner": {
+                "id": 85,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "818:3:1",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            },
+            "recipient": {
+              "referencedKey": 73,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                72
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                72
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "8": {
+          "kind": "VariableDeclaration",
+          "id": 8,
+          "name": "balances",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 51,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                50,
+                65,
+                84
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                50,
+                65,
+                84
+              ],
+              "nullifyingPaths": [
+                65,
+                84
+              ],
+              "isNullified": true,
+              "owner": {
+                "id": 85,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "818:3:1",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            },
+            "recipient": {
+              "referencedKey": 73,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                72
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                72
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "indicators": {
+        "8": {
+          "id": 8,
+          "name": "balances",
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 66,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                65
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                65
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": false,
+              "initialisationRequired": true,
+              "isIncremented": true,
+              "isDecremented": true,
+              "binding": {
+                "referencedKey": 51,
+                "referencedKeyNodeType": "t_magic_message",
+                "referencedKeyisParam": false,
+                "referencedKeyisMsg": true,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 3,
+                "referencingPaths": [
+                  50,
+                  65,
+                  84
+                ],
+                "isModified": true,
+                "modificationCount": 3,
+                "modifyingPaths": [
+                  50,
+                  65,
+                  84
+                ],
+                "nullifyingPaths": [
+                  65,
+                  84
+                ],
+                "isNullified": true,
+                "owner": {
+                  "id": 85,
+                  "name": "msg",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 4294967281,
+                  "src": "818:3:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_magic_message",
+                    "typeString": "msg"
+                  }
+                },
+                "isOwned": true
+              },
+              "id": 8,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "balances[msg]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": [
+                65
+              ]
+            },
+            "recipient": {
+              "referencedKey": 73,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                72
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                72
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": false,
+              "initialisationRequired": true,
+              "isUnknown": true,
+              "isIncremented": true,
+              "isDecremented": false,
+              "binding": {
+                "referencedKey": 73,
+                "referencedKeyNodeType": "VariableDeclaration",
+                "referencedKeyisParam": true,
+                "referencedKeyisMsg": false,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 1,
+                "referencingPaths": [
+                  72
+                ],
+                "isModified": true,
+                "modificationCount": 1,
+                "modifyingPaths": [
+                  72
+                ],
+                "nullifyingPaths": []
+              },
+              "id": 8,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "balances[recipient]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isModified": true,
+          "isOwned": true
+        }
+      }
+    },
+    {
+      "scopeId": 106,
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "81": {
+          "kind": "VariableDeclaration",
+          "id": 81,
+          "name": "amountWithdraw",
+          "stateVariable": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            88
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "92": {
+          "kind": "VariableDeclaration",
+          "id": 92,
+          "name": "success",
+          "stateVariable": false,
+          "isReferenced": false,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "8": {
+          "referencedKey": 51,
+          "referencedKeyNodeType": "t_magic_message",
+          "referencedKeyisParam": false,
+          "referencedKeyisMsg": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 3,
+          "referencingPaths": [
+            50,
+            65,
+            84
+          ],
+          "isModified": true,
+          "modificationCount": 3,
+          "modifyingPaths": [
+            50,
+            65,
+            84
+          ],
+          "nullifyingPaths": [
+            65,
+            84
+          ],
+          "isNullified": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isOwned": true
+        },
+        "81": {
+          "kind": "VariableDeclaration",
+          "id": 81,
+          "name": "amountWithdraw",
+          "stateVariable": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            88
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "8": {
+          "kind": "VariableDeclaration",
+          "id": 8,
+          "name": "balances",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 51,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                50,
+                65,
+                84
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                50,
+                65,
+                84
+              ],
+              "nullifyingPaths": [
+                65,
+                84
+              ],
+              "isNullified": true,
+              "owner": {
+                "id": 85,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "818:3:1",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            },
+            "recipient": {
+              "referencedKey": 73,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                72
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                72
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "8": {
+          "kind": "VariableDeclaration",
+          "id": 8,
+          "name": "balances",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 51,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                50,
+                65,
+                84
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                50,
+                65,
+                84
+              ],
+              "nullifyingPaths": [
+                65,
+                84
+              ],
+              "isNullified": true,
+              "owner": {
+                "id": 85,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "818:3:1",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            },
+            "recipient": {
+              "referencedKey": 73,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                72
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                72
+              ],
+              "nullifyingPaths": []
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 85,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "818:3:1",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "indicators": {
+        "8": {
+          "id": 8,
+          "name": "balances",
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 85,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                84
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                84
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": false,
+              "initialisationRequired": true,
+              "isIncremented": true,
+              "isDecremented": true,
+              "binding": {
+                "referencedKey": 51,
+                "referencedKeyNodeType": "t_magic_message",
+                "referencedKeyisParam": false,
+                "referencedKeyisMsg": true,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 3,
+                "referencingPaths": [
+                  50,
+                  65,
+                  84
+                ],
+                "isModified": true,
+                "modificationCount": 3,
+                "modifyingPaths": [
+                  50,
+                  65,
+                  84
+                ],
+                "nullifyingPaths": [
+                  65,
+                  84
+                ],
+                "isNullified": true,
+                "owner": {
+                  "id": 85,
+                  "name": "msg",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 4294967281,
+                  "src": "818:3:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_magic_message",
+                    "typeString": "msg"
+                  }
+                },
+                "isOwned": true
+              },
+              "id": 8,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "balances[msg]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": [
+                84
+              ]
+            }
+          },
+          "isModified": true,
+          "isOwned": true
+        }
+      }
+    }
+  ],
+  "errorType": null,
+  "errorMessage": null,
+  "warningMessages": [
+    "Non-secret parameter amountDeposit used to assign secret variable balances",
+    "Non-secret parameter amountWithdraw used to assign secret variable balances"
+  ]
+}

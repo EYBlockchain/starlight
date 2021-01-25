@@ -51,8 +51,8 @@ const collectScopesIntoArray = (path, state) => {
   if (!scopes.some(scp => scp.scopeId === scope.scopeId)) scopes.push(scope);
 };
 
-const pathsMap = bindingOrIndicator => {
-  const x = bindingOrIndicator;
+const pathsMap = bindingOrIndicatorOrMappingKey => {
+  const x = bindingOrIndicatorOrMappingKey;
   const mapToId = pathsArr =>
     pathsArr.map(p => {
       return p.node ? p.node.id : p;
@@ -62,12 +62,19 @@ const pathsMap = bindingOrIndicator => {
   if (x.nullifyingPaths) x.nullifyingPaths = mapToId(x.nullifyingPaths);
 };
 
+const formatMappingKey = mappingKey => {
+  for (const keyInfo of Object.values(mappingKey)) {
+    pathsMap(keyInfo);
+  }
+};
+
 const formatBindings = bindings => {
   for (const binding of Object.values(bindings)) {
     delete binding.node;
     delete binding.path;
     delete binding.scope;
     pathsMap(binding);
+    if (binding.mappingKey) formatMappingKey(binding.mappingKey);
   }
 };
 
@@ -75,6 +82,7 @@ const formatIndicators = indicators => {
   for (const indicator of Object.values(indicators)) {
     delete indicator.binding;
     pathsMap(indicator);
+    if (indicator.mappingKey) formatMappingKey(indicator.mappingKey);
   }
 };
 
@@ -91,16 +99,24 @@ const formatScopesForTesting = scopes => {
   });
 };
 
-// TODO: remember to delete the temp dir for each zapp that these tests create, at the end of each loop!!!
+const originalWarn = logger.warn; // remember logger.warn; we'll be diverting it to a stub.
+
+function beforeEachSync(consoleWarnings) {
+  const stubWarn = warning => consoleWarnings.push(warning);
+  logger.warn = stubWarn; // temporarily divert logger.warn, so that we may collect warnings in memory, for testing.
+}
+
+function afterEachSync() {
+  logger.warn = originalWarn; // reset logger.warn to its correct functionality.
+}
 
 // We wrap the `it()` function in a closure, because `it()` is located within a 'for' loop. If we don't do this, mocha does weird async things.
 function itShouldCompareOutputs(options, expected, actual, consoleWarnings) {
   const fileName = options.inputFileName;
   it(`${fileName}: indicators & bindings should be as expected`, () => {
     // try {
+    beforeEachSync(consoleWarnings);
     const path = zappify(options);
-    rmDir(options.outputDirPath); // clean up
-
     const scopes = [];
     path.traversePathsFast(collectScopesIntoArray, scopes);
     formatScopesForTesting(scopes);
@@ -111,6 +127,9 @@ function itShouldCompareOutputs(options, expected, actual, consoleWarnings) {
       errorMessage: null,
       warningMessages: consoleWarnings,
     };
+
+    rmDir(options.outputDirPath); // clean up
+    afterEachSync();
 
     if (args.includes('--json')) {
       // User is requesting the JSON be output to the console.
@@ -156,11 +175,16 @@ function itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarning
   const fileName = options.inputFileName;
   it(`${fileName}: should write/overwrite '${fileName}.json'`, () => {
     try {
+      beforeEachSync(consoleWarnings);
+
       const path = zappify(options);
       const scopes = [];
       path.traversePathsFast(collectScopesIntoArray, scopes);
       formatScopesForTesting(scopes);
-      // `eql` tests for _deep_ object equality.
+
+      console.log('SCOPES')
+      console.dir(scopes, { depth: 5 })
+
       actual = {
         scopes,
         errorType: null,
@@ -175,10 +199,12 @@ function itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarning
         warningMessages: null,
       };
     }
-    writeJsonFile(jsonFilePath, actual);
-    console.log(`Overwritten json file '${jsonFilePath}' with new expected values.`);
 
     rmDir(options.outputDirPath); // clean up
+    afterEachSync();
+
+    writeJsonFile(jsonFilePath, actual);
+    console.log(`Overwritten json file '${jsonFilePath}' with new expected values.`);
   });
 }
 
@@ -188,18 +214,9 @@ describe('Test prelim traversals of .zsol files', function () {
     `Pass '--write <fileName>' to write/overwrite the scopes to a JSON file. (But only do this if you know what you're doing!)\n`,
   );
 
-  const originalWarn = logger.warn; // remember logger.warn; we'll be diverting it to a stub.
-  afterEach(function () {
-    logger.warn = originalWarn; // reset logger.warn to its correct functionality.
-  });
-
-  const consoleWarnings = [];
-  const stubWarn = warning => consoleWarnings.push(warning);
-  beforeEach(function () {
-    logger.warn = stubWarn; // temporarily divert logger.warn, so that we may collect warnings in memory, for testing.
-  });
-
   for (const zsolFile of testDataFiles) {
+    const consoleWarnings = [];
+
     const fileName = pathjs.basename(zsolFile, '.zsol');
     const zsolFilePath = pathjs.join(testDataDir, `${fileName}.zsol`);
     const jsonFilePath = pathjs.join(testDataDir, `${fileName}.json`);
