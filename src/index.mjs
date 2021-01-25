@@ -22,7 +22,7 @@ const zappify = options => {
 
   ownership(path, options);
 
-  toOrchestration(zsolAST, options);
+  // toOrchestration(zsolAST, options);
   //
   // toCircuit(zsolAST, options);
   //
