@@ -140,12 +140,18 @@ export default {
               nodeType: 'ReadPreimage',
               privateStateName: stateVarName,
               parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
+              stateVarId: [id],
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
+              isOwned: binding.isOwned,
+              owner: binding.owner,
             });
           }
           // - oldCommitment preimage check
           // - oldCommitment membership & check vs the commitmentRoot
           node._newASTPointer.body.statements.push({
             nodeType: 'MembershipWitness',
+            privateStateName: stateVarName,
             contractName: contractName,
           });
 
@@ -155,6 +161,7 @@ export default {
           if (indicator.isNullified) {
             node._newASTPointer.body.statements.push({
               nodeType: 'CalculateNullifier',
+              privateStateName: stateVarName,
             });
           }
 
@@ -163,6 +170,11 @@ export default {
             nodeType: 'CalculateCommitment',
             privateStateName: stateVarName,
             parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
+            stateVarId: [id],
+            isWhole: indicator.isWhole,
+            isPartitioned: indicator.isPartitioned,
+            isOwned: binding.isOwned,
+            owner: binding.owner,
           });
 
           if (state.snarkVerificationRequired) {
@@ -178,6 +190,8 @@ export default {
               privateStateName: stateVarName,
               circuitName: node.name,
               parameters: circuitParams, // TODO this should be the name of the var inside the commitment
+              isOwned: binding.isOwned,
+              owner: binding.owner,
             });
           }
 
@@ -192,6 +206,11 @@ export default {
             nodeType: 'WritePreimage',
             privateStateName: stateVarName,
             parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
+            stateVarId: [id],
+            isWhole: indicator.isWhole,
+            isPartitioned: indicator.isPartitioned,
+            isOwned: binding.isOwned,
+            owner: binding.owner,
           });
         }
       }

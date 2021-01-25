@@ -1,3 +1,5 @@
+import logger from '../../../../utils/logger.mjs';
+
 export const ZappFilesBoilerplate = [
   { readPath: 'src/boilerplate/common/bin/setup', writePath: '/bin/setup', generic: false },
   { readPath: 'src/boilerplate/common/bin/startup', writePath: '/bin/startup', generic: true },
@@ -38,6 +40,52 @@ export const ZappFilesBoilerplate = [
   },
 ];
 
+export const preimageBoilerPlate = node => {
+  const lines = [];
+  const stateVarIds = [];
+  const initialiseParams = [];
+  const preimageParams = [];
+  const { privateStateName } = node;
+
+  node.parameters.forEach(param => {
+    // for each param which goes inside the commitment/ is used to calc commitment value
+    const id = node.stateVarId[node.parameters.indexOf(param)];
+    lines.push(`const ${param}_prev = generalise(${privateStateName}_preimage.${param});`);
+    stateVarIds.push(`const ${param}_stateVarId = ${id};`);
+    initialiseParams.push(`\nlet ${param}_prev = generalise(0);`);
+    preimageParams.push(`\t${param}: 0,`);
+  });
+  switch (node.isWhole) {
+    case true:
+      return [
+        `${stateVarIds.join('\n')}`,
+        `\nlet ${privateStateName}_commitmentExists = true;`,
+        `\nlet ${privateStateName}_witnessRequired = true;\n`,
+        `if (!fs.existsSync(db)) {
+            const preimage = {
+            ${preimageParams.join('')}
+            \tsalt: 0,
+            \tcommitment: 0,
+            };
+            fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+            ${privateStateName}_commitmentExists = false;
+            ${privateStateName}_witnessRequired = false;
+          }`,
+        `\nconst ${privateStateName}_preimage = JSON.parse(
+            fs.readFileSync(db, 'utf-8', err => {
+              console.log(err);
+            }),
+          );
+          const ${privateStateName}_currentCommitment = generalise(${privateStateName}_preimage.commitment);
+          ${lines.join('')}
+          const ${privateStateName}_prevSalt = generalise(${privateStateName}_preimage.salt);
+          \n`,
+      ];
+    default:
+      return [];
+  }
+};
+
 /**
  * Parses the boilerplate import statements, and grabs any common statements.
  * @param {Object} options - must always include stage, for some cases includes other info
@@ -48,12 +96,13 @@ export const OrchestrationCodeBoilerPlate = node => {
   const lines = [];
   const params = [];
   const rtnparams = [];
+  const { privateStateName } = node;
   switch (node.nodeType) {
     case 'Imports':
       // TODO proper db
       return {
         statements: [
-          `/* eslint-disable prettier/prettier, no-use-before-define */`,
+          `/* eslint-disable prettier/prettier, no-use-before-define, babel/camelcase */`,
           `\nimport config from 'config';`,
           `\nimport utils from 'zkp-utils';`,
           `\nimport GN from 'general-number';`,
@@ -82,38 +131,12 @@ export const OrchestrationCodeBoilerPlate = node => {
         ],
         statements: lines,
       };
+
     case 'ReadPreimage':
       // please help with this terrible name
       // TODO proper db
-      node.parameters.forEach(param => {
-        lines.push(`\tprev${param} = generalise(preimage.${param});`);
-        params.push(`\nlet prev${param} = generalise(0);`);
-      });
       return {
-        statements: [
-          `\nlet preimage;`,
-          `\nlet prevSalt = generalise(0);`,
-          params,
-          `\nlet currentCommitment = generalise(0);`,
-          `\nlet commitmentExists;`,
-          `\nlet witnessRequired;
-          \n`,
-          `if (fs.existsSync(db)) {
-            preimage = JSON.parse(
-              fs.readFileSync(db, 'utf-8', err => {
-                console.log(err);
-              }),
-            );
-            currentCommitment = generalise(preimage.commitment);
-            ${lines.join('  \t')}
-            prevSalt = generalise(preimage.salt);
-            commitmentExists = true;
-            witnessRequired = true;
-          } else {
-            commitmentExists = false;
-            witnessRequired = false;
-          }\n`,
-        ],
+        statements: preimageBoilerPlate(node),
       };
     case 'WritePreimage':
       // please help with this terrible name
@@ -123,31 +146,33 @@ export const OrchestrationCodeBoilerPlate = node => {
       });
       return {
         statements: [
-          `\npreimage = {
+          `\nconst preimage = {
           ${lines.join('')}
-          \tsalt: newSalt.integer,
-          \tcommitment: newCommitment.integer,
+          \tsalt: ${privateStateName}_newSalt.integer,
+          \tcommitment: ${privateStateName}_newCommitment.integer,
           };`,
           `\nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
         ],
       };
+
     case 'MembershipWitness':
+      if (logger.level === 'debug') console.dir(node, { depth: 1 });
       return {
         statements: [
           `const emptyPath = new Array(32).fill(0);
-          const witness = witnessRequired
-          \t? await getMembershipWitness('${node.contractName}', currentCommitment.integer)
+          const witness = ${privateStateName}_witnessRequired
+          \t? await getMembershipWitness('${node.contractName}', ${privateStateName}_currentCommitment.integer)
           \t: { index: 0, path: emptyPath, root: 0 };
-          const index = generalise(witness.index);
-          const root = generalise(witness.root);
-          const path = generalise(witness.path).all;\n`,
+          const ${privateStateName}_index = generalise(witness.index);
+          const ${privateStateName}_root = generalise(witness.root);
+          const ${privateStateName}_path = generalise(witness.path).all;\n`,
         ],
       };
     case 'CalculateNullifier':
       return {
         statements: [
-          `\nlet nullifier = commitmentExists ? generalise(utils.shaHash(prevSalt.hex(32))) : generalise(0);
-          \nnullifier = generalise(nullifier.hex(32, 31)); // truncate`,
+          `\nlet ${privateStateName}_nullifier = ${privateStateName}_commitmentExists ? generalise(utils.shaHash(${privateStateName}_stateVarId, secretKey.hex(32), ${privateStateName}_prevSalt.hex(32))) : generalise(0);
+          \n${privateStateName}_nullifier = generalise(${privateStateName}_nullifier.hex(32, 31)); // truncate`,
         ],
       };
     case 'CalculateCommitment':
@@ -156,9 +181,9 @@ export const OrchestrationCodeBoilerPlate = node => {
       });
       return {
         statements: [
-          `\nconst newSalt = generalise(utils.randomHex(32));`,
-          `\nlet newCommitment = generalise(utils.shaHash(${lines}, newSalt.hex(32)));
-          \nnewCommitment = generalise(newCommitment.hex(32, 31)); // truncate`,
+          `\nconst ${privateStateName}_newSalt = generalise(utils.randomHex(32));`,
+          `\nlet ${privateStateName}_newCommitment = generalise(utils.shaHash(${privateStateName}_stateVarId, ${lines}, ${privateStateName}_newOwnerPublicKey.hex(32), ${privateStateName}_newSalt.hex(32)));
+          \n${privateStateName}_newCommitment = generalise(${privateStateName}_newCommitment.hex(32, 31)); // truncate`,
         ],
       };
     case 'GenerateProof':
@@ -167,19 +192,27 @@ export const OrchestrationCodeBoilerPlate = node => {
         .forEach(param => {
           lines.push(`\t${param}.integer,`);
         });
+
+      // NEW:
+      // add statevarid, isdummy bool, PUBLIC KEYS, secret key
       return {
         statements: [
           `\nconst allInputs = [
           ${lines.join('  \t')}
-          \tprev${node.privateStateName}.limbs(32, 8),
-          \tprevSalt.limbs(32, 8),
-          \tindex.integer,
-          \tpath.integer,
-          \tnullifier.integer,
+          \t${privateStateName}_stateVarId,
+          \t!${privateStateName}_commitmentExists,
+          \t${privateStateName}_prev.limbs(32, 8),
+          \tpublicKey.limbs(32, 8),
+          \t${privateStateName}_prevSalt.limbs(32, 8),
+          \t${privateStateName}_index.integer,
+          \t${privateStateName}_path.integer,
+          \tsecretKey.limbs(32, 8),
+          \t${privateStateName}_nullifier.integer,
           \t${node.privateStateName}.limbs(32, 8),
-          \tnewSalt.limbs(32, 8),
-          \tnewCommitment.integer,
-          \troot.integer,
+          \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
+          \t${privateStateName}_newSalt.limbs(32, 8),
+          \t${privateStateName}_newCommitment.integer,
+          \t${privateStateName}_root.integer,
         ].flat(Infinity);`,
           `\nconst res = await generateProof('${node.circuitName}', allInputs);`,
           `\nconst proof = generalise(Object.values(res.proof).flat(Infinity))
@@ -192,7 +225,7 @@ export const OrchestrationCodeBoilerPlate = node => {
         statements: [
           `\nconst instance = await getContractInstance('${node.contractName}');`,
           `\nconst tx = await instance.methods
-          .${node.functionName}(proof, root.integer, [nullifier.integer], [newCommitment.integer])
+          .${node.functionName}(proof, ${privateStateName}_root.integer, [${privateStateName}_nullifier.integer], [${privateStateName}_newCommitment.integer])
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,

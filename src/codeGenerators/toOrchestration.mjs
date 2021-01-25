@@ -186,9 +186,9 @@ function codeGenerator(node) {
       return codeGenerator(node.expression);
 
     case 'Assignment':
-      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
+      return `\nconst ${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
         node.rightHandSide,
-      )}`;
+      )}; \n`;
 
     case 'Identifier':
       return node.name;

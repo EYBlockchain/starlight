@@ -98,7 +98,7 @@ export default {
             referencedIndicator.nullifyingPaths = [];
           }
           break;
-        case 'IndexAccess': {
+        case 'IndexAccess':
           newState.id = node.expression.leftHandSide.baseExpression.id;
           traversePathsFast(path, getIdentifierPath, newState);
           const mappingKey = scope.getMappingKeyIndicator(node.expression.leftHandSide);
