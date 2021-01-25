@@ -72,6 +72,11 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 
 ---
 
+## Requirements
+
+- Tested with Node.js v15 or higher.
+  (Known issues with v13).
+
 ## Install
 
 Whilst the package is in early development, it isn't hosted on npm. To install:
