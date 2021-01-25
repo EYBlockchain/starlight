@@ -57,17 +57,15 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Contents**
 
-  - [Install](#install)
-  - [Run](#run)
-    - [other options](#other-options)
+- [Troubleshooting](#troubleshooting)
 - [Developer](#developer)
-  - [Testing outputs](#testing-outputs)
-    - [circuit](#circuit)
+  - [Testing](#testing)
     - [full zapp](#full-zapp)
+    - [preliminary traversals](#preliminary-traversals)
+      - [Adding new test cases](#adding-new-test-cases)
+      - [Updating test cases](#updating-test-cases)
+    - [circuit](#circuit)
   - [R&D Notes & Ideas](#rd-notes--ideas)
-  - [Miranda's test branch](#mirandas-test-branch)
-    - [Testing `removeDecorators`](#testing-removedecorators)
-    - [Testing compiler output](#testing-compiler-output)
 - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
