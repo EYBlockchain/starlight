@@ -182,9 +182,6 @@ function itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarning
       path.traversePathsFast(collectScopesIntoArray, scopes);
       formatScopesForTesting(scopes);
 
-      console.log('SCOPES')
-      console.dir(scopes, { depth: 5 })
-
       actual = {
         scopes,
         errorType: null,

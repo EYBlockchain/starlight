@@ -164,7 +164,7 @@ export class Scope {
           path,
           scope: this,
           stateVariable: node.stateVariable,
-          isSecret: node.isSecret,
+          isSecret: node.isSecret || false,
           // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
           isReferenced: false,
           referenceCount: 0,

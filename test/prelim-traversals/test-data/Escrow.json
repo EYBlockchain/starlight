@@ -24,6 +24,7 @@
           "id": 4,
           "name": "owner",
           "stateVariable": true,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -146,6 +147,7 @@
           "id": 11,
           "name": "erc20",
           "stateVariable": true,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -207,6 +209,7 @@
           "id": 13,
           "name": "_erc20",
           "stateVariable": false,
+          "isSecret": false,
           "isReferenced": false,
           "referenceCount": 0,
           "referencingPaths": [],
@@ -231,6 +234,7 @@
           "id": 4,
           "name": "owner",
           "stateVariable": true,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -257,6 +261,7 @@
           "id": 11,
           "name": "erc20",
           "stateVariable": true,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -285,6 +290,7 @@
           "id": 4,
           "name": "owner",
           "stateVariable": true,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -311,6 +317,7 @@
           "id": 11,
           "name": "erc20",
           "stateVariable": true,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -345,6 +352,7 @@
           "id": 30,
           "name": "amountDeposit",
           "stateVariable": false,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -369,6 +377,7 @@
           "id": 34,
           "name": "hasBalance",
           "stateVariable": false,
+          "isSecret": false,
           "isReferenced": false,
           "referenceCount": 0,
           "referencingPaths": [],
@@ -432,6 +441,7 @@
           "id": 30,
           "name": "amountDeposit",
           "stateVariable": false,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -1102,6 +1112,7 @@
           "id": 81,
           "name": "amountWithdraw",
           "stateVariable": false,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -1126,6 +1137,7 @@
           "id": 92,
           "name": "success",
           "stateVariable": false,
+          "isSecret": false,
           "isReferenced": false,
           "referenceCount": 0,
           "referencingPaths": [],
@@ -1189,6 +1201,7 @@
           "id": 81,
           "name": "amountWithdraw",
           "stateVariable": false,
+          "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
