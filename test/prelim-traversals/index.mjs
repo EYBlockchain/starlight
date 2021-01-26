@@ -233,7 +233,10 @@ describe('Test prelim traversals of .zsol files', function () {
 
     // If the tester (dev) trusts the output and wants to write it to file, to become the 'expected' object for future tests.
     // TODO: use yargs to enforce an argument be passed with '--write'
-    if (args.includes('--write') && args[args.indexOf('--write') + 1] === fileName) {
+    if (
+      (args.includes('--write') && args[args.indexOf('--write') + 1] === fileName) ||
+      args.includes('--write-all')
+    ) {
       itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarnings);
       continue;
     }

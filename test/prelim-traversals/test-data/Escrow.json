@@ -87,6 +87,7 @@
                 65,
                 84
               ],
+              "nullificationCount": 2,
               "isNullified": true,
               "owner": {
                 "id": 85,
@@ -118,7 +119,8 @@
               "modifyingPaths": [
                 72
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isKnown": false,
@@ -421,6 +423,7 @@
             65,
             84
           ],
+          "nullificationCount": 2,
           "isNullified": true,
           "owner": {
             "id": 85,
@@ -504,6 +507,7 @@
                 65,
                 84
               ],
+              "nullificationCount": 2,
               "isNullified": true,
               "owner": {
                 "id": 85,
@@ -535,7 +539,8 @@
               "modifyingPaths": [
                 72
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isKnown": false,
@@ -616,6 +621,7 @@
                   65,
                   84
                 ],
+                "nullificationCount": 2,
                 "isNullified": true,
                 "owner": {
                   "id": 85,
@@ -638,7 +644,8 @@
               "isPartitionedReason": [
                 "Incremented and marked as unknown"
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isModified": true
@@ -718,7 +725,8 @@
           "modifyingPaths": [
             72
           ],
-          "nullifyingPaths": []
+          "nullifyingPaths": [],
+          "nullificationCount": 0
         },
         "60": {
           "kind": "VariableDeclaration",
@@ -814,6 +822,7 @@
                 65,
                 84
               ],
+              "nullificationCount": 2,
               "isNullified": true,
               "owner": {
                 "id": 85,
@@ -845,7 +854,8 @@
               "modifyingPaths": [
                 72
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isKnown": false,
@@ -912,6 +922,7 @@
                 65,
                 84
               ],
+              "nullificationCount": 2,
               "isNullified": true,
               "owner": {
                 "id": 85,
@@ -943,7 +954,8 @@
               "modifyingPaths": [
                 72
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isKnown": false,
@@ -1022,6 +1034,7 @@
                   65,
                   84
                 ],
+                "nullificationCount": 2,
                 "isNullified": true,
                 "owner": {
                   "id": 85,
@@ -1046,7 +1059,8 @@
               ],
               "nullifyingPaths": [
                 65
-              ]
+              ],
+              "nullificationCount": 1
             },
             "recipient": {
               "referencedKey": 73,
@@ -1086,7 +1100,8 @@
                 "modifyingPaths": [
                   72
                 ],
-                "nullifyingPaths": []
+                "nullifyingPaths": [],
+                "nullificationCount": 0
               },
               "id": 8,
               "isWhole": false,
@@ -1095,7 +1110,8 @@
               "isPartitionedReason": [
                 "Incremented and marked as unknown"
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isModified": true,
@@ -1181,6 +1197,7 @@
             65,
             84
           ],
+          "nullificationCount": 2,
           "isNullified": true,
           "owner": {
             "id": 85,
@@ -1264,6 +1281,7 @@
                 65,
                 84
               ],
+              "nullificationCount": 2,
               "isNullified": true,
               "owner": {
                 "id": 85,
@@ -1295,7 +1313,8 @@
               "modifyingPaths": [
                 72
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isKnown": false,
@@ -1362,6 +1381,7 @@
                 65,
                 84
               ],
+              "nullificationCount": 2,
               "isNullified": true,
               "owner": {
                 "id": 85,
@@ -1393,7 +1413,8 @@
               "modifyingPaths": [
                 72
               ],
-              "nullifyingPaths": []
+              "nullifyingPaths": [],
+              "nullificationCount": 0
             }
           },
           "isKnown": false,
@@ -1472,6 +1493,7 @@
                   65,
                   84
                 ],
+                "nullificationCount": 2,
                 "isNullified": true,
                 "owner": {
                   "id": 85,
@@ -1496,7 +1518,8 @@
               ],
               "nullifyingPaths": [
                 84
-              ]
+              ],
+              "nullificationCount": 1
             }
           },
           "isModified": true,

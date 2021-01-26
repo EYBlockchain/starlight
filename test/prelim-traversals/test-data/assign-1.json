@@ -36,7 +36,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -115,7 +115,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -174,7 +174,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -208,7 +208,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -250,7 +250,8 @@
           ],
           "nullifyingPaths": [
             8
-          ]
+          ],
+          "nullificationCount": 1
         }
       }
     }

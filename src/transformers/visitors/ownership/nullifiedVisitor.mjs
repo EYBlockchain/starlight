@@ -92,10 +92,13 @@ export default {
           if (!referencedIndicator) return;
           if (!referencedBinding.nullifyingPaths) {
             referencedBinding.nullifyingPaths = [];
+            referencedBinding.nullificationCount = 0;
             referencedIndicator.nullifyingPaths = [];
+            referencedIndicator.nullificationCount = 0;
           } else if (!referencedIndicator.nullifyingPaths) {
             // we have a separate statement for init just the indicator obj, since indicators are per function, while bindings are per contract
             referencedIndicator.nullifyingPaths = [];
+            referencedIndicator.nullificationCount = 0;
           }
           break;
         case 'IndexAccess': {
@@ -110,10 +113,13 @@ export default {
               .mappingKey[mappingKey];
           if (!referencedBinding.nullifyingPaths) {
             referencedBinding.nullifyingPaths = [];
+            referencedBinding.nullificationCount = 0;
             referencedIndicator.nullifyingPaths = [];
+            referencedIndicator.nullificationCount = 0;
           } else if (!referencedIndicator.nullifyingPaths) {
             // we have a separate statement for init just the indicator obj, since indicators are per function, while bindings are per contract
             referencedIndicator.nullifyingPaths = [];
+            referencedIndicator.nullificationCount = 0;
           }
           break;
         }
@@ -131,14 +137,18 @@ export default {
             node.expression.isNullification = true;
             referencedBinding.isNullified = true;
             referencedBinding.nullifyingPaths.push(newState.path);
+            referencedBinding.nullificationCount++;
             referencedIndicator.nullifyingPaths.push(newState.path);
+            referencedIndicator.nullificationCount++;
             scope.addNullifyingPath(newState.path);
             break;
           } else if (node.expression.leftHandSide.isKnown || node.expression.leftHandSide.isWhole) {
             node.expression.isNullification = true;
             referencedBinding.isNullified = true;
             referencedBinding.nullifyingPaths.push(newState.path);
+            referencedBinding.nullificationCount++;
             referencedIndicator.nullifyingPaths.push(newState.path);
+            referencedIndicator.nullificationCount++;
             scope.addNullifyingPath(newState.path);
             break;
           } else {
@@ -149,7 +159,9 @@ export default {
           node.expression.isNullification = true;
           referencedBinding.isNullified = true;
           referencedBinding.nullifyingPaths.push(newState.path);
+          referencedBinding.nullificationCount++;
           referencedIndicator.nullifyingPaths.push(newState.path);
+          referencedIndicator.nullificationCount++;
           scope.addNullifyingPath(newState.path);
           break;
         default:
