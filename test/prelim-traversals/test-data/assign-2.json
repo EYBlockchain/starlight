@@ -1,6 +1,0 @@
-{
-  "scopes": null,
-  "errorType": "Error",
-  "errorMessage": "Can't mark a whole state as unknown. The state a is whole due to: Overwritten at 168:10:0",
-  "warningMessages": null
-}

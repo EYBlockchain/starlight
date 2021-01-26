@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract MyContract {
+
+    secret uint256 private a;
+    address private admin;
+
+    function assign(secret uint256 param1) public {
+        require(msg.sender == admin);
+        a = param1;
+    }
+}

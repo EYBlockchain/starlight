@@ -182,6 +182,10 @@ You can automate the creation of 'expected outputs' for these tests.
 
 Run the steps above. Warning: this will overwrite existing 'expected' data with new data.
 
+##### Adding/Updating _all_ test cases
+
+Use the flag `--write-all` instead of `--write <fileName`. **WARNING** this will overwrite all 'expected' test files. Only use if you know what you're doing.
+
 #### circuit
 
 `cd ./path/to/myCircuit.zok`

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: CC0
 
+// TARGET CONTRACT FOR PHASE 2 OF DEVELOPMENT:
+
 pragma solidity ^0.8.0;
 
 import "./Escrow-imports/IERC20.sol";
@@ -15,20 +17,20 @@ contract Escrow {
         erc20 = IERC20(_erc20);
     }
 
-    function deposit(uint amountDeposit) public {
-        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amountDeposit);
+    function deposit(uint amount) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
         require(hasBalance);
-        unknown balances[msg.sender] += amountDeposit;
+        balances[msg.sender] += amount;
     }
 
-    function transfer(secret address recipient, secret uint256 amountTransfer) public {
-        balances[msg.sender] -= amountTransfer;
-        unknown balances[recipient] += amountTransfer;
+    function transfer(secret address recipient, secret uint256 amount) public {
+        balances[msg.sender] -= amount;
+        unknown balances[recipient] += amount;
     }
 
-    function withdraw(uint256 amountWithdraw) public {
-        balances[msg.sender] -= amountWithdraw;
-        bool success = erc20.transfer(msg.sender, amountWithdraw);
+    function withdraw(uint256 amount) public {
+        balances[msg.sender] -= amount;
+        bool success = erc20.transfer(msg.sender, amount);
         require(success, "ERC20 transfer failed");
     }
 }

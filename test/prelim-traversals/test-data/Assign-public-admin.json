@@ -1,12 +1,12 @@
 {
   "scopes": [
     {
-      "scopeId": 15,
+      "scopeId": 24,
       "scopeType": "SourceUnit",
       "bindings": {
-        "14": {
+        "23": {
           "kind": "ContractDefinition",
-          "id": 14,
+          "id": 23,
           "name": "MyContract"
         }
       },
@@ -16,7 +16,8 @@
       "indicators": {}
     },
     {
-      "scopeId": 14,
+      "scopeId": 23,
+      "scopeName": "MyContract",
       "scopeType": "ContractDefinition",
       "bindings": {
         "3": {
@@ -28,32 +29,77 @@
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            8
+            17
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            8
+            17
           ],
           "isNullified": true,
           "nullificationCount": 1,
           "nullifyingPaths": [
-            8
+            17
           ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
           "isPartitioned": false,
-          "isOwned": false,
-          "owner": null,
+          "isOwned": true,
+          "owner": {
+            "kind": "VariableDeclaration",
+            "id": 5,
+            "name": "admin",
+            "stateVariable": true,
+            "isSecret": false,
+            "isReferenced": false,
+            "referenceCount": 0,
+            "referencingPaths": [],
+            "isModified": false,
+            "modificationCount": 0,
+            "modifyingPaths": [],
+            "isNullified": false,
+            "nullificationCount": 0,
+            "nullifyingPaths": [],
+            "isMapping": false,
+            "mappingKey": null,
+            "isKnown": false,
+            "isWhole": false,
+            "isPartitioned": false,
+            "isOwned": false,
+            "owner": null
+          },
           "isWholeReason": [
-            "Overwritten at 168:10:0"
+            "Overwritten at 235:10:0"
           ]
         },
-        "13": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "admin",
+          "stateVariable": true,
+          "isSecret": false,
+          "isReferenced": false,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "22": {
           "kind": "FunctionDefinition",
-          "id": 13,
+          "id": 22,
           "name": "assign"
         }
       },
@@ -68,19 +114,20 @@
       }
     },
     {
-      "scopeId": 13,
+      "scopeId": 22,
+      "scopeName": "assign",
       "scopeType": "FunctionDefinition",
       "bindings": {
-        "5": {
+        "7": {
           "kind": "VariableDeclaration",
-          "id": 5,
+          "id": 7,
           "name": "param1",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            9
+            18
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -107,39 +154,61 @@
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            8
+            17
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            8
+            17
           ],
           "isNullified": true,
           "nullificationCount": 1,
           "nullifyingPaths": [
-            8
+            17
           ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
           "isPartitioned": false,
-          "isOwned": false,
-          "owner": null,
+          "isOwned": true,
+          "owner": {
+            "kind": "VariableDeclaration",
+            "id": 5,
+            "name": "admin",
+            "stateVariable": true,
+            "isSecret": false,
+            "isReferenced": false,
+            "referenceCount": 0,
+            "referencingPaths": [],
+            "isModified": false,
+            "modificationCount": 0,
+            "modifyingPaths": [],
+            "isNullified": false,
+            "nullificationCount": 0,
+            "nullifyingPaths": [],
+            "isMapping": false,
+            "mappingKey": null,
+            "isKnown": false,
+            "isWhole": false,
+            "isPartitioned": false,
+            "isOwned": false,
+            "owner": null
+          },
           "isWholeReason": [
-            "Overwritten at 168:10:0"
+            "Overwritten at 235:10:0"
           ]
         },
-        "5": {
+        "7": {
           "kind": "VariableDeclaration",
-          "id": 5,
+          "id": 7,
           "name": "param1",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            9
+            18
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -166,27 +235,49 @@
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            8
+            17
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            8
+            17
           ],
           "isNullified": true,
           "nullificationCount": 1,
           "nullifyingPaths": [
-            8
+            17
           ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
           "isPartitioned": false,
-          "isOwned": false,
-          "owner": null,
+          "isOwned": true,
+          "owner": {
+            "kind": "VariableDeclaration",
+            "id": 5,
+            "name": "admin",
+            "stateVariable": true,
+            "isSecret": false,
+            "isReferenced": false,
+            "referenceCount": 0,
+            "referencingPaths": [],
+            "isModified": false,
+            "modificationCount": 0,
+            "modifyingPaths": [],
+            "isNullified": false,
+            "nullificationCount": 0,
+            "nullifyingPaths": [],
+            "isMapping": false,
+            "mappingKey": null,
+            "isKnown": false,
+            "isWhole": false,
+            "isPartitioned": false,
+            "isOwned": false,
+            "owner": null
+          },
           "isWholeReason": [
-            "Overwritten at 168:10:0"
+            "Overwritten at 235:10:0"
           ]
         }
       },
@@ -200,27 +291,49 @@
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            8
+            17
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            8
+            17
           ],
           "isNullified": true,
           "nullificationCount": 1,
           "nullifyingPaths": [
-            8
+            17
           ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
           "isPartitioned": false,
-          "isOwned": false,
-          "owner": null,
+          "isOwned": true,
+          "owner": {
+            "kind": "VariableDeclaration",
+            "id": 5,
+            "name": "admin",
+            "stateVariable": true,
+            "isSecret": false,
+            "isReferenced": false,
+            "referenceCount": 0,
+            "referencingPaths": [],
+            "isModified": false,
+            "modificationCount": 0,
+            "modifyingPaths": [],
+            "isNullified": false,
+            "nullificationCount": 0,
+            "nullifyingPaths": [],
+            "isMapping": false,
+            "mappingKey": null,
+            "isKnown": false,
+            "isWhole": false,
+            "isPartitioned": false,
+            "isOwned": false,
+            "owner": null
+          },
           "isWholeReason": [
-            "Overwritten at 168:10:0"
+            "Overwritten at 235:10:0"
           ]
         }
       },
@@ -229,11 +342,11 @@
           "id": 3,
           "name": "a",
           "referencingPaths": [
-            8
+            17
           ],
           "referenceCount": 1,
           "modifyingPaths": [
-            8
+            17
           ],
           "modificationCount": 1,
           "isReferenced": true,
@@ -246,19 +359,31 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 168:10:0"
+            "Overwritten at 235:10:0"
           ],
           "nullifyingPaths": [
-            8
+            17
           ],
-          "nullificationCount": 1
+          "nullificationCount": 1,
+          "isOwned": true
+        }
+      },
+      "callerRestriction": "match",
+      "callerRestrictionNode": {
+        "id": 13,
+        "name": "admin",
+        "nodeType": "Identifier",
+        "overloadedDeclarations": [],
+        "referencedDeclaration": 5,
+        "src": "218:5:0",
+        "typeDescriptions": {
+          "typeIdentifier": "t_address",
+          "typeString": "address"
         }
       }
     }
   ],
   "errorType": null,
   "errorMessage": null,
-  "warningMessages": [
-    "Warning: secret state a is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
-  ]
+  "warningMessages": []
 }

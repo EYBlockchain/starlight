@@ -96,7 +96,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "945:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -134,7 +134,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -355,7 +355,7 @@
         "30": {
           "kind": "VariableDeclaration",
           "id": 30,
-          "name": "amount",
+          "name": "amountDeposit",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
@@ -434,7 +434,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -445,7 +445,7 @@
         "30": {
           "kind": "VariableDeclaration",
           "id": 30,
-          "name": "amount",
+          "name": "amountDeposit",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
@@ -518,7 +518,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "945:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -556,7 +556,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -597,6 +597,7 @@
               "newCommitmentRequired": true,
               "isNullified": false,
               "initialisationRequired": true,
+              "isUnknown": true,
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
@@ -631,7 +632,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "815:3:1",
+                  "src": "945:3:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"
@@ -687,7 +688,7 @@
         "62": {
           "kind": "VariableDeclaration",
           "id": 62,
-          "name": "amount",
+          "name": "amountTransfer",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
@@ -759,7 +760,7 @@
         "62": {
           "kind": "VariableDeclaration",
           "id": 62,
-          "name": "amount",
+          "name": "amountTransfer",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
@@ -833,7 +834,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "945:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -871,7 +872,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -933,7 +934,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "945:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -971,7 +972,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1045,7 +1046,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "815:3:1",
+                  "src": "945:3:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"
@@ -1130,7 +1131,7 @@
         "81": {
           "kind": "VariableDeclaration",
           "id": 81,
-          "name": "amount",
+          "name": "amountWithdraw",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
@@ -1209,7 +1210,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1220,7 +1221,7 @@
         "81": {
           "kind": "VariableDeclaration",
           "id": 81,
-          "name": "amount",
+          "name": "amountWithdraw",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
@@ -1293,7 +1294,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "945:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -1331,7 +1332,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1393,7 +1394,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "945:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -1431,7 +1432,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "945:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1505,7 +1506,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "815:3:1",
+                  "src": "945:3:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"
@@ -1535,7 +1536,7 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "Non-secret parameter amount used to assign secret variable balances",
-    "Non-secret parameter amount used to assign secret variable balances"
+    "Non-secret parameter amountDeposit used to assign secret variable balances",
+    "Non-secret parameter amountWithdraw used to assign secret variable balances"
   ]
 }
