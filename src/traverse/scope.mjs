@@ -1120,12 +1120,14 @@ export class Scope {
    */
   isNullifiable() {
     // for each state variable in the function def scope
-    for (const stateVarId of Object.keys(this.indicators)) {
+    for (const stateVarId of Object.keys(this.bindings)) {
       // only modified states live in the indicators object, so we don't have to worry about filtering out secret params here (they're allowed to be non-nullified)
-      const stateVar = this.indicators[stateVarId];
-      if (!stateVar.binding.isSecret) continue;
+      const stateVar = this.bindings[stateVarId];
+      if (!stateVar.isSecret) continue;
+      if (!stateVar.isWhole) continue;
+      if (stateVar.node.isConstant || stateVar.node.constant) continue;
       // go through each mapping key, if mapping
-      if (this.indicators[stateVarId].mappingKey) {
+      if (stateVar.mappingKey) {
         for (const key of Object.keys(stateVar.mappingKey)) {
           // if the key is a parameter, then it can be any (user defined) key, so as long as isNullified = true, any key can be nullified
           if (
@@ -1140,12 +1142,12 @@ export class Scope {
             !stateVar.mappingKey[key].referencedKeyisMsg
           )
             throw new Error(
-              `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable.`,
+              `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable or constant.`,
             );
         }
       } else if (stateVar.isNullified !== true) {
         throw new Error(
-          `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable.`,
+          `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable or constant.`,
         );
       }
     }
