@@ -61,6 +61,7 @@ export class Scope {
     if (cachedScope && cachedScope.path) return cachedScope;
 
     this.scopeId = node.id;
+    this.scopeName = node.name; // whilst not all nodes have a 'name' property; all scopable nodes do.
     this.scopeType = node.nodeType;
     this.path = path;
     this.bindings = {}; // keys are AST node `id`s
@@ -164,7 +165,7 @@ export class Scope {
           path,
           scope: this,
           stateVariable: node.stateVariable,
-          isSecret: node.isSecret,
+          isSecret: node.isSecret || false,
           // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
           isReferenced: false,
           referenceCount: 0,

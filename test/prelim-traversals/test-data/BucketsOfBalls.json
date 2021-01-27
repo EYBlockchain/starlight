@@ -1,0 +1,6 @@
+{
+  "scopes": null,
+  "errorType": "TypeError",
+  "errorMessage": "Cannot read property 'includes' of undefined",
+  "warningMessages": null
+}

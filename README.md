@@ -55,8 +55,11 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Contents**
 
+
+- [Install](#install)
+- [Run](#run)
+  - [other options](#other-options)
 - [Troubleshooting](#troubleshooting)
 - [Developer](#developer)
   - [Testing](#testing)
@@ -69,6 +72,13 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+---
+
+## Requirements
+
+- Tested with Node.js v15 or higher.
+  (Known issues with v13).
 
 ---
 
@@ -88,11 +98,16 @@ This will create a symlink to your node.js bin, allowing you to run the commands
 
 ... converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
 
-### other options
+### CLI options
 
-- `-o ./custom/output/dir/` - specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.
-- `-z customZappName` - otherwise files get output to a folder with name matching that of the input file.
-- `-h` for help.
+| option  | abbr.  | description  |
+|:--|:--|:--|
+| `--input <./path/to/contract.zsol>`  | `-i`  | Specify an input contract file with a `.zsol` extension.  |
+| `--output <./custom/output/dir/>`  | `-o`  | Specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.  |
+| `--zapp-name <customZappName>` | `-z`  | Otherwise files get output to a folder with name matching that of the input file.  |
+| `--log-level <debug>`  | -  | Specify a Winston log level type.  |
+| `--help`  | `-h`  | CLI help.  |
+
 
 ---
 
@@ -166,6 +181,10 @@ You can automate the creation of 'expected outputs' for these tests.
 ##### Updating test cases
 
 Run the steps above. Warning: this will overwrite existing 'expected' data with new data.
+
+##### Adding/Updating _all_ test cases
+
+Use the flag `--write-all` instead of `--write <fileName`. **WARNING** this will overwrite all 'expected' test files. Only use if you know what you're doing.
 
 #### circuit
 
