@@ -112,6 +112,7 @@ export default {
                 );
               lhsbinding.owner = scope.getReferencedBinding(ownerNode);
               lhsbinding.isOwned = true;
+              logger.debug(`The owner of state ${lhsbinding.name} is ${ownerNode.name}`);
               scope.indicators[lhsIdentifier.referencedDeclaration].isOwned = true;
               break;
             case 'Literal':
@@ -176,6 +177,12 @@ export default {
           }
           break;
       }
+      // if we have an owner which is an eth address, we need a way to convert from addresses to zkp public keys:
+      if (
+        lhsbinding.owner.name === 'msg' ||
+        lhsbinding.owner.node.typeDescriptions.typeIdentifier.includes('address')
+      )
+        scope.onChainKeyRegistry = true;
       // logger.debug(scope.getReferencedBinding(lhsIdentifier));
       // logger.debug('------');
       // logger.debug(scope.indicators[lhsIdentifier.referencedDeclaration]);

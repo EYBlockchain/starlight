@@ -174,7 +174,6 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'MembershipWitness':
-      if (logger.level === 'debug') console.dir(node, { depth: 1 });
       return {
         statements: [
           `const emptyPath = new Array(32).fill(0);
@@ -237,11 +236,15 @@ export const OrchestrationCodeBoilerPlate = node => {
         ],
       };
     case 'SendTransaction':
+      if (node.publicInputs[0]) {
+        lines[0] = ` ,`;
+        lines[1] = node.publicInputs;
+      }
       return {
         statements: [
           `\nconst instance = await getContractInstance('${node.contractName}');`,
           `\nconst tx = await instance.methods
-          .${node.functionName}(proof, ${privateStateName}_root.integer, [${privateStateName}_nullifier.integer], [${privateStateName}_newCommitment.integer])
+          .${node.functionName}(proof, ${privateStateName}_root.integer, [${privateStateName}_nullifier.integer], [${privateStateName}_newCommitment.integer]${lines})
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,

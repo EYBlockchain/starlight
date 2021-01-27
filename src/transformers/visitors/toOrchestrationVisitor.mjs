@@ -156,7 +156,10 @@ export default {
               isWhole: indicator.isWhole,
               isPartitioned: indicator.isPartitioned,
               isOwned: binding.isOwned,
-              owner: binding.owner,
+              owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+              ownerIsSecret: binding.isOwned
+                ? binding.owner.isSecret || binding.owner.node.isSecret
+                : null,
             });
           }
           // - oldCommitment preimage check
@@ -186,7 +189,10 @@ export default {
             isWhole: indicator.isWhole,
             isPartitioned: indicator.isPartitioned,
             isOwned: binding.isOwned,
-            owner: binding.owner,
+            owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+            ownerIsSecret: binding.isOwned
+              ? binding.owner.isSecret || binding.owner.node.isSecret
+              : null,
           });
 
           if (state.snarkVerificationRequired) {
@@ -203,8 +209,19 @@ export default {
               circuitName: node.name,
               parameters: circuitParams, // TODO this should be the name of the var inside the commitment
               isOwned: binding.isOwned,
-              owner: binding.owner,
+              owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+              ownerIsSecret: binding.isOwned
+                ? binding.owner.isSecret || binding.owner.node.isSecret
+                : null,
             });
+          }
+
+          console.log(node.parameters.parameters);
+
+          const publicInputs = [];
+
+          for (const param of node.parameters.parameters) {
+            if (!param.isSecret) publicInputs.push(param.name);
           }
 
           node._newASTPointer.body.statements.push({
@@ -212,6 +229,7 @@ export default {
             privateStateName: stateVarName,
             functionName: node.name,
             contractName: contractName,
+            publicInputs: publicInputs,
           });
 
           node._newASTPointer.body.statements.push({
@@ -222,7 +240,10 @@ export default {
             isWhole: indicator.isWhole,
             isPartitioned: indicator.isPartitioned,
             isOwned: binding.isOwned,
-            owner: binding.owner,
+            owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+            ownerIsSecret: binding.isOwned
+              ? binding.owner.isSecret || binding.owner.node.isSecret
+              : null,
           });
         }
       }
@@ -353,12 +374,14 @@ export default {
         }
       }
 
-      newNode = {
-        nodeType: node.nodeType,
-        expression: {},
-      };
-      node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      if (node.expression.nodeType !== 'FunctionCall') {
+        newNode = {
+          nodeType: node.nodeType,
+          expression: {},
+        };
+        node._newASTPointer = newNode;
+        parent._newASTPointer.push(newNode);
+      }
     },
 
     exit(path, parent) {},
@@ -373,7 +396,6 @@ export default {
         state.skipSubNodes = true;
         return;
       }
-      console.log(path.scope.bindings[node.id].referencingPaths);
       let modifiesSecretState = false;
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
