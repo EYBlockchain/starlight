@@ -21,15 +21,16 @@ export default {
   ContractDefinition: {
     enter(path, state) {},
 
-    exit(path, state) {},
+    exit(path, state) {
+      const { scope } = path;
+      scope.isNullifiable();
+    },
   },
 
   FunctionDefinition: {
     enter(path, state) {},
 
     exit(path, state) {
-      const { scope } = path;
-      scope.isNullifiable();
     },
   },
 
@@ -123,7 +124,6 @@ export default {
       }
       // then look at the node.expression to see if its incremented and/or the lhs to see if the state is whole
       // whole or decrement: we have a nullification
-
       switch (node.expression.isIncremented) {
         case true:
           if (node.expression.isDecremented) {

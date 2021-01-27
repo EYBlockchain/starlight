@@ -39,6 +39,7 @@ export default {
         // If we've not yet added this function as a node to our newAST, let's do that:
         // Our location in the newAST (parent._newASTPointer) should be Folder.files[].
         // NODEBUILDING
+        const contractName = `${node.name.charAt(0).toUpperCase() + node.name.slice(1)}Shield`;
         const newNode = {
           nodeType: 'File',
           name: node.name, // the name of this function
@@ -46,6 +47,11 @@ export default {
           nodes: [
             {
               nodeType: 'Imports',
+            },
+            {
+              nodeType: 'KeyRegistrationFunction',
+              onChainKeyRegistry: scope.onChainKeyRegistry, // TODO this is the temp solution to have a mapping with eth addr -> zkp keys on chain (we don't always need it)
+              contractName: contractName,
             },
             {
               // insert this FunctionDefinition node into our newly created circuit file.
@@ -57,7 +63,7 @@ export default {
             },
           ],
         };
-        node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
+        node._newASTPointer = newNode.nodes[2]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
       } else {
         // Not sure what to do if we're not creating a file...
@@ -127,9 +133,15 @@ export default {
           binding => binding.stateVariable && binding.isSecret,
         );
 
+        node._newASTPointer.parameters.modifiedStateVariables = [];
+
         for (const [id, binding] of Object.entries(modifiedStateVariableBindings)) {
           const indicator = scope.indicators[id];
           const stateVarName = binding.node.name;
+          node._newASTPointer.parameters.modifiedStateVariables.push({
+            nodeType: binding.node.nodeType,
+            name: stateVarName,
+          });
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
           // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
@@ -180,9 +192,9 @@ export default {
           if (state.snarkVerificationRequired) {
             const circuitParams = [];
             // this adds other values we need in the circuit - v simple
-            for (const modifier of binding.modifyingPaths) {
-              if (modifier.parent.nodeType === 'Assignment')
-                circuitParams.push(modifier.parent.rightHandSide.name);
+            for (const param of node._newASTPointer.parameters.parameters) {
+              if (param.isPrivate || param.isSecret || param.modifiesSecretState)
+                circuitParams.push(param.name);
             }
             circuitParams.push(stateVarName);
             node._newASTPointer.body.statements.push({
@@ -265,6 +277,7 @@ export default {
       const { node, parent } = path;
       const newNode = {
         nodeType: node.nodeType,
+        operator: node.operator,
         leftExpression: {},
         rightExpression: {},
       };
@@ -286,7 +299,11 @@ export default {
         rightHandSide: {},
       };
       node._newASTPointer = newNode;
-      parent._newASTPointer.expression = newNode;
+      if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+        parent._newASTPointer.initialValue = newNode;
+      } else {
+        parent._newASTPointer.expression = newNode;
+      }
     },
 
     exit(path, state) {},
@@ -297,7 +314,6 @@ export default {
       const { node, parent, scope } = path;
       let newNode;
       // ExpressionStatements can contain an Assignment node.
-      // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the _first_ such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
@@ -305,10 +321,12 @@ export default {
         const referencedNode = referencedBinding.node;
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
-        const modifiedBinding = scope.modifiedBindings[referencedBinding.id];
+        const modifiedPaths = referencedBinding.modifyingPaths.filter(
+          path => path.scope.scopeId === scope.scopeId,
+        );
 
         // NODEBUILDING
-        if (!modifiedBinding && referencedNode.isSecret) {
+        if (modifiedPaths[0].node.id === lhs.id && referencedNode.isSecret) {
           newNode = {
             nodeType: 'VariableDeclarationStatement',
             declarations: [
@@ -321,14 +339,12 @@ export default {
                 },
               },
             ],
-            initialValue: {
-              ...rhs,
-            },
+            initialValue: {},
           };
 
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
-          state.skipSubNodes = true;
+          // state.skipSubNodes = true;
 
           // Continue scoping subNodes, so that any references / modifications to bindings are collected. We'll require this data when exiting the tree.
           path.traverse({}, {});
@@ -350,19 +366,26 @@ export default {
 
   VariableDeclaration: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable.
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
         return;
       }
+      console.log(path.scope.bindings[node.id].referencingPaths);
+      let modifiesSecretState = false;
+
+      scope.bindings[node.id].referencingPaths.forEach(refPath => {
+        if (scope.getReferencedBinding(refPath.node).isSecret) modifiesSecretState = true;
+      });
 
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = {
         nodeType: node.nodeType,
         name: node.name,
-        isPrivate: true, // assume all params are private for now? TODO: think this through better.
+        isPrivate: node.isSecret,
+        modifiesSecretState: modifiesSecretState,
         typeName: {},
       };
       node._newASTPointer = newNode;
@@ -410,7 +433,16 @@ export default {
   },
 
   Literal: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+      const newNode = {
+        nodeType: node.nodeType,
+        name: node.value,
+      };
+
+      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = newNode;
+    },
 
     exit(path) {},
   },

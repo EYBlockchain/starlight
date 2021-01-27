@@ -23,7 +23,7 @@ const zappify = options => {
 
   if (options.isTest && options.testType === 'prelim') return path;
 
-  toOrchestration(path, options);
+  // toOrchestration(path, options);
   //
   // toCircuit(zsolAST, options);
   //

@@ -154,7 +154,7 @@ function codeGenerator(node) {
     }
 
     case 'FunctionDefinition': {
-      node.parameters = node.parameters.parameters.map(codeGenerator);
+      node.inputParameters = node.parameters.parameters.map(codeGenerator);
       node.returnParameters = node.returnParameters.parameters.map(codeGenerator) || [];
       const fn = OrchestrationCodeBoilerPlate(node);
       const statements = codeGenerator(node.body);
@@ -171,9 +171,9 @@ function codeGenerator(node) {
     }
 
     case 'VariableDeclarationStatement': {
-      const declarations = node.declarations.map(codeGenerator).join(', ');
-      const initialValue = codeGenerator(node.initialValue);
-      return `\nlet ${declarations} = ${initialValue};`;
+      // const declarations = node.declarations.map(codeGenerator).join(', ');
+      // const initialValue = codeGenerator(node.initialValue);
+      return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
     case 'ElementaryTypeName':
@@ -183,13 +183,19 @@ function codeGenerator(node) {
       return node.statements.map(codeGenerator).join('  ');
 
     case 'ExpressionStatement':
-      return codeGenerator(node.expression);
+      return `\n${codeGenerator(node.expression)};`;
 
     case 'Assignment':
-      return `\nconst ${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
+      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
         node.rightHandSide,
-      )}; \n`;
+      )}`;
 
+    case 'BinaryOperation':
+      return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
+        node.rightExpression,
+      )}`;
+
+    case 'Literal':
     case 'Identifier':
       return node.name;
 
@@ -201,6 +207,7 @@ function codeGenerator(node) {
     case 'GenerateProof':
     case 'SendTransaction':
     case 'Imports':
+    case 'KeyRegistrationFunction':
       return `${OrchestrationCodeBoilerPlate(node).statements.join('')}`;
     // And if we haven't recognized the node, we'll throw an error.
     default:

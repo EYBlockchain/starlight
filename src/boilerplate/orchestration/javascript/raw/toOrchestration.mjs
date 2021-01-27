@@ -51,7 +51,7 @@ export const preimageBoilerPlate = node => {
     // for each param which goes inside the commitment/ is used to calc commitment value
     const id = node.stateVarId[node.parameters.indexOf(param)];
     lines.push(`const ${param}_prev = generalise(${privateStateName}_preimage.${param});`);
-    stateVarIds.push(`const ${param}_stateVarId = ${id};`);
+    stateVarIds.push(`\nconst ${param}_stateVarId = ${id};`);
     initialiseParams.push(`\nlet ${param}_prev = generalise(0);`);
     preimageParams.push(`\t${param}: 0,`);
   });
@@ -76,6 +76,14 @@ export const preimageBoilerPlate = node => {
               console.log(err);
             }),
           );
+          const keys = JSON.parse(
+              fs.readFileSync(keyDb, 'utf-8', err => {
+                console.log(err);
+              }),
+            );
+          const secretKey = generalise(keys.secretKey);
+          const publicKey = generalise(keys.publicKey);
+          ${privateStateName}_newOwnerPublicKey = ${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;
           const ${privateStateName}_currentCommitment = generalise(${privateStateName}_preimage.commitment);
           ${lines.join('')}
           const ${privateStateName}_prevSalt = generalise(${privateStateName}_preimage.salt);
@@ -95,6 +103,7 @@ export const preimageBoilerPlate = node => {
 export const OrchestrationCodeBoilerPlate = node => {
   const lines = [];
   const params = [];
+  const states = [];
   const rtnparams = [];
   const { privateStateName } = node;
   switch (node.nodeType) {
@@ -113,19 +122,28 @@ export const OrchestrationCodeBoilerPlate = node => {
           `\nimport { getMembershipWitness } from './common/timber.mjs';
           \n`,
           `\nconst { generalise } = GN;`,
-          `\nconst db = '/app/orchestration/common/db/preimage.json';\n\n`,
+          `\nconst db = '/app/orchestration/common/db/preimage.json';`,
+          `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
         ],
       };
     case 'FunctionDefinition':
       // the main function
-      node.parameters.forEach(param => {
+      node.inputParameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
       });
+
+      node.parameters.modifiedStateVariables.forEach(param => {
+        states.push(`_${param.name}_newOwnerPublicKey = 0`);
+        lines.push(
+          `\nlet ${param.name}_newOwnerPublicKey = generalise(_${param.name}_newOwnerPublicKey);`,
+        );
+      });
       node.returnParameters.forEach(param => rtnparams.push(`, ${param.integer}`));
+
       return {
         signature: [
-          `export default async function ${node.name}(${params}) {`,
+          `\nexport default async function ${node.name}(${params}, ${states}) {`,
           `\nreturn { tx ${rtnparams.join('')}};
         \n}`,
         ],
@@ -193,8 +211,6 @@ export const OrchestrationCodeBoilerPlate = node => {
           lines.push(`\t${param}.integer,`);
         });
 
-      // NEW:
-      // add statevarid, isdummy bool, PUBLIC KEYS, secret key
       return {
         statements: [
           `\nconst allInputs = [
@@ -230,6 +246,28 @@ export const OrchestrationCodeBoilerPlate = node => {
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,
             });\n`,
+        ],
+      };
+    case 'KeyRegistrationFunction':
+      if (node.onChainKeyRegistry === true)
+        lines.push(`\n\tconst instance = await getContractInstance('${node.contractName}');\n\tconst tx = await instance.methods
+                .registerKey(publicKey.integer)
+                .send({
+                    from: config.web3.options.defaultAccount,
+                    gas: config.web3.options.defaultGas,
+                  });\n`);
+      return {
+        statements: [
+          `\nexport async function registerKey(_secretKey) {`,
+          `\n\tconst secretKey = generalise(_secretKey);`,
+          `\n\tconst publicKey = generalise(utils.shaHash(secretKey.hex(32)));`,
+          lines[0],
+          `\n\tconst keyJson = {
+            secretKey: secretKey.integer,
+            publicKey: publicKey.integer, // not req
+          };`,
+          `\n\tfs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));`,
+          `\n}\n`,
         ],
       };
     default:
