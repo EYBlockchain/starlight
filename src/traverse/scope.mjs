@@ -1125,6 +1125,7 @@ export class Scope {
       const stateVar = this.bindings[stateVarId];
       if (!stateVar.isSecret) continue;
       if (!stateVar.isWhole) continue;
+      if (stateVar.node.isConstant || stateVar.node.constant) continue;
       // go through each mapping key, if mapping
       if (stateVar.mappingKey) {
         for (const key of Object.keys(stateVar.mappingKey)) {
@@ -1141,12 +1142,12 @@ export class Scope {
             !stateVar.mappingKey[key].referencedKeyisMsg
           )
             throw new Error(
-              `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable.`,
+              `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable or constant.`,
             );
         }
       } else if (stateVar.isNullified !== true) {
         throw new Error(
-          `All states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable.`,
+          `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable or constant.`,
         );
       }
     }

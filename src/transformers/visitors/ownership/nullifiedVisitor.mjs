@@ -30,8 +30,7 @@ export default {
   FunctionDefinition: {
     enter(path, state) {},
 
-    exit(path, state) {
-    },
+    exit(path, state) {},
   },
 
   ParameterList: {
