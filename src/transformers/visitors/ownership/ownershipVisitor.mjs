@@ -121,6 +121,7 @@ export default {
                 );
               lhsbinding.owner = ownerNode;
               lhsbinding.isOwned = true;
+              logger.debug(`The owner of state ${lhsbinding.name} is ${ownerNode.name}`);
               break;
             default:
               break;
@@ -164,6 +165,9 @@ export default {
               throw new Error(
                 `Found two distinct owners of one state: ${lhsbinding.owner.name} and msg.sender`,
               );
+            logger.debug(
+              `The owner of state ${lhsNode.baseExpression.name}[${lhsNode.indexExpression.expression.name}] is ${lhsNode.indexExpression.expression.name}`,
+            );
             lhsbinding.owner = lhsNode.indexExpression.expression;
             lhsbinding.isOwned = true;
             scope.getReferencedBinding(lhsIdentifier).owner = lhsNode.indexExpression.expression;
