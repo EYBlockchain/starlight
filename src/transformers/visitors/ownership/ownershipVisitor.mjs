@@ -179,8 +179,9 @@ export default {
       }
       // if we have an owner which is an eth address, we need a way to convert from addresses to zkp public keys:
       if (
-        lhsbinding.owner.name === 'msg' ||
-        lhsbinding.owner.node.typeDescriptions.typeIdentifier.includes('address')
+        lhsbinding.owner &&
+        (lhsbinding.owner.name === 'msg' ||
+          lhsbinding.owner.node.typeDescriptions.typeIdentifier.includes('address'))
       )
         scope.onChainKeyRegistry = true;
       // logger.debug(scope.getReferencedBinding(lhsIdentifier));

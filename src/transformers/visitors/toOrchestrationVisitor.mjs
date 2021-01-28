@@ -39,7 +39,7 @@ export default {
         // If we've not yet added this function as a node to our newAST, let's do that:
         // Our location in the newAST (parent._newASTPointer) should be Folder.files[].
         // NODEBUILDING
-        const contractName = `${node.name.charAt(0).toUpperCase() + node.name.slice(1)}Shield`;
+        const contractName = `${parent.name}Shield`;
         const newNode = {
           nodeType: 'File',
           name: node.name, // the name of this function
@@ -106,7 +106,7 @@ export default {
             nodeType: 'EditableCommitmentCommonFilesBoilerplate',
           });
         }
-        const contractName = `${node.name.charAt(0).toUpperCase() + node.name.slice(1)}Shield`;
+        const contractName = `${parent.name}Shield`;
 
         if (state.snarkVerificationRequired) {
           parent._newASTPointer.push({
@@ -143,6 +143,23 @@ export default {
             name: stateVarName,
           });
 
+          let increment;
+
+          if (indicator.isPartitioned) {
+            node._newASTPointer.body.statements.forEach(statement => {
+              if (
+                statement.nodeType === 'ExpressionStatement' &&
+                statement.incrementsSecretState &&
+                statement.secretStateName === stateVarName
+              )
+                increment = statement.increment;
+              if (statement.decrementsSecretState) {
+                node._newASTPointer.decrementsSecretState = true;
+                node._newASTPointer.decrementedSecretState = statement.secretStateName; // TODO make this an array
+              }
+            });
+          }
+
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
           // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
           // Also do for MembershipWitness
@@ -151,10 +168,12 @@ export default {
             node._newASTPointer.body.statements.push({
               nodeType: 'ReadPreimage',
               privateStateName: stateVarName,
+              increment: increment,
               parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
               stateVarId: [id],
               isWhole: indicator.isWhole,
               isPartitioned: indicator.isPartitioned,
+              nullifierRequired: indicator.isNullified,
               isOwned: binding.isOwned,
               owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
               ownerIsSecret: binding.isOwned
@@ -162,21 +181,28 @@ export default {
                 : null,
             });
           }
-          // - oldCommitment preimage check
-          // - oldCommitment membership & check vs the commitmentRoot
-          node._newASTPointer.body.statements.push({
-            nodeType: 'MembershipWitness',
-            privateStateName: stateVarName,
-            contractName: contractName,
-          });
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
 
           // - oldCommitment nullifier preimage check
           if (indicator.isNullified) {
+            // - oldCommitment preimage check
+            // - oldCommitment membership & check vs the commitmentRoot
+            node._newASTPointer.body.statements.push({
+              nodeType: 'MembershipWitness',
+              privateStateName: stateVarName,
+              increment: increment,
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
+              contractName: contractName,
+            });
+
             node._newASTPointer.body.statements.push({
               nodeType: 'CalculateNullifier',
               privateStateName: stateVarName,
+              increment: increment,
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
             });
           }
 
@@ -186,8 +212,10 @@ export default {
             privateStateName: stateVarName,
             parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
             stateVarId: [id],
+            increment: increment,
             isWhole: indicator.isWhole,
             isPartitioned: indicator.isPartitioned,
+            nullifierRequired: indicator.isNullified,
             isOwned: binding.isOwned,
             owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
             ownerIsSecret: binding.isOwned
@@ -206,8 +234,12 @@ export default {
             node._newASTPointer.body.statements.push({
               nodeType: 'GenerateProof',
               privateStateName: stateVarName,
+              increment: increment,
               circuitName: node.name,
               parameters: circuitParams, // TODO this should be the name of the var inside the commitment
+              nullifierRequired: indicator.isNullified,
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
               isOwned: binding.isOwned,
               owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
               ownerIsSecret: binding.isOwned
@@ -215,8 +247,6 @@ export default {
                 : null,
             });
           }
-
-          console.log(node.parameters.parameters);
 
           const publicInputs = [];
 
@@ -229,14 +259,20 @@ export default {
             privateStateName: stateVarName,
             functionName: node.name,
             contractName: contractName,
+            increment: increment,
+            isPartitioned: indicator.isPartitioned,
+            isWhole: indicator.isWhole,
             publicInputs: publicInputs,
+            nullifierRequired: indicator.isNullified,
           });
 
           node._newASTPointer.body.statements.push({
             nodeType: 'WritePreimage',
             privateStateName: stateVarName,
+            increment: increment,
             parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
             stateVarId: [id],
+            nullifierRequired: indicator.isNullified,
             isWhole: indicator.isWhole,
             isPartitioned: indicator.isPartitioned,
             isOwned: binding.isOwned,
@@ -347,7 +383,12 @@ export default {
         );
 
         // NODEBUILDING
-        if (modifiedPaths[0].node.id === lhs.id && referencedNode.isSecret) {
+        // if its secret and this is the first assigment, we add a vardec
+        if (
+          modifiedPaths[0].node.id === lhs.id &&
+          referencedNode.isSecret &&
+          referencedBinding.isWhole
+        ) {
           newNode = {
             nodeType: 'VariableDeclarationStatement',
             declarations: [
@@ -372,8 +413,22 @@ export default {
 
           return;
         }
-      }
+        if (node.expression.isIncremented && referencedBinding.isPartitioned) {
+          newNode = {
+            nodeType: node.nodeType,
+            expression: {},
+            incrementsSecretState: node.expression.isIncremented,
+            decrementsSecretState: node.expression.isDecremented,
+            secretStateName: referencedBinding.name,
+          };
 
+          node._newASTPointer = newNode;
+          parent._newASTPointer.push(newNode);
+          // state.skipSubNodes = true;
+
+          return;
+        }
+      }
       if (node.expression.nodeType !== 'FunctionCall') {
         newNode = {
           nodeType: node.nodeType,
@@ -384,7 +439,30 @@ export default {
       }
     },
 
-    exit(path, parent) {},
+    exit(path) {
+      if (path.node._newASTPointer.incrementsSecretState) {
+        let increment;
+        switch (path.node.expression.rightHandSide.nodeType) {
+          case 'Identifier':
+            increment = path.node.expression.rightHandSide.name;
+            break;
+          case 'BinaryOperation':
+            if (
+              path.node.expression.rightHandSide.leftExpression.name ===
+              path.node.expression.leftHandSide.name
+            ) {
+              increment = path.node.expression.rightHandSide.rightExpression.name;
+              break;
+            } else {
+              increment = path.node.expression.rightHandSide.leftHandSide.name;
+              break;
+            }
+          default:
+            break;
+        }
+        path.node._newASTPointer.increment = increment;
+      }
+    },
   },
 
   VariableDeclaration: {

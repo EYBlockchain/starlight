@@ -136,6 +136,7 @@ export default {
             referencedBinding.isNullified = true;
             referencedBinding.nullifyingPaths.push(newState.path);
             referencedBinding.nullificationCount++;
+            referencedIndicator.isNullified = true;
             referencedIndicator.nullifyingPaths.push(newState.path);
             referencedIndicator.nullificationCount++;
             scope.addNullifyingPath(newState.path);
@@ -145,6 +146,7 @@ export default {
             referencedBinding.isNullified = true;
             referencedBinding.nullifyingPaths.push(newState.path);
             referencedBinding.nullificationCount++;
+            referencedIndicator.isNullified = true;
             referencedIndicator.nullifyingPaths.push(newState.path);
             referencedIndicator.nullificationCount++;
             scope.addNullifyingPath(newState.path);
@@ -158,6 +160,7 @@ export default {
           referencedBinding.isNullified = true;
           referencedBinding.nullifyingPaths.push(newState.path);
           referencedBinding.nullificationCount++;
+          referencedIndicator.isNullified = true;
           referencedIndicator.nullifyingPaths.push(newState.path);
           referencedIndicator.nullificationCount++;
           scope.addNullifyingPath(newState.path);

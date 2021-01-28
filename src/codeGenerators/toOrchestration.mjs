@@ -183,7 +183,8 @@ function codeGenerator(node) {
       return node.statements.map(codeGenerator).join('  ');
 
     case 'ExpressionStatement':
-      return `\n${codeGenerator(node.expression)};`;
+      if (!node.incrementsSecretState) return `\n${codeGenerator(node.expression)};`;
+      return `\n// increment would go here`;
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
