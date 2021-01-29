@@ -858,12 +858,14 @@ export class Scope {
             nodes.push(rhsNode.rightExpression);
           }
           for (const [index, param] of nodes.entries()) {
-            if (param.nodeType === 'BinaryOperation') {
+            if (
+              param.nodeType === 'BinaryOperation' &&
+              (param.operator.includes('+') || param.operator.includes('-'))
+            ) {
               nodes[index] = param.leftExpression;
               param.rightExpression.precedingOperator = param.operator;
               nodes.push(param.rightExpression);
             }
-            console.log(nodes);
           }
           nodes.forEach(node => {
             if (node.precedingOperator && node.precedingOperator.includes('-')) {
@@ -1161,14 +1163,10 @@ export class Scope {
     if (logger.level === 'debug') console.dir(this, { depth: 0 });
     logger.debug('----------');
     if (logger.level === 'debug') console.dir(this.indicators);
-    console.dir(this.indicators[secretVar.id].increments);
-    console.dir(this.indicators[secretVar.id].decrements);
     logger.debug('----------');
     if (this.indicators[secretVar.id].mappingKey) {
       logger.debug(`Indicator.mappingKey[${secretVar.name}]`);
       if (logger.level === 'debug') console.dir(secretVar, { depth: 1 });
-      console.dir(secretVar.increments);
-      console.dir(secretVar.decrements);
       logger.debug('----------');
     }
     logger.debug(
