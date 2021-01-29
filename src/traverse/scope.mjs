@@ -179,6 +179,8 @@ export class Scope {
           isNullified: false,
           nullificationCount: 0,
           nullifyingPaths: [], // paths of `Identifier` nodes which nullify this binding
+          increments: [],
+          decrements: [],
           isMapping: false,
           mappingKey: null,
           isKnown: false,
@@ -821,11 +823,74 @@ export class Scope {
     let isDecrementedBool;
     // first, check if the LHS node is secret
     let lhsSecret;
+    let lhsbinding;
+    const increments = [];
+    const decrements = [];
+    const getIncrements = (expressionNode, incrementedNode) => {
+      const rhsNode = expressionNode.rightHandSide;
+      const nodes = [];
+      const obj = { increments: [], decrements: [] };
+      const isMapping = !!incrementedNode.baseExpression;
+      switch (rhsNode.nodeType) {
+        case 'Identifier':
+          if (rhsNode.name !== incrementedNode.name && expressionNode.operator.includes('+'))
+            obj.increments = [rhsNode];
+          if (rhsNode.name !== incrementedNode.name && expressionNode.operator.includes('-'))
+            obj.decrements = [rhsNode];
+          return obj;
+        case 'BinaryOperation':
+          if (
+            (!isMapping && rhsNode.leftExpression.name !== incrementedNode.name) ||
+            (isMapping && !rhsNode.leftExpression.baseExpression) ||
+            (isMapping &&
+              rhsNode.leftExpression.baseExpression.name !== incrementedNode.baseExpression.name &&
+              rhsNode.leftExpression.indexExpression.name !== incrementedNode.indexExpression.name)
+          )
+            nodes.push(rhsNode.leftExpression);
+          if (
+            (!isMapping && rhsNode.rightExpression.name !== incrementedNode.name) ||
+            (isMapping && !rhsNode.rightExpression.baseExpression) ||
+            (isMapping &&
+              rhsNode.rightExpression.baseExpression.name !== incrementedNode.baseExpression.name &&
+              rhsNode.rightExpression.indexExpression.name !== incrementedNode.indexExpression.name)
+          ) {
+            rhsNode.rightExpression.precedingOperator = rhsNode.operator;
+            nodes.push(rhsNode.rightExpression);
+          }
+          for (const [index, param] of nodes.entries()) {
+            if (
+              param.nodeType === 'BinaryOperation' &&
+              (param.operator.includes('+') || param.operator.includes('-'))
+            ) {
+              nodes[index] = param.leftExpression;
+              param.rightExpression.precedingOperator = param.operator;
+              nodes.push(param.rightExpression);
+            }
+          }
+          nodes.forEach(node => {
+            if (node.precedingOperator && node.precedingOperator.includes('-')) {
+              obj.decrements.push(node);
+            } else {
+              obj.increments.push(node);
+            }
+          });
+          return obj;
+        case 'IndexAccess':
+          if (rhsNode !== incrementedNode) return [rhsNode];
+          if (rhsNode !== incrementedNode && expressionNode.operator.includes('+'))
+            obj.increments = [rhsNode];
+          if (rhsNode !== incrementedNode && expressionNode.operator.includes('-'))
+            obj.decrements = [rhsNode];
+          return obj;
+        default:
+          return [null];
+      }
+    };
     if (lhsNode.nodeType === 'Identifier') {
-      const lhsbinding = scope.getReferencedBinding(lhsNode);
+      lhsbinding = scope.getReferencedBinding(lhsNode);
       lhsSecret = !!lhsbinding.isSecret;
     } else if (lhsNode.nodeType === 'IndexAccess') {
-      const lhsbinding = scope.getReferencedBinding(lhsNode.baseExpression);
+      lhsbinding = scope.getReferencedBinding(lhsNode.baseExpression);
       lhsSecret = !!lhsbinding.isSecret;
     }
     // look at the assignment
@@ -835,10 +900,14 @@ export class Scope {
         if (lhsSecret && expressionNode.operator === '+=') {
           isIncrementedBool = true;
           isDecrementedBool = false;
+          getIncrements(expressionNode, lhsNode).increments.forEach(node => increments.push(node));
+          getIncrements(expressionNode, lhsNode).decrements.forEach(node => decrements.push(node));
           break;
         } else if (lhsSecret && expressionNode.operator === '-=') {
           isIncrementedBool = true;
           isDecrementedBool = true;
+          getIncrements(expressionNode, lhsNode).increments.forEach(node => increments.push(node));
+          getIncrements(expressionNode, lhsNode).decrements.forEach(node => decrements.push(node));
           break;
         }
         // b *= something, b /= something
@@ -919,6 +988,14 @@ export class Scope {
               // if none, go to the next param
             }
           }
+          if (isIncrementedBool) {
+            getIncrements(expressionNode, lhsNode).increments.forEach(node =>
+              increments.push(node),
+            );
+            getIncrements(expressionNode, lhsNode).decrements.forEach(node =>
+              decrements.push(node),
+            );
+          }
         } else if (rhsType === 'Identifier') {
           // c = a + b, a = c
           // TODO consider cases where c has lots of modifiers, which might cancel out the incrementation of a
@@ -955,6 +1032,21 @@ export class Scope {
     logger.debug(`statement is decremented? ${isDecrementedBool}`);
     expressionNode.isIncremented = isIncrementedBool;
     expressionNode.isDecremented = isDecrementedBool;
+    const referencedIndicator = lhsNode.baseExpression
+      ? scope.indicators[lhsNode.baseExpression.referencedDeclaration].mappingKey[
+          this.getMappingKeyIndicator(lhsNode)
+        ]
+      : scope.indicators[lhsNode.referencedDeclaration];
+    if (!referencedIndicator.increments) referencedIndicator.increments = [];
+    if (!referencedIndicator.decrements) referencedIndicator.decrements = [];
+    increments.forEach(inc => {
+      referencedIndicator.increments.push(inc);
+      lhsbinding.increments.push(inc);
+    });
+    decrements.forEach(inc => {
+      referencedIndicator.decrements.push(inc);
+      lhsbinding.decrements.push(inc);
+    });
 
     return { isIncrementedBool, isDecrementedBool };
   }
@@ -1024,6 +1116,7 @@ export class Scope {
     if (secretVar.isWhole === false && secretVar.isDecremented) {
       // partitioned/decremented state needs nullifiers
       secretVar.isNullified = true;
+      secretVar.binding.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
     if (secretVar.isWhole === false && secretVar.isIncremented) {
@@ -1032,6 +1125,7 @@ export class Scope {
     } else {
       // otherwise, we have a whole state which needs nullifiers at every edit
       secretVar.isNullified = true;
+      secretVar.binding.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
     // here - mark the contract obj and check for conflicting indicators
@@ -1044,6 +1138,9 @@ export class Scope {
       );
     // update contract scope with whole/partitioned reasons
     topScope.isWhole = secretVar.isWhole;
+    if (secretVar.isWhole !== undefined) secretVar.binding.isWhole = secretVar.isWhole;
+    if (secretVar.isPartitioned !== undefined)
+      secretVar.binding.isPartitioned = secretVar.isPartitioned;
     if (topScope.isWhole === false && !topScope.isPartitionedReason) {
       topScope.isPartitioned = true;
       topScope.isPartitionedReason = secretVar.isPartitionedReason;
@@ -1073,6 +1170,9 @@ export class Scope {
       if (logger.level === 'debug') console.dir(secretVar, { depth: 1 });
       logger.debug('----------');
     }
+    logger.debug(
+      `NB: Nullification traversals haven't been completed - so isNullified and nullifyingPaths will not be correct yet.`,
+    );
     // logger.debug(`Contract level binding for state:`);
     // if (logger.level === 'debug') console.dir(topScope, { depth: 0 });
     // if (topScope.isWholeReason) {
