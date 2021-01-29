@@ -184,7 +184,7 @@ function codeGenerator(node) {
 
     case 'ExpressionStatement':
       if (!node.incrementsSecretState) return `\n${codeGenerator(node.expression)};`;
-      return `\n// increment would go here`;
+      return `\n// increment would go here but has been filtered out`;
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(

@@ -32,6 +32,9 @@ function recogniseDecorators(line) {
       if (recogniseGlobal(deDecLine)) {
         type = 'global';
         [, , name] = deDecLine.replace(/ *\([^)]*\) */g, ' ').split(' ');
+        if (name.includes('=') || name === '=') {
+          [, name] = deDecLine.split(' ');
+        }
         name = name.replace(';', '');
       } else if (recogniseFunction(deDecLine)) {
         ({ type, name } = recogniseFunction(deDecLine, true));

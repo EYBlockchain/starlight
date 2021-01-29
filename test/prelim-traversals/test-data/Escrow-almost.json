@@ -84,6 +84,8 @@
                 65,
                 84
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [
                 65,
                 84
@@ -120,6 +122,8 @@
               "modifyingPaths": [
                 72
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [],
               "nullificationCount": 0
             }
@@ -422,6 +426,8 @@
             65,
             84
           ],
+          "isWhole": false,
+          "isPartitioned": true,
           "nullifyingPaths": [
             65,
             84
@@ -506,6 +512,8 @@
                 65,
                 84
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [
                 65,
                 84
@@ -542,6 +550,8 @@
               "modifyingPaths": [
                 72
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [],
               "nullificationCount": 0
             }
@@ -620,6 +630,8 @@
                   65,
                   84
                 ],
+                "isWhole": false,
+                "isPartitioned": true,
                 "nullifyingPaths": [
                   65,
                   84
@@ -729,6 +741,8 @@
           "modifyingPaths": [
             72
           ],
+          "isWhole": false,
+          "isPartitioned": true,
           "nullifyingPaths": [],
           "nullificationCount": 0
         },
@@ -822,6 +836,8 @@
                 65,
                 84
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [
                 65,
                 84
@@ -858,6 +874,8 @@
               "modifyingPaths": [
                 72
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [],
               "nullificationCount": 0
             }
@@ -922,6 +940,8 @@
                 65,
                 84
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [
                 65,
                 84
@@ -958,6 +978,8 @@
               "modifyingPaths": [
                 72
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [],
               "nullificationCount": 0
             }
@@ -1010,7 +1032,7 @@
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
-              "isNullified": false,
+              "isNullified": true,
               "initialisationRequired": true,
               "isIncremented": true,
               "isDecremented": true,
@@ -1034,6 +1056,8 @@
                   65,
                   84
                 ],
+                "isWhole": false,
+                "isPartitioned": true,
                 "nullifyingPaths": [
                   65,
                   84
@@ -1104,6 +1128,8 @@
                 "modifyingPaths": [
                   72
                 ],
+                "isWhole": false,
+                "isPartitioned": true,
                 "nullifyingPaths": [],
                 "nullificationCount": 0
               },
@@ -1121,7 +1147,8 @@
           "isModified": true,
           "isOwned": true
         }
-      }
+      },
+      "onChainKeyRegistry": true
     },
     {
       "scopeId": 106,
@@ -1198,6 +1225,8 @@
             65,
             84
           ],
+          "isWhole": false,
+          "isPartitioned": true,
           "nullifyingPaths": [
             65,
             84
@@ -1282,6 +1311,8 @@
                 65,
                 84
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [
                 65,
                 84
@@ -1318,6 +1349,8 @@
               "modifyingPaths": [
                 72
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [],
               "nullificationCount": 0
             }
@@ -1382,6 +1415,8 @@
                 65,
                 84
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [
                 65,
                 84
@@ -1418,6 +1453,8 @@
               "modifyingPaths": [
                 72
               ],
+              "isWhole": false,
+              "isPartitioned": true,
               "nullifyingPaths": [],
               "nullificationCount": 0
             }
@@ -1470,7 +1507,7 @@
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
-              "isNullified": false,
+              "isNullified": true,
               "initialisationRequired": true,
               "isIncremented": true,
               "isDecremented": true,
@@ -1494,6 +1531,8 @@
                   65,
                   84
                 ],
+                "isWhole": false,
+                "isPartitioned": true,
                 "nullifyingPaths": [
                   65,
                   84
@@ -1530,7 +1569,8 @@
           "isModified": true,
           "isOwned": true
         }
-      }
+      },
+      "onChainKeyRegistry": true
     }
   ],
   "errorType": null,

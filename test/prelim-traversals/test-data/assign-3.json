@@ -17,6 +17,7 @@
     },
     {
       "scopeId": 16,
+      "scopeName": "Assign",
       "scopeType": "ContractDefinition",
       "bindings": {
         "3": {
@@ -36,7 +37,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -44,7 +45,6 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
-          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -69,6 +69,7 @@
     },
     {
       "scopeId": 15,
+      "scopeName": "assign",
       "scopeType": "FunctionDefinition",
       "bindings": {
         "5": {
@@ -115,7 +116,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -123,7 +124,6 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
-          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -174,7 +174,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -182,7 +182,6 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
-          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -208,7 +207,7 @@
             8
           ],
           "isNullified": true,
-          "nullificationCount": 0,
+          "nullificationCount": 1,
           "nullifyingPaths": [
             8
           ],
@@ -216,7 +215,6 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
-          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -250,11 +248,15 @@
           ],
           "nullifyingPaths": [
             8
-          ]
+          ],
+          "nullificationCount": 1
         }
       }
     }
   ],
   "errorType": null,
-  "errorMessage": null
+  "errorMessage": null,
+  "warningMessages": [
+    "Warning: secret state x is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
+  ]
 }

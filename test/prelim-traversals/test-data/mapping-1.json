@@ -1,0 +1,752 @@
+{
+  "scopes": [
+    {
+      "scopeId": 43,
+      "scopeType": "SourceUnit",
+      "bindings": {
+        "42": {
+          "kind": "ContractDefinition",
+          "id": 42,
+          "name": "MyContract"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {}
+    },
+    {
+      "scopeId": 42,
+      "scopeName": "MyContract",
+      "scopeType": "ContractDefinition",
+      "bindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 4,
+              "referencingPaths": [
+                10,
+                14,
+                28,
+                32
+              ],
+              "isModified": true,
+              "modificationCount": 2,
+              "modifyingPaths": [
+                10,
+                28
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1,
+              "isNullified": true,
+              "owner": {
+                "id": 29,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "285:3:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 29,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "285:3:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        },
+        "23": {
+          "kind": "FunctionDefinition",
+          "id": 23,
+          "name": "increment"
+        },
+        "41": {
+          "kind": "FunctionDefinition",
+          "id": 41,
+          "name": "decrement"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {
+        "zkSnarkVerificationRequired": true,
+        "oldCommitmentAccessRequired": true,
+        "nullifiersRequired": true,
+        "newCommitmentsRequired": true
+      }
+    },
+    {
+      "scopeId": 23,
+      "scopeName": "increment",
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "7": {
+          "kind": "VariableDeclaration",
+          "id": 7,
+          "name": "param2",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            18
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "5": {
+          "referencedKey": 11,
+          "referencedKeyNodeType": "t_magic_message",
+          "referencedKeyisParam": false,
+          "referencedKeyisMsg": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 4,
+          "referencingPaths": [
+            10,
+            14,
+            28,
+            32
+          ],
+          "isModified": true,
+          "modificationCount": 2,
+          "modifyingPaths": [
+            10,
+            28
+          ],
+          "isWhole": false,
+          "isPartitioned": true,
+          "nullifyingPaths": [
+            28
+          ],
+          "nullificationCount": 1,
+          "isNullified": true,
+          "owner": {
+            "id": 29,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "285:3:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isOwned": true
+        },
+        "7": {
+          "kind": "VariableDeclaration",
+          "id": 7,
+          "name": "param2",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            18
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 4,
+              "referencingPaths": [
+                10,
+                14,
+                28,
+                32
+              ],
+              "isModified": true,
+              "modificationCount": 2,
+              "modifyingPaths": [
+                10,
+                28
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1,
+              "isNullified": true,
+              "owner": {
+                "id": 29,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "285:3:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 29,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "285:3:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "nullifiedBindings": {},
+      "indicators": {
+        "5": {
+          "id": 5,
+          "name": "a",
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isReferenced": true,
+              "referenceCount": 2,
+              "referencingPaths": [
+                10,
+                14
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                10
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": false,
+              "initialisationRequired": true,
+              "isUnknown": true,
+              "isIncremented": true,
+              "isDecremented": false,
+              "binding": {
+                "referencedKey": 11,
+                "referencedKeyNodeType": "t_magic_message",
+                "referencedKeyisParam": false,
+                "referencedKeyisMsg": true,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 4,
+                "referencingPaths": [
+                  10,
+                  14,
+                  28,
+                  32
+                ],
+                "isModified": true,
+                "modificationCount": 2,
+                "modifyingPaths": [
+                  10,
+                  28
+                ],
+                "isWhole": false,
+                "isPartitioned": true,
+                "nullifyingPaths": [
+                  28
+                ],
+                "nullificationCount": 1,
+                "isNullified": true,
+                "owner": {
+                  "id": 29,
+                  "name": "msg",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 4294967281,
+                  "src": "285:3:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_magic_message",
+                    "typeString": "msg"
+                  }
+                },
+                "isOwned": true
+              },
+              "id": 5,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "a[msg]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            }
+          },
+          "isModified": true
+        }
+      }
+    },
+    {
+      "scopeId": 41,
+      "scopeName": "decrement",
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "25": {
+          "kind": "VariableDeclaration",
+          "id": 25,
+          "name": "param3",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            36
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "5": {
+          "referencedKey": 11,
+          "referencedKeyNodeType": "t_magic_message",
+          "referencedKeyisParam": false,
+          "referencedKeyisMsg": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 4,
+          "referencingPaths": [
+            10,
+            14,
+            28,
+            32
+          ],
+          "isModified": true,
+          "modificationCount": 2,
+          "modifyingPaths": [
+            10,
+            28
+          ],
+          "isWhole": false,
+          "isPartitioned": true,
+          "nullifyingPaths": [
+            28
+          ],
+          "nullificationCount": 1,
+          "isNullified": true,
+          "owner": {
+            "id": 29,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "285:3:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isOwned": true
+        },
+        "25": {
+          "kind": "VariableDeclaration",
+          "id": 25,
+          "name": "param3",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            36
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 4,
+              "referencingPaths": [
+                10,
+                14,
+                28,
+                32
+              ],
+              "isModified": true,
+              "modificationCount": 2,
+              "modifyingPaths": [
+                10,
+                28
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1,
+              "isNullified": true,
+              "owner": {
+                "id": 29,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "285:3:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 29,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "285:3:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "isMapping": true,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 4,
+              "referencingPaths": [
+                10,
+                14,
+                28,
+                32
+              ],
+              "isModified": true,
+              "modificationCount": 2,
+              "modifyingPaths": [
+                10,
+                28
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1,
+              "isNullified": true,
+              "owner": {
+                "id": 29,
+                "name": "msg",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 4294967281,
+                "src": "285:3:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_magic_message",
+                  "typeString": "msg"
+                }
+              },
+              "isOwned": true
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": true,
+          "owner": {
+            "id": 29,
+            "name": "msg",
+            "nodeType": "Identifier",
+            "overloadedDeclarations": [],
+            "referencedDeclaration": 4294967281,
+            "src": "285:3:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_magic_message",
+              "typeString": "msg"
+            }
+          },
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "indicators": {
+        "5": {
+          "id": 5,
+          "name": "a",
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "msg": {
+              "referencedKey": 29,
+              "referencedKeyNodeType": "t_magic_message",
+              "referencedKeyisParam": false,
+              "referencedKeyisMsg": true,
+              "isReferenced": true,
+              "referenceCount": 2,
+              "referencingPaths": [
+                28,
+                32
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                28
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": true,
+              "initialisationRequired": true,
+              "isIncremented": true,
+              "isDecremented": true,
+              "binding": {
+                "referencedKey": 11,
+                "referencedKeyNodeType": "t_magic_message",
+                "referencedKeyisParam": false,
+                "referencedKeyisMsg": true,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 4,
+                "referencingPaths": [
+                  10,
+                  14,
+                  28,
+                  32
+                ],
+                "isModified": true,
+                "modificationCount": 2,
+                "modifyingPaths": [
+                  10,
+                  28
+                ],
+                "isWhole": false,
+                "isPartitioned": true,
+                "nullifyingPaths": [
+                  28
+                ],
+                "nullificationCount": 1,
+                "isNullified": true,
+                "owner": {
+                  "id": 29,
+                  "name": "msg",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 4294967281,
+                  "src": "285:3:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_magic_message",
+                    "typeString": "msg"
+                  }
+                },
+                "isOwned": true
+              },
+              "id": 5,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "a[msg]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1
+            }
+          },
+          "isModified": true,
+          "isOwned": true
+        }
+      },
+      "onChainKeyRegistry": true
+    }
+  ],
+  "errorType": null,
+  "errorMessage": null,
+  "warningMessages": []
+}
