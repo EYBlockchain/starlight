@@ -1138,8 +1138,9 @@ export class Scope {
       );
     // update contract scope with whole/partitioned reasons
     topScope.isWhole = secretVar.isWhole;
-    secretVar.binding.isWhole = secretVar.isWhole;
-    secretVar.binding.isPartitioned = secretVar.isPartitioned;
+    if (secretVar.isWhole !== undefined) secretVar.binding.isWhole = secretVar.isWhole;
+    if (secretVar.isPartitioned !== undefined)
+      secretVar.binding.isPartitioned = secretVar.isPartitioned;
     if (topScope.isWhole === false && !topScope.isPartitionedReason) {
       topScope.isPartitioned = true;
       topScope.isPartitionedReason = secretVar.isPartitionedReason;
