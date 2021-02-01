@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract MyContract {
+
+    secret uint256 private a;
+    secret mapping(uint256 => uint256) private b;
+
+    function assign(secret uint256 param1, uint256 key, secret uint256 c) public {
+        unknown a += param1;
+        unknown b[key] += c;
+        unknown b[key] += param1;
+    }
+
+    function decra(secret uint256 param2) public {
+      a -= param2;
+    }
+
+    function decrb(secret uint256 param2, uint256 key) public {
+      b[key] = b[key] - param2;
+    }
+
+    function incra(secret uint256 param3, uint256 param4) public {
+      a += param3 - param4 - 5;
+    }
+}

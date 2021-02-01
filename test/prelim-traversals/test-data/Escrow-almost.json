@@ -39,6 +39,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -62,6 +64,58 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 54,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "650:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 75,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "809:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 69,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "769:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 88,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 81,
+              "src": "907:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -86,12 +140,12 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 65,
                 84
               ],
               "nullificationCount": 2,
-              "isNullified": true,
               "owner": {
                 "id": 85,
                 "name": "msg",
@@ -168,6 +222,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -227,6 +283,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -256,6 +314,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -283,6 +343,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -312,6 +374,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -339,6 +403,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -373,6 +439,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -396,6 +464,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -428,12 +498,12 @@
           ],
           "isWhole": false,
           "isPartitioned": true,
+          "isNullified": true,
           "nullifyingPaths": [
             65,
             84
           ],
           "nullificationCount": 2,
-          "isNullified": true,
           "owner": {
             "id": 85,
             "name": "msg",
@@ -465,6 +535,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -490,6 +562,58 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 54,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "650:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 75,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "809:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 69,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "769:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 88,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 81,
+              "src": "907:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -514,12 +638,12 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 65,
                 84
               ],
               "nullificationCount": 2,
-              "isNullified": true,
               "owner": {
                 "id": 85,
                 "name": "msg",
@@ -608,6 +732,21 @@
               "isNullified": false,
               "initialisationRequired": true,
               "isUnknown": true,
+              "increments": [
+                {
+                  "id": 54,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 30,
+                  "src": "650:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [],
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
@@ -632,12 +771,12 @@
                 ],
                 "isWhole": false,
                 "isPartitioned": true,
+                "isNullified": true,
                 "nullifyingPaths": [
                   65,
                   84
                 ],
                 "nullificationCount": 2,
-                "isNullified": true,
                 "owner": {
                   "id": 85,
                   "name": "msg",
@@ -689,6 +828,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -715,6 +856,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -763,6 +906,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -789,6 +934,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -814,6 +961,58 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 54,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "650:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 75,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "809:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 69,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "769:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 88,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 81,
+              "src": "907:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -838,12 +1037,12 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 65,
                 84
               ],
               "nullificationCount": 2,
-              "isNullified": true,
               "owner": {
                 "id": 85,
                 "name": "msg",
@@ -918,6 +1117,58 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 54,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "650:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 75,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "809:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 69,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "769:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 88,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 81,
+              "src": "907:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -942,12 +1193,12 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 65,
                 84
               ],
               "nullificationCount": 2,
-              "isNullified": true,
               "owner": {
                 "id": 85,
                 "name": "msg",
@@ -1034,6 +1285,21 @@
               "newCommitmentRequired": true,
               "isNullified": true,
               "initialisationRequired": true,
+              "increments": [],
+              "decrements": [
+                {
+                  "id": 69,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 62,
+                  "src": "769:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
@@ -1058,12 +1324,12 @@
                 ],
                 "isWhole": false,
                 "isPartitioned": true,
+                "isNullified": true,
                 "nullifyingPaths": [
                   65,
                   84
                 ],
                 "nullificationCount": 2,
-                "isNullified": true,
                 "owner": {
                   "id": 85,
                   "name": "msg",
@@ -1110,6 +1376,21 @@
               "isNullified": false,
               "initialisationRequired": true,
               "isUnknown": true,
+              "increments": [
+                {
+                  "id": 75,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 62,
+                  "src": "809:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [],
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
@@ -1172,6 +1453,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -1195,6 +1478,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -1227,12 +1512,12 @@
           ],
           "isWhole": false,
           "isPartitioned": true,
+          "isNullified": true,
           "nullifyingPaths": [
             65,
             84
           ],
           "nullificationCount": 2,
-          "isNullified": true,
           "owner": {
             "id": 85,
             "name": "msg",
@@ -1264,6 +1549,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -1289,6 +1576,58 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 54,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "650:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 75,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "809:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 69,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "769:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 88,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 81,
+              "src": "907:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -1313,12 +1652,12 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 65,
                 84
               ],
               "nullificationCount": 2,
-              "isNullified": true,
               "owner": {
                 "id": 85,
                 "name": "msg",
@@ -1393,6 +1732,58 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 54,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "650:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 75,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "809:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 69,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 62,
+              "src": "769:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 88,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 81,
+              "src": "907:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -1417,12 +1808,12 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 65,
                 84
               ],
               "nullificationCount": 2,
-              "isNullified": true,
               "owner": {
                 "id": 85,
                 "name": "msg",
@@ -1509,6 +1900,21 @@
               "newCommitmentRequired": true,
               "isNullified": true,
               "initialisationRequired": true,
+              "increments": [],
+              "decrements": [
+                {
+                  "id": 88,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 81,
+                  "src": "907:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
@@ -1533,12 +1939,12 @@
                 ],
                 "isWhole": false,
                 "isPartitioned": true,
+                "isNullified": true,
                 "nullifyingPaths": [
                   65,
                   84
                 ],
                 "nullificationCount": 2,
-                "isNullified": true,
                 "owner": {
                   "id": 85,
                   "name": "msg",
