@@ -35,6 +35,36 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 18,
+              "name": "param2",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 7,
+              "src": "215:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 36,
+              "name": "param3",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "315:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -59,11 +89,11 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 28
               ],
               "nullificationCount": 1,
-              "isNullified": true,
               "owner": {
                 "id": 29,
                 "name": "msg",
@@ -143,6 +173,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -175,11 +207,11 @@
           ],
           "isWhole": false,
           "isPartitioned": true,
+          "isNullified": true,
           "nullifyingPaths": [
             28
           ],
           "nullificationCount": 1,
-          "isNullified": true,
           "owner": {
             "id": 29,
             "name": "msg",
@@ -211,6 +243,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -236,6 +270,36 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 18,
+              "name": "param2",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 7,
+              "src": "215:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 36,
+              "name": "param3",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "315:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -260,11 +324,11 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 28
               ],
               "nullificationCount": 1,
-              "isNullified": true,
               "owner": {
                 "id": 29,
                 "name": "msg",
@@ -333,6 +397,22 @@
               "isNullified": false,
               "initialisationRequired": true,
               "isUnknown": true,
+              "increments": [
+                {
+                  "id": 18,
+                  "name": "param2",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 7,
+                  "src": "215:6:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "precedingOperator": "+"
+                }
+              ],
+              "decrements": [],
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
@@ -357,11 +437,11 @@
                 ],
                 "isWhole": false,
                 "isPartitioned": true,
+                "isNullified": true,
                 "nullifyingPaths": [
                   28
                 ],
                 "nullificationCount": 1,
-                "isNullified": true,
                 "owner": {
                   "id": 29,
                   "name": "msg",
@@ -413,6 +493,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -445,11 +527,11 @@
           ],
           "isWhole": false,
           "isPartitioned": true,
+          "isNullified": true,
           "nullifyingPaths": [
             28
           ],
           "nullificationCount": 1,
-          "isNullified": true,
           "owner": {
             "id": 29,
             "name": "msg",
@@ -481,6 +563,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -506,6 +590,36 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 18,
+              "name": "param2",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 7,
+              "src": "215:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 36,
+              "name": "param3",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "315:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -530,11 +644,11 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 28
               ],
               "nullificationCount": 1,
-              "isNullified": true,
               "owner": {
                 "id": 29,
                 "name": "msg",
@@ -588,6 +702,36 @@
           "isNullified": true,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 18,
+              "name": "param2",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 7,
+              "src": "215:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 36,
+              "name": "param3",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "315:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": true,
           "mappingKey": {
             "msg": {
@@ -612,11 +756,11 @@
               ],
               "isWhole": false,
               "isPartitioned": true,
+              "isNullified": true,
               "nullifyingPaths": [
                 28
               ],
               "nullificationCount": 1,
-              "isNullified": true,
               "owner": {
                 "id": 29,
                 "name": "msg",
@@ -683,6 +827,22 @@
               "newCommitmentRequired": true,
               "isNullified": true,
               "initialisationRequired": true,
+              "increments": [],
+              "decrements": [
+                {
+                  "id": 36,
+                  "name": "param3",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "315:6:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "precedingOperator": "-"
+                }
+              ],
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
@@ -707,11 +867,11 @@
                 ],
                 "isWhole": false,
                 "isPartitioned": true,
+                "isNullified": true,
                 "nullifyingPaths": [
                   28
                 ],
                 "nullificationCount": 1,
-                "isNullified": true,
                 "owner": {
                   "id": 29,
                   "name": "msg",

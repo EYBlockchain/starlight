@@ -47,6 +47,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": true,
           "owner": {
             "kind": "VariableDeclaration",
@@ -179,6 +180,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": true,
           "owner": {
             "kind": "VariableDeclaration",
@@ -265,6 +267,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": true,
           "owner": {
             "kind": "VariableDeclaration",
@@ -324,6 +327,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": true,
           "owner": {
             "kind": "VariableDeclaration",

@@ -47,6 +47,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -130,6 +131,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -192,6 +194,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -227,6 +230,7 @@
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [

@@ -45,6 +45,36 @@
           "nullifyingPaths": [
             20
           ],
+          "increments": [
+            {
+              "id": 10,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "174:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 22,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 17,
+              "src": "253:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -100,6 +130,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -135,6 +167,36 @@
           "nullifyingPaths": [
             20
           ],
+          "increments": [
+            {
+              "id": 10,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "174:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 22,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 17,
+              "src": "253:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -164,6 +226,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -198,6 +262,36 @@
           "nullificationCount": 1,
           "nullifyingPaths": [
             20
+          ],
+          "increments": [
+            {
+              "id": 10,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "174:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 22,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 17,
+              "src": "253:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
           ],
           "isMapping": false,
           "mappingKey": null,
@@ -233,6 +327,22 @@
           "isNullified": false,
           "initialisationRequired": true,
           "isUnknown": true,
+          "increments": [
+            {
+              "id": 10,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "174:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [],
           "isIncremented": true,
           "isDecremented": false,
           "isWhole": false,
@@ -267,6 +377,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -302,6 +414,36 @@
           "nullifyingPaths": [
             20
           ],
+          "increments": [
+            {
+              "id": 10,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "174:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 22,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 17,
+              "src": "253:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -331,6 +473,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -365,6 +509,36 @@
           "nullificationCount": 1,
           "nullifyingPaths": [
             20
+          ],
+          "increments": [
+            {
+              "id": 10,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "174:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 22,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 17,
+              "src": "253:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
           ],
           "isMapping": false,
           "mappingKey": null,
@@ -405,6 +579,36 @@
           "nullifyingPaths": [
             20
           ],
+          "increments": [
+            {
+              "id": 10,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "174:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "+"
+            }
+          ],
+          "decrements": [
+            {
+              "id": 22,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 17,
+              "src": "253:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -437,6 +641,22 @@
           "newCommitmentRequired": true,
           "isNullified": true,
           "initialisationRequired": true,
+          "increments": [],
+          "decrements": [
+            {
+              "id": 22,
+              "name": "param1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 17,
+              "src": "253:6:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "precedingOperator": "-"
+            }
+          ],
           "isIncremented": true,
           "isDecremented": true,
           "isWhole": false,

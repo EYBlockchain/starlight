@@ -41,10 +41,13 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -89,6 +92,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -120,10 +125,13 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -147,6 +155,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -178,10 +188,13 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -211,10 +224,13 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
           "isWhole": true,
+          "isPartitioned": false,
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
@@ -240,6 +256,8 @@
           "newCommitmentRequired": true,
           "isNullified": true,
           "initialisationRequired": true,
+          "increments": [],
+          "decrements": [],
           "isIncremented": false,
           "isDecremented": false,
           "isWhole": true,
