@@ -93,7 +93,7 @@ export const generateProofBoilerplate = node => {
               \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
               \t${privateStateName}_2_newSalt.limbs(32, 8),
               \t${privateStateName}_2_newCommitment.integer,
-              \tpublicKey,
+              \tpublicKey.limbs(32,8),
               \t${node.increment}_newSalt.limbs(32, 8),
               \t${node.increment}_newCommitment.integer,
               \t${privateStateName}_root.integer,

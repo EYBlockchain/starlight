@@ -135,11 +135,27 @@ export default {
 
         node._newASTPointer.parameters.modifiedStateVariables = [];
 
-        for (const [id, binding] of Object.entries(modifiedStateVariableBindings)) {
-          const indicator = scope.indicators[id];
-          const stateVarName = binding.node.name;
+        for (const [id, refbinding] of Object.entries(modifiedStateVariableBindings)) {
+          if (refbinding.isMapping) {
+            const binding = refbinding;
+            for (const [key, mappingBinding] of Object.entries(binding.mappingKey)) {
+              modifiedStateVariableBindings[`${id}.${key}`] = mappingBinding;
+            }
+            delete modifiedStateVariableBindings[id];
+          }
+        }
+
+        for (let [id, binding] of Object.entries(modifiedStateVariableBindings)) {
+          let indicator = scope.indicators[id];
+          let stateVarName = binding.node ? binding.node.name : binding.name;
+          if (id.includes('.')) {
+            let key;
+            [id, key] = id.split('.');
+            indicator = scope.indicators[id].mappingKey[key];
+            stateVarName = binding.name.replace('[', '_').replace(']', '');
+          }
           node._newASTPointer.parameters.modifiedStateVariables.push({
-            nodeType: binding.node.nodeType,
+            nodeType: binding.node ? binding.node.nodeType : `VariableDeclaration`,
             name: stateVarName,
           });
 
@@ -165,6 +181,7 @@ export default {
           // Also do for MembershipWitness
           // NODEBUILDING
           if (indicator.initialisationRequired) {
+            if (binding.owner && !binding.owner.node) binding.owner.node = binding.owner;
             node._newASTPointer.body.statements.push({
               nodeType: 'ReadPreimage',
               privateStateName: stateVarName,
@@ -370,12 +387,17 @@ export default {
     enter(path, state) {
       const { node, parent, scope } = path;
       let newNode;
+      let isMapping;
       // ExpressionStatements can contain an Assignment node.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedBinding = scope.getReferencedBinding(lhs);
+        let referencedBinding =
+          scope.getReferencedBinding(lhs) || scope.getReferencedBinding(lhs.baseExpression);
         const referencedNode = referencedBinding.node;
+        isMapping = referencedBinding.isMapping;
+        if (isMapping)
+          referencedBinding = referencedBinding.mappingKey[scope.getMappingKeyIndicator(lhs)];
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         const modifiedPaths = referencedBinding.modifyingPaths.filter(
@@ -403,7 +425,6 @@ export default {
             ],
             initialValue: {},
           };
-
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
           // state.skipSubNodes = true;
@@ -419,13 +440,14 @@ export default {
             expression: {},
             incrementsSecretState: node.expression.isIncremented,
             decrementsSecretState: node.expression.isDecremented,
-            secretStateName: referencedBinding.name,
+            secretStateName: isMapping
+              ? referencedBinding.name.replace(`[`, `_`).replace(`]`, ``)
+              : referencedBinding.name,
           };
 
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
           // state.skipSubNodes = true;
-
           return;
         }
       }
@@ -524,7 +546,21 @@ export default {
         nodeType: node.nodeType,
         name: node.name,
       };
+      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = newNode;
+    },
 
+    exit(path) {},
+  },
+
+  IndexAccess: {
+    enter(path, state) {
+      const { node, parent } = path;
+      const newNode = {
+        nodeType: node.nodeType,
+        name: `${node.baseExpression.name}_${node.indexExpression.expression.name}`,
+      };
+      state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
       // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = newNode;
     },
