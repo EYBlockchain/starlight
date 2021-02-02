@@ -28,7 +28,7 @@ function transformation1(oldAST) {
     nullifiersRequired: true,
 
     stopTraversal: false,
-    skipSubnodes: false,
+    skipSubNodes: false,
   };
 
   const dummyParent = {

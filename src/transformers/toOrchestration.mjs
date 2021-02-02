@@ -25,7 +25,7 @@ function transformation1(oldAST) {
 
   const state = {
     stopTraversal: false,
-    skipSubnodes: false,
+    skipSubNodes: false,
     snarkVerificationRequired: true,
     newCommitmentsRequired: true,
     nullifiersRequired: true,

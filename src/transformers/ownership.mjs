@@ -16,7 +16,7 @@ import ownershipVisitor from './visitors/ownership/ownershipVisitor.mjs';
 function transformation1(ast) {
   const state = {
     stopTraversal: false,
-    skipSubnodes: false,
+    skipSubNodes: false,
   };
 
   // We'll start by calling the traverser function with our ast and a visitor.
