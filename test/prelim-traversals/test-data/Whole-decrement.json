@@ -42,23 +42,17 @@
           "nullifyingPaths": [
             8
           ],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
-          "isWhole": true,
           "isPartitioned": false,
           "isOwned": false,
-          "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
-          ]
+          "owner": null
         },
         "13": {
           "kind": "FunctionDefinition",
           "id": 13,
-          "name": "assign"
+          "name": "decr"
         }
       },
       "referencedBindings": {},
@@ -73,7 +67,7 @@
     },
     {
       "scopeId": 13,
-      "scopeName": "assign",
+      "scopeName": "decr",
       "scopeType": "FunctionDefinition",
       "bindings": {
         "5": {
@@ -93,8 +87,6 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -126,18 +118,12 @@
           "nullifyingPaths": [
             8
           ],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
-          "isWhole": true,
           "isPartitioned": false,
           "isOwned": false,
-          "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
-          ]
+          "owner": null
         },
         "5": {
           "kind": "VariableDeclaration",
@@ -156,8 +142,6 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -189,18 +173,12 @@
           "nullifyingPaths": [
             8
           ],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
-          "isWhole": true,
           "isPartitioned": false,
           "isOwned": false,
-          "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
-          ]
+          "owner": null
         }
       },
       "nullifiedBindings": {
@@ -225,18 +203,12 @@
           "nullifyingPaths": [
             8
           ],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
-          "isWhole": true,
           "isPartitioned": false,
           "isOwned": false,
-          "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
-          ]
+          "owner": null
         }
       },
       "indicators": {
@@ -257,14 +229,8 @@
           "newCommitmentRequired": true,
           "isNullified": true,
           "initialisationRequired": true,
-          "increments": [],
-          "decrements": [],
-          "isIncremented": false,
-          "isDecremented": false,
-          "isWhole": true,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
-          ],
+          "isIncremented": true,
+          "isDecremented": true,
           "nullifyingPaths": [
             8
           ],

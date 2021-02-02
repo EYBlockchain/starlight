@@ -1,10 +1,12 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
+import cloneDeep from 'lodash.clonedeep';
 import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/zokrates-types.mjs';
+import NP from '../../traverse/NodePath.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
-export default {
+const visitor = {
   PragmaDirective: {
     // we ignore the Pragma Directive; it doesn't aid us in creating a circuit
     enter(path, state) {},
@@ -28,82 +30,68 @@ export default {
       // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.
       // TODO: will we also need a new circuit file even if we're merely 'referring to' a secret state (because then a nullifier might be needed?)
-      let newFile = false;
       if (scope.modifiesSecretState()) {
-        newFile = true;
+        // Let's create a new circuit File to represent this function.
+        // We'll add a new 'File' node to our newAST:
+
+        console.log('\n\n\nEntering FunctionDefinition node...')
+        console.log('SCOPE:', scope);
+
+        const newFunctionDefinitionNode = buildNode('FunctionDefinition', { name: 'main' });
+        const newImportStatementListNode = buildNode('ImportStatementList');
+
+        const { indicators } = scope;
+
+        newImportStatementListNode.imports.push(
+          ...buildNode('Boilerplate', {
+            bpSection: 'importStatements',
+            indicators,
+          }),
+        );
+
+        const newNode = buildNode('File', {
+          fileName: node.name,
+          nodes: [newImportStatementListNode, newFunctionDefinitionNode],
+        });
+
+        node._newASTPointer = newFunctionDefinitionNode; // TODO: we might want to make this point to newNode (the 'File') rather than newNode.nodes[1] (the 'FunctionDefinition'), so that in future we can more easily access the ImportStatements.
+
+        const files = parent._newASTPointer;
+        files.push(newNode);
       } else {
         // Not sure what to do 'else', yet.
         // If there are no global state modifications / 'references', then (currently) a circuit isn't needed for this function. In future, this could be a helper function which supports some other state-editing function, in which case a circuit would be needed.
         // I suppose other functions for which newFile = true (i.e. functions which actually modify secret state) will need to include any helper functions they reference within the circuit file (or import them).
-        return;
-      }
-
-      if (newFile) {
-        // Let's add this function as a node to our newAST.
-        // TODO: why is the decision to add import statements separate from adding the nodes of the files which get imported by these statements?
-        const newNode = buildNode('File', {
-          fileName: node.name,
-          nodes: [
-            buildNode('ImportStatementList', {
-              imports: [buildNode('EditableCommitmentImportStatementsBoilerplate')],
-            }),
-            buildNode('FunctionDefinition', { name: 'main' }),
-          ],
-        });
-
-        node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
-        const files = parent._newASTPointer;
-        files.push(newNode);
-
-        // Add a placeholder for common circuit files within the circuits Folder:
-        // TODO: no need for a placeholder here. Remove. At the end of codeGeneration of this single file of code, the codeGenerator should then parse all import statements and add the files which need to be imported.
-        if (!files.some(file => file.nodeType === 'EditableCommitmentCommonFilesBoilerplate')) {
-          files.push(buildNode('EditableCommitmentCommonFilesBoilerplate'));
-        }
-      } else {
-        // Not sure what to do if we're not creating a file...
+        throw new Error(
+          `Not yet supported. We haven't yet written code which can transpile functions which don't modify secret states.`,
+        );
       }
     },
 
     exit(path, state) {
       const { node, parent, scope } = path;
-      // By this point, we've added a body and parameters to the skeleton functionDefinition node created during 'enter'. Let's populate the body and paramters with some boilerplate...
-
+      const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
-      // Now let's add some commitment-related boilerplate!
-      const modifiedStateVariableBindings = scope.filterModifiedBindings(
-        binding => binding.stateVariable && binding.isSecret,
+      // We populate the boilerplate for the function
+      newFunctionDefinitionNode.parameters.parameters.push(
+        ...buildNode('Boilerplate', {
+          bpSection: 'parameters',
+          indicators,
+        }),
       );
 
-      for (const binding of Object.values(modifiedStateVariableBindings)) {
-        const privateStateName = binding.node.name;
+      newFunctionDefinitionNode.body.preStatements.push(
+        ...buildNode('Boilerplate', {
+          bpSection: 'preStatements',
+          indicators,
+        }),
+      );
 
-        // Add 'editable commitment'-related parameters to the function's parameters, for each global which is assigned-to within the function:
-        newFunctionDefinitionNode.parameters.parameters.push(
-          buildNode('EditableCommitmentParametersBoilerplate', {
-            privateStateName,
-          }),
-        );
-
-        // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
-        // - oldCommitment preimage check
-        // - oldCommitment membership & check vs the commitmentRoot
-        // - oldCommitment nullifier preimage check
-        // - newCommitment preimage check
-        // ^^^ do this for each global:
-        newFunctionDefinitionNode.body.statements.push(
-          buildNode('EditableCommitmentStatementsBoilerplate', {
-            privateStateName,
-          }),
-        );
-      }
-
-      // Add a commitmentRoot parameter (only 1 commitmentRoot param is needed for all globals being committed to)
-      newFunctionDefinitionNode.parameters.parameters.push(
-        buildNode('VariableDeclaration', {
-          name: 'commitmentRoot',
-          type: 'field',
+      newFunctionDefinitionNode.body.postStatements.push(
+        ...buildNode('Boilerplate', {
+          bpSection: 'postStatements',
+          indicators,
         }),
       );
     },
@@ -145,7 +133,8 @@ export default {
   BinaryOperation: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = buildNode('BinaryOperation');
+      const { operator } = node;
+      const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -168,37 +157,57 @@ export default {
   ExpressionStatement: {
     enter(path, state) {
       const { node, parent, scope } = path;
+      const { expression } = node;
+      // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
+      // TODO: what other expressions are there?
+      const { isIncremented, isDecremented } = expression;
       let newNode;
-      // ExpressionStatements can contain an Assignment node.
-      // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the _first_ such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
-      // TODO: we'll need to do similar for a unary operator, or any other assignment-like node which modifies a secret state.
-      if (node.expression.nodeType === 'Assignment') {
-        const assignmentNode = node.expression;
-        const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedNode = scope.getReferencedNode(lhs);
 
-        // We should only replace the _first_ node in this scope which modifies the referencedNode. Let's look at the scope's modifiedBindings for the first modifyingNode.
-        const modifiedBinding = scope.modifiedBindings[referencedNode.id];
+      console.log("\n\n\nIN ExpressionStatement:")
+      console.log('expression:', expression);
 
-        if (lhs === modifiedBinding.modifyingPaths[0].node && referencedNode.isSecret) {
-          newNode = buildNode('VariableDeclarationStatement', {
-            declarations: [
-              //
-              buildNode('VariableDeclaration', {
-                name: lhs.name,
-                type: 'field',
-              }),
-            ],
-            initialValue: {
-              ...rhs,
-            },
-          });
+      // TODO: tidy this up...
+      if (isIncremented || isDecremented) {
+        switch (expression.nodeType) {
+          case 'Assignment': {
+            const { leftHandSide: lhs, rightHandSide: rhs } = expression;
+            const lhsIndicator = scope.indicators[lhs.referencedDeclaration];
+            if (!lhsIndicator.isPartitioned) break;
 
-          node._newASTPointer = newNode;
-          parent._newASTPointer.push(newNode);
-          state.skipSubNodes = true;
+            const rhsPath = NP.getPath(rhs);
+            // We need to clone the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
+            const tempRHSPath = cloneDeep(rhsPath);
+            const tempRHSParent = tempRHSPath.parent;
 
-          return;
+            if (isDecremented) {
+              newNode = buildNode('PartitionedDecrementationStatementBoilerplate', {
+                indicators: lhsIndicator,
+                subtrahendId: rhs.id,
+              });
+              tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
+              node._newASTPointer = newNode.subtrahend;
+            } else {
+              // isIncremented
+              newNode = buildNode('PartitionedIncrementationStatementBoilerplate', {
+                indicators: lhsIndicator,
+                addendId: rhs.id,
+              });
+              tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
+              node._newASTPointer = newNode.addend;
+            }
+
+            // The child of this 'ExpressionStatement' node is an 'Assignment' node. But we've built a newNode to replace the 'Assignment' node of the original tree. The child of this newNode will be the RHS of the original 'Assignment' node. We discard the LHS, so we need to 'skip' the traversal of the 'Assignment' (using skipSubNodes = true), and instead traverse directly into the RHS node.
+
+            tempRHSParent._newASTPointer = newNode;
+            tempRHSPath.traverse(visitor, {});
+            state.skipSubNodes = true;
+            parent._newASTPointer.push(newNode);
+            return;
+          }
+          default:
+            throw Error(
+              `Expressions of nodeType ${expression.nodeType} are not yet supported. Please open a new issue in github (if none exists).`,
+            );
         }
       }
 
@@ -223,7 +232,7 @@ export default {
         return;
       }
 
-      // If it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
+      // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', { name: node.name, isPrivate: true });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
@@ -231,8 +240,6 @@ export default {
       } else {
         parent._newASTPointer[path.containerName].push(newNode);
       }
-
-      // TODO: what about declaration of local stack variables; they'll need to be copied over into the circuit!!
     },
 
     exit(path) {},
@@ -244,7 +251,7 @@ export default {
       if (node.name !== 'uint256')
         throw new Error('Currently, only transpilation of "uint256" types is supported');
 
-      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('ElementaryTypeName', {
         name: 'field', // convert uint types to 'field', for now.
       });
@@ -257,7 +264,7 @@ export default {
     enter(path) {
       const { node, parent } = path;
       const { name } = node;
-      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('Identifier', { name });
     },
 
@@ -270,3 +277,5 @@ export default {
     exit(path) {},
   },
 };
+
+export default visitor;

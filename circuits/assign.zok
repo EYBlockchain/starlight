@@ -4,32 +4,155 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
 from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256
 from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
 from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768
 from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
 
+// CHANGED a_oldCommitment_value TO FIELD FOR EASIER ARITHMETIC ON THIS VALUE
 def main(\
-	private field value,\
+	private field b,\
 	private u32[8] a_stateVarId,\
 	private bool a_oldCommitment_isDummy,\
-	private u32[8] a_oldCommitment_value,\
-	private u32[8] a_oldCommitment_owner_publicKey,\
+	private field a_oldCommitment_value,\
 	private u32[8] a_oldCommitment_salt,\
 	private field a_oldCommitment_membershipWitness_index,\
 	private field[32] a_oldCommitment_membershipWitness_siblingPath,\
 	private u32[8] a_oldCommitment_owner_secretKey,\
 	public field a_oldCommitment_nullifier,\
-	private u32[8] a_newCommitment_value,\
 	private u32[8] a_newCommitment_owner_publicKey,\
 	private u32[8] a_newCommitment_salt,\
 	public field a_newCommitment_commitment,\
 	public field commitmentRoot\
 ) -> ():
 
-	field a = value
+	// NOTICE: we don't need an input param for a_newCommitmentValue, because that value is derived through the body of the function! (i.e. it is the final value of `a`).
+	// private u32[8] a_newCommitment_value,\
 
-	// prepare secret states for commitment
+	// WHOLE
+	field a = a_oldCommitment_value // whilst not needed for this example (of overwriting the state), we'll need this line if `a` is whole and involved in +=, -=, *=, /= (so that we may "access" the old value...). We may as well leave it here, for simplicity of transpilation.
 
-	a_newCommitment_value = field_to_u32_8(a)
+	// +=, -=, *=, /= (of whole states):
+	// field a = a_oldCommitment_value
+	// a = a * 3
+	// u32[8] a_newCommitment_value = field_to_u32_8(a)
+
+	// what if `b` is a secret which is 'accessed'?
+	// e.g. a = b + 3
+	// field b = b_oldCommitment_value            <<<<
+	// field a = a_oldCommitment_value
+	// do stuff with `a` and `b`, including:
+	// a = b + 3                                  <<<<
+	// u32[8] a_newCommitment_value = field_to_u32_8(a)
+
+
+	// What if `a` is partitioned?
+
+	// a += b; // then we create a new 'part' containing b. We never use `a`.
+	// param: b (but it's only included as a param when code is generated for `b` (not `a`))
+	// a = a + b // <-- but we can't use a partitioned a. So we just need to create b out of thin air!
+	// u32[8] a_0_newCommitmentValue = field_to_u32_8(b) // <-- notice a & b here!
+	//
+	// PARAMS:
+	//
+	// param: b
+	//
+	// param: a_0_newCommitment_owner_publicKey
+	// param: a_0_newCommitment_salt
+	// param: a_0_newCommitment_commitment
+	//
+	//
+	// BODY: - we'll need the visitor to provide a placeholder for this body
+	//
+	// no body for this operation - we just create a commitment out of thin air, because it's a partitioned incrementation
+	//
+	// POST:
+	//
+	// u32[8] a_0_newCommitmentValue = field_to_u32_8(b) // <-- notice a & b here!
+	// create new commitment for a_0
+
+
+
+	// a -= b; // then we need two old 'parts' to nullify, whose sum is >= b.
+	// a = a - b
+	// PARAMS:
+	//
+	// param: b
+	//
+	// param: a_0_oldCommitment_value <<<< 'part 0' to be nullified
+	// param: a_0_oldCommitment_salt
+	// param: a_0_oldCommitment_membershipWitness_index,\
+	// param: a_0_oldCommitment_membershipWitness_siblingPath,\
+	// param: a_0_oldCommitment_owner_secretKey,\
+	// param: a_0_oldCommitment_nullifier,\
+	//
+	// param: a_1_oldCommitment_value <<<< 'part 1' to be nullified
+	// param: a_1_oldCommitment_salt
+	// param: a_1_oldCommitment_membershipWitness_index,\
+	// param: a_1_oldCommitment_membershipWitness_siblingPath,\
+	// param: a_1_oldCommitment_owner_secretKey,\
+	// param: a_1_oldCommitment_nullifier,\
+	//
+	// param: a_2_newCommitment_owner_publicKey
+	// param: a_2_newCommitment_salt
+	// param: a_2_newCommitment_commitment
+	//
+	// BODY: - we'll need the visitor to provide a placeholder for this body
+	//
+	// assert(a_0 + a_1 > b)
+	// assert no over/underflows!
+	//
+	// field a_2 = (a_0 + a_1) - b // instead of `a = a - b`
+	//
+	// POST:
+	//
+	// nullification a_0, a_1
+	// oldCommitmentPreimage a_0, a_1
+	// oldCommitmentExistence a_0, a_1
+	//
+	// u32[8] a_2_newCommitmentValue = field_to_u32_8(a_2)
+ 	//
+	// create new commitment for a_2
+
+
+	// WHAT ABOUT... `a = a + b - c`?
+	// or equiv.....
+	// `a = a + b` <-- creates a new 'part' commitment for `a` with value = b
+	// `a = a - c` <-- we can't be sure the `b` 'part' will be large enough, so we'll need two parts `a_0` and `a_1` to nullify, in addition to `b`?
+	//
+	//
+	// param: b
+	// param: a_0_oldCommitment_value <<<< 'part 0' to be nullified
+	// param: a_1_oldCommitment_value <<<< 'part 1' to be nullified
+	// param: c
+    //
+	// // `a = a - c` stuff:
+	//
+	// assert(a_0 + a_1 > c)
+	// assert no over/underflows!
+	//
+	// field a_2 = (a_0 + a_1) - c // instead of `a = a - c`
+	//
+	// u32[8] a_2_newCommitmentValue = field_to_u32_8(a_2)
+	//
+	// u32[8] a_3_newCommitmentValue = field_to_u32_8(b) // <-- notice a & b here!
+
+
+	// a -= b; // then we need two old 'parts' to nullify, whose sum is >= b.
+
+
+	//
+	// assert(a_0 + a_1 > b)
+	// assert no over/underflows!
+	//
+	// field a_2 = (a_0 + a_1) - b // instead of `a = a - b`
+	//
+
+
+
+
+	// Function 'Body':
+
+	a = b
 
 	// old commitments - nullify
 
@@ -41,32 +164,58 @@ def main(\
 
 	a_oldCommitment_salt = if a_oldCommitment_isDummy then [0x00000000; 8] else a_oldCommitment_salt fi
 
-	u32[8] a_oldCommitment_nullifier_check = sha256of768([...a_stateVarId, ...a_oldCommitment_owner_secretKey, ...a_oldCommitment_salt])
+	u32[8] a_oldCommitment_nullifier_check = sha256of768([\
+		...a_stateVarId,\
+		...a_oldCommitment_owner_secretKey,\
+		...a_oldCommitment_salt\
+	])
 
 	assert(\
 		field_to_bool_256(a_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(a_oldCommitment_nullifier_check)[8..256]\
 	)
 
+	// oldCommitment - PoKoSK
+
+	u32[8] a_oldCommitment_owner_publicKey = sha256of256([...a_oldCommitment_owner_secretKey])
+
 	// old commitments - preimage checks
 
-	u32[8] a_oldCommitment_commitment = sha256of1024([...a_stateVarId, ...a_oldCommitment_value, ...a_oldCommitment_owner_publicKey, ...a_oldCommitment_salt])
+	u32[8] a_oldCommitment_commitment = sha256of1024([\
+		...a_stateVarId,\
+		...field_to_u32_8(a_oldCommitment_value),\
+		...a_oldCommitment_owner_publicKey,\
+		...a_oldCommitment_salt\
+	])
 
 	// old commitments - existence checks
 
 	field a_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(a_oldCommitment_commitment)[8..256]])
 
-	field a_commitmentRoot_check = checkRoot(a_oldCommitment_membershipWitness_siblingPath, a_oldCommitment_commitment_truncated, a_oldCommitment_membershipWitness_index)
+	field a_commitmentRoot_check = checkRoot(\
+		a_oldCommitment_membershipWitness_siblingPath,\
+		a_oldCommitment_commitment_truncated,\
+		a_oldCommitment_membershipWitness_index\
+	)
 
 	// Note: Don't bother checking existence, if the oldCommitment is a dummy:
-	field a_commitmentRoot_check = if a_oldCommitment_isDummy == true then commitmentRoot else a_commitmentRoot_check fi
+	a_commitmentRoot_check = if a_oldCommitment_isDummy == true then commitmentRoot else a_commitmentRoot_check fi
 
 	assert(\
 		field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_commitmentRoot_check)[8..256]\
 	)
 
+	// prepare secret states for commitment
+
+	u32[8] a_newCommitment_value = field_to_u32_8(a)
+
 	// new commitments - preimage checks
 
-	u32[8] a_newCommitment_commitment_check = sha256of1024([...a_stateVarId, ...a_newCommitment_value, ...a_newCommitment_owner_publicKey, ...a_newCommitment_salt])
+	u32[8] a_newCommitment_commitment_check = sha256of1024([\
+		...a_stateVarId,\
+		...a_newCommitment_value,\
+		...a_newCommitment_owner_publicKey,\
+		...a_newCommitment_salt\
+	])
 
 	assert(\
 		field_to_bool_256(a_newCommitment_commitment)[8..256] == u32_8_to_bool_256(a_newCommitment_commitment_check)[8..256]\

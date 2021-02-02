@@ -9,7 +9,7 @@ import { Scope } from './Scope.mjs';
 A NodePath is required as a way of 'connecting' a node to its parent (and its parent, and so on...). We can't assign a `.parent` to a `node` (to create `node.parent`), because we'd end up with a cyclic reference; the parent already contains the node, so the node can't then contain the parent!
 The solution: wrap both the node and the parent in a class.
 */
-class NodePath {
+export default class NodePath {
   /**
   @param {Object} node - the node of a tree
   @param {Object} parent - the parent of the node (itself a node)
@@ -40,8 +40,7 @@ class NodePath {
    *        // the node is at parent[key][index] = container[index]
    */
   constructor({ node, parent, key, container, index, parentPath }) {
-    const cachedPath = pathCache.get(node);
-    if (pathCache.has(node)) return cachedPath;
+    if (pathCache.has(node)) return pathCache.get(node);
 
     NodePath.validateConstructorArgs({ node, parent, container, key, index, parentPath });
 
@@ -90,6 +89,11 @@ class NodePath {
 
   traverseNodesFast(enter, state) {
     traverseNodesFast(this.node, enter, state);
+  }
+
+  static getPath(node) {
+    if (pathCache.has(node)) return pathCache.get(node);
+    throw new Error('Node not found in pathCache');
   }
 
   /**
@@ -429,5 +433,3 @@ class NodePath {
     this.scope = this.isScopable() ? new Scope(this) : nearestAncestorScope;
   }
 }
-
-export default NodePath;

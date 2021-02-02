@@ -1,6 +1,6 @@
-/* eslint-disable no-mutable-exports */
-let pathCache = new WeakMap(); // keep as mutable.
-let scopeCache = new WeakMap(); // keep as mutable.
+/* eslint-disable import/no-mutable-exports */
+let pathCache = new WeakMap(); // keep as mutable
+let scopeCache = new WeakMap(); // keep as mutable, to enable the 'clear' functions
 
 export { pathCache, scopeCache };
 

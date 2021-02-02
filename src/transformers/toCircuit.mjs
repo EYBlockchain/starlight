@@ -57,6 +57,8 @@ export default function toCircuit(ast, options) {
   logger.verbose('Transforming the .zsol AST to a contract AST...');
   const newAST = transformation1(ast);
   const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
+  console.log('\n\n\nNEWAST:')
+  console.dir(newAST, { depth: 10 });
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the circuit files from the newly created circuit AST:

@@ -1,0 +1,6 @@
+{
+  "scopes": null,
+  "errorType": "Error",
+  "errorMessage": "Secret value a assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.",
+  "warningMessages": null
+}

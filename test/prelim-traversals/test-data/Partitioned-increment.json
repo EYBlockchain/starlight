@@ -37,28 +37,25 @@
           "modifyingPaths": [
             8
           ],
-          "isNullified": true,
-          "nullificationCount": 1,
-          "nullifyingPaths": [
-            8
-          ],
-          "increments": [],
-          "decrements": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
-          "isWhole": true,
+          "isWhole": false,
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
           ]
         },
         "13": {
           "kind": "FunctionDefinition",
           "id": 13,
-          "name": "assign"
+          "name": "incr"
         }
       },
       "referencedBindings": {},
@@ -73,7 +70,7 @@
     },
     {
       "scopeId": 13,
-      "scopeName": "assign",
+      "scopeName": "incr",
       "scopeType": "FunctionDefinition",
       "bindings": {
         "5": {
@@ -93,8 +90,6 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -121,22 +116,19 @@
           "modifyingPaths": [
             8
           ],
-          "isNullified": true,
-          "nullificationCount": 1,
-          "nullifyingPaths": [
-            8
-          ],
-          "increments": [],
-          "decrements": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
-          "isWhole": true,
+          "isWhole": false,
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
           ]
         },
         "5": {
@@ -156,8 +148,6 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
-          "increments": [],
-          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -184,61 +174,23 @@
           "modifyingPaths": [
             8
           ],
-          "isNullified": true,
-          "nullificationCount": 1,
-          "nullifyingPaths": [
-            8
-          ],
-          "increments": [],
-          "decrements": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
-          "isWhole": true,
+          "isWhole": false,
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
           ]
         }
       },
-      "nullifiedBindings": {
-        "3": {
-          "kind": "VariableDeclaration",
-          "id": 3,
-          "name": "a",
-          "stateVariable": true,
-          "isSecret": true,
-          "isReferenced": true,
-          "referenceCount": 1,
-          "referencingPaths": [
-            8
-          ],
-          "isModified": true,
-          "modificationCount": 1,
-          "modifyingPaths": [
-            8
-          ],
-          "isNullified": true,
-          "nullificationCount": 1,
-          "nullifyingPaths": [
-            8
-          ],
-          "increments": [],
-          "decrements": [],
-          "isMapping": false,
-          "mappingKey": null,
-          "isKnown": false,
-          "isWhole": true,
-          "isPartitioned": false,
-          "isOwned": false,
-          "owner": null,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
-          ]
-        }
-      },
+      "nullifiedBindings": {},
       "indicators": {
         "3": {
           "id": 3,
@@ -255,20 +207,18 @@
           "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
-          "isNullified": true,
+          "isNullified": false,
           "initialisationRequired": true,
-          "increments": [],
-          "decrements": [],
-          "isIncremented": false,
+          "isUnknown": true,
+          "isIncremented": true,
           "isDecremented": false,
-          "isWhole": true,
-          "isWholeReason": [
-            "Overwritten at 168:10:0"
+          "isWhole": false,
+          "isPartitioned": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
           ],
-          "nullifyingPaths": [
-            8
-          ],
-          "nullificationCount": 1
+          "nullifyingPaths": [],
+          "nullificationCount": 0
         }
       }
     }

@@ -1,4 +1,3 @@
-import Listr from 'listr';
 import removeDecorators from './parse/removeDecorators.mjs';
 import redecorate from './parse/redecorate.mjs';
 import compile from './solc.mjs';
@@ -25,7 +24,7 @@ const zappify = options => {
 
   // toOrchestration(zsolAST, options);
   //
-  // toCircuit(zsolAST, options);
+  toCircuit(zsolAST, options);
   //
   // toContract(zsolAST, options);
 
@@ -33,47 +32,5 @@ const zappify = options => {
 
   return path;
 };
-
-// const tasks = new Listr([
-//   {
-//     title: '.zsol => .sol',
-//     task: ctx => {
-//       const { options } = ctx;
-//       const { desprinkledFile, toResprinkle } = desprinkle(options);
-//       ctx.desprinkledFile = desprinkledFile;
-//       ctx.toResprinkle = toResprinkle;
-//     },
-//   },
-//   {
-//     title: '.sol => .sol AST',
-//     task: ctx => {
-//       const { desprinkledFile, options } = ctx;
-//       const solAST = compile(desprinkledFile, options);
-//       ctx.solAST = solAST;
-//     },
-//   },
-//   {
-//     title: '.sol AST => .zsol AST',
-//     task: ctx => {
-//       const { solAST, toResprinkle, options } = ctx;
-//       const zsolAST = resprinkle(solAST, toResprinkle, options);
-//       ctx.zsolAST = zsolAST;
-//     },
-//   },
-//   {
-//     title: '.zsol AST => circuit AST => .zok files',
-//     task: ctx => {
-//       const { zsolAST, options } = ctx;
-//       toCircuit(zsolAST, options);
-//     },
-//   },
-// ]);
-
-// const zappify = options => {
-//   const ctx = { options };
-//   tasks.run(ctx).catch(err => {
-//     throw new Error(err);
-//   });
-// };
 
 export default zappify;

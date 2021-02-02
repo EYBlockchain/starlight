@@ -1,11 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import logger from '../../../utils/logger.mjs';
-import {
-  EditableCommitmentImportStatementsBoilerplate,
-  editableCommitmentStatementsBoilerplate,
-  editableCommitmentParametersBoilerplate,
-} from '../../../boilerplate/circuit/zokrates/raw/toCircuit.mjs';
+import BP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.mjs';
+
+const bp = new BP();
 
 const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
 
@@ -96,36 +94,37 @@ const beautify = code => {
 };
 
 function codeGenerator(node) {
-  // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder':
-      return node.files.flatMap(codeGenerator);
+      return BP.uniqueify(node.files.flatMap(codeGenerator));
 
-    case 'File':
-      return [
-        {
-          filepath: path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`),
-          file: node.nodes.map(codeGenerator).join('\n\n'),
-        },
-      ];
-
-    case 'EditableCommitmentCommonFilesBoilerplate':
-      return editableCommitmentCommonFilesBoilerplate();
+    case 'File': {
+      const filepath = path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`);
+      const file = node.nodes.map(codeGenerator).join('\n\n');
+      const thisFile = {
+        filepath,
+        file,
+      };
+      const importedFiles = collectImportFiles(file);
+      return [thisFile, ...importedFiles];
+    }
 
     case 'ImportStatementList':
-      return `${node.imports.map(codeGenerator).join('\n')}`;
-
-    case 'EditableCommitmentImportStatementsBoilerplate':
-      return EditableCommitmentImportStatementsBoilerplate.join('\n');
+      return `${BP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
       const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
       const body = codeGenerator(node.body);
-      return `${functionSignature}\n\n\t${body}\n\n\treturn`;
+      return `${functionSignature}
+
+      ${body}
+
+      return
+      `;
     }
 
     case 'ParameterList':
-      return node.parameters.map(codeGenerator).join(',\\\n\t');
+      return BP.uniqueify(node.parameters.flatMap(codeGenerator)).join(',\\\n\t');
 
     case 'VariableDeclaration': {
       const isPrivate = node.isPrivate ? 'private ' : '';
@@ -141,8 +140,12 @@ function codeGenerator(node) {
     case 'ElementaryTypeName':
       return node.name;
 
-    case 'Block':
-      return node.statements.map(codeGenerator).join('\n\n\t');
+    case 'Block': {
+      const preStatements = BP.uniqueify(node.preStatements.flatMap(codeGenerator));
+      const statements = BP.uniqueify(node.statements.flatMap(codeGenerator));
+      const postStatements = BP.uniqueify(node.postStatements.flatMap(codeGenerator));
+      return [...preStatements, ...statements, ...postStatements].join('\n\n\t');
+    }
 
     case 'ExpressionStatement':
       return codeGenerator(node.expression);
@@ -152,19 +155,25 @@ function codeGenerator(node) {
         node.rightHandSide,
       )}`;
 
+    case 'BinaryOperation':
+      return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
+        node.rightExpression,
+      )}`;
+
     case 'Identifier':
       return node.name;
 
-    case 'EditableCommitmentStatementsBoilerplate':
-      return editableCommitmentStatementsBoilerplate(node.privateStateName);
+    case 'Boilerplate':
+      return bp.generateBoilerplate(node);
 
-    case 'EditableCommitmentParametersBoilerplate':
-      return editableCommitmentParametersBoilerplate(node.privateStateName).join(',\\\n\t');
+    case 'BoilerplateStatement': {
+      return bp.generateBoilerplate(node);
+    }
 
     // And if we haven't recognized the node, we'll throw an error.
     default:
       return;
-      // throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
+    // throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
   }
 }
 

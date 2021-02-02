@@ -2,6 +2,7 @@
   "scopes": [
     {
       "scopeId": 108,
+      "scopeName": "",
       "scopeType": "SourceUnit",
       "bindings": {
         "107": {

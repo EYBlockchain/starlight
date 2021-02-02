@@ -1111,7 +1111,7 @@ function run() {
   const newAST = transformer(ast);
   logger.debug('newAST:', newAST);
   const output = codeGenerator(newAST);
-  logger.debug('output code:', output);
+  logger.info('output code:', output);
 }
 
 run();

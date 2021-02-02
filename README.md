@@ -87,7 +87,9 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 Whilst the package is in early development, it isn't hosted on npm. To install:
 
 `cd zappify`
+
 `npm i`
+
 `npm i -g ./`
 
 This will create a symlink to your node.js bin, allowing you to run the commands specified in the '`"bin":`' field of the `package.json`; namely the `zappify` command.
