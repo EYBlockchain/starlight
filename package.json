@@ -1,14 +1,13 @@
 {
   "name": "zappify",
   "version": "0.0.1",
-  "description": "Compiles Zero Knowledge Protocols from Solidity",
+  "description": "Generates Zero Knowledge Protocols from Solidity",
   "main": "index.mjs",
   "scripts": {
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
     "test": "./bin/startup && docker-compose run zappify npx mocha --exit --require @babel/register 'test/test.mjs'",
-    "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs",
-    "stc-demo": "node STC/stc.mjs"
+    "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs"
   },
   "bin": {
     "zappify": "bin/index.mjs"
@@ -29,7 +28,7 @@
     "circuit",
     "zokrates"
   ],
-  "author": "iAmMichaelConnor, MirandaWood, ChaitanyaKonda, Westlad",
+  "author": "iAmMichaelConnor, MirandaWood, LijuJoseJJ, Westlad, ChaitanyaKonda",
   "license": "CC0-1.0",
   "bugs": {
     "url": "https://github.com/EYBlockchain/sprinkles/issues"

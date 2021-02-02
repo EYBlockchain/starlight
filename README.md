@@ -208,6 +208,9 @@ See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a
 
 ## Acknowledgements
 
-- [Babel](https://babeljs.io)
 - solc
 - zokrates
+- [Babel](https://babeljs.io)
+
+Inspirational works:
+- [The Super Tiny Compiler](https://github.com/jamiebuilds/the-super-tiny-compiler)
