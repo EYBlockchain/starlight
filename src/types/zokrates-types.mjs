@@ -114,11 +114,11 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, isPrivate = false } = fields;
+      const { name, type, isSecret: isPrivate = false } = fields;
       return {
         nodeType,
         name,
-        isPrivate,
+        isPrivate, // 'private' to match zokrates keyword
         typeName: buildNode('ElementaryTypeName', { name: type }),
       };
     }

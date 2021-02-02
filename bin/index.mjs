@@ -82,6 +82,13 @@ validateOptions(options);
 
 mkdirs(options);
 
-console.log(figlet.textSync('zappify!'));
+const logo = () => {
+  const words = ['zappify!', 'zapp-it!', 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz', 'zapp-a-dee-doo-dah!', 'brrrrrrrrrrrrrrrrrrrrr', `mmmm makin' dat sweet sweet zapp...`, `zapp brannigan's underpants!!!`, 'gimme a "z"...', 'starligh... LOL JK!', 'zauzagez!', 'zo zo zo zcandalouz', 'by the beard of zeus!!!'];
+  const rnd = Math.floor(Math.random() * (words.length + 1));
+  console.log(figlet.textSync(words[rnd]));
+};
+
+logo();
+// console.log(figlet.textSync('zappify!'));
 
 zappify(options);

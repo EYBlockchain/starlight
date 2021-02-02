@@ -169,8 +169,10 @@ const visitor = {
       const { isIncremented, isDecremented } = expression;
       let newNode;
 
-      console.log("\n\n\nIN ExpressionStatement:")
-      console.log('expression:', expression);
+      console.log("\n\n\nIN EXPRESSION STATEMENT")
+      console.log('\nnode:', node)
+
+
 
       // TODO: tidy this up...
       if (isIncremented || isDecremented) {
@@ -239,7 +241,10 @@ const visitor = {
       }
 
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
-      const newNode = buildNode('VariableDeclaration', { name: node.name, isPrivate: true });
+      const newNode = buildNode('VariableDeclaration', {
+        name: node.name,
+        isSecret: node.isSecret,
+      });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
@@ -254,12 +259,15 @@ const visitor = {
   ElementaryTypeName: {
     enter(path) {
       const { node, parent } = path;
-      if (!['uint256', 'address'].includes(node.name))
-        throw new Error('Currently, only transpilation of "uint256" types is supported');
+      const supportedTypes = ['uint', 'uint256', 'address', 'bool'];
+      if (!supportedTypes.includes(node.name))
+        throw new Error(
+          `Currently, only transpilation of types "${supportedTypes}" is supported. Got ${node.name} type.`,
+        );
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('ElementaryTypeName', {
-        name: 'field', // convert uint & address types to 'field', for now.
+        name: node.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
       });
     },
 
