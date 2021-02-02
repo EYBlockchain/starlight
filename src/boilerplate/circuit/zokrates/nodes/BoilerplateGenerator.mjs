@@ -39,7 +39,7 @@ class BoilerplateGenerator {
           nodeType: 'Boilerplate',
           bpSection,
           bpType,
-          name: extraParams.name || this.name,
+          name: extraParams?.name || this.name,
           // only include if they exist:
           ...(this.isWhole && { isWhole: this.isWhole }),
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
@@ -68,7 +68,6 @@ class BoilerplateGenerator {
           this._addBP(bpType, { name: `${name}_${j + 1}`, ...extraParams });
         }
         if (bpType === 'newCommitment') {
-          this._addBP(bpType, { name: `${name}_${j + 2}`, ...extraParams });
           this._addBP(bpType, { name: `${name}_${j + 3}`, ...extraParams });
         }
       });

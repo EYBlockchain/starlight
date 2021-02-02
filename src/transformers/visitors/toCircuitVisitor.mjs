@@ -26,11 +26,9 @@ const visitor = {
     // parent._newASTPointer location is Folder.files[].
     enter(path, state) {
       const { node, parent, scope } = path;
-      console.log('node.kind', node.kind)
       if (node.kind === 'constructor') {
         // We currently treat all constructors as publicly executed functions.
         // TODO: consider supporting private constructor proofs?
-        console.log("HELLO IN A CONSTRUCTOR...")
         state.skipSubNodes = true;
         return;
       }
@@ -259,7 +257,6 @@ const visitor = {
       if (!['uint256', 'address'].includes(node.name))
         throw new Error('Currently, only transpilation of "uint256" types is supported');
 
-      console.log('BAD NODE', node)
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('ElementaryTypeName', {
         name: 'field', // convert uint & address types to 'field', for now.

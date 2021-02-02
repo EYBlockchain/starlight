@@ -20,45 +20,9 @@ class BoilerplateGenerator {
     return this[bpType][bpSection] ? this[bpType][bpSection](otherParams) : [];
   }
 
-  // addBP(bpType, state) {
-  //   this.bpSections.static.forEach(t => {
-  //     this[t].concat(this[bpType][t](state) || []);
-  //   });
-  // }
-
   static uniqueify(arr) {
     return Array.from(new Set(arr));
   }
-
-  removeDuplicateLines() {
-    this.bpSections.static.forEach(t => {
-      this.uniqueify(this[t]);
-    });
-  }
-
-  // // TODO: need to find where to put the ${x}_stateVarId parameter!!! Needs to appear for any commitment (old or new).
-  // generateBoilerplate2() {
-  //   if (this.isNullified || this.isAccessed) {
-  //     this.addBP('nullification');
-  //     this.addBP('oldCommitmentPreimage');
-  //     this.addBP('oldCommitmentExistence');
-  //   }
-  //   if (this.newCommitmentRequired) {
-  //     this.addBP('newCommitment');
-  //   }
-  //   if (this.isDecremented && this.isPartitioned) {
-  //     // get the subtrahendName somehow
-  //     const subtrahendName = this.subtrahend.name;
-  //     this.addBP('decrementation', { subtrahendName });
-  //   }
-  //   if (this.isMapping) {
-  //     for (const mappingKey of Object.keys(this.mappingKey)) {
-  //       this.addBP('mapping', { mappingName: this.x, mappingKey });
-  //     }
-  //   }
-  //
-  //   this.removeDuplicateLines();
-  // }
 
   PoKoSK = {
     importStatements() {
@@ -211,7 +175,7 @@ class BoilerplateGenerator {
         `public field commitmentRoot`,
       ];
       if (isWhole) {
-        [`private bool ${x}_oldCommitment_isDummy`].concat(lines);
+        lines.unshift(`private bool ${x}_oldCommitment_isDummy`);
       }
       return lines;
     },
@@ -243,8 +207,8 @@ class BoilerplateGenerator {
           -1,
           0,
           `
-            // Note: Don't bother checking existence, if the oldCommitment is a dummy:
-            field ${x}_commitmentRoot_check = if ${x}_oldCommitment_isDummy == true then commitmentRoot else ${x}_commitmentRoot_check fi`,
+            // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+            ${x}_commitmentRoot_check = if ${x}_oldCommitment_isDummy == true then commitmentRoot else ${x}_commitmentRoot_check fi`,
         );
       }
       return lines;
