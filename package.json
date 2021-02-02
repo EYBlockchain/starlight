@@ -36,28 +36,27 @@
   },
   "homepage": "https://github.com/EYBlockchain/sprinkles#readme",
   "dependencies": {
-    "@babel/register": "^7.11.5",
+    "@babel/register": "^7.12.10",
+    "@babel/runtime": "^7.12.5",
     "@truffle/contract": "^4.2.21",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "chai": "^4.2.0",
-    "chalk": "^4.1.0",
-    "commander": "^6.1.0",
-    "config": "^3.3.1",
-    "enquirer": "^2.3.6",
+    "commander": "^7.0.0",
+    "config": "^3.3.3",
     "figlet": "^1.5.0",
     "general-number": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
     "solc": "0.8.0",
-    "truffle": "^5.1.49",
+    "truffle": "^5.1.64",
     "winston": "^3.3.3",
     "yargs": "^15.4.1",
     "zkp-utils": "^1.0.8"
   },
   "devDependencies": {
-    "cod-scripts": "^3.2.0",
+    "cod-scripts": "^6.0.0",
     "eslint": "^7.19.0",
     "husky": "^4.2.5",
     "mocha": "^8.2.1",
-    "prettier": "^2.0.5"
+    "prettier": "^2.2.1"
   }
 }

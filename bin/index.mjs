@@ -43,14 +43,15 @@ program
   );
 
 program.parse(process.argv);
+const opts = program.opts();
 
-logger.level = program.verbose ? 'verbose' : program.logLevel || logger.level;
+logger.level = opts.verbose ? 'verbose' : opts.logLevel || logger.level;
 
-const inputFilePath = program.input;
+const inputFilePath = opts.input;
 const inputFileName = path.parse(inputFilePath).name;
 // commander converts 'zapp-name' to 'zappName'
-const zappName = program.zappName || inputFileName;
-const outputDirPath = `${program.output}/${zappName}`;
+const zappName = opts.zappName || inputFileName;
+const outputDirPath = `${opts.output}/${zappName}`;
 const parseDirPath = `${outputDirPath}/parse`;
 const circuitsDirPath = `${outputDirPath}/circuits`;
 const contractsDirPath = `${outputDirPath}/contracts`;
