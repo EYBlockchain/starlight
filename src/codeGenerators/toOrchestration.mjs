@@ -120,8 +120,8 @@ function codeGenerator(node) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder': {
-      const check = node.files.flatMap(codeGenerator);
-      // console.log("\n\n\n\n\n\n\n\n\ncheck FOLDER:", check)
+      const check = node.files.filter(x => x.nodeType === 'File').flatMap(codeGenerator);
+      // console.log("\n\n\n\n\n\n\n\n\ncheck FOLDER:", check);
       return check;
     }
 
@@ -173,6 +173,7 @@ function codeGenerator(node) {
     case 'VariableDeclarationStatement': {
       // const declarations = node.declarations.map(codeGenerator).join(', ');
       // const initialValue = codeGenerator(node.initialValue);
+      if (!node.modifiesSecretState) return;
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 

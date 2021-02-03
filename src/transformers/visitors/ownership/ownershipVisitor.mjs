@@ -27,6 +27,22 @@ export default {
             `Warning: secret state ${binding.name} is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.`,
           );
         }
+        if (binding.isSecret && binding.isOwned && binding.isMapping) {
+          const { owner } = binding;
+          Object.keys(binding.mappingKey).forEach(key => {
+            if (!binding.mappingKey[key].isOwned) {
+              binding.mappingKey[key].isOwned = true;
+              binding.mappingKey[key].owner =
+                owner.name === 'msg' && binding.mappingKey.msg
+                  ? binding.mappingKey[key].referencedKeyisParam
+                    ? { name: key }
+                    : path.scope.getReferencedNode({
+                        referencedDeclaration: binding.mappingKey[key].referencedKey,
+                      })
+                  : owner;
+            }
+          });
+        }
       });
     },
   },
