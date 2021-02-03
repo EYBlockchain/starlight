@@ -164,7 +164,7 @@ export default {
             : scope.getReferencedBinding(lhsNode.baseExpression);
         if (lhs.isSecret && rightAncestor && !referencedBinding.stateVariable)
           logger.warn(
-            `Non-secret parameter ${node.name} used to assign secret variable ${lhsName}`,
+            `src: ${lhsNode.src}: Non-secret parameter '${node.name}' used when assigning to a secret variable '${lhsName}'. Blockchain observers might be able to infer the value of '${lhsName}' from this. I.e. although you've labelled '${lhsName}' as 'secret', it might not be secret.`,
           );
       }
     },

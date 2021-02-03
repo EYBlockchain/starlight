@@ -8,7 +8,6 @@ import toCircuit from './transformers/toCircuit.mjs';
 import toContract from './transformers/toContract.mjs';
 import toOrchestration from './transformers/toOrchestration.mjs';
 
-// Original funtion before listr - might choose to revert back to this simple function.
 const zappify = options => {
   const { deDecoratedFile, toRedecorate } = removeDecorators(options);
 

@@ -37,8 +37,6 @@
   "dependencies": {
     "@babel/register": "^7.12.10",
     "@babel/runtime": "^7.12.5",
-    "@truffle/contract": "^4.2.21",
-    "axios": "^0.21.1",
     "chai": "^4.2.0",
     "commander": "^7.0.0",
     "config": "^3.3.3",
@@ -46,7 +44,6 @@
     "general-number": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
     "solc": "0.8.0",
-    "truffle": "^5.1.64",
     "winston": "^3.3.3",
     "yargs": "^15.4.1",
     "zkp-utils": "^1.0.8"
