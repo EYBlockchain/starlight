@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import recogniseDecorators from '../recognisers/decorators.mjs';
 import recogniseCurlyBracket from '../recognisers/curly-bracket.mjs';
+import backtrace from '../error/backtrace.mjs';
 import logger from '../utils/logger.mjs';
 
 function tidy(_line) {
@@ -70,6 +71,7 @@ function removeDecorators(options) {
   });
 
   const deDecoratedFile = deDecledLines.join('\r\n');
+  backtrace.setSolContract(deDecoratedFile); // store for later backtracing 'src' locators to lines of original code.
 
   const deDecoratedFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol`;
   fs.writeFileSync(deDecoratedFilePath, deDecoratedFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.
