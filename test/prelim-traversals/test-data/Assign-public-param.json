@@ -2,6 +2,7 @@
   "scopes": [
     {
       "scopeId": 15,
+      "scopeName": "",
       "scopeType": "SourceUnit",
       "bindings": {
         "14": {
@@ -275,7 +276,7 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "Non-secret parameter value used to assign secret variable a",
+    "src: 154:1:0: Non-secret parameter 'value' used when assigning to a secret variable 'a'. Blockchain observers might be able to infer the value of 'a' from this. I.e. although you've labelled 'a' as 'secret', it might not be secret.",
     "Warning: secret state a is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
   ]
 }

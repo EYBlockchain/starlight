@@ -42,6 +42,8 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -70,6 +72,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -122,6 +126,8 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -150,6 +156,8 @@
           "isNullified": false,
           "nullificationCount": 0,
           "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -182,6 +190,8 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -216,6 +226,8 @@
           "nullifyingPaths": [
             8
           ],
+          "increments": [],
+          "decrements": [],
           "isMapping": false,
           "mappingKey": null,
           "isKnown": false,
@@ -246,6 +258,8 @@
           "newCommitmentRequired": true,
           "isNullified": true,
           "initialisationRequired": true,
+          "increments": [],
+          "decrements": [],
           "isIncremented": false,
           "isDecremented": false,
           "isWhole": true,

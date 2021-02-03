@@ -1,6 +1,1161 @@
 {
-  "scopes": null,
-  "errorType": "TypeError",
-  "errorMessage": "Cannot read property 'includes' of undefined",
-  "warningMessages": null
+  "scopes": [
+    {
+      "scopeId": 43,
+      "scopeName": "",
+      "scopeType": "SourceUnit",
+      "bindings": {
+        "42": {
+          "kind": "ContractDefinition",
+          "id": 42,
+          "name": "BucketsOfBalls"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {}
+    },
+    {
+      "scopeId": 42,
+      "scopeName": "BucketsOfBalls",
+      "scopeType": "ContractDefinition",
+      "bindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "buckets",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 15,
+              "name": "amountDeposit",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 9,
+              "src": "240:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 37,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "445:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 31,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "398:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "isMapping": true,
+          "mappingKey": {
+            "bucketId": {
+              "referencedKey": 13,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                12
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                12
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            },
+            "fromBucketId": {
+              "referencedKey": 29,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                28
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                28
+              ],
+              "isNullified": true,
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1
+            },
+            "toBucketId": {
+              "referencedKey": 35,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                34
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                34
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        },
+        "19": {
+          "kind": "FunctionDefinition",
+          "id": 19,
+          "name": "deposit"
+        },
+        "41": {
+          "kind": "FunctionDefinition",
+          "id": 41,
+          "name": "transfer"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {
+        "zkSnarkVerificationRequired": true,
+        "oldCommitmentAccessRequired": true,
+        "nullifiersRequired": true,
+        "newCommitmentsRequired": true
+      }
+    },
+    {
+      "scopeId": 19,
+      "scopeName": "deposit",
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "7": {
+          "kind": "VariableDeclaration",
+          "id": 7,
+          "name": "bucketId",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            13
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "9": {
+          "kind": "VariableDeclaration",
+          "id": 9,
+          "name": "amountDeposit",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            15
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "5": {
+          "referencedKey": 13,
+          "referencedKeyNodeType": "VariableDeclaration",
+          "referencedKeyisParam": true,
+          "referencedKeyisMsg": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            12
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            12
+          ],
+          "isWhole": false,
+          "isPartitioned": true,
+          "nullifyingPaths": [],
+          "nullificationCount": 0
+        },
+        "7": {
+          "kind": "VariableDeclaration",
+          "id": 7,
+          "name": "bucketId",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            13
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "9": {
+          "kind": "VariableDeclaration",
+          "id": 9,
+          "name": "amountDeposit",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            15
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "buckets",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 15,
+              "name": "amountDeposit",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 9,
+              "src": "240:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 37,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "445:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 31,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "398:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "isMapping": true,
+          "mappingKey": {
+            "bucketId": {
+              "referencedKey": 13,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                12
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                12
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            },
+            "fromBucketId": {
+              "referencedKey": 29,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                28
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                28
+              ],
+              "isNullified": true,
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1
+            },
+            "toBucketId": {
+              "referencedKey": 35,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                34
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                34
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "nullifiedBindings": {},
+      "indicators": {
+        "5": {
+          "id": 5,
+          "name": "buckets",
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "bucketId": {
+              "referencedKey": 13,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                12
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                12
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": false,
+              "initialisationRequired": true,
+              "isUnknown": true,
+              "increments": [
+                {
+                  "id": 15,
+                  "name": "amountDeposit",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 9,
+                  "src": "240:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [],
+              "isIncremented": true,
+              "isDecremented": false,
+              "binding": {
+                "referencedKey": 13,
+                "referencedKeyNodeType": "VariableDeclaration",
+                "referencedKeyisParam": true,
+                "referencedKeyisMsg": false,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 1,
+                "referencingPaths": [
+                  12
+                ],
+                "isModified": true,
+                "modificationCount": 1,
+                "modifyingPaths": [
+                  12
+                ],
+                "isWhole": false,
+                "isPartitioned": true,
+                "nullifyingPaths": [],
+                "nullificationCount": 0
+              },
+              "id": 5,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "buckets[bucketId]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            }
+          },
+          "isModified": true
+        }
+      }
+    },
+    {
+      "scopeId": 41,
+      "scopeName": "transfer",
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "21": {
+          "kind": "VariableDeclaration",
+          "id": 21,
+          "name": "fromBucketId",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            29
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "23": {
+          "kind": "VariableDeclaration",
+          "id": 23,
+          "name": "toBucketId",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            35
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "25": {
+          "kind": "VariableDeclaration",
+          "id": 25,
+          "name": "numberOfBalls",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 2,
+          "referencingPaths": [
+            31,
+            37
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "5": {
+          "referencedKey": 35,
+          "referencedKeyNodeType": "VariableDeclaration",
+          "referencedKeyisParam": true,
+          "referencedKeyisMsg": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            34
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            34
+          ],
+          "isWhole": false,
+          "isPartitioned": true,
+          "nullifyingPaths": [],
+          "nullificationCount": 0
+        },
+        "21": {
+          "kind": "VariableDeclaration",
+          "id": 21,
+          "name": "fromBucketId",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            29
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "23": {
+          "kind": "VariableDeclaration",
+          "id": 23,
+          "name": "toBucketId",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            35
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "25": {
+          "kind": "VariableDeclaration",
+          "id": 25,
+          "name": "numberOfBalls",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 2,
+          "referencingPaths": [
+            31,
+            37
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "buckets",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 15,
+              "name": "amountDeposit",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 9,
+              "src": "240:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 37,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "445:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 31,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "398:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "isMapping": true,
+          "mappingKey": {
+            "bucketId": {
+              "referencedKey": 13,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                12
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                12
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            },
+            "fromBucketId": {
+              "referencedKey": 29,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                28
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                28
+              ],
+              "isNullified": true,
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1
+            },
+            "toBucketId": {
+              "referencedKey": 35,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                34
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                34
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "buckets",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [
+            {
+              "id": 15,
+              "name": "amountDeposit",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 9,
+              "src": "240:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 37,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "445:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 31,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "398:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "isMapping": true,
+          "mappingKey": {
+            "bucketId": {
+              "referencedKey": 13,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                12
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                12
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            },
+            "fromBucketId": {
+              "referencedKey": 29,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                28
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                28
+              ],
+              "isNullified": true,
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1
+            },
+            "toBucketId": {
+              "referencedKey": 35,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                34
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                34
+              ],
+              "isWhole": false,
+              "isPartitioned": true,
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            }
+          },
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isUnknown": true,
+          "isPartitionedReason": [
+            "Incremented and marked as unknown"
+          ]
+        }
+      },
+      "indicators": {
+        "5": {
+          "id": 5,
+          "name": "buckets",
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "fromBucketId": {
+              "referencedKey": 29,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                28
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                28
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": true,
+              "initialisationRequired": true,
+              "increments": [],
+              "decrements": [
+                {
+                  "id": 31,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "398:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "isIncremented": true,
+              "isDecremented": true,
+              "binding": {
+                "referencedKey": 29,
+                "referencedKeyNodeType": "VariableDeclaration",
+                "referencedKeyisParam": true,
+                "referencedKeyisMsg": false,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 1,
+                "referencingPaths": [
+                  28
+                ],
+                "isModified": true,
+                "modificationCount": 1,
+                "modifyingPaths": [
+                  28
+                ],
+                "isNullified": true,
+                "isWhole": false,
+                "isPartitioned": true,
+                "nullifyingPaths": [
+                  28
+                ],
+                "nullificationCount": 1
+              },
+              "id": 5,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "buckets[fromBucketId]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": [
+                28
+              ],
+              "nullificationCount": 1
+            },
+            "toBucketId": {
+              "referencedKey": 35,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                34
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                34
+              ],
+              "oldCommitmentAccessRequired": true,
+              "newCommitmentRequired": true,
+              "isNullified": false,
+              "initialisationRequired": true,
+              "isUnknown": true,
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "445:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [],
+              "isIncremented": true,
+              "isDecremented": false,
+              "binding": {
+                "referencedKey": 35,
+                "referencedKeyNodeType": "VariableDeclaration",
+                "referencedKeyisParam": true,
+                "referencedKeyisMsg": false,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 1,
+                "referencingPaths": [
+                  34
+                ],
+                "isModified": true,
+                "modificationCount": 1,
+                "modifyingPaths": [
+                  34
+                ],
+                "isWhole": false,
+                "isPartitioned": true,
+                "nullifyingPaths": [],
+                "nullificationCount": 0
+              },
+              "id": 5,
+              "isWhole": false,
+              "isPartitioned": true,
+              "name": "buckets[toBucketId]",
+              "isPartitionedReason": [
+                "Incremented and marked as unknown"
+              ],
+              "nullifyingPaths": [],
+              "nullificationCount": 0
+            }
+          },
+          "isModified": true
+        }
+      }
+    }
+  ],
+  "errorType": null,
+  "errorMessage": null,
+  "warningMessages": [
+    "src: 219:17:0: Non-secret parameter 'amountDeposit' used when assigning to a secret variable 'buckets'. Blockchain observers might be able to infer the value of 'buckets' from this. I.e. although you've labelled 'buckets' as 'secret', it might not be secret.",
+    "Warning: secret state buckets is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
+  ]
 }

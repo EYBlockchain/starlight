@@ -242,7 +242,15 @@ describe('Test prelim traversals of .zsol files', function () {
     }
 
     /** Compare actual vs expected */
-    const expected = readJsonFile(jsonFilePath);
+    let expected;
+    try {
+      expected = readJsonFile(jsonFilePath);
+    } catch (err) {
+      logger.error(
+        `Perhaps you've forgotten to create the 'expected' json data for an input .zsol file?`,
+      );
+      throw err;
+    }
     if (!expected.errorType) {
       itShouldCompareOutputs(options, expected, actual, consoleWarnings);
     } else {

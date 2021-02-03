@@ -1284,7 +1284,7 @@
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
-              "isNullified": false,
+              "isNullified": true,
               "initialisationRequired": true,
               "increments": [],
               "decrements": [
@@ -1898,7 +1898,7 @@
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
-              "isNullified": false,
+              "isNullified": true,
               "initialisationRequired": true,
               "increments": [],
               "decrements": [
@@ -1981,7 +1981,7 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "Non-secret parameter amount used to assign secret variable balances",
-    "Non-secret parameter amount used to assign secret variable balances"
+    "src: 626:20:1: Non-secret parameter 'amount' used when assigning to a secret variable 'balances'. Blockchain observers might be able to infer the value of 'balances' from this. I.e. although you've labelled 'balances' as 'secret', it might not be secret.",
+    "src: 883:20:1: Non-secret parameter 'amount' used when assigning to a secret variable 'balances'. Blockchain observers might be able to infer the value of 'balances' from this. I.e. although you've labelled 'balances' as 'secret', it might not be secret."
   ]
 }
