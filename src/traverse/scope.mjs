@@ -318,6 +318,7 @@ export class Scope {
               id: referencedId,
               name: referencedName,
               binding: this.getReferencedBinding(node),
+              isMapping: isMapping,
               referencingPaths: [],
               referenceCount: 0,
               modifyingPaths: [],
