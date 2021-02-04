@@ -4,22 +4,32 @@ pragma solidity ^0.8.0;
 
 contract MyContract {
 
-  secret mapping(address => uint256) private a;
-  secret uint256 private b;
-  secret address private admin;
+  uint256[] myDynamicArray;
+  address[5] myStaticArray;
+  mapping(uint256 => uint256) myUintMapping;
+  mapping(address => address) myAddressMapping;
 
-  function assign(secret address param1, secret uint256 param2) public {
-    unknown a[param1] = a[param1] + param2;
+  function assignToDynamicArray(uint param1) public {
+    myDynamicArray.push(param1);
   }
 
-  function assign2(secret uint256 param3) public {
-    a[msg.sender] = a[msg.sender] - param3;
-    known b = b + param3;
+  function getFromDynamicArray(uint indexParam) public view returns (uint) {
+    return myDynamicArray[indexParam];
   }
 
-  function assign3(secret address param4, secret uint256 param5) public {
-    require(msg.sender == admin);
-    // a[param4] = a[param4] - param3;
-    known b = b + param5;
+  function assignToStaticArray(uint indexParam, address param1) public {
+    myStaticArray[indexParam] = param1;
+  }
+
+  function getFromStaticArray(uint indexParam) public view returns (address) {
+    return myStaticArray[indexParam];
+  }
+
+  function assignToMyUintMapping(uint key1, uint param1) public {
+    myUintMapping[key1] = param1;
+  }
+
+  function assignToMyAddressMapping(address param1) public {
+    myAddressMapping[msg.sender] = param1;
   }
 }

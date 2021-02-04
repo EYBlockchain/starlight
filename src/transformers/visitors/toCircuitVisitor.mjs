@@ -28,7 +28,6 @@ const visitor = {
       const { node, parent, scope } = path;
       if (node.kind === 'constructor') {
         // We currently treat all constructors as publicly executed functions.
-        // TODO: consider supporting private constructor proofs?
         state.skipSubNodes = true;
         return;
       }
@@ -173,13 +172,12 @@ const visitor = {
       console.log('\nnode:', node)
 
 
-
       // TODO: tidy this up...
       if (isIncremented || isDecremented) {
         switch (expression.nodeType) {
           case 'Assignment': {
             const { leftHandSide: lhs, rightHandSide: rhs } = expression;
-            const lhsIndicator = scope.indicators[lhs.referencedDeclaration];
+            const lhsIndicator = scope.getReferencedIndicator(lhs);
             if (!lhsIndicator.isPartitioned) break;
 
             const rhsPath = NP.getPath(rhs);
@@ -278,6 +276,10 @@ const visitor = {
     enter(path) {
       const { node, parent } = path;
       const { name } = node;
+
+      console.log("\n\n\nIN IDENTIFIER")
+      console.log('\npath:', path)
+
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('Identifier', { name });
     },
@@ -289,6 +291,30 @@ const visitor = {
     enter(path) {},
 
     exit(path) {},
+  },
+
+  MemberAccess: {
+    enter(path, state) {
+      const { node, parent } = path;
+
+      if (!path.isMsgSender()) throw new Error(`Struct property access isn't yet supported.`);
+
+      // What follows assumes this node represents msg.sender:
+      const newNode = buildNode('MsgSender');
+      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = newNode;
+      state.skipSubNodes = true;
+    },
+  },
+
+  IndexAccess: {
+    enter(path) {
+      const { node, parent } = path;
+
+      const newNode = buildNode('IndexAccess');
+      node._newASTPointer = newNode;
+      parent._newASTPointer[path.containerName] = newNode;
+    },
   },
 };
 

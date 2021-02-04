@@ -487,26 +487,30 @@ export class Scope {
           }
         }
         break;
-      case 'ExpressionStatement':
-      case 'VariableDeclarationStatement':
-      case 'PragmaDirective':
-      case 'ParameterList':
-      case 'Block':
+      case 'ArrayTypeName':
       case 'Assignment':
+      case 'Block':
       case 'BinaryOperation':
       case 'ElementaryTypeName':
-      case 'Literal':
-      case 'IndexAccess':
-      case 'MemberAccess':
-      case 'Mapping':
-      case 'UnaryOperation':
-      case 'TupleExpression':
+      case 'ExpressionStatement':
       case 'ImportDirective':
+      case 'IndexAccess':
+      case 'Literal':
+      case 'Mapping':
+      case 'MemberAccess':
+      case 'ParameterList':
+      case 'PragmaDirective':
+      case 'Return':
+      case 'TupleExpression':
+      case 'UnaryOperation':
       case 'UserDefinedTypeName':
+      case 'VariableDeclarationStatement':
         break;
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.
       default:
+        logger.error(`Hitherto unknown nodeType ${node.nodeType}`);
+        console.error(`Here's the path of this mysterious nodeType:`, path.node);
         throw new TypeError(node.nodeType);
     }
   }
@@ -515,6 +519,7 @@ export class Scope {
    * Starting at current `scope` and going up the nested scope object, return the first
    * `scope` that causes the provided `callback` to return a truthy value,
    * or `null` if the `callback` never returns a truthy value.
+   * @returns {Scope || null}
    */
   findAncestor(callback) {
     let scope = this;
@@ -554,18 +559,18 @@ export class Scope {
 
   /**
    * @param {string} nodeType - a valid scopeType.
-   * Get the first @return {scope || null} matching the given scopeType, in which the input `scope` is contained (including the input scope itself in the search).
+   * Get the first @return {Scope || null} matching the given scopeType, in which the input `scope` is contained (including the input scope itself in the search).
    */
   getAncestorOfScopeType(scopeType) {
     return this.findAncestor(scope => scope.scopeType === scopeType);
   }
 
   /**
-   * @returns {Binding || null} - the binding of the node being referred-to by the input referencingNode.
+   * @returns {Binding || null} - the binding of the VariableDeclaration being referred-to by the input referencingNode.
    */
   getReferencedBinding(referencingNode) {
     const node = referencingNode;
-    const id = node.referencedDeclaration;
+    const id = this.path.getReferencedDeclarationId(node);
     if (!id) return null; // if the node doesn't refer to another variable
     return this.queryAncestors(s => {
       return s.bindings[id];
@@ -573,11 +578,18 @@ export class Scope {
   }
 
   /**
-   * @returns {Binding || null} - the node being referred-to by the input referencingNode.
+   * @returns {Binding || null} - the indicator of the variable being referred-to by the input referencingNode.
+   */
+  getReferencedIndicator(referencingNode) {
+    return this.getIndicatorById(this.path.getReferencedDeclarationId(referencingNode));
+  }
+
+  /**
+   * @returns {Binding || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.
    */
   getReferencedNode(referencingNode) {
     const binding = this.getReferencedBinding(referencingNode);
-    return binding ? binding.node : binding;
+    return binding?.node || null;
   }
 
   /**
@@ -660,8 +672,6 @@ export class Scope {
   /**
    * @returns {Boolean} - if some stateVariable is nullified within the scope (of a FunctionDefinition scope).
    */
-  // TODO: HOW TO SEE IF A FUNCTION NULLIFIES A STATE?
-  // TODO: YOU HAVEN'T WRITTEN THIS FUNCTION YET, MIKE
   nullifiesSecretState() {
     if (this.scopeType !== 'FunctionDefinition') return false;
     const { indicators } = this;
@@ -762,7 +772,7 @@ export class Scope {
   }
 
   /**
-   * Gets a Function Definition scope's indicator object for a particular state variable.
+   * Gets a Function Definition scope's indicator object for a particular state variable's id.
    * @param {Number} id - an AST node's id.
    * @returns {Indicator Object || null}
    */

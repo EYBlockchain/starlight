@@ -331,6 +331,69 @@ export default class NodePath {
   }
 
   /**
+   * Checks whether a node represents `msg.sender`
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isMsgSender(node = this.node) {
+    if (
+      node.nodeType === 'MemberAccess' &&
+      node.memberName === 'sender' &&
+      node.typeDescriptions.typeString === 'address' &&
+      node.expression.nodeType === 'Identifier' &&
+      node.expression.name === 'msg' &&
+      node.expression.typeDescriptions.typeString === 'msg'
+    )
+      return true;
+
+    return false;
+  }
+
+  /**
+   * Checks whether a node is a VariableDeclaration of a Mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isMappingDeclaration(node = this.node) {
+    if (node.nodeType === 'VariableDeclaration' && node.typeName.nodeType === 'Mapping')
+      return true;
+    return false;
+  }
+
+  /**
+   * Get the referencedDeclaration node id of a particular node.
+   * I.e. get the id of the node which the input node references.
+   * @param {Node} node - OPTIONAL - the node which references some other node
+   * @return {Number || null} - the id of the node being referenced by the input node.
+   */
+  getReferencedDeclarationId(referencingNode = this.node) {
+    const { nodeType } = referencingNode;
+    let id;
+    switch (nodeType) {
+      case 'Identifier':
+        id = referencingNode.referencedDeclaration;
+        break;
+      case 'IndexAccess':
+        id = referencingNode.baseExpression.referencedDeclaration;
+        break;
+      case 'MemberAccess':
+        id = referencingNode.expression.referencedDeclaration;
+        break;
+      default:
+        // No other nodeTypes have been encountered which include a referencedDeclaration
+        return null;
+    }
+    return id;
+  }
+
+  /**
+   * @returns {Node || null} - the node being referred-to by the input referencingNode.
+   */
+  getReferencedNode(referencingNode = this.node) {
+    return this.scope.getReferencedNode(referencingNode);
+  }
+
+  /**
    * Slower than querying the `scope` object.
    * Suppose this.node refers to some previously-declared variable. Or suppose `this.node` is the _parent_ or _grandparent_ or earlier _ancestor_ of a node which refers to some previously-declared variable (e.g. a 'statement' node will have subNodes which make the references).
    * This function will collect (within the scope of nodes beneath `beneathNodeType`) all nodePaths which reference the same node(s).

@@ -87,7 +87,7 @@ export default {
         let fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
 
         // a mapping:
-
+        // TODO: IndexAccess also describes access of an array (not just mappings)
         if (lhsNode.nodeType === 'IndexAccess') {
           const keyName = scope.getMappingKeyIndicator(lhsNode);
           fnIndicatorObj = fnIndicatorObj.mappingKey[keyName];

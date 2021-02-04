@@ -155,12 +155,28 @@ export function buildNode(nodeType, fields = {}) {
         expression,
       };
     }
+    case 'IndexAccess': {
+      const { baseExpression = {}, indexExpression = {} } = fields;
+      return {
+        nodeType,
+        baseExpression,
+        indexExpression,
+      };
+    }
+    case 'MsgSender': {
+      return {
+        nodeType,
+      };
+    }
     case 'Identifier': {
       const { name } = fields;
       return {
         nodeType,
         name,
       };
+    }
+    case 'Literal': {
+      throw new Error('TODO.... Literals');
     }
     case 'ElementaryTypeName': {
       const { name } = fields;

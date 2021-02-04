@@ -170,9 +170,9 @@ class BoilerplateGenerator {
 
     parameters({ name: x, isWhole }) {
       const lines = [
+        `public field commitmentRoot`,
         `private field ${x}_oldCommitment_membershipWitness_index`,
         `private field[32] ${x}_oldCommitment_membershipWitness_siblingPath`,
-        `public field commitmentRoot`,
       ];
       if (isWhole) {
         lines.unshift(`private bool ${x}_oldCommitment_isDummy`);

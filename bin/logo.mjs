@@ -18,6 +18,7 @@ export default () => {
     'zhe zellz zea zhellz on ze zea zhore',
     'by the beard of zeus!!!',
     'zappificating...',
+    'zapp: (noun) - zero-knowledge application',
   ];
   const rnd = Math.floor(Math.random() * words.length);
   console.log(figlet.textSync(words[rnd]));

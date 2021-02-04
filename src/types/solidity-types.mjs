@@ -16,6 +16,8 @@ export function getVisitableKeys(nodeType) {
     case 'VariableDeclarationStatement':
       return ['declarations', 'initialValue'];
     case 'ExpressionStatement':
+    case 'MemberAccess':
+    case 'Return':
       return ['expression'];
     case 'Assignment':
       return ['leftHandSide', 'rightHandSide'];
@@ -27,12 +29,14 @@ export function getVisitableKeys(nodeType) {
       return ['keyType', 'valueType'];
     case 'IndexAccess':
       return ['indexExpression', 'baseExpression'];
-    case 'MemberAccess':
-      return ['expression'];
     case 'UnaryOperation':
       return ['subExpression'];
     case 'TupleExpression':
       return ['components'];
+    case 'FunctionCall':
+      return ['expression, arguments'];
+    case 'ArrayTypeName':
+      return ['baseType'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -40,8 +44,6 @@ export function getVisitableKeys(nodeType) {
     case 'UserDefinedTypeName':
     case 'ImportDirective':
       return [];
-    case 'FunctionCall':
-      return ['expression, arguments'];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
     // error.
