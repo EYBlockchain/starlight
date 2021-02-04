@@ -120,8 +120,8 @@ function codeGenerator(node) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder': {
-      const check = node.files.flatMap(codeGenerator);
-      // console.log("\n\n\n\n\n\n\n\n\ncheck FOLDER:", check)
+      const check = node.files.filter(x => x.nodeType === 'File').flatMap(codeGenerator);
+      // console.log("\n\n\n\n\n\n\n\n\ncheck FOLDER:", check);
       return check;
     }
 
@@ -154,7 +154,7 @@ function codeGenerator(node) {
     }
 
     case 'FunctionDefinition': {
-      node.parameters = node.parameters.parameters.map(codeGenerator);
+      node.inputParameters = node.parameters.parameters.map(codeGenerator);
       node.returnParameters = node.returnParameters.parameters.map(codeGenerator) || [];
       const fn = OrchestrationCodeBoilerPlate(node);
       const statements = codeGenerator(node.body);
@@ -171,9 +171,10 @@ function codeGenerator(node) {
     }
 
     case 'VariableDeclarationStatement': {
-      const declarations = node.declarations.map(codeGenerator).join(', ');
-      const initialValue = codeGenerator(node.initialValue);
-      return `\nlet ${declarations} = ${initialValue};`;
+      // const declarations = node.declarations.map(codeGenerator).join(', ');
+      // const initialValue = codeGenerator(node.initialValue);
+      if (!node.modifiesSecretState) return;
+      return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
     case 'ElementaryTypeName':
@@ -183,13 +184,20 @@ function codeGenerator(node) {
       return node.statements.map(codeGenerator).join('  ');
 
     case 'ExpressionStatement':
-      return codeGenerator(node.expression);
+      if (!node.incrementsSecretState) return `\n${codeGenerator(node.expression)};`;
+      return `\n// increment would go here but has been filtered out`;
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
         node.rightHandSide,
       )}`;
 
+    case 'BinaryOperation':
+      return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
+        node.rightExpression,
+      )}`;
+
+    case 'Literal':
     case 'Identifier':
       return node.name;
 
@@ -201,6 +209,7 @@ function codeGenerator(node) {
     case 'GenerateProof':
     case 'SendTransaction':
     case 'Imports':
+    case 'KeyRegistrationFunction':
       return `${OrchestrationCodeBoilerPlate(node).statements.join('')}`;
     // And if we haven't recognized the node, we'll throw an error.
     default:

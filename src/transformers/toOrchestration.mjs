@@ -30,17 +30,18 @@ function transformation1(oldAST) {
     newCommitmentsRequired: true,
     nullifiersRequired: true,
   };
+  //
+  // const dummyParent = {
+  //   ast: oldAST,
+  // };
 
-  const dummyParent = {
-    ast: oldAST,
-  };
-
-  const path = new NodePath({
-    parent: dummyParent,
-    key: 'ast', // since parent.ast = node
-    container: oldAST,
-    node: oldAST,
-  }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
+  const path = oldAST;
+  // new NodePath({
+  //   parent: dummyParent,
+  //   key: 'ast', // since parent.ast = node
+  //   container: oldAST,
+  //   node: oldAST,
+  // }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
 
   // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
   traversePathsFast(path, p => delete p.node._newASTPointer);

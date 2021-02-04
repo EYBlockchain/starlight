@@ -1429,7 +1429,8 @@
           "isModified": true,
           "isOwned": true
         }
-      }
+      },
+      "onChainKeyRegistry": true
     },
     {
       "scopeId": 106,
@@ -1975,7 +1976,8 @@
           "isModified": true,
           "isOwned": true
         }
-      }
+      },
+      "onChainKeyRegistry": true
     }
   ],
   "errorType": null,

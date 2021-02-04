@@ -7,6 +7,6 @@ contract Assign {
   secret uint256 private x;
 
   function assign(secret uint256 value) public {
-    x = value;
+    x = value + 2;
   }
 }

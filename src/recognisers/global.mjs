@@ -13,9 +13,10 @@ function recogniseGlobal(line) {
       const ln = line.replace(/ *\([^)]*\) */g, ' ').replace(';', '');
       logger.debug(ln);
       let [type, visibility, name] = ln.split(' ');
-      if (name.includes('=')) {
+      if (name.includes('=') || name === '=') {
         [type, name] = ln.split(' ');
         visibility = '';
+        console.log([type, name]);
       }
       process({ type, visibility, name }); // call the processor
       return true;
