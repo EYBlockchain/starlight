@@ -206,14 +206,20 @@ function itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarning
 }
 
 describe('Test prelim traversals of .zsol files', function () {
+  console.log(`Pass '--input <fileName.zsol>' to test a single file.`);
   console.log(`Pass '--json' to see a JSON output of the scopes.`);
   console.log(
-    `Pass '--write <fileName>' to write/overwrite the scopes to a JSON file. (But only do this if you know what you're doing!)\n`,
+    `Pass '--write <fileName>' to write/overwrite the scopes to a JSON file. (But only do this if you know what you're doing!)`,
+  );
+  console.log(
+    `Pass '--write-all' to write/overwrite all JSON files. (But only do this if you know what you're doing!)\n`,
   );
 
   for (const zsolFile of testDataFiles) {
-    const consoleWarnings = [];
+    // TODO: use yargs to enforce an argument be passed with '--input'
+    if (!(args.includes('--input') && args[args.indexOf('--input') + 1] === zsolFile)) continue;
 
+    const consoleWarnings = [];
     const fileName = pathjs.basename(zsolFile, '.zsol');
     const zsolFilePath = pathjs.join(testDataDir, `${fileName}.zsol`);
     const jsonFilePath = pathjs.join(testDataDir, `${fileName}.json`);
@@ -222,8 +228,8 @@ describe('Test prelim traversals of .zsol files', function () {
       zappName: fileName,
       inputFileName: fileName,
       inputFilePath: zsolFilePath,
-      outputDirPath: `./zapps/${fileName}`,
-      parseDirPath: `./zapps/${fileName}/parse`,
+      outputDirPath: `./test-zapps/${fileName}`,
+      parseDirPath: `./test-zapps/${fileName}/parse`,
       isTest: true,
       testType: 'prelim',
     };

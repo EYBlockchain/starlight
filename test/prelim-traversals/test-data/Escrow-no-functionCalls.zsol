@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0
 
-// We had to put unique param names, and put `unknown` in Deposit. We'd like to remove these eventually (see Escrow1.zsol).
+// TARGET CONTRACT FOR PHASE 2 OF DEVELOPMENT:
 
 pragma solidity ^0.8.0;
 
@@ -18,9 +18,9 @@ contract Escrow {
     }
 
     function deposit(uint amount) public {
-        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
-        require(hasBalance);
-        unknown balances[msg.sender] += amount;
+        // bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        // require(hasBalance);
+        balances[msg.sender] += amount;
     }
 
     function transfer(secret address recipient, secret uint256 amount) public {
@@ -30,7 +30,7 @@ contract Escrow {
 
     function withdraw(uint256 amount) public {
         balances[msg.sender] -= amount;
-        bool success = erc20.transfer(msg.sender, amount);
-        require(success, "ERC20 transfer failed");
+        // bool success = erc20.transfer(msg.sender, amount);
+        // require(success, "ERC20 transfer failed");
     }
 }
