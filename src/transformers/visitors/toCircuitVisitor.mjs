@@ -39,8 +39,8 @@ const visitor = {
         // Let's create a new circuit File to represent this function.
         // We'll add a new 'File' node to our newAST:
 
-        console.log('\n\n\nEntering FunctionDefinition node...')
-        console.log('SCOPE:', scope);
+        // console.log('\n\n\nEntering FunctionDefinition node...')
+        // console.log('SCOPE:', scope);
 
         const newFunctionDefinitionNode = buildNode('FunctionDefinition', { name: 'main' });
         const newImportStatementListNode = buildNode('ImportStatementList');
@@ -168,9 +168,8 @@ const visitor = {
       const { isIncremented, isDecremented } = expression;
       let newNode;
 
-      console.log("\n\n\nIN EXPRESSION STATEMENT")
-      console.log('\nnode:', node)
-
+      console.log("\n\n\n\n\n\n\n\n\nIN EXPRESSION STATEMENT")
+      console.log('path:', path)
 
       // TODO: tidy this up...
       if (isIncremented || isDecremented) {
@@ -178,10 +177,11 @@ const visitor = {
           case 'Assignment': {
             const { leftHandSide: lhs, rightHandSide: rhs } = expression;
             const lhsIndicator = scope.getReferencedIndicator(lhs);
+
             if (!lhsIndicator.isPartitioned) break;
 
             const rhsPath = NP.getPath(rhs);
-            // We need to clone the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
+            // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
             const tempRHSPath = cloneDeep(rhsPath);
             const tempRHSParent = tempRHSPath.parent;
 
@@ -189,6 +189,9 @@ const visitor = {
               newNode = buildNode('PartitionedDecrementationStatementBoilerplate', {
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
+                ...(lhsIndicator.isMapping && {
+                  mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
+                }), // TODO: this is an ugly hack.
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
               node._newASTPointer = newNode.subtrahend;
@@ -197,6 +200,9 @@ const visitor = {
               newNode = buildNode('PartitionedIncrementationStatementBoilerplate', {
                 indicators: lhsIndicator,
                 addendId: rhs.id,
+                ...(lhsIndicator.isMapping && {
+                  mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
+                }), // TODO: this is an ugly hack.
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
               node._newASTPointer = newNode.addend;
@@ -276,9 +282,6 @@ const visitor = {
     enter(path) {
       const { node, parent } = path;
       const { name } = node;
-
-      console.log("\n\n\nIN IDENTIFIER")
-      console.log('\npath:', path)
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('Identifier', { name });

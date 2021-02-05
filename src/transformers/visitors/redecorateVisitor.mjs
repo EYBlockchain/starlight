@@ -121,7 +121,6 @@ export default {
               break;
           }
         }
-        console.log(state);
       }
     },
 

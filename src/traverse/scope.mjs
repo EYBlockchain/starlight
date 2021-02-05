@@ -93,6 +93,7 @@ export class Scope {
         break;
       case 'FunctionDefinition':
         this.indicators = {
+          // BIG COMMENT FOR INFO ONLY
           // id: { // Although state variables have unique names, id is more consistent with other objects
           //   id: state_var_node_id
           //   name: state_var_name,
@@ -166,7 +167,6 @@ export class Scope {
           scope: this,
           stateVariable: node.stateVariable,
           isSecret: node.isSecret || false,
-          // incrementingOrAccumulating: 'accumulating', // replaced by isIncremented indicator
           isReferenced: false,
           referenceCount: 0,
           referencingPaths: [], // paths of `Identifier` nodes which reference this variable
@@ -318,7 +318,7 @@ export class Scope {
               id: referencedId,
               name: referencedName,
               binding: this.getReferencedBinding(node),
-              isMapping: isMapping,
+              isMapping,
               referencingPaths: [],
               referenceCount: 0,
               modifyingPaths: [],

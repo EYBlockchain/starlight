@@ -13,42 +13,57 @@ def main(\
 	private u32[8] a_1_oldCommitment_owner_secretKey,\
 	public field a_0_oldCommitment_nullifier,\
 	public field a_1_oldCommitment_nullifier,\
-	private u32[8] a_0_stateVarId,\
 	private field a_0_oldCommitment_value,\
 	private u32[8] a_0_oldCommitment_salt,\
-	private u32[8] a_1_stateVarId,\
 	private field a_1_oldCommitment_value,\
 	private u32[8] a_1_oldCommitment_salt,\
+	public field commitmentRoot,\
 	private field a_0_oldCommitment_membershipWitness_index,\
 	private field[32] a_0_oldCommitment_membershipWitness_siblingPath,\
-	public field commitmentRoot,\
 	private field a_1_oldCommitment_membershipWitness_index,\
 	private field[32] a_1_oldCommitment_membershipWitness_siblingPath,\
-	private u32[8] a_2_stateVarId,\
 	private u32[8] a_2_newCommitment_owner_publicKey,\
 	private u32[8] a_2_newCommitment_salt,\
 	public field a_2_newCommitment_commitment,\
-	private u32[8] a_3_stateVarId,\
-	private u32[8] a_3_newCommitment_owner_publicKey,\
-	private u32[8] a_3_newCommitment_salt,\
-	public field a_3_newCommitment_commitment\
+	private u32[8] b_0_newCommitment_owner_publicKey,\
+	private u32[8] b_0_newCommitment_salt,\
+	public field b_0_newCommitment_commitment\
 ) -> ():
 
       
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] a_0_stateVarId = field_to_u32_8(3)
+
+	
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] a_1_stateVarId = field_to_u32_8(3)
+
+	
           field a_0 = a_0_oldCommitment_value
 
 	
           field a_1 = a_1_oldCommitment_value
 
 	
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] a_2_stateVarId = field_to_u32_8(3)
+
+	
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] b_0_stateVarId = field_to_u32_8(5)
+
+	
           // The below represents the decrementation 'a = a - param1':
 
-          field a_2 = param1
-
-          assert(a_0 + a_1 > a_2)
+          assert(a_0 + a_1 > param1)
           // TODO: assert no under/overflows
 
-          field a_3 = (a_0 + a_1) - a_2
+          field a_2 = (a_0 + a_1) - param1
+
+	
+          // The below represents the incrementation 'b = b + param1':
+
+          field b_0 = param1
 
 	
           // a_0_oldCommitment - PoKoSK:
@@ -151,7 +166,7 @@ def main(\
 
           // a_2_newCommitment_commitment - preimage check
 
-        	u32[8] a_2_newCommitment_commitment_check = sha256of1024([\
+          u32[8] a_2_newCommitment_commitment_check = sha256of1024([\
             ...a_2_stateVarId,\
             ...a_2_newCommitment_value,\
             ...a_2_newCommitment_owner_publicKey,\
@@ -163,21 +178,21 @@ def main(\
           )
 
 	
-          // prepare secret state 'a_3' for commitment
+          // prepare secret state 'b_0' for commitment
 
-          u32[8] a_3_newCommitment_value = field_to_u32_8(a_3)
+          u32[8] b_0_newCommitment_value = field_to_u32_8(b_0)
 
-          // a_3_newCommitment_commitment - preimage check
+          // b_0_newCommitment_commitment - preimage check
 
-        	u32[8] a_3_newCommitment_commitment_check = sha256of1024([\
-            ...a_3_stateVarId,\
-            ...a_3_newCommitment_value,\
-            ...a_3_newCommitment_owner_publicKey,\
-            ...a_3_newCommitment_salt\
+          u32[8] b_0_newCommitment_commitment_check = sha256of1024([\
+            ...b_0_stateVarId,\
+            ...b_0_newCommitment_value,\
+            ...b_0_newCommitment_owner_publicKey,\
+            ...b_0_newCommitment_salt\
           ])
 
           assert(\
-            field_to_bool_256(a_3_newCommitment_commitment)[8..256] == u32_8_to_bool_256(a_3_newCommitment_commitment_check)[8..256]\
+            field_to_bool_256(b_0_newCommitment_commitment)[8..256] == u32_8_to_bool_256(b_0_newCommitment_commitment_check)[8..256]\
           )
 
       return

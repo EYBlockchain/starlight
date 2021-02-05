@@ -169,7 +169,13 @@ All the above use Docker in the background. If you'd like to see the Docker logg
 
 Preliminary traversals populate the `binding` and `indicator` objects. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
 
-`npm run test-prelim`
+`npm run-script test-prelim`  
+
+##### To test a single file:
+
+`npm run-script test-prelim -- --input fileName.zsol`
+
+(Note all test-prelim files are stored in `./test/prelim-traversals/test-data` so no path is needed as input).
 
 ##### Adding new test cases
 
@@ -182,11 +188,13 @@ You can automate the creation of 'expected outputs' for these tests.
 
 ##### Updating test cases
 
-Run the steps above. Warning: this will overwrite existing 'expected' data with new data.
+Run the steps above.  
+**Warning:** this will overwrite existing 'expected' data with new data.
 
 ##### Adding/Updating _all_ test cases
 
-Use the flag `--write-all` instead of `--write <fileName`. **WARNING** this will overwrite all 'expected' test files. Only use if you know what you're doing.
+Use the flag `--write-all` instead of `--write <fileName`.  
+**Warning:** this will overwrite all 'expected' test files. Only use if you know what you're doing.
 
 #### circuit
 
@@ -210,7 +218,7 @@ See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a
 
 - solc
 - zokrates
-- [Babel](https://babeljs.io)
 
 Inspirational works:
+- [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)
 - [The Super Tiny Compiler](https://github.com/jamiebuilds/the-super-tiny-compiler)

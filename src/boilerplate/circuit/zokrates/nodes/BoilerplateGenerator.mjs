@@ -7,25 +7,83 @@ const bpCache = new WeakMap();
 class BoilerplateGenerator {
   constructor(indicators) {
     if (bpCache.has(indicators)) return bpCache.get(indicators);
-    Object.assign(this, indicators); // this inherits all properties of the indicators object.
+
     this.bpSections.forEach(bpSection => {
       this[bpSection] = [];
     });
 
-    this.generateBoilerplate();
+    this.initialise(indicators);
 
     bpCache.set(indicators, this);
   }
 
+  // Bump all important indicators (used by this class) to this 'top-level' of `this`.
+  assignIndicators({
+    id,
+    name,
+    isWhole,
+    isPartitioned,
+    isNullified,
+    isAccessed,
+    newCommitmentRequired,
+    isMapping,
+    increments,
+    decrements,
+  }) {
+    Object.assign(this, {
+      id,
+      name,
+      isWhole,
+      isPartitioned,
+      isNullified,
+      isAccessed,
+      newCommitmentRequired,
+      isMapping,
+      increments,
+      decrements,
+    });
+  }
+
+  initialise(indicators) {
+    this.indicators = indicators;
+    if (indicators.isMapping) {
+      for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKey)) {
+        mappingKeyIndicator.isMapping = true; // TODO: put isMapping in every mappingKeys indicator during prelim traversals
+        this.assignIndicators(mappingKeyIndicator);
+        this.mappingKeyName = mappingKeyName;
+        this.mappingName = this.indicators.name;
+        this.name = `${this.mappingName}_${mappingKeyName}`;
+        this.generateBoilerplate();
+      }
+    } else {
+      this.assignIndicators(indicators);
+      this.generateBoilerplate();
+    }
+  }
+
+  refresh(mappingKeyName) {
+    const mappingKeyIndicator = this.indicators.mappingKey[mappingKeyName];
+    this.assignIndicators(mappingKeyIndicator);
+    this.mappingKeyName = mappingKeyName;
+    this.mappingName = this.indicators.name;
+    this.name = `${this.mappingName}_${mappingKeyName}`;
+  }
+
   generateBoilerplateStatement(bpType, extraParams) {
+    if (this.isMapping) {
+      const { mappingKeyName } = extraParams;
+      this.refresh(mappingKeyName);
+    }
     return {
       nodeType: 'BoilerplateStatement',
       bpSection: 'statements',
       bpType,
       name: this.name,
+      id: this.id,
       // only include if they exist:
       ...(this.isWhole && { isWhole: this.isWhole }),
       ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
+      ...(this.isMapping && { isMapping: this.isMapping }),
       ...this[bpType](extraParams),
     };
   }
@@ -40,9 +98,11 @@ class BoilerplateGenerator {
           bpSection,
           bpType,
           name: extraParams?.name || this.name,
+          id: this.id,
           // only include if they exist:
           ...(this.isWhole && { isWhole: this.isWhole }),
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
+          ...(this.isMapping && { isMapping: this.isMapping }),
           ...this[bpType](extraParams),
         })
         .filter(Boolean);
@@ -60,15 +120,19 @@ class BoilerplateGenerator {
       decrements.forEach((subtrahend, i) => {
         const j = startIndex + i;
         if (
-          ['PoKoSK', 'nullification', 'oldCommitmentPreimage', 'oldCommitmentExistence'].includes(
-            bpType,
-          )
+          [
+            'PoKoSK',
+            'nullification',
+            'oldCommitmentPreimage',
+            'oldCommitmentExistence',
+            'mapping',
+          ].includes(bpType)
         ) {
           this._addBP(bpType, { name: `${name}_${j}`, ...extraParams });
           this._addBP(bpType, { name: `${name}_${j + 1}`, ...extraParams });
         }
-        if (bpType === 'newCommitment') {
-          this._addBP(bpType, { name: `${name}_${j + 3}`, ...extraParams });
+        if (['newCommitment', 'mapping'].includes(bpType)) {
+          this._addBP(bpType, { name: `${name}_${j + 2}`, ...extraParams });
         }
       });
     },
@@ -78,6 +142,9 @@ class BoilerplateGenerator {
 
   generateBoilerplate() {
     const addBP = (this.isWhole ? this.addBP.whole : this.addBP.partitioned).bind(this); // the class will be 'this' within the function.
+    if (this.isMapping) {
+      addBP('mapping');
+    }
     if (this.isNullified || this.isAccessed) {
       addBP('PoKoSK');
       addBP('nullification');
@@ -86,11 +153,6 @@ class BoilerplateGenerator {
     }
     if (this.newCommitmentRequired) {
       addBP('newCommitment');
-    }
-    if (this.isMapping) {
-      for (const mappingKey of Object.keys(this.mappingKey)) {
-        addBP('mapping', { mappingName: this.x, mappingKey });
-      }
     }
   }
 
@@ -136,9 +198,9 @@ class BoilerplateGenerator {
 
   newCommitment = () => ({});
 
-  mapping = ({ mappingName, mappingKeyName }) => ({
-    mappingName,
-    mappingKeyName,
+  mapping = () => ({
+    mappingName: this.mappingName,
+    mappingKeyName: this.mappingKeyName,
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */

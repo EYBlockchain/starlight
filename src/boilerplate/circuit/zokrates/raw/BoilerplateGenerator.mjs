@@ -61,6 +61,15 @@ class BoilerplateGenerator {
       ];
     },
 
+    preStatements({ name: x, id, isMapping }) {
+      if (isMapping) return [];
+      return [
+        `
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+      ];
+    },
+
     postStatements({ name: x }) {
       // default nullification lines (for partitioned & whole states)
       const lines = [
@@ -93,31 +102,6 @@ class BoilerplateGenerator {
     },
   };
 
-  mapping = {
-    importStatments() {
-      return [
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
-        `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
-      ];
-    },
-
-    parameters({ mappingName: m, mappingKeyName: k }) {
-      return [
-        `private field ${m}_mappingId`,
-        `private field ${k}`, // must be a field, in case we need to do arithmetic on it.
-      ];
-    },
-
-    postStatements({ mappingName: m, mappingKeyName: k }) {
-      const x = `${m}_${k}`;
-      return [
-        `field ${x}_stateVarId_field = mimc2(${m}_mappingId, ${k})`,
-
-        `u32[8] ${x}_stateVarId = field_to_u32_8(${x}_stateVarId_field)`, // convert to u32[8], for later sha256 hashing
-      ];
-    },
-  };
-
   oldCommitmentPreimage = {
     importStatements() {
       return [
@@ -129,7 +113,6 @@ class BoilerplateGenerator {
     parameters({ name: x }) {
       // prettier-ignore
       return [
-        `private u32[8] ${x}_stateVarId`,
         `private field ${x}_oldCommitment_value`,
         `private u32[8] ${x}_oldCommitment_salt`,
       ];
@@ -222,15 +205,24 @@ class BoilerplateGenerator {
         `from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
         `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
+        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
       ];
     },
 
     parameters({ name: x }) {
       return [
-        `private u32[8] ${x}_stateVarId`,
         `private u32[8] ${x}_newCommitment_owner_publicKey`,
         `private u32[8] ${x}_newCommitment_salt`,
         `public field ${x}_newCommitment_commitment`,
+      ];
+    },
+
+    preStatements({ name: x, id, isMapping }) {
+      if (isMapping) return [];
+      return [
+        `
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
@@ -253,6 +245,40 @@ class BoilerplateGenerator {
           assert(\\
             field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
           )`,
+      ];
+    },
+  };
+
+  mapping = {
+    importStatements() {
+      return [
+        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
+        `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
+      ];
+    },
+
+    parameters({ mappingKeyName: k }) {
+      return [
+        `private field ${k}`, // must be a field, in case we need to do arithmetic on it.
+      ];
+    },
+
+    preStatements({ id: mappingId, mappingName: m }) {
+      return [
+        `
+          // We need to hard-code the mappingId's of mappings into the circuit:
+          field ${m}_mappingId = ${mappingId}`,
+      ];
+    },
+
+    postStatements({ name: x, mappingName: m, mappingKeyName: k }) {
+      // const x = `${m}_${k}`;
+      return [
+        `
+          field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
+
+        `
+          u32[8] ${x}_stateVarId = field_to_u32_8(${x}_stateVarId_field)`, // convert to u32[8], for later sha256 hashing
       ];
     },
   };
@@ -284,19 +310,16 @@ class BoilerplateGenerator {
       let i = startIndex;
       const x0 = `${x}_${i++}`;
       const x1 = `${x}_${i++}`;
-      const x2 = `${x}_${i++}`;
-      const x3 = `${x}_${i}`;
+      const x2 = `${x}_${i}`;
 
       return [
         `
           // The below represents the decrementation '${x} = ${x} - ${y}':
 
-          field ${x2} = ${y}
-
-          assert(${x0} + ${x1} > ${x2})
+          assert(${x0} + ${x1} > ${y})
           // TODO: assert no under/overflows
 
-          field ${x3} = (${x0} + ${x1}) - ${x2}`,
+          field ${x2} = (${x0} + ${x1}) - ${y}`,
       ];
     },
   };

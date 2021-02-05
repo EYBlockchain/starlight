@@ -191,10 +191,12 @@ export function buildNode(nodeType, fields = {}) {
     }
     case 'PartitionedIncrementationStatementBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      console.log('fields', fields)
       return generateBoilerplateStatement('incrementation', fields);
     }
     case 'PartitionedDecrementationStatementBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      console.log('fields', fields)
       return generateBoilerplateStatement('decrementation', fields);
     }
     default:

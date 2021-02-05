@@ -26,7 +26,7 @@ function transformation1(oldAST, toRedecorate) {
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
   path.traverse(explode(redecorateVisitor), toRedecorate);
-  logger.debug(toRedecorate);
+  // logger.debug(toRedecorate);
   // At the end of our transformer function we'll return the new ast that we
   // just created.
   return path;
