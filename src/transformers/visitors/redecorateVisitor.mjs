@@ -196,6 +196,25 @@ export default {
                       line.nodeId = node.leftHandSide.id;
                       break;
                     }
+                    if (node.rightHandSide.leftExpression.nodeType === 'BinaryOperation') {
+                      if (
+                        (line.rhs.includes(node.rightHandSide.leftExpression.leftExpression.name) ||
+                          line.rhs.includes(
+                            node.rightHandSide.leftExpression.leftExpression.value,
+                          )) &&
+                        (line.rhs.includes(
+                          node.rightHandSide.leftExpression.rightExpression.name,
+                        ) ||
+                          line.rhs.includes(
+                            node.rightHandSide.leftExpression.rightExpression.value,
+                          )) &&
+                        (line.rhs.includes(node.rightHandSide.rightExpression.value) ||
+                          line.rhs.includes(node.rightHandSide.rightExpression.value))
+                      ) {
+                        line.nodeId = node.leftHandSide.id;
+                        break;
+                      }
+                    }
                     break;
                   }
                   break;

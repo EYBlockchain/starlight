@@ -22,7 +22,7 @@ export default {
     exit(path, state) {
       Object.keys(path.scope.bindings).forEach(id => {
         const binding = path.scope.bindings[id];
-        if (binding.isSecret && !binding.isOwned) {
+        if (binding.isSecret && !binding.isOwned && binding.isWhole) {
           logger.warn(
             `Warning: secret state ${binding.name} is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.`,
           );
