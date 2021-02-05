@@ -837,66 +837,6 @@ export class Scope {
     let lhsbinding;
     const increments = [];
     const decrements = [];
-    const getIncrements = (expressionNode, incrementedNode) => {
-      const rhsNode = expressionNode.rightHandSide;
-      const nodes = [];
-      const obj = { increments: [], decrements: [] };
-      const isMapping = !!incrementedNode.baseExpression;
-      switch (rhsNode.nodeType) {
-        case 'Identifier':
-          if (rhsNode.name !== incrementedNode.name && expressionNode.operator.includes('+'))
-            obj.increments = [rhsNode];
-          if (rhsNode.name !== incrementedNode.name && expressionNode.operator.includes('-'))
-            obj.decrements = [rhsNode];
-          return obj;
-        case 'BinaryOperation':
-          if (
-            (!isMapping && rhsNode.leftExpression.name !== incrementedNode.name) ||
-            (isMapping && !rhsNode.leftExpression.baseExpression) ||
-            (isMapping &&
-              rhsNode.leftExpression.baseExpression.name !== incrementedNode.baseExpression.name &&
-              rhsNode.leftExpression.indexExpression.name !== incrementedNode.indexExpression.name)
-          )
-            nodes.push(rhsNode.leftExpression);
-          if (
-            (!isMapping && rhsNode.rightExpression.name !== incrementedNode.name) ||
-            (isMapping && !rhsNode.rightExpression.baseExpression) ||
-            (isMapping &&
-              rhsNode.rightExpression.baseExpression.name !== incrementedNode.baseExpression.name &&
-              rhsNode.rightExpression.indexExpression.name !== incrementedNode.indexExpression.name)
-          ) {
-            rhsNode.rightExpression.precedingOperator = rhsNode.operator;
-            nodes.push(rhsNode.rightExpression);
-          }
-          for (const [index, param] of nodes.entries()) {
-            if (
-              param.nodeType === 'BinaryOperation' &&
-              (param.operator.includes('+') || param.operator.includes('-'))
-            ) {
-              nodes[index] = param.leftExpression;
-              param.rightExpression.precedingOperator = param.operator;
-              nodes.push(param.rightExpression);
-            }
-          }
-          nodes.forEach(node => {
-            if (node.precedingOperator && node.precedingOperator.includes('-')) {
-              obj.decrements.push(node);
-            } else {
-              obj.increments.push(node);
-            }
-          });
-          return obj;
-        case 'IndexAccess':
-          if (rhsNode !== incrementedNode) return [rhsNode];
-          if (rhsNode !== incrementedNode && expressionNode.operator.includes('+'))
-            obj.increments = [rhsNode];
-          if (rhsNode !== incrementedNode && expressionNode.operator.includes('-'))
-            obj.decrements = [rhsNode];
-          return obj;
-        default:
-          return [null];
-      }
-    };
     if (lhsNode.nodeType === 'Identifier') {
       lhsbinding = scope.getReferencedBinding(lhsNode);
       lhsSecret = !!lhsbinding.isSecret;
@@ -911,14 +851,12 @@ export class Scope {
         if (lhsSecret && expressionNode.operator === '+=') {
           isIncrementedBool = true;
           isDecrementedBool = false;
-          getIncrements(expressionNode, lhsNode).increments.forEach(node => increments.push(node));
-          getIncrements(expressionNode, lhsNode).decrements.forEach(node => decrements.push(node));
+          increments.push(expressionNode.rightHandSide);
           break;
         } else if (lhsSecret && expressionNode.operator === '-=') {
           isIncrementedBool = true;
           isDecrementedBool = true;
-          getIncrements(expressionNode, lhsNode).increments.forEach(node => increments.push(node));
-          getIncrements(expressionNode, lhsNode).decrements.forEach(node => decrements.push(node));
+          decrements.push(expressionNode.rightHandSide);
           break;
         }
         // b *= something, b /= something
@@ -999,13 +937,10 @@ export class Scope {
               // if none, go to the next param
             }
           }
-          if (isIncrementedBool) {
-            getIncrements(expressionNode, lhsNode).increments.forEach(node =>
-              increments.push(node),
-            );
-            getIncrements(expressionNode, lhsNode).decrements.forEach(node =>
-              decrements.push(node),
-            );
+          if (isIncrementedBool && !isDecrementedBool) {
+            increments.push(binopNode);
+          } else if (isDecrementedBool) {
+            decrements.push(binopNode);
           }
         } else if (rhsType === 'Identifier') {
           // c = a + b, a = c
@@ -1050,12 +985,23 @@ export class Scope {
       : scope.indicators[lhsNode.referencedDeclaration];
     if (!referencedIndicator.increments) referencedIndicator.increments = [];
     if (!referencedIndicator.decrements) referencedIndicator.decrements = [];
+
     increments.forEach(inc => {
       referencedIndicator.increments.push(inc);
+      if (lhsNode.baseExpression) {
+        const keyBinding = lhsbinding.mappingKey[this.getMappingKeyIndicator(lhsNode)];
+        if (!keyBinding.increments) keyBinding.increments = [];
+        keyBinding.increments.push(inc);
+      }
       lhsbinding.increments.push(inc);
     });
     decrements.forEach(inc => {
       referencedIndicator.decrements.push(inc);
+      if (lhsNode.baseExpression) {
+        const keyBinding = lhsbinding.mappingKey[this.getMappingKeyIndicator(lhsNode)];
+        if (!keyBinding.decrements) keyBinding.decrements = [];
+        keyBinding.decrements.push(inc);
+      }
       lhsbinding.decrements.push(inc);
     });
 
