@@ -127,7 +127,7 @@ function codeGenerator(node) {
       return BP.uniqueify(node.parameters.flatMap(codeGenerator)).join(',\\\n\t');
 
     case 'VariableDeclaration': {
-      const isPrivate = node.isPrivate ? 'private ' : 'public';
+      const isPrivate = node.isPrivate ? 'private ' : 'public ';
       return `${isPrivate}${codeGenerator(node.typeName)} ${node.name}`;
     }
 
