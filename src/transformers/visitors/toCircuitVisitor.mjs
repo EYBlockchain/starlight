@@ -168,9 +168,6 @@ const visitor = {
       const { isIncremented, isDecremented } = expression;
       let newNode;
 
-      console.log("\n\n\n\n\n\n\n\n\nIN EXPRESSION STATEMENT")
-      console.log('path:', path)
-
       // TODO: tidy this up...
       if (isIncremented || isDecremented) {
         switch (expression.nodeType) {
