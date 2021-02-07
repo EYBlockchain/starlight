@@ -340,9 +340,24 @@ export default class NodePath {
       node.nodeType === 'MemberAccess' &&
       node.memberName === 'sender' &&
       node.typeDescriptions.typeString === 'address' &&
-      node.expression.nodeType === 'Identifier' &&
-      node.expression.name === 'msg' &&
-      node.expression.typeDescriptions.typeString === 'msg'
+      this.isMsg(node.expression)
+    )
+      return true;
+
+    return false;
+  }
+
+  /**
+   * Checks whether a node represents the special solidity type `msg` (e.g. used in `msg.sender`)
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isMsg(node = this.node) {
+    if (
+      node.nodeType === 'Identifier' &&
+      node.name === 'msg' &&
+      node.typeDescriptions.typeIdentifier === 't_magic_message' &&
+      node.typeDescriptions.typeString === 'msg'
     )
       return true;
 
