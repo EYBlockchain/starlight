@@ -6,7 +6,7 @@ contract MyContract {
 
     secret uint256 private a;
 
-    function incr(secret uint256 param1) public {
-        unknown a += param1;
+    function incra(secret uint256 param3, uint256 param4) public {
+        unknown a += param3 + param4 + 5;
     }
 }

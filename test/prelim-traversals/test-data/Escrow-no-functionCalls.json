@@ -139,6 +139,46 @@
                 48,
                 67
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 30,
+                  "src": "579:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 52,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "698:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 71,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 64,
+                  "src": "836:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
@@ -178,6 +218,20 @@
               "modifyingPaths": [
                 55
               ],
+              "increments": [
+                {
+                  "id": 58,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "738:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
@@ -191,7 +245,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 68,
@@ -478,6 +532,46 @@
             48,
             67
           ],
+          "increments": [
+            {
+              "id": 37,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "579:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 52,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 45,
+              "src": "698:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 71,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 64,
+              "src": "836:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
           "name": "balances[msg]",
           "isWhole": false,
           "isPartitioned": true,
@@ -619,6 +713,46 @@
                 48,
                 67
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 30,
+                  "src": "579:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 52,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "698:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 71,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 64,
+                  "src": "836:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
@@ -658,6 +792,20 @@
               "modifyingPaths": [
                 55
               ],
+              "increments": [
+                {
+                  "id": 58,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "738:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
@@ -671,7 +819,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 68,
@@ -696,6 +844,7 @@
         "8": {
           "id": 8,
           "name": "balances",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
@@ -757,6 +906,46 @@
                   48,
                   67
                 ],
+                "increments": [
+                  {
+                    "id": 37,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 30,
+                    "src": "579:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "id": 52,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 45,
+                    "src": "698:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  {
+                    "id": 71,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 64,
+                    "src": "836:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
                 "name": "balances[msg]",
                 "isWhole": false,
                 "isPartitioned": true,
@@ -791,7 +980,9 @@
               "nullificationCount": 0
             }
           },
-          "isModified": true
+          "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false
         }
       }
     },
@@ -872,6 +1063,20 @@
           "modificationCount": 1,
           "modifyingPaths": [
             55
+          ],
+          "increments": [
+            {
+              "id": 58,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 45,
+              "src": "738:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
           ],
           "name": "balances[recipient]",
           "isWhole": false,
@@ -1029,6 +1234,46 @@
                 48,
                 67
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 30,
+                  "src": "579:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 52,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "698:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 71,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 64,
+                  "src": "836:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1068,6 +1313,20 @@
               "modifyingPaths": [
                 55
               ],
+              "increments": [
+                {
+                  "id": 58,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "738:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1081,7 +1340,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 68,
@@ -1191,6 +1450,46 @@
                 48,
                 67
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 30,
+                  "src": "579:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 52,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "698:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 71,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 64,
+                  "src": "836:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1230,6 +1529,20 @@
               "modifyingPaths": [
                 55
               ],
+              "increments": [
+                {
+                  "id": 58,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "738:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1243,7 +1556,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 68,
@@ -1267,6 +1580,7 @@
         "8": {
           "id": 8,
           "name": "balances",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
@@ -1327,6 +1641,46 @@
                   33,
                   48,
                   67
+                ],
+                "increments": [
+                  {
+                    "id": 37,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 30,
+                    "src": "579:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "id": 52,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 45,
+                    "src": "698:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  {
+                    "id": 71,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 64,
+                    "src": "836:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
                 ],
                 "name": "balances[msg]",
                 "isWhole": false,
@@ -1416,6 +1770,20 @@
                 "modifyingPaths": [
                   55
                 ],
+                "increments": [
+                  {
+                    "id": 58,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 45,
+                    "src": "738:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
                 "name": "balances[recipient]",
                 "isWhole": false,
                 "isPartitioned": true,
@@ -1438,6 +1806,8 @@
             }
           },
           "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false,
           "isOwned": true
         }
       },
@@ -1496,6 +1866,46 @@
             33,
             48,
             67
+          ],
+          "increments": [
+            {
+              "id": 37,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 30,
+              "src": "579:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 52,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 45,
+              "src": "698:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 71,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 64,
+              "src": "836:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
           ],
           "name": "balances[msg]",
           "isWhole": false,
@@ -1638,6 +2048,46 @@
                 48,
                 67
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 30,
+                  "src": "579:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 52,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "698:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 71,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 64,
+                  "src": "836:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1677,6 +2127,20 @@
               "modifyingPaths": [
                 55
               ],
+              "increments": [
+                {
+                  "id": 58,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "738:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1690,7 +2154,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 68,
@@ -1800,6 +2264,46 @@
                 48,
                 67
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 30,
+                  "src": "579:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 52,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "698:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 71,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 64,
+                  "src": "836:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1839,6 +2343,20 @@
               "modifyingPaths": [
                 55
               ],
+              "increments": [
+                {
+                  "id": 58,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 45,
+                  "src": "738:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
               "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
@@ -1852,7 +2370,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 68,
@@ -1876,6 +2394,7 @@
         "8": {
           "id": 8,
           "name": "balances",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
@@ -1937,6 +2456,46 @@
                   48,
                   67
                 ],
+                "increments": [
+                  {
+                    "id": 37,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 30,
+                    "src": "579:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "id": 52,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 45,
+                    "src": "698:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  {
+                    "id": 71,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 64,
+                    "src": "836:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
                 "name": "balances[msg]",
                 "isWhole": false,
                 "isPartitioned": true,
@@ -1974,6 +2533,8 @@
             }
           },
           "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false,
           "isOwned": true
         }
       },

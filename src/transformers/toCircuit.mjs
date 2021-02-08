@@ -54,7 +54,7 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toCircuit(ast, options) {
   // transpile to a circuit AST:
-  logger.verbose('Transforming the .zsol AST to a contract AST...');
+  logger.verbose('Transforming the .zol AST to a contract AST...');
   const newAST = transformation1(ast);
   const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
   // console.log('\n\n\nNEWAST:')

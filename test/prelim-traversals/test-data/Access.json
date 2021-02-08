@@ -244,6 +244,7 @@
         "3": {
           "id": 3,
           "name": "a",
+          "isMapping": false,
           "referencingPaths": [
             8
           ],
@@ -277,7 +278,6 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "Warning: secret state a is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.",
-    "Warning: secret state b is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
+    "Warning: secret state a is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
   ]
 }

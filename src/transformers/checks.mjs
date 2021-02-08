@@ -1,7 +1,5 @@
 /* eslint-disable no-param-reassign */
 
-import fs from 'fs';
-import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
 import explode from './visitors/explode.mjs';
@@ -61,25 +59,9 @@ function transformation1(oldAST) {
 }
 
 // A transformer function which will accept an ast.
-export default function checks(ast, options) {
-  logger.verbose('Performing checks on the zsol AST...');
+export default function checks(ast) {
+  logger.verbose('Performing checks on the zol AST...');
   const path = transformation1(ast);
-  //  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
-  //  fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
-
-  // generate the circuit files from the newly created circuit AST:
-  // logger.verbose('Generating files from the .zok AST...');
-  // const circuitFileData = codeGenerator(newAST);
-  //
-  // // save the circuit files to the output dir:
-  // logger.verbose(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
-  // for (const fileObj of circuitFileData) {
-  //   const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
-  //   const dir = pathjs.dirname(filepath);
-  //   logger.debug(`About to save to ${filepath}...`)
-  //   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
-  //   fs.writeFileSync(filepath, fileObj.file);
-  // }
   logger.verbose('Checks complete.');
   return path;
 }

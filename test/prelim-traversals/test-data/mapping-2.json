@@ -1,6 +1,6 @@
 {
   "scopes": null,
-  "errorType": "TypeError",
-  "errorMessage": "Cannot destructure property 'ast' of 'compiled.sources.input' as it is undefined.",
+  "errorType": "Error",
+  "errorMessage": "Solc Compilation Error: ^^^",
   "warningMessages": null
 }

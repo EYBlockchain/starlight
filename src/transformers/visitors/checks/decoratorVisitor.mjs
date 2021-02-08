@@ -89,7 +89,7 @@ export default {
 
     exit(path, state) {
       const { node, scope, parent } = path;
-      if (node.referencedDeclaration > 4294967200) return; // this means we have msg.sender
+      if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
       const varDec =
         path.parentPath.node.nodeType !== 'MemberAccess'
           ? scope.getReferencedBinding(node)

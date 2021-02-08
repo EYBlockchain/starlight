@@ -37,7 +37,7 @@ export default function redecorate(ast, toRedecorate, options) {
   logger.verbose(`Creating decorated ast... `);
   const newAST = transformation1(ast, toRedecorate);
 
-  const zsolASTFilePath = `${options.parseDirPath}/${options.inputFileName}.zsol_ast.json`;
-  fs.writeFileSync(zsolASTFilePath, JSON.stringify(newAST.node, null, 4));
+  const zolASTFilePath = `${options.parseDirPath}/${options.inputFileName}.zol_ast.json`;
+  fs.writeFileSync(zolASTFilePath, JSON.stringify(newAST.node, null, 4));
   return JSON.parse(JSON.stringify(newAST.node, null, 4));
 }

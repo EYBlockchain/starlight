@@ -23,7 +23,7 @@ function tidy(_line) {
 }
 
 /**
- * Takes an input '.zsol' file and removes the privacy keywords.
+ * Takes an input '.zol' file and removes the privacy keywords.
  * @return {Object} = {
  *     deDecoratedFile // a '.sol' file, stripped of any keywords, so
  *                        that 'solc' may compile it.

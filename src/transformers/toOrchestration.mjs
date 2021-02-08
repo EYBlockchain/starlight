@@ -61,7 +61,7 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toOrchestration(ast, options) {
   // transpile to a node AST:
-  logger.debug('Transforming the .zsol AST to a .mjs AST...');
+  logger.debug('Transforming the .zol AST to a .mjs AST...');
   const newAST = transformation1(ast);
   const newASTFilePath = pathjs.join(
     options.orchestrationDirPath,

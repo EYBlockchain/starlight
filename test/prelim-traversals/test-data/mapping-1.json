@@ -2,6 +2,7 @@
   "scopes": [
     {
       "scopeId": 43,
+      "scopeName": "",
       "scopeType": "SourceUnit",
       "bindings": {
         "42": {
@@ -37,32 +38,168 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 18,
-              "name": "param2",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 7,
-              "src": "215:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "+"
+              "id": 19,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 14,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "199:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 17,
+                "indexExpression": {
+                  "expression": {
+                    "id": 15,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "201:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 16,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "201:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "199:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "+",
+              "rightExpression": {
+                "id": 18,
+                "name": "param2",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 7,
+                "src": "215:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "199:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "decrements": [
             {
-              "id": 36,
-              "name": "param3",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 25,
-              "src": "315:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "-"
+              "id": 37,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 32,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "299:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 35,
+                "indexExpression": {
+                  "expression": {
+                    "id": 33,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "301:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 34,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "301:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "299:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "-",
+              "rightExpression": {
+                "id": 36,
+                "name": "param3",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 25,
+                "src": "315:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "299:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "isMapping": true,
@@ -87,6 +224,173 @@
                 10,
                 28
               ],
+              "increments": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 19,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 14,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "199:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 17,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 15,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "201:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 16,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "201:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "199:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "+",
+                  "rightExpression": {
+                    "id": 18,
+                    "name": "param2",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 7,
+                    "src": "215:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "199:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 37,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 32,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "299:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 35,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 33,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "301:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 34,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "301:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "299:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "-",
+                  "rightExpression": {
+                    "id": 36,
+                    "name": "param3",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 25,
+                    "src": "315:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "299:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "a[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
@@ -111,7 +415,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 29,
@@ -205,6 +509,173 @@
             10,
             28
           ],
+          "increments": [
+            {
+              "commonType": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "id": 19,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 14,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "199:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 17,
+                "indexExpression": {
+                  "expression": {
+                    "id": 15,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "201:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 16,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "201:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "199:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "+",
+              "rightExpression": {
+                "id": 18,
+                "name": "param2",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 7,
+                "src": "215:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "199:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "commonType": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "id": 37,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 32,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "299:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 35,
+                "indexExpression": {
+                  "expression": {
+                    "id": 33,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "301:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 34,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "301:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "299:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "-",
+              "rightExpression": {
+                "id": 36,
+                "name": "param3",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 25,
+                "src": "315:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "299:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "name": "a[msg]",
           "isWhole": false,
           "isPartitioned": true,
           "isNullified": true,
@@ -272,32 +743,168 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 18,
-              "name": "param2",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 7,
-              "src": "215:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "+"
+              "id": 19,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 14,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "199:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 17,
+                "indexExpression": {
+                  "expression": {
+                    "id": 15,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "201:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 16,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "201:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "199:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "+",
+              "rightExpression": {
+                "id": 18,
+                "name": "param2",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 7,
+                "src": "215:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "199:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "decrements": [
             {
-              "id": 36,
-              "name": "param3",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 25,
-              "src": "315:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "-"
+              "id": 37,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 32,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "299:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 35,
+                "indexExpression": {
+                  "expression": {
+                    "id": 33,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "301:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 34,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "301:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "299:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "-",
+              "rightExpression": {
+                "id": 36,
+                "name": "param3",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 25,
+                "src": "315:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "299:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "isMapping": true,
@@ -322,6 +929,173 @@
                 10,
                 28
               ],
+              "increments": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 19,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 14,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "199:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 17,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 15,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "201:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 16,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "201:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "199:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "+",
+                  "rightExpression": {
+                    "id": 18,
+                    "name": "param2",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 7,
+                    "src": "215:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "199:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 37,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 32,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "299:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 35,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 33,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "301:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 34,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "301:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "299:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "-",
+                  "rightExpression": {
+                    "id": 36,
+                    "name": "param3",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 25,
+                    "src": "315:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "299:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "a[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
@@ -346,7 +1120,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 29,
@@ -371,6 +1145,7 @@
         "5": {
           "id": 5,
           "name": "a",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
@@ -399,17 +1174,85 @@
               "isUnknown": true,
               "increments": [
                 {
-                  "id": 18,
-                  "name": "param2",
-                  "nodeType": "Identifier",
-                  "overloadedDeclarations": [],
-                  "referencedDeclaration": 7,
-                  "src": "215:6:0",
-                  "typeDescriptions": {
+                  "commonType": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
                   },
-                  "precedingOperator": "+"
+                  "id": 19,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 14,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "199:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 17,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 15,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "201:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 16,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "201:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "199:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "+",
+                  "rightExpression": {
+                    "id": 18,
+                    "name": "param2",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 7,
+                    "src": "215:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "199:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
                 }
               ],
               "decrements": [],
@@ -435,6 +1278,173 @@
                   10,
                   28
                 ],
+                "increments": [
+                  {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 19,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "baseExpression": {
+                        "id": 14,
+                        "name": "a",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 5,
+                        "src": "199:1:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                          "typeString": "mapping(address => uint256)"
+                        }
+                      },
+                      "id": 17,
+                      "indexExpression": {
+                        "expression": {
+                          "id": 15,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 4294967281,
+                          "src": "201:3:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 16,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "src": "201:10:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "199:13:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "+",
+                    "rightExpression": {
+                      "id": 18,
+                      "name": "param2",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 7,
+                      "src": "215:6:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "199:22:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 37,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "baseExpression": {
+                        "id": 32,
+                        "name": "a",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 5,
+                        "src": "299:1:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                          "typeString": "mapping(address => uint256)"
+                        }
+                      },
+                      "id": 35,
+                      "indexExpression": {
+                        "expression": {
+                          "id": 33,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 4294967281,
+                          "src": "301:3:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 34,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "src": "301:10:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "299:13:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "-",
+                    "rightExpression": {
+                      "id": 36,
+                      "name": "param3",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 25,
+                      "src": "315:6:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "299:22:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "a[msg]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "isNullified": true,
@@ -467,7 +1477,9 @@
               "nullificationCount": 0
             }
           },
-          "isModified": true
+          "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false
         }
       }
     },
@@ -525,6 +1537,173 @@
             10,
             28
           ],
+          "increments": [
+            {
+              "commonType": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "id": 19,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 14,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "199:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 17,
+                "indexExpression": {
+                  "expression": {
+                    "id": 15,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "201:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 16,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "201:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "199:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "+",
+              "rightExpression": {
+                "id": 18,
+                "name": "param2",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 7,
+                "src": "215:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "199:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "commonType": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "id": 37,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 32,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "299:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 35,
+                "indexExpression": {
+                  "expression": {
+                    "id": 33,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "301:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 34,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "301:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "299:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "-",
+              "rightExpression": {
+                "id": 36,
+                "name": "param3",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 25,
+                "src": "315:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "299:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "name": "a[msg]",
           "isWhole": false,
           "isPartitioned": true,
           "isNullified": true,
@@ -592,32 +1771,168 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 18,
-              "name": "param2",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 7,
-              "src": "215:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "+"
+              "id": 19,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 14,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "199:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 17,
+                "indexExpression": {
+                  "expression": {
+                    "id": 15,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "201:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 16,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "201:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "199:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "+",
+              "rightExpression": {
+                "id": 18,
+                "name": "param2",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 7,
+                "src": "215:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "199:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "decrements": [
             {
-              "id": 36,
-              "name": "param3",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 25,
-              "src": "315:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "-"
+              "id": 37,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 32,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "299:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 35,
+                "indexExpression": {
+                  "expression": {
+                    "id": 33,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "301:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 34,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "301:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "299:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "-",
+              "rightExpression": {
+                "id": 36,
+                "name": "param3",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 25,
+                "src": "315:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "299:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "isMapping": true,
@@ -642,6 +1957,173 @@
                 10,
                 28
               ],
+              "increments": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 19,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 14,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "199:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 17,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 15,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "201:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 16,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "201:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "199:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "+",
+                  "rightExpression": {
+                    "id": 18,
+                    "name": "param2",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 7,
+                    "src": "215:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "199:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 37,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 32,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "299:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 35,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 33,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "301:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 34,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "301:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "299:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "-",
+                  "rightExpression": {
+                    "id": 36,
+                    "name": "param3",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 25,
+                    "src": "315:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "299:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "a[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
@@ -666,7 +2148,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 29,
@@ -704,32 +2186,168 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 18,
-              "name": "param2",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 7,
-              "src": "215:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "+"
+              "id": 19,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 14,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "199:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 17,
+                "indexExpression": {
+                  "expression": {
+                    "id": 15,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "201:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 16,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "201:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "199:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "+",
+              "rightExpression": {
+                "id": 18,
+                "name": "param2",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 7,
+                "src": "215:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "199:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "decrements": [
             {
-              "id": 36,
-              "name": "param3",
-              "nodeType": "Identifier",
-              "overloadedDeclarations": [],
-              "referencedDeclaration": 25,
-              "src": "315:6:0",
-              "typeDescriptions": {
+              "commonType": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               },
-              "precedingOperator": "-"
+              "id": 37,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": false,
+              "lValueRequested": false,
+              "leftExpression": {
+                "baseExpression": {
+                  "id": 32,
+                  "name": "a",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 5,
+                  "src": "299:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                    "typeString": "mapping(address => uint256)"
+                  }
+                },
+                "id": 35,
+                "indexExpression": {
+                  "expression": {
+                    "id": 33,
+                    "name": "msg",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 4294967281,
+                    "src": "301:3:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_magic_message",
+                      "typeString": "msg"
+                    }
+                  },
+                  "id": 34,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "memberName": "sender",
+                  "nodeType": "MemberAccess",
+                  "src": "301:10:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "isConstant": false,
+                "isLValue": true,
+                "isPure": false,
+                "lValueRequested": false,
+                "nodeType": "IndexAccess",
+                "src": "299:13:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "nodeType": "BinaryOperation",
+              "operator": "-",
+              "rightExpression": {
+                "id": 36,
+                "name": "param3",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 25,
+                "src": "315:6:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                }
+              },
+              "src": "299:22:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
             }
           ],
           "isMapping": true,
@@ -754,6 +2372,173 @@
                 10,
                 28
               ],
+              "increments": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 19,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 14,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "199:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 17,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 15,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "201:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 16,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "201:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "199:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "+",
+                  "rightExpression": {
+                    "id": 18,
+                    "name": "param2",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 7,
+                    "src": "215:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "199:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "commonType": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "id": 37,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 32,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "299:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 35,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 33,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "301:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 34,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "301:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "299:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "-",
+                  "rightExpression": {
+                    "id": 36,
+                    "name": "param3",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 25,
+                    "src": "315:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "299:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "a[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
@@ -778,7 +2563,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
             "id": 29,
@@ -802,6 +2587,7 @@
         "5": {
           "id": 5,
           "name": "a",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
@@ -830,17 +2616,85 @@
               "increments": [],
               "decrements": [
                 {
-                  "id": 36,
-                  "name": "param3",
-                  "nodeType": "Identifier",
-                  "overloadedDeclarations": [],
-                  "referencedDeclaration": 25,
-                  "src": "315:6:0",
-                  "typeDescriptions": {
+                  "commonType": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
                   },
-                  "precedingOperator": "-"
+                  "id": 37,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "leftExpression": {
+                    "baseExpression": {
+                      "id": 32,
+                      "name": "a",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5,
+                      "src": "299:1:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                        "typeString": "mapping(address => uint256)"
+                      }
+                    },
+                    "id": 35,
+                    "indexExpression": {
+                      "expression": {
+                        "id": 33,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "301:3:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 34,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "301:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "299:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "BinaryOperation",
+                  "operator": "-",
+                  "rightExpression": {
+                    "id": 36,
+                    "name": "param3",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 25,
+                    "src": "315:6:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "src": "299:22:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
                 }
               ],
               "isIncremented": true,
@@ -865,6 +2719,173 @@
                   10,
                   28
                 ],
+                "increments": [
+                  {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 19,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "baseExpression": {
+                        "id": 14,
+                        "name": "a",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 5,
+                        "src": "199:1:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                          "typeString": "mapping(address => uint256)"
+                        }
+                      },
+                      "id": 17,
+                      "indexExpression": {
+                        "expression": {
+                          "id": 15,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 4294967281,
+                          "src": "201:3:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 16,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "src": "201:10:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "199:13:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "+",
+                    "rightExpression": {
+                      "id": 18,
+                      "name": "param2",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 7,
+                      "src": "215:6:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "199:22:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 37,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "baseExpression": {
+                        "id": 32,
+                        "name": "a",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 5,
+                        "src": "299:1:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
+                          "typeString": "mapping(address => uint256)"
+                        }
+                      },
+                      "id": 35,
+                      "indexExpression": {
+                        "expression": {
+                          "id": 33,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 4294967281,
+                          "src": "301:3:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 34,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "src": "301:10:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "299:13:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "-",
+                    "rightExpression": {
+                      "id": 36,
+                      "name": "param3",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 25,
+                      "src": "315:6:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "299:22:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "a[msg]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "isNullified": true,
@@ -900,6 +2921,8 @@
             }
           },
           "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false,
           "isOwned": true
         }
       },

@@ -74,8 +74,8 @@ const validateOptions = ({
   if (!fs.existsSync(inputFilePath))
     throw new FilingError(`inputFilePath "${inputFilePath}" does not exist.`);
 
-  if (path.parse(inputFilePath).ext !== '.zsol')
-    throw new FilingError(`Invalid input file extension. Expected '.zsol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
+  if (path.parse(inputFilePath).ext !== '.zol')
+    throw new FilingError(`Invalid input file extension. Expected '.zol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
 };
 
 validateOptions(options);

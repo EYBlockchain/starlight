@@ -2,6 +2,7 @@
   "scopes": [
     {
       "scopeId": 17,
+      "scopeName": "",
       "scopeType": "SourceUnit",
       "bindings": {
         "16": {
@@ -242,6 +243,7 @@
         "3": {
           "id": 3,
           "name": "x",
+          "isMapping": false,
           "referencingPaths": [
             8
           ],

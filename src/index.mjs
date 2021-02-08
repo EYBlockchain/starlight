@@ -13,9 +13,9 @@ const zappify = options => {
 
   const solAST = compile(deDecoratedFile, options);
 
-  const zsolAST = redecorate(solAST, toRedecorate, options);
+  const zolAST = redecorate(solAST, toRedecorate, options);
 
-  let path = checks(zsolAST, options);
+  let path = checks(zolAST, options);
 
   path = ownership(path, options);
 
@@ -23,9 +23,9 @@ const zappify = options => {
 
   // toOrchestration(path, options);
   //
-  toCircuit(zsolAST, options);
+  toCircuit(zolAST, options);
   //
-  // toContract(zsolAST, options);
+  // toContract(zolAST, options);
 
   if (options.isTest) return path.scope.indicators;
 

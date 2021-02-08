@@ -20,7 +20,7 @@ const __dirname = pathjs.dirname(fileURLToPath(import.meta.url)); // because ES 
 const args = process.argv;
 
 const testDataDir = pathjs.join(__dirname, 'test-data');
-const testDataFiles = fs.readdirSync(testDataDir).filter(file => file.includes('.zsol'));
+const testDataFiles = fs.readdirSync(testDataDir).filter(file => file.includes('.zol'));
 
 const mkDirs = ({ outputDirPath, parseDirPath }) => {
   try {
@@ -205,8 +205,8 @@ function itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarning
   });
 }
 
-describe('Test prelim traversals of .zsol files', function () {
-  console.log(`Pass '--input <fileName.zsol>' to test a single file.`);
+describe('Test prelim traversals of .zol files', function () {
+  console.log(`Pass '--input <fileName.zol>' to test a single file.`);
   console.log(`Pass '--json' to see a JSON output of the scopes.`);
   console.log(
     `Pass '--write <fileName>' to write/overwrite the scopes to a JSON file. (But only do this if you know what you're doing!)`,
@@ -215,19 +215,19 @@ describe('Test prelim traversals of .zsol files', function () {
     `Pass '--write-all' to write/overwrite all JSON files. (But only do this if you know what you're doing!)\n`,
   );
 
-  for (const zsolFile of testDataFiles) {
+  for (const zolFile of testDataFiles) {
     // TODO: use yargs to enforce an argument be passed with '--input'
-    if (!(args.includes('--input') && args[args.indexOf('--input') + 1] === zsolFile)) continue;
+    if (args.includes('--input') && !args[args.indexOf('--input') + 1] === zolFile) continue;
 
     const consoleWarnings = [];
-    const fileName = pathjs.basename(zsolFile, '.zsol');
-    const zsolFilePath = pathjs.join(testDataDir, `${fileName}.zsol`);
+    const fileName = pathjs.basename(zolFile, '.zol');
+    const zolFilePath = pathjs.join(testDataDir, `${fileName}.zol`);
     const jsonFilePath = pathjs.join(testDataDir, `${fileName}.json`);
 
     const options = {
       zappName: fileName,
       inputFileName: fileName,
-      inputFilePath: zsolFilePath,
+      inputFilePath: zolFilePath,
       outputDirPath: `./test-zapps/${fileName}`,
       parseDirPath: `./test-zapps/${fileName}/parse`,
       isTest: true,
@@ -253,7 +253,7 @@ describe('Test prelim traversals of .zsol files', function () {
       expected = readJsonFile(jsonFilePath);
     } catch (err) {
       logger.error(
-        `Perhaps you've forgotten to create the 'expected' json data for an input .zsol file?`,
+        `Perhaps you've forgotten to create the 'expected' json data for an input .zol file?`,
       );
       throw err;
     }

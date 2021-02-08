@@ -364,6 +364,7 @@
         "3": {
           "id": 3,
           "name": "a",
+          "isMapping": false,
           "referencingPaths": [
             17
           ],

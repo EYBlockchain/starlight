@@ -99,7 +99,7 @@ contract Assign {
 }
 ```
 
-They run `zappify -i <./path/to/file>.zsol` and get an entire standalone zapp in return:
+They run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in return:
 
 <img src= "doc/zappdir.png" width="250">
 
@@ -113,8 +113,8 @@ Easy!
 
 ### Summary
 
-To `zappify`, the compiler must take the decorated solidity file (a `.zsol` file) and complete the following (simplified) steps:
--   **parse**, takes the `zsol` code, analyses it, and creates an abstract syntax tree (AST) representation of that code
+To `zappify`, the compiler must take the decorated solidity file (a `.zol` file) and complete the following (simplified) steps:
+-   **parse**, takes the `zol` code, analyses it, and creates an abstract syntax tree (AST) representation of that code
 -   **transform**, changes that AST into: a circuit AST, a smart contract AST, and an 'orchestration' AST.
 -   **generate code**, generates code for the output zApp (circuit, contract and orchestration code)
 
@@ -124,7 +124,7 @@ _[Skip](#what-we-done-did-so-far) to the next big section. Or read on for detail
 
 ### Parse
 
-At this stage, to transform the `.zsol` file into an AST, we cheat a little. We actually first use `solc` to compile it as if it were a normal `.sol` file, to get a normal solidity AST. However, `solc` would throw a hundred errors at us if we kept the special decorators like `secret` in there.
+At this stage, to transform the `.zol` file into an AST, we cheat a little. We actually first use `solc` to compile it as if it were a normal `.sol` file, to get a normal solidity AST. However, `solc` would throw a hundred errors at us if we kept the special decorators like `secret` in there.
 
 So the parsing stage (unlike a 'normal' compiler) looks through the code line by line and identifies decorators. It removes those decorators, saving their place, to output a working `.sol` file. We can then use `solc compile` to get a nice, ready-made Solidity AST! [Here](doc/littleast.json)'s a (very abridged) version of what the AST for the above example looks like.
 
@@ -132,7 +132,7 @@ Graphically, that JSON AST translates to this:
 
 ![ast](doc/ast.png)
 
-The parsing stage has saved all the locations of special `zsol` decorators for us. So the above `dedecoratedAST` can be `redecorated`. We turn a secret variable node from something like:
+The parsing stage has saved all the locations of special `zol` decorators for us. So the above `dedecoratedAST` can be `redecorated`. We turn a secret variable node from something like:
 ```json
 {
     "id": 3,
@@ -155,7 +155,7 @@ To:
     "isSecret": true, // <-- this
 }
 ```
-For each decorated variable, statement, parameter, and function. This output `zsol` AST is then *traversed* and *transformed*.
+For each decorated variable, statement, parameter, and function. This output `zol` AST is then *traversed* and *transformed*.
 
 ### Transform
 
@@ -177,7 +177,7 @@ The `NodePath` class is designed to 'wrap' a node in lots of extra information a
 
 The Babel Handbook explains this concept nicely. A scope is a section of code where a name binding is valid. A `Scope` class gets created for each `scopeType`: `ContractDefinition` scopes and `FunctionDefinition` scopes are the main ones we focus on for our purposes. Depending on the `scopeType`, different information will be collected. Several 'preliminary traversals' are done to collect information and add it to various scopes.
 
-Consider the following example `.zsol` code snippet. Scopes are highlighted.
+Consider the following example `.zol` code snippet. Scopes are highlighted.
 
 ```solidity
 // Beginning of `SourceUnit` scopeType
@@ -395,15 +395,15 @@ We also have these indicators for stateVariables at the function scope level (su
 
 #### Preliminary traversals
 
-We first look at every node in the custom `zsol` AST and perform a series of traversals to collect all the information we need for our zApp. Which variables are secret? How many functions are there? What should our commitments look like? Which variables should be nullified? Has the user written something really stupid?
+We first look at every node in the custom `zol` AST and perform a series of traversals to collect all the information we need for our zApp. Which variables are secret? How many functions are there? What should our commitments look like? Which variables should be nullified? Has the user written something really stupid?
 
-This step answers those questions, and more, with the magic of *traversals*. Each traversal takes us through the entire AST and stores information based on certain rules. In later 'transform' traversals, we gradually build up new ASTs which represent output zApp code by traversing the `zsol` AST.
+This step answers those questions, and more, with the magic of *traversals*. Each traversal takes us through the entire AST and stores information based on certain rules. In later 'transform' traversals, we gradually build up new ASTs which represent output zApp code by traversing the `zol` AST.
 
 For now, lets look at the preliminary traversals, which check for errors, find secrets, and populate indicators.
 
 A traversal is a [depth-first search](https://en.wikipedia.org/wiki/Depth-first_search) of the AST from the current `path` of the AST. Each traversal follows a [visitor pattern](https://en.wikipedia.org/wiki/Visitor_pattern). For each AST traversal, a particular visitor function is passed in. When a node of a particular nodeType is 'visited' by the traverser, the visitor function will perform a task specifically for that nodeType (e.g. "do this thing when we find a `VariableDeclaration` node"). The visitor functions primarily build objects. Preliminary visitors build `scope` and `indicator` objects, whilst an AST transformation visitor will build an `AST` object representing a module of code for a particular programming language.
 
-Each traversal starts at the root node of the `zsol` AST; always a node of nodeType `SourceUnit`. A `path` and `scope` are initialised for this `SourceUnit` node, and then the traversal begins; we call: `path.traverse(visitor)`.
+Each traversal starts at the root node of the `zol` AST; always a node of nodeType `SourceUnit`. A `path` and `scope` are initialised for this `SourceUnit` node, and then the traversal begins; we call: `path.traverse(visitor)`.
 
 Preliminary traversals will generate:
 - a nesting of `NodePath` class instances to wrap every node in the AST (paths within paths within paths...);
@@ -521,7 +521,7 @@ myMapping[key] = value, is stored at storage slot `hash( key, id )`
 
 For our current phase of work, we're only planning on supporting `uint256` and `address` basic types, and `mapping`. (So no arrays or structs yet, and certainly no dynamic arrays, because we're dealing with snarks).
 
-Consider this incomplete `.zsol` contract:
+Consider this incomplete `.zol` contract:
 
 ```solidity
 contract MyContract {
@@ -609,7 +609,7 @@ h( h(balancesStateVarID, key = ownerPK), value, salt)
 
 The transpiler would convert an Ethereum address (the mapping key  (`msg.sender` in this case)) to a snark-compatible `ownerPK` anyway. We'd need a PoKoSK ("proof of knowledge of secret key") whenever we see `msg.sender` because a Zokrates circuit doesn't have a concept of 'owning' an address - so proving that you are `msg.sender` (which happens in the background of calling a contract) becomes proving that you own the secret key corresponding to whatever public key is in the commitment.
 
-In short: whenever we see `msg.sender` in the `.zsol` contract, we probably need a PoKoSK in the circuit. 'Probably' becomes 'definitely' if that code block deals with secret states.
+In short: whenever we see `msg.sender` in the `.zol` contract, we probably need a PoKoSK in the circuit. 'Probably' becomes 'definitely' if that code block deals with secret states.
 
 That observation lead to the question: if we need a PK in the commitment, would they be added as a mapping key *anyway*? So do we need to bother with a separate PK field?
 
@@ -632,7 +632,7 @@ fn1(value1, value2) {
 
 Since we are overwriting a value (the value of `myMapping[value1]`), we need to nullify a previous commitment to call `fn1`. So, the user would need to provide the correct salt to the circuit to update `mymapping[value1]`, which does the same job as a PK would.
 
-If the `.zsol` developer wanted to restrict who can edit this state, they would add:
+If the `.zol` developer wanted to restrict who can edit this state, they would add:
 ```solidity
 require(msg.sender == someAddress);
 ```
@@ -765,7 +765,7 @@ This is where the `unknown` decorator comes in. In the above example, the prepen
 
 #### Identification of whole/partitioned with (un)known
 
-The new decorators introduced here are `known` and `unknown`. While we wanted the compiler's `zsol` code to be as close to normal Solidity as possible, we needed a way for the dev to tell the transpiler whether the state should be whole or partitioned.
+The new decorators introduced here are `known` and `unknown`. While we wanted the compiler's `zol` code to be as close to normal Solidity as possible, we needed a way for the dev to tell the transpiler whether the state should be whole or partitioned.
 
 Consider this example:
 ```solidity
@@ -776,7 +776,7 @@ function fn1(secret uint value) {
 }
 ```
 
-The dev writing this `.zsol` could feasibly want either of these:
+The dev writing this `.zol` could feasibly want either of these:
 1. _"`fn1()` should only be callable by the person who knows `a`, meaning only the owner* of `a` may edit `a`"_
 1.  _"`fn1()` should be callable by anyone, meaning anyone may edit `a`"_.
 
@@ -1110,7 +1110,7 @@ Restrictions on who may call the function
 Restrictions on which states may be accessed:
 - `myMapping[msg.sender] = value;`
 
-In a `.zsol` contract, ownership of secret states is difficult to infer. However, we need to figure out how, to work out which public key to put inside the commitment hiding the state's value.
+In a `.zol` contract, ownership of secret states is difficult to infer. However, we need to figure out how, to work out which public key to put inside the commitment hiding the state's value.
 
 If we allow the caller to add any public key they wish, that might prevent an admin from being able to access some needed value. Meanwhile, if we fix a public key, then we lose transferability of ownership, and any resulting flexibility that the dev might have wanted.
 
@@ -1360,7 +1360,7 @@ Option 2 can be achieved by encrypting the data _within_ the transaction's snark
 
 **Zappify will generate zApp code in line with data sharing Option 2; submission of encrypted secret data to the blockchain.**
 
-To this end, we find we need some new `zsol` syntax...
+To this end, we find we need some new `zol` syntax...
 
 Consider the below examples:
 
@@ -1498,7 +1498,7 @@ We need to be aware of three types of keypair
 |    msgSK   |    msgPK   |    -      | Used for encrypting & sharing secret data. Must support ECDSA computations within a snark. (Uses babyJubJub). |
 
 
-Consider the following `zsol` code snippet, which isn't a sensible contract, but illustrates some difficult points nicely:
+Consider the following `zol` code snippet, which isn't a sensible contract, but illustrates some difficult points nicely:
 
 ```Solidity
 contract WierdEscrow {

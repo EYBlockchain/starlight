@@ -94,6 +94,21 @@
               "modifyingPaths": [
                 12
               ],
+              "increments": [
+                {
+                  "id": 15,
+                  "name": "amountDeposit",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 9,
+                  "src": "240:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[bucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -115,6 +130,21 @@
               "modifyingPaths": [
                 28
               ],
+              "decrements": [
+                {
+                  "id": 31,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "398:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[fromBucketId]",
               "isNullified": true,
               "isWhole": false,
               "isPartitioned": true,
@@ -139,6 +169,21 @@
               "modifyingPaths": [
                 34
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "445:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[toBucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -147,7 +192,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": false,
           "owner": null,
           "isUnknown": true,
@@ -253,6 +298,21 @@
           "modifyingPaths": [
             12
           ],
+          "increments": [
+            {
+              "id": 15,
+              "name": "amountDeposit",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 9,
+              "src": "240:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "name": "buckets[bucketId]",
           "isWhole": false,
           "isPartitioned": true,
           "nullifyingPaths": [],
@@ -387,6 +447,21 @@
               "modifyingPaths": [
                 12
               ],
+              "increments": [
+                {
+                  "id": 15,
+                  "name": "amountDeposit",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 9,
+                  "src": "240:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[bucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -408,6 +483,21 @@
               "modifyingPaths": [
                 28
               ],
+              "decrements": [
+                {
+                  "id": 31,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "398:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[fromBucketId]",
               "isNullified": true,
               "isWhole": false,
               "isPartitioned": true,
@@ -432,6 +522,21 @@
               "modifyingPaths": [
                 34
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "445:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[toBucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -440,7 +545,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": false,
           "owner": null,
           "isUnknown": true,
@@ -454,6 +559,7 @@
         "5": {
           "id": 5,
           "name": "buckets",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
@@ -512,6 +618,21 @@
                 "modifyingPaths": [
                   12
                 ],
+                "increments": [
+                  {
+                    "id": 15,
+                    "name": "amountDeposit",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 9,
+                    "src": "240:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "buckets[bucketId]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "nullifyingPaths": [],
@@ -528,7 +649,9 @@
               "nullificationCount": 0
             }
           },
-          "isModified": true
+          "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false
         }
       }
     },
@@ -637,6 +760,21 @@
           "modifyingPaths": [
             34
           ],
+          "increments": [
+            {
+              "id": 37,
+              "name": "numberOfBalls",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 25,
+              "src": "445:13:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "name": "buckets[toBucketId]",
           "isWhole": false,
           "isPartitioned": true,
           "nullifyingPaths": [],
@@ -799,6 +937,21 @@
               "modifyingPaths": [
                 12
               ],
+              "increments": [
+                {
+                  "id": 15,
+                  "name": "amountDeposit",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 9,
+                  "src": "240:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[bucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -820,6 +973,21 @@
               "modifyingPaths": [
                 28
               ],
+              "decrements": [
+                {
+                  "id": 31,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "398:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[fromBucketId]",
               "isNullified": true,
               "isWhole": false,
               "isPartitioned": true,
@@ -844,6 +1012,21 @@
               "modifyingPaths": [
                 34
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "445:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[toBucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -852,7 +1035,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": false,
           "owner": null,
           "isUnknown": true,
@@ -935,6 +1118,21 @@
               "modifyingPaths": [
                 12
               ],
+              "increments": [
+                {
+                  "id": 15,
+                  "name": "amountDeposit",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 9,
+                  "src": "240:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[bucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -956,6 +1154,21 @@
               "modifyingPaths": [
                 28
               ],
+              "decrements": [
+                {
+                  "id": 31,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "398:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[fromBucketId]",
               "isNullified": true,
               "isWhole": false,
               "isPartitioned": true,
@@ -980,6 +1193,21 @@
               "modifyingPaths": [
                 34
               ],
+              "increments": [
+                {
+                  "id": 37,
+                  "name": "numberOfBalls",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 25,
+                  "src": "445:13:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "buckets[toBucketId]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
@@ -988,7 +1216,7 @@
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": false,
           "owner": null,
           "isUnknown": true,
@@ -1001,6 +1229,7 @@
         "5": {
           "id": 5,
           "name": "buckets",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
@@ -1058,6 +1287,21 @@
                 "modifyingPaths": [
                   28
                 ],
+                "decrements": [
+                  {
+                    "id": 31,
+                    "name": "numberOfBalls",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 25,
+                    "src": "398:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "buckets[fromBucketId]",
                 "isNullified": true,
                 "isWhole": false,
                 "isPartitioned": true,
@@ -1131,6 +1375,21 @@
                 "modifyingPaths": [
                   34
                 ],
+                "increments": [
+                  {
+                    "id": 37,
+                    "name": "numberOfBalls",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 25,
+                    "src": "445:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "buckets[toBucketId]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "nullifyingPaths": [],
@@ -1147,7 +1406,9 @@
               "nullificationCount": 0
             }
           },
-          "isModified": true
+          "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false
         }
       }
     }
@@ -1155,7 +1416,6 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "src: 219:17:0: Non-secret parameter 'amountDeposit' used when assigning to a secret variable 'buckets'. Blockchain observers might be able to infer the value of 'buckets' from this. I.e. although you've labelled 'buckets' as 'secret', it might not be secret.",
-    "Warning: secret state buckets is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
+    "src: 219:17:0: Non-secret parameter 'amountDeposit' used when assigning to a secret variable 'buckets'. Blockchain observers might be able to infer the value of 'buckets' from this. I.e. although you've labelled 'buckets' as 'secret', it might not be secret."
   ]
 }

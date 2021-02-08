@@ -96,7 +96,7 @@ This will create a symlink to your node.js bin, allowing you to run the commands
 
 ## Run
 
-`zappify -i ./path/to/MyZappableContract.zsol`
+`zappify -i ./path/to/MyZappableContract.zol`
 
 ... converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
 
@@ -104,7 +104,7 @@ This will create a symlink to your node.js bin, allowing you to run the commands
 
 | option  | abbr.  | description  |
 |:--|:--|:--|
-| `--input <./path/to/contract.zsol>`  | `-i`  | Specify an input contract file with a `.zsol` extension.  |
+| `--input <./path/to/contract.zol>`  | `-i`  | Specify an input contract file with a `.zol` extension.  |
 | `--output <./custom/output/dir/>`  | `-o`  | Specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.  |
 | `--zapp-name <customZappName>` | `-z`  | Otherwise files get output to a folder with name matching that of the input file.  |
 | `--log-level <debug>`  | -  | Specify a Winston log level type.  |
@@ -173,7 +173,7 @@ Preliminary traversals populate the `binding` and `indicator` objects. This is s
 
 ##### To test a single file:
 
-`npm run-script test-prelim -- --input fileName.zsol`
+`npm run-script test-prelim -- --input fileName.zol`
 
 (Note all test-prelim files are stored in `./test/prelim-traversals/test-data` so no path is needed as input).
 
@@ -181,7 +181,7 @@ Preliminary traversals populate the `binding` and `indicator` objects. This is s
 
 You can automate the creation of 'expected outputs' for these tests.
 
-1. Create a `.zsol` file, around which you'd like a test to be created. For this example, suppose it's called `example-1.zsol`.
+1. Create a `.zol` file, around which you'd like a test to be created. For this example, suppose it's called `example-1.zol`.
 1. Save it in `./test/prelim-traversals/test-data`.
 1. Run `npm run-script test-prelim -- --write example-1`. This will run `zappify` on the file, and write output data to a file called `example-1.json`.
 1. Future tests will use `example-1.json` as the 'expected' outcome of the test.

@@ -4,22 +4,13 @@ import cloneDeep from 'lodash.clonedeep';
 import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/zokrates-types.mjs';
 import NP from '../../traverse/NodePath.mjs';
-import { traverse } from '../../traverse/traverse.mjs';
 
 const visitor = {
-  PragmaDirective: {
-    // we ignore the Pragma Directive; it doesn't aid us in creating a circuit
-    enter(path, state) {},
-    exit(path, state) {},
-  },
-
   ContractDefinition: {
-    enter(path, state) {
+    enter(path) {
       const { node, parent } = path;
       node._newASTPointer = parent._newASTPointer;
     },
-
-    exit(path) {},
   },
 
   FunctionDefinition: {
@@ -73,8 +64,8 @@ const visitor = {
       }
     },
 
-    exit(path, state) {
-      const { node, parent, scope } = path;
+    exit(path) {
+      const { node, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
@@ -109,8 +100,6 @@ const visitor = {
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
     },
-
-    exit(path) {},
   },
 
   Block: {
@@ -120,8 +109,6 @@ const visitor = {
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
     },
-
-    exit(path) {},
   },
 
   VariableDeclarationStatement: {
@@ -131,8 +118,6 @@ const visitor = {
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
-
-    exit(path) {},
   },
 
   BinaryOperation: {
@@ -143,20 +128,16 @@ const visitor = {
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
-
-    exit(path) {},
   },
 
   Assignment: {
-    enter(path, state) {
+    enter(path) {
       const { node, parent } = path;
       const { operator } = node;
       const newNode = buildNode('Assignment', { operator });
       node._newASTPointer = newNode;
       parent._newASTPointer.expression = newNode;
     },
-
-    exit(path, state) {},
   },
 
   ExpressionStatement: {
@@ -176,6 +157,12 @@ const visitor = {
             const lhsIndicator = scope.getReferencedIndicator(lhs);
 
             if (!lhsIndicator.isPartitioned) break;
+
+            // console.log('\n\n\nIN EXPRESSION STATEMENT')
+            // console.log('\n\n\npath', path)
+            // console.log('\n\n\nlhs', lhs)
+            // console.log('\n\n\nrhs', rhs)
+            // console.log('\n\n\nscope.indicators', scope.indicators)
 
             const rhsPath = NP.getPath(rhs);
             // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
@@ -225,8 +212,6 @@ const visitor = {
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
-
-    exit(node, parent) {},
   },
 
   VariableDeclaration: {
@@ -253,8 +238,6 @@ const visitor = {
         parent._newASTPointer[path.containerName].push(newNode);
       }
     },
-
-    exit(path) {},
   },
 
   ElementaryTypeName: {
@@ -271,8 +254,6 @@ const visitor = {
         name: node.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
       });
     },
-
-    exit(path) {},
   },
 
   Identifier: {
@@ -283,8 +264,6 @@ const visitor = {
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('Identifier', { name });
     },
-
-    exit(path) {},
   },
 
   Literal: {
@@ -295,7 +274,7 @@ const visitor = {
 
   MemberAccess: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { parent } = path;
 
       if (!path.isMsgSender()) throw new Error(`Struct property access isn't yet supported.`);
 
