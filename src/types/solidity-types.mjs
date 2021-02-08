@@ -135,6 +135,24 @@ export function buildNode(nodeType, fields) {
         typeName,
       };
     }
+    case 'BinaryOperation': {
+      const { leftExpression = {}, operator, rightExpression = {} } = fields;
+      return {
+        nodeType,
+        leftExpression,
+        operator,
+        rightExpression,
+      };
+    }
+    case 'Assignment': {
+      const { leftHandSide = {}, operator, rightHandSide = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        leftHandSide,
+        rightHandSide,
+      };
+    }
     case 'Mapping': {
       const { keyType = {}, valueType = {}, typeDescriptions = {} } = fields;
       return {

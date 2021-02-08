@@ -138,6 +138,34 @@ const visitor = {
       node._newASTPointer = newNode;
       parent._newASTPointer.expression = newNode;
     },
+
+    exit(path) {
+      // Convert 'a += b' into 'a = a + b' for all operators, because zokrates doesn't support the shortened syntax.
+      // We do this on exit, so that the child nodes of this assignment get transformed into the correct zokrates nodeTypes (otherwise they might get missed).
+      const expandAssignment = node => {
+        const { operator, leftHandSide, rightHandSide } = node;
+        const expandableOps = ['+=', '-=', '*=', '/=', '%=', '|=', '&=', '^='];
+        if (!expandableOps.includes(operator)) return node;
+        const op = operator.charAt(0);
+        const binOpNode = buildNode('BinaryOperation', {
+          operator: op,
+          leftExpression: leftHandSide,
+          rightExpression: rightHandSide,
+        });
+        const assNode = buildNode('Assignment', {
+          operator: '=',
+          leftHandSide,
+          rightHandSide: binOpNode,
+        });
+        return assNode;
+      };
+
+      const { parent } = path;
+      const circuitNode = parent._newASTPointer.expression;
+      const newNode = expandAssignment(circuitNode);
+      // node._newASTPointer = newNode; // no need to ascribe the node._newASTPointer, because we're exiting.
+      parent._newASTPointer.expression = newNode;
+    },
   },
 
   ExpressionStatement: {
