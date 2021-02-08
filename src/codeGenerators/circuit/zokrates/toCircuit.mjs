@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import fs from 'fs';
 import path from 'path';
 import logger from '../../../utils/logger.mjs';
@@ -54,43 +55,6 @@ const collectImportFiles = (file, contextDirPath = boilerplateCircuitsDir) => {
   });
 
   return uniqueLocalFiles;
-};
-
-/**
- * Parses the boilerplate import statements, and grabs any common files.
- * @return {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
- * The filepath will be used when saving the file into the new zApp's dir.
- */
-const editableCommitmentCommonFilesBoilerplate = () => {
-  return collectImportFiles(EditableCommitmentImportStatementsBoilerplate.join('\n'));
-};
-
-// newline / tab beautification for '.zok' files
-const beautify = code => {
-  // can't be bothered writing this yet
-  const lines = code.split('\n');
-  let newCode = '';
-  let tabCount = 0;
-  for (const line of lines) {
-    const chars = line.split('');
-    let newLine = '';
-    for (const char of chars) {
-      switch (char) {
-        case '[':
-          ++tabCount;
-          newLine += `${char}\\\n${'\t'.repeat(tabCount)}`;
-          break;
-        case ']':
-          --tabCount;
-          newLine += `\\\n${'\t'.repeat(tabCount)}${char}`;
-          break;
-        default:
-          newLine += char;
-      }
-    }
-    newCode += newLine;
-  }
-  return newCode;
 };
 
 function codeGenerator(node) {
@@ -162,6 +126,9 @@ function codeGenerator(node) {
 
     case 'Identifier':
       return node.name;
+
+    case 'Literal':
+      return node.value;
 
     case 'Boilerplate':
       return bp.generateBoilerplate(node);

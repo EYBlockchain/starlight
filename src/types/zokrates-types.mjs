@@ -176,7 +176,11 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'Literal': {
-      throw new Error('TODO.... Literals');
+      const { value } = fields;
+      return {
+        nodeType,
+        value,
+      };
     }
     case 'ElementaryTypeName': {
       const { name } = fields;
