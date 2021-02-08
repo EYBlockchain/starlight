@@ -37,10 +37,10 @@ class BoilerplateGenerator {
       // default nullification lines (for partitioned & whole states)
       return [
         `
-          // ${x}_oldCommitment - PoKoSK:
-          // The correctness of this secret key will be constrained within the oldCommitment existence check.
+        // ${x}_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
 
-          u32[8] ${x}_oldCommitment_owner_publicKey = sha256of256([...${x}_oldCommitment_owner_secretKey])`,
+        u32[8] ${x}_oldCommitment_owner_publicKey = sha256of256([...${x}_oldCommitment_owner_secretKey])`,
       ];
     },
   };
@@ -65,8 +65,8 @@ class BoilerplateGenerator {
       if (isMapping) return [];
       return [
         `
-          // We need to hard-code each stateVarId into the circuit:
-          u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        // We need to hard-code each stateVarId into the circuit:
+        u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
@@ -74,26 +74,26 @@ class BoilerplateGenerator {
       // default nullification lines (for partitioned & whole states)
       const lines = [
         `
-          // Nullify ${x}:
+        // Nullify ${x}:
 
-          u32[8] ${x}_oldCommitment_nullifier_check = sha256of768([\\
-            ...${x}_stateVarId,\\
-            ...${x}_oldCommitment_owner_secretKey,\\
-            ...${x}_oldCommitment_salt\\
-          ])
+        u32[8] ${x}_oldCommitment_nullifier_check = sha256of768([\\
+          ...${x}_stateVarId,\\
+          ...${x}_oldCommitment_owner_secretKey,\\
+          ...${x}_oldCommitment_salt\\
+        ])
 
-          assert(\\
-            field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(${x}_oldCommitment_nullifier_check)[8..256]\\
-          )`,
+        assert(\\
+        field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(${x}_oldCommitment_nullifier_check)[8..256]\\
+        )`,
       ];
 
       if (this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [
           `
-            ${x}_oldCommitment_owner_secretKey = if ${x}_oldCommitment_isDummy then [0x00000000; 8] else ${x}_oldCommitment_owner_secretKey fi
+          ${x}_oldCommitment_owner_secretKey = if ${x}_oldCommitment_isDummy then [0x00000000; 8] else ${x}_oldCommitment_owner_secretKey fi
 
-            ${x}_oldCommitment_salt = if ${x}_oldCommitment_isDummy then [0x00000000; 8] else ${x}_oldCommitment_salt fi`,
+          ${x}_oldCommitment_salt = if ${x}_oldCommitment_isDummy then [0x00000000; 8] else ${x}_oldCommitment_salt fi`,
         ];
         newLines.concat(lines);
       }
@@ -122,21 +122,21 @@ class BoilerplateGenerator {
       // For a state variable, we'll have passed in `${x}_oldCommitment_value` as a parameter. But our AST nodes will be using `${x}`. This line resolves the two.
       return [
         `
-          field ${x} = ${x}_oldCommitment_value`,
+        field ${x} = ${x}_oldCommitment_value`,
       ];
     },
 
     postStatements({ name: x }) {
       return [
         `
-          // ${x}_oldCommitment_commitment: preimage check
+        // ${x}_oldCommitment_commitment: preimage check
 
-          u32[8] ${x}_oldCommitment_commitment = sha256of1024([\\
-            ...${x}_stateVarId,\\
-            ...field_to_u32_8(${x}_oldCommitment_value),\\
-            ...${x}_oldCommitment_owner_publicKey,\\
-            ...${x}_oldCommitment_salt\\
-          ])`,
+        u32[8] ${x}_oldCommitment_commitment = sha256of1024([\\
+          ...${x}_stateVarId,\\
+          ...field_to_u32_8(${x}_oldCommitment_value),\\
+          ...${x}_oldCommitment_owner_publicKey,\\
+          ...${x}_oldCommitment_salt\\
+        ])`,
       ];
     },
   };
@@ -166,22 +166,19 @@ class BoilerplateGenerator {
     postStatements({ name: x, isWhole }) {
       const lines = [
         `
-          // ${x}_oldCommitment_commitment: existence check`,
+        // ${x}_oldCommitment_commitment: existence check
 
-        `
-          field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])`,
+        field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])
 
-        `
-          field ${x}_commitmentRoot_check = checkRoot(\\
-            ${x}_oldCommitment_membershipWitness_siblingPath,\\
-            ${x}_oldCommitment_commitment_truncated,\\
-            ${x}_oldCommitment_membershipWitness_index\\
-          )`,
+        field ${x}_commitmentRoot_check = checkRoot(\\
+          ${x}_oldCommitment_membershipWitness_siblingPath,\\
+          ${x}_oldCommitment_commitment_truncated,\\
+          ${x}_oldCommitment_membershipWitness_index\\
+        )
 
-        `
-          assert(\\
-            field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(${x}_commitmentRoot_check)[8..256]\\
-          )`,
+        assert(\\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(${x}_commitmentRoot_check)[8..256]\\
+        )`,
       ];
 
       if (isWhole) {
@@ -190,8 +187,8 @@ class BoilerplateGenerator {
           -1,
           0,
           `
-            // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
-            ${x}_commitmentRoot_check = if ${x}_oldCommitment_isDummy == true then commitmentRoot else ${x}_commitmentRoot_check fi`,
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        ${x}_commitmentRoot_check = if ${x}_oldCommitment_isDummy == true then commitmentRoot else ${x}_commitmentRoot_check fi`,
         );
       }
       return lines;
@@ -221,30 +218,30 @@ class BoilerplateGenerator {
       if (isMapping) return [];
       return [
         `
-          // We need to hard-code each stateVarId into the circuit:
-          u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        // We need to hard-code each stateVarId into the circuit:
+        u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
     postStatements({ name: x }) {
       return [
         `
-          // prepare secret state '${x}' for commitment
+        // prepare secret state '${x}' for commitment
 
-          u32[8] ${x}_newCommitment_value = field_to_u32_8(${x})
+        u32[8] ${x}_newCommitment_value = field_to_u32_8(${x})
 
-          // ${x}_newCommitment_commitment - preimage check
+        // ${x}_newCommitment_commitment - preimage check
 
-          u32[8] ${x}_newCommitment_commitment_check = sha256of1024([\\
-            ...${x}_stateVarId,\\
-            ...${x}_newCommitment_value,\\
-            ...${x}_newCommitment_owner_publicKey,\\
-            ...${x}_newCommitment_salt\\
-          ])
+        u32[8] ${x}_newCommitment_commitment_check = sha256of1024([\\
+          ...${x}_stateVarId,\\
+          ...${x}_newCommitment_value,\\
+          ...${x}_newCommitment_owner_publicKey,\\
+          ...${x}_newCommitment_salt\\
+        ])
 
-          assert(\\
-            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
-          )`,
+        assert(\\
+          field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
+        )`,
       ];
     },
   };
@@ -266,8 +263,8 @@ class BoilerplateGenerator {
     preStatements({ id: mappingId, mappingName: m }) {
       return [
         `
-          // We need to hard-code the mappingId's of mappings into the circuit:
-          field ${m}_mappingId = ${mappingId}`,
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field ${m}_mappingId = ${mappingId}`,
       ];
     },
 
@@ -275,10 +272,10 @@ class BoilerplateGenerator {
       // const x = `${m}_${k}`;
       return [
         `
-          field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
+        field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
 
         `
-          u32[8] ${x}_stateVarId = field_to_u32_8(${x}_stateVarId_field)`, // convert to u32[8], for later sha256 hashing
+        u32[8] ${x}_stateVarId = field_to_u32_8(${x}_stateVarId_field)`, // convert to u32[8], for later sha256 hashing
       ];
     },
   };
@@ -292,9 +289,9 @@ class BoilerplateGenerator {
       const y = codeGenerator(addend);
       return [
         `
-          // The below represents the incrementation '${x} = ${x} + ${y}':
+        // The below represents the incrementation '${x} = ${x} + ${y}':
 
-          field ${x}_${i} = ${y}`,
+        field ${x}_${i} = ${y}`,
       ];
     },
   };
@@ -314,12 +311,12 @@ class BoilerplateGenerator {
 
       return [
         `
-          // The below represents the decrementation '${x} = ${x} - ${y}':
+        // The below represents the decrementation '${x} = ${x} - ${y}':
 
-          assert(${x0} + ${x1} > ${y})
-          // TODO: assert no under/overflows
+        assert(${x0} + ${x1} > ${y})
+        // TODO: assert no under/overflows
 
-          field ${x2} = (${x0} + ${x1}) - ${y}`,
+        field ${x2} = (${x0} + ${x1}) - ${y}`,
       ];
     },
   };

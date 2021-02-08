@@ -81,10 +81,10 @@ function codeGenerator(node) {
       const body = codeGenerator(node.body);
       return `${functionSignature}
 
-      ${body}
+        ${body}
 
-      return
-      `;
+        return
+        `;
     }
 
     case 'ParameterList':
@@ -108,16 +108,15 @@ function codeGenerator(node) {
       const preStatements = BP.uniqueify(node.preStatements.flatMap(codeGenerator));
       const statements = BP.uniqueify(node.statements.flatMap(codeGenerator));
       const postStatements = BP.uniqueify(node.postStatements.flatMap(codeGenerator));
-      return [...preStatements, ...statements, ...postStatements].join('\n\n\t');
+      return [...preStatements, ...statements, ...postStatements].join('\n\n');
     }
 
     case 'ExpressionStatement':
       return codeGenerator(node.expression);
 
     case 'Assignment':
-      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
-        node.rightHandSide,
-      )}`;
+      return `
+        ${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
