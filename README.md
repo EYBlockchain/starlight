@@ -40,14 +40,14 @@ _"An easy cell to developers that increases their capacity to develop Zero Knowl
 
 ## Induction :zap:
 
-zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write.
+zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? Zappify helps developers do just this...
 
 - Write a Solidity contract
-- Add a few new privacy decorators to the contract (to get a 'zappable' Solidity contract)
+- Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
 - Zappify that baby
 - Get a fully working zApp in return
 
-Solidity Contract --> zappable Solidity Contract --> zappify --> zApp
+_Solidity contract --> Zolidity contract --> zappify --> zApp_
 
 See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 
@@ -96,9 +96,9 @@ This will create a symlink to your node.js bin, allowing you to run the commands
 
 ## Run
 
-`zappify -i ./path/to/MyZappableContract.zol`
+`zappify -i ./path/to/MyZolidityContract.zol`
 
-... converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
+... converts a Zolidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
 
 ### CLI options
 

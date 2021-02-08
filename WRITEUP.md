@@ -56,11 +56,11 @@ Generate a zApp from a Solidity contract.
 zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? Zappify helps developers do just this...
 
 - Write a Solidity contract
-- Add a few new privacy decorators to the contract (to get a 'zappable' Solidity contract)
+- Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
 - Zappify that baby
 - Get a fully working zApp in return
 
-Solidity contract --> zappable Solidity contract --> zappify --> zApp
+_Solidity contract --> Zolidity contract --> zappify --> zApp_
 
 ---
 
@@ -113,7 +113,7 @@ Easy!
 
 ### Summary
 
-To `zappify`, the compiler must take the decorated solidity file (a `.zol` file) and complete the following (simplified) steps:
+To `zappify`, the compiler must take the Zolidity file (a `.zol` file) and complete the following (simplified) steps:
 -   **parse**, takes the `zol` code, analyses it, and creates an abstract syntax tree (AST) representation of that code
 -   **transform**, changes that AST into: a circuit AST, a smart contract AST, and an 'orchestration' AST.
 -   **generate code**, generates code for the output zApp (circuit, contract and orchestration code)
