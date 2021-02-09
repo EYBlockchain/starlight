@@ -97,6 +97,7 @@ const formatScopesForTesting = scopes => {
     formatBindings(scope.modifiedBindings);
     formatIndicators(scope.indicators);
   });
+  return JSON.parse(JSON.stringify(scopes)); // this removes any 'undefined' values from the JSON object, to aid with 'diffs' of files
 };
 
 const originalWarn = logger.warn; // remember logger.warn; we'll be diverting it to a stub.
@@ -117,10 +118,10 @@ function itShouldCompareOutputs(options, expected, actual, consoleWarnings) {
     // try {
     beforeEachSync(consoleWarnings);
     const path = zappify(options);
-    const scopes = [];
+    let scopes = [];
     path.traversePathsFast(collectScopesIntoArray, scopes);
-    formatScopesForTesting(scopes);
-    // `eql` tests for _deep_ object equality.
+    scopes = formatScopesForTesting(scopes);
+
     actual = {
       scopes,
       errorType: null,
@@ -137,6 +138,7 @@ function itShouldCompareOutputs(options, expected, actual, consoleWarnings) {
       console.log(JSON.stringify(actual, null, 2));
     }
 
+    // `eql` tests for _deep_ object equality.
     expect(actual).to.eql(expected);
     // } catch (err) {
     //   rmDir(options.outputDirPath); // clean up
