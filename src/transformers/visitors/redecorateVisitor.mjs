@@ -121,7 +121,6 @@ export default {
               break;
           }
         }
-        console.log(state);
       }
     },
 
@@ -216,7 +215,6 @@ export default {
                         break;
                       }
                     }
-                    break;
                   }
                   break;
                 default:

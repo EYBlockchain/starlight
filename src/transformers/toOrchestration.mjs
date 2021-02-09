@@ -92,6 +92,7 @@ export default function toOrchestration(ast, options) {
   }Shield`;
 
   logger.verbose(`Saving backend files to the zApp output directory ${options.outputDirPath}...`);
+  // HERE
   for (const fileObj of ZappFilesBoilerplate) {
     let file = fs.readFileSync(fileObj.readPath, 'utf8');
     const filepath = pathjs.join(options.outputDirPath, fileObj.writePath);
