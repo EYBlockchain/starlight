@@ -459,7 +459,7 @@ export default {
         const referencedNode = referencedBinding.node;
         isMapping = referencedBinding.isMapping;
         if (isMapping)
-          referencedBinding = referencedBinding.mappingKey[scope.getMappingKeyIndicator(lhs)];
+          referencedBinding = referencedBinding.mappingKey[scope.getMappingKeyName(lhs)];
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         const modifiedPaths = referencedBinding.modifyingPaths.filter(

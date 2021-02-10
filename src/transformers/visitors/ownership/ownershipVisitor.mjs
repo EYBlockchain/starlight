@@ -105,7 +105,7 @@ export default {
       } else if (lhsNode.nodeType === 'IndexAccess') {
         isMapping = true;
         lhsIdentifier = lhsNode.baseExpression;
-        const keyName = scope.getMappingKeyIndicator(lhsNode);
+        const keyName = scope.getMappingKeyName(lhsNode);
         lhsbinding = scope.getReferencedBinding(lhsIdentifier).mappingKey[keyName];
       }
 

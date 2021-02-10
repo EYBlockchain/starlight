@@ -25,8 +25,8 @@ class BackTrace {
     const line = contract.substring(lineStart, lineEnd);
     const srcStartWithinLine = srcStart - lineStart;
     const pointerLine = ' '.repeat(srcStartWithinLine) + '^'.repeat(srcLength);
-    console.log('src:', src);
-    console.log(srcCode);
+    // console.log('src:', src);
+    // console.log(srcCode);
     console.log('line', startLineNumber);
     console.log(line);
     console.log(pointerLine);

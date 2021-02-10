@@ -331,20 +331,37 @@ export default class NodePath {
   }
 
   /**
+   * Decides whether an expression is an incrementation.
+   * E.g. `a = a + b` is an incrementation.
+   * E.g. `a + b` is an incrementation.
+   * E.g. `a++` is an incrementation.
+   * @param {Object} expressionNode - an expression, usually an Assignment nodeType.
+   * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
+   * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
+   */
+  isIncrementation(expressionNode = this.node) {}
+
+  /**
+   * Decides whether an expression is an incrementation of some node (`lhsNode`).
+   * E.g. `a = a + b` is an expression which is an incrementation of `a`.
+   * @param {Object} expressionNode - an expression, usually an Assignment nodeType.
+   * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
+   * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
+   */
+  isIncrementationOf(lhsNode, expressionNode = this.node) {}
+
+  /**
    * Checks whether a node represents `msg.sender`
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
   isMsgSender(node = this.node) {
-    if (
+    return (
       node.nodeType === 'MemberAccess' &&
       node.memberName === 'sender' &&
       node.typeDescriptions.typeString === 'address' &&
       this.isMsg(node.expression)
-    )
-      return true;
-
-    return false;
+    );
   }
 
   /**
@@ -353,15 +370,12 @@ export default class NodePath {
    * @returns {Boolean}
    */
   isMsg(node = this.node) {
-    if (
+    return (
       node.nodeType === 'Identifier' &&
       node.name === 'msg' &&
       node.typeDescriptions.typeIdentifier === 't_magic_message' &&
       node.typeDescriptions.typeString === 'msg'
-    )
-      return true;
-
-    return false;
+    );
   }
 
   /**
@@ -373,6 +387,52 @@ export default class NodePath {
     if (node.nodeType === 'VariableDeclaration' && node.typeName.nodeType === 'Mapping')
       return true;
     return false;
+  }
+
+  /**
+   * Checks whether a node is an Identifier for a mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isMappingIdentifier(node = this.node) {
+    if (node.nodeType !== 'IndexAccess') return false;
+    // It could be a mapping or it could be an array. The only way to tell is to trace it all the way back to its referencedDeclaration.
+    const varDecNode = this.getReferencedNode(node);
+    return this.isMappingDeclaration(varDecNode);
+  }
+
+  isMapping(node = this.node) {
+    return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
+  }
+
+  /**
+   * Checks whether a node is a Solidity `require` statement.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isRequireStatement(node = this.node) {
+    /* `require` statements are often contained within the following structure:
+        {
+          nodeType: 'ExpressionStatement',
+          expression: {
+            nodeType: 'FunctionCall',
+            arguments: [...],
+            expression: {
+              name: 'require'
+            }
+          }
+        }
+
+        We'll return 'true' for both the `ExpressionStatement` and the `FunctionCall`
+     */
+    switch (node.nodeType) {
+      case 'ExpressionStatement':
+        return this.isRequireStatement(node.expression);
+      case 'FunctionCall':
+        return node.expression.name === 'require';
+      default:
+        return false;
+    }
   }
 
   /**

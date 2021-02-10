@@ -129,6 +129,9 @@ function codeGenerator(node) {
     case 'Literal':
       return node.value;
 
+    case 'Assert':
+      return `assert(${node.args.flatMap(codeGenerator)})`;
+
     case 'Boilerplate':
       return bp.generateBoilerplate(node);
 

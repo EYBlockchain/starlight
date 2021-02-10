@@ -1,7 +1,7 @@
 /**
 process a function process end
 */
-import { ParseError } from '../utils/errors.mjs';
+import { ParseError } from '../error/errors.mjs';
 import { currentFunction, zokrates } from '../state.mjs';
 import logger from '../utils/logger.mjs';
 

@@ -8,7 +8,7 @@
         "14": {
           "kind": "ContractDefinition",
           "id": 14,
-          "name": "Assign"
+          "name": "MyContract"
         }
       },
       "referencedBindings": {},
@@ -18,7 +18,7 @@
     },
     {
       "scopeId": 14,
-      "scopeName": "Assign",
+      "scopeName": "MyContract",
       "scopeType": "ContractDefinition",
       "bindings": {
         "3": {
@@ -52,13 +52,13 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            "Overwritten at 166:11:0"
           ]
         },
         "13": {
           "kind": "FunctionDefinition",
           "id": 13,
-          "name": "assign"
+          "name": "incr"
         }
       },
       "referencedBindings": {},
@@ -73,15 +73,15 @@
     },
     {
       "scopeId": 13,
-      "scopeName": "assign",
+      "scopeName": "incr",
       "scopeType": "FunctionDefinition",
       "bindings": {
         "5": {
           "kind": "VariableDeclaration",
           "id": 5,
-          "name": "value",
+          "name": "param1",
           "stateVariable": false,
-          "isSecret": false,
+          "isSecret": true,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -136,15 +136,15 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            "Overwritten at 166:11:0"
           ]
         },
         "5": {
           "kind": "VariableDeclaration",
           "id": 5,
-          "name": "value",
+          "name": "param1",
           "stateVariable": false,
-          "isSecret": false,
+          "isSecret": true,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
@@ -199,7 +199,7 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            "Overwritten at 166:11:0"
           ]
         }
       },
@@ -235,7 +235,7 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            "Overwritten at 166:11:0"
           ]
         }
       },
@@ -264,7 +264,7 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            "Overwritten at 166:11:0"
           ],
           "nullifyingPaths": [
             8
@@ -277,7 +277,6 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "Non-secret parameter 'value' used when assigning to a secret variable 'a'. Blockchain observers might be able to infer the value of 'a' from this. I.e. although you've labelled 'a' as 'secret', it might not be secret.",
     "Warning: secret state a is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
   ]
 }

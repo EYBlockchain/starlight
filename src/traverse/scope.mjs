@@ -139,7 +139,7 @@ export class Scope {
 
     if (this.bindings[id])
       throw new Error(
-        `Whilst updating scope for nodeType ${nodeType}, expected this.bindings[${id}] to be undefined, but found binding: ${this.bindings[id]} for this scope: ${this}`,
+        `Whilst updating scope for nodeType '${nodeType}', expected this.bindings[${id}] to be 'undefined', but found binding: '${this.bindings[id]}' for this scope: ${this}`,
       );
 
     switch (nodeType) {
@@ -427,10 +427,8 @@ export class Scope {
           });
         } else if (
           node.arguments[0].nodeType === 'BinaryOperation' &&
-          (node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
-            't_magic_message' ||
-            node.arguments[0].rightExpression.expression.typeDescriptions.typeIdentifier ===
-              't_magic_message')
+          (path.isMsgSender(node.arguments[0].leftExpression) ||
+            path.isMsgSender(node.arguments[0].rightExpression))
         ) {
           // here: either lhs or rhs of require statement includes msg.sender
           // TODO  check if admin = state variable
@@ -579,14 +577,26 @@ export class Scope {
   }
 
   /**
-   * @returns {Binding || null} - the indicator of the variable being referred-to by the input referencingNode.
+   * Get the Indicator object for the variable being referred-to by a referencingNode (i.e. a node which refers to another (often an 'Identifier' node)).
+   * @param {Node} referencingNode - the node referring to a previously-declared variable.
+   * @param {Boolean} mappingKeyIndicatorOnly - OPTIONAL - A mapping has two types of indicator associated with it, one nested within the other. The outer indicator gives general info about the mapping. There is a nested indicator object for each mappingKey name.
+   *   true - only the inner mappingKey indicator will be returned.
+   *   false - the entire (outer) mapping's indicator will be returned.
+   * @returns {Indicator || null} - the indicator of the variable being referred-to by the input referencingNode.
    */
-  getReferencedIndicator(referencingNode) {
-    return this.getIndicatorById(this.path.getReferencedDeclarationId(referencingNode));
+  getReferencedIndicator(referencingNode, mappingKeyIndicatorOnly = false) {
+    const { path } = this;
+    const indicator = this.getIndicatorById(path.getReferencedDeclarationId(referencingNode));
+
+    if (!path.isMapping(referencingNode)) return indicator;
+
+    return mappingKeyIndicatorOnly
+      ? indicator.mappingKey[this.getMappingKeyName(referencingNode)]
+      : indicator;
   }
 
   /**
-   * @returns {Binding || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.
+   * @returns {Node || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.
    */
   getReferencedNode(referencingNode) {
     const binding = this.getReferencedBinding(referencingNode);
@@ -796,28 +806,51 @@ export class Scope {
   // TODO: one for 'uses' secret state?
 
   /**
+   * A mapping's key will contain an Identifier node pointing to a previously-declared variable.
+   * @param {Object} - the mapping's index access node.
+   * @returns {Node} - an Identifier node
+   */
+  getMappingKeyIdentifier(indexAccessNode) {
+    if (indexAccessNode.nodeType !== 'IndexAccess') return null;
+
+    const { path } = this;
+    const { indexExpression } = indexAccessNode;
+    const keyNode = path.isMsgSender(indexExpression)
+      ? indexExpression?.expression
+      : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
+    return keyNode;
+  }
+
+  /**
    * Gets a mapping's indicator object for a particular key.
    * @param {Object} - the mapping's index access node.
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
-  getMappingKeyIndicator(indexAccessNode) {
-    const keyNode = indexAccessNode.indexExpression.expression || indexAccessNode.indexExpression;
-    let keyName = keyNode.name;
+  getMappingKeyName(indexAccessNode) {
+    if (indexAccessNode.nodeType !== 'IndexAccess') return null;
+
+    const keyIdentifierNode = this.getMappingKeyIdentifier(indexAccessNode);
+    const keyBinding = this.getReferencedBinding(keyIdentifierNode);
+    let keyName = keyIdentifierNode.name;
+
     // TODO does the below work when we are traversing again and already have modified paths?
-    if (this.getReferencedBinding(keyNode) && this.getReferencedBinding(keyNode).isModified) {
-      const keyBinding = this.getReferencedBinding(keyNode);
+    // If the value of the mapping key is edited between mapping accesses then the below copes with that.
+    if (keyBinding?.isModified) {
       let i = 0;
-      for (const modPath of keyBinding.modifyingPaths) {
-        if (indexAccessNode.id < modPath.node.id && i === 0) break;
+      // TODO: please annotate or refactor to be easier to follow.
+      // Consider each time the variable (which becomes the mapping's key) is edited throughout the scope:
+      for (const modifyingPath of keyBinding.modifyingPaths) {
+        // Ignore all modifications to the variable which happened _after_ it was used as the mapping's key, unless i > 0 ???????
+        if (indexAccessNode.id < modifyingPath.node.id && i === 0) break;
+
         i++;
         if (
-          modPath.node.id < indexAccessNode.id &&
-          keyBinding.modifyingPaths[i] &&
-          indexAccessNode.id < keyBinding.modifyingPaths[i].node.id
+          modifyingPath.node.id < indexAccessNode.id && // a modification to the variable _before_ it was used as the mapping's key
+          indexAccessNode.id < keyBinding.modifyingPaths?.[i].node.id
         )
           break;
       }
-      if (i > 0) keyName = `${keyNode.name}_${i}`;
+      if (i > 0) keyName = `${keyIdentifierNode.name}_${i}`;
     }
     return keyName;
   }
@@ -829,138 +862,165 @@ export class Scope {
    * @returns {Object {bool, bool}} - isIncremented and isDecremented
    */
   isIncremented(expressionNode, lhsNode) {
-    const scope = this;
-    let isIncrementedBool;
-    let isDecrementedBool;
+    let isIncrementedBool = false;
+    let isDecrementedBool = false;
+
     // first, check if the LHS node is secret
-    let lhsSecret;
-    let lhsbinding;
     const increments = [];
     const decrements = [];
-    if (lhsNode.nodeType === 'Identifier') {
-      lhsbinding = scope.getReferencedBinding(lhsNode);
-      lhsSecret = !!lhsbinding.isSecret;
-    } else if (lhsNode.nodeType === 'IndexAccess') {
-      lhsbinding = scope.getReferencedBinding(lhsNode.baseExpression);
-      lhsSecret = !!lhsbinding.isSecret;
-    }
+
+    const lhsbinding = this.getReferencedBinding(lhsNode);
+    const lhsSecret = !!lhsbinding.isSecret;
+
     // look at the assignment
     switch (expressionNode.nodeType) {
       case 'Assignment': {
+        // ARITHMETIC ASSIGNMENT OPERATORS:
+        const { operator, leftHandSide, rightHandSide } = expressionNode;
+
         // a += something, -= something
-        if (lhsSecret && expressionNode.operator === '+=') {
+        if (lhsSecret && operator === '+=') {
           isIncrementedBool = true;
           isDecrementedBool = false;
-          increments.push(expressionNode.rightHandSide);
-          break;
-        } else if (lhsSecret && expressionNode.operator === '-=') {
-          isIncrementedBool = true;
-          isDecrementedBool = true;
-          decrements.push(expressionNode.rightHandSide);
+          increments.push(rightHandSide);
           break;
         }
-        // b *= something, b /= something
+
+        if (lhsSecret && operator === '-=') {
+          isIncrementedBool = true;
+          isDecrementedBool = true;
+          decrements.push(rightHandSide);
+          break;
+        }
+
+        // a *= something, a /= something
         if (
-          expressionNode.operator === '%=' ||
-          expressionNode.operator === '/=' ||
-          expressionNode.operator === '*='
+          operator === '%=' ||
+          operator === '/=' ||
+          operator === '*=' // TODO other operators like |= etc?
         ) {
           isIncrementedBool = false;
           break;
         }
-        // move to more complicated cases
-        const rhsType = expressionNode.rightHandSide.nodeType;
-        if (rhsType === 'BinaryOperation') {
-          const binopNode = expressionNode.rightHandSide;
-          const params = [binopNode.leftExpression, binopNode.rightExpression];
-          const op = expressionNode.rightHandSide.operator;
-          // TODO deal with binops like a + b - c, c < a + b
-          // if we dont have any + or -, can't be an incrementation
-          if (!op.includes('+') && !op.includes('-')) {
-            isIncrementedBool = false;
-            isDecrementedBool = false;
+
+        if (operator !== '=')
+          throw new Error(`Operator '${operator}' not yet supported. Please open an issue.`);
+
+        // SIMPLE ASSIGNMENT `=`:
+        // `a = something`
+        switch (rightHandSide.nodeType) {
+          case 'BinaryOperation': {
+            const binOpNode = rightHandSide;
+            const operands = [binOpNode.leftExpression, binOpNode.rightExpression];
+            const { operator } = rightHandSide;
+
+            // TODO deal with binOps like a + b - c, c < a + b
+            // if we dont have any + or -, it can't be an incrementation
+            if (!operator.includes('+') && !operator.includes('-')) {
+              isIncrementedBool = false;
+              isDecrementedBool = false;
+              break;
+            }
+
+            // FIXME: this isn't recursion.
+            // recursively checks for binop + binop
+            // fills an array of params
+            for (const [index, operand] of operands.entries()) {
+              if (operand.nodeType === 'BinaryOperation') {
+                if (!operand.operator.includes('+')) {
+                  isIncrementedBool = false;
+                  break;
+                }
+                operands[index] = operand.leftExpression;
+                operands.push(operand.rightExpression);
+              }
+            }
+
+            // Goes through each operand and checks whether it's the lhsNode and whether it's +/- anything
+            for (const operand of operands) {
+              if (operand.referencedDeclaration || operand.baseExpression) {
+                const { isSecret } = this.getReferencedBinding(operand);
+
+                // a = a + b
+                if (isSecret && operand.name === lhsNode.name && operator.includes('+')) {
+                  isIncrementedBool = true;
+                  isDecrementedBool = false;
+                  break;
+                }
+
+                // a = a + b (mapping)
+                if (
+                  isSecret &&
+                  operand.nodeType === 'IndexAccess' &&
+                  operand.baseExpression.name === lhsNode.baseExpression.name &&
+                  operand.indexExpression.name === lhsNode.indexExpression.name &&
+                  operator.includes('+')
+                ) {
+                  isIncrementedBool = true;
+                  isDecrementedBool = false;
+                  break;
+                }
+
+                // TODO: what was this for? I wouldn't classify `b = a + somthing` as an "incrementation", because there's no `b` on the rhs. Commenting out for now.
+                // // b = a + something
+                // if (!lhsSecret && isSecret && operator.includes('+')) {
+                //   isIncrementedBool = true;
+                //   isDecrementedBool = false;
+                //   break;
+                // }
+
+                // a = a - something
+                if (
+                  isSecret &&
+                  operand.name === lhsNode.name &&
+                  operator.includes('-') &&
+                  operand === binOpNode.leftExpression
+                ) {
+                  isIncrementedBool = true;
+                  isDecrementedBool = true;
+                  break;
+                }
+                // if none, go to the next param
+              }
+            }
+            if (isIncrementedBool && !isDecrementedBool) {
+              increments.push(binOpNode);
+            } else if (isDecrementedBool) {
+              decrements.push(binOpNode);
+            }
             break;
           }
-          // recursively checks for binop + binop
-          // fills an array of params
-          for (const [index, param] of params.entries()) {
-            if (param.nodeType === 'BinaryOperation') {
-              if (!param.operator.includes('+')) {
-                isIncrementedBool = false;
-                break;
-              }
-              params[index] = param.leftExpression;
-              params.push(param.rightExpression);
-            }
-          }
-          // goes through each param and checks whether its the lhs param and whether its +/- anything
-          for (const param of params) {
-            if (param.referencedDeclaration || param.baseExpression) {
-              const isSecret = param.baseExpression
-                ? scope.getReferencedBinding(param.baseExpression).isSecret
-                : scope.getReferencedBinding(param).isSecret;
-              // a = a + b
-              if (isSecret && param.name === lhsNode.name && op.includes('+')) {
-                isIncrementedBool = true;
-                isDecrementedBool = false;
-                break;
-              }
-              // a = a + b (mapping)
-              if (
-                isSecret &&
-                param.nodeType === 'IndexAccess' &&
-                param.baseExpression.name === lhsNode.baseExpression.name &&
-                param.indexExpression.name === lhsNode.indexExpression.name &&
-                op.includes('+')
-              ) {
-                isIncrementedBool = true;
-                isDecrementedBool = false;
-                break;
-              }
-              // b = a + something
-              if (!lhsSecret && isSecret && op.includes('+')) {
-                isIncrementedBool = true;
-                isDecrementedBool = false;
-                break;
-              }
-              // a = a - something
-              if (
-                isSecret &&
-                param.name === lhsNode.name &&
-                op.includes('-') &&
-                param === binopNode.leftExpression
-              ) {
-                isIncrementedBool = true;
-                isDecrementedBool = true;
-                break;
-              }
-              // if none, go to the next param
-            }
-          }
-          if (isIncrementedBool && !isDecrementedBool) {
-            increments.push(binopNode);
-          } else if (isDecrementedBool) {
-            decrements.push(binopNode);
-          }
-        } else if (rhsType === 'Identifier') {
-          // c = a + b, a = c
-          // TODO consider cases where c has lots of modifiers, which might cancel out the incrementation of a
-          // TODO consider doing this at the level of c, not a, maybe that works out better
-          const rhsbinding = scope.getReferencedBinding(expressionNode.rightHandSide);
-          const isSecret = rhsbinding.secretVariable;
-          // looking at modifiers of c...
-          if (rhsbinding && rhsbinding.isModified) {
-            // for each modifier, replace a with c and see if there are incrementations..
-            for (const path of rhsbinding.modifyingPaths) {
-              const modifyingNode = path.node;
-              // ... and if a xor c are secret, then true
-              if (scope.isIncremented(modifyingNode, lhsNode) && (lhsSecret || isSecret)) {
-                isIncrementedBool = true;
-                break;
+
+          case 'Identifier': {
+            // c = a + b, a = c
+            // TODO consider cases where c has lots of modifiers, which might cancel out the incrementation of a
+            // TODO consider doing this at the level of c, not a, maybe that works out better
+            const rhsbinding = this.getReferencedBinding(rightHandSide);
+            const isSecret = rhsbinding.secretVariable;
+            // looking at modifiers of c...
+            if (rhsbinding && rhsbinding.isModified) {
+              // for each modifier, replace a with c and see if there are incrementations..
+              for (const p of rhsbinding.modifyingPaths) {
+                const modifyingNode = p.node;
+                // ... and if a xor c are secret, then true
+                if (this.isIncremented(modifyingNode, lhsNode) && (lhsSecret || isSecret)) {
+                  isIncrementedBool = true;
+                  break;
+                }
               }
             }
+            break;
           }
+
+          default:
+            console.log(
+              `Assignment.rightHandSide is of nodeType ${rightHandSide.nodeType} which is not being properly handled by the 'isIncremented()' function`,
+            );
+          // throw new Error(
+          //   `Assignment.rightHandSide is of nodeType ${expressionNode.rightHandSide.nodeType} which is not yet supported. Please open an issue.`,
+          // );
         }
+
         if (!isIncrementedBool) {
           isIncrementedBool = false;
           isDecrementedBool = false;
@@ -974,35 +1034,34 @@ export class Scope {
         isDecrementedBool = false;
         break;
     }
+
     logger.debug(`statement is incremented? ${isIncrementedBool}`);
     logger.debug(`statement is decremented? ${isDecrementedBool}`);
     expressionNode.isIncremented = isIncrementedBool;
     expressionNode.isDecremented = isDecrementedBool;
-    const referencedIndicator = lhsNode.baseExpression
-      ? scope.indicators[lhsNode.baseExpression.referencedDeclaration].mappingKey[
-          this.getMappingKeyIndicator(lhsNode)
-        ]
-      : scope.indicators[lhsNode.referencedDeclaration];
-    if (!referencedIndicator.increments) referencedIndicator.increments = [];
-    if (!referencedIndicator.decrements) referencedIndicator.decrements = [];
+
+    const referencedIndicator = this.getReferencedIndicator(lhsNode, true);
+    referencedIndicator.increments = referencedIndicator.increments || [];
+    referencedIndicator.decrements = referencedIndicator.decrements || [];
 
     increments.forEach(inc => {
       referencedIndicator.increments.push(inc);
       if (lhsNode.baseExpression) {
-        const keyBinding = lhsbinding.mappingKey[this.getMappingKeyIndicator(lhsNode)];
-        if (!keyBinding.increments) keyBinding.increments = [];
+        const keyBinding = lhsbinding.mappingKey[this.getMappingKeyName(lhsNode)];
+        keyBinding.increments = keyBinding.increments || [];
         keyBinding.increments.push(inc);
       }
       lhsbinding.increments.push(inc);
     });
-    decrements.forEach(inc => {
-      referencedIndicator.decrements.push(inc);
+
+    decrements.forEach(dec => {
+      referencedIndicator.decrements.push(dec);
       if (lhsNode.baseExpression) {
-        const keyBinding = lhsbinding.mappingKey[this.getMappingKeyIndicator(lhsNode)];
-        if (!keyBinding.decrements) keyBinding.decrements = [];
-        keyBinding.decrements.push(inc);
+        const keyBinding = lhsbinding.mappingKey[this.getMappingKeyName(lhsNode)];
+        keyBinding.decrements = keyBinding.decrements || [];
+        keyBinding.decrements.push(dec);
       }
-      lhsbinding.decrements.push(inc);
+      lhsbinding.decrements.push(dec);
     });
 
     return { isIncrementedBool, isDecrementedBool };
@@ -1013,69 +1072,78 @@ export class Scope {
    * - ensures all secret states are either whole or partitioned
    * - ensures no conflicting indicators
    * - looks for missing/bad syntax which couldn't be picked up before
-   * @param {Object} secretVar - indicator object (fnDefScope) for secret state
+   * @param {Indicator} secretVar - indicator object (fnDefScope) for secret state
    */
   indicatorChecks(secretVar) {
     const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
-    const topScope = contractDefScope.bindings[secretVar.id];
+    const topBinding = contractDefScope.bindings[secretVar.id];
+
     // warning: state is clearly whole, don't need known decorator
     if (secretVar.isKnown && secretVar.isWhole)
       logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state ${secretVar.name} MUST be known, due to: ${secretVar.isWholeReason}`,
+        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${secretVar.name}' is trivially 'known' because it is 'whole', due to: ${secretVar.isWholeReason}`,
       );
+
     // error: conflicting unknown/whole state
     if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole)
       throw new Error(
-        `Can't mark a whole state as unknown. The state ${secretVar.name} is whole due to: ${secretVar.isWholeReason}`,
+        `Can't mark a whole state as 'unknown'. The state '${secretVar.name}' is 'whole' due to: ${secretVar.isWholeReason}`,
       );
+
     // mark a state as partitioned (isIncremented and isUnknown)
     if (
-      (topScope.isUnknown || secretVar.isUnknown) &&
+      (topBinding.isUnknown || secretVar.isUnknown) &&
       secretVar.isIncremented &&
       !secretVar.isWhole
     ) {
       secretVar.isWhole = false;
       secretVar.isPartitioned = true;
       secretVar.isPartitionedReason = [`Incremented and marked as unknown`];
+
       if (
-        topScope.isPartitionedReason &&
-        !topScope.isPartitionedReason.includes(secretVar.isPartitionedReason[0])
+        topBinding.isPartitionedReason &&
+        !topBinding.isPartitionedReason.includes(secretVar.isPartitionedReason[0])
       ) {
-        topScope.isPartitionedReason.push(secretVar.isPartitionedReason[0]);
-      } else if (!topScope.isPartitionedReason) {
-        topScope.isPartitionedReason = secretVar.isPartitionedReason;
+        topBinding.isPartitionedReason.push(secretVar.isPartitionedReason[0]);
+      } else if (!topBinding.isPartitionedReason) {
+        topBinding.isPartitionedReason = secretVar.isPartitionedReason;
       }
     }
+
     if (secretVar.isIncremented && secretVar.isWhole === undefined && !secretVar.isDecremented) {
       // state isIncremented, not isDecremented, and not yet marked as whole/partitioned
       if (!secretVar.isKnown && !secretVar.isUnknown) {
         // error: no known/unknown syntax at all
         throw new Error(
-          `Secret value ${secretVar.name} assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
+          `Secret value '${secretVar.name}' assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
         );
       }
+
       // error: this should have been picked up in previous block (isIncremented and isUnknown)
       if (secretVar.isUnknown) throw new Error(`This should be unreachable code!`);
-      // mark a known state as whole
+
       if (secretVar.isKnown) {
+        // mark a known state as whole
         secretVar.isWhole = true;
         secretVar.isWholeReason = [`Marked as known`];
-      } else if (!topScope.isUnknown) {
-        // warning: its whole by default, may not be dev intention
+      } else if (!topBinding.isUnknown) {
+        // warning: it's whole by default, may not be dev's intention
         logger.warn(
-          `State ${secretVar.name} will be treated as a whole state, because there are no unknown decorators`,
+          `State '${secretVar.name}' will be treated as a whole state, because there are no 'unknown' decorators`,
         );
         secretVar.isWhole = true;
-        secretVar.isWholeReason = [`No unknown decorator or overwrites`];
+        secretVar.isWholeReason = [`No 'unknown' decorator or overwrites`];
       }
       // look for duplicates: PEDANTIC: Unnecessary duplicate 'unknown' decorator for secret state `a`.
     }
+
     if (secretVar.isWhole === false && secretVar.isDecremented) {
       // partitioned/decremented state needs nullifiers
       secretVar.isNullified = true;
       secretVar.binding.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
+
     if (secretVar.isWhole === false && secretVar.isIncremented) {
       // partitioned/incremented state doesn't need nullifiers (in this function)
       secretVar.isNullified = false;
@@ -1085,36 +1153,42 @@ export class Scope {
       secretVar.binding.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
     }
+
     // here - mark the contract obj and check for conflicting indicators
     // errors: contract and function scopes conflict
-    if (topScope.isWhole && !secretVar.isWhole)
-      throw new Error(`State ${secretVar.name} must be whole because: ${topScope.isWholeReason}`);
-    if (topScope.isPartitioned && secretVar.isWhole)
+    if (topBinding.isWhole && !secretVar.isWhole)
+      throw new Error(`State ${secretVar.name} must be whole because: ${topBinding.isWholeReason}`);
+
+    if (topBinding.isPartitioned && secretVar.isWhole)
       throw new Error(
-        `State ${secretVar.name} must be whole because: ${secretVar.isWholeReason}, but is partitioned: ${topScope.isPartitionedReason}`,
+        `State ${secretVar.name} must be whole because: ${secretVar.isWholeReason}, but is partitioned: ${topBinding.isPartitionedReason}`,
       );
+
     // update contract scope with whole/partitioned reasons
-    topScope.isWhole = secretVar.isWhole;
+    topBinding.isWhole = secretVar.isWhole;
     if (secretVar.isWhole !== undefined) secretVar.binding.isWhole = secretVar.isWhole;
+
     if (secretVar.isPartitioned !== undefined)
       secretVar.binding.isPartitioned = secretVar.isPartitioned;
-    if (topScope.isWhole === false && !topScope.isPartitionedReason) {
-      topScope.isPartitioned = true;
-      topScope.isPartitionedReason = secretVar.isPartitionedReason;
-    } else if (topScope.isWhole === false && topScope.isPartitionedReason) {
+
+    if (topBinding.isWhole === false && !topBinding.isPartitionedReason) {
+      topBinding.isPartitioned = true;
+      topBinding.isPartitionedReason = secretVar.isPartitionedReason;
+    } else if (topBinding.isWhole === false && topBinding.isPartitionedReason) {
       if (!secretVar.isPartitionedReason) secretVar.isPartitionedReason = [];
       secretVar.isPartitionedReason.forEach(reason => {
-        if (!topScope.isPartitionedReason.includes(reason))
-          topScope.isPartitionedReason.push(reason);
+        if (!topBinding.isPartitionedReason.includes(reason))
+          topBinding.isPartitionedReason.push(reason);
       });
-    } else if (!topScope.isWholeReason) {
-      topScope.isWholeReason = secretVar.isWholeReason;
+    } else if (!topBinding.isWholeReason) {
+      topBinding.isWholeReason = secretVar.isWholeReason;
     } else {
       if (!secretVar.isWholeReason) secretVar.isWholeReason = [];
       secretVar.isWholeReason.forEach(reason => {
-        if (!topScope.isWholeReason.includes(reason)) topScope.isWholeReason.push(reason);
+        if (!topBinding.isWholeReason.includes(reason)) topBinding.isWholeReason.push(reason);
       });
     }
+
     // logging
     logger.debug(`Indicator: (at ${secretVar.name})`);
     logger.debug('----------');
@@ -1150,7 +1224,7 @@ export class Scope {
 
     if (isMapping) {
       // we instead use the mapping[key] binding for most cases
-      const keyName = this.getMappingKeyIndicator(parent);
+      const keyName = this.getMappingKeyName(parent);
       referencedBinding = referencedBinding.mappingKey[keyName];
     }
 
@@ -1208,10 +1282,6 @@ export class Scope {
         );
       }
     }
-  }
-
-  getIndicator() {
-    return this.indicators;
   }
 }
 

@@ -104,7 +104,7 @@ export default {
         case 'IndexAccess':
           newState.id = node.expression.leftHandSide.baseExpression.id;
           traversePathsFast(path, getIdentifierPath, newState);
-          const mappingKey = scope.getMappingKeyIndicator(node.expression.leftHandSide);
+          const mappingKey = scope.getMappingKeyName(node.expression.leftHandSide);
           referencedBinding = scope.getReferencedBinding(
             node.expression.leftHandSide.baseExpression,
           ).mappingKey[mappingKey];

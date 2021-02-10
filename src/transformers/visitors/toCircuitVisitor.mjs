@@ -114,6 +114,9 @@ const visitor = {
   VariableDeclarationStatement: {
     enter(path) {
       const { node, parent } = path;
+      if (node.stateVariable) {
+        throw new Error('TODO... secret VariableDeclarationStatements');
+      }
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
@@ -124,6 +127,9 @@ const visitor = {
     enter(path) {
       const { node, parent } = path;
       const { operator } = node;
+
+      console.log('\n\n\n\n\n\nBINARY OPERATION', path)
+
       const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
@@ -191,6 +197,7 @@ const visitor = {
             // console.log('\n\n\nlhs', lhs)
             // console.log('\n\n\nrhs', rhs)
             // console.log('\n\n\nscope.indicators', scope.indicators)
+            // console.log('\n\n\nlhsIndicator', lhsIndicator)
 
             const rhsPath = NP.getPath(rhs);
             // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
@@ -203,7 +210,7 @@ const visitor = {
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
                   mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
-                }), // TODO: this is an ugly hack.
+                }), // HACK: this is an ugly hack.
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
               node._newASTPointer = newNode.subtrahend;
@@ -214,7 +221,7 @@ const visitor = {
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
                   mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
-                }), // TODO: this is an ugly hack.
+                }), // HACK: this is an ugly hack.
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
               node._newASTPointer = newNode.addend;
@@ -330,6 +337,22 @@ const visitor = {
       const newNode = buildNode('IndexAccess');
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
+    },
+  },
+
+  FunctionCall: {
+    enter(path) {
+      const { node, parent } = path;
+      let newNode;
+
+      // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
+
+      if (path.isRequireStatement()) {
+        newNode = buildNode('Assert', { arguments: node.arguments });
+
+        node._newASTPointer = newNode;
+        parent._newASTPointer[path.containerName] = newNode;
+      }
     },
   },
 };

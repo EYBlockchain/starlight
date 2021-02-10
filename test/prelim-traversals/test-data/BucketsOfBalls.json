@@ -1416,6 +1416,6 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "src: 219:17:0: Non-secret parameter 'amountDeposit' used when assigning to a secret variable 'buckets'. Blockchain observers might be able to infer the value of 'buckets' from this. I.e. although you've labelled 'buckets' as 'secret', it might not be secret."
+    "Non-secret parameter 'amountDeposit' used when assigning to a secret variable 'buckets'. Blockchain observers might be able to infer the value of 'buckets' from this. I.e. although you've labelled 'buckets' as 'secret', it might not be secret."
   ]
 }

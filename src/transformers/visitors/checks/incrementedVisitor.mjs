@@ -3,68 +3,19 @@
 import logger from '../../../utils/logger.mjs';
 
 export default {
-  SourceUnit: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  PragmaDirective: {
-    enter(path, state) {},
-    exit(path, state) {},
-  },
-
-  ContractDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  FunctionDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  ParameterList: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Block: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  VariableDeclarationStatement: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  BinaryOperation: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Assignment: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
   ExpressionStatement: {
     enter(path, state) {},
 
     exit(path, state) {
-      // Why here? Because we need the indicatorObj of the individual elts before we decide
+      // Why here? Because we need the indicatorObj of the individual elts before we decide.
       const { node, scope } = path;
       const expressionNode = node.expression;
+
+      // TODO: why?
       if (expressionNode.nodeType === 'FunctionCall') return;
+
       const lhsNode = expressionNode.leftHandSide || expressionNode.subExpression;
+
       const { isIncrementedBool, isDecrementedBool } =
         lhsNode.typeDescriptions.typeString !== 'address'
           ? scope.isIncremented(expressionNode, lhsNode)
@@ -89,7 +40,7 @@ export default {
         // a mapping:
         // TODO: IndexAccess also describes access of an array (not just mappings)
         if (lhsNode.nodeType === 'IndexAccess') {
-          const keyName = scope.getMappingKeyIndicator(lhsNode);
+          const keyName = scope.getMappingKeyName(lhsNode);
           fnIndicatorObj = fnIndicatorObj.mappingKey[keyName];
         }
 
@@ -115,29 +66,5 @@ export default {
         }
       }
     },
-  },
-
-  VariableDeclaration: {
-    enter(path, state) {},
-
-    exit(path) {},
-  },
-
-  ElementaryTypeName: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Identifier: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  Literal: {
-    enter(path) {},
-
-    exit(path) {},
   },
 };

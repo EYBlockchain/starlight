@@ -601,6 +601,6 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "src: 183:1:0: Non-secret parameter 'param4' used when assigning to a secret variable 'a'. Blockchain observers might be able to infer the value of 'a' from this. I.e. although you've labelled 'a' as 'secret', it might not be secret."
+    "Non-secret parameter 'param4' used when assigning to a secret variable 'a'. Blockchain observers might be able to infer the value of 'a' from this. I.e. although you've labelled 'a' as 'secret', it might not be secret."
   ]
 }

@@ -8,18 +8,16 @@ import "./Escrow-imports/IERC20.sol";
 
 contract Escrow {
 
-    address public owner;
     secret mapping(address => uint256) public balances;
     IERC20 public erc20;
 
     constructor(address _erc20) {
-        owner = msg.sender;
         erc20 = IERC20(_erc20);
     }
 
     function deposit(uint amount) public {
         bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
-        require(hasBalance);
+        require(hasBalance == true);
         balances[msg.sender] += amount;
     }
 

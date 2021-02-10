@@ -189,6 +189,14 @@ export function buildNode(nodeType, fields = {}) {
         name,
       };
     }
+    case 'Assert': {
+      // A very specific zokrates nodeType, which is similar to a Solidity 'require' statement. It asserts a truth.
+      const { arguments: args } = fields; // we have to 'tip-toe' around the reserved JS keyword 'arguments'!
+      return {
+        nodeType,
+        args,
+      };
+    }
     case 'Boilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
       return generateBoilerplate(fields);
