@@ -17,9 +17,15 @@ contract Escrow {
         erc20 = IERC20(_erc20);
     }
 
+    function hello(uint256) private returns (bool) {
+        return true;
+    }
+
     function deposit(uint amount) public {
         // bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
         // require(hasBalance);
+        bool hasBalance = hello(amount);
+        require(hasBalance);
         balances[msg.sender] += amount;
     }
 

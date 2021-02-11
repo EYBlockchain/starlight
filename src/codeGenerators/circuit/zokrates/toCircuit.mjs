@@ -1,4 +1,4 @@
-/* eslint-disable import/no-cycle */
+/* eslint-disable import/no-cycle, no-nested-ternary */
 import fs from 'fs';
 import path from 'path';
 import logger from '../../../utils/logger.mjs';
@@ -91,8 +91,9 @@ function codeGenerator(node) {
       return BP.uniqueify(node.parameters.flatMap(codeGenerator)).join(',\\\n\t');
 
     case 'VariableDeclaration': {
-      const isPrivate = node.isPrivate ? 'private ' : 'public ';
-      return `${isPrivate}${codeGenerator(node.typeName)} ${node.name}`;
+      const visibility =
+        node.declarationType === 'parameter' ? (node.isPrivate ? 'private ' : 'public ') : '\t\t';
+      return `${visibility}${codeGenerator(node.typeName)} ${node.name}`;
     }
 
     case 'VariableDeclarationStatement': {
@@ -130,7 +131,8 @@ function codeGenerator(node) {
       return node.value;
 
     case 'Assert':
-      return `assert(${node.args.flatMap(codeGenerator)})`;
+      return `
+        assert(${node.args.flatMap(codeGenerator)})`;
 
     case 'Boilerplate':
       return bp.generateBoilerplate(node);

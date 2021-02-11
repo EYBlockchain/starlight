@@ -146,9 +146,9 @@ export default class NodePath {
    * @returns { ? || falsey} - depends on the callback
    */
   queryAncestors(callback) {
-    const path = this.parentPath || null;
+    const path = this || null;
     if (!path) return null; // No more paths to look at. So not found anywhere.
-    return callback(path) || path.queryAncestors(callback);
+    return callback(path) || (path.parentPath?.queryAncestors(callback) ?? null);
   }
 
   /**
@@ -256,32 +256,48 @@ export default class NodePath {
   }
 
   /**
+   * Callable from any nodeType below (or equal to) a 'SourceUnit' node.
+   * @returns {NodePath || null} the parameters of the function.
+   */
+  getSourceUnit(node = this.node) {
+    const path = NodePath.getPath(node);
+    return path.getAncestorOfType('SourceUnit') || null;
+  }
+
+  /**
+   * Callable from any nodeType below (or equal to) a 'ContractDefinition' node.
+   * @returns {NodePath || null} the parameters of the function.
+   */
+  getContractDefinition(node = this.node) {
+    const path = NodePath.getPath(node);
+    return path.getAncestorOfType('ContractDefinition') || null;
+  }
+
+  /**
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
-   * @returns {Array[NodePath] || null} the parameters of the function.
+   * @returns {Array[Node] || null} the parameters of the function.
    */
   getFunctionParameters() {
     const functionDefinition = this.getAncestorOfType('FunctionDefinition');
-    return functionDefinition ? functionDefinition.parameters.parameters : null;
+    return functionDefinition?.node?.parameters?.parameters ?? null;
   }
 
   /**
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
-   * @returns {Array[NodePath] || null} the parameters of the function.
+   * @returns {Array[Node] || null} the parameters of the function.
    */
   getFunctionReturnParameters() {
     const functionDefinition = this.getAncestorOfType('FunctionDefinition');
-    return functionDefinition ? functionDefinition.returnParameters.parameters : null;
+    return functionDefinition?.node?.returnParameters?.parameters ?? null;
   }
 
   /**
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
-   * @returns {Array[NodePath] || null} the statements of the function.
+   * @returns {Array[Node] || null} the statements of the function.
    */
   getFunctionBodyStatements() {
     const functionDefinition = this.getAncestorOfType('FunctionDefinition');
-    return functionDefinition && functionDefinition.body
-      ? functionDefinition.body.statements
-      : null;
+    return functionDefinition?.node?.body?.statements ?? null;
   }
 
   /**
@@ -327,7 +343,73 @@ export default class NodePath {
    * @returns {Boolean}
    */
   isInFunctionBodyStatement() {
-    return this.queryAncestors(path => path.isFunctionBodyStatement());
+    return !!this.queryAncestors(path => path.isFunctionBodyStatement());
+  }
+
+  isFunctionParameterDeclaration() {
+    const functionParameters = this.getFunctionParameters();
+    return functionParameters.some(node => node === this.node);
+  }
+
+  isFunctionParameter(node = this.node) {
+    const referencedBinding = this.scope.getReferencedBinding(node);
+    return referencedBinding.path.isFunctionParameterDeclaration();
+  }
+
+  isFunctionReturnParameterDeclaration() {
+    return (
+      this.parent.nodeType === 'ParameterList' && this.parent.containerName === 'returnParameters'
+    );
+  }
+
+  isFunctionReturnParameter(node = this.node) {
+    const referencedBinding = this.scope.getReferencedBinding(node);
+    return referencedBinding.path.isFunctionReturnParameterDeclaration();
+  }
+
+  // TODO: this will capture `memory` delcarations as well. In future we might want to split out identification of memory (heap) variables from stack variables.
+  // NOTE: this does not consider function parameters to be local stack variables.
+  isLocalStackVariableDeclaration() {
+    return (
+      this.isInFunctionBodyStatement() &&
+      ['VariableDeclaration', 'VariableDeclarationStatement'].includes(this.nodeType)
+    );
+  }
+
+  // TODO: this will capture `memory` delcarations as well. In future we might want to split out identification of memory (heap) variables from stack variables.
+  // NOTE: this does not consider function parameters to be local stack variables.
+  isLocalStackVariable(node = this.node) {
+    const referencedBinding = this.scope.getReferencedBinding(node);
+    return referencedBinding.path.isLocalStackVariableDeclaration();
+  }
+
+  isExternalContractInstanceDeclaration(node = this.path) {
+    if (!['VariableDeclaration', 'VariableDeclarationStatement'].includes(node.nodeType))
+      return false;
+    if (!node.typeDescriptions?.typeString.includes('contract')) return false;
+
+    // Ensure the contract being declared is external:
+    const referencedContractId = node.typeName?.referenceDeclaration;
+    const thisContractDefinition = this.getContractDefinition(node).node;
+    const sourceUnit = this.getSourceUnit(node).node;
+    const exportedSymbolsId = sourceUnit?.exportedSymbols?.[thisContractDefinition.name]?.[0];
+
+    if (!exportedSymbolsId) return false;
+
+    return referencedContractId === exportedSymbolsId;
+  }
+
+  isExternalContractInstance(node = this.path) {
+    const varDecNode = this.getReferencedNode(node);
+    return this.isExternalContractInstanceDeclaration(varDecNode);
+  }
+
+  isExternalFunctionCall() {
+    if (this.nodeType !== 'FunctionCall') return false;
+    const { expression: functionNode } = this.node; // the function being called
+    // The `expression` for an external function call will be a MemberAccess nodeType. myExternalContract.functionName
+    if (functionNode.nodeType !== 'MemberAccess') return false;
+    return this.isExternalContractInstance(functionNode);
   }
 
   /**

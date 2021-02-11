@@ -112,11 +112,21 @@ const visitor = {
   },
 
   VariableDeclarationStatement: {
-    enter(path) {
+    enter(path, state) {
       const { node, parent } = path;
       if (node.stateVariable) {
-        throw new Error('TODO... secret VariableDeclarationStatements');
+        throw new Error(
+          `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
+        );
       }
+
+      // HACK: this hack ignores all local stack variables and assumes they'll be picked up in Solidity. A future enhancement will be to only ignore local stack variables which interact solely with non-secret states. Local stack variabels which _do_ interact with secret states can probably be brought into the circuit eventually.
+      if (path.isLocalStackVariableDeclaration()) {
+        // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
+        state.skipSubNodes = true;
+        return;
+      }
+
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
@@ -127,8 +137,6 @@ const visitor = {
     enter(path) {
       const { node, parent } = path;
       const { operator } = node;
-
-      console.log('\n\n\n\n\n\nBINARY OPERATION', path)
 
       const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
@@ -261,10 +269,21 @@ const visitor = {
         return;
       }
 
+      if (path.isFunctionReturnParameterDeclaration())
+        throw new Error(
+          `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
+        );
+
+      let declarationType;
+      // TODO: `memery` declarations and `returnParameter` declarations
+      if (path.isLocalStackVariableDeclaration()) declarationType = 'localStack';
+      if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
+
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
         isSecret: node.isSecret,
+        declarationType,
       });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
@@ -341,17 +360,28 @@ const visitor = {
   },
 
   FunctionCall: {
-    enter(path) {
+    enter(path, state) {
       const { node, parent } = path;
       let newNode;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 
       if (path.isRequireStatement()) {
-        newNode = buildNode('Assert', { arguments: node.arguments });
+        // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least)
+        return;
 
-        node._newASTPointer = newNode;
-        parent._newASTPointer[path.containerName] = newNode;
+        // newNode = buildNode('Assert', { arguments: node.arguments });
+        //
+        // node._newASTPointer = newNode;
+        // parent._newASTPointer[path.containerName] = newNode;
+        // return;
+      }
+
+      if (path.isExternalFunctionCall()) {
+        // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
+
+        // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
+        state.skipSubNodes = true;
       }
     },
   },
