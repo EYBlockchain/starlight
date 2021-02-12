@@ -87,11 +87,13 @@ export default function toOrchestration(ast, options) {
     if (fileObj.filepath.includes('preimage.json')) continue;
     fs.writeFileSync(filepath, fileObj.file);
   }
+  const contractNode = ast.node.nodes.filter(n => n.nodeType === `ContractDefinition`)[0];
   const contractName = `${
-    options.zappName.charAt(0).toUpperCase() + options.zappName.slice(1)
+    contractNode.name.charAt(0).toUpperCase() + contractNode.name.slice(1)
   }Shield`;
 
   logger.verbose(`Saving backend files to the zApp output directory ${options.outputDirPath}...`);
+  // HERE
   for (const fileObj of ZappFilesBoilerplate) {
     let file = fs.readFileSync(fileObj.readPath, 'utf8');
     const filepath = pathjs.join(options.outputDirPath, fileObj.writePath);

@@ -1,7 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger.mjs';
-import { OrchestrationCodeBoilerPlate } from '../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
+import {
+  OrchestrationCodeBoilerPlate,
+  integrationTestBoilerplate,
+} from '../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
 
 const boilerplateNodeDir = './src/boilerplate/';
 const testReadPath = './src/boilerplate/common/generic-test.mjs';
@@ -17,11 +20,12 @@ const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(
     line =>
-      (line.includes(`.mjs`) || line.includes(`.json`)) &&
+      (line.includes(`.mjs`) || line.includes(`.json`) || line.includes(`shield.js`)) &&
       !line.includes('return') &&
       line.includes('import'),
   );
   let localFiles = [];
+  // HERE
   // parse for imports of local (non-zokrates-stdlib) files:
   const localFilePaths = ImportStatementList.reduce((acc, line) => {
     const importFilePath = line.match(/'(.*?)'/g)[0].replace(/'/g, ''); // get text between quotes; i.e. the import filepaths
@@ -68,23 +72,55 @@ const editableCommitmentCommonFilesBoilerplate = () => {
 
 const testInputsByType = solidityType => {
   switch (solidityType) {
+    case 'uint':
     case 'uint256':
       return Math.floor(Math.random() * Math.floor(20)); // random number between 1 and 20
+    case 'address':
+      return `'this-is-an-address'`;
+    case 'key':
+      return `'this-is-a-zkp-key'`;
+    case 'commitment':
+      return `'this-is-an-old-commitment'`;
     default:
       return 0; // TODO
   }
 };
 
 const prepareIntegrationTest = node => {
-  const genericTestFile = fs.readFileSync(testReadPath, 'utf8');
-  let outputTestFile = genericTestFile.replace(/CONTRACT_NAME/g, node.contractName);
-  outputTestFile = outputTestFile.replace(/FUNCTION_NAME/g, node.functionName);
-  // console.log(node.parameters);
-  const paramTypes = node.parameters.parameters.map(obj => obj.typeName.name);
-  const inputs1 = paramTypes.map(testInputsByType);
-  const inputs2 = paramTypes.map(testInputsByType);
-  outputTestFile = outputTestFile.replace(/FUNCTION_SIG_1/g, inputs1);
-  outputTestFile = outputTestFile.replace(/FUNCTION_SIG_2/g, inputs2);
+  const genericTestFile = integrationTestBoilerplate;
+  let outputTestFile = genericTestFile.prefix;
+  node.functions.forEach(fn => {
+    let fnboilerplate = genericTestFile.function
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name);
+    // fn sig: original params -> new public keys -> input commitments
+    const paramTypes = fn.parameters.parameters.map(obj => obj.typeName.name);
+    fn.parameters.modifiedStateVariables.forEach(param => {
+      const index = paramTypes.indexOf('key');
+      if (index > -1) {
+        paramTypes.splice(index, 0, 'key');
+      } else {
+        paramTypes.push('key'); // for each modified state, add a new owner public key
+      }
+
+      if (param.isDecremented) {
+        // if dec, we need two input commitments
+        paramTypes.push('commitment');
+        paramTypes.push('commitment');
+      }
+    });
+    fnboilerplate = fnboilerplate.replace(
+      /FUNCTION_SIG_1/g,
+      paramTypes.map(testInputsByType).join(', '),
+    );
+    fnboilerplate = fnboilerplate.replace(
+      /FUNCTION_SIG_2/g,
+      paramTypes.map(testInputsByType).join(', '),
+    );
+
+    const fnimport = genericTestFile.fnimport.replace(/FUNCTION_NAME/g, fn.name);
+    outputTestFile = `${fnimport}\n${outputTestFile}\n${fnboilerplate}`;
+  });
   return outputTestFile;
 };
 
@@ -120,7 +156,9 @@ function codeGenerator(node) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder': {
-      const check = node.files.filter(x => x.nodeType === 'File').flatMap(codeGenerator);
+      const check = node.files
+        .filter(x => x.nodeType !== 'NonSecretFunction')
+        .flatMap(codeGenerator);
       // console.log("\n\n\n\n\n\n\n\n\ncheck FOLDER:", check);
       return check;
     }
@@ -141,7 +179,25 @@ function codeGenerator(node) {
 
     case 'ZokratesSetupCommonFilesBoilerplate': {
       const check = collectImportFiles(
-        [`import './common/write-vk.mjs'`, `import './common/zkp-setup.mjs'`].join('\n'),
+        [
+          `import './common/write-vk.mjs'`,
+          `import './common/zkp-setup.mjs'`,
+          `import './common/migrations/2_shield.js'`,
+        ].join('\n'),
+      );
+      const vkfile = check.filter(obj => obj.filepath.includes(`write-vk`))[0];
+      vkfile.file = vkfile.file.replace(/FUNCTION_NAMES/g, `'${node.functions.join(`', '`)}'`);
+      const setupfile = check.filter(obj => obj.filepath.includes(`zkp-setup`))[0];
+      setupfile.file = setupfile.file.replace(
+        /FUNCTION_NAMES/g,
+        `'${node.functions.join(`', '`)}'`,
+      );
+      const migrationsfile = check.filter(obj => obj.filepath.includes(`shield`))[0];
+      migrationsfile.filepath = `./migrations/2_shield.js`;
+      migrationsfile.file = migrationsfile.file.replace(/CONTRACT_NAME/g, node.contractName);
+      migrationsfile.file = migrationsfile.file.replace(
+        /FUNCTION_NAMES/g,
+        `'${node.functions.join(`', '`)}'`,
       );
       // console.log("\n\n\n\n\n\n\n\n\ncheck ZokratesSetupCommonFilesBoilerplate:", check);
       return check;

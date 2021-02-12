@@ -47,11 +47,11 @@ export default {
             {
               nodeType: 'Imports',
             },
-            {
-              nodeType: 'KeyRegistrationFunction',
-              onChainKeyRegistry: scope.onChainKeyRegistry, // TODO this is the temp solution to have a mapping with eth addr -> zkp keys on chain (we don't always need it)
-              contractName: contractName,
-            },
+            // {
+            //   nodeType: 'KeyRegistrationFunction',
+            //   onChainKeyRegistry: scope.onChainKeyRegistry, // TODO this is the temp solution to have a mapping with eth addr -> zkp keys on chain (we don't always need it)
+            //   contractName: contractName,
+            // },
             {
               // insert this FunctionDefinition node into our newly created circuit file.
               nodeType: node.nodeType, // FunctionDefinition
@@ -62,7 +62,7 @@ export default {
             },
           ],
         };
-        node._newASTPointer = newNode.nodes[2]; // eslint-disable-line prefer-destructuring
+        node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
       } else {
         // Not sure what to do if we're not creating a file...
@@ -95,10 +95,18 @@ export default {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._newASTPointer;
         let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
+        let ZokratesSetupCommonFilesBoilerplateAlreadyExists = false;
+        let IntegrationTestBoilerplateAlreadyExists = false;
         for (const file of files) {
           if (file.nodeType === 'EditableCommitmentCommonFilesBoilerplate') {
             EditableCommitmentCommonFilesBoilerplateAlreadyExists = true;
-            break;
+          }
+          if (file.nodes && file.nodes[0].nodeType === 'IntegrationTestBoilerplate') {
+            IntegrationTestBoilerplateAlreadyExists = true;
+          }
+          if (file.nodeType === 'ZokratesSetupCommonFilesBoilerplate') {
+            ZokratesSetupCommonFilesBoilerplateAlreadyExists = true;
+            file.functions.push(node.name);
           }
         }
         if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
@@ -108,10 +116,15 @@ export default {
         }
         const contractName = `${parent.name}Shield`;
 
-        if (state.snarkVerificationRequired) {
+        if (state.snarkVerificationRequired && !ZokratesSetupCommonFilesBoilerplateAlreadyExists) {
           parent._newASTPointer.push({
             nodeType: 'ZokratesSetupCommonFilesBoilerplate',
+            functions: [node.name],
+            contractName: contractName,
           });
+        }
+
+        if (state.snarkVerificationRequired && !IntegrationTestBoilerplateAlreadyExists) {
           // NODEBUILDING
           parent._newASTPointer.push({
             nodeType: 'File',
@@ -121,10 +134,19 @@ export default {
               {
                 nodeType: 'IntegrationTestBoilerplate',
                 contractName: contractName,
-                functionName: node.name,
-                parameters: node.parameters,
+                functions: [{ name: node.name, parameters: node._newASTPointer.parameters }],
               },
             ],
+          });
+        }
+
+        if (state.snarkVerificationRequired && IntegrationTestBoilerplateAlreadyExists) {
+          const testNode = parent._newASTPointer.filter(
+            node => node.name === 'test' && node.nodes,
+          )[0];
+          testNode.nodes[0].functions.push({
+            name: node.name,
+            parameters: node._newASTPointer.parameters,
           });
         }
 
@@ -139,8 +161,10 @@ export default {
             const binding = refbinding;
             const modifiedKeys = Object.keys(scope.indicators[id].mappingKey);
             for (const [key, mappingBinding] of Object.entries(binding.mappingKey)) {
-              if (modifiedKeys.includes(key))
+              if (modifiedKeys.includes(key)) {
+                mappingBinding.referencedKeyName = key;
                 modifiedStateVariableBindings[`${id}.${key}`] = mappingBinding;
+              }
             }
             delete modifiedStateVariableBindings[id];
           }
@@ -159,7 +183,6 @@ export default {
             name: stateVarName,
           });
           let increment;
-
           if (indicator.isPartitioned) {
             node._newASTPointer.body.statements.forEach(statement => {
               if (
@@ -170,7 +193,19 @@ export default {
                 increment = statement.increment;
               if (statement.decrementsSecretState) {
                 node._newASTPointer.decrementsSecretState = true;
-                node._newASTPointer.decrementedSecretState = statement.secretStateName; // TODO make this an array
+                node._newASTPointer.decrementedSecretState = statement.secretStateName;
+                const testNode = parent._newASTPointer.filter(
+                  statement => statement.name === 'test' && statement.nodes,
+                )[0];
+                const fnTestNode = testNode.nodes[0].functions.filter(
+                  statement => statement.name === node.name,
+                )[0];
+                fnTestNode.decrementsSecretState = true;
+                fnTestNode.parameters.modifiedStateVariables.filter(
+                  param => param.name === statement.secretStateName,
+                )[0].isDecremented = true;
+
+                // TODO make this an array
               }
             });
           }
@@ -186,12 +221,15 @@ export default {
           // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
           // Also do for MembershipWitness
           // NODEBUILDING
+
           if (indicator.initialisationRequired) {
             if (binding.owner && !binding.owner.node) binding.owner.node = binding.owner;
             if (!generateProofNodeExists) {
               const readPreimageNode = {
                 nodeType: 'ReadPreimage',
                 privateStates: {},
+                onChainKeyRegistry: scope.onChainKeyRegistry,
+                contractName: contractName,
               };
               node._newASTPointer.body.statements.push(readPreimageNode);
             }
@@ -211,6 +249,12 @@ export default {
                 ? binding.owner.isSecret || binding.owner.node.isSecret
                 : null,
             };
+
+            if (binding.referencedKey) {
+              node._newASTPointer.body.statements[index].privateStates[
+                stateVarName
+              ].stateVarId.push(binding.referencedKeyName);
+            }
           }
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
@@ -268,6 +312,10 @@ export default {
               : null,
           };
 
+          if (binding.referencedKey) {
+            calculateCommitmentNode.stateVarId.push(binding.referencedKeyName);
+          }
+
           if (!generateProofNodeExists) {
             node._newASTPointer.body.statements.push(calculateCommitmentNode);
           } else {
@@ -299,6 +347,7 @@ export default {
             generateProofNode.privateStates[stateVarName] = {
               nullifierRequired: indicator.isNullified,
               increment: increment,
+              isMapping: !!binding.referencedKeyName,
               isWhole: indicator.isWhole,
               isPartitioned: indicator.isPartitioned,
               isOwned: binding.isOwned,
@@ -360,6 +409,11 @@ export default {
               ? binding.owner.isSecret || binding.owner.node.isSecret
               : null,
           };
+          if (binding.referencedKey) {
+            node._newASTPointer.body.statements[index].privateStates[stateVarName].stateVarId.push(
+              binding.referencedKeyName,
+            );
+          }
         }
       }
     },
@@ -538,8 +592,21 @@ export default {
             ) {
               increment = path.node.expression.rightHandSide.rightExpression.name;
               break;
-            } else {
+            } else if (path.node.expression.rightHandSide.leftHandSide) {
               increment = path.node.expression.rightHandSide.leftHandSide.name;
+              break;
+            } else {
+              increment = '';
+              path.scope.indicators[
+                path.node.expression.leftHandSide.referencedDeclaration
+              ].increments.forEach(inc => {
+                increment += inc.name ? `+ ${inc.name} ` : `+ ${inc.value} `;
+              });
+              path.scope.indicators[
+                path.node.expression.leftHandSide.referencedDeclaration
+              ].decrements.forEach(dec => {
+                increment += dec.name ? `- ${dec.name} ` : `- ${dec.value} `;
+              });
               break;
             }
           default:
@@ -592,7 +659,7 @@ export default {
 
       const newNode = {
         nodeType: node.nodeType,
-        name: 'node.name', // convert uint types to 'field', for now.
+        name: node.name, // convert uint types to 'field', for now.
       };
 
       // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.

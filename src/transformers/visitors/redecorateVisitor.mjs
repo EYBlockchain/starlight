@@ -215,7 +215,6 @@ export default {
                         break;
                       }
                     }
-                    break;
                   }
                   break;
                 default:
