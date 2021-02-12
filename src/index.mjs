@@ -21,10 +21,10 @@ const zappify = options => {
 
   if (options.isTest && options.testType === 'prelim') return path;
 
-  // toOrchestration(path, options);
-  //
+  toOrchestration(path, options);
+
   toCircuit(zolAST, options);
-  //
+
   // toContract(zolAST, options);
 
   if (options.isTest) return path.scope.indicators;
