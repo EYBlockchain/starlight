@@ -13,10 +13,10 @@ sleep 5
 
 printf "\n${GREEN}*** Running setup for your ZApp... ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml run zapp node /app/orchestration/common/zkp-setup.mjs -i FUNCTION_NAME
+docker-compose -f docker-compose.zapp.yml run zapp node /app/orchestration/common/zkp-setup.mjs -i ''
 
 printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml run zokrates node /app/write-vk.mjs -i FUNCTION_NAME
+docker-compose -f docker-compose.zapp.yml run zokrates node /app/write-vk.mjs -i ''
 
 printf "\n${GREEN}*** Finished! ***${NC}\n"
