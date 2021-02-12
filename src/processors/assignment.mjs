@@ -4,7 +4,7 @@ output code for assignement
 import logger from '../utils/logger.mjs';
 import { globals, inits, node, solidity, zokrates } from '../state.mjs';
 import { assignNode, assignZokrates, assignSolidity } from '../standardFunctions/assignment.mjs';
-import { UnsupportedSyntaxError, TODOError } from '../utils/errors.mjs';
+import { UnsupportedSyntaxError, TODOError } from '../error/errors.mjs';
 import processExpression from './expression.mjs';
 
 function processAssignment(assignment) {

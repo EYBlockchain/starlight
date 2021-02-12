@@ -2,6 +2,7 @@
 // no-unused-vars <-- to reinstate eventually
 
 import logger from '../../../utils/logger.mjs';
+import backtrace from '../../../error/backtrace.mjs';
 
 export default {
   SourceUnit: {
@@ -136,7 +137,7 @@ export default {
             );
           const reason = `Accessed at ${node.src}`;
           if (lhsNode.nodeType === 'IndexAccess') {
-            const keyName = scope.getMappingKeyIndicator(lhsNode);
+            const keyName = scope.getMappingKeyName(lhsNode);
             referencedIndicator = referencedIndicator.mappingKey[keyName];
           }
           referencedIndicator.isWhole = true;
@@ -162,10 +163,12 @@ export default {
           lhsNode.nodeType === 'Identifier'
             ? scope.getReferencedBinding(lhsNode)
             : scope.getReferencedBinding(lhsNode.baseExpression);
-        if (lhs.isSecret && rightAncestor && !referencedBinding.stateVariable)
+        if (lhs.isSecret && rightAncestor && !referencedBinding.stateVariable) {
           logger.warn(
-            `Non-secret parameter ${node.name} used to assign secret variable ${lhsName}`,
+            `Non-secret parameter '${node.name}' used when assigning to a secret variable '${lhsName}'. Blockchain observers might be able to infer the value of '${lhsName}' from this. I.e. although you've labelled '${lhsName}' as 'secret', it might not be secret.`,
           );
+          backtrace.getSourceCode(node.src);
+        }
       }
     },
 

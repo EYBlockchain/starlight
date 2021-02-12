@@ -4,12 +4,7 @@ pragma solidity ^0.8.0;
 
 contract BucketsOfBalls {
 
-    address public owner;
     secret mapping(uint256 => uint256) public buckets;
-
-    constructor(address _erc20) {
-        owner = msg.sender;
-    }
 
     function deposit(uint256 bucketId, uint amountDeposit) public {
         unknown buckets[bucketId] += amountDeposit;
@@ -18,11 +13,5 @@ contract BucketsOfBalls {
     function transfer(secret uint256 fromBucketId, secret uint256 toBucketId, secret uint256 numberOfBalls) public {
         buckets[fromBucketId] -= numberOfBalls;
         unknown buckets[toBucketId] += numberOfBalls;
-    }
-
-    function withdraw(uint256 amountWithdraw) public {
-        balances[msg.sender] -= amountWithdraw;
-        bool success = erc20.transfer(msg.sender, amountWithdraw);
-        require(success, "ERC20 transfer failed");
     }
 }

@@ -3,51 +3,59 @@
 pragma solidity ^0.8.0;
 
 import "./merkle-tree/MerkleTree.sol";
+
 import "./verify/Verifier_Interface.sol";
 
 contract AssignShield is MerkleTree {
 
-  Verifier_Interface private verifier;
+	Verifier_Interface private verifier;
 
-  mapping(uint256 => uint256) public nullifiers;
-  mapping(uint256 => uint256) public roots;
-  mapping(uint256 => uint256[]) public vk;
-  uint256 public latestRoot;
+	enum FunctionNames { assign }
 
-  constructor (
-    address verifierAddress,
-    uint256[] memory _vk
-) {
-    verifier = Verifier_Interface(verifierAddress);
-    vk[0] = _vk;
-}
+	mapping(uint256 => uint256[]) public vks; // indexed to by an enum uint(FunctionNames):
 
-  // function getVK() public view returns (uint256[] memory) {
-  //   return vk[msg.sender];
-  // }
+	mapping(uint256 => uint256) public commitmentRoots;
 
-  // function registerVk(uint256[] calldata _vk) public {
-  //   vk[msg.sender] = _vk;
-  // }
+	uint256 public latestRoot;
 
-  function assign(uint256[] memory proof, uint256 root, uint256 nullifier, uint256 commitment) public {
-    if (nullifier == 0 && root == 0 && latestRoot == 0) {
-      // user is correctly assigning for the first time
-    } else if (nullifier != 0) {
-      require(nullifiers[nullifier] == 0, "Nullifier already exists");
-      require(roots[root] == root, "Root does not exist");
-      nullifiers[nullifier] = nullifier;
-    } else revert("Nullifier for latest commitment not defined");
+	mapping(uint256 => uint256) public  nullifiers;
 
-    uint256[] memory inputs = new uint256[](3);
-    inputs[0] = root;
-    inputs[1] = nullifier;
-    inputs[2] = commitment;
 
-    bool res = verifier.verify(proof, inputs, vk[0]);
-    require(res, "The proof has not been verified by the contract");
+	constructor (
+		address verifierAddress,
+		uint256[][] memory vk
+	) {
+		verifier = Verifier_Interface(verifierAddress);
+		for (uint i = 0; i < vk.length; i++) {
+			vks[0] = vk[0];
+		}
+	}
 
-    latestRoot = insertLeaf(commitment);
-    roots[latestRoot] = latestRoot;
-  }
+	function assign (uint256[] calldata proof, uint256 commitmentRoot, uint256[] calldata newNullifiers, uint256[] calldata newCommitments) external {
+
+		for (uint i; i < newNullifiers.length; i++) {
+			require(nullifiers[newNullifiers[i]] == 0, "Nullifier already exists");
+			nullifiers[newNullifiers[i]] = newNullifiers[i];
+		}
+
+		require(commitmentRoots[commitmentRoot] == commitmentRoot, "Input commitmentRoot does not exist.");
+
+		uint256[] memory inputs = new uint256[](1 + newNullifiers.length + newCommitments.length); // the '1' is the commitmentRoot
+
+		uint k = 0;
+		for (uint i = 0; i < newNullifiers.length; i++) {
+			inputs[k++] = newNullifiers[i];
+		}
+		for (uint i = 0; i < newCommitments.length; i++) {
+			inputs[k++] = newCommitments[i];
+		}
+		inputs[k++] = commitmentRoot;
+
+		bool result = verifier.verify(proof, inputs, vks[uint(FunctionNames.assign)]);
+		require(result, "The proof has not been verified by the contract");
+
+		latestRoot = insertLeaves(newCommitments);
+		commitmentRoots[latestRoot] = latestRoot;
+
+	}
 }

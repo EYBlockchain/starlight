@@ -1,5 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
+import backtrace from './backtrace.mjs'
+
 export class ParseError extends Error {
   constructor(message) {
     super(message);
@@ -11,7 +13,15 @@ export class ParseError extends Error {
   }
 }
 
-export class UnsupportedSyntaxError extends ParseError {
+export class UnsupportedSyntaxError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class SyntaxError extends Error {
   constructor(message) {
     super(message);
     this.name = this.constructor.name;

@@ -22,10 +22,26 @@ export default {
     exit(path, state) {
       Object.keys(path.scope.bindings).forEach(id => {
         const binding = path.scope.bindings[id];
-        if (binding.isSecret && !binding.isOwned) {
+        if (binding.isSecret && !binding.isOwned && binding.isWhole) {
           logger.warn(
             `Warning: secret state ${binding.name} is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.`,
           );
+        }
+        if (binding.isSecret && binding.isOwned && binding.isMapping) {
+          const { owner } = binding;
+          Object.keys(binding.mappingKey).forEach(key => {
+            if (!binding.mappingKey[key].isOwned) {
+              binding.mappingKey[key].isOwned = true;
+              binding.mappingKey[key].owner =
+                owner.name === 'msg' && binding.mappingKey.msg
+                  ? binding.mappingKey[key].referencedKeyisParam
+                    ? { name: key }
+                    : path.scope.getReferencedNode({
+                        referencedDeclaration: binding.mappingKey[key].referencedKey,
+                      })
+                  : owner;
+            }
+          });
         }
       });
     },
@@ -89,7 +105,7 @@ export default {
       } else if (lhsNode.nodeType === 'IndexAccess') {
         isMapping = true;
         lhsIdentifier = lhsNode.baseExpression;
-        const keyName = scope.getMappingKeyIndicator(lhsNode);
+        const keyName = scope.getMappingKeyName(lhsNode);
         lhsbinding = scope.getReferencedBinding(lhsIdentifier).mappingKey[keyName];
       }
 
@@ -112,6 +128,7 @@ export default {
                 );
               lhsbinding.owner = scope.getReferencedBinding(ownerNode);
               lhsbinding.isOwned = true;
+              logger.debug(`The owner of state ${lhsbinding.name} is ${ownerNode.name}`);
               scope.indicators[lhsIdentifier.referencedDeclaration].isOwned = true;
               break;
             case 'Literal':
@@ -176,6 +193,13 @@ export default {
           }
           break;
       }
+      // if we have an owner which is an eth address, we need a way to convert from addresses to zkp public keys:
+      if (
+        lhsbinding.owner &&
+        (lhsbinding.owner.name === 'msg' ||
+          lhsbinding.owner.node.typeDescriptions.typeIdentifier.includes('address'))
+      )
+        scope.onChainKeyRegistry = true;
       // logger.debug(scope.getReferencedBinding(lhsIdentifier));
       // logger.debug('------');
       // logger.debug(scope.indicators[lhsIdentifier.referencedDeclaration]);

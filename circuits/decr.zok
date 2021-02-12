@@ -1,0 +1,199 @@
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256
+from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768
+from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+def main(\
+	private field param1,\
+	private u32[8] a_0_oldCommitment_owner_secretKey,\
+	private u32[8] a_1_oldCommitment_owner_secretKey,\
+	public field a_0_oldCommitment_nullifier,\
+	public field a_1_oldCommitment_nullifier,\
+	private field a_0_oldCommitment_value,\
+	private u32[8] a_0_oldCommitment_salt,\
+	private field a_1_oldCommitment_value,\
+	private u32[8] a_1_oldCommitment_salt,\
+	public field commitmentRoot,\
+	private field a_0_oldCommitment_membershipWitness_index,\
+	private field[32] a_0_oldCommitment_membershipWitness_siblingPath,\
+	private field a_1_oldCommitment_membershipWitness_index,\
+	private field[32] a_1_oldCommitment_membershipWitness_siblingPath,\
+	private u32[8] a_2_newCommitment_owner_publicKey,\
+	private u32[8] a_2_newCommitment_salt,\
+	public field a_2_newCommitment_commitment,\
+	private u32[8] b_0_newCommitment_owner_publicKey,\
+	private u32[8] b_0_newCommitment_salt,\
+	public field b_0_newCommitment_commitment\
+) -> ():
+
+      
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] a_0_stateVarId = field_to_u32_8(3)
+
+	
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] a_1_stateVarId = field_to_u32_8(3)
+
+	
+          field a_0 = a_0_oldCommitment_value
+
+	
+          field a_1 = a_1_oldCommitment_value
+
+	
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] a_2_stateVarId = field_to_u32_8(3)
+
+	
+          // We need to hard-code each stateVarId into the circuit:
+          u32[8] b_0_stateVarId = field_to_u32_8(5)
+
+	
+          // The below represents the decrementation 'a = a - param1':
+
+          assert(a_0 + a_1 > param1)
+          // TODO: assert no under/overflows
+
+          field a_2 = (a_0 + a_1) - param1
+
+	
+          // The below represents the incrementation 'b = b + param1':
+
+          field b_0 = param1
+
+	
+          // a_0_oldCommitment - PoKoSK:
+          // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+          u32[8] a_0_oldCommitment_owner_publicKey = sha256of256([...a_0_oldCommitment_owner_secretKey])
+
+	
+          // a_1_oldCommitment - PoKoSK:
+          // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+          u32[8] a_1_oldCommitment_owner_publicKey = sha256of256([...a_1_oldCommitment_owner_secretKey])
+
+	
+          // Nullify a_0:
+
+          u32[8] a_0_oldCommitment_nullifier_check = sha256of768([\
+            ...a_0_stateVarId,\
+            ...a_0_oldCommitment_owner_secretKey,\
+            ...a_0_oldCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(a_0_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(a_0_oldCommitment_nullifier_check)[8..256]\
+          )
+
+	
+          // Nullify a_1:
+
+          u32[8] a_1_oldCommitment_nullifier_check = sha256of768([\
+            ...a_1_stateVarId,\
+            ...a_1_oldCommitment_owner_secretKey,\
+            ...a_1_oldCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(a_1_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(a_1_oldCommitment_nullifier_check)[8..256]\
+          )
+
+	
+          // a_0_oldCommitment_commitment: preimage check
+
+          u32[8] a_0_oldCommitment_commitment = sha256of1024([\
+            ...a_0_stateVarId,\
+            ...field_to_u32_8(a_0_oldCommitment_value),\
+            ...a_0_oldCommitment_owner_publicKey,\
+            ...a_0_oldCommitment_salt\
+          ])
+
+	
+          // a_1_oldCommitment_commitment: preimage check
+
+          u32[8] a_1_oldCommitment_commitment = sha256of1024([\
+            ...a_1_stateVarId,\
+            ...field_to_u32_8(a_1_oldCommitment_value),\
+            ...a_1_oldCommitment_owner_publicKey,\
+            ...a_1_oldCommitment_salt\
+          ])
+
+	
+          // a_0_oldCommitment_commitment: existence check
+
+	
+          field a_0_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(a_0_oldCommitment_commitment)[8..256]])
+
+	
+          field a_0_commitmentRoot_check = checkRoot(\
+            a_0_oldCommitment_membershipWitness_siblingPath,\
+            a_0_oldCommitment_commitment_truncated,\
+            a_0_oldCommitment_membershipWitness_index\
+          )
+
+	
+          assert(\
+            field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_0_commitmentRoot_check)[8..256]\
+          )
+
+	
+          // a_1_oldCommitment_commitment: existence check
+
+	
+          field a_1_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(a_1_oldCommitment_commitment)[8..256]])
+
+	
+          field a_1_commitmentRoot_check = checkRoot(\
+            a_1_oldCommitment_membershipWitness_siblingPath,\
+            a_1_oldCommitment_commitment_truncated,\
+            a_1_oldCommitment_membershipWitness_index\
+          )
+
+	
+          assert(\
+            field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_1_commitmentRoot_check)[8..256]\
+          )
+
+	
+          // prepare secret state 'a_2' for commitment
+
+          u32[8] a_2_newCommitment_value = field_to_u32_8(a_2)
+
+          // a_2_newCommitment_commitment - preimage check
+
+          u32[8] a_2_newCommitment_commitment_check = sha256of1024([\
+            ...a_2_stateVarId,\
+            ...a_2_newCommitment_value,\
+            ...a_2_newCommitment_owner_publicKey,\
+            ...a_2_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(a_2_newCommitment_commitment)[8..256] == u32_8_to_bool_256(a_2_newCommitment_commitment_check)[8..256]\
+          )
+
+	
+          // prepare secret state 'b_0' for commitment
+
+          u32[8] b_0_newCommitment_value = field_to_u32_8(b_0)
+
+          // b_0_newCommitment_commitment - preimage check
+
+          u32[8] b_0_newCommitment_commitment_check = sha256of1024([\
+            ...b_0_stateVarId,\
+            ...b_0_newCommitment_value,\
+            ...b_0_newCommitment_owner_publicKey,\
+            ...b_0_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(b_0_newCommitment_commitment)[8..256] == u32_8_to_bool_256(b_0_newCommitment_commitment_check)[8..256]\
+          )
+
+      return
+      

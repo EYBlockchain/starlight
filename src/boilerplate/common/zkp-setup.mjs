@@ -8,14 +8,16 @@ import { generateKeys } from './zokrates.mjs';
 
 // const { generalise } = GN;
 const { argv } = yargs.usage('Usage: $0 -i <input file>').demandOption(['i']);
-const functionPath = `/app/examples/cases/uninit_global`;
+const functionNames = [FUNCTION_NAMES];
 
 export const setup = async functionName => {
-  if (!fs.existsSync(`/app/circuits/${functionName}.zok`)) {
-    const circuit = fs.readFileSync(`${functionPath}/${functionName}.zok`, 'utf-8');
-    fs.writeFileSync(`/app/circuits/${functionName}.zok`, circuit);
+  if (!functionName) {
+    functionNames.forEach(async name => {
+      await generateKeys(`${name}.zok`);
+    });
+  } else {
+    await generateKeys(`${functionName}.zok`);
   }
-  await generateKeys(`${functionName}.zok`);
 };
 
 setup(argv.i);

@@ -1,0 +1,283 @@
+{
+  "scopes": [
+    {
+      "scopeId": 15,
+      "scopeName": "",
+      "scopeType": "SourceUnit",
+      "bindings": {
+        "14": {
+          "kind": "ContractDefinition",
+          "id": 14,
+          "name": "MyContract"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {}
+    },
+    {
+      "scopeId": 14,
+      "scopeName": "MyContract",
+      "scopeType": "ContractDefinition",
+      "bindings": {
+        "3": {
+          "kind": "VariableDeclaration",
+          "id": 3,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            8
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            8
+          ],
+          "isNullified": true,
+          "nullificationCount": 1,
+          "nullifyingPaths": [
+            8
+          ],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Overwritten at 185:5:0"
+          ]
+        },
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "b",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            9
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isAccessed": true
+        },
+        "13": {
+          "kind": "FunctionDefinition",
+          "id": 13,
+          "name": "assignByAccess"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {
+        "zkSnarkVerificationRequired": true,
+        "oldCommitmentAccessRequired": true,
+        "nullifiersRequired": true,
+        "newCommitmentsRequired": true
+      }
+    },
+    {
+      "scopeId": 13,
+      "scopeName": "assignByAccess",
+      "scopeType": "FunctionDefinition",
+      "bindings": {},
+      "referencedBindings": {
+        "3": {
+          "kind": "VariableDeclaration",
+          "id": 3,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            8
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            8
+          ],
+          "isNullified": true,
+          "nullificationCount": 1,
+          "nullifyingPaths": [
+            8
+          ],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Overwritten at 185:5:0"
+          ]
+        },
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "b",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            9
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isAccessed": true
+        }
+      },
+      "modifiedBindings": {
+        "3": {
+          "kind": "VariableDeclaration",
+          "id": 3,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            8
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            8
+          ],
+          "isNullified": true,
+          "nullificationCount": 1,
+          "nullifyingPaths": [
+            8
+          ],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Overwritten at 185:5:0"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "3": {
+          "kind": "VariableDeclaration",
+          "id": 3,
+          "name": "a",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            8
+          ],
+          "isModified": true,
+          "modificationCount": 1,
+          "modifyingPaths": [
+            8
+          ],
+          "isNullified": true,
+          "nullificationCount": 1,
+          "nullifyingPaths": [
+            8
+          ],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Overwritten at 185:5:0"
+          ]
+        }
+      },
+      "indicators": {
+        "3": {
+          "id": 3,
+          "name": "a",
+          "isMapping": false,
+          "referencingPaths": [
+            8
+          ],
+          "referenceCount": 1,
+          "modifyingPaths": [
+            8
+          ],
+          "modificationCount": 1,
+          "isReferenced": true,
+          "oldCommitmentAccessRequired": true,
+          "isModified": true,
+          "newCommitmentRequired": true,
+          "isNullified": true,
+          "initialisationRequired": true,
+          "increments": [],
+          "decrements": [],
+          "isIncremented": false,
+          "isDecremented": false,
+          "isWhole": true,
+          "isWholeReason": [
+            "Overwritten at 185:5:0"
+          ],
+          "nullifyingPaths": [
+            8
+          ],
+          "nullificationCount": 1
+        }
+      }
+    }
+  ],
+  "errorType": null,
+  "errorMessage": null,
+  "warningMessages": [
+    "Warning: secret state a is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
+  ]
+}

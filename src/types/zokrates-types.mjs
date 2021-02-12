@@ -1,5 +1,7 @@
 /* eslint-disable consistent-return */
+import BP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerator.mjs';
 
+// TODO: I don't think this is ever used; only the Solidity version ever gets visited. Can probably delete this function...
 export function getVisitableKeys(nodeType) {
   switch (nodeType) {
     case 'Folder':
@@ -32,13 +34,31 @@ export function getVisitableKeys(nodeType) {
     case 'Identifier':
     case 'Literal':
       return [];
-
+    case 'PartitionedIncrementationStatementBoilerplate':
+      return ['addend'];
+    case 'PartitionedDecrementationStatementBoilerplate':
+      return ['subtrahend'];
     // And again, if we haven't recognized the nodeType then we'll throw an
     // error.
     default:
       throw new TypeError(nodeType);
   }
 }
+
+const generateBoilerplate = ({ indicators, bpSection }) => {
+  const bpArray = [];
+  for (const indicatorObj of Object.values(indicators)) {
+    const bp = new BP(indicatorObj);
+    bpArray.push(...bp[bpSection]);
+  }
+  return bpArray;
+};
+
+const generateBoilerplateStatement = (bpType, extraParams) => {
+  const { indicators } = extraParams;
+  const bp = new BP(indicators);
+  return bp.generateBoilerplateStatement(bpType, extraParams);
+};
 
 /**
  * @param {string} nodeType - the type of node you'd like to build
@@ -63,13 +83,18 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'FunctionDefinition': {
-      const { name, body = {}, parameters = {} } = fields;
+      // prettier-ignore
+      const {
+        name,
+        body = buildNode('Block'),
+        parameters = buildNode('ParameterList')
+      } = fields;
       return {
         nodeType,
         name,
         body,
         parameters,
-        // Notice no return parameters. Whilst zokrates can return parameters, we've chosen to transpile in such a way that all parameters are _input_ parameters to the circuit.
+        // Notice no return parameters. Although zokrates _can_ return parameters, we've chosen to transpile in such a way that all parameters are _input_ parameters to the circuit.
       };
     }
     case 'ParameterList': {
@@ -80,18 +105,21 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'Block': {
-      const { statements = [] } = fields;
+      const { preStatements = [], statements = [], postStatements = [] } = fields;
       return {
         nodeType,
+        preStatements,
         statements,
+        postStatements,
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, isPrivate = false } = fields;
+      const { name, type, isSecret: isPrivate = false, declarationType } = fields;
       return {
         nodeType,
         name,
-        isPrivate,
+        isPrivate, // 'private' to match zokrates keyword
+        declarationType,
         typeName: buildNode('ElementaryTypeName', { name: type }),
       };
     }
@@ -104,15 +132,16 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'BinaryOperation': {
-      const { leftExpression = {}, rightExpression = {} } = fields;
+      const { leftExpression = {}, operator, rightExpression = {} } = fields;
       return {
         nodeType,
         leftExpression,
+        operator,
         rightExpression,
       };
     }
     case 'Assignment': {
-      const { operator, leftHandSide = {}, rightHandSide = {} } = fields;
+      const { leftHandSide = {}, operator, rightHandSide = {} } = fields;
       return {
         nodeType,
         operator,
@@ -127,11 +156,31 @@ export function buildNode(nodeType, fields = {}) {
         expression,
       };
     }
+    case 'IndexAccess': {
+      const { baseExpression = {}, indexExpression = {} } = fields;
+      return {
+        nodeType,
+        baseExpression,
+        indexExpression,
+      };
+    }
+    case 'MsgSender': {
+      return {
+        nodeType,
+      };
+    }
     case 'Identifier': {
       const { name } = fields;
       return {
         nodeType,
         name,
+      };
+    }
+    case 'Literal': {
+      const { value } = fields;
+      return {
+        nodeType,
+        value,
       };
     }
     case 'ElementaryTypeName': {
@@ -141,33 +190,25 @@ export function buildNode(nodeType, fields = {}) {
         name,
       };
     }
-    case 'EditableCommitmentImportStatementsBoilerplate': {
-      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+    case 'Assert': {
+      // A very specific zokrates nodeType, which is similar to a Solidity 'require' statement. It asserts a truth.
+      const { arguments: args } = fields; // we have to 'tip-toe' around the reserved JS keyword 'arguments'!
       return {
         nodeType,
+        args,
       };
     }
-    case 'EditableCommitmentCommonFilesBoilerplate': {
+    case 'Boilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      return {
-        nodeType,
-      };
+      return generateBoilerplate(fields);
     }
-    case 'EditableCommitmentParametersBoilerplate': {
-      const { privateStateName } = fields;
-      // We'll build an array of parameters (each parameter being a VariableDeclaration AST node)
-      return {
-        nodeType,
-        privateStateName,
-      };
-    }
-    case 'EditableCommitmentStatementsBoilerplate': {
-      const { privateStateName } = fields;
+    case 'PartitionedIncrementationStatementBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      return {
-        nodeType,
-        privateStateName,
-      };
+      return generateBoilerplateStatement('incrementation', fields);
+    }
+    case 'PartitionedDecrementationStatementBoilerplate': {
+      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      return generateBoilerplateStatement('decrementation', fields);
     }
     default:
       throw new TypeError(nodeType);

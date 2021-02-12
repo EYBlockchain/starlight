@@ -1,12 +1,12 @@
 import fs from 'fs';
 
 export const readJsonFile = filePath => {
-  if (fs.existsSync(filePath)) {
+  try {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
+  } catch (err) {
+    throw new Error(err);
   }
-  console.warn('Unable to locate file: ', filePath);
-  return null;
 };
 
 export const writeJsonFile = (filePath, object) => {

@@ -2,6 +2,7 @@
   "scopes": [
     {
       "scopeId": 24,
+      "scopeName": "",
       "scopeType": "SourceUnit",
       "bindings": {
         "23": {
@@ -363,6 +364,7 @@
         "3": {
           "id": 3,
           "name": "a",
+          "isMapping": false,
           "referencingPaths": [
             17
           ],
@@ -404,7 +406,8 @@
           "typeIdentifier": "t_address",
           "typeString": "address"
         }
-      }
+      },
+      "onChainKeyRegistry": true
     }
   ],
   "errorType": null,

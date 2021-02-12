@@ -1,10 +1,14 @@
 import fs from 'fs';
 import config from 'config';
-
+import GN from 'general-number';
+import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 
 const web3 = Web3.connection();
+const { generalise } = GN;
+const db = '/app/orchestration/common/db/preimage.json';
+const keyDb = '/app/orchestration/common/db/key.json';
 
 export const contractPath = contractName => {
   return `/app/build/contracts/${contractName}.json`;
@@ -81,4 +85,41 @@ export async function deploy(userAddress, userAddressPassword, contractName, con
       return deployedContractInstance.options.address;
     });
   return deployedContractAddress;
+}
+
+export async function registerKey(_secretKey, contractName, registerWithContract) {
+  const secretKey = generalise(_secretKey);
+  const publicKey = generalise(utils.shaHash(secretKey.hex(32)));
+  if (registerWithContract) {
+    const instance = await getContractInstance(contractName);
+    await instance.methods.registerKey(publicKey.integer).send({
+      from: config.web3.options.defaultAccount,
+      gas: config.web3.options.defaultGas,
+    });
+  }
+  const keyJson = {
+    secretKey: secretKey.integer,
+    publicKey: publicKey.integer, // not req
+  };
+  fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
+
+  return publicKey;
+}
+
+export function getInputCommitments(publicKey, value) {
+  const commitments = JSON.parse(
+    fs.readFileSync(db, 'utf-8', err => {
+      console.log(err);
+    }),
+  );
+  const possibleCommitments = Object.entries(commitments).filter(
+    (hash, preimage) => preimage.publicKey === publicKey,
+  );
+  possibleCommitments.sort(
+    (preimageA, preimageB) => parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
+  );
+  if (possibleCommitments[0][1].value + possibleCommitments[1][1].value >= value) {
+    return [possibleCommitments[0][0], possibleCommitments[0][1]];
+  }
+  return null;
 }

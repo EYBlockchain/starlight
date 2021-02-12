@@ -39,7 +39,7 @@ zkSnarkVerificationRequired:
 
 SECRET STATE INDICATORS:
 
-secretVariable:from initial parsing of the zsol contract.
+secretVariable:from initial parsing of the zol contract.
 
 incrementingOrAccumulating:
 - Difficult, but important...Maybe, if some non-owner is permitted to increment the secret state (somewhere in the contract), then it must be `incrementing`; otherwise it can be `accumulating`.

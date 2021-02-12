@@ -3,12 +3,12 @@
 import fs from 'fs';
 import path from 'path';
 import commander from 'commander';
-import figlet from 'figlet';
 
 import mkdirs from './mkdirs.mjs';
+import logo from './logo.mjs';
 import zappify from '../src/index.mjs';
 import logger from '../src/utils/logger.mjs';
-import { FilingError } from '../src/utils/errors.mjs';
+import { FilingError } from '../src/error/errors.mjs';
 
 const { Command } = commander;
 const program = new Command();
@@ -43,14 +43,15 @@ program
   );
 
 program.parse(process.argv);
+const opts = program.opts();
 
-logger.level = program.verbose ? 'verbose' : program.logLevel || logger.level;
+logger.level = opts.verbose ? 'verbose' : opts.logLevel || logger.level;
 
-const inputFilePath = program.input;
+const inputFilePath = opts.input;
 const inputFileName = path.parse(inputFilePath).name;
 // commander converts 'zapp-name' to 'zappName'
-const zappName = program.zappName || inputFileName;
-const outputDirPath = `${program.output}/${zappName}`;
+const zappName = opts.zappName || inputFileName;
+const outputDirPath = `${opts.output}/${zappName}`;
 const parseDirPath = `${outputDirPath}/parse`;
 const circuitsDirPath = `${outputDirPath}/circuits`;
 const contractsDirPath = `${outputDirPath}/contracts`;
@@ -73,14 +74,15 @@ const validateOptions = ({
   if (!fs.existsSync(inputFilePath))
     throw new FilingError(`inputFilePath "${inputFilePath}" does not exist.`);
 
-  if (path.parse(inputFilePath).ext !== '.zsol')
-    throw new FilingError(`Invalid input file extension. Expected '.zsol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
+  if (path.parse(inputFilePath).ext !== '.zol')
+    throw new FilingError(`Invalid input file extension. Expected '.zol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
 };
 
 validateOptions(options);
 
 mkdirs(options);
 
-console.log(figlet.textSync('zappify!'));
+logo();
+// console.log(figlet.textSync('zappify!'));
 
 zappify(options);

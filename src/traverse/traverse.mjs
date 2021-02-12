@@ -12,30 +12,16 @@ export function traverse(path, visitor, state = {}) {
     `${path.getLocation()} = ${path.node.nodeType} ${path.node.name || ''}`,
   );
 
-  if (state && state.stopTraversal) return;
-  if (state && state.skipSubNodes) return;
+  if (state?.stopTraversal || state?.skipSubNodes) return;
 
   const { node } = path;
   const keys = getVisitableKeys(node.nodeType);
   if (!keys) return;
 
   const methods = visitor[node.nodeType];
-
-  // If there is an `enter` method for this node type we'll call it with the
-  // `node` and its `parent`.
-  if (methods && methods.enter) {
-    // logger.debug('\n\n\n\n************************************************');
-    // logger.debug(`${node.nodeType} before enter`);
-    // logger.debug('node._newASTPointer:', node._newASTPointer);
-    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
-    // logger.debug('state:', state);
+  if (methods?.enter) {
     methods.enter(path, state);
-
-    // logger.debug(`\n\n\n\n${node.nodeType} after enter`);
-    // logger.debug('node._newASTPointer:', node._newASTPointer);
-    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
-    // logger.debug('state:', state);
-    // logger.debug('*************************************************');
+    if (state?.stopTraversal) return;
   }
 
   for (const key of keys) {
@@ -66,26 +52,8 @@ export function traverse(path, visitor, state = {}) {
     }
   }
 
-  if (state && state.skipSubNodes) state.skipSubNodes = false;
-
-  // If there is an `exit` method for this node type we'll call it with the
-  // `node` and its `parent`.
-  if (methods && methods.exit) {
-    // logger.debug('\n\n\n\n*************************************************');
-    // logger.debug(`${node.nodeType} before exit`);
-    // logger.debug('node._newASTPointer:', node._newASTPointer);
-    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
-    // logger.debug('state:', state);
-    // logger.debug('*************************************************');
-
-    methods.exit(path, state);
-
-    // logger.debug(`\n\n\n\n${node.nodeType} after exit`);
-    // logger.debug('node._newASTPointer:', node._newASTPointer);
-    // if (parent) logger.debug('parent._newASTPointer:', parent._newASTPointer);
-    // logger.debug('state:', state);
-    // logger.debug('*************************************************');
-  }
+  if (methods?.exit && !state?.skipSubNodes) methods.exit(path, state);
+  if (state?.skipSubNodes) state.skipSubNodes = false;
 }
 
 /**
@@ -94,8 +62,7 @@ export function traverse(path, visitor, state = {}) {
  */
 export function traverseNodesFast(node, enter, state = {}) {
   if (!node) return;
-  if (state && state.stopTraversal) return;
-  if (state && state.skipSubNodes) return;
+  if (state?.stopTraversal || state?.skipSubNodes) return;
 
   const keys = getVisitableKeys(node.nodeType);
   if (!keys) return;
@@ -114,7 +81,7 @@ export function traverseNodesFast(node, enter, state = {}) {
     }
   }
 
-  if (state && state.skipSubNodes) state.skipSubNodes = false;
+  if (state?.skipSubNodes) state.skipSubNodes = false;
 }
 
 /**
@@ -123,8 +90,7 @@ export function traverseNodesFast(node, enter, state = {}) {
  */
 export function traversePathsFast(path, enter, state = {}) {
   if (!path) return;
-  if (state && state.stopTraversal) return;
-  if (state && state.skipSubNodes) return;
+  if (state?.stopTraversal || state?.skipSubNodes) return;
 
   const keys = getVisitableKeys(path.node.nodeType);
   if (!keys) return;
@@ -161,5 +127,5 @@ export function traversePathsFast(path, enter, state = {}) {
     }
   }
 
-  if (state && state.skipSubNodes) state.skipSubNodes = false;
+  if (state?.skipSubNodes) state.skipSubNodes = false;
 }

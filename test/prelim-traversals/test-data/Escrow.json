@@ -1,12 +1,13 @@
 {
   "scopes": [
     {
-      "scopeId": 108,
+      "scopeId": 103,
+      "scopeName": "",
       "scopeType": "SourceUnit",
       "bindings": {
-        "107": {
+        "102": {
           "kind": "ContractDefinition",
-          "id": 107,
+          "id": 102,
           "name": "Escrow"
         }
       },
@@ -16,42 +17,13 @@
       "indicators": {}
     },
     {
-      "scopeId": 107,
+      "scopeId": 102,
       "scopeName": "Escrow",
       "scopeType": "ContractDefinition",
       "bindings": {
-        "4": {
+        "6": {
           "kind": "VariableDeclaration",
-          "id": 4,
-          "name": "owner",
-          "stateVariable": true,
-          "isSecret": false,
-          "isReferenced": true,
-          "referenceCount": 1,
-          "referencingPaths": [
-            16
-          ],
-          "isModified": true,
-          "modificationCount": 1,
-          "modifyingPaths": [
-            16
-          ],
-          "isNullified": false,
-          "nullificationCount": 0,
-          "nullifyingPaths": [],
-          "increments": [],
-          "decrements": [],
-          "isMapping": false,
-          "mappingKey": null,
-          "isKnown": false,
-          "isWhole": false,
-          "isPartitioned": false,
-          "isOwned": false,
-          "owner": null
-        },
-        "8": {
-          "kind": "VariableDeclaration",
-          "id": 8,
+          "id": 6,
           "name": "balances",
           "stateVariable": true,
           "isSecret": true,
@@ -66,24 +38,24 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 54,
+              "id": 49,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30,
-              "src": "573:6:1",
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 75,
+              "id": 70,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "732:6:1",
+              "referencedDeclaration": 57,
+              "src": "684:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -92,24 +64,24 @@
           ],
           "decrements": [
             {
-              "id": 69,
+              "id": 64,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "692:6:1",
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 88,
+              "id": 83,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 81,
-              "src": "830:6:1",
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -119,7 +91,7 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 51,
+              "referencedKey": 46,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
@@ -127,32 +99,73 @@
               "isReferenced": true,
               "referenceCount": 3,
               "referencingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
               "isModified": true,
               "modificationCount": 3,
               "modifyingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
+              "increments": [
+                {
+                  "id": 49,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 23,
+                  "src": "525:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 64,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "644:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 83,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 76,
+                  "src": "782:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
               "nullifyingPaths": [
-                65,
-                84
+                60,
+                79
               ],
               "nullificationCount": 2,
               "owner": {
-                "id": 85,
+                "id": 80,
                 "name": "msg",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "767:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -161,7 +174,7 @@
               "isOwned": true
             },
             "recipient": {
-              "referencedKey": 73,
+              "referencedKey": 68,
               "referencedKeyNodeType": "VariableDeclaration",
               "referencedKeyisParam": true,
               "referencedKeyisMsg": false,
@@ -169,30 +182,49 @@
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                72
+                67
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                72
+                67
               ],
+              "increments": [
+                {
+                  "id": 70,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "684:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
-              "nullificationCount": 0
+              "nullificationCount": 0,
+              "isOwned": true,
+              "owner": {
+                "name": "recipient"
+              }
             }
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -203,21 +235,21 @@
             "Incremented and marked as unknown"
           ]
         },
-        "11": {
+        "9": {
           "kind": "VariableDeclaration",
-          "id": 11,
+          "id": 9,
           "name": "erc20",
           "stateVariable": true,
           "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            21
+            14
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            21
+            14
           ],
           "isNullified": false,
           "nullificationCount": 0,
@@ -232,24 +264,24 @@
           "isOwned": false,
           "owner": null
         },
-        "28": {
+        "21": {
           "kind": "FunctionDefinition",
-          "id": 28,
+          "id": 21,
           "name": ""
         },
-        "58": {
+        "53": {
           "kind": "FunctionDefinition",
-          "id": 58,
+          "id": 53,
           "name": "deposit"
         },
-        "79": {
+        "74": {
           "kind": "FunctionDefinition",
-          "id": 79,
+          "id": 74,
           "name": "transfer"
         },
-        "106": {
+        "101": {
           "kind": "FunctionDefinition",
-          "id": 106,
+          "id": 101,
           "name": "withdraw"
         }
       },
@@ -264,13 +296,13 @@
       }
     },
     {
-      "scopeId": 28,
+      "scopeId": 21,
       "scopeName": "",
       "scopeType": "FunctionDefinition",
       "bindings": {
-        "13": {
+        "11": {
           "kind": "VariableDeclaration",
-          "id": 13,
+          "id": 11,
           "name": "_erc20",
           "stateVariable": false,
           "isSecret": false,
@@ -295,50 +327,21 @@
         }
       },
       "referencedBindings": {
-        "4": {
+        "9": {
           "kind": "VariableDeclaration",
-          "id": 4,
-          "name": "owner",
-          "stateVariable": true,
-          "isSecret": false,
-          "isReferenced": true,
-          "referenceCount": 1,
-          "referencingPaths": [
-            16
-          ],
-          "isModified": true,
-          "modificationCount": 1,
-          "modifyingPaths": [
-            16
-          ],
-          "isNullified": false,
-          "nullificationCount": 0,
-          "nullifyingPaths": [],
-          "increments": [],
-          "decrements": [],
-          "isMapping": false,
-          "mappingKey": null,
-          "isKnown": false,
-          "isWhole": false,
-          "isPartitioned": false,
-          "isOwned": false,
-          "owner": null
-        },
-        "11": {
-          "kind": "VariableDeclaration",
-          "id": 11,
+          "id": 9,
           "name": "erc20",
           "stateVariable": true,
           "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            21
+            14
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            21
+            14
           ],
           "isNullified": false,
           "nullificationCount": 0,
@@ -355,50 +358,21 @@
         }
       },
       "modifiedBindings": {
-        "4": {
+        "9": {
           "kind": "VariableDeclaration",
-          "id": 4,
-          "name": "owner",
-          "stateVariable": true,
-          "isSecret": false,
-          "isReferenced": true,
-          "referenceCount": 1,
-          "referencingPaths": [
-            16
-          ],
-          "isModified": true,
-          "modificationCount": 1,
-          "modifyingPaths": [
-            16
-          ],
-          "isNullified": false,
-          "nullificationCount": 0,
-          "nullifyingPaths": [],
-          "increments": [],
-          "decrements": [],
-          "isMapping": false,
-          "mappingKey": null,
-          "isKnown": false,
-          "isWhole": false,
-          "isPartitioned": false,
-          "isOwned": false,
-          "owner": null
-        },
-        "11": {
-          "kind": "VariableDeclaration",
-          "id": 11,
+          "id": 9,
           "name": "erc20",
           "stateVariable": true,
           "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            21
+            14
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            21
+            14
           ],
           "isNullified": false,
           "nullificationCount": 0,
@@ -418,20 +392,20 @@
       "indicators": {}
     },
     {
-      "scopeId": 58,
+      "scopeId": 53,
       "scopeName": "deposit",
       "scopeType": "FunctionDefinition",
       "bindings": {
-        "30": {
+        "23": {
           "kind": "VariableDeclaration",
-          "id": 30,
+          "id": 23,
           "name": "amount",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            54
+            49
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -449,9 +423,9 @@
           "isOwned": false,
           "owner": null
         },
-        "34": {
+        "27": {
           "kind": "VariableDeclaration",
-          "id": 34,
+          "id": 27,
           "name": "hasBalance",
           "stateVariable": false,
           "isSecret": false,
@@ -476,8 +450,8 @@
         }
       },
       "referencedBindings": {
-        "8": {
-          "referencedKey": 51,
+        "6": {
+          "referencedKey": 46,
           "referencedKeyNodeType": "t_magic_message",
           "referencedKeyisParam": false,
           "referencedKeyisMsg": true,
@@ -485,32 +459,73 @@
           "isReferenced": true,
           "referenceCount": 3,
           "referencingPaths": [
-            50,
-            65,
-            84
+            45,
+            60,
+            79
           ],
           "isModified": true,
           "modificationCount": 3,
           "modifyingPaths": [
-            50,
-            65,
-            84
+            45,
+            60,
+            79
           ],
+          "increments": [
+            {
+              "id": 49,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 64,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 83,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "name": "balances[msg]",
           "isWhole": false,
           "isPartitioned": true,
           "isNullified": true,
           "nullifyingPaths": [
-            65,
-            84
+            60,
+            79
           ],
           "nullificationCount": 2,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -518,16 +533,16 @@
           },
           "isOwned": true
         },
-        "30": {
+        "23": {
           "kind": "VariableDeclaration",
-          "id": 30,
+          "id": 23,
           "name": "amount",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            54
+            49
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -547,9 +562,9 @@
         }
       },
       "modifiedBindings": {
-        "8": {
+        "6": {
           "kind": "VariableDeclaration",
-          "id": 8,
+          "id": 6,
           "name": "balances",
           "stateVariable": true,
           "isSecret": true,
@@ -564,24 +579,24 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 54,
+              "id": 49,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30,
-              "src": "573:6:1",
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 75,
+              "id": 70,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "732:6:1",
+              "referencedDeclaration": 57,
+              "src": "684:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -590,24 +605,24 @@
           ],
           "decrements": [
             {
-              "id": 69,
+              "id": 64,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "692:6:1",
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 88,
+              "id": 83,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 81,
-              "src": "830:6:1",
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -617,7 +632,7 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 51,
+              "referencedKey": 46,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
@@ -625,32 +640,73 @@
               "isReferenced": true,
               "referenceCount": 3,
               "referencingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
               "isModified": true,
               "modificationCount": 3,
               "modifyingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
+              "increments": [
+                {
+                  "id": 49,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 23,
+                  "src": "525:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 64,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "644:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 83,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 76,
+                  "src": "782:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
               "nullifyingPaths": [
-                65,
-                84
+                60,
+                79
               ],
               "nullificationCount": 2,
               "owner": {
-                "id": 85,
+                "id": 80,
                 "name": "msg",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "767:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -659,7 +715,7 @@
               "isOwned": true
             },
             "recipient": {
-              "referencedKey": 73,
+              "referencedKey": 68,
               "referencedKeyNodeType": "VariableDeclaration",
               "referencedKeyisParam": true,
               "referencedKeyisMsg": false,
@@ -667,30 +723,49 @@
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                72
+                67
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                72
+                67
               ],
+              "increments": [
+                {
+                  "id": 70,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "684:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
-              "nullificationCount": 0
+              "nullificationCount": 0,
+              "isOwned": true,
+              "owner": {
+                "name": "recipient"
+              }
             }
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -704,28 +779,29 @@
       },
       "nullifiedBindings": {},
       "indicators": {
-        "8": {
-          "id": 8,
+        "6": {
+          "id": 6,
           "name": "balances",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
           "modificationCount": 0,
           "mappingKey": {
             "msg": {
-              "referencedKey": 51,
+              "referencedKey": 46,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                50
+                45
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                50
+                45
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
@@ -733,12 +809,12 @@
               "initialisationRequired": true,
               "increments": [
                 {
-                  "id": 54,
+                  "id": 49,
                   "name": "amount",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 30,
-                  "src": "573:6:1",
+                  "referencedDeclaration": 23,
+                  "src": "525:6:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -749,7 +825,7 @@
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
-                "referencedKey": 51,
+                "referencedKey": 46,
                 "referencedKeyNodeType": "t_magic_message",
                 "referencedKeyisParam": false,
                 "referencedKeyisMsg": true,
@@ -757,32 +833,73 @@
                 "isReferenced": true,
                 "referenceCount": 3,
                 "referencingPaths": [
-                  50,
-                  65,
-                  84
+                  45,
+                  60,
+                  79
                 ],
                 "isModified": true,
                 "modificationCount": 3,
                 "modifyingPaths": [
-                  50,
-                  65,
-                  84
+                  45,
+                  60,
+                  79
                 ],
+                "increments": [
+                  {
+                    "id": 49,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 23,
+                    "src": "525:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "id": 64,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 57,
+                    "src": "644:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  {
+                    "id": 83,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 76,
+                    "src": "782:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "balances[msg]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "isNullified": true,
                 "nullifyingPaths": [
-                  65,
-                  84
+                  60,
+                  79
                 ],
                 "nullificationCount": 2,
                 "owner": {
-                  "id": 85,
+                  "id": 80,
                   "name": "msg",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "815:3:1",
+                  "src": "767:3:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"
@@ -790,7 +907,7 @@
                 },
                 "isOwned": true
               },
-              "id": 8,
+              "id": 6,
               "isWhole": false,
               "isPartitioned": true,
               "name": "balances[msg]",
@@ -801,25 +918,27 @@
               "nullificationCount": 0
             }
           },
-          "isModified": true
+          "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false
         }
       }
     },
     {
-      "scopeId": 79,
+      "scopeId": 74,
       "scopeName": "transfer",
       "scopeType": "FunctionDefinition",
       "bindings": {
-        "60": {
+        "55": {
           "kind": "VariableDeclaration",
-          "id": 60,
+          "id": 55,
           "name": "recipient",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            73
+            68
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -837,17 +956,17 @@
           "isOwned": false,
           "owner": null
         },
-        "62": {
+        "57": {
           "kind": "VariableDeclaration",
-          "id": 62,
+          "id": 57,
           "name": "amount",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
           "referenceCount": 2,
           "referencingPaths": [
-            69,
-            75
+            64,
+            70
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -867,8 +986,8 @@
         }
       },
       "referencedBindings": {
-        "8": {
-          "referencedKey": 73,
+        "6": {
+          "referencedKey": 68,
           "referencedKeyNodeType": "VariableDeclaration",
           "referencedKeyisParam": true,
           "referencedKeyisMsg": false,
@@ -876,28 +995,47 @@
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            72
+            67
           ],
           "isModified": true,
           "modificationCount": 1,
           "modifyingPaths": [
-            72
+            67
           ],
+          "increments": [
+            {
+              "id": 70,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 57,
+              "src": "684:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "name": "balances[recipient]",
           "isWhole": false,
           "isPartitioned": true,
           "nullifyingPaths": [],
-          "nullificationCount": 0
+          "nullificationCount": 0,
+          "isOwned": true,
+          "owner": {
+            "name": "recipient"
+          }
         },
-        "60": {
+        "55": {
           "kind": "VariableDeclaration",
-          "id": 60,
+          "id": 55,
           "name": "recipient",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            73
+            68
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -915,17 +1053,17 @@
           "isOwned": false,
           "owner": null
         },
-        "62": {
+        "57": {
           "kind": "VariableDeclaration",
-          "id": 62,
+          "id": 57,
           "name": "amount",
           "stateVariable": false,
           "isSecret": true,
           "isReferenced": true,
           "referenceCount": 2,
           "referencingPaths": [
-            69,
-            75
+            64,
+            70
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -945,9 +1083,9 @@
         }
       },
       "modifiedBindings": {
-        "8": {
+        "6": {
           "kind": "VariableDeclaration",
-          "id": 8,
+          "id": 6,
           "name": "balances",
           "stateVariable": true,
           "isSecret": true,
@@ -962,24 +1100,24 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 54,
+              "id": 49,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30,
-              "src": "573:6:1",
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 75,
+              "id": 70,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "732:6:1",
+              "referencedDeclaration": 57,
+              "src": "684:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -988,24 +1126,24 @@
           ],
           "decrements": [
             {
-              "id": 69,
+              "id": 64,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "692:6:1",
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 88,
+              "id": 83,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 81,
-              "src": "830:6:1",
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1015,7 +1153,7 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 51,
+              "referencedKey": 46,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
@@ -1023,32 +1161,73 @@
               "isReferenced": true,
               "referenceCount": 3,
               "referencingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
               "isModified": true,
               "modificationCount": 3,
               "modifyingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
+              "increments": [
+                {
+                  "id": 49,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 23,
+                  "src": "525:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 64,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "644:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 83,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 76,
+                  "src": "782:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
               "nullifyingPaths": [
-                65,
-                84
+                60,
+                79
               ],
               "nullificationCount": 2,
               "owner": {
-                "id": 85,
+                "id": 80,
                 "name": "msg",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "767:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -1057,7 +1236,7 @@
               "isOwned": true
             },
             "recipient": {
-              "referencedKey": 73,
+              "referencedKey": 68,
               "referencedKeyNodeType": "VariableDeclaration",
               "referencedKeyisParam": true,
               "referencedKeyisMsg": false,
@@ -1065,30 +1244,49 @@
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                72
+                67
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                72
+                67
               ],
+              "increments": [
+                {
+                  "id": 70,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "684:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
-              "nullificationCount": 0
+              "nullificationCount": 0,
+              "isOwned": true,
+              "owner": {
+                "name": "recipient"
+              }
             }
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1101,9 +1299,9 @@
         }
       },
       "nullifiedBindings": {
-        "8": {
+        "6": {
           "kind": "VariableDeclaration",
-          "id": 8,
+          "id": 6,
           "name": "balances",
           "stateVariable": true,
           "isSecret": true,
@@ -1118,24 +1316,24 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 54,
+              "id": 49,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30,
-              "src": "573:6:1",
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 75,
+              "id": 70,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "732:6:1",
+              "referencedDeclaration": 57,
+              "src": "684:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1144,24 +1342,24 @@
           ],
           "decrements": [
             {
-              "id": 69,
+              "id": 64,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "692:6:1",
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 88,
+              "id": 83,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 81,
-              "src": "830:6:1",
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1171,7 +1369,7 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 51,
+              "referencedKey": 46,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
@@ -1179,32 +1377,73 @@
               "isReferenced": true,
               "referenceCount": 3,
               "referencingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
               "isModified": true,
               "modificationCount": 3,
               "modifyingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
+              "increments": [
+                {
+                  "id": 49,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 23,
+                  "src": "525:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 64,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "644:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 83,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 76,
+                  "src": "782:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
               "nullifyingPaths": [
-                65,
-                84
+                60,
+                79
               ],
               "nullificationCount": 2,
               "owner": {
-                "id": 85,
+                "id": 80,
                 "name": "msg",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "767:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -1213,7 +1452,7 @@
               "isOwned": true
             },
             "recipient": {
-              "referencedKey": 73,
+              "referencedKey": 68,
               "referencedKeyNodeType": "VariableDeclaration",
               "referencedKeyisParam": true,
               "referencedKeyisMsg": false,
@@ -1221,30 +1460,49 @@
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                72
+                67
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                72
+                67
               ],
+              "increments": [
+                {
+                  "id": 70,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "684:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
-              "nullificationCount": 0
+              "nullificationCount": 0,
+              "isOwned": true,
+              "owner": {
+                "name": "recipient"
+              }
             }
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1257,42 +1515,43 @@
         }
       },
       "indicators": {
-        "8": {
-          "id": 8,
+        "6": {
+          "id": 6,
           "name": "balances",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
           "modificationCount": 0,
           "mappingKey": {
             "msg": {
-              "referencedKey": 66,
+              "referencedKey": 61,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                65
+                60
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                65
+                60
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
-              "isNullified": false,
+              "isNullified": true,
               "initialisationRequired": true,
               "increments": [],
               "decrements": [
                 {
-                  "id": 69,
+                  "id": 64,
                   "name": "amount",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 62,
-                  "src": "692:6:1",
+                  "referencedDeclaration": 57,
+                  "src": "644:6:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -1302,7 +1561,7 @@
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
-                "referencedKey": 51,
+                "referencedKey": 46,
                 "referencedKeyNodeType": "t_magic_message",
                 "referencedKeyisParam": false,
                 "referencedKeyisMsg": true,
@@ -1310,32 +1569,73 @@
                 "isReferenced": true,
                 "referenceCount": 3,
                 "referencingPaths": [
-                  50,
-                  65,
-                  84
+                  45,
+                  60,
+                  79
                 ],
                 "isModified": true,
                 "modificationCount": 3,
                 "modifyingPaths": [
-                  50,
-                  65,
-                  84
+                  45,
+                  60,
+                  79
                 ],
+                "increments": [
+                  {
+                    "id": 49,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 23,
+                    "src": "525:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "id": 64,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 57,
+                    "src": "644:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  {
+                    "id": 83,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 76,
+                    "src": "782:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "balances[msg]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "isNullified": true,
                 "nullifyingPaths": [
-                  65,
-                  84
+                  60,
+                  79
                 ],
                 "nullificationCount": 2,
                 "owner": {
-                  "id": 85,
+                  "id": 80,
                   "name": "msg",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "815:3:1",
+                  "src": "767:3:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"
@@ -1343,7 +1643,7 @@
                 },
                 "isOwned": true
               },
-              "id": 8,
+              "id": 6,
               "isWhole": false,
               "isPartitioned": true,
               "name": "balances[msg]",
@@ -1351,24 +1651,24 @@
                 "Incremented and marked as unknown"
               ],
               "nullifyingPaths": [
-                65
+                60
               ],
               "nullificationCount": 1
             },
             "recipient": {
-              "referencedKey": 73,
+              "referencedKey": 68,
               "referencedKeyNodeType": "VariableDeclaration",
               "referencedKeyisParam": true,
               "referencedKeyisMsg": false,
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                72
+                67
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                72
+                67
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
@@ -1377,12 +1677,12 @@
               "isUnknown": true,
               "increments": [
                 {
-                  "id": 75,
+                  "id": 70,
                   "name": "amount",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 62,
-                  "src": "732:6:1",
+                  "referencedDeclaration": 57,
+                  "src": "684:6:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -1393,7 +1693,7 @@
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
-                "referencedKey": 73,
+                "referencedKey": 68,
                 "referencedKeyNodeType": "VariableDeclaration",
                 "referencedKeyisParam": true,
                 "referencedKeyisMsg": false,
@@ -1401,19 +1701,38 @@
                 "isReferenced": true,
                 "referenceCount": 1,
                 "referencingPaths": [
-                  72
+                  67
                 ],
                 "isModified": true,
                 "modificationCount": 1,
                 "modifyingPaths": [
-                  72
+                  67
                 ],
+                "increments": [
+                  {
+                    "id": 70,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 57,
+                    "src": "684:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "balances[recipient]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "nullifyingPaths": [],
-                "nullificationCount": 0
+                "nullificationCount": 0,
+                "isOwned": true,
+                "owner": {
+                  "name": "recipient"
+                }
               },
-              "id": 8,
+              "id": 6,
               "isWhole": false,
               "isPartitioned": true,
               "name": "balances[recipient]",
@@ -1425,25 +1744,28 @@
             }
           },
           "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false,
           "isOwned": true
         }
-      }
+      },
+      "onChainKeyRegistry": true
     },
     {
-      "scopeId": 106,
+      "scopeId": 101,
       "scopeName": "withdraw",
       "scopeType": "FunctionDefinition",
       "bindings": {
-        "81": {
+        "76": {
           "kind": "VariableDeclaration",
-          "id": 81,
+          "id": 76,
           "name": "amount",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            88
+            83
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -1461,9 +1783,9 @@
           "isOwned": false,
           "owner": null
         },
-        "92": {
+        "87": {
           "kind": "VariableDeclaration",
-          "id": 92,
+          "id": 87,
           "name": "success",
           "stateVariable": false,
           "isSecret": false,
@@ -1488,8 +1810,8 @@
         }
       },
       "referencedBindings": {
-        "8": {
-          "referencedKey": 51,
+        "6": {
+          "referencedKey": 46,
           "referencedKeyNodeType": "t_magic_message",
           "referencedKeyisParam": false,
           "referencedKeyisMsg": true,
@@ -1497,32 +1819,73 @@
           "isReferenced": true,
           "referenceCount": 3,
           "referencingPaths": [
-            50,
-            65,
-            84
+            45,
+            60,
+            79
           ],
           "isModified": true,
           "modificationCount": 3,
           "modifyingPaths": [
-            50,
-            65,
-            84
+            45,
+            60,
+            79
           ],
+          "increments": [
+            {
+              "id": 49,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "decrements": [
+            {
+              "id": 64,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            {
+              "id": 83,
+              "name": "amount",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          ],
+          "name": "balances[msg]",
           "isWhole": false,
           "isPartitioned": true,
           "isNullified": true,
           "nullifyingPaths": [
-            65,
-            84
+            60,
+            79
           ],
           "nullificationCount": 2,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1530,16 +1893,16 @@
           },
           "isOwned": true
         },
-        "81": {
+        "76": {
           "kind": "VariableDeclaration",
-          "id": 81,
+          "id": 76,
           "name": "amount",
           "stateVariable": false,
           "isSecret": false,
           "isReferenced": true,
           "referenceCount": 1,
           "referencingPaths": [
-            88
+            83
           ],
           "isModified": false,
           "modificationCount": 0,
@@ -1559,9 +1922,9 @@
         }
       },
       "modifiedBindings": {
-        "8": {
+        "6": {
           "kind": "VariableDeclaration",
-          "id": 8,
+          "id": 6,
           "name": "balances",
           "stateVariable": true,
           "isSecret": true,
@@ -1576,24 +1939,24 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 54,
+              "id": 49,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30,
-              "src": "573:6:1",
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 75,
+              "id": 70,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "732:6:1",
+              "referencedDeclaration": 57,
+              "src": "684:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1602,24 +1965,24 @@
           ],
           "decrements": [
             {
-              "id": 69,
+              "id": 64,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "692:6:1",
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 88,
+              "id": 83,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 81,
-              "src": "830:6:1",
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1629,7 +1992,7 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 51,
+              "referencedKey": 46,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
@@ -1637,32 +2000,73 @@
               "isReferenced": true,
               "referenceCount": 3,
               "referencingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
               "isModified": true,
               "modificationCount": 3,
               "modifyingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
+              "increments": [
+                {
+                  "id": 49,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 23,
+                  "src": "525:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 64,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "644:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 83,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 76,
+                  "src": "782:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
               "nullifyingPaths": [
-                65,
-                84
+                60,
+                79
               ],
               "nullificationCount": 2,
               "owner": {
-                "id": 85,
+                "id": 80,
                 "name": "msg",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "767:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -1671,7 +2075,7 @@
               "isOwned": true
             },
             "recipient": {
-              "referencedKey": 73,
+              "referencedKey": 68,
               "referencedKeyNodeType": "VariableDeclaration",
               "referencedKeyisParam": true,
               "referencedKeyisMsg": false,
@@ -1679,30 +2083,49 @@
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                72
+                67
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                72
+                67
               ],
+              "increments": [
+                {
+                  "id": 70,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "684:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
-              "nullificationCount": 0
+              "nullificationCount": 0,
+              "isOwned": true,
+              "owner": {
+                "name": "recipient"
+              }
             }
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1715,9 +2138,9 @@
         }
       },
       "nullifiedBindings": {
-        "8": {
+        "6": {
           "kind": "VariableDeclaration",
-          "id": 8,
+          "id": 6,
           "name": "balances",
           "stateVariable": true,
           "isSecret": true,
@@ -1732,24 +2155,24 @@
           "nullifyingPaths": [],
           "increments": [
             {
-              "id": 54,
+              "id": 49,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30,
-              "src": "573:6:1",
+              "referencedDeclaration": 23,
+              "src": "525:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 75,
+              "id": 70,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "732:6:1",
+              "referencedDeclaration": 57,
+              "src": "684:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1758,24 +2181,24 @@
           ],
           "decrements": [
             {
-              "id": 69,
+              "id": 64,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 62,
-              "src": "692:6:1",
+              "referencedDeclaration": 57,
+              "src": "644:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
               }
             },
             {
-              "id": 88,
+              "id": 83,
               "name": "amount",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 81,
-              "src": "830:6:1",
+              "referencedDeclaration": 76,
+              "src": "782:6:1",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1785,7 +2208,7 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 51,
+              "referencedKey": 46,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
@@ -1793,32 +2216,73 @@
               "isReferenced": true,
               "referenceCount": 3,
               "referencingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
               "isModified": true,
               "modificationCount": 3,
               "modifyingPaths": [
-                50,
-                65,
-                84
+                45,
+                60,
+                79
               ],
+              "increments": [
+                {
+                  "id": 49,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 23,
+                  "src": "525:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "decrements": [
+                {
+                  "id": 64,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "644:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                {
+                  "id": 83,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 76,
+                  "src": "782:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[msg]",
               "isWhole": false,
               "isPartitioned": true,
               "isNullified": true,
               "nullifyingPaths": [
-                65,
-                84
+                60,
+                79
               ],
               "nullificationCount": 2,
               "owner": {
-                "id": 85,
+                "id": 80,
                 "name": "msg",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "815:3:1",
+                "src": "767:3:1",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -1827,7 +2291,7 @@
               "isOwned": true
             },
             "recipient": {
-              "referencedKey": 73,
+              "referencedKey": 68,
               "referencedKeyNodeType": "VariableDeclaration",
               "referencedKeyisParam": true,
               "referencedKeyisMsg": false,
@@ -1835,30 +2299,49 @@
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                72
+                67
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                72
+                67
               ],
+              "increments": [
+                {
+                  "id": 70,
+                  "name": "amount",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 57,
+                  "src": "684:6:1",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                }
+              ],
+              "name": "balances[recipient]",
               "isWhole": false,
               "isPartitioned": true,
               "nullifyingPaths": [],
-              "nullificationCount": 0
+              "nullificationCount": 0,
+              "isOwned": true,
+              "owner": {
+                "name": "recipient"
+              }
             }
           },
           "isKnown": false,
           "isWhole": false,
-          "isPartitioned": false,
+          "isPartitioned": true,
           "isOwned": true,
           "owner": {
-            "id": 85,
+            "id": 80,
             "name": "msg",
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "815:3:1",
+            "src": "767:3:1",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1871,42 +2354,43 @@
         }
       },
       "indicators": {
-        "8": {
-          "id": 8,
+        "6": {
+          "id": 6,
           "name": "balances",
+          "isMapping": true,
           "referencingPaths": [],
           "referenceCount": 0,
           "modifyingPaths": [],
           "modificationCount": 0,
           "mappingKey": {
             "msg": {
-              "referencedKey": 85,
+              "referencedKey": 80,
               "referencedKeyNodeType": "t_magic_message",
               "referencedKeyisParam": false,
               "referencedKeyisMsg": true,
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
-                84
+                79
               ],
               "isModified": true,
               "modificationCount": 1,
               "modifyingPaths": [
-                84
+                79
               ],
               "oldCommitmentAccessRequired": true,
               "newCommitmentRequired": true,
-              "isNullified": false,
+              "isNullified": true,
               "initialisationRequired": true,
               "increments": [],
               "decrements": [
                 {
-                  "id": 88,
+                  "id": 83,
                   "name": "amount",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 81,
-                  "src": "830:6:1",
+                  "referencedDeclaration": 76,
+                  "src": "782:6:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -1916,7 +2400,7 @@
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
-                "referencedKey": 51,
+                "referencedKey": 46,
                 "referencedKeyNodeType": "t_magic_message",
                 "referencedKeyisParam": false,
                 "referencedKeyisMsg": true,
@@ -1924,32 +2408,73 @@
                 "isReferenced": true,
                 "referenceCount": 3,
                 "referencingPaths": [
-                  50,
-                  65,
-                  84
+                  45,
+                  60,
+                  79
                 ],
                 "isModified": true,
                 "modificationCount": 3,
                 "modifyingPaths": [
-                  50,
-                  65,
-                  84
+                  45,
+                  60,
+                  79
                 ],
+                "increments": [
+                  {
+                    "id": 49,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 23,
+                    "src": "525:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "decrements": [
+                  {
+                    "id": 64,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 57,
+                    "src": "644:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  {
+                    "id": 83,
+                    "name": "amount",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 76,
+                    "src": "782:6:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  }
+                ],
+                "name": "balances[msg]",
                 "isWhole": false,
                 "isPartitioned": true,
                 "isNullified": true,
                 "nullifyingPaths": [
-                  65,
-                  84
+                  60,
+                  79
                 ],
                 "nullificationCount": 2,
                 "owner": {
-                  "id": 85,
+                  "id": 80,
                   "name": "msg",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "815:3:1",
+                  "src": "767:3:1",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"
@@ -1957,7 +2482,7 @@
                 },
                 "isOwned": true
               },
-              "id": 8,
+              "id": 6,
               "isWhole": false,
               "isPartitioned": true,
               "name": "balances[msg]",
@@ -1965,21 +2490,24 @@
                 "Incremented and marked as unknown"
               ],
               "nullifyingPaths": [
-                84
+                79
               ],
               "nullificationCount": 1
             }
           },
           "isModified": true,
+          "isPartitioned": true,
+          "isWhole": false,
           "isOwned": true
         }
-      }
+      },
+      "onChainKeyRegistry": true
     }
   ],
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
-    "Non-secret parameter amount used to assign secret variable balances",
-    "Non-secret parameter amount used to assign secret variable balances"
+    "Non-secret parameter 'amount' used when assigning to a secret variable 'balances'. Blockchain observers might be able to infer the value of 'balances' from this. I.e. although you've labelled 'balances' as 'secret', it might not be secret.",
+    "Non-secret parameter 'amount' used when assigning to a secret variable 'balances'. Blockchain observers might be able to infer the value of 'balances' from this. I.e. although you've labelled 'balances' as 'secret', it might not be secret."
   ]
 }

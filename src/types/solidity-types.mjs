@@ -16,6 +16,8 @@ export function getVisitableKeys(nodeType) {
     case 'VariableDeclarationStatement':
       return ['declarations', 'initialValue'];
     case 'ExpressionStatement':
+    case 'MemberAccess':
+    case 'Return':
       return ['expression'];
     case 'Assignment':
       return ['leftHandSide', 'rightHandSide'];
@@ -27,12 +29,14 @@ export function getVisitableKeys(nodeType) {
       return ['keyType', 'valueType'];
     case 'IndexAccess':
       return ['indexExpression', 'baseExpression'];
-    case 'MemberAccess':
-      return ['expression'];
     case 'UnaryOperation':
       return ['subExpression'];
     case 'TupleExpression':
       return ['components'];
+    case 'FunctionCall':
+      return ['expression, arguments'];
+    case 'ArrayTypeName':
+      return ['baseType'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -40,8 +44,6 @@ export function getVisitableKeys(nodeType) {
     case 'UserDefinedTypeName':
     case 'ImportDirective':
       return [];
-    case 'FunctionCall':
-      return ['expression, arguments'];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
     // error.
@@ -79,6 +81,13 @@ export function buildNode(nodeType, fields) {
       return {
         nodeType,
         literals,
+      };
+    }
+    case 'InheritanceSpecifier': {
+      const { baseName = {} } = fields;
+      return {
+        nodeType,
+        baseName,
       };
     }
     case 'ImportStatementList': {
@@ -131,6 +140,24 @@ export function buildNode(nodeType, fields) {
         storageLocation,
         typeDescriptions: { typeString: type },
         typeName,
+      };
+    }
+    case 'BinaryOperation': {
+      const { leftExpression = {}, operator, rightExpression = {} } = fields;
+      return {
+        nodeType,
+        leftExpression,
+        operator,
+        rightExpression,
+      };
+    }
+    case 'Assignment': {
+      const { leftHandSide = {}, operator, rightHandSide = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        leftHandSide,
+        rightHandSide,
       };
     }
     case 'Mapping': {

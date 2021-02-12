@@ -51,7 +51,13 @@ export default {
             secretVar.mappingKey[key].isWhole = isWhole;
             secretVar.mappingKey[key].isPartitioned = isPartitioned;
             secretVar.mappingKey[key].name = `${secretVar.name}[${key}]`;
+            secretVar.mappingKey[key].binding.name = `${secretVar.name}[${key}]`;
             scope.indicatorChecks(secretVar.mappingKey[key]);
+
+            secretVar.isPartitioned = secretVar.mappingKey[key].isPartitioned;
+            secretVar.binding.isPartitioned = secretVar.mappingKey[key].isPartitioned;
+            secretVar.isWhole = secretVar.mappingKey[key].isWhole;
+            secretVar.binding.isWhole = secretVar.mappingKey[key].isWhole;
           });
         } else {
           scope.indicatorChecks(secretVar);

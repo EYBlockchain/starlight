@@ -24,7 +24,6 @@ export default {
         throw new Error('Only 1 contract per solidity file is currently supported');
 
       // Create a 'SourceUnit' node.
-      // NODEBUILDING
       const newNode = buildNode('SourceUnit', { name: contractNames[0], license: node.license });
 
       node._newASTPointer = parent._newASTPointer;
@@ -35,14 +34,14 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zsol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
+    // TODO: We should probably check that the `.zol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {
       const { node, parent } = path;
       const { literals } = node;
 
       parent._newASTPointer[0].nodes.push(buildNode('PragmaDirective', { literals }));
-      // node._newASTPointer = parent._newASTPointer; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
+      // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
     exit(path, state) {},
   },
@@ -60,7 +59,7 @@ export default {
     },
 
     exit(path, state) {
-      // We populate much of the contractDefinition upon exit, having populated the ContractDefinition's scope by this point.
+      // TODO there's possibly no-longer a compelling reason to do this on `exit` rather than `enter`?
       const { node, parent } = path;
       const sourceUnitNodes = parent._newASTPointer[0].nodes;
       const contractNodes = node._newASTPointer;
@@ -73,18 +72,15 @@ export default {
       } = path.scope.indicators;
 
       // base contracts (`contract MyContract is BaseContract`)
-      // NODEBUILDING
-      sourceUnitNodes[1].baseContracts.push({
-        nodeType: 'InheritanceSpecifier',
-        baseName: {
+      sourceUnitNodes[1].baseContracts.push(
+        buildNode('InheritanceSpecifier', {
           nodeType: 'UserDefinedTypeName',
           name: 'MerkleTree',
-        },
-      }); // TODO: other things might have been pushed / spliced into the containing array that is 'parent._newASTPointer', so we might need a more intelligent lookup to ensure we're editing the correct array index. For now, we'll assume the ContractDefinition node is still at index 1.
+        }),
+      ); // TODO: other things might have been pushed / spliced into the containing array that is 'parent._newASTPointer', so we might need a more intelligent lookup to ensure we're editing the correct array index. For now, we'll assume the ContractDefinition node is still at index 1.
 
       // Imports
       // TODO: probably need more intelligent insertions of nodes than splicing / unshifting into fixed positions. This looks over-fitted to the October example-case.
-      // NODEBUILDING
       if (zkSnarkVerificationRequired)
         sourceUnitNodes.splice(
           1,
@@ -147,7 +143,14 @@ export default {
   },
 
   FunctionDefinition: {
-    enter(path, state) {},
+    enter(path, state) {
+      // FIXME: need to actually translate the constructor into the new Solidity contract.
+      if (path.node.kind === 'constructor') {
+        // We currently treat all constructors as publicly executed functions.
+        state.skipSubNodes = true;
+        return;
+      }
+    },
 
     exit(path, state) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
@@ -185,9 +188,7 @@ export default {
 
       const contractDefScope = scope.getAncestorOfScopeType('ContractDefinition');
       const { zkSnarkVerificationRequired } = contractDefScope.indicators;
-      const oldCommitmentAccessRequired = scope.someIndicators(
-        i => i.oldCommitmentAccessRequired,
-      );
+      const oldCommitmentAccessRequired = scope.someIndicators(i => i.oldCommitmentAccessRequired);
       const nullifiersRequired = scope.someIndicators(i => i.isNullified);
       const newCommitmentsRequired = scope.someIndicators(i => i.newCommitmentRequired);
       // For the 'toContract' transformation, we don't need to consider the initialisationRequired indicator; although it's important in the other transformations.

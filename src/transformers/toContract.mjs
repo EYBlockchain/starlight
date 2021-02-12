@@ -28,7 +28,7 @@ function transformation1(oldAST) {
     nullifiersRequired: true,
 
     stopTraversal: false,
-    skipSubnodes: false,
+    skipSubNodes: false,
   };
 
   const dummyParent = {
@@ -59,7 +59,7 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toContract(ast, options) {
   // transpile to a contract AST:
-  logger.debug('Transforming the .zsol AST to a solidity AST...');
+  logger.debug('Transforming the .zol AST to a solidity AST...');
   const newAST = transformation1(ast);
   // logger.debug('new solidity ast:', newAST);
   const newASTFilePath = pathjs.join(options.contractsDirPath, `${options.inputFileName}_ast.json`);

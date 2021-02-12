@@ -89,6 +89,13 @@ export default {
   FunctionCall: {
     enter(path, state) {
       const { node, parent } = path;
+
+      // TODO: `require` statements are 'FunctionCall' nodes, and they should be able to have secret states as arguments
+      // TODO: FunctionCalls to functions within the same contract ought to be allowed.
+      // TODO: FunctionCalls to base contracts (i.e. this contract `is` baseContract) ought to be allowed.
+      // `address(...)` is considered a FunctionCall.
+      // Initialisation of a contract instance is considered a FunctionCall.
+
       const args = node.arguments;
       args.forEach(arg => {
         const binding = arg.referencedDeclaration ? path.scope.getReferencedBinding(arg) : {};

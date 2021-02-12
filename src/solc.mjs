@@ -5,6 +5,7 @@ import logger from './utils/logger.mjs';
 // import config from 'config';
 // import { releases } from './solc-versions-list';
 
+// TODO: get this version getter working again...
 // const getSolcVersion = contractName => {
 //   console.log('getSolcVersion...');
 //   const contractsFiles = fs.readdirSync(contractsPath);
@@ -38,7 +39,7 @@ function tidy(_line) {
   let line = _line.replace(/\s+/g, ' ').replace(/^\s/, '');
   // remove comments
   if (line.startsWith('//')) return null;
-  line = line.split('//')[0];
+  [line] = line.split('//');
   return line;
 }
 
@@ -118,23 +119,38 @@ const createSolcInput = solidityFile => {
 // };
 
 /**
+ * Shows when there were errors during compilation.
+ * @param {Object} compiled - the output object from running solc
+ */
+const errorHandling = compiled => {
+  if (!compiled) {
+    logger.error(`solc didn't create any output...`);
+  } else if (compiled.errors) {
+    // something went wrong.
+    compiled.errors.map(error => logger.error(error.formattedMessage));
+    throw new Error('Solc Compilation Error: ^^^');
+  }
+};
+
+/**
   Compiles a solidity file and saves the output(s) (namely the AST) to file.
 */
-
 const compile = (solidityFile, options) => {
   const sources = buildSources(solidityFile, options);
   const params = createSolcInput(solidityFile);
-  function findImports(_import) {
-    logger.debug(_import);
+  const findImports = _import => {
+    logger.debug('import:', _import);
     if (sources[_import.toString()]) {
       return {
         contents: sources[_import.toString()].contents,
       };
     }
     return { error: 'File not found' };
-  }
+  };
+
   const compiled = JSON.parse(solc.compile(JSON.stringify(params), { import: findImports }));
   logger.debug('compiled', compiled);
+  errorHandling(compiled);
 
   const { ast } = compiled.sources.input;
 

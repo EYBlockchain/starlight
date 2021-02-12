@@ -40,14 +40,14 @@ _"An easy cell to developers that increases their capacity to develop Zero Knowl
 
 ## Induction :zap:
 
-zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write.
+zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? Zappify helps developers do just this...
 
 - Write a Solidity contract
-- Add a few new privacy decorators to the contract (to get a 'zappable' Solidity contract)
+- Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
 - Zappify that baby
 - Get a fully working zApp in return
 
-Solidity Contract --> zappable Solidity Contract --> zappify --> zApp
+_Solidity contract --> Zolidity contract --> zappify --> zApp_
 
 See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 
@@ -87,22 +87,24 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 Whilst the package is in early development, it isn't hosted on npm. To install:
 
 `cd zappify`
+
 `npm i`
+
 `npm i -g ./`
 
 This will create a symlink to your node.js bin, allowing you to run the commands specified in the '`"bin":`' field of the `package.json`; namely the `zappify` command.
 
 ## Run
 
-`zappify -i ./path/to/MyZappableContract.zsol`
+`zappify -i ./path/to/MyZolidityContract.zol`
 
-... converts a zappable Solidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
+... converts a Zolidity contract into a zApp. By default, the zApp is output to a `./zapps/` folder.
 
 ### CLI options
 
 | option  | abbr.  | description  |
 |:--|:--|:--|
-| `--input <./path/to/contract.zsol>`  | `-i`  | Specify an input contract file with a `.zsol` extension.  |
+| `--input <./path/to/contract.zol>`  | `-i`  | Specify an input contract file with a `.zol` extension.  |
 | `--output <./custom/output/dir/>`  | `-o`  | Specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.  |
 | `--zapp-name <customZappName>` | `-z`  | Otherwise files get output to a folder with name matching that of the input file.  |
 | `--log-level <debug>`  | -  | Specify a Winston log level type.  |
@@ -167,24 +169,32 @@ All the above use Docker in the background. If you'd like to see the Docker logg
 
 Preliminary traversals populate the `binding` and `indicator` objects. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
 
-`npm run test-prelim`
+`npm run-script test-prelim`  
+
+##### To test a single file:
+
+`npm run-script test-prelim -- --input fileName.zol`
+
+(Note all test-prelim files are stored in `./test/prelim-traversals/test-data` so no path is needed as input).
 
 ##### Adding new test cases
 
 You can automate the creation of 'expected outputs' for these tests.
 
-1. Create a `.zsol` file, around which you'd like a test to be created. For this example, suppose it's called `example-1.zsol`.
+1. Create a `.zol` file, around which you'd like a test to be created. For this example, suppose it's called `example-1.zol`.
 1. Save it in `./test/prelim-traversals/test-data`.
 1. Run `npm run-script test-prelim -- --write example-1`. This will run `zappify` on the file, and write output data to a file called `example-1.json`.
 1. Future tests will use `example-1.json` as the 'expected' outcome of the test.
 
 ##### Updating test cases
 
-Run the steps above. Warning: this will overwrite existing 'expected' data with new data.
+Run the steps above.  
+**Warning:** this will overwrite existing 'expected' data with new data.
 
 ##### Adding/Updating _all_ test cases
 
-Use the flag `--write-all` instead of `--write <fileName`. **WARNING** this will overwrite all 'expected' test files. Only use if you know what you're doing.
+Use the flag `--write-all` instead of `--write <fileName`.  
+**Warning:** this will overwrite all 'expected' test files. Only use if you know what you're doing.
 
 #### circuit
 
@@ -206,6 +216,9 @@ See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a
 
 ## Acknowledgements
 
-- [Babel](https://babeljs.io)
 - solc
 - zokrates
+
+Inspirational works:
+- [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)
+- [The Super Tiny Compiler](https://github.com/jamiebuilds/the-super-tiny-compiler)

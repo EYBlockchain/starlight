@@ -1,11 +1,10 @@
+/* eslint-disable import/no-cycle, no-nested-ternary */
 import fs from 'fs';
 import path from 'path';
 import logger from '../../../utils/logger.mjs';
-import {
-  EditableCommitmentImportStatementsBoilerplate,
-  editableCommitmentStatementsBoilerplate,
-  editableCommitmentParametersBoilerplate,
-} from '../../../boilerplate/circuit/zokrates/raw/toCircuit.mjs';
+import BP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.mjs';
+
+const bp = new BP();
 
 const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
 
@@ -58,78 +57,43 @@ const collectImportFiles = (file, contextDirPath = boilerplateCircuitsDir) => {
   return uniqueLocalFiles;
 };
 
-/**
- * Parses the boilerplate import statements, and grabs any common files.
- * @return {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
- * The filepath will be used when saving the file into the new zApp's dir.
- */
-const editableCommitmentCommonFilesBoilerplate = () => {
-  return collectImportFiles(EditableCommitmentImportStatementsBoilerplate.join('\n'));
-};
-
-// newline / tab beautification for '.zok' files
-const beautify = code => {
-  // can't be bothered writing this yet
-  const lines = code.split('\n');
-  let newCode = '';
-  let tabCount = 0;
-  for (const line of lines) {
-    const chars = line.split('');
-    let newLine = '';
-    for (const char of chars) {
-      switch (char) {
-        case '[':
-          ++tabCount;
-          newLine += `${char}\\\n${'\t'.repeat(tabCount)}`;
-          break;
-        case ']':
-          --tabCount;
-          newLine += `\\\n${'\t'.repeat(tabCount)}${char}`;
-          break;
-        default:
-          newLine += char;
-      }
-    }
-    newCode += newLine;
-  }
-  return newCode;
-};
-
 function codeGenerator(node) {
-  // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder':
-      return node.files.flatMap(codeGenerator);
+      return BP.uniqueify(node.files.flatMap(codeGenerator));
 
-    case 'File':
-      return [
-        {
-          filepath: path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`),
-          file: node.nodes.map(codeGenerator).join('\n\n'),
-        },
-      ];
-
-    case 'EditableCommitmentCommonFilesBoilerplate':
-      return editableCommitmentCommonFilesBoilerplate();
+    case 'File': {
+      const filepath = path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`);
+      const file = node.nodes.map(codeGenerator).join('\n\n');
+      const thisFile = {
+        filepath,
+        file,
+      };
+      const importedFiles = collectImportFiles(file);
+      return [thisFile, ...importedFiles];
+    }
 
     case 'ImportStatementList':
-      return `${node.imports.map(codeGenerator).join('\n')}`;
-
-    case 'EditableCommitmentImportStatementsBoilerplate':
-      return EditableCommitmentImportStatementsBoilerplate.join('\n');
+      return `${BP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
       const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
       const body = codeGenerator(node.body);
-      return `${functionSignature}\n\n\t${body}\n\n\treturn`;
+      return `${functionSignature}
+
+        ${body}
+
+        return
+        `;
     }
 
     case 'ParameterList':
-      return node.parameters.map(codeGenerator).join(',\\\n\t');
+      return BP.uniqueify(node.parameters.flatMap(codeGenerator)).join(',\\\n\t');
 
     case 'VariableDeclaration': {
-      const isPrivate = node.isPrivate ? 'private ' : '';
-      return `${isPrivate}${codeGenerator(node.typeName)} ${node.name}`;
+      const visibility =
+        node.declarationType === 'parameter' ? (node.isPrivate ? 'private ' : 'public ') : '\t\t';
+      return `${visibility}${codeGenerator(node.typeName)} ${node.name}`;
     }
 
     case 'VariableDeclarationStatement': {
@@ -141,30 +105,46 @@ function codeGenerator(node) {
     case 'ElementaryTypeName':
       return node.name;
 
-    case 'Block':
-      return node.statements.map(codeGenerator).join('\n\n\t');
+    case 'Block': {
+      const preStatements = BP.uniqueify(node.preStatements.flatMap(codeGenerator));
+      const statements = BP.uniqueify(node.statements.flatMap(codeGenerator));
+      const postStatements = BP.uniqueify(node.postStatements.flatMap(codeGenerator));
+      return [...preStatements, ...statements, ...postStatements].join('\n\n');
+    }
 
     case 'ExpressionStatement':
       return codeGenerator(node.expression);
 
     case 'Assignment':
-      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
-        node.rightHandSide,
+      return `
+        ${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
+
+    case 'BinaryOperation':
+      return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
+        node.rightExpression,
       )}`;
 
     case 'Identifier':
       return node.name;
 
-    case 'EditableCommitmentStatementsBoilerplate':
-      return editableCommitmentStatementsBoilerplate(node.privateStateName);
+    case 'Literal':
+      return node.value;
 
-    case 'EditableCommitmentParametersBoilerplate':
-      return editableCommitmentParametersBoilerplate(node.privateStateName).join(',\\\n\t');
+    case 'Assert':
+      return `
+        assert(${node.args.flatMap(codeGenerator)})`;
+
+    case 'Boilerplate':
+      return bp.generateBoilerplate(node);
+
+    case 'BoilerplateStatement': {
+      return bp.generateBoilerplate(node);
+    }
 
     // And if we haven't recognized the node, we'll throw an error.
     default:
       return;
-      // throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
+    // throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
   }
 }
 

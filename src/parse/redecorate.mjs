@@ -26,7 +26,7 @@ function transformation1(oldAST, toRedecorate) {
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
   path.traverse(explode(redecorateVisitor), toRedecorate);
-  logger.debug(toRedecorate);
+  // logger.debug(toRedecorate);
   // At the end of our transformer function we'll return the new ast that we
   // just created.
   return path;
@@ -37,7 +37,7 @@ export default function redecorate(ast, toRedecorate, options) {
   logger.verbose(`Creating decorated ast... `);
   const newAST = transformation1(ast, toRedecorate);
 
-  const zsolASTFilePath = `${options.parseDirPath}/${options.inputFileName}.zsol_ast.json`;
-  fs.writeFileSync(zsolASTFilePath, JSON.stringify(newAST.node, null, 4));
+  const zolASTFilePath = `${options.parseDirPath}/${options.inputFileName}.zol_ast.json`;
+  fs.writeFileSync(zolASTFilePath, JSON.stringify(newAST.node, null, 4));
   return JSON.parse(JSON.stringify(newAST.node, null, 4));
 }

@@ -32,13 +32,13 @@ export default {
       } else {
         // Not sure what to do 'else', yet.
         // If there are no global state modifications / 'references', then (currently) a circuit isn't needed for this function. In future, this could be a helper function which supports some other state-editing function, in which case a circuit would be needed.
-        return;
       }
 
       if (newFile) {
         // If we've not yet added this function as a node to our newAST, let's do that:
         // Our location in the newAST (parent._newASTPointer) should be Folder.files[].
         // NODEBUILDING
+        const contractName = `${parent.name}Shield`;
         const newNode = {
           nodeType: 'File',
           name: node.name, // the name of this function
@@ -47,6 +47,11 @@ export default {
             {
               nodeType: 'Imports',
             },
+            // {
+            //   nodeType: 'KeyRegistrationFunction',
+            //   onChainKeyRegistry: scope.onChainKeyRegistry, // TODO this is the temp solution to have a mapping with eth addr -> zkp keys on chain (we don't always need it)
+            //   contractName: contractName,
+            // },
             {
               // insert this FunctionDefinition node into our newly created circuit file.
               nodeType: node.nodeType, // FunctionDefinition
@@ -62,6 +67,7 @@ export default {
       } else {
         // Not sure what to do if we're not creating a file...
         // NODEBUILDING
+        if (node.kind === 'constructor') node.name = node.kind;
         const newNode = {
           nodeType: 'NonSecretFunction',
           name: node.name, // the name of this function
@@ -85,14 +91,22 @@ export default {
       const { node, parent, scope } = path;
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       // Now let's add some commitment-related boilerplate!
-      if (state.newCommitmentsRequired) {
+      if (state.newCommitmentsRequired && scope.modifiesSecretState()) {
         // Add a placeholder for common circuit files within the circuits Folder:
         const files = parent._newASTPointer;
         let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
+        let ZokratesSetupCommonFilesBoilerplateAlreadyExists = false;
+        let IntegrationTestBoilerplateAlreadyExists = false;
         for (const file of files) {
           if (file.nodeType === 'EditableCommitmentCommonFilesBoilerplate') {
             EditableCommitmentCommonFilesBoilerplateAlreadyExists = true;
-            break;
+          }
+          if (file.nodes && file.nodes[0].nodeType === 'IntegrationTestBoilerplate') {
+            IntegrationTestBoilerplateAlreadyExists = true;
+          }
+          if (file.nodeType === 'ZokratesSetupCommonFilesBoilerplate') {
+            ZokratesSetupCommonFilesBoilerplateAlreadyExists = true;
+            file.functions.push(node.name);
           }
         }
         if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
@@ -100,12 +114,17 @@ export default {
             nodeType: 'EditableCommitmentCommonFilesBoilerplate',
           });
         }
-        const contractName = `${node.name.charAt(0).toUpperCase() + node.name.slice(1)}Shield`;
+        const contractName = `${parent.name}Shield`;
 
-        if (state.snarkVerificationRequired) {
+        if (state.snarkVerificationRequired && !ZokratesSetupCommonFilesBoilerplateAlreadyExists) {
           parent._newASTPointer.push({
             nodeType: 'ZokratesSetupCommonFilesBoilerplate',
+            functions: [node.name],
+            contractName: contractName,
           });
+        }
+
+        if (state.snarkVerificationRequired && !IntegrationTestBoilerplateAlreadyExists) {
           // NODEBUILDING
           parent._newASTPointer.push({
             nodeType: 'File',
@@ -115,10 +134,19 @@ export default {
               {
                 nodeType: 'IntegrationTestBoilerplate',
                 contractName: contractName,
-                functionName: node.name,
-                parameters: node.parameters,
+                functions: [{ name: node.name, parameters: node._newASTPointer.parameters }],
               },
             ],
+          });
+        }
+
+        if (state.snarkVerificationRequired && IntegrationTestBoilerplateAlreadyExists) {
+          const testNode = parent._newASTPointer.filter(
+            node => node.name === 'test' && node.nodes,
+          )[0];
+          testNode.nodes[0].functions.push({
+            name: node.name,
+            parameters: node._newASTPointer.parameters,
           });
         }
 
@@ -127,72 +155,265 @@ export default {
           binding => binding.stateVariable && binding.isSecret,
         );
 
-        for (const [id, binding] of Object.entries(modifiedStateVariableBindings)) {
-          const indicator = scope.indicators[id];
-          const stateVarName = binding.node.name;
+        node._newASTPointer.parameters.modifiedStateVariables = [];
+        for (const [id, refbinding] of Object.entries(modifiedStateVariableBindings)) {
+          if (refbinding.isMapping) {
+            const binding = refbinding;
+            const modifiedKeys = Object.keys(scope.indicators[id].mappingKey);
+            for (const [key, mappingBinding] of Object.entries(binding.mappingKey)) {
+              if (modifiedKeys.includes(key)) {
+                mappingBinding.referencedKeyName = key;
+                modifiedStateVariableBindings[`${id}.${key}`] = mappingBinding;
+              }
+            }
+            delete modifiedStateVariableBindings[id];
+          }
+        }
+        for (let [id, binding] of Object.entries(modifiedStateVariableBindings)) {
+          let indicator = scope.indicators[id];
+          let stateVarName = binding.node ? binding.node.name : binding.name;
+          if (id.includes('.')) {
+            let key;
+            [id, key] = id.split('.');
+            indicator = scope.indicators[id].mappingKey[key];
+            stateVarName = binding.name.replace('[', '_').replace(']', '');
+          }
+          node._newASTPointer.parameters.modifiedStateVariables.push({
+            nodeType: binding.node ? binding.node.nodeType : `VariableDeclaration`,
+            name: stateVarName,
+          });
+          let increment;
+          if (indicator.isPartitioned) {
+            node._newASTPointer.body.statements.forEach(statement => {
+              if (
+                statement.nodeType === 'ExpressionStatement' &&
+                statement.incrementsSecretState &&
+                statement.secretStateName === stateVarName
+              )
+                increment = statement.increment;
+              if (statement.decrementsSecretState) {
+                node._newASTPointer.decrementsSecretState = true;
+                node._newASTPointer.decrementedSecretState = statement.secretStateName;
+                const testNode = parent._newASTPointer.filter(
+                  statement => statement.name === 'test' && statement.nodes,
+                )[0];
+                const fnTestNode = testNode.nodes[0].functions.filter(
+                  statement => statement.name === node.name,
+                )[0];
+                fnTestNode.decrementsSecretState = true;
+                fnTestNode.parameters.modifiedStateVariables.filter(
+                  param => param.name === statement.secretStateName,
+                )[0].isDecremented = true;
+
+                // TODO make this an array
+              }
+            });
+          }
+
+          const generateProofNodeExists = !!node._newASTPointer.body.statements.filter(
+            statement => statement.nodeType === 'GenerateProof',
+          )[0];
+          const SendTransactionNodeExists = !!node._newASTPointer.body.statements.filter(
+            statement => statement.nodeType === 'SendTransaction',
+          )[0];
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
           // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
           // Also do for MembershipWitness
           // NODEBUILDING
+
           if (indicator.initialisationRequired) {
-            node._newASTPointer.body.statements.push({
-              nodeType: 'ReadPreimage',
-              privateStateName: stateVarName,
+            if (binding.owner && !binding.owner.node) binding.owner.node = binding.owner;
+            if (!generateProofNodeExists) {
+              const readPreimageNode = {
+                nodeType: 'ReadPreimage',
+                privateStates: {},
+                onChainKeyRegistry: scope.onChainKeyRegistry,
+                contractName: contractName,
+              };
+              node._newASTPointer.body.statements.push(readPreimageNode);
+            }
+            const index = node._newASTPointer.body.statements.findIndex(
+              node => node.nodeType === 'ReadPreimage',
+            );
+            node._newASTPointer.body.statements[index].privateStates[stateVarName] = {
+              increment: increment,
               parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
-            });
+              stateVarId: [id],
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
+              nullifierRequired: indicator.isNullified,
+              isOwned: binding.isOwned,
+              owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+              ownerIsSecret: binding.isOwned
+                ? binding.owner.isSecret || binding.owner.node.isSecret
+                : null,
+            };
+
+            if (binding.referencedKey) {
+              node._newASTPointer.body.statements[index].privateStates[
+                stateVarName
+              ].stateVarId.push(binding.referencedKeyName);
+            }
           }
-          // - oldCommitment preimage check
-          // - oldCommitment membership & check vs the commitmentRoot
-          node._newASTPointer.body.statements.push({
-            nodeType: 'MembershipWitness',
-            contractName: contractName,
-          });
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
 
           // - oldCommitment nullifier preimage check
           if (indicator.isNullified) {
-            node._newASTPointer.body.statements.push({
+            // - oldCommitment preimage check
+            // - oldCommitment membership & check vs the commitmentRoot
+            const membershipWitnessNode = {
+              nodeType: 'MembershipWitness',
+              privateStateName: stateVarName,
+              increment: increment,
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
+              contractName: contractName,
+            };
+
+            const calculateNullifierNode = {
               nodeType: 'CalculateNullifier',
-            });
+              privateStateName: stateVarName,
+              increment: increment,
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
+            };
+
+            if (!generateProofNodeExists) {
+              node._newASTPointer.body.statements.push(membershipWitnessNode);
+              node._newASTPointer.body.statements.push(calculateNullifierNode);
+            } else {
+              let index = node._newASTPointer.body.statements.findIndex(
+                node => node.nodeType === 'MembershipWitness',
+              );
+              node._newASTPointer.body.statements.splice(index, 0, membershipWitnessNode);
+              index = node._newASTPointer.body.statements.findIndex(
+                node => node.nodeType === 'CalculateNullifier',
+              );
+              node._newASTPointer.body.statements.splice(index, 0, calculateNullifierNode);
+            }
           }
 
           // - newCommitment preimage check
-          node._newASTPointer.body.statements.push({
+          const calculateCommitmentNode = {
             nodeType: 'CalculateCommitment',
             privateStateName: stateVarName,
             parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
-          });
+            stateVarId: [id],
+            increment: increment,
+            isWhole: indicator.isWhole,
+            isPartitioned: indicator.isPartitioned,
+            nullifierRequired: indicator.isNullified,
+            isOwned: binding.isOwned,
+            owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+            ownerIsSecret: binding.isOwned
+              ? binding.owner.isSecret || binding.owner.node.isSecret
+              : null,
+          };
+
+          if (binding.referencedKey) {
+            calculateCommitmentNode.stateVarId.push(binding.referencedKeyName);
+          }
+
+          if (!generateProofNodeExists) {
+            node._newASTPointer.body.statements.push(calculateCommitmentNode);
+          } else {
+            const index = node._newASTPointer.body.statements.findIndex(
+              node => node.nodeType === 'CalculateCommitment',
+            );
+            node._newASTPointer.body.statements.splice(index, 0, calculateCommitmentNode);
+          }
 
           if (state.snarkVerificationRequired) {
             const circuitParams = [];
             // this adds other values we need in the circuit - v simple
-            for (const modifier of binding.modifyingPaths) {
-              if (modifier.parent.nodeType === 'Assignment')
-                circuitParams.push(modifier.parent.rightHandSide.name);
+            for (const param of node._newASTPointer.parameters.parameters) {
+              if (param.isPrivate || param.isSecret || param.modifiesSecretState)
+                circuitParams.push(param.name);
             }
             circuitParams.push(stateVarName);
+            if (!generateProofNodeExists) {
+              node._newASTPointer.body.statements.push({
+                nodeType: 'GenerateProof',
+                privateStates: {},
+                circuitName: node.name,
+                parameters: circuitParams,
+              });
+            }
+            const generateProofNode = node._newASTPointer.body.statements.filter(
+              node => node.nodeType === 'GenerateProof',
+            )[0];
+            generateProofNode.privateStates[stateVarName] = {
+              nullifierRequired: indicator.isNullified,
+              increment: increment,
+              isMapping: !!binding.referencedKeyName,
+              isWhole: indicator.isWhole,
+              isPartitioned: indicator.isPartitioned,
+              isOwned: binding.isOwned,
+              owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+              ownerIsSecret: binding.isOwned
+                ? binding.owner.isSecret || binding.owner.node.isSecret
+                : null,
+            };
+            generateProofNode.parameters.push(stateVarName);
+          }
+
+          const publicInputs = [];
+
+          if (!SendTransactionNodeExists) {
+            for (const param of node.parameters.parameters) {
+              if (!param.isSecret) publicInputs.push(param.name);
+            }
+
             node._newASTPointer.body.statements.push({
-              nodeType: 'GenerateProof',
+              nodeType: 'SendTransaction',
+              privateStates: {},
               privateStateName: stateVarName,
-              circuitName: node.name,
-              parameters: circuitParams, // TODO this should be the name of the var inside the commitment
+              functionName: node.name,
+              contractName: contractName,
+              publicInputs: publicInputs,
             });
           }
 
-          node._newASTPointer.body.statements.push({
-            nodeType: 'SendTransaction',
-            privateStateName: stateVarName,
-            functionName: node.name,
-            contractName: contractName,
-          });
+          const sendTransactionNode = node._newASTPointer.body.statements.filter(
+            node => node.nodeType === 'SendTransaction',
+          )[0];
+          sendTransactionNode.privateStates[stateVarName] = {
+            increment: increment,
+            isPartitioned: indicator.isPartitioned,
+            isWhole: indicator.isWhole,
+            nullifierRequired: indicator.isNullified,
+          };
 
-          node._newASTPointer.body.statements.push({
-            nodeType: 'WritePreimage',
-            privateStateName: stateVarName,
+          if (!generateProofNodeExists) {
+            const writePreimageNode = {
+              nodeType: 'WritePreimage',
+              privateStates: {},
+            };
+            node._newASTPointer.body.statements.push(writePreimageNode);
+          }
+          const index = node._newASTPointer.body.statements.findIndex(
+            node => node.nodeType === 'WritePreimage',
+          );
+          node._newASTPointer.body.statements[index].privateStates[stateVarName] = {
+            increment: increment,
             parameters: [stateVarName], // TODO this should be the name of the var inside the commitment
-          });
+            stateVarId: [id],
+            isWhole: indicator.isWhole,
+            isPartitioned: indicator.isPartitioned,
+            nullifierRequired: indicator.isNullified,
+            isOwned: binding.isOwned,
+            owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
+            ownerIsSecret: binding.isOwned
+              ? binding.owner.isSecret || binding.owner.node.isSecret
+              : null,
+          };
+          if (binding.referencedKey) {
+            node._newASTPointer.body.statements[index].privateStates[stateVarName].stateVarId.push(
+              binding.referencedKeyName,
+            );
+          }
         }
       }
     },
@@ -246,6 +467,7 @@ export default {
       const { node, parent } = path;
       const newNode = {
         nodeType: node.nodeType,
+        operator: node.operator,
         leftExpression: {},
         rightExpression: {},
       };
@@ -267,7 +489,11 @@ export default {
         rightHandSide: {},
       };
       node._newASTPointer = newNode;
-      parent._newASTPointer.expression = newNode;
+      if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+        parent._newASTPointer.initialValue = newNode;
+      } else {
+        parent._newASTPointer.expression = newNode;
+      }
     },
 
     exit(path, state) {},
@@ -277,19 +503,30 @@ export default {
     enter(path, state) {
       const { node, parent, scope } = path;
       let newNode;
+      let isMapping;
       // ExpressionStatements can contain an Assignment node.
-      // If this ExpressionStatement contains an assignment `a = b` to a stateVariable `a`, and if it's the _first_ such assignment in this scope, then this ExpressionStatement needs to become a VariableDeclarationStatement in the circuit's AST, i.e. `field a = b`.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
-        const referencedBinding = scope.getReferencedBinding(lhs);
+        let referencedBinding =
+          scope.getReferencedBinding(lhs) || scope.getReferencedBinding(lhs.baseExpression);
         const referencedNode = referencedBinding.node;
+        isMapping = referencedBinding.isMapping;
+        if (isMapping)
+          referencedBinding = referencedBinding.mappingKey[scope.getMappingKeyName(lhs)];
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
-        const modifiedBinding = scope.modifiedBindings[referencedBinding.id];
+        const modifiedPaths = referencedBinding.modifyingPaths.filter(
+          path => path.scope.scopeId === scope.scopeId,
+        );
 
         // NODEBUILDING
-        if (!modifiedBinding && referencedNode.isSecret) {
+        // if its secret and this is the first assigment, we add a vardec
+        if (
+          modifiedPaths[0].node.id === lhs.id &&
+          referencedNode.isSecret &&
+          referencedBinding.isWhole
+        ) {
           newNode = {
             nodeType: 'VariableDeclarationStatement',
             declarations: [
@@ -302,48 +539,105 @@ export default {
                 },
               },
             ],
-            initialValue: {
-              ...rhs,
-            },
+            initialValue: {},
+            modifiesSecretState: true,
           };
-
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
-          state.skipSubNodes = true;
+          // state.skipSubNodes = true;
 
           // Continue scoping subNodes, so that any references / modifications to bindings are collected. We'll require this data when exiting the tree.
           path.traverse({}, {});
 
           return;
         }
-      }
+        if (node.expression.isIncremented && referencedBinding.isPartitioned) {
+          newNode = {
+            nodeType: node.nodeType,
+            expression: {},
+            incrementsSecretState: node.expression.isIncremented,
+            decrementsSecretState: node.expression.isDecremented,
+            secretStateName: isMapping
+              ? referencedBinding.name.replace(`[`, `_`).replace(`]`, ``)
+              : referencedBinding.name,
+          };
 
-      newNode = {
-        nodeType: node.nodeType,
-        expression: {},
-      };
-      node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+          node._newASTPointer = newNode;
+          parent._newASTPointer.push(newNode);
+          // state.skipSubNodes = true;
+          return;
+        }
+      }
+      if (node.expression.nodeType !== 'FunctionCall') {
+        newNode = {
+          nodeType: node.nodeType,
+          expression: {},
+        };
+        node._newASTPointer = newNode;
+        parent._newASTPointer.push(newNode);
+      }
     },
 
-    exit(path, parent) {},
+    exit(path) {
+      if (path.node._newASTPointer && path.node._newASTPointer.incrementsSecretState) {
+        let increment;
+        switch (path.node.expression.rightHandSide.nodeType) {
+          case 'Identifier':
+            increment = path.node.expression.rightHandSide.name;
+            break;
+          case 'BinaryOperation':
+            if (
+              path.node.expression.rightHandSide.leftExpression.name ===
+              path.node.expression.leftHandSide.name
+            ) {
+              increment = path.node.expression.rightHandSide.rightExpression.name;
+              break;
+            } else if (path.node.expression.rightHandSide.leftHandSide) {
+              increment = path.node.expression.rightHandSide.leftHandSide.name;
+              break;
+            } else {
+              increment = '';
+              path.scope.indicators[
+                path.node.expression.leftHandSide.referencedDeclaration
+              ].increments.forEach(inc => {
+                increment += inc.name ? `+ ${inc.name} ` : `+ ${inc.value} `;
+              });
+              path.scope.indicators[
+                path.node.expression.leftHandSide.referencedDeclaration
+              ].decrements.forEach(dec => {
+                increment += dec.name ? `- ${dec.name} ` : `- ${dec.value} `;
+              });
+              break;
+            }
+          default:
+            break;
+        }
+        path.node._newASTPointer.increment = increment;
+      }
+    },
   },
 
   VariableDeclaration: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable.
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
         return;
       }
+      let modifiesSecretState = false;
+
+      scope.bindings[node.id].referencingPaths.forEach(refPath => {
+        if (scope.getReferencedBinding(refPath.node).isSecret) modifiesSecretState = true;
+      });
 
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = {
         nodeType: node.nodeType,
         name: node.name,
-        isPrivate: true, // assume all params are private for now? TODO: think this through better.
+        isPrivate: node.isSecret,
+        modifiesSecretState: modifiesSecretState,
         typeName: {},
       };
       node._newASTPointer = newNode;
@@ -360,12 +654,12 @@ export default {
   ElementaryTypeName: {
     enter(path) {
       const { node, parent } = path;
-      if (node.name !== 'uint256')
-        throw new Error('Currently, only transpilation of "uint256" types is supported');
+      // if (node.name !== 'uint256')
+      //   throw new Error('Currently, only transpilation of "uint256" types is supported');
 
       const newNode = {
         nodeType: node.nodeType,
-        name: 'field', // convert uint types to 'field', for now.
+        name: node.name, // convert uint types to 'field', for now.
       };
 
       // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
@@ -382,7 +676,37 @@ export default {
         nodeType: node.nodeType,
         name: node.name,
       };
+      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = newNode;
+    },
 
+    exit(path) {},
+  },
+
+  IndexAccess: {
+    enter(path, state) {
+      const { node, parent } = path;
+      if (!node.indexExpression.expression) node.indexExpression.expression = node.indexExpression;
+      const newNode = {
+        nodeType: node.nodeType,
+        name: `${node.baseExpression.name}_${node.indexExpression.expression.name}`,
+      };
+      state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
+      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = newNode;
+    },
+
+    exit(path) {},
+  },
+
+  MemberAccess: {
+    enter(path, state) {
+      const { node, parent } = path;
+      const newNode = {
+        nodeType: node.nodeType,
+        name: `${node.expression.name}_${node.memberName}`,
+      };
+      state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
       // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -391,7 +715,16 @@ export default {
   },
 
   Literal: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+      const newNode = {
+        nodeType: node.nodeType,
+        name: node.value,
+      };
+
+      // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = newNode;
+    },
 
     exit(path) {},
   },

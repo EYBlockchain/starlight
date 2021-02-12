@@ -22,7 +22,7 @@ function transformation1(oldAST) {
 
   const state = {
     stopTraversal: false,
-    skipSubnodes: false,
+    skipSubNodes: false,
   };
 
   const dummyParent = {
@@ -54,9 +54,11 @@ function transformation1(oldAST) {
 // A transformer function which will accept an ast.
 export default function toCircuit(ast, options) {
   // transpile to a circuit AST:
-  logger.verbose('Transforming the .zsol AST to a contract AST...');
+  logger.verbose('Transforming the .zol AST to a contract AST...');
   const newAST = transformation1(ast);
   const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
+  // console.log('\n\n\nNEWAST:')
+  // console.dir(newAST, { depth: 10 });
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the circuit files from the newly created circuit AST:

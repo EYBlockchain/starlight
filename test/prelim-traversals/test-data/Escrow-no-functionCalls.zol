@@ -17,8 +17,14 @@ contract Escrow {
         erc20 = IERC20(_erc20);
     }
 
+    function hello(uint256) private returns (bool) {
+        return true;
+    }
+
     function deposit(uint amount) public {
-        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        // bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        // require(hasBalance);
+        bool hasBalance = hello(amount);
         require(hasBalance);
         balances[msg.sender] += amount;
     }
@@ -30,7 +36,7 @@ contract Escrow {
 
     function withdraw(uint256 amount) public {
         balances[msg.sender] -= amount;
-        bool success = erc20.transfer(msg.sender, amount);
-        require(success, "ERC20 transfer failed");
+        // bool success = erc20.transfer(msg.sender, amount);
+        // require(success, "ERC20 transfer failed");
     }
 }

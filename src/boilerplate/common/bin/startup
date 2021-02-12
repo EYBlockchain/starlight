@@ -5,7 +5,7 @@ docker-compose -f docker-compose.zapp.yml up -d ganache
 
 sleep 5
 
-docker-compose -f docker-compose.zapp.yml up -d truffle
+docker-compose -f docker-compose.zapp.yml up -d deployer
 
 sleep 10
 

@@ -4,7 +4,7 @@ recognise a function definition
 import config from 'config';
 import process from '../processors/function.mjs';
 import logger from '../utils/logger.mjs';
-import { ParseError } from '../utils/errors.mjs';
+import { ParseError } from '../error/errors.mjs';
 import { blockCount } from '../state.mjs';
 
 function recogniseFunction(line, rtn = false) {
