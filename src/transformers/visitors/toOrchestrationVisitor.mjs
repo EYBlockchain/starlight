@@ -106,6 +106,7 @@ export default {
           }
           if (file.nodeType === 'ZokratesSetupCommonFilesBoilerplate') {
             ZokratesSetupCommonFilesBoilerplateAlreadyExists = true;
+            file.functions.push(node.name);
           }
         }
         if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
@@ -118,6 +119,8 @@ export default {
         if (state.snarkVerificationRequired && !ZokratesSetupCommonFilesBoilerplateAlreadyExists) {
           parent._newASTPointer.push({
             nodeType: 'ZokratesSetupCommonFilesBoilerplate',
+            functions: [node.name],
+            contractName: contractName,
           });
         }
 

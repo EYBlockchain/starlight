@@ -15,11 +15,11 @@ export const ZappFilesBoilerplate = [
     writePath: 'migrations/1_initial_migration.js',
     generic: true,
   },
-  {
-    readPath: 'src/boilerplate/common/migrations/2_shield.js',
-    writePath: 'migrations/2_shield.js',
-    generic: false,
-  },
+  // {
+  //   readPath: 'src/boilerplate/common/migrations/2_shield.js',
+  //   writePath: 'migrations/2_shield.js',
+  //   generic: false,
+  // },
   {
     readPath: 'src/boilerplate/common/boilerplate-package.json',
     writePath: './package.json',
@@ -36,6 +36,16 @@ export const ZappFilesBoilerplate = [
     generic: true,
   },
   {
+    readPath: 'src/boilerplate/common/boilerplate-Dockerfile.deployer',
+    writePath: './Dockerfile.deployer',
+    generic: true,
+  },
+  {
+    readPath: 'src/boilerplate/common/entrypoint.sh',
+    writePath: './entrypoint.sh',
+    generic: true,
+  },
+  {
     readPath: 'src/boilerplate/common/truffle-config.js',
     writePath: './truffle-config.js',
     generic: true,
@@ -44,10 +54,7 @@ export const ZappFilesBoilerplate = [
 
 export const integrationTestBoilerplate = {
   fnimport: `import FUNCTION_NAME from './FUNCTION_NAME.mjs';`,
-  prefix: `import { startEventFilter, getSiblingPath } from './common/timber.mjs';
-  import logger from './common/logger.mjs';
-  import web3 from './common/web3.mjs';
-
+  prefix: `import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport logger from './common/logger.mjs';\nimport web3 from './common/web3.mjs';\n\n
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   let leafIndex;`,
   function: `// eslint-disable-next-line func-names \n ${
@@ -100,8 +107,10 @@ export const generateProofBoilerplate = node => {
   for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
     const lines = [];
     const stateVarIdLines = stateNode.isMapping
-      ? [`\t${privateStateName}_stateVarId,`, `\t${privateStateName}_stateVarId_key.hex(32),`]
-      : [`\t${privateStateName}_stateVarId,`];
+      ? [`\t${privateStateName}_stateVarId_key.integer,`]
+      : [];
+    // [`\t${privateStateName}_stateVarId,`, `\t${privateStateName}_stateVarId_key.hex(32),`]
+    // : [`\t${privateStateName}_stateVarId,`];
     switch (stateNode.isWhole) {
       case true:
         node.parameters
@@ -112,19 +121,19 @@ export const generateProofBoilerplate = node => {
         output.push(`
             ${lines.join('  \n\t\t\t\t\t\t\t\t')}
             ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
-            \t!${privateStateName}_commitmentExists,
-            \t${privateStateName}_prev.limbs(32, 8),
-            \tpublicKey.limbs(32, 8),
-            \t${privateStateName}_prevSalt.limbs(32, 8),
-            \t${privateStateName}_index.integer,
-            \t${privateStateName}_path.integer,
             \tsecretKey.limbs(32, 8),
             \t${privateStateName}_nullifier.integer,
-            \t${privateStateName}.limbs(32, 8),
+            \t${privateStateName}_prev.limbs(32, 8),
+            \t${privateStateName}_prevSalt.limbs(32, 8),
+            \t!${privateStateName}_commitmentExists,
+            \tpublicKey.limbs(32, 8),
+            \t${privateStateName}_root.integer
+            \t${privateStateName}_index.integer,
+            \t${privateStateName}_path.integer,
             \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
             \t${privateStateName}_newSalt.limbs(32, 8),
             \t${privateStateName}_newCommitment.integer,
-            \t${privateStateName}_root.integer`);
+            `);
         break;
       case false:
       default:
@@ -141,28 +150,26 @@ export const generateProofBoilerplate = node => {
             //     \t${stateNode.increment}_newCommitment.integer`;
             if (!output.includes(lines[0])) output.push(lines[0]);
             output.push(`
+                ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
                 \tsecretKey.limbs(32, 8),
                 \tsecretKey.limbs(32, 8),
                 \t${privateStateName}_0_nullifier.integer,
                 \t${privateStateName}_1_nullifier.integer,
-                ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
-                \t${privateStateName}_0_prev.limbs(32, 8),
+                \t${privateStateName}_0_prev.integer,
                 \t${privateStateName}_0_prevSalt.limbs(32, 8),
-                ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
-                \t${privateStateName}_1_prev.limbs(32, 8),
+                \t${privateStateName}_1_prev.integer,
                 \t${privateStateName}_1_prevSalt.limbs(32, 8),
+                \t${privateStateName}_root.integer,
                 \t${privateStateName}_0_index.integer,
                 \t${privateStateName}_0_path.integer,
-                \t${privateStateName}_root.integer,
                 \t${privateStateName}_1_index.integer,
                 \t${privateStateName}_1_path.integer,
-                ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
                 \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
                 \t${privateStateName}_2_newSalt.limbs(32, 8),
                 \t${privateStateName}_2_newCommitment.integer`);
             //  if (!output.includes(lines[1])) output.push(lines[1]);
-            output.push(`
-                \t${privateStateName}_root.integer`);
+            // output.push(`
+            //     \t${privateStateName}_root.integer`);
             break;
           case false:
           default:
@@ -171,7 +178,7 @@ export const generateProofBoilerplate = node => {
             //   lines.push(`\tvalue: ${inc.name}.integer,`);
             // });
             lines[0] = `
-                \t${stateNode.increment}.limbs(32, 8)`;
+                \t${stateNode.increment}.integer`;
             if (!output.includes(lines[0])) output.push(lines[0]);
             output.push(`
                 ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
@@ -229,7 +236,7 @@ export const preimageBoilerPlate = node => {
         // TODO - this is the case where the owner is an admin (state var)
         // we have to let the user submit the key and check it in the contract
         // newOwnerStatment = `${newOwner};`;
-        newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+        newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         break;
     }
 
@@ -442,12 +449,14 @@ export const OrchestrationCodeBoilerPlate = node => {
       }
       return {
         statements: [
-          // `\nlet preimage = {};`,
-          `\nlet preimage = JSON.parse(
+          `\nlet preimage = {};`,
+          `\nif (fs.existsSync(db)) {
+            preimage = JSON.parse(
                 fs.readFileSync(db, 'utf-8', err => {
                   console.log(err);
                 }),
-              );`,
+              );
+            }`,
           states.join('\n'),
         ],
       };
@@ -456,8 +465,8 @@ export const OrchestrationCodeBoilerPlate = node => {
       if (node.isPartitioned) {
         return {
           statements: [
-            `const witness_0 = await getMembershipWitness('${node.contractName}', ${privateStateName}_0_oldCommitment.integer);
-            const witness_1 = await getMembershipWitness('${node.contractName}', ${privateStateName}_1_oldCommitment.integer);
+            `const witness_0 = await getMembershipWitness('${node.contractName}', ${privateStateName}_0_oldCommitment);
+            const witness_1 = await getMembershipWitness('${node.contractName}', ${privateStateName}_1_oldCommitment);
             const ${privateStateName}_0_index = generalise(witness_0.index);
             const ${privateStateName}_1_index = generalise(witness_1.index);
             const ${privateStateName}_root = generalise(witness_0.root);
@@ -502,7 +511,7 @@ export const OrchestrationCodeBoilerPlate = node => {
       // if isMapping and we have the key to hash with the stateVarId
       states[0] = `${privateStateName}_stateVarId`;
       if (node.stateVarId[1] && privateStateName.includes(node.stateVarId[1]))
-        states[0] = `utils.shaHash(${privateStateName}_stateVarId, ${privateStateName}_stateVarId_key.hex(32))`;
+        states[0] = `generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32)`;
       switch (node.isPartitioned) {
         case undefined:
         case false:
