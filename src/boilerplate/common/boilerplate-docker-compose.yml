@@ -11,6 +11,9 @@ services:
       - ganache
     volumes:
       - ./build:/app/build
+      - ./contracts/:/app/contracts/
+      - ./migrations/:/app/migrations/
+      - ./truffle-config.js:/app/truffle-config.js
       - ./circuits/:/app/circuits:delegated
       - ./orchestration/:/app/orchestration:delegated
       - ./test/:/app/test:delegated
@@ -84,19 +87,20 @@ services:
     networks:
       - zapp_network
 
-  truffle:
-    image: docker.io/westlad/contract_deployer:v1.0
+  deployer:
+    build:
+      context: .
+      dockerfile: Dockerfile.deployer
+    depends_on:
+      - ganache
     volumes:
-      - ./contracts/:/truffle/contracts/:ro
-      - ./migrations/:/truffle/migrations/:ro
-      - ./truffle-config.js:/truffle/truffle-config.js:ro
-      - ./build/:/truffle/build/:cached
+      - ./build:/app/build
+      - ./contracts/:/app/contracts/
+      - ./migrations/:/app/migrations/
+      - ./truffle-config.js:/app/truffle-config.js
       - ./orchestration/:/app/orchestration:delegated
     networks:
       - zapp_network
-    depends_on:
-      - ganache
-    command: ["truffle", "migrate", "--reset", "--network", "development_ganache"]
 
 volumes:
   timber-mongo-volume: {}
