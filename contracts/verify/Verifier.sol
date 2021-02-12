@@ -49,7 +49,16 @@ contract Verifier is Ownable {
 
   Verification_Key_GM17 vk;
 
+  uint256 private r = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
+  function validateInputs(uint256[] memory _inputs) {
+      for (uint i = 0; i < _inputs.length; i++) {
+          require(_inputs[i] < r, "Inputs must be less than r.");
+      }
+  }
+
   function verify(uint256[] memory _proof, uint256[] memory _inputs, uint256[] memory _vk) public returns (bool result) {
+      validateInputs(_inputs);
       if (verificationCalculation(_proof, _inputs, _vk) == 0) {
           result = true;
       } else {

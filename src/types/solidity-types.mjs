@@ -83,6 +83,13 @@ export function buildNode(nodeType, fields) {
         literals,
       };
     }
+    case 'InheritanceSpecifier': {
+      const { baseName = {} } = fields;
+      return {
+        nodeType,
+        baseName,
+      };
+    }
     case 'ImportStatementList': {
       const { imports = [] } = fields;
       return {
