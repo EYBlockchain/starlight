@@ -113,13 +113,16 @@ export function getInputCommitments(publicKey, value) {
     }),
   );
   const possibleCommitments = Object.entries(commitments).filter(
-    (hash, preimage) => preimage.publicKey === publicKey,
+    entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );
   possibleCommitments.sort(
     (preimageA, preimageB) => parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
   );
-  if (possibleCommitments[0][1].value + possibleCommitments[1][1].value >= value) {
-    return [possibleCommitments[0][0], possibleCommitments[0][1]];
+  if (
+    parseInt(possibleCommitments[0][1].value, 10) + parseInt(possibleCommitments[1][1].value, 10) >=
+    parseInt(value, 10)
+  ) {
+    return [possibleCommitments[0][0], possibleCommitments[1][0]];
   }
   return null;
 }

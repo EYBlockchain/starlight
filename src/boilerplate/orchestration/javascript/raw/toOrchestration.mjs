@@ -56,7 +56,16 @@ export const integrationTestBoilerplate = {
   fnimport: `import FUNCTION_NAME from './FUNCTION_NAME.mjs';`,
   prefix: `import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport logger from './common/logger.mjs';\nimport web3 from './common/web3.mjs';\n\n
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  let leafIndex;`,
+  let leafIndex;
+  // eslint-disable-next-line func-names
+   describe('CONTRACT_NAME', async function () {
+    this.timeout(3660000);
+    try {
+      await web3.connect();
+    } catch (err) {
+      throw new Error(err);
+    }`,
+  suffix: `});`,
   function: `// eslint-disable-next-line func-names \n ${
     fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g)[0]
   }`,
@@ -205,17 +214,28 @@ export const preimageBoilerPlate = node => {
       if (stateNode.isWhole)
         lines.push(`const ${param}_prev = generalise(${privateStateName}_preimage.${param});`);
       const id = stateNode.stateVarId[stateNode.parameters.indexOf(param)];
-      stateVarIds.push(`\nconst ${param}_stateVarId = ${id};`);
+      if (!stateNode.stateVarId[1]) stateVarIds.push(`\nconst ${param}_stateVarId = ${id};`);
       if (
         stateNode.stateVarId[1] &&
         privateStateName.includes(stateNode.stateVarId[1]) &&
         stateNode.stateVarId[1] !== 'msg'
-      )
+      ) {
+        stateVarIds.push(`\nlet ${param}_stateVarId = ${id};`);
         stateVarIds.push(`\nconst ${param}_stateVarId_key = ${stateNode.stateVarId[1]};`);
-      if (stateNode.stateVarId[1] === 'msg' && privateStateName.includes('msg'))
+        stateVarIds.push(
+          `\n${param}_stateVarId = generalise(utils.mimcHash([generalise(${param}_stateVarId).bigInt, ${param}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+        );
+      }
+
+      if (stateNode.stateVarId[1] === 'msg' && privateStateName.includes('msg')) {
+        stateVarIds.push(`\nlet ${param}_stateVarId = ${id};`);
         stateVarIds.push(
           `\nconst ${param}_stateVarId_key = ${privateStateName}_newOwnerPublicKey;`,
         );
+        stateVarIds.push(
+          `\n${param}_stateVarId = generalise(utils.mimcHash([generalise(${param}_stateVarId).bigInt, ${param}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+        );
+      }
       initialiseParams.push(`\nlet ${param}_prev = generalise(0);`);
       preimageParams.push(`\t${param}: 0,`);
     });
@@ -283,10 +303,10 @@ export const preimageBoilerPlate = node => {
               );
               \nconst ${privateStateName}_0_oldCommitment = _${privateStateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${
                 stateNode.increment
-              })[0] : generalise(_${privateStateName}_0_oldCommitment).integer;
-              \nconst ${privateStateName}_1_oldCommitment = _${privateStateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${
+              }.integer)[0] : generalise(_${privateStateName}_0_oldCommitment).hex(32);
+              \nconst ${privateStateName}_1_oldCommitment = _${privateStateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${
                 stateNode.increment
-              })[1] : generalise(_${privateStateName}_1_oldCommitment).integer;
+              }.integer)[1] : generalise(_${privateStateName}_1_oldCommitment).hex(32);
 
               \n${privateStateName}_newOwnerPublicKey = ${newOwnerStatment}
               const ${privateStateName}_0_prevSalt = generalise(${privateStateName}_preimage[${privateStateName}_0_oldCommitment].salt);
@@ -409,6 +429,12 @@ export const OrchestrationCodeBoilerPlate = node => {
             switch (stateNode.nullifierRequired) {
               case true:
                 states.push(
+                  `\npreimage[generalise(${stateName}_0_oldCommitment).hex(32)].isNullified = true;`,
+                );
+                states.push(
+                  `\npreimage[generalise(${stateName}_1_oldCommitment).hex(32)].isNullified = true;`,
+                );
+                states.push(
                   `\npreimage[${stateName}_2_newCommitment.hex(32)] = {
                   ${lines.join('')}
                   \tsalt: ${stateName}_2_newSalt.integer,
@@ -465,8 +491,8 @@ export const OrchestrationCodeBoilerPlate = node => {
       if (node.isPartitioned) {
         return {
           statements: [
-            `const witness_0 = await getMembershipWitness('${node.contractName}', ${privateStateName}_0_oldCommitment);
-            const witness_1 = await getMembershipWitness('${node.contractName}', ${privateStateName}_1_oldCommitment);
+            `const witness_0 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_0_oldCommitment).integer);
+            const witness_1 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_1_oldCommitment).integer);
             const ${privateStateName}_0_index = generalise(witness_0.index);
             const ${privateStateName}_1_index = generalise(witness_1.index);
             const ${privateStateName}_root = generalise(witness_0.root);
@@ -510,8 +536,8 @@ export const OrchestrationCodeBoilerPlate = node => {
     case 'CalculateCommitment':
       // if isMapping and we have the key to hash with the stateVarId
       states[0] = `${privateStateName}_stateVarId`;
-      if (node.stateVarId[1] && privateStateName.includes(node.stateVarId[1]))
-        states[0] = `generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32)`;
+      // if (node.stateVarId[1] && privateStateName.includes(node.stateVarId[1]))
+      //   states[0] = `generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32)`;
       switch (node.isPartitioned) {
         case undefined:
         case false:
@@ -533,7 +559,7 @@ export const OrchestrationCodeBoilerPlate = node => {
               return {
                 statements: [
                   `\nconst ${privateStateName}_2_newSalt = generalise(utils.randomHex(32));`,
-                  `\nlet change = ${privateStateName}_0_prev.integer + ${privateStateName}_1_prev.integer - ${increment}.integer;`,
+                  `\nlet change = parseInt(${privateStateName}_0_prev.integer, 10) + parseInt(${privateStateName}_1_prev.integer, 10) - parseInt(${increment}.integer, 10);`,
                   `\nchange = generalise(change);`,
                   `\nlet ${privateStateName}_2_newCommitment = generalise(utils.shaHash(${states[0]}, change.hex(32), publicKey.hex(32), ${privateStateName}_2_newSalt.hex(32)));
                   \n${privateStateName}_2_newCommitment = generalise(${privateStateName}_2_newCommitment.hex(32, 31)); // truncate`,

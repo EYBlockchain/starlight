@@ -74,13 +74,15 @@ const testInputsByType = solidityType => {
   switch (solidityType) {
     case 'uint':
     case 'uint256':
-      return Math.floor(Math.random() * Math.floor(20)); // random number between 1 and 20
+      return Math.floor(Math.random() * Math.floor(20) + 1); // random number between 1 and 20
     case 'address':
       return `'this-is-an-address'`;
     case 'key':
-      return `'this-is-a-zkp-key'`;
+      // return `'this-is-a-zkp-key'`;
+      return `0`;
     case 'commitment':
-      return `'this-is-an-old-commitment'`;
+      return `0`;
+    //  return `'this-is-an-old-commitment'`;
     default:
       return 0; // TODO
   }
@@ -88,12 +90,13 @@ const testInputsByType = solidityType => {
 
 const prepareIntegrationTest = node => {
   const genericTestFile = integrationTestBoilerplate;
-  let outputTestFile = genericTestFile.prefix;
+  let outputTestFile = genericTestFile.prefix.replace(/CONTRACT_NAME/g, node.contractName);
   node.functions.forEach(fn => {
     let fnboilerplate = genericTestFile.function
       .replace(/CONTRACT_NAME/g, node.contractName)
       .replace(/FUNCTION_NAME/g, fn.name);
     // fn sig: original params -> new public keys -> input commitments
+    let removeSecondCall = false;
     const paramTypes = fn.parameters.parameters.map(obj => obj.typeName.name);
     fn.parameters.modifiedStateVariables.forEach(param => {
       const index = paramTypes.indexOf('key');
@@ -107,6 +110,8 @@ const prepareIntegrationTest = node => {
         // if dec, we need two input commitments
         paramTypes.push('commitment');
         paramTypes.push('commitment');
+        // we should also not do a second call, just in case we don't have enough input commitments
+        removeSecondCall = true;
       }
     });
     fnboilerplate = fnboilerplate.replace(
@@ -117,10 +122,15 @@ const prepareIntegrationTest = node => {
       /FUNCTION_SIG_2/g,
       paramTypes.map(testInputsByType).join(', '),
     );
+    if (removeSecondCall) {
+      const toRemove = fnboilerplate.match(/describe\('Second Call'?[\s\S]*/g)[0];
+      fnboilerplate = fnboilerplate.replace(toRemove, `\n});`);
+    }
 
     const fnimport = genericTestFile.fnimport.replace(/FUNCTION_NAME/g, fn.name);
     outputTestFile = `${fnimport}\n${outputTestFile}\n${fnboilerplate}`;
   });
+  outputTestFile = `${outputTestFile}\n});\n`;
   return outputTestFile;
 };
 

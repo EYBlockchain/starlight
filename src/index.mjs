@@ -23,7 +23,7 @@ const zappify = options => {
 
   toOrchestration(path, options);
 
-  toCircuit(zolAST, options);
+  // toCircuit(zolAST, options);
 
   // toContract(zolAST, options);
 
