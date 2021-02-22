@@ -204,7 +204,6 @@ export default {
             indicator = scope.indicators[id].mappingKey[key];
             stateVarName = binding.name.replace('[', '_').replace(']', '');
           }
-          console.log('at', stateVarName);
           node._newASTPointer.parameters.modifiedStateVariables.push({
             nodeType: binding.node ? binding.node.nodeType : `VariableDeclaration`,
             name: stateVarName,
