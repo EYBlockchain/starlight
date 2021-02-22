@@ -17,6 +17,8 @@ function tidy(_line) {
   line = line.replace(/\s+/g, ' ');
   // remove spaces from the start of the line:
   line = line.replace(/^\s/, '');
+  // remove all comments
+  line = line.replace(/[^:]\/\/.*/g, '');
   // remove comments
   if (line.startsWith('//')) return null;
   return line;
@@ -44,8 +46,8 @@ function removeDecorators(options) {
     if (deDecLine && !Array.isArray(deDecLine)) {
       // record the desprinkling, so that we may add the keywords back to the AST later (after solc compilation):
       toRedecorate.push({
-        oldline: decLine,
-        newline: deDecLine,
+        oldline: tidy(decLine),
+        newline: tidy(deDecLine),
         type,
         keyword,
         name,

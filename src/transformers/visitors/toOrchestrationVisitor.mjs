@@ -19,6 +19,20 @@ export default {
     exit(path) {},
   },
 
+  ImportDirective: {
+    enter(path, state) {
+      const { node, parent } = path;
+      if (!state.contractImports) state.contractImports = [];
+      state.contractImports.push({
+        absolutePath: node.absolutePath,
+        file: node.file,
+      });
+      // we assume all import statements come before all functions
+    },
+
+    exit(path) {},
+  },
+
   FunctionDefinition: {
     enter(path, state) {
       const { node, parent, scope } = path;
@@ -97,6 +111,7 @@ export default {
         let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
         let ZokratesSetupCommonFilesBoilerplateAlreadyExists = false;
         let IntegrationTestBoilerplateAlreadyExists = false;
+        let constructorParams = [];
         for (const file of files) {
           if (file.nodeType === 'EditableCommitmentCommonFilesBoilerplate') {
             EditableCommitmentCommonFilesBoilerplateAlreadyExists = true;
@@ -108,6 +123,9 @@ export default {
             ZokratesSetupCommonFilesBoilerplateAlreadyExists = true;
             file.functions.push(node.name);
           }
+          if (file.nodeType === 'NonSecretFunction' && file.name === 'constructor') {
+            constructorParams = file.nodes[0].parameters.parameters;
+          }
         }
         if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
           parent._newASTPointer.push({
@@ -117,11 +135,14 @@ export default {
         const contractName = `${parent.name}Shield`;
 
         if (state.snarkVerificationRequired && !ZokratesSetupCommonFilesBoilerplateAlreadyExists) {
-          parent._newASTPointer.push({
+          const zokratesSetupCommonFilesBoilerplateNode = {
             nodeType: 'ZokratesSetupCommonFilesBoilerplate',
             functions: [node.name],
             contractName: contractName,
-          });
+          };
+          if (constructorParams) zokratesSetupCommonFilesBoilerplateNode.constructorParams = constructorParams;
+          if (state.contractImports) zokratesSetupCommonFilesBoilerplateNode.contractImports = state.contractImports;
+          parent._newASTPointer.push(zokratesSetupCommonFilesBoilerplateNode);
         }
 
         if (state.snarkVerificationRequired && !IntegrationTestBoilerplateAlreadyExists) {
@@ -142,12 +163,17 @@ export default {
 
         if (state.snarkVerificationRequired && IntegrationTestBoilerplateAlreadyExists) {
           const testNode = parent._newASTPointer.filter(
-            node => node.name === 'test' && node.nodes,
+            thisNode => thisNode.name === 'test' && thisNode.nodes,
           )[0];
-          testNode.nodes[0].functions.push({
-            name: node.name,
-            parameters: node._newASTPointer.parameters,
-          });
+          const functionExists = testNode.nodes[0].functions.filter(
+            functionTestNode => functionTestNode.name === node.name,
+          )[0];
+          if (!functionExists) {
+            testNode.nodes[0].functions.push({
+              name: node.name,
+              parameters: node._newASTPointer.parameters,
+            });
+          }
         }
 
         // assuming one secret state var per commitment
@@ -178,6 +204,7 @@ export default {
             indicator = scope.indicators[id].mappingKey[key];
             stateVarName = binding.name.replace('[', '_').replace(']', '');
           }
+          console.log('at', stateVarName);
           node._newASTPointer.parameters.modifiedStateVariables.push({
             nodeType: binding.node ? binding.node.nodeType : `VariableDeclaration`,
             name: stateVarName,
@@ -191,15 +218,18 @@ export default {
                 statement.secretStateName === stateVarName
               )
                 increment = statement.increment;
-              if (statement.decrementsSecretState) {
+
+              if (statement.decrementsSecretState && statement.secretStateName === stateVarName) {
                 node._newASTPointer.decrementsSecretState = true;
                 node._newASTPointer.decrementedSecretState = statement.secretStateName;
                 const testNode = parent._newASTPointer.filter(
-                  statement => statement.name === 'test' && statement.nodes,
+                  thisNode => thisNode.name === 'test' && thisNode.nodes,
                 )[0];
                 const fnTestNode = testNode.nodes[0].functions.filter(
-                  statement => statement.name === node.name,
+                  thisNode => thisNode.name === node.name,
                 )[0];
+                console.log(fnTestNode.parameters.modifiedStateVariables);
+                console.log(statement);
                 fnTestNode.decrementsSecretState = true;
                 fnTestNode.parameters.modifiedStateVariables.filter(
                   param => param.name === statement.secretStateName,

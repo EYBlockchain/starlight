@@ -23,7 +23,7 @@ Harry R
 
 pragma solidity ^0.8.0;
 
-interface Verifier_Interface {
+interface IVerifier {
 
   function verify(uint256[] calldata _proof, uint256[] calldata _inputs, uint256[] calldata _vk) external returns (bool result);
 

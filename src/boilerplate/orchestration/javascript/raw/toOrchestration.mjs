@@ -55,6 +55,13 @@ export const ZappFilesBoilerplate = [
 export const integrationTestBoilerplate = {
   fnimport: `import FUNCTION_NAME from './FUNCTION_NAME.mjs';`,
   prefix: `import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport logger from './common/logger.mjs';\nimport web3 from './common/web3.mjs';\n\n
+  /**
+  Welcome to your zApp's integration test!
+  Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
+  The transpiler automatically fills in any ZKP inputs for you and provides some dummy values for the original zol function.
+  NOTE: if any non-secret functions need to be called first, the transpiler won't know! You'll need to add those calls below.
+  NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
+  */
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   let leafIndex;
   // eslint-disable-next-line func-names
@@ -101,6 +108,7 @@ export const sendTransactionBoilerplate = node => {
         break;
       case false:
       default:
+        // whole
         output[0].push(`${privateStateName}_root.integer`);
         output[1].push(`${privateStateName}_nullifier.integer`);
         output[2].push(`${privateStateName}_newCommitment.integer`);
@@ -112,10 +120,11 @@ export const sendTransactionBoilerplate = node => {
 
 export const generateProofBoilerplate = node => {
   const { privateStates } = node;
+  const privateStateNames = Object.keys(privateStates);
   const output = [];
   for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
     const lines = [];
-    const stateVarIdLines = stateNode.isMapping
+    let stateVarIdLines = stateNode.isMapping
       ? [`\t${privateStateName}_stateVarId_key.integer,`]
       : [];
     // [`\t${privateStateName}_stateVarId,`, `\t${privateStateName}_stateVarId_key.hex(32),`]
@@ -123,7 +132,7 @@ export const generateProofBoilerplate = node => {
     switch (stateNode.isWhole) {
       case true:
         node.parameters
-          .filter(para => para !== node.privateStateName)
+          .filter(para => !privateStateNames.includes(para)) //  !== node.privateStateName)
           .forEach(param => {
             if (!lines.includes(`\t${param}.integer,`)) lines.push(`\t${param}.integer,`);
           });
@@ -152,13 +161,27 @@ export const generateProofBoilerplate = node => {
             //    stateNode.increment.forEach(inc => {
             //             lines.push(`\tvalue: ${inc.name}.integer,`);
             //           });
-            lines[0] = `
-                \t${stateNode.increment}.integer`;
+            node.parameters
+              .filter(para => !privateStateNames.includes(para)) //  !== node.privateStateName)
+              .forEach(param => {
+                if (
+                  !lines.includes(`\t${param}.integer,`) &&
+                  !output.join().includes(`${param}.integer`)
+                )
+                  lines.push(`\t${param}.integer,`);
+                if (stateNode.owner.includes(param)) stateVarIdLines = [];
+              });
+
+            if (
+              !output.join().includes(`\t${stateNode.increment}.integer`) &&
+              !lines.includes(`\t${stateNode.increment}.integer,`)
+            )
+              output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
             // lines[1] = `
             //     \t${stateNode.increment}_newSalt.limbs(32, 8),
             //     \t${stateNode.increment}_newCommitment.integer`;
-            if (!output.includes(lines[0])) output.push(lines[0]);
             output.push(`
+                ${lines.join('  \n\t\t\t\t\t\t\t\t')}
                 ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
                 \tsecretKey.limbs(32, 8),
                 \tsecretKey.limbs(32, 8),
@@ -186,11 +209,24 @@ export const generateProofBoilerplate = node => {
             // stateNode.increment.forEach(inc => {
             //   lines.push(`\tvalue: ${inc.name}.integer,`);
             // });
-            lines[0] = `
-                \t${stateNode.increment}.integer`;
-            if (!output.includes(lines[0])) output.push(lines[0]);
-            output.push(`
-                ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
+            node.parameters
+              .filter(para => para !== node.privateStateName)
+              .forEach(param => {
+                if (
+                  !lines.includes(`\t${param}.integer,`) &&
+                  !output.join().includes(`${param}.integer`)
+                )
+                  lines.push(`\t${param}.integer,`);
+                if (stateNode.owner && stateNode.owner.includes(param)) stateVarIdLines = [];
+              });
+
+            if (
+              !output.join().includes(`\t${stateNode.increment}.integer`) &&
+              !lines.includes(`\t${stateNode.increment}.integer,`)
+            )
+              output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
+
+            output.push(`${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
                 \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
                 \t${privateStateName}_newSalt.limbs(32, 8),
                 \t${privateStateName}_newCommitment.integer`);
@@ -243,20 +279,20 @@ export const preimageBoilerPlate = node => {
     let newOwnerStatment;
     switch (newOwner) {
       case null:
-        newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         break;
       case 'msg':
         if (privateStateName.includes('msg')) {
           newOwnerStatment = `publicKey;`;
         } else {
-          newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
         break;
       default:
         // TODO - this is the case where the owner is an admin (state var)
         // we have to let the user submit the key and check it in the contract
         // newOwnerStatment = `${newOwner};`;
-        newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
+        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         break;
     }
 
@@ -591,8 +627,11 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
     case 'SendTransaction':
       if (node.publicInputs[0]) {
-        lines.push(...node.publicInputs);
-        lines[0] = `, ${lines[0]}`;
+        node.publicInputs.forEach(input => {
+          lines.push(`${input}.integer`);
+        });
+        // lines[0] = `, ${lines[0]}`;
+        lines[lines.length - 1] += `, `;
       }
       params[0] = sendTransactionBoilerplate(node);
       if (params[0][0][0]) params[0][0] = `${params[0][0]},`;
@@ -602,7 +641,7 @@ export const OrchestrationCodeBoilerPlate = node => {
         statements: [
           `\nconst instance = await getContractInstance('${node.contractName}');`,
           `\nconst tx = await instance.methods
-          .${node.functionName}(proof, ${params[0][0]} ${params[0][1]} ${params[0][2]}${lines})
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]}, proof)
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,

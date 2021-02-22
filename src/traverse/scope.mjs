@@ -1011,7 +1011,8 @@ export class Scope {
             }
             break;
           }
-
+          case 'FunctionCall':
+            break;
           default:
             console.log(
               `Assignment.rightHandSide is of nodeType ${rightHandSide.nodeType} which is not being properly handled by the 'isIncremented()' function`,

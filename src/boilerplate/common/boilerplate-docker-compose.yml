@@ -21,7 +21,7 @@ services:
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
     networks:
       - zapp_network
 
@@ -99,6 +99,9 @@ services:
       - ./migrations/:/app/migrations/
       - ./truffle-config.js:/app/truffle-config.js
       - ./orchestration/:/app/orchestration:delegated
+    environment:
+      BLOCKCHAIN_HOST: ws://ganache
+      BLOCKCHAIN_PORT: 8545
     networks:
       - zapp_network
 

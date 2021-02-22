@@ -112,7 +112,7 @@ export const getSiblingPath = async (contractName, leafIndex, leafValue) => {
         timeout: 360000,
       },
     );
-    logger.http('Timber Response:', response.data.data);
+    logger.debug('Timber Response:', response.data.data);
 
     const siblingPath = response.data.data;
     // const siblingPathValues = siblingPath.map(node => node.value);
