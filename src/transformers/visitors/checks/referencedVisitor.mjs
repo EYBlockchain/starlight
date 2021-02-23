@@ -1,5 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 // no-unused-vars <-- to reinstate eventually
+import cloneDeep from 'lodash.cloneDeep';
 
 import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
@@ -87,11 +88,22 @@ export default {
         path.parentPath.node.nodeType !== 'MemberAccess'
           ? scope.getReferencedBinding(node)
           : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
-      const parentExpression = path.getAncestorOfType('ExpressionStatement');
+      let parentExpression = cloneDeep(path.getAncestorOfType('ExpressionStatement'));
+      const parentStatement = path.getAncestorOfType('VariableDeclarationStatement');
+      if (!parentExpression && parentStatement) {
+        parentExpression = cloneDeep(parentStatement);
+        parentExpression.node.expression = {};
+        parentExpression.node.expression.leftHandSide = parentStatement.node.declarations[0];
+        parentExpression.node.expression.rightHandSide = parentStatement.node.initialValue;
+        parentExpression.node.nodeType = 'Assignment';
+      }
 
       if (parentExpression && referencedBinding.isSecret) {
         // here: we are in a line which modifies a secret state
-        const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
+        const rightAncestor =
+          path.getAncestorContainedWithin('rightHandSide') ||
+          path.getAncestorContainedWithin('initialValue');
+        const leftAncestor = path.getAncestorContainedWithin('leftHandSide');
         const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
 
         if (!functionDefScope) return;
@@ -112,10 +124,15 @@ export default {
               lhsName !== nodeName &&
               nodeName !== 'msg'))
         ) {
-          logger.debug('Found an accessed secret state');
+          logger.debug(`Found an accessed secret state ${node.name}`);
           const lhs =
             lhsNode.nodeType === 'Identifier'
               ? scope.getReferencedBinding(lhsNode)
+              : lhsNode.nodeType === 'VariableDeclaration'
+              ? scope.getReferencedBinding({
+                  nodeType: 'Identifier',
+                  referencedDeclaration: lhsNode.id,
+                })
               : scope.getReferencedBinding(lhsNode.baseExpression);
           if (!node.stateVariable && !referencedBinding.stateVariable) {
             // we have a secret parameter on the RHS
@@ -148,6 +165,46 @@ export default {
           } else {
             referencedIndicator.isWholeReason = [reason];
           }
+          if (referencedBinding.accessedNodes) {
+            referencedBinding.accessedNodes.push(node);
+          } else {
+            referencedBinding.accessedNodes = [node];
+          }
+          node.accessedSecretState = true;
+        }
+        const { operator } = parentExpression.node.expression;
+        // below: check if the identifier is on the LHS and is NOT an incrementation AND requires the LHS value e.g. a *= b
+        if (
+          leftAncestor &&
+          !parentExpression.node.expression.isIncremented &&
+          !referencedBinding.isPartitioned &&
+          operator &&
+          (operator === '*=' || operator === '+=' || operator === '-=')
+        ) {
+          logger.debug(
+            `Found an accessed secret state ${node.name} (accessed in ${operator} operation)`,
+          );
+          // TODO how many of the errors from above need to be copied here?
+          const reason = `Accessed at ${node.src}`;
+          if (lhsNode.nodeType === 'IndexAccess') {
+            const keyName = scope.getMappingKeyName(lhsNode);
+            referencedIndicator = referencedIndicator.mappingKey[keyName];
+          }
+          node.accessedSecretState = true;
+          referencedIndicator.isWhole = true;
+          referencedIndicator.isAccessed = true;
+          referencedBinding.isAccessed = true;
+          if (referencedIndicator.isWholeReason) {
+            referencedIndicator.isWholeReason.push(reason);
+          } else {
+            referencedIndicator.isWholeReason = [reason];
+          }
+          if (referencedBinding.accessedNodes) {
+            referencedBinding.accessedNodes.push(node);
+          } else {
+            referencedBinding.accessedNodes = [node];
+          }
+
         }
       } else if (parentExpression) {
         // In an expression, not secret

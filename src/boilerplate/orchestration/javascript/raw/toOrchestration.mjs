@@ -145,13 +145,12 @@ export const generateProofBoilerplate = node => {
             \t${privateStateName}_prevSalt.limbs(32, 8),
             \t!${privateStateName}_commitmentExists,
             \tpublicKey.limbs(32, 8),
-            \t${privateStateName}_root.integer
+            \t${privateStateName}_root.integer,
             \t${privateStateName}_index.integer,
             \t${privateStateName}_path.integer,
             \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
             \t${privateStateName}_newSalt.limbs(32, 8),
-            \t${privateStateName}_newCommitment.integer,
-            `);
+            \t${privateStateName}_newCommitment.integer`);
         break;
       case false:
       default:
@@ -292,7 +291,9 @@ export const preimageBoilerPlate = node => {
         // TODO - this is the case where the owner is an admin (state var)
         // we have to let the user submit the key and check it in the contract
         // newOwnerStatment = `${newOwner};`;
-        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
+        if (!stateNode.ownerIsSecret) {
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? await instance.methods.${newOwner}().call() : ${privateStateName}_newOwnerPublicKey;`;
+        }
         break;
     }
 
@@ -300,23 +301,6 @@ export const preimageBoilerPlate = node => {
       case true:
         output.push(
           `
-          \nlet ${privateStateName}_commitmentExists = true;
-          \nlet ${privateStateName}_witnessRequired = true;\n
-          if (!fs.existsSync(db)) {
-              const preimage = {
-              ${preimageParams.join('')}
-              \tsalt: 0,
-              \tcommitment: 0,
-              };
-              fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
-              ${privateStateName}_commitmentExists = false;
-              ${privateStateName}_witnessRequired = false;
-            }
-          \nconst ${privateStateName}_preimage = JSON.parse(
-              fs.readFileSync(db, 'utf-8', err => {
-                console.log(err);
-              }),
-            );
           ${privateStateName}_newOwnerPublicKey = ${newOwnerStatment}
             const ${privateStateName}_currentCommitment = generalise(${privateStateName}_preimage.commitment);
             ${lines.join('')}
@@ -402,6 +386,7 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
     case 'FunctionDefinition':
       // the main function
+      lines.push(`\nconst instance = await getContractInstance('${node.contractName}');`);
       node.inputParameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
@@ -415,8 +400,10 @@ export const OrchestrationCodeBoilerPlate = node => {
       });
 
       if (node.decrementsSecretState) {
-        states.push(` _${node.decrementedSecretState}_0_oldCommitment = 0`);
-        states.push(` _${node.decrementedSecretState}_1_oldCommitment = 0`);
+        node.decrementedSecretStates.forEach(decrementedState => {
+          states.push(` _${decrementedState}_0_oldCommitment = 0`);
+          states.push(` _${decrementedState}_1_oldCommitment = 0`);
+        });
       }
       node.returnParameters.forEach(param => rtnparams.push(`, ${param.integer}`));
 
@@ -427,6 +414,33 @@ export const OrchestrationCodeBoilerPlate = node => {
         \n}`,
         ],
         statements: lines,
+      };
+
+    case 'InitialisePreimage':
+      for (const stateName of node.privateStates) {
+        lines.push(`
+        \nlet ${stateName}_commitmentExists = true;
+        let ${stateName}_witnessRequired = true;
+        if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')[${stateName}],
+          )[${stateName}]) {
+            const preimage = {};
+            preimage[${stateName}] = {
+            \t${stateName}: 0,
+            \tsalt: 0,
+            \tcommitment: 0,
+            };
+            fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+            ${stateName}_commitmentExists = false;
+            ${stateName}_witnessRequired = false;
+          }
+        \nconst ${stateName}_preimage = JSON.parse(
+            fs.readFileSync(db, 'utf-8', err => {
+              console.log(err);
+            }),
+          )[${stateName}];`);
+      }
+      return {
+        statements: [lines],
       };
 
     case 'ReadPreimage':
@@ -453,7 +467,7 @@ export const OrchestrationCodeBoilerPlate = node => {
         if (stateNode.increment && !stateNode.nullifierRequired) {
           lines[0] = `\tvalue: ${stateNode.increment}.integer,`;
         } else if (stateNode.increment && stateNode.nullifierRequired) {
-          lines[0] = `\tvalue: change.integer,`;
+          lines[0] = `\tvalue: ${stateName}_change.integer,`;
         } else {
           stateNode.parameters.forEach(param => {
             lines.push(`\t${param}: ${param}.integer,`);
@@ -474,10 +488,9 @@ export const OrchestrationCodeBoilerPlate = node => {
                   `\npreimage[${stateName}_2_newCommitment.hex(32)] = {
                   ${lines.join('')}
                   \tsalt: ${stateName}_2_newSalt.integer,
-                  \tpublicKey: publicKey.integer,
+                  \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
                   \tcommitment: ${stateName}_2_newCommitment.integer,
-                  };
-                  \nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
+                  };`,
                 );
                 break;
               case false:
@@ -488,25 +501,21 @@ export const OrchestrationCodeBoilerPlate = node => {
                   \tsalt: ${stateName}_newSalt.integer,
                   \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
                   \tcommitment: ${stateName}_newCommitment.integer,
-                  };
-                  \nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
+                  };`,
                 );
                 break;
             }
             break;
           case false:
           default:
-            return {
-              statements: [
-                `\nconst ${stateName}_preimage_out = {
-                ${lines.join('')}
-                \tsalt: ${stateName}_newSalt.integer,
-                \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
-                \tcommitment: ${stateName}_newCommitment.integer,
-                };`,
-                `\nfs.writeFileSync(db, JSON.stringify(${stateName}_preimage_out, null, 4));`,
-              ],
-            };
+            states.push(
+              `\npreimage[${stateName}] = {
+              ${lines.join('')}
+              \tsalt: ${stateName}_newSalt.integer,
+              \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
+              \tcommitment: ${stateName}_newCommitment.integer,
+              };`,
+            );
         }
       }
       return {
@@ -520,6 +529,7 @@ export const OrchestrationCodeBoilerPlate = node => {
               );
             }`,
           states.join('\n'),
+          `\nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
         ],
       };
 
@@ -527,13 +537,13 @@ export const OrchestrationCodeBoilerPlate = node => {
       if (node.isPartitioned) {
         return {
           statements: [
-            `const witness_0 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_0_oldCommitment).integer);
-            const witness_1 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_1_oldCommitment).integer);
-            const ${privateStateName}_0_index = generalise(witness_0.index);
-            const ${privateStateName}_1_index = generalise(witness_1.index);
-            const ${privateStateName}_root = generalise(witness_0.root);
-            const ${privateStateName}_0_path = generalise(witness_0.path).all;
-            const ${privateStateName}_1_path = generalise(witness_1.path).all;\n`,
+            `const ${privateStateName}_witness_0 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_0_oldCommitment).integer);
+            const ${privateStateName}_witness_1 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_1_oldCommitment).integer);
+            const ${privateStateName}_0_index = generalise(${privateStateName}_witness_0.index);
+            const ${privateStateName}_1_index = generalise(${privateStateName}_witness_1.index);
+            const ${privateStateName}_root = generalise(${privateStateName}_witness_0.root);
+            const ${privateStateName}_0_path = generalise(${privateStateName}_witness_0.path).all;
+            const ${privateStateName}_1_path = generalise(${privateStateName}_witness_1.path).all;\n`,
           ],
         };
       }
@@ -541,12 +551,12 @@ export const OrchestrationCodeBoilerPlate = node => {
         return {
           statements: [
             `const emptyPath = new Array(32).fill(0);
-            const witness = ${privateStateName}_witnessRequired
+            const ${privateStateName}_witness = ${privateStateName}_witnessRequired
             \t? await getMembershipWitness('${node.contractName}', ${privateStateName}_currentCommitment.integer)
             \t: { index: 0, path: emptyPath, root: 0 };
-            const ${privateStateName}_index = generalise(witness.index);
-            const ${privateStateName}_root = generalise(witness.root);
-            const ${privateStateName}_path = generalise(witness.path).all;\n`,
+            const ${privateStateName}_index = generalise(${privateStateName}_witness.index);
+            const ${privateStateName}_root = generalise(${privateStateName}_witness.root);
+            const ${privateStateName}_path = generalise(${privateStateName}_witness.path).all;\n`,
           ],
         };
       }
@@ -595,9 +605,9 @@ export const OrchestrationCodeBoilerPlate = node => {
               return {
                 statements: [
                   `\nconst ${privateStateName}_2_newSalt = generalise(utils.randomHex(32));`,
-                  `\nlet change = parseInt(${privateStateName}_0_prev.integer, 10) + parseInt(${privateStateName}_1_prev.integer, 10) - parseInt(${increment}.integer, 10);`,
-                  `\nchange = generalise(change);`,
-                  `\nlet ${privateStateName}_2_newCommitment = generalise(utils.shaHash(${states[0]}, change.hex(32), publicKey.hex(32), ${privateStateName}_2_newSalt.hex(32)));
+                  `\nlet ${privateStateName}_change = parseInt(${privateStateName}_0_prev.integer, 10) + parseInt(${privateStateName}_1_prev.integer, 10) - parseInt(${increment}.integer, 10);`,
+                  `\n${privateStateName}_change = generalise(${privateStateName}_change);`,
+                  `\nlet ${privateStateName}_2_newCommitment = generalise(utils.shaHash(${states[0]}, ${privateStateName}_change.hex(32), publicKey.hex(32), ${privateStateName}_2_newSalt.hex(32)));
                   \n${privateStateName}_2_newCommitment = generalise(${privateStateName}_2_newCommitment.hex(32, 31)); // truncate`,
                 ],
               };
@@ -639,7 +649,6 @@ export const OrchestrationCodeBoilerPlate = node => {
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}]`;
       return {
         statements: [
-          `\nconst instance = await getContractInstance('${node.contractName}');`,
           `\nconst tx = await instance.methods
           .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]}, proof)
           .send({

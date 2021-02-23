@@ -234,6 +234,9 @@ const beautify = code => {
 
 function codeGenerator(node) {
   // We'll break things down by the `type` of the `node`.
+  const getAccessedValue = name => {
+    return `\nlet { ${name} } = ${name}_preimage;`;
+  };
   switch (node.nodeType) {
     case 'Folder': {
       const check = node.files
@@ -305,6 +308,17 @@ function codeGenerator(node) {
       // const declarations = node.declarations.map(codeGenerator).join(', ');
       // const initialValue = codeGenerator(node.initialValue);
       if (!node.modifiesSecretState) return;
+      if (node.initialValue.nodeType === 'Assignment') {
+        if (node.declarations[0].isAccessed) {
+          return `${getAccessedValue(node.declarations[0].name)}\n${codeGenerator(
+            node.initialValue,
+          )};`;
+        }
+        return `\nlet ${codeGenerator(node.initialValue)};`;
+      }
+
+      if (node.initialValue.operator && !node.initialValue.operator.includes('='))
+        return `\nlet ${node.declarations[0].name} = ${codeGenerator(node.initialValue)};`;
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
@@ -331,7 +345,7 @@ function codeGenerator(node) {
     case 'Literal':
     case 'Identifier':
       return node.name;
-
+    case 'InitialisePreimage':
     case 'ReadPreimage':
     case 'WritePreimage':
     case 'MembershipWitness':
