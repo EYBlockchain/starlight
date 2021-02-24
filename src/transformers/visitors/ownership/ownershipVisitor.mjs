@@ -35,7 +35,7 @@ export default {
               binding.mappingKey[key].owner =
                 owner.name === 'msg' && binding.mappingKey.msg
                   ? binding.mappingKey[key].referencedKeyisParam
-                    ? { name: key }
+                    ? { name: key, isParam: true }
                     : path.scope.getReferencedNode({
                         referencedDeclaration: binding.mappingKey[key].referencedKey,
                       })

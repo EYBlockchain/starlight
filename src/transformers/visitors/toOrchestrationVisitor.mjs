@@ -290,6 +290,9 @@ export default {
               ownerIsSecret: binding.isOwned
                 ? binding.owner.isSecret || binding.owner.node.isSecret
                 : null,
+              ownerIsParam: binding.isOwned
+                ? binding.owner.isParam || !binding.owner.node.stateVariable
+                : null,
             };
 
             if (binding.referencedKey) {

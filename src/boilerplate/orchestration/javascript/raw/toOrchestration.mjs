@@ -291,8 +291,10 @@ export const preimageBoilerPlate = node => {
         // TODO - this is the case where the owner is an admin (state var)
         // we have to let the user submit the key and check it in the contract
         // newOwnerStatment = `${newOwner};`;
-        if (!stateNode.ownerIsSecret) {
+        if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? await instance.methods.${newOwner}().call() : ${privateStateName}_newOwnerPublicKey;`;
+        } else if (stateNode.ownerIsParam) {
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         }
         break;
     }
