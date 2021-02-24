@@ -728,4 +728,11 @@ export default {
 
     exit(path) {},
   },
+
+  FunctionCall: {
+    enter(path, state) {
+      // HACK: Not sure how to deal with FunctionCalls for Orchestration, so skipping them
+      state.skipSubNodes = true;
+    },
+  },
 };

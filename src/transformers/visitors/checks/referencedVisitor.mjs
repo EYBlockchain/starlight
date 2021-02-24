@@ -82,7 +82,11 @@ export default {
       // 1) Chcek if in a RHS container
       // 2) Check if NOT incrementing
       const { node, scope } = path;
-      if (node.referencedDeclaration > 4294967200) return; // this means we have msg.sender
+      if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
+      if (path.isThis()) return; // the node represents the special 'this' type in solidity
+      if (path.isExportedSymbol()) return; // the node represents an external contract name
+      if (path.isRequireStatement()) return;
+
       const referencedBinding =
         path.parentPath.node.nodeType !== 'MemberAccess'
           ? scope.getReferencedBinding(node)
@@ -152,7 +156,9 @@ export default {
       } else if (parentExpression) {
         // In an expression, not secret
         // Find non-secret params used for assigning secret states
+        // FIXME: too many rigid assumptions about the nodeTypes contained within the parentExpression. It might not be an assignment (e.g. if it's a require statement containing a binary operation)
         const rightAncestor = path.getAncestorContainedWithin('rightHandSide');
+        if (!rightAncestor) return; // HACK - pending the above FIXME, so that we don't get errors below, from too many assumptions about the node structure.
         const indexExpression = path.getAncestorContainedWithin('indexExpression');
         const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         if (!functionDefScope) return;

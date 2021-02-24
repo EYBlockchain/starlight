@@ -211,10 +211,12 @@ export class Scope {
         // node.referencedDeclaration is the `id` of the AST node which this `Identifier` `node` refers to. `-15` is a special id meaning "msg.sender" (we think).
         // So we have a mapping with key msg.sender
         // ... we stop, because this identifier just represents the key, we account for this.
+        // TODO: also, `this` (the solidity keyword) also has a referencedDeclaration which is a negative number (or big number).
 
         // `Identifier` nodes _refer_ to already-declared variables. We grab the binding for that referenced variable:
         let referencedBinding = this.getReferencedBinding(node);
 
+        if (!referencedBinding && this.getReferencedExportedSymbolName(node)) break; // the node is referring to some external contract name
         if (!referencedBinding)
           throw new Error(
             `Couldn't find a referencedDeclaration. I.e. couldn't find a node with id ${node.referencedDeclaration}`,
@@ -419,7 +421,7 @@ export class Scope {
         if (node.expression.name !== 'require') {
           // TODO add external function calls which use non-secret vars
           node.arguments.forEach(arg => {
-            if (arg.nodeType === 'Identifier' && this.getReferencedBinding(arg).isSecret) {
+            if (arg.nodeType === 'Identifier' && this.getReferencedBinding(arg)?.isSecret) {
               throw new TypeError(
                 `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
               );
@@ -446,14 +448,14 @@ export class Scope {
               // if ==, we store the restriction node
               functionDefScope.callerRestriction = 'match';
               functionDefScope.callerRestrictionNode = ownerNode;
-              if (!this.getReferencedBinding(ownerNode).stateVariable)
+              if (!this.getReferencedBinding(ownerNode)?.stateVariable)
                 throw new Error(`Cannot require msg.sender to be an input param!`);
-              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
+              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode)?.isSecret;
               break;
             case '!=':
               // if != we store the 'blacklistedNode'
               functionDefScope.callerRestriction = 'notMatch';
-              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode).isSecret;
+              node.requireStatementPrivate = !!this.getReferencedBinding(ownerNode)?.isSecret;
               // functionDefScope.callerRestrictionNode = node.id;
               break;
             default:
@@ -491,6 +493,7 @@ export class Scope {
       case 'Block':
       case 'BinaryOperation':
       case 'ElementaryTypeName':
+      case 'ElementaryTypeNameExpression':
       case 'ExpressionStatement':
       case 'ImportDirective':
       case 'IndexAccess':
@@ -577,6 +580,21 @@ export class Scope {
   }
 
   /**
+   * @returns {String || null} the name of an exported symbol, if one exists for the given `id`
+   */
+  getReferencedExportedSymbolName(node) {
+    const id = node.referencedDeclaration;
+    if (!id) return null;
+    const { path } = this;
+    const exportedSymbols = path.getSourceUnit()?.node.exportedSymbols;
+    if (!exportedSymbols) return null;
+    for (const [name, ids] of Object.entries(exportedSymbols)) {
+      if (ids.some(_id => _id === id)) return name;
+    }
+    return null;
+  }
+
+  /**
    * Get the Indicator object for the variable being referred-to by a referencingNode (i.e. a node which refers to another (often an 'Identifier' node)).
    * @param {Node} referencingNode - the node referring to a previously-declared variable.
    * @param {Boolean} mappingKeyIndicatorOnly - OPTIONAL - A mapping has two types of indicator associated with it, one nested within the other. The outer indicator gives general info about the mapping. There is a nested indicator object for each mappingKey name.
@@ -658,6 +676,15 @@ export class Scope {
   }
 
   /**
+   * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.some prototype)
+   * @returns {Boolean} - true if one of the values of the object is evaluated as 'true' by the callback
+   */
+  someBinding(callback) {
+    const result = someObject(this.bindings, callback);
+    return result;
+  }
+
+  /**
    * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
    * @returns {Object} - a set of bindings from this scope, filtered according to the callback
    */
@@ -665,32 +692,6 @@ export class Scope {
     const ancestorBindings = this.getAncestorBindings();
     const result = filterObject(ancestorBindings, callback);
     return result;
-  }
-
-  /**
-   * @returns {Boolean} - if some stateVariable is modified within the scope (of a FunctionDefinition scope).
-   */
-  modifiesSecretState() {
-    if (this.scopeType !== 'FunctionDefinition') return false;
-    const { indicators } = this;
-    for (const stateVarId of Object.keys(indicators)) {
-      const indicator = indicators[stateVarId];
-      if (indicator.isModified && indicator.binding.isSecret) return true;
-    }
-    return false;
-  }
-
-  /**
-   * @returns {Boolean} - if some stateVariable is nullified within the scope (of a FunctionDefinition scope).
-   */
-  nullifiesSecretState() {
-    if (this.scopeType !== 'FunctionDefinition') return false;
-    const { indicators } = this;
-    for (const stateVarId of Object.keys(indicators)) {
-      const indicator = indicators[stateVarId];
-      if (indicator.isNullified && indicator.binding.isSecret) return true;
-    }
-    return false;
   }
 
   /**
@@ -714,8 +715,8 @@ export class Scope {
   }
 
   /**
-   * @param {Array<string>} booleanKeys - an array of strings of the boolean keys of a FunctionDefition scope's indicator object.
-   * @returns {Object} - a FunctionDefition scope's indicators, filtered according to the booleanKeys
+   * @param {Array<string>} booleanKeys - an array of strings of the boolean keys of a FunctionDefinition scope's indicator object.
+   * @returns {Object} - a FunctionDefinition scope's indicators, filtered according to the booleanKeys
    */
   filterIndicatorsByBooleans(booleanKeys) {
     let result = {};
@@ -766,7 +767,7 @@ export class Scope {
 
   /**
    * @param {Function} callback - a callback which takes an indicator object as input and returns a boolean (same as the Array.filter prototype)
-   * @returns {Object} - a FunctionDefition scope's indicators, filtered according to the callback
+   * @returns {Object} - a FunctionDefinition scope's indicators, filtered according to the callback
    */
   filterIndicators(callback) {
     const result = filterObject(this.indicators, callback);
@@ -775,9 +776,9 @@ export class Scope {
 
   /**
    * @param {Function} callback - a callback which takes an indicator object as input and returns a boolean (same as the Array.some prototype)
-   * @returns {Boolean} - true if all values of the object are evaluated as 'true' by the callback
+   * @returns {Boolean} - true if one of the values of the object is evaluated as 'true' by the callback
    */
-  someIndicators(callback) {
+  someIndicator(callback) {
     const result = someObject(this.indicators, callback);
     return result;
   }
@@ -853,6 +854,32 @@ export class Scope {
       if (i > 0) keyName = `${keyIdentifierNode.name}_${i}`;
     }
     return keyName;
+  }
+
+  /**
+   * @returns {Boolean} - if some stateVariable is modified within the scope (of a FunctionDefinition scope).
+   */
+  modifiesSecretState() {
+    if (this.scopeType !== 'FunctionDefinition') return false;
+    const { indicators } = this;
+    for (const stateVarId of Object.keys(indicators)) {
+      const indicator = indicators[stateVarId];
+      if (indicator.isModified && indicator.binding.isSecret) return true;
+    }
+    return false;
+  }
+
+  /**
+   * @returns {Boolean} - if some stateVariable is nullified within the scope (of a FunctionDefinition scope).
+   */
+  nullifiesSecretState() {
+    if (this.scopeType !== 'FunctionDefinition') return false;
+    const { indicators } = this;
+    for (const stateVarId of Object.keys(indicators)) {
+      const indicator = indicators[stateVarId];
+      if (indicator.isNullified && indicator.binding.isSecret) return true;
+    }
+    return false;
   }
 
   /**
@@ -1009,6 +1036,12 @@ export class Scope {
                 }
               }
             }
+            break;
+          }
+
+          case 'FunctionCall': {
+            isIncrementedBool = false;
+            isDecrementedBool = false;
             break;
           }
 

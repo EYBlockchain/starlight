@@ -1,15 +1,13 @@
+/* eslint-disable import/no-cycle */
+
 import fs from 'fs';
 import path from 'path';
 import logger from '../../../utils/logger.mjs';
-import {
-  ShieldContractConstructorBoilerplate,
-  ShieldContractInsertLeavesBoilerplate,
-  requireNewNullifiersNotInNullifiersThenAddThemBoilerplate,
-  requireCommitmentRootInCommitmentRootsBoilerplate,
-  inputsVariableDeclarationStatementBoilerplate,
-  verifyBoilerplate,
-  insertLeavesBoilerplate,
-} from '../../../boilerplate/contract/solidity/raw/toContract.mjs';
+import ContractBP from '../../../boilerplate/contract/solidity/raw/ContractBoilerplateGenerator.mjs';
+import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoilerplateGenerator.mjs';
+
+const contractBP = new ContractBP();
+const functionBP = new FunctionBP();
 
 export const boilerplateContractsDir = './contracts'; // relative to process.cwd() // TODO: move to a config?
 
@@ -120,6 +118,7 @@ function codeGenerator(node) {
         }Shield`;
       }
       const contractDeclaration = `contract ${name}`;
+      // TODO: an InheritanceSpecifier is a nodeType in itself, so should be recursed into as its own 'case' in this 'switch' statement.
       const inheritanceSpecifiers = node.baseContracts
         ? ` is ${node.baseContracts
             .reduce((acc, cur) => {
@@ -135,21 +134,23 @@ function codeGenerator(node) {
     }
 
     case 'FunctionDefinition': {
-      const functionSignature = `function ${node.name} (${codeGenerator(node.parameters)}) ${
-        node.visibility
-      } {`;
+      // prettier-ignore
+      const functionSignature = `${node.name !== 'constructor' ? 'function ' : ''}${node.name} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
-      return `${functionSignature}\n\n${body}\n\n}`;
+      return `
+        ${functionSignature}
+
+          ${body}
+
+        }`;
     }
 
     case 'ParameterList':
-      return node.parameters
-        .map(codeGenerator)
-        .map(decl => decl.slice(0, -1)) // remove semi-colon
-        .join(', ');
+      return node.parameters.flatMap(codeGenerator).filter(Boolean).join(', ');
 
     case 'VariableDeclaration': {
-      const type = node.typeDescriptions.typeString;
+      let { typeString } = node.typeDescriptions;
+      typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
       const constant = node.constant ? ' constant' : '';
       const visibility = node.visibility ? ` ${node.visibility}` : '';
       const storageLocation =
@@ -157,64 +158,76 @@ function codeGenerator(node) {
           ? ''
           : ` ${node.storageLocation}`;
       const name = ` ${node.name}`;
-      return `${type}${constant}${storageLocation}${visibility}${name};`;
+
+      if (node.declarationType === 'parameter') {
+        if (node.isSecret) return '';
+        return `${typeString}${constant}${storageLocation}${name}`;
+      }
+      if (node.declarationType === 'localStack') {
+        return `${typeString}${constant}${storageLocation}${name}`; // no semicolon
+      }
+      return `
+        ${typeString}${constant}${storageLocation}${visibility}${name};`;
     }
 
     case 'VariableDeclarationStatement': {
       const declarations = node.declarations.map(codeGenerator).join(', ');
       const initialValue = codeGenerator(node.initialValue);
-      return `${declarations} = ${initialValue};`;
+      return `
+          ${declarations} = ${initialValue};`;
     }
 
-    case 'Block':
-      return node.statements.map(codeGenerator).join('\n\n');
-
+    case 'Block': {
+      const preStatements = node.preStatements.flatMap(codeGenerator);
+      const statements = node.statements.flatMap(codeGenerator);
+      const postStatements = node.postStatements.flatMap(codeGenerator);
+      return [...preStatements, ...statements, ...postStatements].join('\n');
+    }
     case 'ExpressionStatement':
       return codeGenerator(node.expression);
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
         node.rightHandSide,
+      )};`;
+
+    case 'BinaryOperation':
+      return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
+        node.rightExpression,
       )}`;
 
     case 'Identifier':
       return node.name;
 
-    case 'ShieldContractVerifierInterfaceBoilerplate':
-      return `Verifier_Interface private verifier;`;
+    case 'Literal':
+      return node.kind === 'string' ? `"${node.value}"` : node.value;
 
-    case 'ShieldContractMappingBoilerplate': {
-      const { args } = node;
-      return `mapping(${args[1]} => ${args[2]}) public ${args[0]};`;
+    case 'FunctionCall': {
+      const expression = codeGenerator(node.expression);
+      const args = node.arguments.map(codeGenerator);
+      const semicolon = expression === 'require' ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
+      return `${expression}(${args.join(', ')})${semicolon}`;
     }
 
-    case 'ShieldContractConstructorBoilerplate': {
-      return ShieldContractConstructorBoilerplate.join('\n');
+    case 'ElementaryTypeNameExpression':
+      return codeGenerator(node.typeName);
+
+    case 'ElementaryTypeName':
+      return node.typeDescriptions.typeString;
+
+    case 'MsgSender':
+      return 'msg.sender';
+
+    case 'MemberAccess': {
+      const expression = codeGenerator(node.expression);
+      return `${expression}.${node.memberName}`;
     }
 
-    case 'ShieldContractInsertLeavesBoilerplate': {
-      return ShieldContractInsertLeavesBoilerplate.join('\n');
-    }
+    case 'ContractBoilerplate':
+      return contractBP.generateBoilerplate(node).join('\n');
 
-    case 'requireNewNullifiersNotInNullifiersThenAddThemBoilerplate': {
-      return requireNewNullifiersNotInNullifiersThenAddThemBoilerplate.join('\n');
-    }
-
-    case 'requireCommitmentRootInCommitmentRootsBoilerplate': {
-      return requireCommitmentRootInCommitmentRootsBoilerplate.join('\n');
-    }
-
-    case 'InputsVariableDeclarationStatementBoilerplate': {
-      return inputsVariableDeclarationStatementBoilerplate(node).join('\n');
-    }
-
-    case 'verifyBoilerplate': {
-      return verifyBoilerplate.join('\n');
-    }
-
-    case 'insertLeavesBoilerplate': {
-      return insertLeavesBoilerplate.join('\n');
-    }
+    case 'FunctionBoilerplate':
+      return functionBP.generateBoilerplate(node);
 
     // And if we haven't recognized the node, we'll throw an error.
     default:

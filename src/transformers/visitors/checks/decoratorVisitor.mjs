@@ -21,6 +21,10 @@ export default {
     exit(path, state) {
       const { node, scope, parent } = path;
       if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
+      if (path.isThis()) return; // the node represents the special 'this' type in solidity
+      if (path.isExportedSymbol()) return; // the node represents an external contract name
+      if (path.isRequireStatement()) return;
+
       const varDec = scope.getReferencedBinding(node);
 
       if (varDec.secretVariable && path.getAncestorContainedWithin('leftHandSide')) {

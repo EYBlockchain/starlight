@@ -22,11 +22,6 @@ function transformation1(oldAST) {
   };
 
   const state = {
-    // TODO: cleverer traversal to decide whether we need nullifiers / commitments / incremental commitments / etc. Perhaps an initial traversal to discover these things before all 3 transformations begin.
-    snarkVerificationRequired: true,
-    newCommitmentsRequired: true,
-    nullifiersRequired: true,
-
     stopTraversal: false,
     skipSubNodes: false,
   };
@@ -64,6 +59,9 @@ export default function toContract(ast, options) {
   // logger.debug('new solidity ast:', newAST);
   const newASTFilePath = pathjs.join(options.contractsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
+
+  console.log('\n\n\nNEW AST:')
+  console.dir(newAST, { depth: 14 })
 
   // generate the contract files from the newly created contract AST:
   logger.verbose('Generating files from the .sol AST...');
