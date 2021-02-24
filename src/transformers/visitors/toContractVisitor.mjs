@@ -238,8 +238,6 @@ export default {
     enter(path, state) {
       const { node, parent, scope } = path;
       const binding = scope.getReferencedBinding(node.leftHandSide.baseExpression); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
-      console.log('NODNEODNDOENDND', node)
-      console.log('BINDINGINGINGI', binding)
       if (binding?.isSecret) {
         // Don't copy over code which should be secret! It shouldn't appear in a public shield contract; only in the circuit! So skip subnodes.
         state.skipSubNodes = true;

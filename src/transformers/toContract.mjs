@@ -60,9 +60,6 @@ export default function toContract(ast, options) {
   const newASTFilePath = pathjs.join(options.contractsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
-  console.log('\n\n\nNEW AST:')
-  console.dir(newAST, { depth: 14 })
-
   // generate the contract files from the newly created contract AST:
   logger.verbose('Generating files from the .sol AST...');
   const contractFileData = codeGenerator(newAST);
