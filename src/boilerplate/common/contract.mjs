@@ -25,14 +25,32 @@ export async function getContractInterface(contractName) {
 
 export async function getContractAddress(contractName) {
   let deployedAddress;
-  const contractInterface = await getContractInterface(contractName);
+  let errorCount = 0;
 
-  const networkId = await web3.eth.net.getId();
-  logger.silly('networkId:', networkId);
+  if (!deployedAddress) {
+    while (errorCount < 20) {
+      try {
+        const contractInterface = await getContractInterface(contractName);
+        const networkId = await web3.eth.net.getId();
+        logger.silly('networkId:', networkId);
 
-  if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
-    deployedAddress = contractInterface.networks[networkId].address;
+        if (
+          contractInterface &&
+          contractInterface.networks &&
+          contractInterface.networks[networkId]
+        ) {
+          deployedAddress = contractInterface.networks[networkId].address;
+        }
+        if (deployedAddress === undefined) throw new Error('Shield address was undefined');
+        if (deployedAddress) break;
+      } catch (err) {
+        errorCount++;
+        logger.warn('Unable to get a contract address - will try again in 3 seconds');
+        await new Promise(resolve => setTimeout(() => resolve(), 3000));
+      }
+    }
   }
+
   logger.silly('deployed address:', deployedAddress);
   return deployedAddress;
 }
@@ -40,7 +58,6 @@ export async function getContractAddress(contractName) {
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
   const contractInterface = await getContractInterface(contractName);
-
   if (!deployedAddress) {
     // eslint-disable-next-line no-param-reassign
     deployedAddress = await getContractAddress(contractName);
@@ -50,7 +67,7 @@ export async function getContractInstance(contractName, deployedAddress) {
     ? new web3.eth.Contract(contractInterface.abi, deployedAddress, options)
     : new web3.eth.Contract(contractInterface.abi, null, options);
   // logger.silly('\ncontractInstance:', contractInstance);
-  logger.info(`Address: ${deployedAddress}`);
+  logger.info(`${contractName} Address: ${deployedAddress}`);
 
   return contractInstance;
 }

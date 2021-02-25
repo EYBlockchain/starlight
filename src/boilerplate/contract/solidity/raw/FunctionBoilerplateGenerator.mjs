@@ -27,7 +27,7 @@ class FunctionBoilerplateGenerator {
 
     postStatements() {
       return [
-        `verifier = Verifier_Interface(verifierAddress);
+        `verifier = IVerifier(verifierAddress);
     		  for (uint i = 0; i < vk.length; i++) {
     			  vks[i] = vk[i];
     		  }`,

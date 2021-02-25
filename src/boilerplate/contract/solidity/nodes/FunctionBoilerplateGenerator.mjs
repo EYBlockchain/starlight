@@ -67,22 +67,22 @@ class FunctionBoilerplateGenerator {
 
       let nullifiersRequired = false;
       let oldCommitmentAccessRequired = false;
-      let newCommitmentsRequired = false;
+      let newCommitmentRequired = false;
 
       for (const indicator of Object.values(indicators)) {
         if (indicator.isMapping) {
           for (const ind of Object.values(indicator.mappingKey)) {
             if (ind.isNullified) nullifiersRequired = true;
             if (ind.oldCommitmentAccessRequired) oldCommitmentAccessRequired = true;
-            if (ind.newCommitmentRequired) newCommitmentsRequired = true;
+            if (ind.newCommitmentRequired) newCommitmentRequired = true;
           }
         }
         if (indicator.isNullified) nullifiersRequired = true;
         if (indicator.oldCommitmentAccessRequired) oldCommitmentAccessRequired = true;
-        if (indicator.newCommitmentRequired) newCommitmentsRequired = true;
+        if (indicator.newCommitmentRequired) newCommitmentRequired = true;
       }
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentRequired };
     },
 
     parameters() {

@@ -84,8 +84,8 @@ export const sendTransactionBoilerplate = node => {
   output[0] = [];
   output[1] = [];
   output[2] = [];
-  // output[0] = root(s)
-  // output[1] = arr of nullifiers
+  // output[0] = arr of nullifiers
+  // output[1] = root(s)
   // output[2] = arr of commitments
   for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
     switch (stateNode.isPartitioned) {
@@ -93,8 +93,8 @@ export const sendTransactionBoilerplate = node => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            output[0].push(`${privateStateName}_root.integer`);
-            output[1].push(
+            output[1].push(`${privateStateName}_root.integer`);
+            output[0].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
             output[2].push(`${privateStateName}_2_newCommitment.integer`);
@@ -109,8 +109,8 @@ export const sendTransactionBoilerplate = node => {
       case false:
       default:
         // whole
-        output[0].push(`${privateStateName}_root.integer`);
-        output[1].push(`${privateStateName}_nullifier.integer`);
+        output[1].push(`${privateStateName}_root.integer`);
+        output[0].push(`${privateStateName}_nullifier.integer`);
         output[2].push(`${privateStateName}_newCommitment.integer`);
         break;
     }
@@ -646,8 +646,8 @@ export const OrchestrationCodeBoilerPlate = node => {
         lines[lines.length - 1] += `, `;
       }
       params[0] = sendTransactionBoilerplate(node);
-      if (params[0][0][0]) params[0][0] = `${params[0][0]},`;
-      if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`;
+      if (params[0][1][0]) params[0][1] = `${params[0][1]},`;
+      if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`;
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}]`;
       return {
         statements: [

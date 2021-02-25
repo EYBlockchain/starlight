@@ -32,7 +32,7 @@ const collectImportFiles = (file, contextDirPath = boilerplateContractsDir) => {
 
   // collect the import files and their paths:
   for (const p of localFilePaths) {
-    if (p.includes('Verifier_Interface')) {
+    if (p.includes('IVerifier')) {
       localFilePaths.push('./verify/Verifier.sol');
       localFilePaths.push('./Migrations.sol'); // TODO fix bodge
     }

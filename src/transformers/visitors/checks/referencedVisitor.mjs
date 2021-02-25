@@ -102,7 +102,7 @@ export default {
         parentExpression.node.nodeType = 'Assignment';
       }
 
-      if (parentExpression && referencedBinding.isSecret) {
+      if (parentExpression && referencedBinding?.isSecret) {
         // here: we are in a line which modifies a secret state
         const rightAncestor =
           path.getAncestorContainedWithin('rightHandSide') ||
@@ -208,7 +208,6 @@ export default {
           } else {
             referencedBinding.accessedNodes = [node];
           }
-
         }
       } else if (parentExpression) {
         // In an expression, not secret

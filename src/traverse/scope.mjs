@@ -366,9 +366,9 @@ export class Scope {
             referencedIndicator.isReferenced = true;
             ++referencedIndicator.referenceCount;
             referencedIndicator.referencingPaths.push(path); // might overwrite, but that's ok.
-            referencedIndicator.oldCommitmentAccessRequired = true;
+            // referencedIndicator.oldCommitmentAccessRequired = true;
           }
-          contractDefScope.indicators.oldCommitmentAccessRequired = true;
+          // contractDefScope.indicators.oldCommitmentAccessRequired = true;
 
           // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
           if (
@@ -1175,16 +1175,21 @@ export class Scope {
       secretVar.isNullified = true;
       secretVar.binding.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
+      secretVar.oldCommitmentAccessRequired = true;
+      contractDefScope.indicators.oldCommitmentAccessRequired = true;
     }
 
-    if (secretVar.isWhole === false && secretVar.isIncremented) {
+    if (secretVar.isWhole === false && secretVar.isIncremented && !secretVar.isDecremented) {
       // partitioned/incremented state doesn't need nullifiers (in this function)
       secretVar.isNullified = false;
+      secretVar.oldCommitmentAccessRequired = false;
     } else {
       // otherwise, we have a whole state which needs nullifiers at every edit
       secretVar.isNullified = true;
       secretVar.binding.isNullified = true;
       contractDefScope.indicators.nullifiersRequired = true;
+      secretVar.oldCommitmentAccessRequired = true;
+      contractDefScope.indicators.oldCommitmentAccessRequired = true;
     }
 
     // here - mark the contract obj and check for conflicting indicators

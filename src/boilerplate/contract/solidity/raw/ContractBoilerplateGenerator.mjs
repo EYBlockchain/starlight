@@ -20,7 +20,7 @@ class ContractBoilerplateGenerator {
   contract = {
     importStatements({ newCommitmentsRequired }) {
       return [
-        `import "./verify/Verifier_Interface.sol";`,
+        `import "./verify/IVerifier.sol";`,
         ...(newCommitmentsRequired ? [`import "./merkle-tree/MerkleTree.sol";`] : []),
       ];
     },
@@ -38,7 +38,7 @@ class ContractBoilerplateGenerator {
           enum FunctionNames { ${functionNames.join(', ')} }`,
 
         `
-          Verifier_Interface private verifier;`,
+          IVerifier private verifier;`,
 
         `
           mapping(uint256 => uint256[]) public vks; // indexed to by an enum uint(FunctionNames)`,
@@ -75,7 +75,7 @@ class ContractBoilerplateGenerator {
       		address verifierAddress,
       		uint256[][] memory vk
       	) {
-      		verifier = Verifier_Interface(verifierAddress);
+      		verifier = IVerifier(verifierAddress);
       		for (uint i = 0; i < vk.length; i++) {
       			vks[i] = vk[i];
       		}
