@@ -2,6 +2,7 @@ const fs = require('fs');
 
 const BN256G2 = artifacts.require("BN256G2");
 const Verifier = artifacts.require("Verifier");
+CUSTOM_CONTRACT_IMPORT
 const CONTRACT_NAME = artifacts.require("CONTRACT_NAME");
 const functionNames = [FUNCTION_NAMES];
 const vkInput = [];
@@ -19,6 +20,7 @@ module.exports = deployer => {
     await deployer.deploy(BN256G2);
     await deployer.link(BN256G2, Verifier);
     await deployer.deploy(Verifier);
-    await deployer.deploy(CONTRACT_NAME, Verifier.address, vkInput);
+    CUSTOM_CONTRACTS
+    await deployer.deploy(CONTRACT_NAME, CUSTOM_INPUTS Verifier.address, vkInput);
   });
 };

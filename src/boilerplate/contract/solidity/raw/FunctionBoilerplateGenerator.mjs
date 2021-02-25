@@ -1,0 +1,87 @@
+/* eslint-disable import/no-cycle */
+
+import codeGenerator from '../../../../codeGenerators/contract/solidity/toContract.mjs';
+
+class FunctionBoilerplateGenerator {
+  generateBoilerplate(node) {
+    const { bpSection, bpCategory, ...otherParams } = node;
+    // console.log('bpType', bpType)
+    // console.log('bpSection', bpSection)
+    // console.log('this[bpType]', this[bpType])
+    // console.log('this[bpType][bpSection]', this[bpType][bpSection])
+    return this?.[bpCategory]?.[bpSection]?.(otherParams) ?? [];
+  }
+
+  static uniqueify(arr) {
+    return Array.from(new Set(arr));
+  }
+
+  // 'constructor' is a reserved keyword in JS
+  cnstrctr = {
+    parameters() {
+      return [
+        `address verifierAddress`, //
+        `uint256[][] memory vk`,
+      ];
+    },
+
+    postStatements() {
+      return [
+        `verifier = IVerifier(verifierAddress);
+    		  for (uint i = 0; i < vk.length; i++) {
+    			  vks[i] = vk[i];
+    		  }`,
+      ];
+    },
+  };
+
+  customFunction = {
+    parameters({
+      nullifiersRequired: newNullifiers,
+      oldCommitmentAccessRequired: commitmentRoot,
+      newCommitmentRequired: newCommitments,
+    }) {
+      return [
+        ...(newNullifiers ? [`uint256[] calldata newNullifiers`] : []),
+        ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
+        ...(newCommitments ? [`uint256[] calldata newCommitments`] : []),
+        `uint256[] calldata proof`,
+      ];
+    },
+
+    // @param {Array} customInputs
+    postStatements({
+      functionName,
+      customInputs, // array of custom input names
+      nullifiersRequired: newNullifiers,
+      oldCommitmentAccessRequired: commitmentRoot,
+      newCommitmentRequired: newCommitments,
+    }) {
+      // prettier-ignore
+      return [
+        `
+          Inputs memory inputs;`,
+
+        ...(customInputs?.length ?
+          [`
+          inputs.customInputs = new uint[](${customInputs.length});
+        	${customInputs.map((name, i) => `inputs.customInputs[${i}] = ${name};`).join('\n')}`]
+          : []),
+
+        ...(newNullifiers ? [`
+          inputs.newNullifiers = newNullifiers;`] : []),
+
+        ...(commitmentRoot ? [`
+          inputs.commitmentRoot = commitmentRoot;`] : []),
+
+        ...(newCommitments ? [`
+          inputs.newCommitments = newCommitments;`] : []),
+
+        `
+          verify(proof, uint(FunctionNames.${functionName}), inputs);`,
+      ];
+    },
+  };
+}
+
+export default FunctionBoilerplateGenerator;

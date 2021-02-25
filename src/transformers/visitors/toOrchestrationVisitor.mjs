@@ -19,6 +19,20 @@ export default {
     exit(path) {},
   },
 
+  ImportDirective: {
+    enter(path, state) {
+      const { node, parent } = path;
+      if (!state.contractImports) state.contractImports = [];
+      state.contractImports.push({
+        absolutePath: node.absolutePath,
+        file: node.file,
+      });
+      // we assume all import statements come before all functions
+    },
+
+    exit(path) {},
+  },
+
   FunctionDefinition: {
     enter(path, state) {
       const { node, parent, scope } = path;
@@ -56,6 +70,7 @@ export default {
               // insert this FunctionDefinition node into our newly created circuit file.
               nodeType: node.nodeType, // FunctionDefinition
               name: node.name,
+              contractName: contractName,
               body: {},
               parameters: {}, // node.parameters.parameters,
               // no returnParameters
@@ -97,6 +112,7 @@ export default {
         let EditableCommitmentCommonFilesBoilerplateAlreadyExists = false;
         let ZokratesSetupCommonFilesBoilerplateAlreadyExists = false;
         let IntegrationTestBoilerplateAlreadyExists = false;
+        let constructorParams = [];
         for (const file of files) {
           if (file.nodeType === 'EditableCommitmentCommonFilesBoilerplate') {
             EditableCommitmentCommonFilesBoilerplateAlreadyExists = true;
@@ -108,6 +124,9 @@ export default {
             ZokratesSetupCommonFilesBoilerplateAlreadyExists = true;
             file.functions.push(node.name);
           }
+          if (file.nodeType === 'NonSecretFunction' && file.name === 'constructor') {
+            constructorParams = file.nodes[0].parameters.parameters;
+          }
         }
         if (!EditableCommitmentCommonFilesBoilerplateAlreadyExists) {
           parent._newASTPointer.push({
@@ -117,11 +136,14 @@ export default {
         const contractName = `${parent.name}Shield`;
 
         if (state.snarkVerificationRequired && !ZokratesSetupCommonFilesBoilerplateAlreadyExists) {
-          parent._newASTPointer.push({
+          const zokratesSetupCommonFilesBoilerplateNode = {
             nodeType: 'ZokratesSetupCommonFilesBoilerplate',
             functions: [node.name],
             contractName: contractName,
-          });
+          };
+          if (constructorParams) zokratesSetupCommonFilesBoilerplateNode.constructorParams = constructorParams;
+          if (state.contractImports) zokratesSetupCommonFilesBoilerplateNode.contractImports = state.contractImports;
+          parent._newASTPointer.push(zokratesSetupCommonFilesBoilerplateNode);
         }
 
         if (state.snarkVerificationRequired && !IntegrationTestBoilerplateAlreadyExists) {
@@ -142,12 +164,17 @@ export default {
 
         if (state.snarkVerificationRequired && IntegrationTestBoilerplateAlreadyExists) {
           const testNode = parent._newASTPointer.filter(
-            node => node.name === 'test' && node.nodes,
+            thisNode => thisNode.name === 'test' && thisNode.nodes,
           )[0];
-          testNode.nodes[0].functions.push({
-            name: node.name,
-            parameters: node._newASTPointer.parameters,
-          });
+          const functionExists = testNode.nodes[0].functions.filter(
+            functionTestNode => functionTestNode.name === node.name,
+          )[0];
+          if (!functionExists) {
+            testNode.nodes[0].functions.push({
+              name: node.name,
+              parameters: node._newASTPointer.parameters,
+            });
+          }
         }
 
         // assuming one secret state var per commitment
@@ -191,14 +218,22 @@ export default {
                 statement.secretStateName === stateVarName
               )
                 increment = statement.increment;
-              if (statement.decrementsSecretState) {
+
+              if (statement.decrementsSecretState && statement.secretStateName === stateVarName) {
                 node._newASTPointer.decrementsSecretState = true;
-                node._newASTPointer.decrementedSecretState = statement.secretStateName;
+                if (!node._newASTPointer.decrementedSecretStates) {
+                  node._newASTPointer.decrementedSecretStates = [statement.secretStateName];
+                } else if (
+                  !node._newASTPointer.decrementedSecretStates.includes(statement.secretStateName)
+                ) {
+                  node._newASTPointer.decrementedSecretStates.push(statement.secretStateName);
+                }
+
                 const testNode = parent._newASTPointer.filter(
-                  statement => statement.name === 'test' && statement.nodes,
+                  thisNode => thisNode.name === 'test' && thisNode.nodes,
                 )[0];
                 const fnTestNode = testNode.nodes[0].functions.filter(
-                  statement => statement.name === node.name,
+                  thisNode => thisNode.name === node.name,
                 )[0];
                 fnTestNode.decrementsSecretState = true;
                 fnTestNode.parameters.modifiedStateVariables.filter(
@@ -218,13 +253,18 @@ export default {
           )[0];
 
           // Add 'editable commitment' boilerplate code to the body of the function, which does the standard checks:
-          // TODO - sep ReadPreimage into 1. read from db and 2. decide whether comm exists (skip 2 if below false)
-          // Also do for MembershipWitness
           // NODEBUILDING
 
           if (indicator.initialisationRequired) {
             if (binding.owner && !binding.owner.node) binding.owner.node = binding.owner;
             if (!generateProofNodeExists) {
+              if (indicator.isWhole) {
+                const initialisePreimageNode = {
+                  nodeType: 'InitialisePreimage',
+                  privateStates: [stateVarName],
+                };
+                node._newASTPointer.body.statements.splice(0, 0, initialisePreimageNode);
+              }
               const readPreimageNode = {
                 nodeType: 'ReadPreimage',
                 privateStates: {},
@@ -232,6 +272,8 @@ export default {
                 contractName: contractName,
               };
               node._newASTPointer.body.statements.push(readPreimageNode);
+            } else if (indicator.isWhole) {
+              node._newASTPointer.body.statements[0].privateStates.push(stateVarName);
             }
             const index = node._newASTPointer.body.statements.findIndex(
               node => node.nodeType === 'ReadPreimage',
@@ -247,6 +289,9 @@ export default {
               owner: binding.isOwned ? binding.owner.node.name || binding.owner.name : null,
               ownerIsSecret: binding.isOwned
                 ? binding.owner.isSecret || binding.owner.node.isSecret
+                : null,
+              ownerIsParam: binding.isOwned
+                ? binding.owner.isParam || !binding.owner.node.stateVariable
                 : null,
             };
 
@@ -527,12 +572,21 @@ export default {
           referencedNode.isSecret &&
           referencedBinding.isWhole
         ) {
+          let accessed = false;
+
+          if (referencedBinding.accessedNodes) {
+            referencedBinding.accessedNodes.forEach(obj => {
+              if (obj.id === lhs.id) accessed = true;
+            });
+          }
+
           newNode = {
             nodeType: 'VariableDeclarationStatement',
             declarations: [
               {
                 nodeType: 'VariableDeclaration',
                 name: lhs.name,
+                isAccessed: accessed,
                 typeName: {
                   name: 'field',
                   nodeType: 'ElementaryTypeName',
@@ -632,6 +686,9 @@ export default {
         if (scope.getReferencedBinding(refPath.node).isSecret) modifiesSecretState = true;
       });
 
+      if (parent.nodeType === 'VariableDeclarationStatement' && modifiesSecretState)
+        parent._newASTPointer.modifiesSecretState = modifiesSecretState;
+
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = {
         nodeType: node.nodeType,
@@ -727,5 +784,12 @@ export default {
     },
 
     exit(path) {},
+  },
+
+  FunctionCall: {
+    enter(path, state) {
+      // HACK: Not sure how to deal with FunctionCalls for Orchestration, so skipping them
+      state.skipSubNodes = true;
+    },
   },
 };

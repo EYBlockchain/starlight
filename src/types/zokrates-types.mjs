@@ -47,6 +47,7 @@ export function getVisitableKeys(nodeType) {
 
 const generateBoilerplate = ({ indicators, bpSection }) => {
   const bpArray = [];
+  // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
   for (const indicatorObj of Object.values(indicators)) {
     const bp = new BP(indicatorObj);
     bpArray.push(...bp[bpSection]);
@@ -54,10 +55,10 @@ const generateBoilerplate = ({ indicators, bpSection }) => {
   return bpArray;
 };
 
-const generateBoilerplateStatement = (bpType, extraParams) => {
-  const { indicators } = extraParams;
+const generateBoilerplateStatement = fields => {
+  const { bpType, indicators } = fields;
   const bp = new BP(indicators);
-  return bp.generateBoilerplateStatement(bpType, extraParams);
+  return bp.generateBoilerplateStatement(bpType, fields);
 };
 
 /**
@@ -202,13 +203,9 @@ export function buildNode(nodeType, fields = {}) {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
       return generateBoilerplate(fields);
     }
-    case 'PartitionedIncrementationStatementBoilerplate': {
+    case 'BoilerplateStatement': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      return generateBoilerplateStatement('incrementation', fields);
-    }
-    case 'PartitionedDecrementationStatementBoilerplate': {
-      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      return generateBoilerplateStatement('decrementation', fields);
+      return generateBoilerplateStatement(fields);
     }
     default:
       throw new TypeError(nodeType);

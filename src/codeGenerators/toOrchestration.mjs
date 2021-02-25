@@ -74,13 +74,15 @@ const testInputsByType = solidityType => {
   switch (solidityType) {
     case 'uint':
     case 'uint256':
-      return Math.floor(Math.random() * Math.floor(20)); // random number between 1 and 20
+      return Math.floor(Math.random() * Math.floor(20) + 1); // random number between 1 and 20
     case 'address':
       return `'this-is-an-address'`;
     case 'key':
-      return `'this-is-a-zkp-key'`;
+      // return `'this-is-a-zkp-key'`;
+      return `0`;
     case 'commitment':
-      return `'this-is-an-old-commitment'`;
+      return `0`;
+    //  return `'this-is-an-old-commitment'`;
     default:
       return 0; // TODO
   }
@@ -88,25 +90,29 @@ const testInputsByType = solidityType => {
 
 const prepareIntegrationTest = node => {
   const genericTestFile = integrationTestBoilerplate;
-  let outputTestFile = genericTestFile.prefix;
+  let outputTestFile = genericTestFile.prefix.replace(/CONTRACT_NAME/g, node.contractName);
   node.functions.forEach(fn => {
     let fnboilerplate = genericTestFile.function
       .replace(/CONTRACT_NAME/g, node.contractName)
       .replace(/FUNCTION_NAME/g, fn.name);
+    // REMOVED below - test file no longer has fn(original_args, zkp args), now fn(original_args)
     // fn sig: original params -> new public keys -> input commitments
+    let removeSecondCall = false;
     const paramTypes = fn.parameters.parameters.map(obj => obj.typeName.name);
     fn.parameters.modifiedStateVariables.forEach(param => {
-      const index = paramTypes.indexOf('key');
-      if (index > -1) {
-        paramTypes.splice(index, 0, 'key');
-      } else {
-        paramTypes.push('key'); // for each modified state, add a new owner public key
-      }
-
+      //   const index = paramTypes.indexOf('key');
+      //   if (index > -1) {
+      //     paramTypes.splice(index, 0, 'key');
+      //   } else {
+      //     paramTypes.push('key'); // for each modified state, add a new owner public key
+      //   }
+      //
       if (param.isDecremented) {
-        // if dec, we need two input commitments
-        paramTypes.push('commitment');
-        paramTypes.push('commitment');
+        //     // if dec, we need two input commitments
+        //     paramTypes.push('commitment');
+        //     paramTypes.push('commitment');
+        //     // we should also not do a second call, just in case we don't have enough input commitments
+        removeSecondCall = true;
       }
     });
     fnboilerplate = fnboilerplate.replace(
@@ -117,11 +123,85 @@ const prepareIntegrationTest = node => {
       /FUNCTION_SIG_2/g,
       paramTypes.map(testInputsByType).join(', '),
     );
+    if (removeSecondCall) {
+      const toRemove = fnboilerplate.match(/describe\('Second Call'?[\s\S]*/g)[0];
+      fnboilerplate = fnboilerplate.replace(toRemove, `\n});`);
+    }
 
     const fnimport = genericTestFile.fnimport.replace(/FUNCTION_NAME/g, fn.name);
     outputTestFile = `${fnimport}\n${outputTestFile}\n${fnboilerplate}`;
   });
+  outputTestFile = `${outputTestFile}\n});\n`;
   return outputTestFile;
+};
+
+const prepareMigrationsFile = (file, node) => {
+  file.filepath = `./migrations/2_shield.js`;
+  file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
+  file.file = file.file.replace(
+    /FUNCTION_NAMES/g,
+    `'${node.functions.join(`', '`)}'`,
+  );
+  let customImports = ``;
+  let customDeployments = ``;
+  const constructorParams = node.constructorParams.map(obj => obj.name);
+  let constructorParamsIncludesAddr = false;
+  const constructorAddrParams = [];
+
+  if (node.constructorParams) {
+    node.constructorParams.forEach(arg => {
+      if (arg.typeName.name === 'address') {
+        constructorParamsIncludesAddr = true;
+        constructorAddrParams.push(arg.name);
+      }
+    });
+  }
+
+  if (node.contractImports && constructorParamsIncludesAddr) {
+    node.contractImports.forEach(importObj => {
+      const importedContract = fs.readFileSync(`./contracts/${importObj.absolutePath}`, 'utf8');
+      let importedContractName = path.basename(
+        importObj.absolutePath,
+        path.extname(importObj.absolutePath),
+      );
+      // if import is an interface, we need to deploy contract e.g. IERC20 -> deploy ERC20
+      if (
+        importedContractName.startsWith(`I`) &&
+        importedContract.replace(/{.*$/, '').includes('interface')
+      ) {
+        const newPath = importObj.absolutePath.replace(
+          importedContractName,
+          importedContractName.substring(1),
+        );
+        importedContractName = importedContractName.substring(1);
+        const check = fs.existsSync(`./contracts/${newPath}`);
+        if (check) {
+          customImports += `const ${importedContractName} = artifacts.require("${importedContractName}"); \n`;
+          if (importedContractName === 'ERC20') {
+            customDeployments += `await deployer.deploy(${importedContractName}, 'MyCoin', 'MC'); \n`; // HACK
+          } else {
+            customDeployments += `await deployer.deploy(${importedContractName}); \n`;
+          }
+        }
+        constructorAddrParams.forEach(name => {
+          if (
+            name.toLowerCase().includes(importedContractName.substring(1).toLowerCase()) ||
+            importedContractName.substring(1).toLowerCase().includes(name.toLowerCase())
+          ) {
+            const index = constructorParams.indexOf(name);
+            constructorParams[index] = `${importedContractName}.address`;
+          }
+        });
+      }
+    });
+  }
+
+  if (constructorParams.length === 1) constructorParams[0] += `,`;
+
+  file.file = file.file.replace(/CUSTOM_CONTRACT_IMPORT/g, customImports);
+  file.file = file.file.replace(/CUSTOM_CONTRACTS/g, customDeployments);
+  file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParams);
+
 };
 
 // newline / tab beautification for '.zok' files
@@ -154,6 +234,9 @@ const beautify = code => {
 
 function codeGenerator(node) {
   // We'll break things down by the `type` of the `node`.
+  const getAccessedValue = name => {
+    return `\nlet { ${name} } = ${name}_preimage;`;
+  };
   switch (node.nodeType) {
     case 'Folder': {
       const check = node.files
@@ -193,12 +276,7 @@ function codeGenerator(node) {
         `'${node.functions.join(`', '`)}'`,
       );
       const migrationsfile = check.filter(obj => obj.filepath.includes(`shield`))[0];
-      migrationsfile.filepath = `./migrations/2_shield.js`;
-      migrationsfile.file = migrationsfile.file.replace(/CONTRACT_NAME/g, node.contractName);
-      migrationsfile.file = migrationsfile.file.replace(
-        /FUNCTION_NAMES/g,
-        `'${node.functions.join(`', '`)}'`,
-      );
+      prepareMigrationsFile(migrationsfile, node);
       // console.log("\n\n\n\n\n\n\n\n\ncheck ZokratesSetupCommonFilesBoilerplate:", check);
       return check;
     }
@@ -230,6 +308,17 @@ function codeGenerator(node) {
       // const declarations = node.declarations.map(codeGenerator).join(', ');
       // const initialValue = codeGenerator(node.initialValue);
       if (!node.modifiesSecretState) return;
+      if (node.initialValue.nodeType === 'Assignment') {
+        if (node.declarations[0].isAccessed) {
+          return `${getAccessedValue(node.declarations[0].name)}\n${codeGenerator(
+            node.initialValue,
+          )};`;
+        }
+        return `\nlet ${codeGenerator(node.initialValue)};`;
+      }
+
+      if (node.initialValue.operator && !node.initialValue.operator.includes('='))
+        return `\nlet ${node.declarations[0].name} = ${codeGenerator(node.initialValue)};`;
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
@@ -256,7 +345,7 @@ function codeGenerator(node) {
     case 'Literal':
     case 'Identifier':
       return node.name;
-
+    case 'InitialisePreimage':
     case 'ReadPreimage':
     case 'WritePreimage':
     case 'MembershipWitness':

@@ -16,7 +16,7 @@ function recogniseGlobal(line) {
       if (name.includes('=') || name === '=') {
         [type, name] = ln.split(' ');
         visibility = '';
-        console.log([type, name]);
+        // console.log([type, name]);
       }
       process({ type, visibility, name }); // call the processor
       return true;

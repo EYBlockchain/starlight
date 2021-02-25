@@ -24,17 +24,18 @@
     "general-number": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
     "solc": "0.8.0",
-    "truffle": "^5.1.65",
+    "truffle": "5.1.65",
     "web3": "^1.2.11",
     "winston": "^3.3.3",
     "yargs": "^15.4.1",
     "zkp-utils": "^1.0.8"
   },
   "devDependencies": {
-    "cod-scripts": "^3.2.0",
-    "eslint": "^5.16.0",
+    "cod-scripts": "^6.0.0",
+    "eslint": "^7.19.0",
     "husky": "^4.2.5",
-    "prettier": "^2.0.5",
+    "mocha": "^8.2.1",
+    "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-alpha.54"
   }
 }

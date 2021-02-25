@@ -55,8 +55,24 @@ export const ZappFilesBoilerplate = [
 export const integrationTestBoilerplate = {
   fnimport: `import FUNCTION_NAME from './FUNCTION_NAME.mjs';`,
   prefix: `import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport logger from './common/logger.mjs';\nimport web3 from './common/web3.mjs';\n\n
+  /**
+  Welcome to your zApp's integration test!
+  Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
+  The transpiler automatically fills in any ZKP inputs for you and provides some dummy values for the original zol function.
+  NOTE: if any non-secret functions need to be called first, the transpiler won't know! You'll need to add those calls below.
+  NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
+  */
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  let leafIndex;`,
+  let leafIndex;
+  // eslint-disable-next-line func-names
+   describe('CONTRACT_NAME', async function () {
+    this.timeout(3660000);
+    try {
+      await web3.connect();
+    } catch (err) {
+      throw new Error(err);
+    }`,
+  suffix: `});`,
   function: `// eslint-disable-next-line func-names \n ${
     fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g)[0]
   }`,
@@ -68,8 +84,8 @@ export const sendTransactionBoilerplate = node => {
   output[0] = [];
   output[1] = [];
   output[2] = [];
-  // output[0] = root(s)
-  // output[1] = arr of nullifiers
+  // output[0] = arr of nullifiers
+  // output[1] = root(s)
   // output[2] = arr of commitments
   for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
     switch (stateNode.isPartitioned) {
@@ -77,8 +93,8 @@ export const sendTransactionBoilerplate = node => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            output[0].push(`${privateStateName}_root.integer`);
-            output[1].push(
+            output[1].push(`${privateStateName}_root.integer`);
+            output[0].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
             output[2].push(`${privateStateName}_2_newCommitment.integer`);
@@ -92,8 +108,9 @@ export const sendTransactionBoilerplate = node => {
         break;
       case false:
       default:
-        output[0].push(`${privateStateName}_root.integer`);
-        output[1].push(`${privateStateName}_nullifier.integer`);
+        // whole
+        output[1].push(`${privateStateName}_root.integer`);
+        output[0].push(`${privateStateName}_nullifier.integer`);
         output[2].push(`${privateStateName}_newCommitment.integer`);
         break;
     }
@@ -103,10 +120,11 @@ export const sendTransactionBoilerplate = node => {
 
 export const generateProofBoilerplate = node => {
   const { privateStates } = node;
+  const privateStateNames = Object.keys(privateStates);
   const output = [];
   for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
     const lines = [];
-    const stateVarIdLines = stateNode.isMapping
+    let stateVarIdLines = stateNode.isMapping
       ? [`\t${privateStateName}_stateVarId_key.integer,`]
       : [];
     // [`\t${privateStateName}_stateVarId,`, `\t${privateStateName}_stateVarId_key.hex(32),`]
@@ -114,7 +132,7 @@ export const generateProofBoilerplate = node => {
     switch (stateNode.isWhole) {
       case true:
         node.parameters
-          .filter(para => para !== node.privateStateName)
+          .filter(para => !privateStateNames.includes(para)) //  !== node.privateStateName)
           .forEach(param => {
             if (!lines.includes(`\t${param}.integer,`)) lines.push(`\t${param}.integer,`);
           });
@@ -127,13 +145,12 @@ export const generateProofBoilerplate = node => {
             \t${privateStateName}_prevSalt.limbs(32, 8),
             \t!${privateStateName}_commitmentExists,
             \tpublicKey.limbs(32, 8),
-            \t${privateStateName}_root.integer
+            \t${privateStateName}_root.integer,
             \t${privateStateName}_index.integer,
             \t${privateStateName}_path.integer,
             \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
             \t${privateStateName}_newSalt.limbs(32, 8),
-            \t${privateStateName}_newCommitment.integer,
-            `);
+            \t${privateStateName}_newCommitment.integer`);
         break;
       case false:
       default:
@@ -143,13 +160,27 @@ export const generateProofBoilerplate = node => {
             //    stateNode.increment.forEach(inc => {
             //             lines.push(`\tvalue: ${inc.name}.integer,`);
             //           });
-            lines[0] = `
-                \t${stateNode.increment}.integer`;
+            node.parameters
+              .filter(para => !privateStateNames.includes(para)) //  !== node.privateStateName)
+              .forEach(param => {
+                if (
+                  !lines.includes(`\t${param}.integer,`) &&
+                  !output.join().includes(`${param}.integer`)
+                )
+                  lines.push(`\t${param}.integer,`);
+                if (stateNode.owner.includes(param)) stateVarIdLines = [];
+              });
+
+            if (
+              !output.join().includes(`\t${stateNode.increment}.integer`) &&
+              !lines.includes(`\t${stateNode.increment}.integer,`)
+            )
+              output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
             // lines[1] = `
             //     \t${stateNode.increment}_newSalt.limbs(32, 8),
             //     \t${stateNode.increment}_newCommitment.integer`;
-            if (!output.includes(lines[0])) output.push(lines[0]);
             output.push(`
+                ${lines.join('  \n\t\t\t\t\t\t\t\t')}
                 ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
                 \tsecretKey.limbs(32, 8),
                 \tsecretKey.limbs(32, 8),
@@ -177,11 +208,24 @@ export const generateProofBoilerplate = node => {
             // stateNode.increment.forEach(inc => {
             //   lines.push(`\tvalue: ${inc.name}.integer,`);
             // });
-            lines[0] = `
-                \t${stateNode.increment}.integer`;
-            if (!output.includes(lines[0])) output.push(lines[0]);
-            output.push(`
-                ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
+            node.parameters
+              .filter(para => para !== node.privateStateName)
+              .forEach(param => {
+                if (
+                  !lines.includes(`\t${param}.integer,`) &&
+                  !output.join().includes(`${param}.integer`)
+                )
+                  lines.push(`\t${param}.integer,`);
+                if (stateNode.owner && stateNode.owner.includes(param)) stateVarIdLines = [];
+              });
+
+            if (
+              !output.join().includes(`\t${stateNode.increment}.integer`) &&
+              !lines.includes(`\t${stateNode.increment}.integer,`)
+            )
+              output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
+
+            output.push(`${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
                 \t${privateStateName}_newOwnerPublicKey.limbs(32, 8),
                 \t${privateStateName}_newSalt.limbs(32, 8),
                 \t${privateStateName}_newCommitment.integer`);
@@ -205,17 +249,28 @@ export const preimageBoilerPlate = node => {
       if (stateNode.isWhole)
         lines.push(`const ${param}_prev = generalise(${privateStateName}_preimage.${param});`);
       const id = stateNode.stateVarId[stateNode.parameters.indexOf(param)];
-      stateVarIds.push(`\nconst ${param}_stateVarId = ${id};`);
+      if (!stateNode.stateVarId[1]) stateVarIds.push(`\nconst ${param}_stateVarId = ${id};`);
       if (
         stateNode.stateVarId[1] &&
         privateStateName.includes(stateNode.stateVarId[1]) &&
         stateNode.stateVarId[1] !== 'msg'
-      )
+      ) {
+        stateVarIds.push(`\nlet ${param}_stateVarId = ${id};`);
         stateVarIds.push(`\nconst ${param}_stateVarId_key = ${stateNode.stateVarId[1]};`);
-      if (stateNode.stateVarId[1] === 'msg' && privateStateName.includes('msg'))
+        stateVarIds.push(
+          `\n${param}_stateVarId = generalise(utils.mimcHash([generalise(${param}_stateVarId).bigInt, ${param}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+        );
+      }
+
+      if (stateNode.stateVarId[1] === 'msg' && privateStateName.includes('msg')) {
+        stateVarIds.push(`\nlet ${param}_stateVarId = ${id};`);
         stateVarIds.push(
           `\nconst ${param}_stateVarId_key = ${privateStateName}_newOwnerPublicKey;`,
         );
+        stateVarIds.push(
+          `\n${param}_stateVarId = generalise(utils.mimcHash([generalise(${param}_stateVarId).bigInt, ${param}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+        );
+      }
       initialiseParams.push(`\nlet ${param}_prev = generalise(0);`);
       preimageParams.push(`\t${param}: 0,`);
     });
@@ -223,20 +278,24 @@ export const preimageBoilerPlate = node => {
     let newOwnerStatment;
     switch (newOwner) {
       case null:
-        newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         break;
       case 'msg':
         if (privateStateName.includes('msg')) {
           newOwnerStatment = `publicKey;`;
         } else {
-          newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
         break;
       default:
         // TODO - this is the case where the owner is an admin (state var)
         // we have to let the user submit the key and check it in the contract
         // newOwnerStatment = `${newOwner};`;
-        newOwnerStatment = `${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
+        if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? await instance.methods.${newOwner}().call() : ${privateStateName}_newOwnerPublicKey;`;
+        } else if (stateNode.ownerIsParam) {
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
+        }
         break;
     }
 
@@ -244,23 +303,6 @@ export const preimageBoilerPlate = node => {
       case true:
         output.push(
           `
-          \nlet ${privateStateName}_commitmentExists = true;
-          \nlet ${privateStateName}_witnessRequired = true;\n
-          if (!fs.existsSync(db)) {
-              const preimage = {
-              ${preimageParams.join('')}
-              \tsalt: 0,
-              \tcommitment: 0,
-              };
-              fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
-              ${privateStateName}_commitmentExists = false;
-              ${privateStateName}_witnessRequired = false;
-            }
-          \nconst ${privateStateName}_preimage = JSON.parse(
-              fs.readFileSync(db, 'utf-8', err => {
-                console.log(err);
-              }),
-            );
           ${privateStateName}_newOwnerPublicKey = ${newOwnerStatment}
             const ${privateStateName}_currentCommitment = generalise(${privateStateName}_preimage.commitment);
             ${lines.join('')}
@@ -283,10 +325,10 @@ export const preimageBoilerPlate = node => {
               );
               \nconst ${privateStateName}_0_oldCommitment = _${privateStateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${
                 stateNode.increment
-              })[0] : generalise(_${privateStateName}_0_oldCommitment).integer;
-              \nconst ${privateStateName}_1_oldCommitment = _${privateStateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${
+              }.integer)[0] : generalise(_${privateStateName}_0_oldCommitment).hex(32);
+              \nconst ${privateStateName}_1_oldCommitment = _${privateStateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${
                 stateNode.increment
-              })[1] : generalise(_${privateStateName}_1_oldCommitment).integer;
+              }.integer)[1] : generalise(_${privateStateName}_1_oldCommitment).hex(32);
 
               \n${privateStateName}_newOwnerPublicKey = ${newOwnerStatment}
               const ${privateStateName}_0_prevSalt = generalise(${privateStateName}_preimage[${privateStateName}_0_oldCommitment].salt);
@@ -346,6 +388,7 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
     case 'FunctionDefinition':
       // the main function
+      lines.push(`\nconst instance = await getContractInstance('${node.contractName}');`);
       node.inputParameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
@@ -359,8 +402,10 @@ export const OrchestrationCodeBoilerPlate = node => {
       });
 
       if (node.decrementsSecretState) {
-        states.push(` _${node.decrementedSecretState}_0_oldCommitment = 0`);
-        states.push(` _${node.decrementedSecretState}_1_oldCommitment = 0`);
+        node.decrementedSecretStates.forEach(decrementedState => {
+          states.push(` _${decrementedState}_0_oldCommitment = 0`);
+          states.push(` _${decrementedState}_1_oldCommitment = 0`);
+        });
       }
       node.returnParameters.forEach(param => rtnparams.push(`, ${param.integer}`));
 
@@ -371,6 +416,33 @@ export const OrchestrationCodeBoilerPlate = node => {
         \n}`,
         ],
         statements: lines,
+      };
+
+    case 'InitialisePreimage':
+      for (const stateName of node.privateStates) {
+        lines.push(`
+        \nlet ${stateName}_commitmentExists = true;
+        let ${stateName}_witnessRequired = true;
+        if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')[${stateName}],
+          )[${stateName}]) {
+            const preimage = {};
+            preimage[${stateName}] = {
+            \t${stateName}: 0,
+            \tsalt: 0,
+            \tcommitment: 0,
+            };
+            fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+            ${stateName}_commitmentExists = false;
+            ${stateName}_witnessRequired = false;
+          }
+        \nconst ${stateName}_preimage = JSON.parse(
+            fs.readFileSync(db, 'utf-8', err => {
+              console.log(err);
+            }),
+          )[${stateName}];`);
+      }
+      return {
+        statements: [lines],
       };
 
     case 'ReadPreimage':
@@ -397,7 +469,7 @@ export const OrchestrationCodeBoilerPlate = node => {
         if (stateNode.increment && !stateNode.nullifierRequired) {
           lines[0] = `\tvalue: ${stateNode.increment}.integer,`;
         } else if (stateNode.increment && stateNode.nullifierRequired) {
-          lines[0] = `\tvalue: change.integer,`;
+          lines[0] = `\tvalue: ${stateName}_change.integer,`;
         } else {
           stateNode.parameters.forEach(param => {
             lines.push(`\t${param}: ${param}.integer,`);
@@ -409,13 +481,18 @@ export const OrchestrationCodeBoilerPlate = node => {
             switch (stateNode.nullifierRequired) {
               case true:
                 states.push(
+                  `\npreimage[generalise(${stateName}_0_oldCommitment).hex(32)].isNullified = true;`,
+                );
+                states.push(
+                  `\npreimage[generalise(${stateName}_1_oldCommitment).hex(32)].isNullified = true;`,
+                );
+                states.push(
                   `\npreimage[${stateName}_2_newCommitment.hex(32)] = {
                   ${lines.join('')}
                   \tsalt: ${stateName}_2_newSalt.integer,
-                  \tpublicKey: publicKey.integer,
+                  \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
                   \tcommitment: ${stateName}_2_newCommitment.integer,
-                  };
-                  \nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
+                  };`,
                 );
                 break;
               case false:
@@ -426,25 +503,21 @@ export const OrchestrationCodeBoilerPlate = node => {
                   \tsalt: ${stateName}_newSalt.integer,
                   \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
                   \tcommitment: ${stateName}_newCommitment.integer,
-                  };
-                  \nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
+                  };`,
                 );
                 break;
             }
             break;
           case false:
           default:
-            return {
-              statements: [
-                `\nconst ${stateName}_preimage_out = {
-                ${lines.join('')}
-                \tsalt: ${stateName}_newSalt.integer,
-                \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
-                \tcommitment: ${stateName}_newCommitment.integer,
-                };`,
-                `\nfs.writeFileSync(db, JSON.stringify(${stateName}_preimage_out, null, 4));`,
-              ],
-            };
+            states.push(
+              `\npreimage[${stateName}] = {
+              ${lines.join('')}
+              \tsalt: ${stateName}_newSalt.integer,
+              \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
+              \tcommitment: ${stateName}_newCommitment.integer,
+              };`,
+            );
         }
       }
       return {
@@ -458,6 +531,7 @@ export const OrchestrationCodeBoilerPlate = node => {
               );
             }`,
           states.join('\n'),
+          `\nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
         ],
       };
 
@@ -465,13 +539,13 @@ export const OrchestrationCodeBoilerPlate = node => {
       if (node.isPartitioned) {
         return {
           statements: [
-            `const witness_0 = await getMembershipWitness('${node.contractName}', ${privateStateName}_0_oldCommitment);
-            const witness_1 = await getMembershipWitness('${node.contractName}', ${privateStateName}_1_oldCommitment);
-            const ${privateStateName}_0_index = generalise(witness_0.index);
-            const ${privateStateName}_1_index = generalise(witness_1.index);
-            const ${privateStateName}_root = generalise(witness_0.root);
-            const ${privateStateName}_0_path = generalise(witness_0.path).all;
-            const ${privateStateName}_1_path = generalise(witness_1.path).all;\n`,
+            `const ${privateStateName}_witness_0 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_0_oldCommitment).integer);
+            const ${privateStateName}_witness_1 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_1_oldCommitment).integer);
+            const ${privateStateName}_0_index = generalise(${privateStateName}_witness_0.index);
+            const ${privateStateName}_1_index = generalise(${privateStateName}_witness_1.index);
+            const ${privateStateName}_root = generalise(${privateStateName}_witness_0.root);
+            const ${privateStateName}_0_path = generalise(${privateStateName}_witness_0.path).all;
+            const ${privateStateName}_1_path = generalise(${privateStateName}_witness_1.path).all;\n`,
           ],
         };
       }
@@ -479,12 +553,12 @@ export const OrchestrationCodeBoilerPlate = node => {
         return {
           statements: [
             `const emptyPath = new Array(32).fill(0);
-            const witness = ${privateStateName}_witnessRequired
+            const ${privateStateName}_witness = ${privateStateName}_witnessRequired
             \t? await getMembershipWitness('${node.contractName}', ${privateStateName}_currentCommitment.integer)
             \t: { index: 0, path: emptyPath, root: 0 };
-            const ${privateStateName}_index = generalise(witness.index);
-            const ${privateStateName}_root = generalise(witness.root);
-            const ${privateStateName}_path = generalise(witness.path).all;\n`,
+            const ${privateStateName}_index = generalise(${privateStateName}_witness.index);
+            const ${privateStateName}_root = generalise(${privateStateName}_witness.root);
+            const ${privateStateName}_path = generalise(${privateStateName}_witness.path).all;\n`,
           ],
         };
       }
@@ -510,8 +584,8 @@ export const OrchestrationCodeBoilerPlate = node => {
     case 'CalculateCommitment':
       // if isMapping and we have the key to hash with the stateVarId
       states[0] = `${privateStateName}_stateVarId`;
-      if (node.stateVarId[1] && privateStateName.includes(node.stateVarId[1]))
-        states[0] = `generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32)`;
+      // if (node.stateVarId[1] && privateStateName.includes(node.stateVarId[1]))
+      //   states[0] = `generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32)`;
       switch (node.isPartitioned) {
         case undefined:
         case false:
@@ -533,9 +607,9 @@ export const OrchestrationCodeBoilerPlate = node => {
               return {
                 statements: [
                   `\nconst ${privateStateName}_2_newSalt = generalise(utils.randomHex(32));`,
-                  `\nlet change = ${privateStateName}_0_prev.integer + ${privateStateName}_1_prev.integer - ${increment}.integer;`,
-                  `\nchange = generalise(change);`,
-                  `\nlet ${privateStateName}_2_newCommitment = generalise(utils.shaHash(${states[0]}, change.hex(32), publicKey.hex(32), ${privateStateName}_2_newSalt.hex(32)));
+                  `\nlet ${privateStateName}_change = parseInt(${privateStateName}_0_prev.integer, 10) + parseInt(${privateStateName}_1_prev.integer, 10) - parseInt(${increment}.integer, 10);`,
+                  `\n${privateStateName}_change = generalise(${privateStateName}_change);`,
+                  `\nlet ${privateStateName}_2_newCommitment = generalise(utils.shaHash(${states[0]}, ${privateStateName}_change.hex(32), publicKey.hex(32), ${privateStateName}_2_newSalt.hex(32)));
                   \n${privateStateName}_2_newCommitment = generalise(${privateStateName}_2_newCommitment.hex(32, 31)); // truncate`,
                 ],
               };
@@ -565,18 +639,20 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
     case 'SendTransaction':
       if (node.publicInputs[0]) {
-        lines.push(...node.publicInputs);
-        lines[0] = `, ${lines[0]}`;
+        node.publicInputs.forEach(input => {
+          lines.push(`${input}.integer`);
+        });
+        // lines[0] = `, ${lines[0]}`;
+        lines[lines.length - 1] += `, `;
       }
       params[0] = sendTransactionBoilerplate(node);
-      if (params[0][0][0]) params[0][0] = `${params[0][0]},`;
-      if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`;
+      if (params[0][1][0]) params[0][1] = `${params[0][1]},`;
+      if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`;
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}]`;
       return {
         statements: [
-          `\nconst instance = await getContractInstance('${node.contractName}');`,
           `\nconst tx = await instance.methods
-          .${node.functionName}(proof, ${params[0][0]} ${params[0][1]} ${params[0][2]}${lines})
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]}, proof)
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,

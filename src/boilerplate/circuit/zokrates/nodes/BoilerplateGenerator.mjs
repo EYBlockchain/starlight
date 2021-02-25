@@ -110,7 +110,6 @@ class BoilerplateGenerator {
   };
 
   addBP = {
-    // TODO: is `this` that of the class instance, or that of `addBP`, here?
     partitioned(bpType, extraParams = {}) {
       const { increments, decrements, name } = this;
       increments.forEach((addend, i) =>

@@ -26,8 +26,8 @@ export default {
       // Create a 'SourceUnit' node.
       const newNode = buildNode('SourceUnit', { name: contractNames[0], license: node.license });
 
-      node._newASTPointer = parent._newASTPointer;
       parent._newASTPointer.push(newNode);
+      node._newASTPointer = parent._newASTPointer;
     },
 
     exit(path, state) {},
@@ -40,7 +40,20 @@ export default {
       const { node, parent } = path;
       const { literals } = node;
 
+      // parent._newASTPointer[0] is the SourceUnit created earlier by this visitor module.
       parent._newASTPointer[0].nodes.push(buildNode('PragmaDirective', { literals }));
+      // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
+    },
+    exit(path, state) {},
+  },
+
+  ImportDirective: {
+    enter(path, state) {
+      const { node, parent } = path;
+      const { file } = node;
+
+      // parent._newASTPointer[0] is the SourceUnit created earlier by this visitor module.
+      parent._newASTPointer[0].nodes.push(buildNode('ImportDirective', { file }));
       // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
     exit(path, state) {},
@@ -48,89 +61,66 @@ export default {
 
   ContractDefinition: {
     enter(path, state) {
-      const { node, parent } = path;
-      const isShieldContract = true; // TODO: infer this by traversing for 'secret' keyword, or upon exit by querying 'secret' in scope.bindings? OR, just throw an error when _no_ special syntax is used, and tell the user it's just a regular contract?
+      const { node, parent, scope } = path;
+      const isShieldContract = scope.indicators.zkSnarkVerificationRequired;
+
       const newNode = buildNode('ContractDefinition', {
         name: node.name,
         isShieldContract,
       });
       node._newASTPointer = newNode.nodes;
+      // parent._newASTPointer[0] is the SourceUnit created earlier by this visitor module.
       parent._newASTPointer[0].nodes.push(newNode);
     },
 
     exit(path, state) {
-      // TODO there's possibly no-longer a compelling reason to do this on `exit` rather than `enter`?
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       const sourceUnitNodes = parent._newASTPointer[0].nodes;
       const contractNodes = node._newASTPointer;
 
-      const {
-        zkSnarkVerificationRequired,
-        oldCommitmentAccessRequired,
-        nullifiersRequired,
-        newCommitmentsRequired,
-      } = path.scope.indicators;
-
       // base contracts (`contract MyContract is BaseContract`)
-      sourceUnitNodes[1].baseContracts.push(
+      const contractIndex = sourceUnitNodes.findIndex(n => n.name === node.name);
+      sourceUnitNodes[contractIndex].baseContracts.push(
         buildNode('InheritanceSpecifier', {
           nodeType: 'UserDefinedTypeName',
           name: 'MerkleTree',
         }),
-      ); // TODO: other things might have been pushed / spliced into the containing array that is 'parent._newASTPointer', so we might need a more intelligent lookup to ensure we're editing the correct array index. For now, we'll assume the ContractDefinition node is still at index 1.
+      );
 
-      // Imports
-      // TODO: probably need more intelligent insertions of nodes than splicing / unshifting into fixed positions. This looks over-fitted to the October example-case.
-      if (zkSnarkVerificationRequired)
-        sourceUnitNodes.splice(
-          1,
-          0,
-          buildNode('ImportDirective', { file: './verify/Verifier_Interface.sol' }),
-        );
-      if (newCommitmentsRequired)
-        sourceUnitNodes.splice(
-          1,
-          0,
-          buildNode('ImportDirective', { file: './merkle-tree/MerkleTree.sol' }),
-        );
+      sourceUnitNodes.splice(
+        1,
+        0,
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'importStatements',
+          scope,
+        }),
+      );
 
-      // VariableDeclarations:
-      if (zkSnarkVerificationRequired)
-        contractNodes.unshift(buildNode('ShieldContractConstructorBoilerplate'));
-      if (nullifiersRequired)
-        contractNodes.unshift(
-          buildNode('MappingDeclaration', {
-            name: 'nullifiers',
-            fromType: 'uint256',
-            toType: 'uint256',
-          }),
-        );
-      if (oldCommitmentAccessRequired) {
-        contractNodes.unshift(
-          buildNode('VariableDeclaration', {
-            name: 'latestRoot',
-            type: 'uint256',
-            visibility: 'public',
-          }),
-        );
-        contractNodes.unshift(
-          buildNode('MappingDeclaration', {
-            name: 'commitmentRoots',
-            fromType: 'uint256',
-            toType: 'uint256',
-          }),
-        );
-      }
-      if (zkSnarkVerificationRequired) {
-        contractNodes.unshift(
-          buildNode('MappingDeclaration', {
-            name: 'vks',
-            fromType: 'uint256',
-            toType: 'uint256[]',
-          }),
-        );
-        contractNodes.unshift(buildNode('ShieldContractVerifierInterfaceBoilerplate'));
-      }
+      // unshift in reverse order from how we want them to appear
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'verify',
+          scope,
+        }),
+      );
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'registerZKPPublicKey',
+          scope,
+        }),
+      );
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'constructor',
+          scope,
+        }),
+      );
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'stateVariableDeclarations',
+          scope,
+        }),
+      );
 
       if (state.mainPrivateFunctionName) {
         parent._newASTPointer[0].mainPrivateFunctionName = state.mainPrivateFunctionName; // TODO fix bodge
@@ -144,168 +134,335 @@ export default {
 
   FunctionDefinition: {
     enter(path, state) {
-      // FIXME: need to actually translate the constructor into the new Solidity contract.
-      if (path.node.kind === 'constructor') {
-        // We currently treat all constructors as publicly executed functions.
-        state.skipSubNodes = true;
-        return;
-      }
+      const { node, parent } = path;
+      const newNode = buildNode('FunctionDefinition', {
+        name: node.name,
+        visibility: node.kind === 'constructor' ? '' : 'external',
+      });
+
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
 
     exit(path, state) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
-      const { node, parent, scope } = path;
+      const { node, scope } = path;
 
-      const newNode = buildNode('FunctionDefinition', { name: node.name, visibility: 'external' });
-      // const newNode = {
-      //   // insert this FunctionDefinition node into our ContractDefinition node.
-      //   // NODEBUILDING
-      //   nodeType: node.nodeType, // FunctionDefinition
-      //   name: node.name,
-      //   visibility: 'external',
-      //   body: {
-      //     nodeType: 'Block',
-      //     statements: [],
-      //   },
-      //   parameters: {
-      //     nodeType: 'ParameterList',
-      //     parameters: [],
-      //   },
-      //   // no returnParameters
-      // };
+      const newFunctionDefinitionNode = node._newASTPointer;
+
       // Let's populate the `parameters` and `body`:
-      const { parameters } = newNode.parameters;
-      const { statements } = newNode.body;
+      const { parameters } = newFunctionDefinitionNode.parameters;
+      const { postStatements } = newFunctionDefinitionNode.body;
 
-      // TODO: in cases where there are duplicate names (from different scopes), we'll need to assign unique names to them.
-      // const uniqueNames = [];
-      // const countNames = (arr, name) =>
-      //   arr.reduce((acc, cur, i, src) => {
-      //     if (cur === name) ++acc;
-      //     return acc;
-      //   }, 0);
-      // OR... don't do things by name? Use id?
+      const newCommitmentsRequired = scope.someIndicator(i => i.newCommitmentRequired);
 
-      const contractDefScope = scope.getAncestorOfScopeType('ContractDefinition');
-      const { zkSnarkVerificationRequired } = contractDefScope.indicators;
-      const oldCommitmentAccessRequired = scope.someIndicators(i => i.oldCommitmentAccessRequired);
-      const nullifiersRequired = scope.someIndicators(i => i.isNullified);
-      const newCommitmentsRequired = scope.someIndicators(i => i.newCommitmentRequired);
-      // For the 'toContract' transformation, we don't need to consider the initialisationRequired indicator; although it's important in the other transformations.
+      parameters.push(
+        ...buildNode('FunctionBoilerplate', {
+          bpSection: 'parameters',
+          scope,
+        }),
+      );
 
-      // Parameters:
-      // NODEBUILDING
-      if (zkSnarkVerificationRequired)
-        parameters.push(
-          buildNode('VariableDeclaration', {
-            name: 'proof',
-            type: 'uint256[]',
-            storageLocation: 'calldata',
-          }),
-        );
-      if (oldCommitmentAccessRequired)
-        parameters.push(
-          buildNode('VariableDeclaration', {
-            name: 'commitmentRoot',
-            type: 'uint256',
-          }),
-        );
-      if (nullifiersRequired)
-        parameters.push(
-          buildNode('VariableDeclaration', {
-            name: 'newNullifiers',
-            type: 'uint256[]',
-            storageLocation: 'calldata',
-          }),
-        );
       if (newCommitmentsRequired) {
-        parameters.push(
-          buildNode('VariableDeclaration', {
-            name: 'newCommitments',
-            type: 'uint256[]',
-            storageLocation: 'calldata',
-          }),
-        );
-        state.mainPrivateFunctionName = node.name; // TODO fix bodge
+        state.mainPrivateFunctionName = node.name; // TODO fix bodge // NO IDEA WHAT THIS DOES ANYMORE
       }
-      // body:
-      if (nullifiersRequired)
-        statements.push(buildNode('requireNewNullifiersNotInNullifiersThenAddThemBoilerplate'));
-      if (oldCommitmentAccessRequired)
-        statements.push(buildNode('requireCommitmentRootInCommitmentRootsBoilerplate'));
-      if (zkSnarkVerificationRequired) {
-        statements.push({
-          nodeType: 'InputsVariableDeclarationStatementBoilerplate',
-          oldCommitmentAccessRequired,
-          nullifiersRequired,
-          newCommitmentsRequired,
-        });
-        statements.push(buildNode('verifyBoilerplate'));
-      }
-      if (newCommitmentsRequired) statements.push(buildNode('insertLeavesBoilerplate'));
 
-      // no node._newASTPointer assignment yet, because we're not yet considering public smart contract code that might need to be 'copied over' to the shield contract's AST.
-      parent._newASTPointer.push(newNode);
+      postStatements.push(
+        ...buildNode('FunctionBoilerplate', {
+          bpSection: 'postStatements',
+          scope,
+        }),
+      );
     },
   },
 
   ParameterList: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+      const newNode = buildNode('ParameterList');
+      node._newASTPointer = newNode.parameters;
+      parent._newASTPointer[path.containerName] = newNode;
+    },
 
     exit(path) {},
   },
 
   Block: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+      const newNode = buildNode('Block');
+      node._newASTPointer = newNode.statements;
+      parent._newASTPointer.body = newNode;
+    },
 
     exit(path) {},
   },
 
   VariableDeclarationStatement: {
-    enter(path) {},
+    enter(path, state) {
+      const { node, parent } = path;
+      if (node.stateVariable) {
+        throw new Error(
+          `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
+        );
+      }
+
+      // HACK: for now, we assume all local stack variables will be picked up in Solidity. A future enhancement will be to only include local stack variables which interact solely with non-secret states. Local stack variabels which _do_ interact with secret states will probably be brought into the circuit eventually.
+
+      const newNode = buildNode('VariableDeclarationStatement');
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
 
     exit(path) {},
   },
 
   BinaryOperation: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+      const { operator } = node;
+
+      const newNode = buildNode('BinaryOperation', { operator });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
 
     exit(path) {},
   },
 
   Assignment: {
-    enter(path, state) {},
+    enter(path, state) {
+      const { node, parent, scope } = path;
+      const binding = scope.getReferencedBinding(node.leftHandSide.baseExpression); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
+      if (binding?.isSecret) {
+        // Don't copy over code which should be secret! It shouldn't appear in a public shield contract; only in the circuit! So skip subnodes.
+        state.skipSubNodes = true;
+        return;
+      }
+      const { operator } = node;
+      const newNode = buildNode('Assignment', { operator });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.expression = newNode;
+    },
 
     exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state) {},
+    enter(path, state) {
+      const { node, parent } = path;
+
+      // Otherwise, copy this ExpressionStatement into the circuit's language.
+      const newNode = buildNode('ExpressionStatement');
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
 
     exit(path, parent) {},
   },
 
   VariableDeclaration: {
-    enter(path, state) {},
+    enter(path, state) {
+      const { node, parent } = path;
+
+      if (path.isFunctionReturnParameterDeclaration())
+        throw new Error(
+          `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
+        );
+
+      let declarationType;
+      // TODO: `memery` declarations and `returnParameter` declarations
+      if (node.stateVariable) {
+        declarationType = 'state'; // not really needed, since we already have 'stateVariable'
+      } else if (path.isLocalStackVariableDeclaration()) {
+        declarationType = 'localStack';
+      } else if (path.isFunctionParameterDeclaration()) {
+        declarationType = 'parameter';
+      }
+
+      // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
+      const newNode = buildNode('VariableDeclaration', {
+        name: node.name,
+        isSecret: node.isSecret,
+        declarationType,
+        typeString: node.typeDescriptions?.typeString,
+        visibility: node.visibility,
+      });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName].push(newNode);
+      }
+    },
 
     exit(path) {},
   },
 
   ElementaryTypeName: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+
+      // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = buildNode('ElementaryTypeName', {
+        typeDescriptions: { typeString: node.typeDescriptions.typeString || node.name },
+      });
+    },
+
+    exit(path) {},
+  },
+
+  // e.g. for the statement `address(this)`, `address()` is an ElementaryTypeNameExpression for the ElementaryTypeName `address`
+  ElementaryTypeNameExpression: {
+    enter(path) {
+      const { node, parent } = path;
+      const newNode = buildNode('ElementaryTypeNameExpression');
+
+      node._newASTPointer = newNode;
+      parent._newASTPointer[path.containerName] = newNode;
+    },
 
     exit(path) {},
   },
 
   Identifier: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+      const { name } = node;
+
+      const newNode = buildNode('Identifier', { name });
+
+      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
 
     exit(path) {},
   },
 
   Literal: {
-    enter(path) {},
+    enter(path) {
+      const { node, parent } = path;
+      const { value, kind } = node;
+
+      if (!['number', 'bool', 'string'].includes(kind))
+        throw new Error(
+          `Only literals of kind "number" or "bool" are currently supported. Found literal of kind ${node.kind}. Please open an issue.`,
+        );
+
+      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+
+      const newNode = buildNode('Literal', { value, kind });
+
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
 
     exit(path) {},
+  },
+
+  MemberAccess: {
+    enter(path, state) {
+      const { node, parent } = path;
+
+      let newNode;
+
+      if (path.isMsgSender()) {
+        newNode = buildNode('MsgSender');
+        // node._newASTPointer = // no pointer needed in this case, because this is effectively leaf, so we won't be recursing any further.
+        state.skipSubNodes = true;
+      } else {
+        newNode = buildNode('MemberAccess', { memberName: node.memberName });
+        node._newASTPointer = newNode;
+      }
+
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
+  },
+
+  IndexAccess: {
+    enter(path) {
+      const { node, parent } = path;
+
+      const newNode = buildNode('IndexAccess');
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
+  },
+
+  Mapping: {
+    enter(path) {
+      const { node, parent } = path;
+
+      const newNode = buildNode('Mapping');
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
+  },
+
+  FunctionCall: {
+    enter(path, state) {
+      const { node, parent } = path;
+      let newNode;
+
+      // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
+
+      if (path.isRequireStatement()) {
+        // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least).
+        // For now, we'll copy these into Solidity:
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
+        return;
+      }
+
+      if (path.isExternalFunctionCall()) {
+        // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
+
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
+        return;
+      }
+
+      newNode = buildNode('FunctionCall');
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
   },
 };

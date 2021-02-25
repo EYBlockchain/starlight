@@ -25,7 +25,7 @@ const zappify = options => {
 
   toCircuit(zolAST, options);
 
-  // toContract(zolAST, options);
+  toContract(zolAST, options);
 
   if (options.isTest) return path.scope.indicators;
 

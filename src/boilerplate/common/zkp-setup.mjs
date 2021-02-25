@@ -12,9 +12,9 @@ const functionNames = [FUNCTION_NAMES];
 
 export const setup = async functionName => {
   if (!functionName) {
-    functionNames.forEach(async name => {
+    for (const name of functionNames) {
       await generateKeys(`${name}.zok`);
-    });
+    }
   } else {
     await generateKeys(`${functionName}.zok`);
   }

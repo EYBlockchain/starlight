@@ -218,8 +218,8 @@ See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a
 
 ## Acknowledgements
 
-- solc
-- zokrates
+- [solc](https://github.com/ethereum/solc-js)
+- [zokrates](https://github.com/Zokrates/ZoKrates)
 
 Inspirational works:
 - [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)
