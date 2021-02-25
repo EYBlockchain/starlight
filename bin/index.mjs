@@ -75,7 +75,11 @@ const validateOptions = ({
     throw new FilingError(`inputFilePath "${inputFilePath}" does not exist.`);
 
   if (path.parse(inputFilePath).ext !== '.zol')
-    throw new FilingError(`Invalid input file extension. Expected '.zol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
+    if (path.parse(inputFilePath).ext === '.sol') {
+      console.warn(`We'd ordinarily expect a '.zol' file as input, but we'll try to compile this '.sol' file...`);
+    } else {
+      throw new FilingError(`Invalid input file extension. Expected '.zol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
+    }
 };
 
 validateOptions(options);

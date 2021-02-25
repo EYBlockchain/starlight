@@ -88,7 +88,7 @@ export default {
 
   FunctionCall: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
 
       // TODO: `require` statements are 'FunctionCall' nodes, and they should be able to have secret states as arguments
       // TODO: FunctionCalls to functions within the same contract ought to be allowed.
@@ -98,7 +98,8 @@ export default {
 
       const args = node.arguments;
       args.forEach(arg => {
-        const binding = arg.referencedDeclaration ? path.scope.getReferencedBinding(arg) : {};
+        if (arg.name === 'this') return; // you won't find a binding for such a special reference
+        const binding = arg.referencedDeclaration ? scope.getReferencedBinding(arg) : {};
         if (binding.isSecret)
           throw new Error(
             `Cannot pass a secret state (${binding.name}) to an external function call.`,

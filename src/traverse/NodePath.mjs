@@ -32,12 +32,13 @@ export default class NodePath {
    *     2) If the node _is_ contained within a list:
    *        parent: {
    *            key: [  <-- container
-   *                { <-- index of array       <--| this is the node
+   *                { <-- index of array             <--| this is the node
    *                    // contents of the node      <--| at some 'key' (index)
    *                }                                <--| of this container
    *            ]
    *        }
    *        // the node is at parent[key][index] = container[index]
+   *        // Notice how in both cases parent[key] = container.
    */
   constructor({ node, parent, key, container, index, parentPath }) {
     if (pathCache.has(node)) return pathCache.get(node);
@@ -274,6 +275,22 @@ export default class NodePath {
   }
 
   /**
+   * Callable from a ContractDefinition node only
+   * @returns {Array[String] || null} the parameters of the function.
+   */
+  getFunctionNames(contractDefinitionNode = this.node) {
+    if (contractDefinitionNode.nodeType !== 'ContractDefinition') return null;
+    const entryVisitor = (node, state) => {
+      if (node.nodeType !== 'FunctionDefinition') return;
+      state.functionNames.push(node.name);
+      state.skipSubNodes = true;
+    };
+    const state = { functionNames: [] };
+    traverseNodesFast(contractDefinitionNode, entryVisitor, state);
+    return state.functionNames;
+  }
+
+  /**
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
    * @returns {Array[Node] || null} the parameters of the function.
    */
@@ -383,13 +400,13 @@ export default class NodePath {
     return referencedBinding.path.isLocalStackVariableDeclaration();
   }
 
-  isExternalContractInstanceDeclaration(node = this.path) {
+  isExternalContractInstanceDeclaration(node = this.node) {
     if (!['VariableDeclaration', 'VariableDeclarationStatement'].includes(node.nodeType))
       return false;
     if (!node.typeDescriptions?.typeString.includes('contract')) return false;
 
     // Ensure the contract being declared is external:
-    const referencedContractId = node.typeName?.referenceDeclaration;
+    const referencedContractId = node.typeName?.referencedDeclaration;
     const thisContractDefinition = this.getContractDefinition(node).node;
     const sourceUnit = this.getSourceUnit(node).node;
     const exportedSymbolsId = sourceUnit?.exportedSymbols?.[thisContractDefinition.name]?.[0];
@@ -399,7 +416,7 @@ export default class NodePath {
     return referencedContractId === exportedSymbolsId;
   }
 
-  isExternalContractInstance(node = this.path) {
+  isExternalContractInstance(node = this.node) {
     const varDecNode = this.getReferencedNode(node);
     return this.isExternalContractInstanceDeclaration(varDecNode);
   }
@@ -410,6 +427,20 @@ export default class NodePath {
     // The `expression` for an external function call will be a MemberAccess nodeType. myExternalContract.functionName
     if (functionNode.nodeType !== 'MemberAccess') return false;
     return this.isExternalContractInstance(functionNode);
+  }
+
+  /**
+   * @returns {String || null} the name of an exported symbol, if one exists for the given `id`
+   */
+  getReferencedExportedSymbolName(node = this.node) {
+    const id = node.referencedDeclaration;
+    if (!id) return null;
+    const exportedSymbols = this.getSourceUnit()?.node.exportedSymbols;
+    if (!exportedSymbols) return null;
+    for (const [name, ids] of Object.entries(exportedSymbols)) {
+      if (ids.some(_id => _id === id)) return name;
+    }
+    return null;
   }
 
   /**
@@ -458,6 +489,28 @@ export default class NodePath {
       node.typeDescriptions.typeIdentifier === 't_magic_message' &&
       node.typeDescriptions.typeString === 'msg'
     );
+  }
+
+  /**
+   * Checks whether a node represents the special solidity keyword `this`
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isThis(node = this.node) {
+    return (
+      node.nodeType === 'Identifier' &&
+      node.name === 'this' &&
+      node.referencedDeclaration > 4294967200
+    );
+  }
+
+  /**
+   * Checks whether a node represents an external contract ('exported symbol')
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isExportedSymbol(node = this.node) {
+    return !!this.getReferencedExportedSymbolName(node);
   }
 
   /**
@@ -512,6 +565,8 @@ export default class NodePath {
         return this.isRequireStatement(node.expression);
       case 'FunctionCall':
         return node.expression.name === 'require';
+      case 'Identifier':
+        return node.name === 'require' && node.referencedDeclaration > 4294967200; // negative referencedDeclarations are special
       default:
         return false;
     }

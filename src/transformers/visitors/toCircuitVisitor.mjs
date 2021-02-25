@@ -213,23 +213,25 @@ const visitor = {
             const tempRHSParent = tempRHSPath.parent;
 
             if (isDecremented) {
-              newNode = buildNode('PartitionedDecrementationStatementBoilerplate', {
+              newNode = buildNode('BoilerplateStatement', {
+                bpType: 'decrementation',
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
                   mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
-                }), // HACK: this is an ugly hack.
+                }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
               node._newASTPointer = newNode.subtrahend;
             } else {
               // isIncremented
-              newNode = buildNode('PartitionedIncrementationStatementBoilerplate', {
+              newNode = buildNode('BoilerplateStatement', {
+                bpType: 'incrementation',
                 indicators: lhsIndicator,
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
                   mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
-                }), // HACK: this is an ugly hack.
+                }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
               node._newASTPointer = newNode.addend;
@@ -327,7 +329,7 @@ const visitor = {
 
       if (node.kind !== 'number')
         throw new Error(
-          `Only literals of kind "number" are currently supported. Found literal of kind ${node.kind}. Please open an issue.`,
+          `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
         );
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
@@ -368,6 +370,7 @@ const visitor = {
 
       if (path.isRequireStatement()) {
         // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least)
+        state.skipSubNodes = true;
         return;
 
         // newNode = buildNode('Assert', { arguments: node.arguments });
@@ -377,7 +380,7 @@ const visitor = {
         // return;
       }
 
-      if (path.isExternalFunctionCall()) {
+      if (path.isExternalFunctionCall() || path.isExportedSymbol()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
 
         // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.

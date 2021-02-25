@@ -59,14 +59,16 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 
 - [Install](#install)
 - [Run](#run)
-  - [other options](#other-options)
+  - [CLI options](#cli-options)
 - [Troubleshooting](#troubleshooting)
 - [Developer](#developer)
   - [Testing](#testing)
     - [full zapp](#full-zapp)
     - [preliminary traversals](#preliminary-traversals)
+      - [To test a single file:](#to-test-a-single-file)
       - [Adding new test cases](#adding-new-test-cases)
       - [Updating test cases](#updating-test-cases)
+      - [Adding/Updating _all_ test cases](#addingupdating-_all_-test-cases)
     - [circuit](#circuit)
   - [R&D Notes & Ideas](#rd-notes--ideas)
 - [Acknowledgements](#acknowledgements)
@@ -216,8 +218,8 @@ See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a
 
 ## Acknowledgements
 
-- solc
-- zokrates
+- [solc](https://github.com/ethereum/solc-js)
+- [zokrates](https://github.com/Zokrates/ZoKrates)
 
 Inspirational works:
 - [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)

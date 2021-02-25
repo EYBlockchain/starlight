@@ -1,5 +1,8 @@
 /* eslint-disable consistent-return, no-param-reassign */
 
+import ContractBP from '../boilerplate/contract/solidity/nodes/ContractBoilerplateGenerator.mjs';
+import FunctionBP from '../boilerplate/contract/solidity/nodes/FunctionBoilerplateGenerator.mjs';
+
 export function getVisitableKeys(nodeType) {
   switch (nodeType) {
     case 'SourceUnit':
@@ -34,9 +37,11 @@ export function getVisitableKeys(nodeType) {
     case 'TupleExpression':
       return ['components'];
     case 'FunctionCall':
-      return ['expression, arguments'];
+      return ['expression', 'arguments'];
     case 'ArrayTypeName':
       return ['baseType'];
+    case 'ElementaryTypeNameExpression':
+      return ['typeName'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -56,7 +61,7 @@ export function getVisitableKeys(nodeType) {
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
-export function buildNode(nodeType, fields) {
+export function buildNode(nodeType, fields = {}) {
   switch (nodeType) {
     case 'SourceUnit': {
       const { name, license, nodes = [] } = fields;
@@ -84,10 +89,10 @@ export function buildNode(nodeType, fields) {
       };
     }
     case 'InheritanceSpecifier': {
-      const { baseName = {} } = fields;
+      const { name } = fields;
       return {
         nodeType,
-        baseName,
+        baseName: { name },
       };
     }
     case 'ImportStatementList': {
@@ -118,9 +123,9 @@ export function buildNode(nodeType, fields) {
       const {
         name,
         visibility,
-        body = { nodeType: 'Block', statements: [] },
-        parameters = { nodeType: 'ParameterList', parameters: [] },
-        returnParameters = { nodeType: 'ParameterList', parameters: [] },
+        body = buildNode('Block'),
+        parameters = buildNode('ParameterList'),
+        // returnParameters = buildNode('ParameterList'), // TODO
       } = fields;
       return {
         nodeType,
@@ -128,18 +133,36 @@ export function buildNode(nodeType, fields) {
         visibility,
         body,
         parameters,
-        returnParameters,
+        // returnParameters,
+      };
+    }
+    case 'ParameterList': {
+      const { parameters = [] } = fields;
+      return {
+        nodeType,
+        parameters,
+      };
+    }
+    case 'Block': {
+      const { preStatements = [], statements = [], postStatements = [] } = fields;
+      return {
+        nodeType,
+        preStatements,
+        statements,
+        postStatements,
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, visibility, storageLocation, typeName } = fields;
+      const { name, typeString, visibility, storageLocation, isSecret, declarationType } = fields;
       return {
         nodeType,
         name,
         visibility,
         storageLocation,
-        typeDescriptions: { typeString: type },
-        typeName,
+        typeDescriptions: { typeString },
+        typeName: buildNode('ElementaryTypeName', { typeDescriptions: { typeString } }),
+        isSecret,
+        declarationType,
       };
     }
     case 'BinaryOperation': {
@@ -203,6 +226,13 @@ export function buildNode(nodeType, fields) {
         initialValue,
       };
     }
+    case 'ExpressionStatement': {
+      const { expression = {} } = fields;
+      return {
+        nodeType,
+        expression,
+      };
+    }
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;
       return {
@@ -218,6 +248,69 @@ export function buildNode(nodeType, fields) {
         nodeType,
         typeDescriptions,
       };
+    }
+    case 'FunctionCall': {
+      const { expression = {}, arguments: args = [] } = fields;
+      return {
+        nodeType,
+        expression,
+        arguments: args, // 'arguments' is a reserved word in JS
+      };
+    }
+    case 'IndexAccess': {
+      const { baseExpression = {}, indexExpression = {} } = fields;
+      return {
+        nodeType,
+        baseExpression,
+        indexExpression,
+      };
+    }
+    case 'MemberAccess': {
+      const { expression = {}, memberName } = fields;
+      return {
+        nodeType,
+        memberName,
+        expression,
+      };
+    }
+    case 'MsgSender': {
+      return {
+        nodeType,
+      };
+    }
+    case 'Identifier': {
+      const { name } = fields;
+      return {
+        nodeType,
+        name,
+      };
+    }
+    case 'Literal': {
+      const { value, kind } = fields;
+      return {
+        nodeType,
+        value,
+        kind,
+      };
+    }
+    case 'ElementaryTypeNameExpression': {
+      const { typeName = {} } = fields;
+      return {
+        nodeType,
+        typeName,
+      };
+    }
+    case 'ContractBoilerplate': {
+      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      const { scope, bpSection } = fields;
+      const bp = new ContractBP(scope);
+      return bp.getBoilerplate(bpSection);
+    }
+    case 'FunctionBoilerplate': {
+      // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
+      const { scope, bpSection } = fields;
+      const bp = new FunctionBP(scope);
+      return bp.getBoilerplate(bpSection);
     }
     // Boilerplate nodeTypes will be understood by the codeGenerator, where raw boilerplate code will be inserted.
     case 'ShieldContractConstructorBoilerplate': {

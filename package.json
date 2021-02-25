@@ -2,7 +2,7 @@
   "name": "zappify",
   "version": "0.0.1",
   "description": "Generates Zero Knowledge Protocols from Solidity",
-  "main": "index.mjs",
+  "main": "bin/index.mjs",
   "scripts": {
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EYBlockchain/sprinkles.git"
+    "url": "git+https://github.com/EYBlockchain/zappify.git"
   },
   "keywords": [
     "private contract",
@@ -31,9 +31,9 @@
   "author": "iAmMichaelConnor, MirandaWood, LijuJoseJJ, Westlad, ChaitanyaKonda",
   "license": "CC0-1.0",
   "bugs": {
-    "url": "https://github.com/EYBlockchain/sprinkles/issues"
+    "url": "https://github.com/EYBlockchain/zappify/issues"
   },
-  "homepage": "https://github.com/EYBlockchain/sprinkles#readme",
+  "homepage": "https://github.com/EYBlockchain/zappify#readme",
   "dependencies": {
     "@babel/register": "^7.12.10",
     "@babel/runtime": "^7.12.5",

@@ -6,18 +6,13 @@
 import codeGenerator from '../../../../codeGenerators/circuit/zokrates/toCircuit.mjs';
 
 class BoilerplateGenerator {
-  bpSections = {
-    static: ['importStatements', 'parameters', 'preStatements', 'postStatements'],
-    dynamic: ['statements'],
-  };
-
   generateBoilerplate(node) {
     const { bpSection, bpType, ...otherParams } = node;
     // console.log('bpType', bpType)
     // console.log('bpSection', bpSection)
     // console.log('this[bpType]', this[bpType])
     // console.log('this[bpType][bpSection]', this[bpType][bpSection])
-    return this[bpType][bpSection] ? this[bpType][bpSection](otherParams) : [];
+    return this?.[bpType]?.[bpSection]?.(otherParams) ?? [];
   }
 
   static uniqueify(arr) {
