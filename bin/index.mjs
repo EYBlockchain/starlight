@@ -5,7 +5,6 @@ import path from 'path';
 import commander from 'commander';
 
 import mkdirs from './mkdirs.mjs';
-import logo from './logo.mjs';
 import zappify from '../src/index.mjs';
 import logger from '../src/utils/logger.mjs';
 import { FilingError } from '../src/error/errors.mjs';
@@ -85,8 +84,5 @@ const validateOptions = ({
 validateOptions(options);
 
 mkdirs(options);
-
-logo();
-// console.log(figlet.textSync('zappify!'));
 
 zappify(options);

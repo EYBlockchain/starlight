@@ -38,25 +38,17 @@ contract Invoice {
 
     // *******************************************************************
 
-    function createInvoice (
-        secret uint256 invoiceId,
-        secret uint256 amountOwed,
-        secret address owedBy,
-        secret address owedTo,
-    ) external {
+    function createInvoice(secret uint256 invoiceId, secret uint256 amountOwed, secret address owedBy, secret address owedTo) external {
         // require(invoice_id[invoiceId] == 0, "Invoice already created.");
 
         invoice_id[invoiceId] = invoiceId;
         invoice_amount_owed[invoiceId] = amountOwed;
-        unknown invoice_amount_outstanding[invoiceId] += amountOutstanding;
-        unknown invoice_owed_by[invoiceId] += owedBy;
-        unknown invoice_owed_to[invoiceId] += owedTo;
+        unknown invoice_amount_outstanding[invoiceId] += amountOwed;
+        invoice_owed_by[invoiceId] = owedBy;
+        invoice_owed_to[invoiceId] = owedTo;
     }
 
-    function makeInvoicePayment (
-        secret uint256 invoiceId,
-        secret uint256 paymentAmount
-    ) external {
+    function makeInvoicePayment(secret uint256 invoiceId, secret uint256 paymentAmount) external {
         // require(invoice_id[invoiceId] == invoiceId, "Invoice doesn't exist.");
         // require(paymentAmount < invoice_amount_outstanding[invoiceId]);
 
@@ -65,7 +57,7 @@ contract Invoice {
         address payee = invoice_owed_to[invoiceId];
 
         balances[msg.sender] -= paymentAmount;
-        balances[payee] += paymentAmount;
+        unknown balances[payee] += paymentAmount;
 
         invoice_amount_outstanding[invoiceId] -= paymentAmount;
     }
