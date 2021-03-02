@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: CC0-1.0
+
+pragma solidity ^0.8.0;
+
+import "./ERC20-imports/IERC20.sol";
+
+contract Invoice {
+
+    // payment vars
+    secret mapping(address => uint256) public balances;
+    IERC20 public erc20;
+
+    // invoice vars:
+    // we'd use a struct, but they're not supported yet:
+    secret mapping(uint256 => uint256) public invoice_id;
+    secret mapping(uint256 => uint256) public invoice_amount_owed;
+    secret mapping(uint256 => uint256) public invoice_amount_outstanding;
+    secret mapping(uint256 => address) public invoice_owed_by;
+    secret mapping(uint256 => address) public invoice_owed_to;
+
+    constructor(address _erc20) {
+        erc20 = IERC20(_erc20);
+    }
+
+    // *******************************************************************
+
+    function deposit(uint amount) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances[msg.sender] += amount;
+    }
+
+    function withdraw(uint256 amount) public {
+        balances[msg.sender] -= amount;
+        bool success = erc20.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+    }
+
+    // *******************************************************************
+
+    function createInvoice (
+        secret uint256 invoiceId,
+        secret uint256 amountOwed,
+        secret address owedBy,
+        secret address owedTo,
+    ) external {
+        // require(invoice_id[invoiceId] == 0, "Invoice already created.");
+
+        invoice_id[invoiceId] = invoiceId;
+        invoice_amount_owed[invoiceId] = amountOwed;
+        unknown invoice_amount_outstanding[invoiceId] += amountOutstanding;
+        unknown invoice_owed_by[invoiceId] += owedBy;
+        unknown invoice_owed_to[invoiceId] += owedTo;
+    }
+
+    function makeInvoicePayment (
+        secret uint256 invoiceId,
+        secret uint256 paymentAmount
+    ) external {
+        // require(invoice_id[invoiceId] == invoiceId, "Invoice doesn't exist.");
+        // require(paymentAmount < invoice_amount_outstanding[invoiceId]);
+
+        // require(msg.sender == invoice_owed_by[invoiceId]); // difficult key management problem.
+
+        address payee = invoice_owed_to[invoiceId];
+
+        balances[msg.sender] -= paymentAmount;
+        balances[payee] += paymentAmount;
+
+        invoice_amount_outstanding[invoiceId] -= paymentAmount;
+    }
+}

@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: CC0
+
+// TARGET CONTRACT FOR PHASE 2 OF DEVELOPMENT:
+
+pragma solidity ^0.8.0;
+
+import "./ERC20-imports/IERC20.sol";
+
+contract ImportBasedDEX {
+
+    secret mapping(address => uint256) public balances_A;
+    secret mapping(address => uint256) public balances_B;
+    mapping(bytes32 => bytes32) public usedTradeHashes;
+    IERC20 public erc20;
+
+    constructor(address A, address B) {
+        erc20_A = IERC20(A);
+        erc20_B = IERC20(B);
+    }
+
+    // *******************************************************************
+
+    function deposit_A(uint amount) public {
+        bool hasBalance = erc20_A.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances_A[msg.sender] += amount;
+    }
+
+    function withdraw_A(uint256 amount) public {
+        balances_A[msg.sender] -= amount;
+        bool success = erc20_A.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+    }
+
+    function deposit_B(uint amount) public {
+        bool hasBalance = erc20_B.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances_B[msg.sender] += amount;
+    }
+
+    function withdraw_B(uint256 amount) public {
+        balances_B[msg.sender] -= amount;
+        bool success = erc20_B.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+    }
+
+    // *******************************************************************
+
+    // A way for a maker to say "contact me at this PK"
+    function publishIntention(
+        uint256 encryptionPK,
+        address assetToSell,
+        address assetToBuy
+    ) public {
+        // emit an event or parse calldata
+        // TODO: support events
+    }
+
+    function sellAforB(
+        secret uint256 amountOfA,
+        secret uint256 amountOfB,
+        secret address maker,
+        // taker is msg.sender
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
+        bytes32 hash = sha256(abi.encodePacked(this, msg.sig, amountOfA, amountOfB, maker, nonce));
+
+        require(usedTradeHashes[hash] == 0);
+        usedTradeHashes[hash] = hash;
+
+        require(ecrecover(hash,v,r,s) == maker);
+
+        balances_A[msg.sender] -= amountOfA;
+        balances_A[maker] += amountOfA;
+        unknown balances_B[maker] -= amountOfB; // NOT ALLOWED - would need to make it 'known' to the sender, which does actually make sense, given the off-chain steps.
+        balances_B[msg.sender] += amountOfB;
+    }
+
+    function sellBforA(
+        secret uint256 amountOfB,
+        secret uint256 amountOfA,
+        secret address maker,
+        // taker is msg.sender
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
+        bytes32 hash = sha256(abi.encodePacked(this, msg.sig, amountOfB, amountOfA, maker, nonce));
+
+        require(usedTradeHashes[hash] == 0);
+        usedTradeHashes[hash] = hash;
+
+        require(ecrecover(hash,v,r,s) == maker);
+
+        balances_B[msg.sender] -= amountOfB;
+        balances_B[taker] += amountOfB;
+        unknown balances_A[taker] -= amountOfA; // NOT ALLOWED - would need to make it 'known' to the sender, which does actually make sense, given the off-chain steps.
+        balances_A[msg.sender] += amountOfA;
+    }
+}
+
+// ZEXE solves this by having the one party (taker) give the maker a new commitment ('record') and the ability to _consume_ that record (i.e. they're given its secret key!). But the secret key can only be used if the record is consumed by the 'trade' death predacate, which ensure the conditions of the trade (hard-coded into the record) are met.
+// If the trade isn't made, the record can instead be consumed by the taker, back into their own wallet.
