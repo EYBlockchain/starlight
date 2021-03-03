@@ -103,3 +103,5 @@ contract ImportBasedDEX {
 
 // ZEXE solves this by having the one party (taker) give the maker a new commitment ('record') and the ability to _consume_ that record (i.e. they're given its secret key!). But the secret key can only be used if the record is consumed by the 'trade' death predacate, which ensure the conditions of the trade (hard-coded into the record) are met.
 // If the trade isn't made, the record can instead be consumed by the taker, back into their own wallet.
+
+// OR, if we had recursion, we could have both parties create new commitments for the other, and a 'batcher' could wrap both snarks in an 'outer' snark to facilitate the swap.
