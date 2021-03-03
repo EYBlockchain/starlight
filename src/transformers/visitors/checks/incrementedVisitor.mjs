@@ -11,7 +11,7 @@ export default {
       const { node, scope } = path;
       const expressionNode = node.expression;
 
-      // TODO: why?
+      // functionCalls can't be increments
       if (expressionNode.nodeType === 'FunctionCall') return;
 
       const lhsNode = expressionNode.leftHandSide || expressionNode.subExpression;
@@ -20,6 +20,10 @@ export default {
         lhsNode.typeDescriptions.typeString !== 'address'
           ? scope.isIncremented(expressionNode, lhsNode)
           : { isIncrementedBool: false, isDecrementedBool: false };
+
+      expressionNode.isIncremented = isIncrementedBool;
+      expressionNode.isDecremented = isDecrementedBool;
+
       if (lhsNode.isUnknown && expressionNode.isDecremented === true) {
         throw new Error(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
@@ -36,11 +40,13 @@ export default {
       if (referencedBinding.stateVariable && scope.isInScopeType('FunctionDefinition')) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         let fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
+        let parentIndicatorObj;
 
         // a mapping:
         // TODO: IndexAccess also describes access of an array (not just mappings)
         if (lhsNode.nodeType === 'IndexAccess') {
           const keyName = scope.getMappingKeyName(lhsNode);
+          parentIndicatorObj = fnIndicatorObj;
           fnIndicatorObj = fnIndicatorObj.mappingKey[keyName];
         }
 
@@ -53,6 +59,7 @@ export default {
         if (isIncrementedBool === false) {
           // statement is an overwrite
           fnIndicatorObj.isWhole = true;
+          referencedBinding.isWhole = true;
           const reason =
             lhsNode.typeDescriptions.typeString !== 'address'
               ? `Overwritten at ${expressionNode.src}`
@@ -62,6 +69,13 @@ export default {
             fnIndicatorObj.isWholeReason.push(reason);
           } else {
             fnIndicatorObj.isWholeReason = [reason];
+          }
+
+          if (parentIndicatorObj?.isWholeReason) {
+            parentIndicatorObj.isWholeReason.push(reason);
+          } else if (parentIndicatorObj) {
+            parentIndicatorObj.isWhole = true;
+            parentIndicatorObj.isWholeReason = [reason];
           }
         }
       }

@@ -2,6 +2,7 @@
 
 import logger from '../utils/logger.mjs';
 import { scopeCache } from './cache.mjs';
+import backtrace from '../error/backtrace.mjs';
 
 /**
  * Analogue of Array.filter, but for objects.
@@ -222,6 +223,10 @@ export class Scope {
             `Couldn't find a referencedDeclaration. I.e. couldn't find a node with id ${node.referencedDeclaration}`,
           );
 
+        if (referencedBinding.isSecret && this.scopeType === 'FunctionDefinition') {
+          this.interactsWithSecret = true;
+        }
+
         const referencedNode = referencedBinding.node;
         const referencedId = referencedBinding.id;
         const referencedName = referencedBinding.name;
@@ -275,7 +280,7 @@ export class Scope {
           referencedBinding.referencingPaths.push(path);
         }
         // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
-        this.referencedBindings[referencedId] = referencedBinding;
+        this.referencedBindings[referencedId] = this.getReferencedBinding(node);
 
         // Currently, the only state variable 'modifications' we're aware of are:
         //   - when a state variable is referenced on the LHS of an assignment;
@@ -437,7 +442,7 @@ export class Scope {
           const functionDefScope = this.getAncestorOfScopeType('FunctionDefinition');
           const { operator } = node.arguments[0];
           const ownerNode =
-            node.arguments[0].leftExpression.expression.typeDescriptions.typeIdentifier ===
+            node.arguments[0].leftExpression.expression?.typeDescriptions.typeIdentifier ===
             't_magic_message'
               ? node.arguments[0].rightExpression
               : node.arguments[0].leftExpression;
@@ -476,7 +481,23 @@ export class Scope {
                   }
                 });
                 break;
+              case 'IndexAccess':
+                if (arg.baseExpression.nodeType === 'Identifier') {
+                  node.requireStatementPrivate = !!this.getReferencedBinding(arg.baseExpression)
+                    .isSecret;
+                }
+                if (
+                  arg.indexExpression.nodeType === 'Identifier' &&
+                  !node.requireStatementPrivate
+                ) {
+                  node.requireStatementPrivate = !!this.getReferencedBinding(arg.indexExpression)
+                    .isSecret;
+                }
+                if (node.requireStatementPrivate !== true) node.requireStatementPrivate = false;
+                break;
               case 'Identifier':
+                node.requireStatementPrivate = !!this.getReferencedBinding(arg).isSecret;
+                break;
               case 'Literal':
                 // here we probably have a bool, which can't be secret anyway
                 break;
@@ -831,23 +852,24 @@ export class Scope {
     if (indexAccessNode.nodeType !== 'IndexAccess') return null;
 
     const keyIdentifierNode = this.getMappingKeyIdentifier(indexAccessNode);
+    if (keyIdentifierNode === null)
+      return indexAccessNode.indexExpression.name || indexAccessNode.indexExpression.value;
     const keyBinding = this.getReferencedBinding(keyIdentifierNode);
     let keyName = keyIdentifierNode.name;
 
-    // TODO does the below work when we are traversing again and already have modified paths?
     // If the value of the mapping key is edited between mapping accesses then the below copes with that.
     if (keyBinding?.isModified) {
       let i = 0;
       // TODO: please annotate or refactor to be easier to follow.
       // Consider each time the variable (which becomes the mapping's key) is edited throughout the scope:
       for (const modifyingPath of keyBinding.modifyingPaths) {
-        // Ignore all modifications to the variable which happened _after_ it was used as the mapping's key, unless i > 0 ???????
+        // we have found the 'current' state (relative to the input node), so we don't need to move any further
         if (indexAccessNode.id < modifyingPath.node.id && i === 0) break;
 
         i++;
         if (
           modifyingPath.node.id < indexAccessNode.id && // a modification to the variable _before_ it was used as the mapping's key
-          indexAccessNode.id < keyBinding.modifyingPaths?.[i].node.id
+          indexAccessNode.id < keyBinding.modifyingPaths[i]?.node.id
         )
           break;
       }
@@ -949,8 +971,6 @@ export class Scope {
               break;
             }
 
-            // FIXME: this isn't recursion.
-            // recursively checks for binop + binop
             // fills an array of params
             for (const [index, operand] of operands.entries()) {
               if (operand.nodeType === 'BinaryOperation') {
@@ -1045,10 +1065,17 @@ export class Scope {
             break;
           }
 
+          case 'IndexAccess':
+          case 'Literal':
+            // we've done all the work above already -  as long as we're ok with commitment values being non-secret here
+            // TODO give warning?
+            break;
+
           default:
             console.log(
               `Assignment.rightHandSide is of nodeType ${rightHandSide.nodeType} which is not being properly handled by the 'isIncremented()' function`,
             );
+            backtrace.getSourceCode(rightHandSide.src);
           // throw new Error(
           //   `Assignment.rightHandSide is of nodeType ${expressionNode.rightHandSide.nodeType} which is not yet supported. Please open an issue.`,
           // );
@@ -1070,8 +1097,6 @@ export class Scope {
 
     logger.debug(`statement is incremented? ${isIncrementedBool}`);
     logger.debug(`statement is decremented? ${isDecrementedBool}`);
-    expressionNode.isIncremented = isIncrementedBool;
-    expressionNode.isDecremented = isDecrementedBool;
 
     const referencedIndicator = this.getReferencedIndicator(lhsNode, true);
     referencedIndicator.increments = referencedIndicator.increments || [];
@@ -1226,7 +1251,6 @@ export class Scope {
         if (!topBinding.isWholeReason.includes(reason)) topBinding.isWholeReason.push(reason);
       });
     }
-
     // logging
     logger.debug(`Indicator: (at ${secretVar.name})`);
     logger.debug('----------');
