@@ -289,7 +289,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": true,
@@ -311,12 +310,14 @@
           ],
           "isIncremented": true,
           "isDecremented": true,
+          "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
             8
           ],
           "nullificationCount": 1
         }
-      }
+      },
+      "interactsWithSecret": true
     }
   ],
   "errorType": null,

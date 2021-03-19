@@ -51,8 +51,25 @@
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
+          "isAccessed": true,
+          "accessedNodes": [
+            {
+              "id": 8,
+              "name": "a",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 3,
+              "src": "166:1:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "accessedSecretState": true
+            }
+          ],
           "isWholeReason": [
-            "Overwritten at 166:11:0"
+            "Overwritten at 166:11:0",
+            "Accessed at 166:1:0"
           ]
         },
         "13": {
@@ -135,8 +152,25 @@
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
+          "isAccessed": true,
+          "accessedNodes": [
+            {
+              "id": 8,
+              "name": "a",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 3,
+              "src": "166:1:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "accessedSecretState": true
+            }
+          ],
           "isWholeReason": [
-            "Overwritten at 166:11:0"
+            "Overwritten at 166:11:0",
+            "Accessed at 166:1:0"
           ]
         },
         "5": {
@@ -198,8 +232,25 @@
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
+          "isAccessed": true,
+          "accessedNodes": [
+            {
+              "id": 8,
+              "name": "a",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 3,
+              "src": "166:1:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "accessedSecretState": true
+            }
+          ],
           "isWholeReason": [
-            "Overwritten at 166:11:0"
+            "Overwritten at 166:11:0",
+            "Accessed at 166:1:0"
           ]
         }
       },
@@ -234,8 +285,25 @@
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
+          "isAccessed": true,
+          "accessedNodes": [
+            {
+              "id": 8,
+              "name": "a",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 3,
+              "src": "166:1:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "accessedSecretState": true
+            }
+          ],
           "isWholeReason": [
-            "Overwritten at 166:11:0"
+            "Overwritten at 166:11:0",
+            "Accessed at 166:1:0"
           ]
         }
       },
@@ -253,7 +321,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": true,
@@ -264,14 +331,18 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 166:11:0"
+            "Overwritten at 166:11:0",
+            "Accessed at 166:1:0"
           ],
+          "isAccessed": true,
+          "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
             8
           ],
           "nullificationCount": 1
         }
-      }
+      },
+      "interactsWithSecret": true
     }
   ],
   "errorType": null,

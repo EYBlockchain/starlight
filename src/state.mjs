@@ -1,5 +1,5 @@
 /**
-keeps track of the compiler state
+keeps track of the parser's state
 */
 
 export const inits = {
@@ -12,5 +12,11 @@ export const solidity = { src: '', standardFunctions: '' };
 
 export const currentFunction = { name: undefined };
 export const blockCount = { value: 0 };
+
+export const scope = {
+  nestCount: 0,
+  parentScope: null,
+  scopeType: 'SourceUnit',
+};
 
 export const globals = {};

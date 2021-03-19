@@ -1,0 +1,1163 @@
+{
+  "scopes": [
+    {
+      "scopeId": 49,
+      "scopeName": "",
+      "scopeType": "SourceUnit",
+      "bindings": {
+        "48": {
+          "kind": "ContractDefinition",
+          "id": 48,
+          "name": "NFT_Escrow"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {}
+    },
+    {
+      "scopeId": 48,
+      "scopeName": "NFT_Escrow",
+      "scopeType": "ContractDefinition",
+      "bindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        },
+        "18": {
+          "kind": "FunctionDefinition",
+          "id": 18,
+          "name": "deposit"
+        },
+        "32": {
+          "kind": "FunctionDefinition",
+          "id": 32,
+          "name": "transfer"
+        },
+        "47": {
+          "kind": "FunctionDefinition",
+          "id": 47,
+          "name": "withdraw"
+        }
+      },
+      "referencedBindings": {},
+      "modifiedBindings": {},
+      "nullifiedBindings": {},
+      "indicators": {
+        "zkSnarkVerificationRequired": true,
+        "oldCommitmentAccessRequired": true,
+        "nullifiersRequired": true,
+        "newCommitmentsRequired": true
+      }
+    },
+    {
+      "scopeId": 18,
+      "scopeName": "deposit",
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "7": {
+          "kind": "VariableDeclaration",
+          "id": 7,
+          "name": "tokenId",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            11
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        },
+        "7": {
+          "kind": "VariableDeclaration",
+          "id": 7,
+          "name": "tokenId",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            11
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        }
+      },
+      "indicators": {
+        "5": {
+          "id": 5,
+          "name": "tokenOwners",
+          "isMapping": true,
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                10
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                10
+              ],
+              "newCommitmentRequired": true,
+              "isNullified": true,
+              "initialisationRequired": true,
+              "isIncremented": false,
+              "isDecremented": false,
+              "isWhole": true,
+              "isWholeReason": [
+                "Address"
+              ],
+              "binding": {
+                "referencedKey": 11,
+                "referencedKeyNodeType": "VariableDeclaration",
+                "referencedKeyisParam": true,
+                "referencedKeyisMsg": false,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 3,
+                "referencingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "isModified": true,
+                "modificationCount": 3,
+                "modifyingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "name": "tokenOwners[tokenId]",
+                "isNullified": true,
+                "isWhole": true,
+                "isPartitioned": false,
+                "nullifyingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "nullificationCount": 3
+              },
+              "id": 5,
+              "isPartitioned": false,
+              "name": "tokenOwners[tokenId]",
+              "oldCommitmentAccessRequired": true,
+              "nullifyingPaths": [
+                10
+              ],
+              "nullificationCount": 1
+            }
+          },
+          "isModified": true,
+          "isWhole": true,
+          "isWholeReason": [
+            "Address"
+          ],
+          "isPartitioned": false
+        }
+      },
+      "interactsWithSecret": true
+    },
+    {
+      "scopeId": 32,
+      "scopeName": "transfer",
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "20": {
+          "kind": "VariableDeclaration",
+          "id": 20,
+          "name": "recipient",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            28
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "22": {
+          "kind": "VariableDeclaration",
+          "id": 22,
+          "name": "tokenId",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            26
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        },
+        "20": {
+          "kind": "VariableDeclaration",
+          "id": 20,
+          "name": "recipient",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            28
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        },
+        "22": {
+          "kind": "VariableDeclaration",
+          "id": 22,
+          "name": "tokenId",
+          "stateVariable": false,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            26
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        }
+      },
+      "indicators": {
+        "5": {
+          "id": 5,
+          "name": "tokenOwners",
+          "isMapping": true,
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 26,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                25
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                25
+              ],
+              "newCommitmentRequired": true,
+              "isNullified": true,
+              "initialisationRequired": true,
+              "isIncremented": false,
+              "isDecremented": false,
+              "isWhole": true,
+              "isWholeReason": [
+                "Address"
+              ],
+              "binding": {
+                "referencedKey": 11,
+                "referencedKeyNodeType": "VariableDeclaration",
+                "referencedKeyisParam": true,
+                "referencedKeyisMsg": false,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 3,
+                "referencingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "isModified": true,
+                "modificationCount": 3,
+                "modifyingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "name": "tokenOwners[tokenId]",
+                "isNullified": true,
+                "isWhole": true,
+                "isPartitioned": false,
+                "nullifyingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "nullificationCount": 3
+              },
+              "id": 5,
+              "isPartitioned": false,
+              "name": "tokenOwners[tokenId]",
+              "oldCommitmentAccessRequired": true,
+              "nullifyingPaths": [
+                25
+              ],
+              "nullificationCount": 1
+            }
+          },
+          "isModified": true,
+          "isWhole": true,
+          "isWholeReason": [
+            "Address"
+          ],
+          "isPartitioned": false
+        }
+      },
+      "interactsWithSecret": true
+    },
+    {
+      "scopeId": 47,
+      "scopeName": "withdraw",
+      "scopeType": "FunctionDefinition",
+      "bindings": {
+        "34": {
+          "kind": "VariableDeclaration",
+          "id": 34,
+          "name": "tokenId",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            38
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "referencedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        },
+        "34": {
+          "kind": "VariableDeclaration",
+          "id": 34,
+          "name": "tokenId",
+          "stateVariable": false,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            38
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
+        }
+      },
+      "modifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        }
+      },
+      "nullifiedBindings": {
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "tokenOwners",
+          "stateVariable": true,
+          "isSecret": true,
+          "isReferenced": true,
+          "referenceCount": 0,
+          "referencingPaths": [],
+          "isModified": true,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": true,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": true,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 11,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isSecret": true,
+              "isReferenced": true,
+              "referenceCount": 3,
+              "referencingPaths": [
+                10,
+                25,
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 3,
+              "modifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "name": "tokenOwners[tokenId]",
+              "isNullified": true,
+              "isWhole": true,
+              "isPartitioned": false,
+              "nullifyingPaths": [
+                10,
+                25,
+                37
+              ],
+              "nullificationCount": 3
+            }
+          },
+          "isKnown": false,
+          "isWhole": true,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null,
+          "isWholeReason": [
+            "Address"
+          ]
+        }
+      },
+      "indicators": {
+        "5": {
+          "id": 5,
+          "name": "tokenOwners",
+          "isMapping": true,
+          "referencingPaths": [],
+          "referenceCount": 0,
+          "modifyingPaths": [],
+          "modificationCount": 0,
+          "mappingKey": {
+            "tokenId": {
+              "referencedKey": 38,
+              "referencedKeyNodeType": "VariableDeclaration",
+              "referencedKeyisParam": true,
+              "referencedKeyisMsg": false,
+              "isReferenced": true,
+              "referenceCount": 1,
+              "referencingPaths": [
+                37
+              ],
+              "isModified": true,
+              "modificationCount": 1,
+              "modifyingPaths": [
+                37
+              ],
+              "newCommitmentRequired": true,
+              "isNullified": true,
+              "initialisationRequired": true,
+              "isIncremented": false,
+              "isDecremented": false,
+              "isWhole": true,
+              "isWholeReason": [
+                "Address"
+              ],
+              "binding": {
+                "referencedKey": 11,
+                "referencedKeyNodeType": "VariableDeclaration",
+                "referencedKeyisParam": true,
+                "referencedKeyisMsg": false,
+                "isSecret": true,
+                "isReferenced": true,
+                "referenceCount": 3,
+                "referencingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "isModified": true,
+                "modificationCount": 3,
+                "modifyingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "name": "tokenOwners[tokenId]",
+                "isNullified": true,
+                "isWhole": true,
+                "isPartitioned": false,
+                "nullifyingPaths": [
+                  10,
+                  25,
+                  37
+                ],
+                "nullificationCount": 3
+              },
+              "id": 5,
+              "isPartitioned": false,
+              "name": "tokenOwners[tokenId]",
+              "oldCommitmentAccessRequired": true,
+              "nullifyingPaths": [
+                37
+              ],
+              "nullificationCount": 1
+            }
+          },
+          "isModified": true,
+          "isWhole": true,
+          "isWholeReason": [
+            "Address"
+          ],
+          "isPartitioned": false
+        }
+      },
+      "interactsWithSecret": true
+    }
+  ],
+  "errorType": null,
+  "errorMessage": null,
+  "warningMessages": [
+    "Warning: secret state tokenOwners is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
+  ]
+}

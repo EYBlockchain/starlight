@@ -22,13 +22,21 @@ export default {
     exit(path, state) {},
   },
 
+  // FIXME: should 'line' be replaced with 'name' (or a term more accurate) throughout this module?
+
+  /**
+   * Adds `isSecret: true` property to the FunctionDefinition node, if a
+   * matching `secret` function declaration line exists.
+   * QUESTION: is this used, or will this only be triggered with future enhancements?
+   */
   FunctionDefinition: {
     enter(path, state) {
       const { node } = path;
       for (const line of state) {
+        // TODO: `receive()` and `fallback()` functions
         switch (line.type) {
           case 'function':
-            if (line.nodeId) break;
+            if (line.nodeId) break; // QUESTION: reWhat is nodeId used for?
             if (node.kind === 'function' && node.name === line.name) line.nodeId = node.id;
             break;
           case 'constructor':
@@ -40,18 +48,15 @@ export default {
           // line.nodeId = findNodeId(solAST, line);
         }
         if (line.nodeId === node.id) {
+          // QUESTION: is there always only 1 keyword per line ('name')?
           switch (line.keyword) {
             default:
               break;
             case 'secret':
+              // @Node new property
               node.isSecret = true;
               break;
-            // case 'known':
-            //   node.isKnown = true;
-            //   break;
-            // case 'unknown':
-            //   node.isUnknown = true;
-            //   break;
+            // TODO: case 'anon' function
           }
         }
       }
@@ -60,18 +65,26 @@ export default {
     exit(path, state) {},
   },
 
+  /**
+   * Adds `isSecret: true` property to VariableDeclaration nodes within a
+   * ParameterList, if a matching `secret` declaration line exists.
+   */
   ParameterList: {
     enter(path, state) {
       const { node } = path;
       const functionName = path.parent.name;
+      // QUESTION: are they 'lines', or are they actually param 'names'?
       for (const line of state) {
         switch (line.type) {
           case 'param':
             if (line.nodeId) break;
             for (const param of node.parameters) {
               if (param.name === line.name && line.oldline.includes(functionName)) {
+                // TODO: doesn't work for multi-line function declarations (because the line won't include the function's name).
+                // Option: move all this to 'VariableDeclaration' visitor below.
                 line.nodeId = param.id;
                 if (line.keyword === 'secret') {
+                  // @Node new property
                   param.isSecret = true;
                 } else {
                   throw new Error(`Parameters can't be marked as known/unknown`);
@@ -94,6 +107,12 @@ export default {
     exit(path) {},
   },
 
+  /**
+   * Adds `isSecret`, `isKnown`, `isUnknown` properties to the LHS of a
+   * VariableDeclarationStatement node, if a matching line is found
+   */
+  // FIXME: hardcoded [0] array index. Need to make it work with tuple declarations?
+  // FIXME: will this get confused if a local stack variable is shadow-declared (with the same name as a global)?
   VariableDeclarationStatement: {
     enter(path, state) {
       const { node } = path;
@@ -110,6 +129,7 @@ export default {
           switch (line.keyword) {
             default:
               break;
+            // @Node new property (below)
             case 'secret':
               node.declarations[0].isSecret = true;
               break;
@@ -133,17 +153,22 @@ export default {
     exit(path) {},
   },
 
+  // FIXME: requires description & justification
+  // FIXME: too much nesting (6/7 layers in places)
+  // FIXME: too long - split into functions
+  // IDEA: redo entirely? :)
   Assignment: {
     enter(path, state) {
       const operators = ['+', '-', '*', '/', '%'];
-      const eqOperators = [' = ', '+= ', '-= '];
+      const eqOperators = [' = ', '+= ', '-= ']; // QUESTION: why inconsistent spacing?
       let op;
       let eqop;
       const { node } = path;
       for (const line of state) {
         switch (line.type) {
+          // QUESTION: would there ever be other cases? (At the moment only `assignment` case is given)
           case 'assignment':
-            if (line.nodeId) break;
+            if (line.nodeId) break; // QUESTION: why?
             for (const operator of operators) {
               if (line.rhs.includes(operator)) {
                 op = operator;
@@ -320,6 +345,11 @@ export default {
     exit(node, parent) {},
   },
 
+  /**
+   * Adds `isSecret: true` property to VariableDeclaration nodes,
+   * if a matching `secret` declaration line exists.
+   */
+  // FIXME: will this get confused if a local stack variable is shadow-declared (with the same name as a global)?
   VariableDeclaration: {
     enter(path, state) {
       const { node } = path;
@@ -337,14 +367,9 @@ export default {
             default:
               break;
             case 'secret':
+              // @Node new property
               node.isSecret = true;
               break;
-            // case 'known':
-            //   node.isKnown = true;
-            //   break;
-            // case 'unknown':
-            //   node.isUnknown = true;
-            //   break;
           }
         }
       }

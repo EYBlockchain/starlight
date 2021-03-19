@@ -497,7 +497,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": false,
@@ -555,10 +554,12 @@
           "isPartitionedReason": [
             "Incremented and marked as unknown"
           ],
+          "oldCommitmentAccessRequired": false,
           "nullifyingPaths": [],
           "nullificationCount": 0
         }
-      }
+      },
+      "interactsWithSecret": true
     },
     {
       "scopeId": 27,
@@ -1016,7 +1017,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": true,
@@ -1073,12 +1073,14 @@
           "isPartitionedReason": [
             "Incremented and marked as unknown"
           ],
+          "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
             20
           ],
           "nullificationCount": 1
         }
-      }
+      },
+      "interactsWithSecret": true
     }
   ],
   "errorType": null,

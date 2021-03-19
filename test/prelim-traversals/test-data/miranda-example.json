@@ -137,7 +137,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 5,
-                  "src": "299:1:0",
+                  "src": "301:1:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                     "typeString": "mapping(address => uint256)"
@@ -151,7 +151,7 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 4294967281,
-                    "src": "301:3:0",
+                    "src": "303:3:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_magic_message",
                       "typeString": "msg"
@@ -164,7 +164,7 @@
                   "lValueRequested": false,
                   "memberName": "sender",
                   "nodeType": "MemberAccess",
-                  "src": "301:10:0",
+                  "src": "303:10:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -175,7 +175,7 @@
                 "isPure": false,
                 "lValueRequested": false,
                 "nodeType": "IndexAccess",
-                "src": "299:13:0",
+                "src": "301:13:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
@@ -189,13 +189,13 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 25,
-                "src": "315:6:0",
+                "src": "317:6:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
                 }
               },
-              "src": "299:22:0",
+              "src": "301:22:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -325,7 +325,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 5,
-                      "src": "299:1:0",
+                      "src": "301:1:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                         "typeString": "mapping(address => uint256)"
@@ -339,7 +339,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4294967281,
-                        "src": "301:3:0",
+                        "src": "303:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
@@ -352,7 +352,7 @@
                       "lValueRequested": false,
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
-                      "src": "301:10:0",
+                      "src": "303:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -363,7 +363,7 @@
                     "isPure": false,
                     "lValueRequested": false,
                     "nodeType": "IndexAccess",
-                    "src": "299:13:0",
+                    "src": "301:13:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -377,13 +377,13 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 25,
-                    "src": "315:6:0",
+                    "src": "317:6:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
-                  "src": "299:22:0",
+                  "src": "301:22:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -404,7 +404,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "285:3:0",
+                "src": "287:3:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -423,7 +423,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "285:3:0",
+            "src": "287:3:0",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -605,7 +605,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 5,
-                  "src": "299:1:0",
+                  "src": "301:1:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                     "typeString": "mapping(address => uint256)"
@@ -619,7 +619,7 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 4294967281,
-                    "src": "301:3:0",
+                    "src": "303:3:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_magic_message",
                       "typeString": "msg"
@@ -632,7 +632,7 @@
                   "lValueRequested": false,
                   "memberName": "sender",
                   "nodeType": "MemberAccess",
-                  "src": "301:10:0",
+                  "src": "303:10:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -643,7 +643,7 @@
                 "isPure": false,
                 "lValueRequested": false,
                 "nodeType": "IndexAccess",
-                "src": "299:13:0",
+                "src": "301:13:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
@@ -657,13 +657,13 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 25,
-                "src": "315:6:0",
+                "src": "317:6:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
                 }
               },
-              "src": "299:22:0",
+              "src": "301:22:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -793,7 +793,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 5,
-                      "src": "299:1:0",
+                      "src": "301:1:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                         "typeString": "mapping(address => uint256)"
@@ -807,7 +807,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4294967281,
-                        "src": "301:3:0",
+                        "src": "303:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
@@ -820,7 +820,7 @@
                       "lValueRequested": false,
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
-                      "src": "301:10:0",
+                      "src": "303:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -831,7 +831,7 @@
                     "isPure": false,
                     "lValueRequested": false,
                     "nodeType": "IndexAccess",
-                    "src": "299:13:0",
+                    "src": "301:13:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -845,13 +845,13 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 25,
-                    "src": "315:6:0",
+                    "src": "317:6:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
-                  "src": "299:22:0",
+                  "src": "301:22:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -872,7 +872,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "285:3:0",
+                "src": "287:3:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -891,7 +891,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "285:3:0",
+            "src": "287:3:0",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1047,7 +1047,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 5,
-                  "src": "299:1:0",
+                  "src": "301:1:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                     "typeString": "mapping(address => uint256)"
@@ -1061,7 +1061,7 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 4294967281,
-                    "src": "301:3:0",
+                    "src": "303:3:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_magic_message",
                       "typeString": "msg"
@@ -1074,7 +1074,7 @@
                   "lValueRequested": false,
                   "memberName": "sender",
                   "nodeType": "MemberAccess",
-                  "src": "301:10:0",
+                  "src": "303:10:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -1085,7 +1085,7 @@
                 "isPure": false,
                 "lValueRequested": false,
                 "nodeType": "IndexAccess",
-                "src": "299:13:0",
+                "src": "301:13:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
@@ -1099,13 +1099,13 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 25,
-                "src": "315:6:0",
+                "src": "317:6:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
                 }
               },
-              "src": "299:22:0",
+              "src": "301:22:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -1235,7 +1235,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 5,
-                      "src": "299:1:0",
+                      "src": "301:1:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                         "typeString": "mapping(address => uint256)"
@@ -1249,7 +1249,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4294967281,
-                        "src": "301:3:0",
+                        "src": "303:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
@@ -1262,7 +1262,7 @@
                       "lValueRequested": false,
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
-                      "src": "301:10:0",
+                      "src": "303:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -1273,7 +1273,7 @@
                     "isPure": false,
                     "lValueRequested": false,
                     "nodeType": "IndexAccess",
-                    "src": "299:13:0",
+                    "src": "301:13:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1287,13 +1287,13 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 25,
-                    "src": "315:6:0",
+                    "src": "317:6:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
-                  "src": "299:22:0",
+                  "src": "301:22:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -1314,7 +1314,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "285:3:0",
+                "src": "287:3:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -1333,7 +1333,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "285:3:0",
+            "src": "287:3:0",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -1583,7 +1583,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 5,
-                        "src": "299:1:0",
+                        "src": "301:1:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                           "typeString": "mapping(address => uint256)"
@@ -1597,7 +1597,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 4294967281,
-                          "src": "301:3:0",
+                          "src": "303:3:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
                             "typeString": "msg"
@@ -1610,7 +1610,7 @@
                         "lValueRequested": false,
                         "memberName": "sender",
                         "nodeType": "MemberAccess",
-                        "src": "301:10:0",
+                        "src": "303:10:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -1621,7 +1621,7 @@
                       "isPure": false,
                       "lValueRequested": false,
                       "nodeType": "IndexAccess",
-                      "src": "299:13:0",
+                      "src": "301:13:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
@@ -1635,13 +1635,13 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 25,
-                      "src": "315:6:0",
+                      "src": "317:6:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
                       }
                     },
-                    "src": "299:22:0",
+                    "src": "301:22:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1662,7 +1662,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "285:3:0",
+                  "src": "287:3:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"
@@ -1839,7 +1839,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 5,
-                  "src": "299:1:0",
+                  "src": "301:1:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                     "typeString": "mapping(address => uint256)"
@@ -1853,7 +1853,7 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 4294967281,
-                    "src": "301:3:0",
+                    "src": "303:3:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_magic_message",
                       "typeString": "msg"
@@ -1866,7 +1866,7 @@
                   "lValueRequested": false,
                   "memberName": "sender",
                   "nodeType": "MemberAccess",
-                  "src": "301:10:0",
+                  "src": "303:10:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -1877,7 +1877,7 @@
                 "isPure": false,
                 "lValueRequested": false,
                 "nodeType": "IndexAccess",
-                "src": "299:13:0",
+                "src": "301:13:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
@@ -1891,13 +1891,13 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 25,
-                "src": "315:6:0",
+                "src": "317:6:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
                 }
               },
-              "src": "299:22:0",
+              "src": "301:22:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -2027,7 +2027,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 5,
-                      "src": "299:1:0",
+                      "src": "301:1:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                         "typeString": "mapping(address => uint256)"
@@ -2041,7 +2041,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4294967281,
-                        "src": "301:3:0",
+                        "src": "303:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
@@ -2054,7 +2054,7 @@
                       "lValueRequested": false,
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
-                      "src": "301:10:0",
+                      "src": "303:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -2065,7 +2065,7 @@
                     "isPure": false,
                     "lValueRequested": false,
                     "nodeType": "IndexAccess",
-                    "src": "299:13:0",
+                    "src": "301:13:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2079,13 +2079,13 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 25,
-                    "src": "315:6:0",
+                    "src": "317:6:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
-                  "src": "299:22:0",
+                  "src": "301:22:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -2106,7 +2106,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "285:3:0",
+                "src": "287:3:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -2125,7 +2125,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "285:3:0",
+            "src": "287:3:0",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -2281,7 +2281,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 5,
-                  "src": "299:1:0",
+                  "src": "301:1:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                     "typeString": "mapping(address => uint256)"
@@ -2295,7 +2295,7 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 4294967281,
-                    "src": "301:3:0",
+                    "src": "303:3:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_magic_message",
                       "typeString": "msg"
@@ -2308,7 +2308,7 @@
                   "lValueRequested": false,
                   "memberName": "sender",
                   "nodeType": "MemberAccess",
-                  "src": "301:10:0",
+                  "src": "303:10:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -2319,7 +2319,7 @@
                 "isPure": false,
                 "lValueRequested": false,
                 "nodeType": "IndexAccess",
-                "src": "299:13:0",
+                "src": "301:13:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
@@ -2333,13 +2333,13 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 25,
-                "src": "315:6:0",
+                "src": "317:6:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
                 }
               },
-              "src": "299:22:0",
+              "src": "301:22:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -2469,7 +2469,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 5,
-                      "src": "299:1:0",
+                      "src": "301:1:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                         "typeString": "mapping(address => uint256)"
@@ -2483,7 +2483,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4294967281,
-                        "src": "301:3:0",
+                        "src": "303:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
@@ -2496,7 +2496,7 @@
                       "lValueRequested": false,
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
-                      "src": "301:10:0",
+                      "src": "303:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -2507,7 +2507,7 @@
                     "isPure": false,
                     "lValueRequested": false,
                     "nodeType": "IndexAccess",
-                    "src": "299:13:0",
+                    "src": "301:13:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2521,13 +2521,13 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 25,
-                    "src": "315:6:0",
+                    "src": "317:6:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
-                  "src": "299:22:0",
+                  "src": "301:22:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -2548,7 +2548,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "285:3:0",
+                "src": "287:3:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -2567,7 +2567,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "285:3:0",
+            "src": "287:3:0",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -2696,7 +2696,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 5,
-                  "src": "299:1:0",
+                  "src": "301:1:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                     "typeString": "mapping(address => uint256)"
@@ -2710,7 +2710,7 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 4294967281,
-                    "src": "301:3:0",
+                    "src": "303:3:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_magic_message",
                       "typeString": "msg"
@@ -2723,7 +2723,7 @@
                   "lValueRequested": false,
                   "memberName": "sender",
                   "nodeType": "MemberAccess",
-                  "src": "301:10:0",
+                  "src": "303:10:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address",
                     "typeString": "address"
@@ -2734,7 +2734,7 @@
                 "isPure": false,
                 "lValueRequested": false,
                 "nodeType": "IndexAccess",
-                "src": "299:13:0",
+                "src": "301:13:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
@@ -2748,13 +2748,13 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 25,
-                "src": "315:6:0",
+                "src": "317:6:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_uint256",
                   "typeString": "uint256"
                 }
               },
-              "src": "299:22:0",
+              "src": "301:22:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -2884,7 +2884,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 5,
-                      "src": "299:1:0",
+                      "src": "301:1:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                         "typeString": "mapping(address => uint256)"
@@ -2898,7 +2898,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4294967281,
-                        "src": "301:3:0",
+                        "src": "303:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
@@ -2911,7 +2911,7 @@
                       "lValueRequested": false,
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
-                      "src": "301:10:0",
+                      "src": "303:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -2922,7 +2922,7 @@
                     "isPure": false,
                     "lValueRequested": false,
                     "nodeType": "IndexAccess",
-                    "src": "299:13:0",
+                    "src": "301:13:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2936,13 +2936,13 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 25,
-                    "src": "315:6:0",
+                    "src": "317:6:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
-                  "src": "299:22:0",
+                  "src": "301:22:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -2963,7 +2963,7 @@
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": 4294967281,
-                "src": "285:3:0",
+                "src": "287:3:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
                   "typeString": "msg"
@@ -2982,7 +2982,7 @@
             "nodeType": "Identifier",
             "overloadedDeclarations": [],
             "referencedDeclaration": 4294967281,
-            "src": "285:3:0",
+            "src": "287:3:0",
             "typeDescriptions": {
               "typeIdentifier": "t_magic_message",
               "typeString": "msg"
@@ -3042,7 +3042,7 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 5,
-                      "src": "299:1:0",
+                      "src": "301:1:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                         "typeString": "mapping(address => uint256)"
@@ -3056,7 +3056,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 4294967281,
-                        "src": "301:3:0",
+                        "src": "303:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
@@ -3069,7 +3069,7 @@
                       "lValueRequested": false,
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
-                      "src": "301:10:0",
+                      "src": "303:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -3080,7 +3080,7 @@
                     "isPure": false,
                     "lValueRequested": false,
                     "nodeType": "IndexAccess",
-                    "src": "299:13:0",
+                    "src": "301:13:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3094,13 +3094,13 @@
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
                     "referencedDeclaration": 25,
-                    "src": "315:6:0",
+                    "src": "317:6:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
-                  "src": "299:22:0",
+                  "src": "301:22:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -3230,7 +3230,7 @@
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": 5,
-                        "src": "299:1:0",
+                        "src": "301:1:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_address_$_t_uint256_$",
                           "typeString": "mapping(address => uint256)"
@@ -3244,7 +3244,7 @@
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
                           "referencedDeclaration": 4294967281,
-                          "src": "301:3:0",
+                          "src": "303:3:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
                             "typeString": "msg"
@@ -3257,7 +3257,7 @@
                         "lValueRequested": false,
                         "memberName": "sender",
                         "nodeType": "MemberAccess",
-                        "src": "301:10:0",
+                        "src": "303:10:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -3268,7 +3268,7 @@
                       "isPure": false,
                       "lValueRequested": false,
                       "nodeType": "IndexAccess",
-                      "src": "299:13:0",
+                      "src": "301:13:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
@@ -3282,13 +3282,13 @@
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
                       "referencedDeclaration": 25,
-                      "src": "315:6:0",
+                      "src": "317:6:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
                       }
                     },
-                    "src": "299:22:0",
+                    "src": "301:22:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3309,7 +3309,7 @@
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
                   "referencedDeclaration": 4294967281,
-                  "src": "285:3:0",
+                  "src": "287:3:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_magic_message",
                     "typeString": "msg"

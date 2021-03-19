@@ -253,7 +253,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": true,
@@ -266,12 +265,14 @@
           "isWholeReason": [
             "Overwritten at 154:9:0"
           ],
+          "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
             8
           ],
           "nullificationCount": 1
         }
-      }
+      },
+      "interactsWithSecret": true
     }
   ],
   "errorType": null,

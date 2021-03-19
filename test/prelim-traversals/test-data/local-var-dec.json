@@ -307,7 +307,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": true,
@@ -320,17 +319,20 @@
           "isWholeReason": [
             "Overwritten at 182:5:0"
           ],
+          "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
             14
           ],
           "nullificationCount": 1
         }
-      }
+      },
+      "interactsWithSecret": true
     }
   ],
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
+    "Secret parameter value is being used to assign a non-global state. Is this intended?",
     "Warning: secret state x is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
   ]
 }

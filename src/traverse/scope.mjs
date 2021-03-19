@@ -62,7 +62,7 @@ export class Scope {
     if (cachedScope && cachedScope.path) return cachedScope;
 
     this.scopeId = node.id;
-    this.scopeName = node.name || ''; // whilst not all nodes have a 'name' property; all scopable nodes do.
+    this.scopeName = node.name || ''; // whilst not all nodes have a 'name' property; all scopable nodes do. TODO: for loops, while loops, if statements, and other { braced scopes } won't have names.
     this.scopeType = node.nodeType;
     this.path = path;
     this.bindings = {}; // keys are AST node `id`s

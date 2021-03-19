@@ -17,7 +17,7 @@ contract Escrow {
         erc20 = IERC20(_erc20);
     }
 
-    function hello(uint256) private returns (bool) {
+    function hello(uint256) private pure returns (bool) {
         return true;
     }
 

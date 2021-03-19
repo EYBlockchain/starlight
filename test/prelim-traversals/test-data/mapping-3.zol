@@ -17,7 +17,7 @@ contract MyContract {
     known b = b + param3;
   }
 
-  function assign3(secret address param4, secret uint256 param5) public {
+  function assign3(secret uint256 param5) public {
     require(msg.sender == admin);
     known b = b + param5;
   }

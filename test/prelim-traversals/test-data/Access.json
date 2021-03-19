@@ -81,7 +81,22 @@
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
-          "isAccessed": true
+          "isAccessed": true,
+          "accessedNodes": [
+            {
+              "id": 9,
+              "name": "b",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "189:1:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "accessedSecretState": true
+            }
+          ]
         },
         "13": {
           "kind": "FunctionDefinition",
@@ -165,7 +180,22 @@
           "isPartitioned": false,
           "isOwned": false,
           "owner": null,
-          "isAccessed": true
+          "isAccessed": true,
+          "accessedNodes": [
+            {
+              "id": 9,
+              "name": "b",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5,
+              "src": "189:1:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              },
+              "accessedSecretState": true
+            }
+          ]
         }
       },
       "modifiedBindings": {
@@ -254,7 +284,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": true,
@@ -267,12 +296,14 @@
           "isWholeReason": [
             "Overwritten at 185:5:0"
           ],
+          "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
             8
           ],
           "nullificationCount": 1
         }
-      }
+      },
+      "interactsWithSecret": true
     }
   ],
   "errorType": null,

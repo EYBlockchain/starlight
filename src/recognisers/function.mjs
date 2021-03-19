@@ -8,22 +8,26 @@ import { ParseError } from '../error/errors.mjs';
 import { blockCount } from '../state.mjs';
 
 function recogniseFunction(line, rtn = false) {
-  for (const g of config.functions) {
-    if (line.startsWith(g)) {
+  for (const f of config.functionTypes) {
+    if (line.startsWith(f)) {
+      // TODO might need to change this when we introduce `anon` keyword to the start of such lines. Nevermind, by this point, the anon keyword will have been removed, and the line will indeed start with 'function' or etc.
       // function (or constructor) found
 
-      // we don't support nested functions
+      if (blockCount.value === 1)
+        throw new ParseError(
+          `'Free' functions (declared outside of a contract) aren't yet supported`,
+        );
       if (blockCount.value !== 2)
         throw new ParseError(
-          `Nested functions or functions outside of a contract are not allowed: currently inside nested block ${blockCount.value}`,
+          `Nested functions or functions outside of a contract are not supported: currently inside nested block ${blockCount.value}`,
         );
 
       const ln = line
-        .slice(0, -1)
-        .replace(/\(/g, ' (')
-        .replace(/\)/g, ' )')
-        .split(' ')
-        .map(el => el.trim()); // space out parentheses and split on whitespace
+        .slice(0, -1) // rm "{"? QUESTION: why? TODO: if it's a function signature defined over multiple lines, it won't have a closing brace on the first line.
+        .replace(/\(/g, ' ( ') // space out parentheses
+        .replace(/\)/g, ' ) ') // space out parentheses
+        .split(' ') // split on whitespace
+        .map(el => el.trim()); // trim whitespace from both ends of each word/char
       let rest = [];
       let type = '';
       [type, ...rest] = ln;
@@ -32,7 +36,7 @@ function recogniseFunction(line, rtn = false) {
       // special case: constructors are unnamed so name them 'constructor'
       if (type === 'constructor') {
         name = 'constructor';
-        visibility = 'private';
+        visibility = 'private'; // FIXME: shouldn't this just be inherited from the line we're reading? Not sure if constructors can actually have `private` visibility... QUESTION: why is the 'private' word needed when constructors don't need this word?
         logger.debug(`Found ${type}`);
       } else {
         [name, ...rest] = rest;

@@ -56,9 +56,11 @@
             "name": "admin",
             "stateVariable": true,
             "isSecret": false,
-            "isReferenced": false,
-            "referenceCount": 0,
-            "referencingPaths": [],
+            "isReferenced": true,
+            "referenceCount": 1,
+            "referencingPaths": [
+              13
+            ],
             "isModified": false,
             "modificationCount": 0,
             "modifyingPaths": [],
@@ -85,9 +87,11 @@
           "name": "admin",
           "stateVariable": true,
           "isSecret": false,
-          "isReferenced": false,
-          "referenceCount": 0,
-          "referencingPaths": [],
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            13
+          ],
           "isModified": false,
           "modificationCount": 0,
           "modifyingPaths": [],
@@ -189,9 +193,11 @@
             "name": "admin",
             "stateVariable": true,
             "isSecret": false,
-            "isReferenced": false,
-            "referenceCount": 0,
-            "referencingPaths": [],
+            "isReferenced": true,
+            "referenceCount": 1,
+            "referencingPaths": [
+              13
+            ],
             "isModified": false,
             "modificationCount": 0,
             "modifyingPaths": [],
@@ -211,6 +217,33 @@
           "isWholeReason": [
             "Overwritten at 235:10:0"
           ]
+        },
+        "5": {
+          "kind": "VariableDeclaration",
+          "id": 5,
+          "name": "admin",
+          "stateVariable": true,
+          "isSecret": false,
+          "isReferenced": true,
+          "referenceCount": 1,
+          "referencingPaths": [
+            13
+          ],
+          "isModified": false,
+          "modificationCount": 0,
+          "modifyingPaths": [],
+          "isNullified": false,
+          "nullificationCount": 0,
+          "nullifyingPaths": [],
+          "increments": [],
+          "decrements": [],
+          "isMapping": false,
+          "mappingKey": null,
+          "isKnown": false,
+          "isWhole": false,
+          "isPartitioned": false,
+          "isOwned": false,
+          "owner": null
         },
         "7": {
           "kind": "VariableDeclaration",
@@ -276,9 +309,11 @@
             "name": "admin",
             "stateVariable": true,
             "isSecret": false,
-            "isReferenced": false,
-            "referenceCount": 0,
-            "referencingPaths": [],
+            "isReferenced": true,
+            "referenceCount": 1,
+            "referencingPaths": [
+              13
+            ],
             "isModified": false,
             "modificationCount": 0,
             "modifyingPaths": [],
@@ -336,9 +371,11 @@
             "name": "admin",
             "stateVariable": true,
             "isSecret": false,
-            "isReferenced": false,
-            "referenceCount": 0,
-            "referencingPaths": [],
+            "isReferenced": true,
+            "referenceCount": 1,
+            "referencingPaths": [
+              13
+            ],
             "isModified": false,
             "modificationCount": 0,
             "modifyingPaths": [],
@@ -374,7 +411,6 @@
           ],
           "modificationCount": 1,
           "isReferenced": true,
-          "oldCommitmentAccessRequired": true,
           "isModified": true,
           "newCommitmentRequired": true,
           "isNullified": true,
@@ -387,6 +423,7 @@
           "isWholeReason": [
             "Overwritten at 235:10:0"
           ],
+          "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
             17
           ],
@@ -407,6 +444,7 @@
           "typeString": "address"
         }
       },
+      "interactsWithSecret": true,
       "onChainKeyRegistry": true
     }
   ],

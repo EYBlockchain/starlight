@@ -20,7 +20,7 @@ const __dirname = pathjs.dirname(fileURLToPath(import.meta.url)); // because ES 
 const args = process.argv;
 
 const testDataDir = pathjs.join(__dirname, 'test-data');
-const testDataFiles = fs.readdirSync(testDataDir).filter(file => file.includes('.zol'));
+const testDataFiles = fs.readdirSync(testDataDir).filter(file => pathjs.extname(file) === '.zol');
 
 const mkDirs = ({ outputDirPath, parseDirPath }) => {
   try {

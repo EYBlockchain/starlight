@@ -1,3 +1,4 @@
+// @UNUSED?
 /**
 Parser for lines of Solidity
 This is the connection point between Recognisers and Parsers.

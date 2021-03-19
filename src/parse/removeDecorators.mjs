@@ -18,9 +18,8 @@ function tidy(_line) {
   // remove spaces from the start of the line:
   line = line.replace(/^\s/, '');
   // remove all comments
-  line = line.replace(/[^:]\/\/.*/g, '');
-  // remove comments
-  if (line.startsWith('//')) return null;
+  line = line.replace(/\/\/.*/g, '');
+  // TODO: multi-line comments - difficult once we've cut line-by-line
   return line;
 }
 
@@ -40,11 +39,11 @@ function removeDecorators(options) {
   const toRedecorate = [];
   const deDecledLines = decLines.map(decLine => {
     const line = tidy(decLine);
-    if (!line) return decLine;
+    if (!line) return decLine; // empty string is falsey
     recogniseCurlyBracket(line); // increases blockCount, checks we are in the correct block // TODO: is this needed?
     const { keyword, type, name, rhs, deDecLine } = recogniseDecorators(line);
     if (deDecLine && !Array.isArray(deDecLine)) {
-      // record the desprinkling, so that we may add the keywords back to the AST later (after solc compilation):
+      // record the dedecoration, so that we may add the keywords back to the AST later (after solc compilation):
       toRedecorate.push({
         oldline: tidy(decLine),
         newline: tidy(deDecLine),
@@ -53,18 +52,18 @@ function removeDecorators(options) {
         name,
         rhs,
       });
-      return decLine.replace(line, deDecLine);
+      return decLine.replace(line, deDecLine); // QUESTION: won't the earlier trimming of whitespace corrupt this 'replace' attempt sometimes?
     }
     if (deDecLine && Array.isArray(deDecLine)) {
-      // we have secret params
+      // we have secret params - FIXME: structures too confusing: would need to follow lots of code to realise this // TODO: always return array (of objects) from recogniseDecorators?
       for (let i = 0; i < deDecLine.length; i++) {
         toRedecorate.push({
           oldline: decLine,
           newline: deDecLine,
           type: type[i],
-          keyword: keyword[i],
-          name: name[i],
-          rhs,
+          keyword: keyword[i], // all
+          name: name[i], // all
+          rhs, // recogniseAssignments only TODO: move rhs (& recognition of assignments) elsewhere?
         });
       }
       return decLine.replace(/secret/g, '');

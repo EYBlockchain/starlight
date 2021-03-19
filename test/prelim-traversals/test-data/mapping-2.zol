@@ -7,12 +7,12 @@ contract MyContract {
   secret mapping(address => uint256) private a;
   address public admin;
 
-  function increment(secret address param1, secret uint256 param2) public {
+  function increment(secret uint256 param2) public {
     unknown a[msg.sender] = a[msg.sender] + param2;
   }
 
   function decrement(secret address addr, secret uint256 param3) public {
-    require(msg.sender === admin);
+    require(msg.sender == admin);
     a[addr] = a[addr] - param3;
   }
 
