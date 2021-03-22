@@ -4,6 +4,16 @@ import cloneDeep from 'lodash.clonedeep';
 import logger from '../../utils/logger.mjs';
 import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
+/**
+ * @desc:
+ * Visitor creates a `.zol` AST from a `.sol` AST.
+ * Using a custom object `toRedecorate` (=`state`) from the 'dedecoration'
+ * phase, this Visitor adds properties to `.sol` AST nodes. The properties
+ * which get added represent 'Zolidity' decorators that the user originally used
+ * to label states (e.g. as `secret`/`unknown`/ etc.) but that were removed
+ * during the 'dedecoration' phase in order to generate a `.sol` AST using solc.
+ */
+
 export default {
   SourceUnit: {
     enter(path, state) {},

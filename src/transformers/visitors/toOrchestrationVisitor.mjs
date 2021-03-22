@@ -3,6 +3,14 @@
 import logger from '../../utils/logger.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 
+/**
+ * @desc:
+ * Visitor transforms a `.zol` AST into a `.js` AST
+ * NB: the resulting `.js` AST is custom, and can only be interpreted by this
+ * repo's code generator. JS compilers will not be able to interpret this
+ * AST.
+ */
+
 export default {
   PragmaDirective: {
     // we ignore the Pragma Directive; it doesn't aid us in creating a circuit

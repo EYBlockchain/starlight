@@ -1,8 +1,22 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
+/**
+ * @desc:
+ * Visitor will throw errors when certain nodeTypes are traversed.
+ * Namely: nodeTypes for complex Solidity syntax which we haven't written
+ * support for yet.
+*/
+
 import cloneDeep from 'lodash.clonedeep';
 
 export default {
+  PragmaDirective: {
+    // TODO: We should probably check that the `.zol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
+    // However, for now, we'll just inherit the Pragma of the original and hope.
+    enter(path, state) {},
+    exit(path, state) {},
+  },
+
   StructuredDocumentation: {
     enter(path, state) {
       throw new Error('Unsupported Solidity');
@@ -42,88 +56,5 @@ export default {
     },
 
     exit(path, state) {},
-  },
-
-  SourceUnit: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  PragmaDirective: {
-    enter(path, state) {},
-    exit(path, state) {},
-  },
-
-  ContractDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  FunctionDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  ParameterList: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Block: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  VariableDeclarationStatement: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  BinaryOperation: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Assignment: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  ExpressionStatement: {
-    enter(path, state) {},
-
-    exit(node, parent) {},
-  },
-
-  VariableDeclaration: {
-    enter(path, state) {},
-
-    exit(path) {},
-  },
-
-  ElementaryTypeName: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Identifier: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Literal: {
-    enter(path) {},
-
-    exit(path) {},
   },
 };

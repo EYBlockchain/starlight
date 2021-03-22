@@ -5,17 +5,6 @@ import logger from '../../../utils/logger.mjs';
 import { traverse, traverseNodesFast, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
-  SourceUnit: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  PragmaDirective: {
-    enter(path, state) {},
-    exit(path, state) {},
-  },
-
   ContractDefinition: {
     enter(path, state) {},
 
@@ -45,42 +34,6 @@ export default {
         }
       });
     },
-  },
-
-  FunctionDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  ParameterList: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Block: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  VariableDeclarationStatement: {
-    enter(path, state) {},
-
-    exit(path) {},
-  },
-
-  BinaryOperation: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Assignment: {
-    enter(path, state) {},
-
-    exit(path, state) {},
   },
 
   ExpressionStatement: {
@@ -204,29 +157,5 @@ export default {
       // logger.debug('------');
       // logger.debug(scope.indicators[lhsIdentifier.referencedDeclaration]);
     },
-  },
-
-  VariableDeclaration: {
-    enter(path, state) {},
-
-    exit(path) {},
-  },
-
-  ElementaryTypeName: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Identifier: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Literal: {
-    enter(path) {},
-
-    exit(path) {},
   },
 };

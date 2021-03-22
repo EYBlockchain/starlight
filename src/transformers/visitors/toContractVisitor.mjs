@@ -4,6 +4,12 @@ import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/solidity-types.mjs';
 import { traverseNodesFast } from '../../traverse/traverse.mjs';
 
+/**
+ * @desc:
+ * Visitor transforms a `.zol` AST into a `.sol` AST (for a 'shield' contract)
+ * NB: the resulting `.sol` AST is custom, and can only be reliably interpreted * by this repo's code generator. Other software might not be able to interpret * this AST.
+ */
+
 export default {
   SourceUnit: {
     enter(path, state) {
