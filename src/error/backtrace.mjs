@@ -11,7 +11,6 @@ class BackTrace {
     return this.contract;
   }
 
-  // TODO: THIS DOESN'T WORK - I can't get the counting right. The contract json string might be too 'warped' relative to the AST src pointers.
   getSourceCode(src) {
     const { contract } = this;
     const [srcStart, srcLength] = src.split(':');

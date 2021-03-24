@@ -3,8 +3,21 @@
 import fs from 'fs';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
+import backtrace from '../error/backtrace.mjs';
 import explode from '../transformers/visitors/explode.mjs';
 import redecorateVisitor from '../transformers/visitors/redecorateVisitor.mjs';
+
+const errorCheckVisitor = (thisPath, decoratorObj) => {
+  // extract the char number
+  const srcStart = thisPath.node.src.split(':')[0];
+  // if it matches the one we removed, add it back to the AST
+  if (decoratorObj.charStart === Number(srcStart)) {
+    backtrace.getSourceCode(thisPath.node.src);
+    throw new SyntaxError(
+      `Decorator '${decoratorObj.decorator}' cannot be added to node of type '${thisPath.node.nodeType}'.`,
+    );
+  }
+};
 
 /**
  * Inspired by the Transformer
@@ -27,7 +40,11 @@ function transformation1(oldAST, toRedecorate) {
   // The newAST will be mutated through this traversal process.
   // NB: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
   path.traverse(explode(redecorateVisitor), toRedecorate);
-  // logger.debug(toRedecorate);
+
+  for (const decorator of toRedecorate) {
+    if (decorator.added) continue;
+    path.traversePathsFast(errorCheckVisitor, decorator);
+  }
   // At the end of our transformer function we'll return the new ast that we
   // just created.
   return path;
