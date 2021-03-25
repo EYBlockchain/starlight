@@ -16,6 +16,10 @@ export default {
         const srcStart = node.src.split(':')[0];
         // if it matches the one we removed, add it back to the AST
         if (toRedecorate.charStart === Number(srcStart)) {
+          if (path.isInType('VariableDeclarationStatement'))
+            logger.warn(
+              `Superfluous 'secret' decorator used for a local declaration. If the variable interacts with a secret state, it will automatically be kept secret.`,
+            );
           toRedecorate.added = true;
           node.isSecret = true;
           return;
