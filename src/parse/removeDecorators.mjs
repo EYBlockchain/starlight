@@ -35,7 +35,8 @@ function inComment(file, char) {
       // otherwise, we're looking for a start of a comment or a new line
       if (twoCharSubStr === `//`) aComment = true;
       if (twoCharSubStr === `/*`) [aComment, aMultiComment] = [true, true];
-      if (twoCharSubStr.includes(`\r`) || twoCharSubStr.includes(`\n`)) aComment = false;
+      if (twoCharSubStr.includes(`\r`) || twoCharSubStr.includes(`\n`))
+        aComment = false;
     }
   }
   return aComment;
@@ -52,7 +53,9 @@ function inComment(file, char) {
  */
 function removeDecorators(options) {
   logger.verbose(`Parsing decorated file ${options.inputFilePath}... `);
-  const decLines = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
+  const decLines = fs
+    .readFileSync(options.inputFilePath, 'utf-8')
+    .split(/\r?\n/);
   // tidy each line before any changes - so no char numbers are skewed
   const tidyDecLines = decLines.map(decLine => tidy(decLine));
   // combine lines in new file
@@ -85,7 +88,9 @@ function removeDecorators(options) {
     // save the keyword and where the next word starts
     toRedecorate.push({ decorator: match[0], charStart: offsetSrcStart });
     // replace the dedecorated file with one w/o the keyword (and remove one space)
-    deDecoratedFile = deDecoratedFile.replace(`${match[0]} `, '');
+    deDecoratedFile =
+      deDecoratedFile.substring(0, offsetSrcStart) +
+      deDecoratedFile.substring(offsetSrcStart + match[0].length + 1);
     offset += match[0].length + 1;
   }
 
@@ -96,7 +101,9 @@ function removeDecorators(options) {
   fs.writeFileSync(deDecoratedFilePath, deDecoratedFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.
 
   // Let's also copy the original input file to this output dir:
-  const duplicateInputFilePath = `${options.parseDirPath}/${path.basename(options.inputFilePath)}`;
+  const duplicateInputFilePath = `${options.parseDirPath}/${path.basename(
+    options.inputFilePath,
+  )}`;
   fs.copyFileSync(options.inputFilePath, duplicateInputFilePath);
 
   return { deDecoratedFile, toRedecorate };
