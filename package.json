@@ -1,13 +1,15 @@
 {
   "name": "zappify",
   "version": "0.0.1",
-  "description": "Generates Zero Knowledge Protocols from Solidity",
+  "description": "Create a zApp from Solidity",
   "main": "bin/index.mjs",
   "scripts": {
     "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
     "test": "./bin/startup && docker-compose run zappify npx mocha --exit --require @babel/register 'test/test.mjs'",
-    "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs"
+    "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs",
+    "format": "prettier --write \"**/*.{json,css,scss,md}\"",
+    "lint": "eslint ."
   },
   "bin": {
     "zappify": "bin/index.mjs"
@@ -49,9 +51,8 @@
     "zkp-utils": "^1.0.8"
   },
   "devDependencies": {
-    "cod-scripts": "^6.0.0",
-    "eslint": "^7.19.0",
-    "husky": "^4.2.5",
+    "eslint": "^7.22.0",
+    "eslint-config-codfish": "^9.0.2",
     "mocha": "^8.2.1",
     "prettier": "^2.2.1"
   }
