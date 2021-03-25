@@ -38,7 +38,7 @@ Generate a zApp from a Solidity contract.
     - [Examples](#examples)
   - [Ownership](#ownership)
     - [whole vs partitioned states](#whole-vs-partitioned-states)
-  - [Consulting private states](#consulting-private-states)
+  - [Accessing private states](#accessing-private-states)
     - [Summary](#summary-4)
   - [Sharing private data](#sharing-private-data)
     - [Summary](#summary-5)
@@ -704,11 +704,11 @@ Two things:
 
 Why whole? Well, we haven't covered the alternative of 'partitioned' states yet, but feels like the best place to tackle this question...
 
-Let's argue why a secret state _cannot_ be a 'partitioned state' if (somewhere within the contract) it is operated on in such a way that would "require knowledge of the _entire_ state". It's simply because it's impossible to reliably ['consult'](#consulting-private-states) (refer to) the _entirety_ of a _partitioned_ state. Why? Well, if a secret state is partitioned across lots of commitments, then in order to refer to its total value, the state's owner must collect all parts of that partitioned state and 'sum' them. But how can the owner convince a smart contract that he has reliably summed _all_ parts, and hasn't omitted one? He can't. There's no way to prove that the 'accessed' value comprises the entire partition of 'parts', without unwrapping all commitments in the commitment tree - which is impossible to do, because they're mostly owned by other people.
+Let's argue why a secret state _cannot_ be a 'partitioned state' if (somewhere within the contract) it is operated on in such a way that would "require knowledge of the _entire_ state". It's simply because it's impossible to reliably ['access'](#accessing-private-states) (refer to) the _entirety_ of a _partitioned_ state. Why? Well, if a secret state is partitioned across lots of commitments, then in order to refer to its total value, the state's owner must collect all parts of that partitioned state and 'sum' them. But how can the owner convince a smart contract that he has reliably summed _all_ parts, and hasn't omitted one? He can't. There's no way to prove that the 'accessed' value comprises the entire partition of 'parts', without unwrapping all commitments in the commitment tree - which is impossible to do, because they're mostly owned by other people.
 
 What kind of operations _don't_ require knowledge of the entire state?
 
-Incrementations and decrementations. A user can increment a state without consulting its entire value. Similarly, a state can be decremented without consulting its entire value, as long as a collection of parts _at least_ as large as the [minuend](https://www.google.com/search?hl=en&q=minuend&oq=minuend) can be collected and proven to exist.
+Incrementations and decrementations. A user can increment a state without accessing its entire value. Similarly, a state can be decremented without accessing its entire value, as long as a collection of parts _at least_ as large as the [minuend](https://www.google.com/search?hl=en&q=minuend&oq=minuend) can be collected and proven to exist.
 
 
 #### Partitioned states
@@ -1094,7 +1094,7 @@ A similar example with whole states - this mapping contains customer information
 
 ### Ownership
 
-_[Skip](#consulting-private-states) to the next big section. Or read on for detailed explanations._
+_[Skip](#accessing-private-states) to the next big section. Or read on for detailed explanations._
 
 In conventional Solidity, ownership of a state is essentially the ability to edit that state. Developers must explicitly codify ownership of states by restricting which addresses are permitted to call a function, through `require` statements, etc.
 
@@ -1130,7 +1130,7 @@ For each secret state, we traverse the contract for nullifications and associate
 
 1. If, throughout the contract, for a particular secret state `a`, for all functions where `a` is nullified, we find that `msg.sender` is restricted to be precisely _one_ `address` (e.g. `require(msg.sender == someAddress);`) - then the owner of this address must be the owner of the commitment for `a`.
     - If `someAddress` is a public state, retain the `require` statements in the shield contract. Allow the owner of `someAddress` to add any `zkpPK` they want to the commitment for `a`. (If they lock themselves out from editing by adding a different PK, then "that's their own fault").
-    - If `someAddress` is a private state, the `require` statement will have to instead become an 'assertion constraint' within the circuit. `someAddress` will be replaced (within the circuit) with its ['zkSNARK-compatible' public key](#key-management) (zkpPK). The owner of `someAddress` will need to ['consult'](#consulting-private-states) the commitment for `someAddress`, to demonstrate they _know_ the secret value of `someAddress`. The owner of `someAddress` might also have to do a PoKoSK of the zkSNARK-compatible PK. within the circuit, thereby demonstrating ownership of `someAddress`.
+    - If `someAddress` is a private state, the `require` statement will have to instead become an 'assertion constraint' within the circuit. `someAddress` will be replaced (within the circuit) with its ['zkSNARK-compatible' public key](#key-management) (zkpPK). The owner of `someAddress` will need to ['access'](#accessing-private-states) the commitment for `someAddress`, to demonstrate they _know_ the secret value of `someAddress`. The owner of `someAddress` might also have to do a PoKoSK of the zkSNARK-compatible PK. within the circuit, thereby demonstrating ownership of `someAddress`.
     Allow the owner of `someAddress` to add any `zkpPK` they want to the commitment for `a`.
     TODO: more discussion needed on this complex scenario.
 2. If `msg.sender` is the mapping key everywhere a particular mapping is nullified, then that mapping key _is_ effectively an `ownerPK` of the commitment. Therefore, the `mappingKey` and `ownerPK` can be merged into one entity within the commitment: `h(stateVarId, mappingKey = ownerPK, value, salt)`
@@ -1188,9 +1188,9 @@ This is the same as the above example, except `admin` is decorated as `secret`.
 - Therefore this scenario falls under option 1. ii. above.
 - The resulting commitment structure for a state mapped-to by `pot` is:
 `h( h(stateVarId, mappingKey), value, adminPK, salt )`.
-- The circuit will include a PoKoSK for `adminPK`. TODO: discuss whether needed, given the later 'consultation' that must also happen.
+- The circuit will include a PoKoSK for `adminPK`. TODO: discuss whether needed, given the later 'access' that must also happen.
 - The `require` statement in `fn2` will be removed from the shield contract.
-- The circuit will include a `consultation` to the secret state for `admin`.
+- The circuit will `access` the secret state for `admin`.
 
 **2.**
 
@@ -1243,31 +1243,31 @@ But, through many examples and discussions, it seems like wanting a *non*-transf
 
 ---
 
-### Consulting private states
+### Accessing private states
 
 [Previously](#indicators), we mentioned an `isAccessed` indicator, used during the transformation stage. When a secret state is *'accessed'*, its secret value is 'looked up' or 'accessed'.
 
-_We use the term 'consult' because the word 'refer' already has meaning in a conventional Solidity AST... Although as I write this, 'access' is looking like an attractive word too. 'Lookup' is a bit clunky because 'looked up', 'lookupping' aren't pretty within code. Or maybe 'open' is the word to use (because commitments)._
+_We use the term 'access' because the word 'refer' already has meaning in a conventional Solidity AST..._
 
 #### Summary
 
 - A secret state is `accessed` if it's 'looked up'.
   - E.g. used on the RHS of an assignment; or
   - used in a 'require' statement.
-- Assigning to a secret state is _not_ considered a 'consultation', but an assignment.
+- Assigning to a secret state is _not_ considered 'accessing', but an assignment.
 - Only 'whole' states can be accessed.*
   \*(A partitioned state `a` could probably be accessed, but only if asserting `a > b` or `a >= b`)
 - If a state is accessed within a function, only the _owner_ of that state can successfully call the function... Why? Well...
-  - To 'consult' a state is to know its current value.
+  - To 'access' a state is to know its current value.
   - A state's value can only be proven to be 'current' if:
     - the state's commitment's preimage is known;
     - the commitment has not yet been nullified.
-  - So, a nullifier must be derived in order to consult a secret state...
+  - So, a nullifier must be derived in order to access a secret state...
   - ... and only an _owner_ can derive a secret state's nullifier.
 
 _[Skip](#sharing-private-data) to the next big section. Or read on for detailed explanations._
 
-A 'consultation' can only be done by the secret's owner.
+'Accessing' can only be done by the secret's owner.
 
 Consider an example:
 
@@ -1288,7 +1288,7 @@ The transpiler can make a few initial inferences:
 
 Clearly, `a` must be a whole state, and the caller of `fn1()` must own `a`.
 
-Secondly, the caller of `fn1()` must own `b`, since nobody knows the value of `b` except for its owner. In this case that means the owner of `b` also owns `a`. In fact, any state which is updated by consulting the value of another private state must have the same owner.
+Secondly, the caller of `fn1()` must own `b`, since nobody knows the value of `b` except for its owner. In this case that means the owner of `b` also owns `a`. In fact, any state which is updated by accessing the value of another private state must have the same owner.
 
 Finally, `b` _must_ be a whole state; a partitioned state cannot* be 'accessed', because it's impossible\* for the owner to convince us they've gathered all 'parts' of the state (see an informal proof of this [above](#whole-states)).
 \*Unless demonstrating that the partitioned state is _greater than_ some value; then sufficiently many 'parts' can be collected together and proven to exist.
@@ -1327,7 +1327,7 @@ function fn2() {
 ```
 
 `b` must be known, and whole.
-`a` is `unknown`, and hence partitioned. But looking at `fn2`, `a` is being accessed. It's not possible to consult a partitioned state; hence this contract must throw an error at transpilation.
+`a` is `unknown`, and hence partitioned. But looking at `fn2`, `a` is being accessed. It's not possible to access a partitioned state; hence this contract must throw an error at transpilation.
 
 ---
 
