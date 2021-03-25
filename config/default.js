@@ -9,5 +9,5 @@ module.exports = {
   functionVisibility: ['public', 'private', 'internal', 'external'],
   functionModifiers: ['pure', 'view', 'payable', 'nonpayable'],
   functionOverrides: ['virtual', 'override'],
-  log_level: 'info',
+  log_level: 'verbose',
 };

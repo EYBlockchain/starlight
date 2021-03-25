@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../utils/logger.mjs';
@@ -39,7 +39,9 @@ export default {
         const srcStart = node.src.split(':')[0];
         if (toRedecorate.charStart === Number(srcStart)) {
           toRedecorate.added = true;
-          toRedecorate.decorator === 'known' ? (node.isKnown = true) : (node.isUnknown = true);
+          toRedecorate.decorator === 'known'
+            ? (node.isKnown = true)
+            : (node.isUnknown = true);
           return;
         }
       }

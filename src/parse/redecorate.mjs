@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, no-continue */
 
 import fs from 'fs';
 import NodePath from '../traverse/NodePath.mjs';

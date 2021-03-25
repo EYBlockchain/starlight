@@ -1,5 +1,8 @@
 {
-  "extends": "./node_modules/cod-scripts/eslint.js",
+  "extends": ["codfish"],
+  "parserOptions": {
+     "ecmaVersion": 2020,
+  },
   "rules": {
     "no-underscore-dangle": "off",
     "no-console": "off",
@@ -10,9 +13,9 @@
     "no-cond-assign": "off"
   },
   "globals": {
-    "BigInt": "true"
+    "BigInt": true
   },
   "env": {
-    "mocha": "true"
-    }
+    "mocha": true
+  }
 }
