@@ -10,7 +10,7 @@ import redecorateVisitor from '../transformers/visitors/redecorateVisitor.mjs';
 const errorCheckVisitor = (thisPath, decoratorObj) => {
   // extract the char number
   const srcStart = thisPath.node.src.split(':')[0];
-  // if it matches the one we removed, add it back to the AST
+  // if it matches the one we removed, throw error
   if (decoratorObj.charStart === Number(srcStart)) {
     backtrace.getSourceCode(thisPath.node.src);
     throw new SyntaxError(
@@ -36,10 +36,9 @@ function transformation1(oldAST, toRedecorate) {
     node: oldAST,
   });
 
-  // We'll start by calling the traverser function with our ast and a visitor.
-  // The newAST will be mutated through this traversal process.
   // NB: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
   path.traverse(explode(redecorateVisitor), toRedecorate);
+  // we check for decorators we couldn't re-add
   for (const decorator of toRedecorate) {
     if (decorator.added) continue;
     path.traversePathsFast(errorCheckVisitor, decorator);
