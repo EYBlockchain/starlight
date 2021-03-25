@@ -9,6 +9,7 @@ import toContract from './transformers/toContract.mjs';
 import toOrchestration from './transformers/toOrchestration.mjs';
 
 const zappify = options => {
+  Error.stackTraceLimit = 0;
   const { deDecoratedFile, toRedecorate } = removeDecorators(options);
 
   const solAST = compile(deDecoratedFile, options);

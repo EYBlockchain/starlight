@@ -40,7 +40,6 @@ function transformation1(oldAST, toRedecorate) {
   // The newAST will be mutated through this traversal process.
   // NB: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
   path.traverse(explode(redecorateVisitor), toRedecorate);
-
   for (const decorator of toRedecorate) {
     if (decorator.added) continue;
     path.traversePathsFast(errorCheckVisitor, decorator);

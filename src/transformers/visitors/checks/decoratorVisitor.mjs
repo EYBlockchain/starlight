@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, no-unused-vars */
 
 import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
@@ -30,6 +30,7 @@ export default {
       if (varDec.secretVariable && path.getAncestorContainedWithin('leftHandSide')) {
         // we have a parameter (at least, for now a secret non state var is a param)
         // TODO: why?
+        // ans: there was a reason, I can't remember it -  I think it was extra complication in the circuit (having a private circuit input, then reassigning it, is needlessly complex)
         throw new Error(`Cannot reassign secret function parameter ${node.name}.`);
       }
 

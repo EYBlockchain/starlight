@@ -1143,10 +1143,17 @@ export class Scope {
       );
 
     // error: conflicting unknown/whole state
-    if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole)
+    if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole) {
+      const wholeReason = [];
+      secretVar.isWholeReason.forEach(reason => {
+        backtrace.getSourceCode(reason.src);
+        wholeReason.push(reason[0]);
+      });
+
       throw new Error(
-        `Can't mark a whole state as 'unknown'. The state '${secretVar.name}' is 'whole' due to: ${secretVar.isWholeReason}`,
+        `Can't mark a whole state as 'unknown'. The state '${secretVar.name}' is 'whole' due to: ${wholeReason}`,
       );
+    }
 
     // mark a state as partitioned (isIncremented and isUnknown)
     if (

@@ -34,7 +34,6 @@ export default {
         if (toRedecorate.added || toRedecorate.decorator === 'secret') continue;
         const srcStart = node.src.split(':')[0];
         if (toRedecorate.charStart === Number(srcStart)) {
-          console.log(node);
           toRedecorate.added = true;
           toRedecorate.decorator === 'known' ? (node.isKnown = true) : (node.isUnknown = true);
           return;

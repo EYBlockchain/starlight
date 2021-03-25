@@ -60,10 +60,9 @@ export default {
           // statement is an overwrite
           fnIndicatorObj.isWhole = true;
           referencedBinding.isWhole = true;
-          const reason =
-            lhsNode.typeDescriptions.typeString !== 'address'
-              ? `Overwritten at ${expressionNode.src}`
-              : `Address`;
+          const reason = {};
+          reason[0] = lhsNode.typeDescriptions.typeString !== 'address' ? `Overwritten` : `Address`;
+          reason.src = expressionNode.src;
           logger.debug('reason:', reason);
           if (fnIndicatorObj.isWholeReason) {
             fnIndicatorObj.isWholeReason.push(reason);

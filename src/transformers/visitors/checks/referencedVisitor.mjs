@@ -112,6 +112,8 @@ export default {
 
         if (!functionDefScope) return;
         if (parentExpression.node.expression.nodeType === 'UnaryOperation') return;
+        // TODO mark secret states which are accessed to call a fn:
+        if (parentExpression.node.expression.nodeType === 'FunctionCall') return;
 
         let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
@@ -156,7 +158,9 @@ export default {
             throw new Error(
               `Secret state ${node.name} should not be used to assign to a non-secret variable (${lhs.name}). The secret could be deduced by observing how the non-secret variable changes.`,
             );
-          const reason = `Accessed at ${node.src}`;
+          const reason = {};
+          reason[0] = `Accessed`;
+          reason.src = node.src;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyName(lhsNode);
             referencedIndicator = referencedIndicator.mappingKey[keyName];
@@ -189,7 +193,9 @@ export default {
             `Found an accessed secret state ${node.name} (accessed in ${operator} operation)`,
           );
           // TODO how many of the errors from above need to be copied here?
-          const reason = `Accessed at ${node.src}`;
+          const reason = {};
+          reason[0] = `Accessed`;
+          reason.src = node.src;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyName(lhsNode);
             referencedIndicator = referencedIndicator.mappingKey[keyName];
