@@ -6,8 +6,6 @@ Reads an input file line by line and passes each line for further processing
 
 import fs from 'fs';
 import path from 'path';
-import recogniseDecorators from '../recognisers/decorators.mjs';
-import recogniseCurlyBracket from '../recognisers/curly-bracket.mjs';
 import backtrace from '../error/backtrace.mjs';
 import logger from '../utils/logger.mjs';
 
