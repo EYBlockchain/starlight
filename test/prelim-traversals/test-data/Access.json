@@ -52,7 +52,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 185:5:0"
+            {
+              "0": "Overwritten",
+              "src": "165:5:0"
+            }
           ]
         },
         "5": {
@@ -89,7 +92,7 @@
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
               "referencedDeclaration": 5,
-              "src": "189:1:0",
+              "src": "169:1:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -151,7 +154,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 185:5:0"
+            {
+              "0": "Overwritten",
+              "src": "165:5:0"
+            }
           ]
         },
         "5": {
@@ -188,7 +194,7 @@
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
               "referencedDeclaration": 5,
-              "src": "189:1:0",
+              "src": "169:1:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -230,7 +236,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 185:5:0"
+            {
+              "0": "Overwritten",
+              "src": "165:5:0"
+            }
           ]
         }
       },
@@ -266,7 +275,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 185:5:0"
+            {
+              "0": "Overwritten",
+              "src": "165:5:0"
+            }
           ]
         }
       },
@@ -294,7 +306,10 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 185:5:0"
+            {
+              "0": "Overwritten",
+              "src": "165:5:0"
+            }
           ],
           "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [

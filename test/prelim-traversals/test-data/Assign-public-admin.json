@@ -78,7 +78,10 @@
             "owner": null
           },
           "isWholeReason": [
-            "Overwritten at 235:10:0"
+            {
+              "0": "Overwritten",
+              "src": "206:10:0"
+            }
           ]
         },
         "5": {
@@ -215,7 +218,10 @@
             "owner": null
           },
           "isWholeReason": [
-            "Overwritten at 235:10:0"
+            {
+              "0": "Overwritten",
+              "src": "206:10:0"
+            }
           ]
         },
         "5": {
@@ -331,7 +337,10 @@
             "owner": null
           },
           "isWholeReason": [
-            "Overwritten at 235:10:0"
+            {
+              "0": "Overwritten",
+              "src": "206:10:0"
+            }
           ]
         }
       },
@@ -393,7 +402,10 @@
             "owner": null
           },
           "isWholeReason": [
-            "Overwritten at 235:10:0"
+            {
+              "0": "Overwritten",
+              "src": "206:10:0"
+            }
           ]
         }
       },
@@ -421,7 +433,10 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 235:10:0"
+            {
+              "0": "Overwritten",
+              "src": "206:10:0"
+            }
           ],
           "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
@@ -438,7 +453,7 @@
         "nodeType": "Identifier",
         "overloadedDeclarations": [],
         "referencedDeclaration": 5,
-        "src": "218:5:0",
+        "src": "197:5:0",
         "typeDescriptions": {
           "typeIdentifier": "t_address",
           "typeString": "address"

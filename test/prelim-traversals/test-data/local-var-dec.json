@@ -52,7 +52,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 182:5:0"
+            {
+              "0": "Overwritten",
+              "src": "169:5:0"
+            }
           ]
         },
         "19": {
@@ -163,7 +166,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 182:5:0"
+            {
+              "0": "Overwritten",
+              "src": "169:5:0"
+            }
           ]
         },
         "5": {
@@ -253,7 +259,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 182:5:0"
+            {
+              "0": "Overwritten",
+              "src": "169:5:0"
+            }
           ]
         }
       },
@@ -289,7 +298,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 182:5:0"
+            {
+              "0": "Overwritten",
+              "src": "169:5:0"
+            }
           ]
         }
       },
@@ -317,7 +329,10 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 182:5:0"
+            {
+              "0": "Overwritten",
+              "src": "169:5:0"
+            }
           ],
           "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [
@@ -332,6 +347,7 @@
   "errorType": null,
   "errorMessage": null,
   "warningMessages": [
+    "Superfluous 'secret' decorator used for a local declaration. If the variable interacts with a secret state, it will automatically be kept secret.",
     "Secret parameter value is being used to assign a non-global state. Is this intended?",
     "Warning: secret state x is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised."
   ]

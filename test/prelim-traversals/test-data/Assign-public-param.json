@@ -52,7 +52,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            {
+              "0": "Overwritten",
+              "src": "146:9:0"
+            }
           ]
         },
         "13": {
@@ -136,7 +139,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            {
+              "0": "Overwritten",
+              "src": "146:9:0"
+            }
           ]
         },
         "5": {
@@ -199,7 +205,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            {
+              "0": "Overwritten",
+              "src": "146:9:0"
+            }
           ]
         }
       },
@@ -235,7 +244,10 @@
           "isOwned": false,
           "owner": null,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            {
+              "0": "Overwritten",
+              "src": "146:9:0"
+            }
           ]
         }
       },
@@ -263,7 +275,10 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 154:9:0"
+            {
+              "0": "Overwritten",
+              "src": "146:9:0"
+            }
           ],
           "oldCommitmentAccessRequired": true,
           "nullifyingPaths": [

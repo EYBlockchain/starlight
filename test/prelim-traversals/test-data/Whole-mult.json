@@ -59,7 +59,7 @@
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
               "referencedDeclaration": 3,
-              "src": "166:1:0",
+              "src": "149:1:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -68,8 +68,14 @@
             }
           ],
           "isWholeReason": [
-            "Overwritten at 166:11:0",
-            "Accessed at 166:1:0"
+            {
+              "0": "Overwritten",
+              "src": "149:11:0"
+            },
+            {
+              "0": "Accessed",
+              "src": "149:1:0"
+            }
           ]
         },
         "13": {
@@ -160,7 +166,7 @@
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
               "referencedDeclaration": 3,
-              "src": "166:1:0",
+              "src": "149:1:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -169,8 +175,14 @@
             }
           ],
           "isWholeReason": [
-            "Overwritten at 166:11:0",
-            "Accessed at 166:1:0"
+            {
+              "0": "Overwritten",
+              "src": "149:11:0"
+            },
+            {
+              "0": "Accessed",
+              "src": "149:1:0"
+            }
           ]
         },
         "5": {
@@ -240,7 +252,7 @@
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
               "referencedDeclaration": 3,
-              "src": "166:1:0",
+              "src": "149:1:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -249,8 +261,14 @@
             }
           ],
           "isWholeReason": [
-            "Overwritten at 166:11:0",
-            "Accessed at 166:1:0"
+            {
+              "0": "Overwritten",
+              "src": "149:11:0"
+            },
+            {
+              "0": "Accessed",
+              "src": "149:1:0"
+            }
           ]
         }
       },
@@ -293,7 +311,7 @@
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
               "referencedDeclaration": 3,
-              "src": "166:1:0",
+              "src": "149:1:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_uint256",
                 "typeString": "uint256"
@@ -302,8 +320,14 @@
             }
           ],
           "isWholeReason": [
-            "Overwritten at 166:11:0",
-            "Accessed at 166:1:0"
+            {
+              "0": "Overwritten",
+              "src": "149:11:0"
+            },
+            {
+              "0": "Accessed",
+              "src": "149:1:0"
+            }
           ]
         }
       },
@@ -331,8 +355,14 @@
           "isDecremented": false,
           "isWhole": true,
           "isWholeReason": [
-            "Overwritten at 166:11:0",
-            "Accessed at 166:1:0"
+            {
+              "0": "Overwritten",
+              "src": "149:11:0"
+            },
+            {
+              "0": "Accessed",
+              "src": "149:1:0"
+            }
           ],
           "isAccessed": true,
           "oldCommitmentAccessRequired": true,

@@ -204,7 +204,7 @@ Use the flag `--write-all` instead of `--write <fileName`.
 
 `docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
 
-`./zokrates compile --light -i code/assign.zok` <-- it should compile
+`./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
 
 
 
