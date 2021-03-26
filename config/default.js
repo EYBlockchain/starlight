@@ -1,5 +1,5 @@
 module.exports = {
-  globals: ['uint256', 'mapping', 'address'], // to deprecate
+  // TODO: do we need this?
   types: ['uint256', 'mapping', 'address'],
   functionTypes: ['function', 'constructor', 'receive', 'fallback'],
   decorators: ['secret', 'known', 'unknown'],
@@ -9,5 +9,5 @@ module.exports = {
   functionVisibility: ['public', 'private', 'internal', 'external'],
   functionModifiers: ['pure', 'view', 'payable', 'nonpayable'],
   functionOverrides: ['virtual', 'override'],
-  log_level: 'verbose',
+  log_level: 'info',
 };

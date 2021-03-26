@@ -9,7 +9,8 @@ import toContract from './transformers/toContract.mjs';
 import toOrchestration from './transformers/toOrchestration.mjs';
 
 const zappify = options => {
-  Error.stackTraceLimit = 0;
+  Error.stackTraceLimit = 0; // prettier error output
+
   const { deDecoratedFile, toRedecorate } = removeDecorators(options);
 
   const solAST = compile(deDecoratedFile, options);
@@ -18,19 +19,19 @@ const zappify = options => {
 
   let path = checks(zolAST, options);
 
-  // path = ownership(path, options);
+  path = ownership(path, options);
 
-  // if (options.isTest && options.testType === 'prelim') return path;
+  if (options.isTest && options.testType === 'prelim') return path;
 
-  // toOrchestration(path, options);
+  toOrchestration(path, options);
 
-  // toCircuit(zolAST, options);
+  toCircuit(zolAST, options);
 
-  // toContract(zolAST, options);
+  toContract(zolAST, options);
 
-  // if (options.isTest) return path.scope.indicators;
+  if (options.isTest) return path.scope.indicators;
 
-  // return path;
+  return path;
 };
 
 export default zappify;

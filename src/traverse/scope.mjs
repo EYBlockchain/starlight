@@ -428,7 +428,7 @@ export class Scope {
           node.arguments.forEach(arg => {
             if (arg.nodeType === 'Identifier' && this.getReferencedBinding(arg)?.isSecret) {
               throw new TypeError(
-                `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
+                `External function calls with secret parameters (${arg.name}) not yet supported. You can't hide function calls without using recursive proofs.`,
               );
             }
           });

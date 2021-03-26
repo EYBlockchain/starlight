@@ -11,7 +11,9 @@ contract ImportBasedDEX {
     secret mapping(address => uint256) public balances_A;
     secret mapping(address => uint256) public balances_B;
     mapping(bytes32 => bytes32) public usedTradeHashes;
-    IERC20 public erc20;
+    IERC20 public erc20_A;
+    IERC20 public erc20_B;
+
 
     constructor(address A, address B) {
         erc20_A = IERC20(A);
@@ -65,7 +67,7 @@ contract ImportBasedDEX {
         bytes32 r,
         bytes32 s
     ) public {
-        bytes32 hash = sha256(abi.encodePacked(this, msg.sig, amountOfA, amountOfB, maker, nonce));
+        bytes32 hash = sha256(abi.encodePacked(this, msg.sig, amountOfA, amountOfB, maker));
 
         require(usedTradeHashes[hash] == 0);
         usedTradeHashes[hash] = hash;
@@ -87,7 +89,7 @@ contract ImportBasedDEX {
         bytes32 r,
         bytes32 s
     ) public {
-        bytes32 hash = sha256(abi.encodePacked(this, msg.sig, amountOfB, amountOfA, maker, nonce));
+        bytes32 hash = sha256(abi.encodePacked(this, msg.sig, amountOfB, amountOfA, maker));
 
         require(usedTradeHashes[hash] == 0);
         usedTradeHashes[hash] = hash;
@@ -95,8 +97,8 @@ contract ImportBasedDEX {
         require(ecrecover(hash,v,r,s) == maker);
 
         balances_B[msg.sender] -= amountOfB;
-        balances_B[taker] += amountOfB;
-        unknown balances_A[taker] -= amountOfA; // NOT ALLOWED - would need to make it 'known' to the sender, which does actually make sense, given the off-chain steps.
+        balances_B[maker] += amountOfB;
+        unknown balances_A[maker] -= amountOfA; // NOT ALLOWED - would need to make it 'known' to the sender, which does actually make sense, given the off-chain steps.
         balances_A[msg.sender] += amountOfA;
     }
 }
