@@ -21,8 +21,8 @@ export default {
       const args = node.arguments;
       args.forEach(arg => {
         if (arg.name === 'this') return; // you won't find a binding for such a special reference
-        const binding = arg.referencedDeclaration ? scope.getReferencedBinding(arg) : {};
-        if (binding.isSecret)
+        const binding = arg.referencedDeclaration ? scope.getReferencedBinding(arg) : {}; // TODO: what does getReferencedBinding return if it's passed something without a referencedDeclaration property? It should return null.
+        if (binding?.isSecret)
           throw new Error(
             `Cannot pass a secret state (${binding.name}) to an external function call.`,
           );

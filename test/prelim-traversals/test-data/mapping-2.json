@@ -191,10 +191,10 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 13,
-              "referencedKeyNodeType": "t_magic_message",
-              "referencedKeyisParam": false,
-              "referencedKeyisMsg": true,
+              "referencedKeyId": 4294967281,
+              "referencedKeyNodeType": "msg.sender",
+              "referencedKeyIsParam": false,
+              "isMsgSender": true,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -297,10 +297,10 @@
               "nullificationCount": 0
             },
             "addr": {
-              "referencedKey": 40,
+              "referencedKeyId": 27,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -682,10 +682,10 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 13,
-              "referencedKeyNodeType": "t_magic_message",
-              "referencedKeyisParam": false,
-              "referencedKeyisMsg": true,
+              "referencedKeyId": 4294967281,
+              "referencedKeyNodeType": "msg.sender",
+              "referencedKeyIsParam": false,
+              "isMsgSender": true,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -788,10 +788,10 @@
               "nullificationCount": 0
             },
             "addr": {
-              "referencedKey": 40,
+              "referencedKeyId": 27,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -1120,10 +1120,10 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 13,
-              "referencedKeyNodeType": "t_magic_message",
-              "referencedKeyisParam": false,
-              "referencedKeyisMsg": true,
+              "referencedKeyId": 4294967281,
+              "referencedKeyNodeType": "msg.sender",
+              "referencedKeyIsParam": false,
+              "isMsgSender": true,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -1226,10 +1226,10 @@
               "nullificationCount": 0
             },
             "addr": {
-              "referencedKey": 40,
+              "referencedKeyId": 27,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -1372,10 +1372,10 @@
           "modificationCount": 0,
           "mappingKey": {
             "msg": {
-              "referencedKey": 13,
+              "referencedKeyId": 13,
               "referencedKeyNodeType": "t_magic_message",
-              "referencedKeyisParam": false,
-              "referencedKeyisMsg": true,
+              "referencedKeyIsParam": false,
+              "isMsgSender": true,
               "isReferenced": true,
               "referenceCount": 2,
               "referencingPaths": [
@@ -1478,10 +1478,10 @@
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
-                "referencedKey": 13,
-                "referencedKeyNodeType": "t_magic_message",
-                "referencedKeyisParam": false,
-                "referencedKeyisMsg": true,
+                "referencedKeyId": 4294967281,
+                "referencedKeyNodeType": "msg.sender",
+                "referencedKeyIsParam": false,
+                "isMsgSender": true,
                 "isSecret": true,
                 "isReferenced": true,
                 "referenceCount": 2,
@@ -1834,10 +1834,10 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 13,
-              "referencedKeyNodeType": "t_magic_message",
-              "referencedKeyisParam": false,
-              "referencedKeyisMsg": true,
+              "referencedKeyId": 4294967281,
+              "referencedKeyNodeType": "msg.sender",
+              "referencedKeyIsParam": false,
+              "isMsgSender": true,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -1940,10 +1940,10 @@
               "nullificationCount": 0
             },
             "addr": {
-              "referencedKey": 40,
+              "referencedKeyId": 27,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -2327,10 +2327,10 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 13,
-              "referencedKeyNodeType": "t_magic_message",
-              "referencedKeyisParam": false,
-              "referencedKeyisMsg": true,
+              "referencedKeyId": 4294967281,
+              "referencedKeyNodeType": "msg.sender",
+              "referencedKeyIsParam": false,
+              "isMsgSender": true,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -2433,10 +2433,10 @@
               "nullificationCount": 0
             },
             "addr": {
-              "referencedKey": 40,
+              "referencedKeyId": 27,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -2738,10 +2738,10 @@
           "isMapping": true,
           "mappingKey": {
             "msg": {
-              "referencedKey": 13,
-              "referencedKeyNodeType": "t_magic_message",
-              "referencedKeyisParam": false,
-              "referencedKeyisMsg": true,
+              "referencedKeyId": 4294967281,
+              "referencedKeyNodeType": "msg.sender",
+              "referencedKeyIsParam": false,
+              "isMsgSender": true,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -2844,10 +2844,10 @@
               "nullificationCount": 0
             },
             "addr": {
-              "referencedKey": 40,
+              "referencedKeyId": 27,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 2,
@@ -2989,10 +2989,10 @@
           "modificationCount": 0,
           "mappingKey": {
             "addr": {
-              "referencedKey": 40,
+              "referencedKeyId": 40,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isReferenced": true,
               "referenceCount": 2,
               "referencingPaths": [
@@ -3080,10 +3080,10 @@
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
-                "referencedKey": 40,
+                "referencedKeyId": 27,
                 "referencedKeyNodeType": "VariableDeclaration",
-                "referencedKeyisParam": true,
-                "referencedKeyisMsg": false,
+                "referencedKeyIsParam": true,
+                "isMsgSender": false,
                 "isSecret": true,
                 "isReferenced": true,
                 "referenceCount": 2,

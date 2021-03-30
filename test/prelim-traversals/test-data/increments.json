@@ -275,10 +275,10 @@
           "isMapping": true,
           "mappingKey": {
             "key": {
-              "referencedKey": 21,
+              "referencedKeyId": 11,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 4,
@@ -785,10 +785,10 @@
           "isMapping": true,
           "mappingKey": {
             "key": {
-              "referencedKey": 21,
+              "referencedKeyId": 11,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 4,
@@ -1259,10 +1259,10 @@
           "isMapping": true,
           "mappingKey": {
             "key": {
-              "referencedKey": 21,
+              "referencedKeyId": 11,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 4,
@@ -1451,10 +1451,10 @@
           "modificationCount": 0,
           "mappingKey": {
             "key": {
-              "referencedKey": 21,
+              "referencedKeyId": 21,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isReferenced": true,
               "referenceCount": 2,
               "referencingPaths": [
@@ -1501,10 +1501,10 @@
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
-                "referencedKey": 21,
+                "referencedKeyId": 11,
                 "referencedKeyNodeType": "VariableDeclaration",
-                "referencedKeyisParam": true,
-                "referencedKeyisMsg": false,
+                "referencedKeyIsParam": true,
+                "isMsgSender": false,
                 "isSecret": true,
                 "isReferenced": true,
                 "referenceCount": 4,
@@ -2357,10 +2357,10 @@
           "isMapping": true,
           "mappingKey": {
             "key": {
-              "referencedKey": 21,
+              "referencedKeyId": 11,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 4,
@@ -2662,10 +2662,10 @@
           "isMapping": true,
           "mappingKey": {
             "key": {
-              "referencedKey": 21,
+              "referencedKeyId": 11,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 4,
@@ -2912,10 +2912,10 @@
           "isMapping": true,
           "mappingKey": {
             "key": {
-              "referencedKey": 21,
+              "referencedKeyId": 11,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 4,
@@ -3059,10 +3059,10 @@
           "modificationCount": 0,
           "mappingKey": {
             "key": {
-              "referencedKey": 51,
+              "referencedKeyId": 51,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isReferenced": true,
               "referenceCount": 2,
               "referencingPaths": [
@@ -3150,10 +3150,10 @@
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
-                "referencedKey": 21,
+                "referencedKeyId": 11,
                 "referencedKeyNodeType": "VariableDeclaration",
-                "referencedKeyisParam": true,
-                "referencedKeyisMsg": false,
+                "referencedKeyIsParam": true,
+                "isMsgSender": false,
                 "isSecret": true,
                 "isReferenced": true,
                 "referenceCount": 4,

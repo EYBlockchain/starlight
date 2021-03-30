@@ -26,6 +26,7 @@ export default {
           ? scope.isIncremented(expressionNode, lhsNode)
           : { isIncrementedBool: false, isDecrementedBool: false };
 
+      // @Node new properties
       expressionNode.isIncremented = isIncrementedBool;
       expressionNode.isDecremented = isDecrementedBool;
 
@@ -56,14 +57,16 @@ export default {
         }
 
         // if its incremented anywhere, isIncremented = true
-
+        // @Indicator new properties
         fnIndicatorObj.isIncremented =
           fnIndicatorObj.isIncremented === true ? true : isIncrementedBool;
         fnIndicatorObj.isDecremented =
           fnIndicatorObj.isDecremented === true ? true : isDecrementedBool;
         if (isIncrementedBool === false) {
           // statement is an overwrite
+          // @Indicator new properties
           fnIndicatorObj.isWhole = true;
+          // @Binding new properties
           referencedBinding.isWhole = true;
           const reason =
             lhsNode.typeDescriptions.typeString !== 'address'
@@ -71,14 +74,18 @@ export default {
               : `Address`;
           logger.debug('reason:', reason);
           if (fnIndicatorObj.isWholeReason) {
+            // @Indicator new properties
             fnIndicatorObj.isWholeReason.push(reason);
           } else {
+            // @Indicator new properties
             fnIndicatorObj.isWholeReason = [reason];
           }
 
           if (parentIndicatorObj?.isWholeReason) {
+            // @Indicator new properties
             parentIndicatorObj.isWholeReason.push(reason);
           } else if (parentIndicatorObj) {
+            // @Indicator new properties
             parentIndicatorObj.isWhole = true;
             parentIndicatorObj.isWholeReason = [reason];
           }

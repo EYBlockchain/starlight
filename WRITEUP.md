@@ -282,10 +282,10 @@ If the variable is a mapping, we additionally hold some of these fields in `bind
   isMapping: true,
   mappingKey: {
     a: {
-      referencedKey: 51,
+      referencedKeyId: 51,
       referencedKeyNodeType: 'VariableDeclaration',
-      referencedKeyisParam: false,
-      referencedKeyisMsg: false,
+      referencedKeyIsParam: false,
+      isMsgSender: false,
       isSecret: true,
       isReferenced: true,
       referenceCount: 1,
@@ -298,10 +298,10 @@ If the variable is a mapping, we additionally hold some of these fields in `bind
       isOwned: true
     },
     b: {
-      referencedKey: 73,
+      referencedKeyId: 73,
       referencedKeyNodeType: 'VariableDeclaration',
-      referencedKeyisParam: false,
-      referencedKeyisMsg: false,
+      referencedKeyIsParam: false,
+      isMsgSender: false,
       isSecret: true,
       isReferenced: true,
       referenceCount: 1,

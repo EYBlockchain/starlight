@@ -13,6 +13,7 @@ export default {
     enter(path, state) {
       const { node, parent } = path;
       // node.isUnknown gets added during the 'parsing' stage
+      // @Node new properties
       if (node.isUnknown) node.baseExpression.isUnknown = true;
       if (node.isKnown) node.baseExpression.isKnown = true;
     },
@@ -76,6 +77,7 @@ export default {
           throw new Error(`Identifier ${node.name} is marked as unknown and known.`);
       });
 
+      // @Binding new properties
       if (node.isKnown) varDec.isKnown = node.isKnown;
       if (node.isUnknown) varDec.isUnknown = node.isUnknown;
     },

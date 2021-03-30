@@ -303,7 +303,7 @@ export default {
                 : null,
             };
 
-            if (binding.referencedKey) {
+            if (binding.referencedKeyId) {
               node._newASTPointer.body.statements[index].privateStates[
                 stateVarName
               ].stateVarId.push(binding.referencedKeyName);
@@ -365,7 +365,7 @@ export default {
               : null,
           };
 
-          if (binding.referencedKey) {
+          if (binding.referencedKeyId) {
             calculateCommitmentNode.stateVarId.push(binding.referencedKeyName);
           }
 
@@ -462,7 +462,7 @@ export default {
               ? binding.owner.isSecret || binding.owner.node.isSecret
               : null,
           };
-          if (binding.referencedKey) {
+          if (binding.referencedKeyId) {
             node._newASTPointer.body.statements[index].privateStates[stateVarName].stateVarId.push(
               binding.referencedKeyName,
             );

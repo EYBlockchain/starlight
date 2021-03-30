@@ -29,6 +29,7 @@ export default {
             isWhole = false;
           }
           Object.keys(secretVar.mappingKey).forEach(key => {
+            // @Indicator 
             secretVar.mappingKey[key].binding = secretVar.binding.mappingKey[key];
             secretVar.mappingKey[key].id = secretVar.id;
             secretVar.mappingKey[key].isWhole = isWhole;
