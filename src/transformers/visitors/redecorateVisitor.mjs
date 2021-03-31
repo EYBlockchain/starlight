@@ -5,9 +5,31 @@ import logger from '../../utils/logger.mjs';
 import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
 export default {
+  VariableDeclarationStatement: {
+    enter(node, state) {
+      // we only care about statements if they contain a secret declaration
+      // a VariableDeclarationStatement which holds a VariableDeclaration has one only one declaration
+      if (node.declarations[0].nodeType !== 'VariableDeclaration') return;
+      const varDec = node.declarations[0];
+      // for each decorator we have to re-add...
+      for (const toRedecorate of state) {
+        // skip if the decorator is not secret (can't be a variable dec) or if its already been added
+        if (toRedecorate.added || toRedecorate.decorator !== 'secret') continue;
+        // extract the char number
+        const srcStart = varDec.src.split(':')[0];
+        // if it matches the one we removed, throw warning
+        if (toRedecorate.charStart === Number(srcStart)) {
+          logger.warn(
+            `Superfluous 'secret' decorator used for a local declaration. If the variable interacts with a secret state, it will automatically be kept secret.`,
+          );
+          return;
+        }
+      }
+    },
+  },
+
   VariableDeclaration: {
-    enter(path, state) {
-      const { node } = path;
+    enter(node, state) {
       // for each decorator we have to re-add...
       for (const toRedecorate of state) {
         // skip if the decorator is not secret (can't be a variable dec) or if its already been added
@@ -16,10 +38,6 @@ export default {
         const srcStart = node.src.split(':')[0];
         // if it matches the one we removed, add it back to the AST
         if (toRedecorate.charStart === Number(srcStart)) {
-          if (path.isInType('VariableDeclarationStatement'))
-            logger.warn(
-              `Superfluous 'secret' decorator used for a local declaration. If the variable interacts with a secret state, it will automatically be kept secret.`,
-            );
           toRedecorate.added = true;
           node.isSecret = true;
           return;
@@ -31,9 +49,8 @@ export default {
   },
 
   Identifier: {
-    enter(path, state) {
+    enter(node, state) {
       // see varDec for comments
-      const { node } = path;
       for (const toRedecorate of state) {
         if (toRedecorate.added || toRedecorate.decorator === 'secret') continue;
         const srcStart = node.src.split(':')[0];

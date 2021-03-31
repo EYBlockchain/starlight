@@ -1,9 +1,12 @@
 /* eslint-disable no-param-reassign, no-continue */
 
 import fs from 'fs';
-import NodePath from '../traverse/NodePath.mjs';
+import {
+  traverseNodesFast,
+  traverseNodesFastVisitor,
+} from '../traverse/traverse.mjs';
 import logger from '../utils/logger.mjs';
-import backtrace from '../error/backtrace.mjs';
+import { SyntaxTypeError, SyntaxError } from '../error/errors.mjs';
 import explode from '../transformers/visitors/explode.mjs';
 import redecorateVisitor from '../transformers/visitors/redecorateVisitor.mjs';
 
@@ -12,10 +15,7 @@ const errorCheckVisitor = (thisPath, decoratorObj) => {
   const srcStart = thisPath.node.src.split(':')[0];
   // if it matches the one we removed, throw error
   if (decoratorObj.charStart === Number(srcStart)) {
-    backtrace.getSourceCode(thisPath.node.src);
-    throw new SyntaxError(
-      `Decorator '${decoratorObj.decorator}' cannot be added to node of type '${thisPath.node.nodeType}'.`,
-    );
+    throw new SyntaxTypeError(thisPath.node, decoratorObj.decorator);
   }
 };
 
@@ -25,27 +25,31 @@ const errorCheckVisitor = (thisPath, decoratorObj) => {
  */
 
 function transformation1(oldAST, toRedecorate) {
-  const dummyParent = {
-    ast: oldAST,
-  };
-
-  const path = new NodePath({
-    parent: dummyParent,
-    key: 'ast', // since parent.ast = node
-    container: oldAST,
-    node: oldAST,
-  });
+  // const dummyParent = {
+  //   ast: oldAST,
+  // };
+  //
+  // const path = new NodePath({
+  //   parent: dummyParent,
+  //   key: 'ast', // since parent.ast = node
+  //   container: oldAST,
+  //   node: oldAST,
+  // });
 
   // NB: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
-  path.traverse(explode(redecorateVisitor), toRedecorate);
+  traverseNodesFastVisitor(oldAST, explode(redecorateVisitor), toRedecorate);
+
   // we check for decorators we couldn't re-add
   for (const decorator of toRedecorate) {
     if (decorator.added) continue;
-    path.traversePathsFast(errorCheckVisitor, decorator);
+    traverseNodesFast(oldAST, errorCheckVisitor, decorator);
+    throw new SyntaxError(
+      `We couldn't find where ${decorator.decorator} should be re-added (char number ${decorator.charStart}). Do all decorators precede a variable name?`,
+    );
   }
   // At the end of our transformer function we'll return the new ast that we
   // just created.
-  return path;
+  return oldAST;
 }
 
 // A transformer function which will accept an ast.
@@ -54,6 +58,6 @@ export default function redecorate(ast, toRedecorate, options) {
   const newAST = transformation1(ast, toRedecorate);
 
   const zolASTFilePath = `${options.parseDirPath}/${options.inputFileName}.zol_ast.json`;
-  fs.writeFileSync(zolASTFilePath, JSON.stringify(newAST.node, null, 4));
-  return JSON.parse(JSON.stringify(newAST.node, null, 4));
+  fs.writeFileSync(zolASTFilePath, JSON.stringify(newAST, null, 4));
+  return JSON.parse(JSON.stringify(newAST, null, 4));
 }

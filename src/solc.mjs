@@ -2,6 +2,7 @@ import solc from 'solc';
 import fs from 'fs';
 import path from 'path';
 import logger from './utils/logger.mjs';
+import { FilingError } from './error/errors.mjs';
 // import config from 'config';
 // import { releases } from './solc-versions-list';
 
@@ -124,11 +125,14 @@ const createSolcInput = solidityFile => {
  */
 const errorHandling = compiled => {
   if (!compiled) {
-    logger.error(`solc didn't create any output...`);
+    throw new FilingError(`solc didn't create any output...`);
   } else if (compiled.errors) {
     // something went wrong.
+    logger.error(`solc errors:`);
     compiled.errors.map(error => logger.error(error.formattedMessage));
-    throw new Error('Solc Compilation Error: ^^^');
+    throw new FilingError(
+      'Solc Compilation Error: Make sure your .sol contract compiles without Zappify decorators.',
+    );
   }
 };
 
@@ -145,10 +149,12 @@ const compile = (solidityFile, options) => {
         contents: sources[_import.toString()].contents,
       };
     }
-    return { error: 'File not found' };
+    throw new FilingError(`We couldn't find the import ${_import}`);
   };
 
-  const compiled = JSON.parse(solc.compile(JSON.stringify(params), { import: findImports }));
+  const compiled = JSON.parse(
+    solc.compile(JSON.stringify(params), { import: findImports }),
+  );
   logger.debug('compiled', compiled);
   errorHandling(compiled);
 

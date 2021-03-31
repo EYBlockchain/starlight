@@ -85,6 +85,38 @@ export function traverseNodesFast(node, enter, state = {}) {
 }
 
 /**
+ * Fast traversal function for quick searching of a subtree. No scoping calcs. Allows seperate enter() methods per node type.
+ * @param {function} enter - a visitor function.
+ */
+export function traverseNodesFastVisitor(node, visitor, state = {}) {
+  if (!node) return;
+  if (state?.stopTraversal || state?.skipSubNodes) return;
+
+  const keys = getVisitableKeys(node.nodeType);
+  if (!keys) return;
+
+  const methods = visitor[node.nodeType];
+  if (methods?.enter) {
+    methods.enter(node, state);
+    if (state?.stopTraversal) return;
+  }
+
+  for (const key of keys) {
+    if (Array.isArray(node[key])) {
+      const subNodes = node[key];
+      for (const subNode of subNodes) {
+        traverseNodesFastVisitor(subNode, visitor, state);
+      }
+    } else if (node[key]) {
+      const subNode = node[key];
+      traverseNodesFastVisitor(subNode, visitor, state);
+    }
+  }
+
+  if (state?.skipSubNodes) state.skipSubNodes = false;
+}
+
+/**
  * Fast traversal function for quick searching of a subtree. No scoping calcs.
  * @param {function} enter - a visitor function.
  */
