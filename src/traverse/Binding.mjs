@@ -2,37 +2,37 @@
 
 import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
+import { bindingCache } from './cache.mjs';
 
 export default class Binding {
   // Exists to catch nodeTypes for which a binding makes no sense
   static isBindable(nodeType) {
     switch (nodeType) {
-      case 'ContractDefinition' ||
-        'FunctionDefinition' ||
-        'Identifier' ||
-        'FunctionCall':
+      case 'ContractDefinition':
+      case 'FunctionDefinition':
+      case 'VariableDeclaration':
         return true;
-      case 'ArrayTypeName' ||
-        'Assignment' ||
-        'Block' ||
-        'BinaryOperation' ||
-        'ElementaryTypeName' ||
-        'ElementaryTypeNameExpression' ||
-        'ExpressionStatement' ||
-        'Identifier' ||
-        'ImportDirective' ||
-        'IndexAccess' ||
-        'Literal' ||
-        'Mapping' ||
-        'MemberAccess' ||
-        'ParameterList' ||
-        'PragmaDirective' ||
-        'Return' ||
-        'TupleExpression' ||
-        'UnaryOperation' ||
-        'UserDefinedTypeName' ||
-        'VariableDeclaration' ||
-        'VariableDeclarationStatement':
+      case 'ArrayTypeName':
+      case 'Assignment':
+      case 'Block':
+      case 'BinaryOperation':
+      case 'ElementaryTypeName':
+      case 'ElementaryTypeNameExpression':
+      case 'ExpressionStatement':
+      case 'FunctionCall':
+      case 'Identifier':
+      case 'ImportDirective':
+      case 'IndexAccess':
+      case 'Literal':
+      case 'Mapping':
+      case 'MemberAccess':
+      case 'ParameterList':
+      case 'PragmaDirective':
+      case 'Return':
+      case 'TupleExpression':
+      case 'UnaryOperation':
+      case 'UserDefinedTypeName':
+      case 'VariableDeclarationStatement':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);
@@ -46,8 +46,16 @@ export default class Binding {
    * @returns {Binding || null}
    */
   static create(path) {
-    if (!this.isBindable(path.node.nodeType)) return null;
-    return new Binding(path);
+    const { node } = path;
+
+    if (!this.isBindable(node.nodeType)) return null;
+
+    const cachedBinding = bindingCache.get(node);
+    if (cachedBinding) return cachedBinding;
+
+    const binding = new Binding(path);
+    bindingCache.set(node, binding);
+    return binding;
   }
 
   constructor(path) {
@@ -70,20 +78,20 @@ export default class Binding {
       this.stateVariable = node.stateVariable;
 
       this.isReferenced = false;
-      this.referencedCount = 0;
-      this.referencingPaths = null; // array of paths of `Identifier` nodes which reference this variable
+      this.referenceCount = 0;
+      this.referencingPaths = []; // array of paths of `Identifier` nodes which reference this variable
 
       this.isModified = false;
       this.modificationCount = 0;
-      this.modifyingPaths = null; // array of paths of `Identifier` nodes which modify this variable
+      this.modifyingPaths = []; // array of paths of `Identifier` nodes which modify this variable
       // NOTE: modification _is_ nullification, unless it's a partitioned state being incremented (in which case there's no nullifier). So nullifyingPaths is a subset of modifyingPaths.
 
       this.isNullified = false;
       this.nullificationCount = 0;
-      this.nullifyingPaths = null; // array of paths of `Identifier` nodes which nullify this binding
+      this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
 
-      this.increments = null; // array of nodes
-      this.decrements = null; // array of nodes
+      this.increments = []; // array of nodes
+      this.decrements = []; // array of nodes
 
       this.isMapping = false;
       this.mappingKeys = null; // object of objects, indexed by node id.
@@ -100,32 +108,14 @@ export default class Binding {
         this.isMapping = true;
         this.mappingKeys = {};
       }
-
-      return;
-    }
-
-    if (path.isNodeType('Identifier')) {
-      // TODO: the below check probably belongs in the scope checks, rather than in here. (Because it needs to be caught before trying to initialise either a binding &or an indicator etc.)
-      if (
-        path.isMsg() ||
-        path.isRequire() ||
-        path.isThis() ||
-        path.isExportedSymbol()
-      )
-        return;
-
-      const referencedBinding = path.getReferencedBinding();
-      if (!referencedBinding)
-        throw new Error(
-          `Couldn't find a referencedDeclaration node for the current Identifier node.  I.e. couldn't find a node with id ${node.referencedDeclaration}`,
-        );
     }
   }
 
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
   addMappingKey(referencingPath) {
-    if (!this.isMapping) return;
-    const keyNode = referencingPath.parent.indexExpression;
+    const keyNode =
+      referencingPath.parent.indexExpression.expression ||
+      referencingPath.parent.indexExpression; // FIXME: the keyNode should always be parent.indexExpression. The reason for the complication is to get 'Msg' for msg.sender, but it'd be better (and make it easier to expand to other struct (MemberAccess) keys in future) if we always use parent.indexExpression. In the case of msg.sender, the keyname would become msg.sender. At the moment, making that change causes the increments stuff to break. :(
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
@@ -144,76 +134,106 @@ export default class Binding {
     // add this mappingKey if it hasn't yet been added:
     const mappingKeyExists = !!this.mappingKeys[keyName];
     if (!mappingKeyExists)
-      this.mappingKeys[keyName] = new MappingKey(this, keyNode);
+      this.mappingKeys[keyName] = new MappingKey(this, keyPath);
+
+    return this.mappingKeys[keyName];
   }
 
-  /**
-   * @desc As we traverse through the AST, each node we reach will provide more
-   * info to add (as properties) to `this`.
-   * @param {NodePath} path
-   */
+  // A binding will be updated if (some time after its creation) we encounter an AST node which refers to this binding's variable.
+  // E.g. if we encounter an Identifier node.
   update(path) {
-    const {
-      node: { name, id, nodeType },
-      parent,
-    } = path;
+    if (this.isMapping) {
+      this.addMappingKey(path).updateProperties(path);
+    } else {
+      this.updateProperties(path);
+    }
+  }
+
+  updateProperties(path) {
+    this.addReferencingPath(path);
+    if (path.isModification()) this.addModifyingPath(path);
+  }
+
+  addReferencingPath(path) {
+    this.isReferenced = true;
+    ++this.referenceCount;
+    if (!this.referencingPaths.some(p => p.node.id === path.node.id))
+      this.referencingPaths.push(path);
+  }
+
+  addModifyingPath(path) {
+    this.isModified = true;
+    ++this.modificationCount;
+    if (!this.modifyingPaths.some(p => p.node.id === path.node.id))
+      this.modifyingPaths.push(path);
   }
 
   addNullifyingPath(path) {
     this.isNullified = true;
     ++this.nullificationCount;
-    this.modifyingPaths.push(path);
-    // QUESTION: also update modifications? (Because a nullification => modification)
-    this.addModifyingPath(path);
-  }
-}
-
-/**
- * If a Binding represents a mapping, it will contain a MappingKeys class.
- */
-export class MappingKey {
-  constructor(binding, keyPath) {
-    // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
-    this.referenceKeyId = keyPath.node.referencedDeclaration;
-    this.referencedKeyNodeType = keyPath.isMsgSender()
-      ? 'msg.sender'
-      : keyPath.getReferencedNode().nodeType;
-    this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
-    this.isMsgSender = keyPath.isMsg(); // used for finding owner
-    this.isSecret = binding.isSecret;
-    this.isReferenced = false;
-    this.referenceCount = 0;
-    this.referencingPaths = []; // paths which reference this binding
-    this.isModified = false;
-    this.modificationCount = 0;
-    this.modifyingPaths = []; // paths which reference this binding;
+    this.nullifyingPaths.push(path);
   }
 }
 
 const commonFunctions = {
-  // nullification => modification => referencing
-  /**
-   * @this { Binding || MappingKey }
-   */
-  addReferencingPath(path) {
-    this.isReferenced = true;
-    ++this.referenceCount;
-    this.referencingPaths.push(path);
-  },
 
-  /**
-   * @this { Binding || MappingKey }
-   */
-  addModifyingPath(path) {
-    this.isModified = true;
-    ++this.modificationCount;
-    this.modifyingPaths.push(path);
-    // QUESTION: also update references? (Because a modification is a reference)
-    this.addReferencingPath(path);
-  },
 };
 
 // add common functions as methods to the classes:
-Object.assign(MappingKey.prototype, commonFunctions);
+// Object.assign(MappingKey.prototype, commonFunctions);
+//
+// Object.assign(Binding.prototype, commonFunctions);
 
-Object.assign(Binding.prototype, commonFunctions);
+/**
+ * If a Binding/StateVarIndicator represents a mapping, it will contain a MappingKey class.
+ */
+export class MappingKey {
+  /**
+   * A mappingKey can be contained within a binding or an indicator class.
+   * @param { Binding || StateVarIndicator } container
+   * @param { NodePath } keyPath
+   */
+  constructor(container, keyPath) {
+    this.container = container;
+
+    // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
+    this.referencedKeyId = keyPath.node.referencedDeclaration;
+    this.referencedKeyNodeType = keyPath.isMsg()
+      ? 'msg.sender'
+      : keyPath.getReferencedNode().nodeType;
+    this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
+    this.isMsgSender = keyPath.isMsg(); // used for finding owner
+    this.isSecret = container.isSecret;
+
+    this.isReferenced = false;
+    this.referenceCount = 0;
+    this.referencingPaths = []; // paths which reference this variable
+
+    this.isModified = false;
+    this.modificationCount = 0;
+    this.modifyingPaths = []; // paths which reference this variable
+  }
+
+  updateProperties(path) {
+    this.addReferencingPath(path);
+    if (path.isModification()) this.addModifyingPath(path);
+
+    this.container.updateProperties(path);
+  }
+
+  // TODO: move into commonFunctions (because it's the same function as included in the Binding class)
+  addReferencingPath(path) {
+    this.isReferenced = true;
+    ++this.referenceCount;
+    if (!this.referencingPaths.some(p => p.node.id === path.node.id))
+      this.referencingPaths.push(path);
+  }
+
+  addModifyingPath(path) {
+    this.isModified = true;
+    ++this.modificationCount;
+    if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
+      this.modifyingPaths.push(path);
+    }
+  }
+}

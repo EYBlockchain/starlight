@@ -624,6 +624,28 @@ export default class NodePath {
     }
   }
 
+  isModification() {
+    switch (this.nodeType) {
+      case 'Identifier':
+        // Currently, the only state variable 'modifications' we're aware of are:
+        //   - when a state variable is referenced on the LHS of an assignment;
+        //   - a unary operator
+
+        // prettier-ignore
+        return (
+            this.containerName !== 'indexExpression' &&
+            this.getAncestorContainedWithin('leftHandSide') &&
+            this.getAncestorOfType('Assignment')
+          ) ||
+          (
+            this.getAncestorOfType('UnaryOperation') &&
+            this.containerName !== 'indexExpression'
+          );
+      default:
+        return false;
+    }
+  }
+
   /**
    * Get the referencedDeclaration node id of a particular node.
    * I.e. get the id of the node which the input node references.

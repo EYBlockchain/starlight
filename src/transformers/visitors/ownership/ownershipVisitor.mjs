@@ -18,16 +18,16 @@ export default {
         }
         if (binding.isSecret && binding.isOwned && binding.isMapping) {
           const { owner } = binding;
-          Object.keys(binding.mappingKey).forEach(key => {
-            if (!binding.mappingKey[key].isOwned) {
+          Object.keys(binding.mappingKeys).forEach(key => {
+            if (!binding.mappingKeys[key].isOwned) {
               // @Binding new properties
-              binding.mappingKey[key].isOwned = true;
-              binding.mappingKey[key].owner =
-                owner.name === 'msg' && binding.mappingKey.msg
-                  ? binding.mappingKey[key].referencedKeyIsParam
+              binding.mappingKeys[key].isOwned = true;
+              binding.mappingKeys[key].owner =
+                owner.name === 'msg' && binding.mappingKeys.msg
+                  ? binding.mappingKeys[key].referencedKeyIsParam
                     ? { name: key, isParam: true }
                     : path.scope.getReferencedNode({
-                        referencedDeclaration: binding.mappingKey[key].referencedKeyId,
+                        referencedDeclaration: binding.mappingKeys[key].referencedKeyId,
                       })
                   : owner;
             }
@@ -61,7 +61,7 @@ export default {
         isMapping = true;
         lhsIdentifier = lhsNode.baseExpression;
         const keyName = scope.getMappingKeyName(lhsNode);
-        lhsbinding = scope.getReferencedBinding(lhsIdentifier).mappingKey[keyName];
+        lhsbinding = scope.getReferencedBinding(lhsIdentifier).mappingKeys[keyName];
       }
 
       const lhsSecret = !!lhsbinding.isSecret;

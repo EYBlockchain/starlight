@@ -64,9 +64,10 @@ const pathsMap = bindingOrIndicatorOrMappingKey => {
   if (x.nullifyingPaths) x.nullifyingPaths = mapToId(x.nullifyingPaths);
 };
 
-const formatMappingKey = mappingKey => {
-  for (const keyInfo of Object.values(mappingKey)) {
-    pathsMap(keyInfo);
+const formatMappingKeys = mappingKeys => {
+  for (const mappingKey of Object.values(mappingKeys)) {
+    pathsMap(mappingKey);
+    delete mappingKey.container;
   }
 };
 
@@ -76,7 +77,7 @@ const formatBindings = bindings => {
     delete binding.path;
     delete binding.scope;
     pathsMap(binding);
-    if (binding.mappingKey) formatMappingKey(binding.mappingKey);
+    if (binding.mappingKeys) formatMappingKeys(binding.mappingKeys);
   }
 };
 
@@ -84,7 +85,7 @@ const formatIndicators = indicators => {
   for (const indicator of Object.values(indicators)) {
     delete indicator.binding;
     pathsMap(indicator);
-    if (indicator.mappingKey) formatMappingKey(indicator.mappingKey);
+    if (indicator.mappingKeys) formatMappingKeys(indicator.mappingKeys);
   }
 };
 

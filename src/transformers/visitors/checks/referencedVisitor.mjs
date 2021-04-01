@@ -95,7 +95,7 @@ export default {
           const reason = `Accessed at ${node.src}`;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyName(lhsNode);
-            referencedIndicator = referencedIndicator.mappingKey[keyName];
+            referencedIndicator = referencedIndicator.mappingKeys[keyName];
           }
           // @Indicator updated properties
           // @Binding updated properties
@@ -131,7 +131,7 @@ export default {
           const reason = `Accessed at ${node.src}`;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyName(lhsNode);
-            referencedIndicator = referencedIndicator.mappingKey[keyName];
+            referencedIndicator = referencedIndicator.mappingKeys[keyName];
           }
           // @Node new property
           // @Indicator updated properties

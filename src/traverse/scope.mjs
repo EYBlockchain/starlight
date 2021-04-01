@@ -2,6 +2,12 @@
 
 import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
+import Binding from './Binding.mjs';
+import {
+  ContractDefinitionIndicator,
+  FunctionDefinitionIndicator,
+  StateVariableIndicator,
+} from './Indicator.mjs';
 import { scopeCache } from './cache.mjs';
 import backtrace from '../error/backtrace.mjs';
 
@@ -60,7 +66,7 @@ export class Scope {
   constructor(path) {
     const { node } = path;
     const cachedScope = scopeCache.get(node);
-    if (cachedScope && cachedScope.path) return cachedScope;
+    if (cachedScope?.path) return cachedScope;
 
     this.scopeId = node.id;
     this.scopeName = node.name || ''; // whilst not all nodes have a 'name' property; all scopable nodes do. TODO: for loops, while loops, if statements, and other { braced scopes } won't have names.
@@ -87,46 +93,11 @@ export class Scope {
     switch (this.scopeType) {
       case 'ContractDefinition':
         // @Indicator_ConDec new properties
-        this.indicators = {
-          zkSnarkVerificationRequired: false,
-          oldCommitmentAccessRequired: false,
-          nullifiersRequired: false,
-          newCommitmentsRequired: false,
-        };
+        this.indicators = new ContractDefinitionIndicator();
         break;
       case 'FunctionDefinition':
         // @Indicator_FnDef new properties
-        this.indicators = {
-          // BIG COMMENT FOR INFO ONLY
-          // id: { // Although state variables have unique names, id is more consistent with other objects
-          //   id: state_var_node_id
-          //   name: state_var_name,
-          //   binding: { binding_of_var_decl },
-          //   isReferenced: true,
-          //   referenceCount: 3,
-          //   referencingPaths: [
-          //     path_of_identifier,
-          //     path_of_identifier,
-          //     ...
-          //   ], // we use an array to preserve the order of references
-          //   isModified: true,
-          //   modificationCount: 1,
-          //   modifyingPaths: [
-          //     path_of_identifier,
-          //     path_of_identifier,
-          //     ...
-          //   ], // a subset of referencingPaths. // we use an array to preserve the order of references
-          //   nullifyingPaths: [
-          //     path_of_identifier,
-          //     path_of_identifier,
-          //     ...
-          //   ], // a subset of modifyingPaths. // we use an array to preserve the order of references
-          //   oldCommitmentAccessRequired: true,
-          //   isNullified: true,
-          //   initialisationRequired: true,
-          //   newCommitmentRequired: true,
-          // }
-        };
+        this.indicators = new FunctionDefinitionIndicator();
         break;
       default:
     }
@@ -137,6 +108,7 @@ export class Scope {
    *  - Creates a binding if this is a new declaration of a contract/function/variable.
    *  - Updates the indicators for `this` scope, based on the nature of the `path`.
    */
+   // NOTE: suggestion for this function: only have properties of a @Scope be updated in the body of this function. @Node updates could (I suggest) be done before we reach this function. And @Binding / @Indicator updates (whilst they're triggered within here) should be done within the classes.
   update(path) {
     const { node, parent } = path;
     const { name, id, nodeType } = node;
@@ -146,80 +118,25 @@ export class Scope {
         `Whilst updating scope for nodeType '${nodeType}', expected this.bindings[${id}] to be 'undefined', but found binding: '${this.bindings[id]}' for this scope: ${this}`,
       );
 
+    const newBinding = Binding.create(path);
+    if (newBinding) this.bindings[id] = newBinding;
+
     switch (nodeType) {
-      case 'ContractDefinition':
-      case 'FunctionDefinition':
-        // a 'ContractDefinition' is a declaration (binding) within a SourceUnit scope.
-        // a 'FunctionDefinition' is a declaration (binding) within a ContractDefinition scope.
-        // @Binding_ConDec @Binding_FnDef new properties
-        this.bindings[id] = this.bindings[id] || {
-          kind: nodeType,
-          id,
-          name,
-          node,
-          path,
-          scope: this,
-        };
-        break;
-
       case 'VariableDeclaration':
-        // @Binding_VarDec new properties
-        this.bindings[id] = this.bindings[id] || {
-          kind: nodeType, // TODO: make 'kind' more specific, e.g. 'param'?
-          id,
-          name,
-          node,
-          path,
-          scope: this,
-          stateVariable: node.stateVariable,
-          isSecret: node.isSecret || false,
-          isReferenced: false,
-          referenceCount: 0,
-          referencingPaths: [], // paths of `Identifier` nodes which reference this variable
-          isModified: false,
-          modificationCount: 0,
-          modifyingPaths: [], // paths of `Identifier` nodes which modify this variable
-          // Note: modification _is_ nullification, unless it's a partitioned state being incremented (in which case there's no nullifier).
-          // So nullifyingPaths is a subset of modifyingPaths.
-          // TODO: MIKE: suggestion only. populate these nullifier fields later in this function:
-          isNullified: false,
-          nullificationCount: 0,
-          nullifyingPaths: [], // paths of `Identifier` nodes which nullify this binding
-          increments: [],
-          decrements: [],
-          isMapping: false,
-          mappingKey: null,
-          isKnown: false,
-          isWhole: false,
-          isPartitioned: false,
-          isOwned: false,
-          owner: null,
-        };
-
-        if (this.scopeType === 'ContractDefinition' && node.isSecret) {
-          // indicators used to construct import statements for the shield contract AST:
-          // @Indicator_ConDec updated properties
-          this.indicators.newCommitmentsRequired = true;
-          this.indicators.zkSnarkVerificationRequired = true;
-        }
-
-        if (node.typeDescriptions.typeString.includes('mapping')) {
-          // TODO initialise these properties at initialisation as `false` and `{}`
-          // @Binding new properties
-          this.bindings[id].isMapping = true;
-          this.bindings[id].mappingKey = {};
-        }
+        if (this.scopeType === 'ContractDefinition')
+          this.indicators.update(path);
         break;
 
+      // An Identifier node is a special case, because it refers to an alread-defined variable whose bindings and indicators have already been initialised. So rather than initialise indicators/bindings, we must update them with the information of this new Identifier node.
+      //
       case 'Identifier': {
         // 1) Update the binding this Identifier node is referencing:
 
+        // ignore special Identifiers; there are no bindings/indicators for these.
         if (path.isMsg() || path.isRequireStatement() || path.isThis()) break;
-        // E.g. for `msg`, we have a mapping with key msg.sender
-        // ... we stop, because this identifier just represents the key, we account for this.
 
         // `Identifier` nodes _refer_ to already-declared variables. We grab the binding for that referenced variable:
-        let referencedBinding = this.getReferencedBinding(node);
+        const referencedBinding = this.getReferencedBinding(node);
 
         if (!referencedBinding && this.getReferencedExportedSymbolName(node))
           break; // the node is referring to some external contract name
@@ -228,119 +145,30 @@ export class Scope {
             `Couldn't find a referencedDeclaration node for the current Identifier node.  I.e. couldn't find a node with id ${node.referencedDeclaration}`,
           );
 
-        if (
-          referencedBinding.isSecret &&
-          this.scopeType === 'FunctionDefinition'
-        ) {
-          // @scope_FnDef new property
-          this.interactsWithSecret = true; // NOTE: unused.
-        }
+        // if (
+        //   referencedBinding.isSecret &&
+        //   this.scopeType === 'FunctionDefinition'
+        // ) {
+        //   // @scope_FnDef new property
+        //   this.interactsWithSecret = true; // NOTE: unused. TODO: more functionality around 'tainting' secrets with public stuff and vice versa.
+        // }
 
-        const referencedNode = referencedBinding.node;
+        // Update the binding of the stateVariable being referenced by this Identifier node, to reflect the information contained in this Identifier node:
+        // @Binding update properties
+        referencedBinding.update(path);
+
+        // Update @Scope
         const referencedId = referencedBinding.id;
-        const referencedName = referencedBinding.name;
-        const parentBinding = referencedBinding;
-
-        // Is this node an Identifier for a mapping?
-        const isMapping = path.isMappingIdentifier();
-
-        if (isMapping) {
-          // here - initialise binding for mapping[key]
-          const keyNode =
-            parent.indexExpression.expression || parent.indexExpression; // FIXME: the keyNode should always be parent.indexExpression. The reason for the complication is to get 'Msg' for msg.sender, but it'd be better (and make it easier to expand to other struct (MemberAccess) keys) if we always use parent.indexExpression. In the case of msg.sender, the keyname would become msg.sender. At the moment, making that change causes the increments stuff to break. :(
-          const keyPath = NodePath.getPath(keyNode);
-          const isMsgSender = keyPath.isMsgSender();
-          const isMsg = keyPath.isMsg();
-            // parent.indexExpression.expression || parent.indexExpression; // NOTE: I'm not sure I like this. The keyNode will always be parent.indexExpression.
-          // TODO: key might be a literal node (not an identifier node), in which case it won't be referring to a binding. We'll need to edit this code when we come to that. For now, here's an error to remind ourselves:
-          if (keyNode.nodeType !== 'Identifier') {
-            throw new Error(
-              `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType 'Identifier'`,
-            );
-          }
-
-          let keyName = keyNode.name;
-          const keyBinding = this.getReferencedBinding(keyNode);
-          if (keyBinding?.isModified)
-            keyName = `${keyName}_${keyBinding.modificationCount}`;
-
-          const mappingKeyExists = !!referencedBinding.mappingKey[keyName];
-          if (!mappingKeyExists) {
-            // @Binding new mappingKey
-            // @mappingKey
-            referencedBinding.mappingKey[keyName] = {
-              referencedKeyId: keyNode.referencedDeclaration,
-              referencedKeyNodeType: isMsg
-                ? 'msg.sender'
-                : this.getReferencedNode(keyNode).nodeType,
-              referencedKeyIsParam: keyPath.isFunctionParameter(), // is a function parameter - used for finding owner
-              isMsgSender: isMsg, // used for finding owner
-              isSecret: referencedNode.isSecret,
-              isReferenced: false,
-              referenceCount: 0,
-              referencingPaths: [], // paths which reference this binding
-              isModified: false,
-              modificationCount: 0,
-              modifyingPaths: [], // paths which reference this binding;
-            };
-          }
-          referencedBinding = referencedBinding.mappingKey[keyName];
-        }
-
-        // update the referenced binding, to say "this variable has been referred-to by this node (`node`)"
-        if (
-          !referencedBinding.referencingPaths.some(
-            p => p.node.id === path.node.id,
-          )
-        ) {
-          // @Binding updated properties
-          referencedBinding.isReferenced = true;
-          if (isMapping) parentBinding.isReferenced = true;
-          ++referencedBinding.referenceCount;
-          referencedBinding.referencingPaths.push(path);
-        }
-        // update this scope, to say "the code in this scope 'refers to' a variable declared elsewhere"
+        // update this scope, to say "the code in this scope 'refers to'/'modifies' a variable declared elsewhere"
         // @Scope new referencedBinding
-        this.referencedBindings[referencedId] = this.getReferencedBinding(node);
-
-        // Currently, the only state variable 'modifications' we're aware of are:
-        //   - when a state variable is referenced on the LHS of an assignment;
-        //   - a unary operator
-        if (
-          // prettier-ignore
-          (
-            path.containerName !== 'indexExpression' &&
-            path.getAncestorContainedWithin('leftHandSide') &&
-            path.getAncestorOfType('Assignment')
-          ) ||
-          (
-            path.getAncestorOfType('UnaryOperation') &&
-            path.containerName !== 'indexExpression'
-          )
-        ) {
-          // Update the referenced variable's binding, to say "this variable has been referred-to by this node (`path`)"
-          if (
-            !referencedBinding.modifyingPaths.some(
-              p => p.node.id === path.node.id,
-            )
-          ) {
-            // @Binding updated properties
-            referencedBinding.isModified = true;
-            ++referencedBinding.modificationCount;
-            referencedBinding.modifyingPaths.push(path);
-          }
-
-          if (isMapping) {
-            // @Binding updated properties
-            this.getReferencedBinding(node).isModified = true;
-          }
-
-          // update this scope, to say "the code in this scope 'modifies' a variable declared elsewhere"
-          // @Binding new modifiedBinding
-          this.modifiedBindings[referencedId] = this.getReferencedBinding(node);
+        this.referencedBindings[referencedId] = referencedBinding;
+        if (path.isModification()) {
+          // @Scope new modifiedBinding
+          this.modifiedBindings[referencedId] = referencedBinding;
         }
 
         // 2) Update the indicators of this scope:
+        const referencedNode = referencedBinding.node;
         if (
           referencedNode.stateVariable &&
           this.isInScopeType('FunctionDefinition')
@@ -352,228 +180,134 @@ export class Scope {
             'ContractDefinition',
           );
 
-          let referencedIndicator = functionDefScope.indicators[referencedId];
+          functionDefScope.indicators[referencedId] =
+            functionDefScope.indicators[referencedId] ??
+            new StateVariableIndicator(path);
 
-          const indicatorForStateVarExists = !!referencedIndicator;
-          if (!indicatorForStateVarExists)
-            referencedIndicator = {
-              id: referencedId,
-              name: referencedName,
-              binding: this.getReferencedBinding(node),
-              isMapping,
-              referencingPaths: [],
-              referenceCount: 0,
-              modifyingPaths: [],
-              modificationCount: 0,
-            };
+          const referencedIndicator = functionDefScope.indicators[referencedId];
 
-          const parentIndicator = referencedIndicator;
-          if (isMapping) {
-            // here: initialise indicator for mapping[key]
-            const keyNode =
-              parent.indexExpression.expression || parent.indexExpression;
-            if (!referencedIndicator.mappingKey) {
-              // @Indicator new mappingKey
-              referencedIndicator.mappingKey = {};
-            }
-            let keyName = keyNode.name;
+          // Update the indicator of the stateVariable being referenced by this Identifier node, to reflect the information contained in this Identifier node:
+          // @Indicator update properties
+          referencedIndicator.update(path);
 
-            if (
-              this.getReferencedBinding(keyNode) &&
-              this.getReferencedBinding(keyNode).isModified
-            )
-              keyName = `${keyName}_${
-                this.getReferencedBinding(keyNode).modificationCount
-              }`;
-            const isParam = this.getReferencedBinding(keyNode)
-              ? !!this.getReferencedBinding(keyNode).path.getAncestorOfType(
-                  'ParameterList',
-                )
-              : false;
-            const isMsg = keyNode.referencedDeclaration > 4294967200; // FIXME use isMsgSender method instead
-            if (!referencedIndicator.mappingKey[keyName]) {
-              // @Indicator new mappingKey
-              referencedIndicator.mappingKey[keyName] = {
-                referencedKeyId: keyNode.referenceDeclaration || keyNode.id,
-                referencedKeyNodeType: isMsg
-                  ? keyNode.typeDescriptions.typeIdentifier
-                  : this.getReferencedNode(keyNode).nodeType ||
-                    keyNode.nodeType,
-                referencedKeyIsParam: isParam, // key is a function parameter - used for finding owner
-                isMsgSender: isMsg, // key is msg.sender - used for finding owner
-                isReferenced: false,
-                referenceCount: 0,
-                referencingPaths: [], // paths which reference this binding
-                isModified: false,
-                modificationCount: 0,
-                modifyingPaths: [], // paths which reference this binding};
-              };
-            }
-            referencedIndicator = referencedIndicator.mappingKey[keyName];
+          if (path.isModification()) {
+            // @Indicator update properties
+            contractDefScope.indicators.nullifiersRequired = true; // FIXME: I thought we didn't know yet? (because a modification (incrementation) to a partitioned state doesn't need a nullifier)
           }
 
-          // All of the below indicator assignments will need more thought. There are a lot of cases to check, which aren't checked at all yet.
-          if (
-            !referencedIndicator.referencingPaths.some(
-              p => p.node.id === path.node.id,
-            )
-          ) {
-            // @Indicator updated properties
-            referencedIndicator.isReferenced = true;
-            ++referencedIndicator.referenceCount;
-            referencedIndicator.referencingPaths.push(path); // might overwrite, but that's ok.
-            // referencedIndicator.oldCommitmentAccessRequired = true;
-          }
-          // contractDefScope.indicators.oldCommitmentAccessRequired = true;
-
-          // Currently, the only state variable 'modification' we're aware of is when a state variable is referenced on the LHS of an assignment:
-          if (
-            // prettier-ignore
-            (
-              path.containerName !== 'indexExpression' &&
-              path.getAncestorContainedWithin('leftHandSide') &&
-              path.getAncestorOfType('Assignment')
-            ) ||
-            (
-              path.getAncestorOfType('UnaryOperation') &&
-              path.containerName !== 'indexExpression'
-            )
-          ) {
-            if (
-              !referencedIndicator.modifyingPaths.some(
-                p => p.node.id === path.node.id,
-              )
-            ) {
-              // @Indicator updated properties
-              referencedIndicator.isModified = true;
-              if (isMapping) parentIndicator.isModified = true;
-              ++referencedIndicator.modificationCount;
-              referencedIndicator.modifyingPaths.push(path);
-            }
-            // @Indicator updated properties
-            referencedIndicator.newCommitmentRequired = true;
-            referencedIndicator.isNullified = null; // we don't know yet
-            referencedIndicator.initialisationRequired = true;
-            if (node.isKnown || (isMapping && parent.isKnown))
-              referencedIndicator.isKnown = true;
-            if (node.isUnknown || (isMapping && parent.isUnknown))
-              referencedIndicator.isUnknown = true;
-
-            // @Indicator updated properties
-            contractDefScope.indicators.nullifiersRequired = true;
-          }
-
+          // FIXME: move to some other place? Inside the Indicator class?
           if (referencedIndicator.isKnown && referencedIndicator.isUnknown) {
             throw new Error(
               `Secret state ${node.name} cannot be marked as both known and unknown in the same ${this.scopeType} scope`,
             );
           }
-
-          referencedIndicator = parentIndicator;
-          if (!indicatorForStateVarExists)
-            functionDefScope.indicators[
-              referencedNode.id
-            ] = referencedIndicator; // @Indicator new indicator
-
-          // logger.debug(this.getReferencedBinding(node));
-          // logger.debug(functionDefScope.indicators);
-          // logger.debug('---------');
-          // logger.debug(functionDefScope.indicators[5].mappingKey);
         }
         break;
       }
-      case 'FunctionCall':
+      case 'FunctionCall': {
         // here: we look for require statements and add any indicators
-        if (node.expression.name !== 'require') {
-          // TODO add external function calls which use non-secret vars
+        if (!path.isRequireStatement()) {
+          // TODO at the moment this prevents _any_ function call (internal or external). Update to only restrict external calls?
+          // Disallow the passing of secret variables to an external function:
           node.arguments.forEach(arg => {
             if (
               arg.nodeType === 'Identifier' &&
               this.getReferencedBinding(arg)?.isSecret
             ) {
               throw new TypeError(
-                `External function calls not yet supported. You can't hide function calls without using recursive proofs.`,
+                `Passing secrets to external function calls is not yet supported, because the external contract being called might not be designed to hide anything. In fact, currently, this transpiler doesn't even support the passing of secrets to _any_ other function - we'll work on supporting internal function calls.`,
               );
             }
           });
-        } else if (
-          node.arguments[0].nodeType === 'BinaryOperation' &&
-          (path.isMsgSender(node.arguments[0].leftExpression) ||
-            path.isMsgSender(node.arguments[0].rightExpression))
-        ) {
-          // here: either lhs or rhs of require statement includes msg.sender
-          // TODO  check if admin = state variable
-          const functionDefScope = this.getAncestorOfScopeType(
-            'FunctionDefinition',
-          );
-          const { operator } = node.arguments[0];
-          const ownerNode =
-            node.arguments[0].leftExpression.expression?.typeDescriptions
-              .typeIdentifier === 't_magic_message' // FIXME use isMsgSender method instead
-              ? node.arguments[0].rightExpression
-              : node.arguments[0].leftExpression;
-
-          switch (operator) {
-            // either have a 'msg.sender ==' or '!='
-            case '==':
-              // if ==, we store the restriction node
-              functionDefScope.callerRestriction = 'match';
-              functionDefScope.callerRestrictionNode = ownerNode;
-              if (!this.getReferencedBinding(ownerNode)?.stateVariable)
-                throw new Error(
-                  `Cannot require msg.sender to be an input param!`,
-                );
-              // @Node new property
-              node.requireStatementPrivate = !!this.getReferencedBinding(
-                ownerNode,
-              )?.isSecret;
-              break;
-            case '!=':
-              // if != we store the 'blacklistedNode'
-              functionDefScope.callerRestriction = 'notMatch';
-              // @Node new property
-              node.requireStatementPrivate = !!this.getReferencedBinding(
-                ownerNode,
-              )?.isSecret;
-              // functionDefScope.callerRestrictionNode = node.id;
-              break;
-            default:
-              throw new Error(
-                `This kind of restriction on msg.sender isn't implemented yet!`,
-              );
-          }
-          break;
-          // otherwise, we have a require statement NOT on msg.sender
         } else {
-          for (const arg of node.arguments) {
-            switch (arg.nodeType) {
+          // NOTE: all of this require statement stuff feels like it could be put in a separate function... possibly even called from somewhere else?
+          // Require statement:
+          const requirement = node.arguments[0]; // only the 0th arg of a `require` statement contains logic; the other arg is a message.
+          if (
+            requirement.nodeType === 'BinaryOperation' &&
+            (path.isMsgSender(requirement.leftExpression) ||
+              path.isMsgSender(requirement.rightExpression))
+          ) {
+            // Here: either the lhs or rhs of require statement is msg.sender
+            // TODO  check if admin = state variable
+            const functionDefScope = this.getAncestorOfScopeType(
+              'FunctionDefinition',
+            );
+            const { operator } = requirement;
+
+            const ownerNode = path.isMsgSender(requirement.leftExpression)
+              ? requirement.rightExpression
+              : requirement.leftExpression;
+            const ownerBinding = this.getReferencedBinding(ownerNode);
+            if (!ownerBinding)
+              throw new Error(
+                `require(msg.sender...) doesn't refer to a variable.`,
+              );
+
+            switch (operator) {
+              // We consider 'require(msg.sender == ...)' and 'require(msg.sender != ...)'
+              // (TODO: there could feasibly be a '>' or something, but we don't support that yet.)
+              case '==':
+                // if ==, we store the restriction node
+                // We'll infer from `require(msg.sender == ownerNode)` that the caller of this function is restricted to one "owner".
+                // @Scope new properties
+                functionDefScope.callerRestriction = 'match';
+                functionDefScope.callerRestrictionNode = ownerNode;
+
+                // @Node new property
+                node.requireStatementPrivate = !!ownerBinding?.isSecret;
+                break;
+              case '!=':
+                // We'll infer from `require(msg.sender != blacklistedAddress)` that the caller of this function is not allowed to be a particular blacklisted "blacklistedAddress".
+                // if != we store the 'blacklisted' address
+                // QUESTION: we don't seem to be storing any blacklisted node?
+                // @Scope new properties
+                functionDefScope.callerRestriction = 'notMatch';
+
+                // @Node new property
+                node.requireStatementPrivate = !!ownerBinding?.isSecret;
+                // functionDefScope.callerRestrictionNode = node.id;
+                break;
+              default:
+                throw new Error(
+                  `This kind of restriction on msg.sender isn't implemented yet!`,
+                );
+            }
+            break;
+            // otherwise, we have a require statement NOT on msg.sender
+          } else {
+            switch (requirement.nodeType) {
               // if we have a restriction on a secret state, we note that this require statement is private and should be copied over to the zok file
               case 'BinaryOperation':
-                [arg.leftExpression, arg.rightExpression].forEach(exp => {
+                [
+                  requirement.leftExpression,
+                  requirement.rightExpression,
+                ].forEach(exp => {
                   if (exp.nodeType === 'Identifier') {
                     // @Node new property
                     node.requireStatementPrivate = !!this.getReferencedBinding(
                       exp,
                     ).isSecret;
                   } else if (node.requireStatementPrivate !== true) {
+                    // QUESTION: when would this be triggered? How would node.requireStatementPrivate have been set to true before this point?
                     node.requireStatementPrivate = false;
                   }
                 });
                 break;
               case 'IndexAccess':
-                if (arg.baseExpression.nodeType === 'Identifier') {
+                if (requirement.baseExpression.nodeType === 'Identifier') {
                   // @Node new property
                   node.requireStatementPrivate = !!this.getReferencedBinding(
-                    arg.baseExpression,
+                    requirement.baseExpression,
                   ).isSecret;
                 }
                 if (
-                  arg.indexExpression.nodeType === 'Identifier' &&
+                  requirement.indexExpression.nodeType === 'Identifier' &&
                   !node.requireStatementPrivate
                 ) {
                   // @Node new property
                   node.requireStatementPrivate = !!this.getReferencedBinding(
-                    arg.indexExpression,
+                    requirement.indexExpression,
                   ).isSecret;
                 }
                 if (node.requireStatementPrivate !== true)
@@ -581,20 +315,24 @@ export class Scope {
                 break;
               case 'Identifier':
                 // @Node new property
-                node.requireStatementPrivate = !!this.getReferencedBinding(arg)
-                  .isSecret;
+                node.requireStatementPrivate = !!this.getReferencedBinding(
+                  requirement,
+                ).isSecret;
                 break;
               case 'Literal':
-                // here we probably have a bool, which can't be secret anyway
+                // here we probably have a bool, which can't be secret anyway QUESTION: why not? A bool can feasibly be secret.
                 break;
               default:
                 throw new Error(
-                  `This kind of expression (${arg.nodeType}) in a require statement isn't implemented yet!`,
+                  `This kind of expression (${requirement.nodeType}) in a require statement isn't implemented yet!`,
                 );
             }
           }
         }
         break;
+      }
+      case 'ContractDefinition':
+      case 'FunctionDefinition':
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':
@@ -722,7 +460,7 @@ export class Scope {
     if (!path.isMapping(referencingNode)) return indicator;
 
     return mappingKeyIndicatorOnly
-      ? indicator.mappingKey[this.getMappingKeyName(referencingNode)]
+      ? indicator.mappingKeys[this.getMappingKeyName(referencingNode)]
       : indicator;
   }
 
@@ -1230,7 +968,7 @@ export class Scope {
       referencedIndicator.increments.push(inc);
       if (lhsNode.baseExpression) {
         const keyBinding =
-          lhsbinding.mappingKey[this.getMappingKeyName(lhsNode)];
+          lhsbinding.mappingKeys[this.getMappingKeyName(lhsNode)];
         // @Increments updated/new increment
         keyBinding.increments = keyBinding.increments || [];
         keyBinding.increments.push(inc);
@@ -1242,7 +980,7 @@ export class Scope {
       referencedIndicator.decrements.push(dec);
       if (lhsNode.baseExpression) {
         const keyBinding =
-          lhsbinding.mappingKey[this.getMappingKeyName(lhsNode)];
+          lhsbinding.mappingKeys[this.getMappingKeyName(lhsNode)];
         // @Decrements updated/new decrement
         keyBinding.decrements = keyBinding.decrements || [];
         keyBinding.decrements.push(dec);
@@ -1418,8 +1156,8 @@ export class Scope {
     logger.debug('----------');
     if (logger.level === 'debug') console.dir(this.indicators);
     logger.debug('----------');
-    if (this.indicators[secretVar.id].mappingKey) {
-      logger.debug(`Indicator.mappingKey[${secretVar.name}]`);
+    if (this.indicators[secretVar.id].mappingKeys) {
+      logger.debug(`Indicator.mappingKeys[${secretVar.name}]`);
       if (logger.level === 'debug') console.dir(secretVar, { depth: 1 });
       logger.debug('----------');
     }
@@ -1447,7 +1185,7 @@ export class Scope {
     if (isMapping) {
       // we instead use the mapping[key] binding for most cases
       const keyName = this.getMappingKeyName(parent);
-      referencedBinding = referencedBinding.mappingKey[keyName];
+      referencedBinding = referencedBinding.mappingKeys[keyName];
     }
 
     if (
@@ -1487,19 +1225,19 @@ export class Scope {
       if (!stateVar.isWhole) continue;
       if (stateVar.node.isConstant || stateVar.node.constant) continue;
       // go through each mapping key, if mapping
-      if (stateVar.mappingKey) {
-        for (const key of Object.keys(stateVar.mappingKey)) {
+      if (stateVar.mappingKeys) {
+        for (const key of Object.keys(stateVar.mappingKeys)) {
           // if the key is a parameter, then it can be any (user defined) key, so as long as isNullified = true, any key can be nullified
           if (
-            stateVar.mappingKey[key].isNullified === true &&
-            (stateVar.mappingKey[key].referencedKeyIsParam ||
-              stateVar.mappingKey[key].isMsgSender)
+            stateVar.mappingKeys[key].isNullified === true &&
+            (stateVar.mappingKeys[key].referencedKeyIsParam ||
+              stateVar.mappingKeys[key].isMsgSender)
           )
             break; // this means any mapping[key] is nullifiable - good!
           if (
-            stateVar.mappingKey[key].isNullified !== true &&
-            !stateVar.mappingKey[key].referencedKeyIsParam &&
-            !stateVar.mappingKey[key].isMsgSender
+            stateVar.mappingKeys[key].isNullified !== true &&
+            !stateVar.mappingKeys[key].referencedKeyIsParam &&
+            !stateVar.mappingKeys[key].isMsgSender
           )
             throw new Error(
               `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable or constant.`,

@@ -55,16 +55,19 @@ export default {
             referencedIndicator.nullificationCount = 0;
           }
           break;
-        case 'IndexAccess':
+        case 'IndexAccess': {
           newState.id = node.expression.leftHandSide.baseExpression.id;
           traversePathsFast(path, getIdentifierPath, newState);
-          const mappingKey = scope.getMappingKeyName(node.expression.leftHandSide);
+          const mappingKey = scope.getMappingKeyName(
+            node.expression.leftHandSide,
+          );
           referencedBinding = scope.getReferencedBinding(
             node.expression.leftHandSide.baseExpression,
-          ).mappingKey[mappingKey];
+          ).mappingKeys[mappingKey];
           referencedIndicator =
-            scope.indicators[node.expression.leftHandSide.baseExpression.referencedDeclaration]
-              .mappingKey[mappingKey];
+            scope.indicators[
+              node.expression.leftHandSide.baseExpression.referencedDeclaration
+            ].mappingKeys[mappingKey];
           if (!referencedBinding.nullifyingPaths) {
             // @Binding new properties
             referencedBinding.nullifyingPaths = [];
@@ -79,6 +82,7 @@ export default {
             referencedIndicator.nullificationCount = 0;
           }
           break;
+        }
         default:
           referencedBinding = {};
           referencedIndicator = {};

@@ -60,10 +60,10 @@ export default {
 
       // Collect all paths which reference this variable throughout the contract.
       let refPaths;
-      if (varDec.mappingKey) {
+      if (varDec.mappingKeys) {
         refPaths = [];
-        Object.keys(varDec.mappingKey).forEach(key => {
-          varDec.mappingKey[key].referencingPaths.forEach(referencingPath => {
+        Object.keys(varDec.mappingKeys).forEach(key => {
+          varDec.mappingKeys[key].referencingPaths.forEach(referencingPath => {
             refPaths.push(referencingPath);
           });
         });
