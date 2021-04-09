@@ -5,19 +5,6 @@ import logger from '../../../utils/logger.mjs';
 import { traverse, traversePathsFast } from '../../../traverse/traverse.mjs';
 
 export default {
-  SourceUnit: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  PragmaDirective: {
-    // TODO: We should probably check that the `.zol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path, state) {},
-    exit(path, state) {},
-  },
-
   ContractDefinition: {
     enter(path, state) {},
 
@@ -25,42 +12,6 @@ export default {
       const { scope } = path;
       scope.isNullifiable();
     },
-  },
-
-  FunctionDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  ParameterList: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Block: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  VariableDeclarationStatement: {
-    enter(path, state) {},
-
-    exit(path) {},
-  },
-
-  BinaryOperation: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Assignment: {
-    enter(path, state) {},
-
-    exit(path, state) {},
   },
 
   ExpressionStatement: {
@@ -170,29 +121,5 @@ export default {
           throw new Error(`Expression id ${node.expression.id} not marked as incremented.`);
       }
     },
-  },
-
-  VariableDeclaration: {
-    enter(path, state) {},
-
-    exit(path) {},
-  },
-
-  ElementaryTypeName: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Identifier: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Literal: {
-    enter(path) {},
-
-    exit(path) {},
   },
 };

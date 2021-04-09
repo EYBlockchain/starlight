@@ -1,5 +1,12 @@
 /* eslint-disable no-param-reassign, no-continue, no-shadow, consistent-return */
 
+/**
+ * @desc there's some 'lazy' syntax for writing Visitors succinctly. This
+ * function 'explodes' that lazy syntax into a format which can be travsersed
+ * by the traverser.
+ * Lazy syntax: if multiple nodeTypes share the same `enter` & `exit`
+ * functions, then you can write `'NodeType1|NodeType2': { enter(), exit() }`
+ */
 function explode(visitor) {
   if (visitor._exploded) return visitor;
   visitor._exploded = true;

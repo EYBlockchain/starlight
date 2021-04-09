@@ -3,14 +3,19 @@
 import logger from '../../../utils/logger.mjs';
 import { ZKPError, TODOError } from '../../../error/errors.mjs';
 
+/**
+ * @desc:
+ * Throws an error if secret states are passed to an external function call.
+*/
+
 export default {
   FunctionCall: {
     enter(path) {
       const { node, scope } = path;
 
       // TODO: `require` statements are 'FunctionCall' nodes, and they should be able to have secret states as arguments
-      // TODO: FunctionCalls to functions within the same contract ought to be allowed.
-      // TODO: FunctionCalls to base contracts (i.e. this contract `is` baseContract) ought to be allowed.
+      // TODO: FunctionCalls to functions within the same contract ought to be allowed (because all of the functions' logic can be transpiled to within a circuit)
+      // TODO: FunctionCalls to base contracts (i.e. this contract `is` baseContract) ought to be allowed (because in such cases, the base contract effectively is part of the contract)
       // `address(...)` is considered a FunctionCall.
       // Initialisation of a contract instance is considered a FunctionCall.
 

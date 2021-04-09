@@ -4,6 +4,11 @@ import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
 import { SyntaxUsageError } from '../../../error/errors.mjs';
 
+/**
+ * @desc:
+ * Visitor will...
+*/
+
 export default {
   IndexAccess: {
     enter(path, state) {

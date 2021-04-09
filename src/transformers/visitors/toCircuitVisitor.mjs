@@ -5,6 +5,14 @@ import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/zokrates-types.mjs';
 import NP from '../../traverse/NodePath.mjs';
 
+/**
+ * @desc:
+ * Visitor transforms a `.zol` AST into a `.zok` AST
+ * NB: the resulting `.zok` AST is custom, and can only be interpreted by this
+ * repo's code generator. ZoKrates itself will not be able to interpret this
+ * AST.
+ */
+
 const visitor = {
   ContractDefinition: {
     enter(path) {

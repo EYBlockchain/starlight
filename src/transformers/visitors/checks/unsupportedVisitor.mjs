@@ -1,5 +1,12 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
+/**
+ * @desc:
+ * Visitor will throw errors when certain nodeTypes are traversed.
+ * Namely: nodeTypes for complex Solidity syntax which we haven't written
+ * support for yet.
+*/
+
 import cloneDeep from 'lodash.clonedeep';
 import { TODOError, ZKPError } from '../../../error/errors.mjs';
 
