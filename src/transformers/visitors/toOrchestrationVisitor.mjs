@@ -191,11 +191,15 @@ export default {
         );
 
         node._newASTPointer.parameters.modifiedStateVariables = [];
-        for (const [id, refbinding] of Object.entries(modifiedStateVariableBindings)) {
+        for (const [id, refbinding] of Object.entries(
+          modifiedStateVariableBindings,
+        )) {
           if (refbinding.isMapping) {
             const binding = refbinding;
-            const modifiedKeys = Object.keys(scope.indicators[id].mappingKey);
-            for (const [key, mappingBinding] of Object.entries(binding.mappingKey)) {
+            const modifiedKeys = Object.keys(scope.indicators[id].mappingKeys);
+            for (const [key, mappingBinding] of Object.entries(
+              binding.mappingKeys,
+            )) {
               if (modifiedKeys.includes(key)) {
                 mappingBinding.referencedKeyName = key;
                 modifiedStateVariableBindings[`${id}.${key}`] = mappingBinding;
@@ -204,17 +208,21 @@ export default {
             delete modifiedStateVariableBindings[id];
           }
         }
-        for (let [id, binding] of Object.entries(modifiedStateVariableBindings)) {
+        for (let [id, binding] of Object.entries(
+          modifiedStateVariableBindings,
+        )) {
           let indicator = scope.indicators[id];
           let stateVarName = binding.node ? binding.node.name : binding.name;
           if (id.includes('.')) {
             let key;
             [id, key] = id.split('.');
-            indicator = scope.indicators[id].mappingKey[key];
+            indicator = scope.indicators[id].mappingKeys[key];
             stateVarName = binding.name.replace('[', '_').replace(']', '');
           }
           node._newASTPointer.parameters.modifiedStateVariables.push({
-            nodeType: binding.node ? binding.node.nodeType : `VariableDeclaration`,
+            nodeType: binding.node
+              ? binding.node.nodeType
+              : `VariableDeclaration`,
             name: stateVarName,
           });
           let increment;
@@ -303,7 +311,7 @@ export default {
                 : null,
             };
 
-            if (binding.referencedKey) {
+            if (binding.referencedKeyId) {
               node._newASTPointer.body.statements[index].privateStates[
                 stateVarName
               ].stateVarId.push(binding.referencedKeyName);
@@ -365,7 +373,7 @@ export default {
               : null,
           };
 
-          if (binding.referencedKey) {
+          if (binding.referencedKeyId) {
             calculateCommitmentNode.stateVarId.push(binding.referencedKeyName);
           }
 
@@ -462,7 +470,7 @@ export default {
               ? binding.owner.isSecret || binding.owner.node.isSecret
               : null,
           };
-          if (binding.referencedKey) {
+          if (binding.referencedKeyId) {
             node._newASTPointer.body.statements[index].privateStates[stateVarName].stateVarId.push(
               binding.referencedKeyName,
             );
@@ -566,7 +574,8 @@ export default {
         const referencedNode = referencedBinding.node;
         isMapping = referencedBinding.isMapping;
         if (isMapping)
-          referencedBinding = referencedBinding.mappingKey[scope.getMappingKeyName(lhs)];
+          referencedBinding =
+            referencedBinding.mappingKeys[scope.getMappingKeyName(lhs)];
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         const modifiedPaths = referencedBinding.modifyingPaths.filter(

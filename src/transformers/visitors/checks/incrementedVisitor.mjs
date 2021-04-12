@@ -263,7 +263,10 @@ export default {
       } else if (lhsNode.nodeType === 'IndexAccess') {
         referencedBinding = scope.getReferencedBinding(lhsNode.baseExpression); // returns the binding of the mapping TODO per index
       }
-      if (referencedBinding.stateVariable && scope.isInScopeType('FunctionDefinition')) {
+      if (
+        referencedBinding.stateVariable &&
+        scope.isInScopeType('FunctionDefinition')
+      ) {
         const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
         let fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
         let parentIndicatorObj;
@@ -273,32 +276,38 @@ export default {
         if (lhsNode.nodeType === 'IndexAccess') {
           const keyName = scope.getMappingKeyName(lhsNode);
           parentIndicatorObj = fnIndicatorObj;
-          fnIndicatorObj = fnIndicatorObj.mappingKey[keyName];
+          fnIndicatorObj = fnIndicatorObj.mappingKeys[keyName];
         }
 
         // if its incremented anywhere, isIncremented = true
-
+        // @Indicator new properties
         fnIndicatorObj.isIncremented =
           fnIndicatorObj.isIncremented === true ? true : isIncrementedBool;
         fnIndicatorObj.isDecremented =
           fnIndicatorObj.isDecremented === true ? true : isDecrementedBool;
         if (isIncrementedBool === false) {
           // statement is an overwrite
+          // @Indicator new properties
           fnIndicatorObj.isWhole = true;
+          // @Binding new properties
           referencedBinding.isWhole = true;
           const reason = {};
           reason[0] = lhsNode.typeDescriptions.typeString !== 'address' ? `Overwritten` : `Address`;
           reason.src = expressionNode.src;
           logger.debug('reason:', reason);
           if (fnIndicatorObj.isWholeReason) {
+            // @Indicator new properties
             fnIndicatorObj.isWholeReason.push(reason);
           } else {
+            // @Indicator new properties
             fnIndicatorObj.isWholeReason = [reason];
           }
 
           if (parentIndicatorObj?.isWholeReason) {
+            // @Indicator new properties
             parentIndicatorObj.isWholeReason.push(reason);
           } else if (parentIndicatorObj) {
+            // @Indicator new properties
             parentIndicatorObj.isWhole = true;
             parentIndicatorObj.isWholeReason = [reason];
           }

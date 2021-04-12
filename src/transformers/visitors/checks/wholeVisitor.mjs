@@ -17,7 +17,7 @@ export default {
       // some checks (marking the variable's scope obj)
       Object.keys(secretModifiedIndicators).forEach(stateVarId => {
         const secretVar = secretModifiedIndicators[stateVarId];
-        if (secretVar.mappingKey) {
+        if (secretVar.mappingKeys) {
           let isWhole;
           let isPartitioned;
           if (secretVar.binding.isWhole) {
@@ -28,19 +28,20 @@ export default {
             isPartitioned = true;
             isWhole = false;
           }
-          Object.keys(secretVar.mappingKey).forEach(key => {
-            secretVar.mappingKey[key].binding = secretVar.binding.mappingKey[key];
-            secretVar.mappingKey[key].id = secretVar.id;
-            secretVar.mappingKey[key].isWhole = isWhole;
-            secretVar.mappingKey[key].isPartitioned = isPartitioned;
-            secretVar.mappingKey[key].name = `${secretVar.name}[${key}]`;
-            secretVar.mappingKey[key].binding.name = `${secretVar.name}[${key}]`;
-            scope.indicatorChecks(secretVar.mappingKey[key]);
+          Object.keys(secretVar.mappingKeys).forEach(key => {
+            // @Indicator
+            secretVar.mappingKeys[key].binding = secretVar.binding.mappingKeys[key];
+            secretVar.mappingKeys[key].id = secretVar.id;
+            secretVar.mappingKeys[key].isWhole = isWhole;
+            secretVar.mappingKeys[key].isPartitioned = isPartitioned;
+            secretVar.mappingKeys[key].name = `${secretVar.name}[${key}]`;
+            secretVar.mappingKeys[key].binding.name = `${secretVar.name}[${key}]`;
+            scope.indicatorChecks(secretVar.mappingKeys[key]);
 
-            secretVar.isPartitioned = secretVar.mappingKey[key].isPartitioned;
-            secretVar.binding.isPartitioned = secretVar.mappingKey[key].isPartitioned;
-            secretVar.isWhole = secretVar.mappingKey[key].isWhole;
-            secretVar.binding.isWhole = secretVar.mappingKey[key].isWhole;
+            secretVar.isPartitioned = secretVar.mappingKeys[key].isPartitioned;
+            secretVar.binding.isPartitioned = secretVar.mappingKeys[key].isPartitioned;
+            secretVar.isWhole = secretVar.mappingKeys[key].isWhole;
+            secretVar.binding.isWhole = secretVar.mappingKeys[key].isWhole;
           });
         } else {
           scope.indicatorChecks(secretVar);

@@ -20,7 +20,9 @@ const __dirname = pathjs.dirname(fileURLToPath(import.meta.url)); // because ES 
 const args = process.argv;
 
 const testDataDir = pathjs.join(__dirname, 'test-data');
-const testDataFiles = fs.readdirSync(testDataDir).filter(file => pathjs.extname(file) === '.zol');
+const testDataFiles = fs
+  .readdirSync(testDataDir)
+  .filter(file => pathjs.extname(file) === '.zol');
 
 const mkDirs = ({ outputDirPath, parseDirPath }) => {
   try {
@@ -62,9 +64,10 @@ const pathsMap = bindingOrIndicatorOrMappingKey => {
   if (x.nullifyingPaths) x.nullifyingPaths = mapToId(x.nullifyingPaths);
 };
 
-const formatMappingKey = mappingKey => {
-  for (const keyInfo of Object.values(mappingKey)) {
-    pathsMap(keyInfo);
+const formatMappingKeys = mappingKeys => {
+  for (const mappingKey of Object.values(mappingKeys)) {
+    pathsMap(mappingKey);
+    delete mappingKey.container;
   }
 };
 
@@ -74,7 +77,7 @@ const formatBindings = bindings => {
     delete binding.path;
     delete binding.scope;
     pathsMap(binding);
-    if (binding.mappingKey) formatMappingKey(binding.mappingKey);
+    if (binding.mappingKeys) formatMappingKeys(binding.mappingKeys);
   }
 };
 
@@ -82,7 +85,7 @@ const formatIndicators = indicators => {
   for (const indicator of Object.values(indicators)) {
     delete indicator.binding;
     pathsMap(indicator);
-    if (indicator.mappingKey) formatMappingKey(indicator.mappingKey);
+    if (indicator.mappingKeys) formatMappingKeys(indicator.mappingKeys);
   }
 };
 
@@ -173,7 +176,12 @@ function itShouldThrowAnError(options, expected) {
   });
 }
 
-function itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarnings) {
+function itShouldWriteAnOutputFile(
+  options,
+  jsonFilePath,
+  actual,
+  consoleWarnings,
+) {
   const fileName = options.inputFileName;
   it(`${fileName}: should write/overwrite '${fileName}.json'`, () => {
     try {
@@ -203,7 +211,9 @@ function itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarning
     afterEachSync();
 
     writeJsonFile(jsonFilePath, actual);
-    console.log(`Overwritten json file '${jsonFilePath}' with new expected values.`);
+    console.log(
+      `Overwritten json file '${jsonFilePath}' with new expected values.`,
+    );
   });
 }
 
@@ -219,7 +229,11 @@ describe('Test prelim traversals of .zol files', function () {
 
   for (const zolFile of testDataFiles) {
     // TODO: use yargs to enforce an argument be passed with '--input'
-    if (args.includes('--input') && !args[args.indexOf('--input') + 1] === zolFile) continue;
+    if (
+      args.includes('--input') &&
+      !args[args.indexOf('--input') + 1] === zolFile
+    )
+      continue;
 
     const consoleWarnings = [];
     const fileName = pathjs.basename(zolFile, '.zol');
@@ -242,7 +256,8 @@ describe('Test prelim traversals of .zol files', function () {
     // If the tester (dev) trusts the output and wants to write it to file, to become the 'expected' object for future tests.
     // TODO: use yargs to enforce an argument be passed with '--write'
     if (
-      (args.includes('--write') && args[args.indexOf('--write') + 1] === fileName) ||
+      (args.includes('--write') &&
+        args[args.indexOf('--write') + 1] === fileName) ||
       args.includes('--write-all')
     ) {
       itShouldWriteAnOutputFile(options, jsonFilePath, actual, consoleWarnings);

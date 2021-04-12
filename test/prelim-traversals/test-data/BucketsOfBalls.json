@@ -79,10 +79,10 @@
           "isMapping": true,
           "mappingKey": {
             "bucketId": {
-              "referencedKey": 13,
+              "referencedKeyId": 7,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -115,10 +115,10 @@
               "nullificationCount": 0
             },
             "fromBucketId": {
-              "referencedKey": 29,
+              "referencedKeyId": 21,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -154,10 +154,10 @@
               "nullificationCount": 1
             },
             "toBucketId": {
-              "referencedKey": 35,
+              "referencedKeyId": 23,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -340,10 +340,10 @@
           "isMapping": true,
           "mappingKey": {
             "bucketId": {
-              "referencedKey": 13,
+              "referencedKeyId": 7,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -376,10 +376,10 @@
               "nullificationCount": 0
             },
             "fromBucketId": {
-              "referencedKey": 29,
+              "referencedKeyId": 21,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -415,10 +415,10 @@
               "nullificationCount": 1
             },
             "toBucketId": {
-              "referencedKey": 35,
+              "referencedKeyId": 23,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -575,10 +575,10 @@
           "isMapping": true,
           "mappingKey": {
             "bucketId": {
-              "referencedKey": 13,
+              "referencedKeyId": 7,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -611,10 +611,10 @@
               "nullificationCount": 0
             },
             "fromBucketId": {
-              "referencedKey": 29,
+              "referencedKeyId": 21,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -650,10 +650,10 @@
               "nullificationCount": 1
             },
             "toBucketId": {
-              "referencedKey": 35,
+              "referencedKeyId": 23,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -709,10 +709,10 @@
           "modificationCount": 0,
           "mappingKey": {
             "bucketId": {
-              "referencedKey": 13,
+              "referencedKeyId": 13,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
@@ -745,10 +745,10 @@
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
-                "referencedKey": 13,
+                "referencedKeyId": 7,
                 "referencedKeyNodeType": "VariableDeclaration",
-                "referencedKeyisParam": true,
-                "referencedKeyisMsg": false,
+                "referencedKeyIsParam": true,
+                "isMsgSender": false,
                 "isSecret": true,
                 "isReferenced": true,
                 "referenceCount": 1,
@@ -946,10 +946,10 @@
           "isMapping": true,
           "mappingKey": {
             "bucketId": {
-              "referencedKey": 13,
+              "referencedKeyId": 7,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -982,10 +982,10 @@
               "nullificationCount": 0
             },
             "fromBucketId": {
-              "referencedKey": 29,
+              "referencedKeyId": 21,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1021,10 +1021,10 @@
               "nullificationCount": 1
             },
             "toBucketId": {
-              "referencedKey": 35,
+              "referencedKeyId": 23,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1209,10 +1209,10 @@
           "isMapping": true,
           "mappingKey": {
             "bucketId": {
-              "referencedKey": 13,
+              "referencedKeyId": 7,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1245,10 +1245,10 @@
               "nullificationCount": 0
             },
             "fromBucketId": {
-              "referencedKey": 29,
+              "referencedKeyId": 21,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1284,10 +1284,10 @@
               "nullificationCount": 1
             },
             "toBucketId": {
-              "referencedKey": 35,
+              "referencedKeyId": 23,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1390,10 +1390,10 @@
           "isMapping": true,
           "mappingKey": {
             "bucketId": {
-              "referencedKey": 13,
+              "referencedKeyId": 7,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1426,10 +1426,10 @@
               "nullificationCount": 0
             },
             "fromBucketId": {
-              "referencedKey": 29,
+              "referencedKeyId": 21,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1465,10 +1465,10 @@
               "nullificationCount": 1
             },
             "toBucketId": {
-              "referencedKey": 35,
+              "referencedKeyId": 23,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isSecret": true,
               "isReferenced": true,
               "referenceCount": 1,
@@ -1523,10 +1523,10 @@
           "modificationCount": 0,
           "mappingKey": {
             "fromBucketId": {
-              "referencedKey": 29,
+              "referencedKeyId": 29,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
@@ -1558,10 +1558,10 @@
               "isIncremented": true,
               "isDecremented": true,
               "binding": {
-                "referencedKey": 29,
+                "referencedKeyId": 21,
                 "referencedKeyNodeType": "VariableDeclaration",
-                "referencedKeyisParam": true,
-                "referencedKeyisMsg": false,
+                "referencedKeyIsParam": true,
+                "isMsgSender": false,
                 "isSecret": true,
                 "isReferenced": true,
                 "referenceCount": 1,
@@ -1610,10 +1610,10 @@
               "nullificationCount": 1
             },
             "toBucketId": {
-              "referencedKey": 35,
+              "referencedKeyId": 35,
               "referencedKeyNodeType": "VariableDeclaration",
-              "referencedKeyisParam": true,
-              "referencedKeyisMsg": false,
+              "referencedKeyIsParam": true,
+              "isMsgSender": false,
               "isReferenced": true,
               "referenceCount": 1,
               "referencingPaths": [
@@ -1646,10 +1646,10 @@
               "isIncremented": true,
               "isDecremented": false,
               "binding": {
-                "referencedKey": 35,
+                "referencedKeyId": 23,
                 "referencedKeyNodeType": "VariableDeclaration",
-                "referencedKeyisParam": true,
-                "referencedKeyisMsg": false,
+                "referencedKeyIsParam": true,
+                "isMsgSender": false,
                 "isSecret": true,
                 "isReferenced": true,
                 "referenceCount": 1,

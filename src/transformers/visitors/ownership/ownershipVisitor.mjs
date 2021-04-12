@@ -18,15 +18,16 @@ export default {
         }
         if (binding.isSecret && binding.isOwned && binding.isMapping) {
           const { owner } = binding;
-          Object.keys(binding.mappingKey).forEach(key => {
-            if (!binding.mappingKey[key].isOwned) {
-              binding.mappingKey[key].isOwned = true;
-              binding.mappingKey[key].owner =
-                owner.name === 'msg' && binding.mappingKey.msg
-                  ? binding.mappingKey[key].referencedKeyisParam
+          Object.keys(binding.mappingKeys).forEach(key => {
+            if (!binding.mappingKeys[key].isOwned) {
+              // @Binding new properties
+              binding.mappingKeys[key].isOwned = true;
+              binding.mappingKeys[key].owner =
+                owner.name === 'msg' && binding.mappingKeys.msg
+                  ? binding.mappingKeys[key].referencedKeyIsParam
                     ? { name: key, isParam: true }
                     : path.scope.getReferencedNode({
-                        referencedDeclaration: binding.mappingKey[key].referencedKey,
+                        referencedDeclaration: binding.mappingKeys[key].referencedKeyId,
                       })
                   : owner;
             }
@@ -36,6 +37,7 @@ export default {
     },
   },
 
+  // TODO: too much nesting.
   ExpressionStatement: {
     enter(path, state) {},
 
@@ -59,7 +61,7 @@ export default {
         isMapping = true;
         lhsIdentifier = lhsNode.baseExpression;
         const keyName = scope.getMappingKeyName(lhsNode);
-        lhsbinding = scope.getReferencedBinding(lhsIdentifier).mappingKey[keyName];
+        lhsbinding = scope.getReferencedBinding(lhsIdentifier).mappingKeys[keyName];
       }
 
       const lhsSecret = !!lhsbinding.isSecret;
@@ -79,9 +81,11 @@ export default {
                 throw new Error(
                   `Found two distinct owners of one state: ${lhsbinding.owner.name} and ${ownerNode.name}`,
                 );
+              // @Binding new properties
               lhsbinding.owner = scope.getReferencedBinding(ownerNode);
               lhsbinding.isOwned = true;
               logger.debug(`The owner of state ${lhsbinding.name} is ${ownerNode.name}`);
+              // @Indicator new properties
               scope.indicators[lhsIdentifier.referencedDeclaration].isOwned = true;
               break;
             case 'Literal':
@@ -89,6 +93,7 @@ export default {
                 throw new Error(
                   `Found two distinct owners of one state: ${lhsbinding.owner.value} and ${ownerNode.value}`,
                 );
+              // @Binding new properties
               lhsbinding.owner = ownerNode;
               lhsbinding.isOwned = true;
               logger.debug(`The owner of state ${lhsbinding.name} is ${ownerNode.name}`);
@@ -99,19 +104,16 @@ export default {
           break;
         case 'notMatch':
           // if we have msg.sender =/= someone, they are added to a notOwner indicator for later
+          // @Binding new properties
           lhsbinding.notOwner = blacklistedNode;
           break;
         default:
           // look for msg.sender (mapping w/ msg.sender key)
           if (!isMapping) break;
-          // if the mapping key node type isn't an address which is of type t_magic_message, we skip
-          if (
-            !lhsbinding.referencedKeyNodeType.includes('address') &&
-            !lhsbinding.referencedKeyNodeType.includes('magic')
-          )
-            break;
+          // if the mapping key node type isn't 'msg.sender'
+          if (!lhsbinding.referencedKeyNodeType === 'msg.sender') break;
           // if the mapping key for THIS identifier is msg.sender...
-          if (lhsbinding.referencedKeyisMsg) {
+          if (lhsbinding.isMsgSender) {
             let msgSenderEverywhere = true;
             // we look through each nullifying path of this mapping[msg.sender]
             for (const nullPath of lhsbinding.nullifyingPaths) {
@@ -138,10 +140,12 @@ export default {
             logger.debug(
               `The owner of state ${lhsNode.baseExpression.name}[${lhsNode.indexExpression.expression.name}] is ${lhsNode.indexExpression.expression.name}`,
             );
+            // @Binding new properties
             lhsbinding.owner = lhsNode.indexExpression.expression;
             lhsbinding.isOwned = true;
             scope.getReferencedBinding(lhsIdentifier).owner = lhsNode.indexExpression.expression;
             scope.getReferencedBinding(lhsIdentifier).isOwned = true;
+            // @Indicator new properties
             scope.indicators[lhsIdentifier.referencedDeclaration].isOwned = true;
           }
           break;
@@ -152,6 +156,7 @@ export default {
         (lhsbinding.owner.name === 'msg' ||
           lhsbinding.owner.node.typeDescriptions.typeIdentifier.includes('address'))
       )
+        // @Scope new properties
         scope.onChainKeyRegistry = true;
       // logger.debug(scope.getReferencedBinding(lhsIdentifier));
       // logger.debug('------');

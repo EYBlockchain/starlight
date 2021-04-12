@@ -42,37 +42,47 @@ export default {
             scope.indicators[node.expression.leftHandSide.referencedDeclaration];
           if (!referencedIndicator) return;
           if (!referencedBinding.nullifyingPaths) {
+            // @Binding new properties
             referencedBinding.nullifyingPaths = [];
             referencedBinding.nullificationCount = 0;
+            // @Indicator new properties
             referencedIndicator.nullifyingPaths = [];
             referencedIndicator.nullificationCount = 0;
           } else if (!referencedIndicator.nullifyingPaths) {
             // we have a separate statement for init just the indicator obj, since indicators are per function, while bindings are per contract
+            // @Indicator new properties
             referencedIndicator.nullifyingPaths = [];
             referencedIndicator.nullificationCount = 0;
           }
           break;
-        case 'IndexAccess':
+        case 'IndexAccess': {
           newState.id = node.expression.leftHandSide.baseExpression.id;
           traversePathsFast(path, getIdentifierPath, newState);
-          const mappingKey = scope.getMappingKeyName(node.expression.leftHandSide);
+          const mappingKey = scope.getMappingKeyName(
+            node.expression.leftHandSide,
+          );
           referencedBinding = scope.getReferencedBinding(
             node.expression.leftHandSide.baseExpression,
-          ).mappingKey[mappingKey];
+          ).mappingKeys[mappingKey];
           referencedIndicator =
-            scope.indicators[node.expression.leftHandSide.baseExpression.referencedDeclaration]
-              .mappingKey[mappingKey];
+            scope.indicators[
+              node.expression.leftHandSide.baseExpression.referencedDeclaration
+            ].mappingKeys[mappingKey];
           if (!referencedBinding.nullifyingPaths) {
+            // @Binding new properties
             referencedBinding.nullifyingPaths = [];
             referencedBinding.nullificationCount = 0;
+            // @Indicator new properties
             referencedIndicator.nullifyingPaths = [];
             referencedIndicator.nullificationCount = 0;
           } else if (!referencedIndicator.nullifyingPaths) {
             // we have a separate statement for init just the indicator obj, since indicators are per function, while bindings are per contract
+            // @Indicator new properties
             referencedIndicator.nullifyingPaths = [];
             referencedIndicator.nullificationCount = 0;
           }
           break;
+        }
         default:
           referencedBinding = {};
           referencedIndicator = {};
@@ -83,20 +93,26 @@ export default {
       switch (node.expression.isIncremented) {
         case true:
           if (node.expression.isDecremented) {
+            // @Node new properties
             node.expression.isNullification = true;
+            // @Binding new properties
             referencedBinding.isNullified = true;
             referencedBinding.nullifyingPaths.push(newState.path);
             referencedBinding.nullificationCount++;
+            // @Indicator new properties
             referencedIndicator.isNullified = true;
             referencedIndicator.nullifyingPaths.push(newState.path);
             referencedIndicator.nullificationCount++;
             scope.addNullifyingPath(newState.path);
             break;
           } else if (node.expression.leftHandSide.isKnown || node.expression.leftHandSide.isWhole) {
+            // @Node new properties
             node.expression.isNullification = true;
+            // @Binding new properties
             referencedBinding.isNullified = true;
             referencedBinding.nullifyingPaths.push(newState.path);
             referencedBinding.nullificationCount++;
+            // @Indicator new properties
             referencedIndicator.isNullified = true;
             referencedIndicator.nullifyingPaths.push(newState.path);
             referencedIndicator.nullificationCount++;
@@ -107,10 +123,13 @@ export default {
             break;
           }
         case false:
+          // @Node new properties
           node.expression.isNullification = true;
+          // @Binding new properties
           referencedBinding.isNullified = true;
           referencedBinding.nullifyingPaths.push(newState.path);
           referencedBinding.nullificationCount++;
+          // @Indicator new properties
           referencedIndicator.isNullified = true;
           referencedIndicator.nullifyingPaths.push(newState.path);
           referencedIndicator.nullificationCount++;

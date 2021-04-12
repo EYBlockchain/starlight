@@ -26,6 +26,8 @@ export default {
         path.parentPath.node.nodeType !== 'MemberAccess'
           ? scope.getReferencedBinding(node)
           : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+
+      // QUESTION: what's happening here? (The clone deep and then the manual assignment of properties to the newly cloned object)
       let parentExpression = cloneDeep(path.getAncestorOfType('ExpressionStatement'));
       const parentStatement = path.getAncestorOfType('VariableDeclarationStatement');
       if (!parentExpression && parentStatement) {
@@ -97,8 +99,10 @@ export default {
           reason.src = node.src;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyName(lhsNode);
-            referencedIndicator = referencedIndicator.mappingKey[keyName];
+            referencedIndicator = referencedIndicator.mappingKeys[keyName];
           }
+          // @Indicator updated properties
+          // @Binding updated properties
           referencedIndicator.isWhole = true;
           referencedIndicator.isAccessed = true;
           referencedBinding.isAccessed = true;
@@ -112,6 +116,7 @@ export default {
           } else {
             referencedBinding.accessedNodes = [node];
           }
+          // @Node new property
           node.accessedSecretState = true;
         }
         const { operator } = parentExpression.node.expression;
@@ -121,7 +126,7 @@ export default {
           !parentExpression.node.expression.isIncremented &&
           !referencedBinding.isPartitioned &&
           operator &&
-          (operator === '*=' || operator === '+=' || operator === '-=')
+          ['*=', '+=', '-='].includes(operator)
         ) {
           logger.debug(
             `Found an accessed secret state ${node.name} (accessed in ${operator} operation)`,
@@ -132,8 +137,11 @@ export default {
           reason.src = node.src;
           if (lhsNode.nodeType === 'IndexAccess') {
             const keyName = scope.getMappingKeyName(lhsNode);
-            referencedIndicator = referencedIndicator.mappingKey[keyName];
+            referencedIndicator = referencedIndicator.mappingKeys[keyName];
           }
+          // @Node new property
+          // @Indicator updated properties
+          // @Binding updated properties
           node.accessedSecretState = true;
           referencedIndicator.isWhole = true;
           referencedIndicator.isAccessed = true;
