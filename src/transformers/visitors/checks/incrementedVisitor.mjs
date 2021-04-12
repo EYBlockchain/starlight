@@ -1,19 +1,34 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 import logger from '../../../utils/logger.mjs';
-import backtrace from '../../../error/backtrace.mjs'
-import { TODOError } from '../../../error/errors.mjs';
+import backtrace from '../../../error/backtrace.mjs';
+import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
+
+const literalOneNode = {
+  isConstant: false,
+  isPure: true,
+  kind: 'number',
+  lValueRequested: false,
+  nodeType: 'Literal',
+  value: '1',
+};
 
 const markParentIncrementation = (
   path,
   state,
   isIncremented,
   isDecremented,
+  incrementedIdentifier = {},
+  increments = {},
 ) => {
   const parent = path.getAncestorOfType('ExpressionStatement');
   parent.isIncremented = isIncremented;
   parent.isDecremented = isDecremented;
   state.unmarkedIncrementation = false;
+  state.incrementedIdentifier = incrementedIdentifier;
+  isDecremented
+    ? state.decrements.push(increments)
+    : state.increments.push(increments);
 };
 
 const mixedOperatorsWarning = path => {
@@ -38,20 +53,32 @@ export default {
 
       // a += something, -= something
       if (lhsSecret && operator === '+=') {
-        state.increments.push(rightHandSide);
-        markParentIncrementation(path, state, true, false);
+        markParentIncrementation(
+          path,
+          state,
+          true,
+          false,
+          leftHandSide,
+          rightHandSide,
+        );
         return;
       }
 
       if (lhsSecret && operator === '-=') {
-        state.decrements.push(rightHandSide);
-        markParentIncrementation(path, state, true, true);
+        markParentIncrementation(
+          path,
+          state,
+          true,
+          true,
+          leftHandSide,
+          rightHandSide,
+        );
         return;
       }
 
       // a *= something, a /= something
       if (operator === '%=' || operator === '/=' || operator === '*=') {
-        markParentIncrementation(path, state, false, false);
+        markParentIncrementation(path, state, false, false, leftHandSide);
         return;
       }
 
@@ -73,29 +100,25 @@ export default {
       const { subExpression, operator } = node;
       const lhsSecret = !!scope.getReferencedBinding(subExpression).isSecret;
       if (lhsSecret && operator.includes('+')) {
-        state.increments.push({
-          id: 11,
-          isConstant: false,
-          isPure: true,
-          kind: 'number',
-          lValueRequested: false,
-          nodeType: 'Literal',
-          value: '2',
-        });
-        markParentIncrementation(path, state, true, false);
+        markParentIncrementation(
+          path,
+          state,
+          true,
+          false,
+          subExpression,
+          literalOneNode,
+        );
         return;
       }
       if (lhsSecret && operator.includes('-')) {
-        state.decrements.push({
-          id: 11,
-          isConstant: false,
-          isPure: true,
-          kind: 'number',
-          lValueRequested: false,
-          nodeType: 'Literal',
-          value: '2',
-        });
-        markParentIncrementation(path, state, true, true);
+        markParentIncrementation(
+          path,
+          state,
+          true,
+          true,
+          subExpression,
+          literalOneNode,
+        );
       }
     },
   },
@@ -109,14 +132,18 @@ export default {
       const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
       // if we don't have a parent expression or that expression can't hold an incrementation, we exit
       if (!lhsNode) return;
-      const { node } = path;
+      const { node, scope } = path;
       const { operator, leftExpression, rightExpression } = node;
       const operands = [leftExpression, rightExpression];
       const precedingOperator = ['+', operator];
+      const lhsSecret = !!scope.getReferencedBinding(lhsNode).isSecret;
+
+      // TODO: do we need this? Do we care if its secret?
+      if (!lhsSecret) return;
 
       // if we dont have any + or -, it can't be an incrementation
       if (!operator.includes('+') && !operator.includes('-')) {
-        markParentIncrementation(path, state, false, false);
+        markParentIncrementation(path, state, false, false, lhsNode);
         return;
       }
 
@@ -211,15 +238,11 @@ export default {
             state,
             isIncremented.incremented,
             isIncremented.decremented,
+            lhsNode,
+            node,
           );
-          if (!isIncremented.decremented) {
-            // TODO: the stored .increments array may include the incremented node itself
-            // e.g. may include a in the rhs of a = b + a + c
-            state.increments.push(node);
-            return;
-          }
-          state.decrements.push(node);
-          return;
+        } else {
+          markParentIncrementation(path, state, false, false, lhsNode);
         }
       }
     },
@@ -238,81 +261,40 @@ export default {
     exit(path, state) {
       // Here: indicator, binding, nodePath
       const { node, scope } = path;
+      const { incrementedIdentifier } = state;
       const expressionNode = node.expression;
 
-      if (path.isIncremented === undefined) {
-        path.isIncremented = false;
-        path.isDecremented = false;
-        state.unmarkedIncrementation = false;
-      }
+      path.isIncremented ??= false;
+      path.isDecremented ??= false;
+      state.unmarkedIncrementation = false;
 
-      expressionNode.isIncremented = path.isIncremented;
-      expressionNode.isDecremented = path.isDecremented;
+      const { isIncremented, isDecremented } = path;
+      expressionNode.isIncremented = isIncremented;
+      expressionNode.isDecremented = isDecremented;
 
-      // TODO which node is being incremented?
-      if (lhsNode.isUnknown && expressionNode.isDecremented === true) {
-        throw new Error(
-          "Can't nullify (that is, edit with knowledge of the state) an unknown state.",
+      logger.debug(`statement is incremented? ${isIncremented}`);
+      logger.debug(`statement is decremented? ${isDecremented}`);
+
+      if (incrementedIdentifier.isUnknown && isDecremented) {
+        throw new SyntaxUsageError(
+          "Can't nullify (that is, edit with knowledge of the state) an unknown state. Since we are taking away some value of the state, we must know it.",
+          node,
         );
       }
+      // update binding
+      scope
+        .getReferencedBinding(incrementedIdentifier)
+        .updateIncrementation(path, state);
 
-      // 2) Update the indicators of the scope:
-      let referencedBinding;
-      if (lhsNode.nodeType === 'Identifier') {
-        referencedBinding = scope.getReferencedBinding(lhsNode);
-      } else if (lhsNode.nodeType === 'IndexAccess') {
-        referencedBinding = scope.getReferencedBinding(lhsNode.baseExpression); // returns the binding of the mapping TODO per index
-      }
-      if (
-        referencedBinding.stateVariable &&
-        scope.isInScopeType('FunctionDefinition')
-      ) {
-        const fnDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
-        let fnIndicatorObj = fnDefScope.indicators[referencedBinding.id];
-        let parentIndicatorObj;
+      // update indicator
+      scope
+        .getReferencedIndicator(incrementedIdentifier, false)
+        .updateIncrementation(path, state);
 
-        // a mapping:
-        // TODO: IndexAccess also describes access of an array (not just mappings)
-        if (lhsNode.nodeType === 'IndexAccess') {
-          const keyName = scope.getMappingKeyName(lhsNode);
-          parentIndicatorObj = fnIndicatorObj;
-          fnIndicatorObj = fnIndicatorObj.mappingKeys[keyName];
-        }
-
-        // if its incremented anywhere, isIncremented = true
-        // @Indicator new properties
-        fnIndicatorObj.isIncremented =
-          fnIndicatorObj.isIncremented === true ? true : isIncrementedBool;
-        fnIndicatorObj.isDecremented =
-          fnIndicatorObj.isDecremented === true ? true : isDecrementedBool;
-        if (isIncrementedBool === false) {
-          // statement is an overwrite
-          // @Indicator new properties
-          fnIndicatorObj.isWhole = true;
-          // @Binding new properties
-          referencedBinding.isWhole = true;
-          const reason = {};
-          reason[0] = lhsNode.typeDescriptions.typeString !== 'address' ? `Overwritten` : `Address`;
-          reason.src = expressionNode.src;
-          logger.debug('reason:', reason);
-          if (fnIndicatorObj.isWholeReason) {
-            // @Indicator new properties
-            fnIndicatorObj.isWholeReason.push(reason);
-          } else {
-            // @Indicator new properties
-            fnIndicatorObj.isWholeReason = [reason];
-          }
-
-          if (parentIndicatorObj?.isWholeReason) {
-            // @Indicator new properties
-            parentIndicatorObj.isWholeReason.push(reason);
-          } else if (parentIndicatorObj) {
-            // @Indicator new properties
-            parentIndicatorObj.isWhole = true;
-            parentIndicatorObj.isWholeReason = [reason];
-          }
-        }
-      }
+      // reset state
+      state.increments = [];
+      state.decrements = [];
+      state.incrementedIdentifier = {};
     },
   },
 };

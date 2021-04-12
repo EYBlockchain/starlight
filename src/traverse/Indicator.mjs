@@ -131,6 +131,41 @@ export class StateVariableIndicator {
     }
   }
 
+  updateIncrementation(path, state) {
+    if (!path.isIncremented) {
+      this.isWhole = true;
+      const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
+      this.isWholeReason ??= [];
+      this.isWholeReason.push(reason);
+    }
+    // if its incremented anywhere, isIncremented = true
+    // so we only assign if it's already falsey
+    this.isIncremented ||= path.isIncremented;
+    this.isDecremented ||= path.isDecremented;
+    this.increments ??= [];
+    this.decrements ??= [];
+    state.increments.forEach(inc => {
+      this.increments.push(inc);
+      if (this.isMapping) {
+        const mappingKey = this.mappingKeys[
+          path.scope.getMappingKeyName(state.incrementedIdentifier)
+        ];
+        mappingKey.increments ??= [];
+        mappingKey.increments.push(inc);
+      }
+    });
+    state.decrements.forEach(dec => {
+      this.decrements.push(dec);
+      if (this.isMapping) {
+        const mappingKey = this.mappingKeys[
+          path.scope.getMappingKeyName(state.incrementedIdentifier)
+        ];
+        mappingKey.decrements ??= [];
+        mappingKey.decrements.push(dec);
+      }
+    });
+  }
+
   addReferencingPath(path) {
     this.isReferenced = true;
     ++this.referenceCount;

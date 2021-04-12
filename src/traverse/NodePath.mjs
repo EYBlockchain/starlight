@@ -499,7 +499,12 @@ export default class NodePath {
    * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
    * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
    */
-  isIncrementation(expressionNode = this.node) {}
+  isIncrementation(expressionNode = this.node) {
+    return {
+      isIncremented: expressionNode.isIncremented,
+      isDecremented: expressionNode.isIncremented,
+    };
+  }
 
   /**
    * Decides whether an expression is an incrementation of some node (`lhsNode`).

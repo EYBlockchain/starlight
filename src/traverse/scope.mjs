@@ -751,245 +751,245 @@ export class Scope {
     return false;
   }
 
-  /**
-   * Decides whether a statement is an incrementation.
-   * @param {Object} expressionNode - the line's expression node, usually an Assignment.
-   * @param {Object} lhsNode - the left hand side node, usually an Identifier.
-   * @returns {Object {bool, bool}} - isIncremented and isDecremented
-   */
-  isIncremented(expressionNode, lhsNode) {
-    let isIncrementedBool = false;
-    let isDecrementedBool = false;
-
-    // first, check if the LHS node is secret
-    const increments = [];
-    const decrements = [];
-
-    const lhsbinding = this.getReferencedBinding(lhsNode);
-    const lhsSecret = !!lhsbinding.isSecret;
-
-    // look at the assignment
-    switch (expressionNode.nodeType) {
-      case 'Assignment': {
-        // ARITHMETIC ASSIGNMENT OPERATORS:
-        const { operator, leftHandSide, rightHandSide } = expressionNode;
-
-        // a += something
-        if (lhsSecret && operator === '+=') {
-          isIncrementedBool = true;
-          isDecrementedBool = false;
-          increments.push(rightHandSide);
-          break;
-        }
-
-        // a -= something
-        if (lhsSecret && operator === '-=') {
-          isIncrementedBool = true;
-          isDecrementedBool = true;
-          decrements.push(rightHandSide);
-          break;
-        }
-
-        // a *= something, a /= something
-        if (['%=', '/=', '*='].includes(operator)) {
-          // TODO other operators like |= etc?)
-          isIncrementedBool = false;
-          break;
-        }
-
-        if (operator !== '=')
-          throw new Error(
-            `Operator '${operator}' not yet supported. Please open an issue.`,
-          );
-
-        // SIMPLE ASSIGNMENT `=`:
-        // `a = something`
-        switch (rightHandSide.nodeType) {
-          case 'BinaryOperation': {
-            const binOpNode = rightHandSide;
-            const operands = [
-              binOpNode.leftExpression,
-              binOpNode.rightExpression,
-            ];
-            const { operator } = rightHandSide;
-
-            // TODO deal with binOps like a + b - c, c < a + b
-            // if we dont have any + or -, it can't be an incrementation
-            if (!operator.includes('+') && !operator.includes('-')) {
-              isIncrementedBool = false;
-              isDecrementedBool = false;
-              break;
-            }
-
-            // fills an array of params
-            for (const [index, operand] of operands.entries()) {
-              if (operand.nodeType === 'BinaryOperation') {
-                if (!operand.operator.includes('+')) {
-                  isIncrementedBool = false;
-                  break;
-                }
-                operands[index] = operand.leftExpression;
-                operands.push(operand.rightExpression);
-              }
-            }
-
-            // Goes through each operand and checks whether it's the lhsNode and whether it's +/- anything
-            for (const operand of operands) {
-              if (operand.referencedDeclaration || operand.baseExpression) {
-                const { isSecret } = this.getReferencedBinding(operand);
-
-                // a = a + b
-                if (
-                  isSecret &&
-                  operand.name === lhsNode.name &&
-                  operator.includes('+')
-                ) {
-                  isIncrementedBool = true;
-                  isDecrementedBool = false;
-                  break;
-                }
-
-                // a = a + b (mapping)
-                if (
-                  isSecret &&
-                  operand.nodeType === 'IndexAccess' &&
-                  operand.baseExpression.name === lhsNode.baseExpression.name &&
-                  operand.indexExpression.name ===
-                    lhsNode.indexExpression.name &&
-                  operator.includes('+')
-                ) {
-                  isIncrementedBool = true;
-                  isDecrementedBool = false;
-                  break;
-                }
-
-                // TODO: what was this for? I wouldn't classify `b = a + somthing` as an "incrementation", because there's no `b` on the rhs. Commenting out for now.
-                // // b = a + something
-                // if (!lhsSecret && isSecret && operator.includes('+')) {
-                //   isIncrementedBool = true;
-                //   isDecrementedBool = false;
-                //   break;
-                // }
-
-                // a = a - something
-                if (
-                  isSecret &&
-                  operand.name === lhsNode.name &&
-                  operator.includes('-') &&
-                  operand === binOpNode.leftExpression
-                ) {
-                  isIncrementedBool = true;
-                  isDecrementedBool = true;
-                  break;
-                }
-                // if none, go to the next param
-              }
-            }
-            if (isIncrementedBool && !isDecrementedBool) {
-              // @Increments new increment
-              increments.push(binOpNode);
-            } else if (isDecrementedBool) {
-              // @Decrements new decrement
-              decrements.push(binOpNode);
-            }
-            break;
-          }
-
-          case 'Identifier': {
-            // c = a + b, a = c
-            // TODO consider cases where c has lots of modifiers, which might cancel out the incrementation of a
-            // TODO consider doing this at the level of c, not a, maybe that works out better
-            const rhsbinding = this.getReferencedBinding(rightHandSide);
-            const isSecret = rhsbinding.secretVariable;
-            // looking at modifiers of c...
-            if (rhsbinding && rhsbinding.isModified) {
-              // for each modifier, replace a with c and see if there are incrementations..
-              for (const p of rhsbinding.modifyingPaths) {
-                const modifyingNode = p.node;
-                // ... and if a xor c are secret, then true
-                if (
-                  this.isIncremented(modifyingNode, lhsNode) &&
-                  (lhsSecret || isSecret)
-                ) {
-                  isIncrementedBool = true;
-                  break;
-                }
-              }
-            }
-            break;
-          }
-
-          case 'FunctionCall': {
-            isIncrementedBool = false;
-            isDecrementedBool = false;
-            break;
-          }
-
-          case 'IndexAccess':
-          case 'Literal':
-            // we've done all the work above already -  as long as we're ok with commitment values being non-secret here
-            // TODO give warning?
-            break;
-
-          default:
-            console.log(
-              `Assignment.rightHandSide is of nodeType ${rightHandSide.nodeType} which is not being properly handled by the 'isIncremented()' function`,
-            );
-            backtrace.getSourceCode(rightHandSide.src);
-          // throw new Error(
-          //   `Assignment.rightHandSide is of nodeType ${expressionNode.rightHandSide.nodeType} which is not yet supported. Please open an issue.`,
-          // );
-        }
-
-        if (!isIncrementedBool) {
-          isIncrementedBool = false;
-          isDecrementedBool = false;
-        }
-        break;
-      }
-      // TODO are there incrementations which aren't assignments?
-      // Yes - unary operators
-      default:
-        isIncrementedBool = false;
-        isDecrementedBool = false;
-        break;
-    }
-
-    logger.debug(`statement is incremented? ${isIncrementedBool}`);
-    logger.debug(`statement is decremented? ${isDecrementedBool}`);
-
-    const referencedIndicator = this.getReferencedIndicator(lhsNode, true);
-    // @Indicator new property
-    referencedIndicator.increments = referencedIndicator.increments || [];
-    referencedIndicator.decrements = referencedIndicator.decrements || [];
-
-    increments.forEach(inc => {
-      // @Indicator update property
-      referencedIndicator.increments.push(inc);
-      if (lhsNode.baseExpression) {
-        const keyBinding =
-          lhsbinding.mappingKeys[this.getMappingKeyName(lhsNode)];
-        // @Increments updated/new increment
-        keyBinding.increments = keyBinding.increments || [];
-        keyBinding.increments.push(inc);
-      }
-      lhsbinding.increments.push(inc);
-    });
-
-    decrements.forEach(dec => {
-      referencedIndicator.decrements.push(dec);
-      if (lhsNode.baseExpression) {
-        const keyBinding =
-          lhsbinding.mappingKeys[this.getMappingKeyName(lhsNode)];
-        // @Decrements updated/new decrement
-        keyBinding.decrements = keyBinding.decrements || [];
-        keyBinding.decrements.push(dec);
-      }
-      lhsbinding.decrements.push(dec);
-    });
-
-    return { isIncrementedBool, isDecrementedBool };
-  }
+  // /**
+  //  * Decides whether a statement is an incrementation.
+  //  * @param {Object} expressionNode - the line's expression node, usually an Assignment.
+  //  * @param {Object} lhsNode - the left hand side node, usually an Identifier.
+  //  * @returns {Object {bool, bool}} - isIncremented and isDecremented
+  //  */
+  // isIncremented(expressionNode, lhsNode) {
+  //   let isIncrementedBool = false;
+  //   let isDecrementedBool = false;
+  //
+  //   // first, check if the LHS node is secret
+  //   const increments = [];
+  //   const decrements = [];
+  //
+  //   const lhsbinding = this.getReferencedBinding(lhsNode);
+  //   const lhsSecret = !!lhsbinding.isSecret;
+  //
+  //   // look at the assignment
+  //   switch (expressionNode.nodeType) {
+  //     case 'Assignment': {
+  //       // ARITHMETIC ASSIGNMENT OPERATORS:
+  //       const { operator, leftHandSide, rightHandSide } = expressionNode;
+  //
+  //       // a += something
+  //       if (lhsSecret && operator === '+=') {
+  //         isIncrementedBool = true;
+  //         isDecrementedBool = false;
+  //         increments.push(rightHandSide);
+  //         break;
+  //       }
+  //
+  //       // a -= something
+  //       if (lhsSecret && operator === '-=') {
+  //         isIncrementedBool = true;
+  //         isDecrementedBool = true;
+  //         decrements.push(rightHandSide);
+  //         break;
+  //       }
+  //
+  //       // a *= something, a /= something
+  //       if (['%=', '/=', '*='].includes(operator)) {
+  //         // TODO other operators like |= etc?)
+  //         isIncrementedBool = false;
+  //         break;
+  //       }
+  //
+  //       if (operator !== '=')
+  //         throw new Error(
+  //           `Operator '${operator}' not yet supported. Please open an issue.`,
+  //         );
+  //
+  //       // SIMPLE ASSIGNMENT `=`:
+  //       // `a = something`
+  //       switch (rightHandSide.nodeType) {
+  //         case 'BinaryOperation': {
+  //           const binOpNode = rightHandSide;
+  //           const operands = [
+  //             binOpNode.leftExpression,
+  //             binOpNode.rightExpression,
+  //           ];
+  //           const { operator } = rightHandSide;
+  //
+  //           // TODO deal with binOps like a + b - c, c < a + b
+  //           // if we dont have any + or -, it can't be an incrementation
+  //           if (!operator.includes('+') && !operator.includes('-')) {
+  //             isIncrementedBool = false;
+  //             isDecrementedBool = false;
+  //             break;
+  //           }
+  //
+  //           // fills an array of params
+  //           for (const [index, operand] of operands.entries()) {
+  //             if (operand.nodeType === 'BinaryOperation') {
+  //               if (!operand.operator.includes('+')) {
+  //                 isIncrementedBool = false;
+  //                 break;
+  //               }
+  //               operands[index] = operand.leftExpression;
+  //               operands.push(operand.rightExpression);
+  //             }
+  //           }
+  //
+  //           // Goes through each operand and checks whether it's the lhsNode and whether it's +/- anything
+  //           for (const operand of operands) {
+  //             if (operand.referencedDeclaration || operand.baseExpression) {
+  //               const { isSecret } = this.getReferencedBinding(operand);
+  //
+  //               // a = a + b
+  //               if (
+  //                 isSecret &&
+  //                 operand.name === lhsNode.name &&
+  //                 operator.includes('+')
+  //               ) {
+  //                 isIncrementedBool = true;
+  //                 isDecrementedBool = false;
+  //                 break;
+  //               }
+  //
+  //               // a = a + b (mapping)
+  //               if (
+  //                 isSecret &&
+  //                 operand.nodeType === 'IndexAccess' &&
+  //                 operand.baseExpression.name === lhsNode.baseExpression.name &&
+  //                 operand.indexExpression.name ===
+  //                   lhsNode.indexExpression.name &&
+  //                 operator.includes('+')
+  //               ) {
+  //                 isIncrementedBool = true;
+  //                 isDecrementedBool = false;
+  //                 break;
+  //               }
+  //
+  //               // TODO: what was this for? I wouldn't classify `b = a + somthing` as an "incrementation", because there's no `b` on the rhs. Commenting out for now.
+  //               // // b = a + something
+  //               // if (!lhsSecret && isSecret && operator.includes('+')) {
+  //               //   isIncrementedBool = true;
+  //               //   isDecrementedBool = false;
+  //               //   break;
+  //               // }
+  //
+  //               // a = a - something
+  //               if (
+  //                 isSecret &&
+  //                 operand.name === lhsNode.name &&
+  //                 operator.includes('-') &&
+  //                 operand === binOpNode.leftExpression
+  //               ) {
+  //                 isIncrementedBool = true;
+  //                 isDecrementedBool = true;
+  //                 break;
+  //               }
+  //               // if none, go to the next param
+  //             }
+  //           }
+  //           if (isIncrementedBool && !isDecrementedBool) {
+  //             // @Increments new increment
+  //             increments.push(binOpNode);
+  //           } else if (isDecrementedBool) {
+  //             // @Decrements new decrement
+  //             decrements.push(binOpNode);
+  //           }
+  //           break;
+  //         }
+  //
+  //         case 'Identifier': {
+  //           // c = a + b, a = c
+  //           // TODO consider cases where c has lots of modifiers, which might cancel out the incrementation of a
+  //           // TODO consider doing this at the level of c, not a, maybe that works out better
+  //           const rhsbinding = this.getReferencedBinding(rightHandSide);
+  //           const isSecret = rhsbinding.secretVariable;
+  //           // looking at modifiers of c...
+  //           if (rhsbinding && rhsbinding.isModified) {
+  //             // for each modifier, replace a with c and see if there are incrementations..
+  //             for (const p of rhsbinding.modifyingPaths) {
+  //               const modifyingNode = p.node;
+  //               // ... and if a xor c are secret, then true
+  //               if (
+  //                 this.isIncremented(modifyingNode, lhsNode) &&
+  //                 (lhsSecret || isSecret)
+  //               ) {
+  //                 isIncrementedBool = true;
+  //                 break;
+  //               }
+  //             }
+  //           }
+  //           break;
+  //         }
+  //
+  //         case 'FunctionCall': {
+  //           isIncrementedBool = false;
+  //           isDecrementedBool = false;
+  //           break;
+  //         }
+  //
+  //         case 'IndexAccess':
+  //         case 'Literal':
+  //           // we've done all the work above already -  as long as we're ok with commitment values being non-secret here
+  //           // TODO give warning?
+  //           break;
+  //
+  //         default:
+  //           console.log(
+  //             `Assignment.rightHandSide is of nodeType ${rightHandSide.nodeType} which is not being properly handled by the 'isIncremented()' function`,
+  //           );
+  //           backtrace.getSourceCode(rightHandSide.src);
+  //         // throw new Error(
+  //         //   `Assignment.rightHandSide is of nodeType ${expressionNode.rightHandSide.nodeType} which is not yet supported. Please open an issue.`,
+  //         // );
+  //       }
+  //
+  //       if (!isIncrementedBool) {
+  //         isIncrementedBool = false;
+  //         isDecrementedBool = false;
+  //       }
+  //       break;
+  //     }
+  //     // TODO are there incrementations which aren't assignments?
+  //     // Yes - unary operators
+  //     default:
+  //       isIncrementedBool = false;
+  //       isDecrementedBool = false;
+  //       break;
+  //   }
+  //
+  //   logger.debug(`statement is incremented? ${isIncrementedBool}`);
+  //   logger.debug(`statement is decremented? ${isDecrementedBool}`);
+  //
+  //   const referencedIndicator = this.getReferencedIndicator(lhsNode, true);
+  //   // @Indicator new property
+  //   referencedIndicator.increments = referencedIndicator.increments || [];
+  //   referencedIndicator.decrements = referencedIndicator.decrements || [];
+  //
+  //   increments.forEach(inc => {
+  //     // @Indicator update property
+  //     referencedIndicator.increments.push(inc);
+  //     if (lhsNode.baseExpression) {
+  //       const keyBinding =
+  //         lhsbinding.mappingKeys[this.getMappingKeyName(lhsNode)];
+  //       // @Increments updated/new increment
+  //       keyBinding.increments = keyBinding.increments || [];
+  //       keyBinding.increments.push(inc);
+  //     }
+  //     lhsbinding.increments.push(inc);
+  //   });
+  //
+  //   decrements.forEach(dec => {
+  //     referencedIndicator.decrements.push(dec);
+  //     if (lhsNode.baseExpression) {
+  //       const keyBinding =
+  //         lhsbinding.mappingKeys[this.getMappingKeyName(lhsNode)];
+  //       // @Decrements updated/new decrement
+  //       keyBinding.decrements = keyBinding.decrements || [];
+  //       keyBinding.decrements.push(dec);
+  //     }
+  //     lhsbinding.decrements.push(dec);
+  //   });
+  //
+  //   return { isIncrementedBool, isDecrementedBool };
+  // }
 
   /**
    * Completes final checks on initial traversal:

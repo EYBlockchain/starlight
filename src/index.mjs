@@ -9,7 +9,7 @@ import toContract from './transformers/toContract.mjs';
 import toOrchestration from './transformers/toOrchestration.mjs';
 
 const zappify = options => {
-  Error.stackTraceLimit = 0; // prettier error output TODO see if we can remove this in place of error/errors.mjs handling the limit
+  // Error.stackTraceLimit = 0; // prettier error output TODO see if we can remove this in place of error/errors.mjs handling the limit
   // testing prettier errors
   process.on('uncaughtException', err => {
     console.log(err);

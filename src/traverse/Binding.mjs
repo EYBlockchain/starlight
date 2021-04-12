@@ -154,6 +154,20 @@ export default class Binding {
     if (path.isModification()) this.addModifyingPath(path);
   }
 
+  updateIncrementation(path, state) {
+    // The binding level tells us about the state everywhere, so we only need to update if it's whole
+    // We update the function level indicators with isIncremented
+    if (!path.isIncremented) {
+      this.isWhole = true;
+      const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
+      if (this.isWholeReason) {
+        this.isWholeReason.push(reason);
+      } else {
+        this.isWholeReason = [reason];
+      }
+    }
+  }
+
   addReferencingPath(path) {
     this.isReferenced = true;
     ++this.referenceCount;
