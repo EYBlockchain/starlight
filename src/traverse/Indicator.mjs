@@ -132,11 +132,25 @@ export class StateVariableIndicator {
   }
 
   updateIncrementation(path, state) {
+    // TODO split if isMapping
     if (!path.isIncremented) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
       this.isWholeReason ??= [];
       this.isWholeReason.push(reason);
+    } else if (
+      !path.isDecremented &&
+      (state.incrementedIdentifier.isUnknown ||
+        state.incrementedIdentifier.baseExpression?.isUnknown)
+    ) {
+      this.isPartitioned = true;
+      const reason = {
+        src: state.incrementedIdentifier.src,
+        0: `Incremented and marked as unknown`,
+      };
+      this.isUnknown ??= true;
+      this.isPartitionedReason ??= [];
+      this.isPartitionedReason.push(reason);
     }
     // if its incremented anywhere, isIncremented = true
     // so we only assign if it's already falsey

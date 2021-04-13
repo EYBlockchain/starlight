@@ -33,8 +33,8 @@ const markParentIncrementation = (
 
 const mixedOperatorsWarning = path => {
   backtrace.getSourceCode(path.node.src);
-  console.warn(
-    `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Try to use += for incrementations and -= for decrementations where possible. \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c.`,
+  logger.warn(
+    `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Make sure that incrementing (a = a + ...) always increases the secret state value while decrementing (a = a - ...) decreases it. \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c. Similarly, we assume a = a - b + c is a decrementation, so c - b < a.`,
   );
 };
 
@@ -61,6 +61,7 @@ export default {
           leftHandSide,
           rightHandSide,
         );
+        if (rightHandSide.operator?.includes('-')) mixedOperatorsWarning(path);
         return;
       }
 
@@ -73,6 +74,7 @@ export default {
           leftHandSide,
           rightHandSide,
         );
+        if (rightHandSide.operator?.includes('-')) mixedOperatorsWarning(path);
         return;
       }
 
@@ -90,6 +92,7 @@ export default {
 
       // then, it depends what's on the RHS
       // we may have a = a + b (binop below)
+      state.incrementedIdentifier = leftHandSide;
     },
   },
 
@@ -158,7 +161,7 @@ export default {
       }
 
       if (
-        precedingOperator.length > 1 &&
+        precedingOperator.length > 2 &&
         precedingOperator.includes('+') &&
         precedingOperator.includes('-')
       )
@@ -173,13 +176,13 @@ export default {
         if (operand.referencedDeclaration || operand.baseExpression) {
           // a = a + something
           if (
+            operand.nodeType !== 'IndexAccess' &&
             operand.name === lhsNode.name &&
             precedingOperator[index + 1].includes('+') && // we have ... + a + ...
             precedingOperator[index].includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: false };
-            return;
           }
 
           // a = a + something (mapping)
@@ -192,18 +195,17 @@ export default {
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: false };
-            return;
           }
 
           // a = a - something
           if (
+            operand.nodeType !== 'IndexAccess' &&
             operand.name === lhsNode.name &&
             precedingOperator[index + 1].includes('-') && // we have ... + a - ...
             precedingOperator[index].includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
-            return;
           }
 
           // a = a - something (mapping)
@@ -216,7 +218,6 @@ export default {
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
-            return;
           }
 
           // a = something - a
@@ -273,23 +274,33 @@ export default {
       expressionNode.isDecremented = isDecremented;
 
       logger.debug(`statement is incremented? ${isIncremented}`);
+      if (isIncremented && !isDecremented) {
+        logger.debug(`increments? ${state.increments}`);
+      }
       logger.debug(`statement is decremented? ${isDecremented}`);
+      if (isDecremented) {
+        logger.debug(`decrements? ${state.decrements}`);
+      }
 
-      if (incrementedIdentifier.isUnknown && isDecremented) {
+      if (
+        (incrementedIdentifier?.isUnknown ||
+          incrementedIdentifier?.baseExpression?.isUnknown) &&
+        isDecremented
+      ) {
         throw new SyntaxUsageError(
-          "Can't nullify (that is, edit with knowledge of the state) an unknown state. Since we are taking away some value of the state, we must know it.",
+          "Can't nullify (that is, edit with knowledge of the state) an unknown state. Since we are taking away some value of the state, we must know it. Only incrementations like a += x can be marked as unknown.",
           node,
         );
       }
       // update binding
       scope
         .getReferencedBinding(incrementedIdentifier)
-        .updateIncrementation(path, state);
+        ?.updateIncrementation(path, state);
 
       // update indicator
       scope
         .getReferencedIndicator(incrementedIdentifier, false)
-        .updateIncrementation(path, state);
+        ?.updateIncrementation(path, state);
 
       // reset state
       state.increments = [];

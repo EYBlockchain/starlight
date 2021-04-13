@@ -402,7 +402,7 @@ export default class NodePath {
 
   isFunctionParameterDeclaration() {
     const functionParameters = this.getFunctionParameters();
-    return functionParameters.some(node => node === this.node);
+    return functionParameters?.some(node => node === this.node);
   }
 
   isFunctionParameter(node = this.node) {

@@ -155,16 +155,27 @@ export default class Binding {
   }
 
   updateIncrementation(path, state) {
-    // The binding level tells us about the state everywhere, so we only need to update if it's whole
+    // The binding level tells us about the state everywhere, so we only need to update if it's whole/partitioned
     // We update the function level indicators with isIncremented
+    // TODO split if isMapping
     if (!path.isIncremented) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
-      if (this.isWholeReason) {
-        this.isWholeReason.push(reason);
-      } else {
-        this.isWholeReason = [reason];
-      }
+      this.isWholeReason ??= [];
+      this.isWholeReason.push(reason);
+    } else if (
+      !path.isDecremented &&
+      (state.incrementedIdentifier.isUnknown ||
+        state.incrementedIdentifier.baseExpression?.isUnknown)
+    ) {
+      this.isPartitioned = true;
+      const reason = {
+        src: state.incrementedIdentifier.src,
+        0: `Incremented and marked as unknown`,
+      };
+      this.isUnknown ??= true;
+      this.isPartitionedReason ??= [];
+      this.isPartitionedReason.push(reason);
     }
   }
 
