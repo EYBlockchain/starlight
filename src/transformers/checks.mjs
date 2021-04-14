@@ -8,7 +8,7 @@ import unsupportedVisitor from './visitors/checks/unsupportedVisitor.mjs';
 import externalCallVisitor from './visitors/checks/externalCallVisitor.mjs';
 import decoratorVisitor from './visitors/checks/decoratorVisitor.mjs';
 import incrementedVisitor from './visitors/checks/incrementedVisitor.mjs';
-import accessedVisitor from './visitors/checks/referencedVisitor.mjs';
+import accessedVisitor from './visitors/checks/accessedVisitor.mjs';
 import wholeVisitor from './visitors/checks/wholeVisitor.mjs';
 
 /**

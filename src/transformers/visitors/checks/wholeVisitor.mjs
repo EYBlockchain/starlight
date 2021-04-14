@@ -3,6 +3,8 @@
 
 import logger from '../../../utils/logger.mjs';
 
+// TODO move most of this to indicator
+
 export default {
   FunctionDefinition: {
     enter(path, state) {},

@@ -7,34 +7,41 @@ import backtrace from '../../../error/backtrace.mjs';
 
 /**
  * @desc:
- * Visitor will...
-*/
+ * Visitor checks whether a secret state is 'accessed'.
+ * This means that we need to know the value (and open a commitment) to use it here.
+ * An accessed state must be whole, because we can't open a dynamic number of commitments.
+ */
 
 export default {
   Identifier: {
     enter(path, state) {
       // Here, if secret:
-      // 1) Chcek if in a RHS container
+      // 1) Check if in a RHS container
       // 2) Check if NOT incrementing
       const { node, scope } = path;
       if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
       if (path.isExportedSymbol()) return; // the node represents an external contract name
-      if (path.isRequireStatement()) return;
+      if (path.isRequireStatement()) return; // a require statement
 
-      const referencedBinding =
-        path.parentPath.node.nodeType !== 'MemberAccess'
-          ? scope.getReferencedBinding(node)
-          : scope.getReferencedBinding(path.parentPath.parentPath.node.baseExpression);
+      const referencedBinding = scope.getReferencedBinding(node);
 
       // QUESTION: what's happening here? (The clone deep and then the manual assignment of properties to the newly cloned object)
-      let parentExpression = cloneDeep(path.getAncestorOfType('ExpressionStatement'));
-      const parentStatement = path.getAncestorOfType('VariableDeclarationStatement');
+      // ANSWER: We have to account for VariableDeclarationStatements which have 'initialValue' and 'declarations' instead of LHS and RHS. So I copy an obj and make it look like an ExpressionStatement. TODO: improve this with a sep. visitor
+      let parentExpression = cloneDeep(
+        path.getAncestorOfType('ExpressionStatement'),
+      );
+      const parentStatement = path.getAncestorOfType(
+        'VariableDeclarationStatement',
+      );
+      // if we have a VariableDeclarationStatement, we make it look like an ExpressionStatement so we only need one method. TODO: improve
       if (!parentExpression && parentStatement) {
         parentExpression = cloneDeep(parentStatement);
         parentExpression.node.expression = {};
-        parentExpression.node.expression.leftHandSide = parentStatement.node.declarations[0];
-        parentExpression.node.expression.rightHandSide = parentStatement.node.initialValue;
+        parentExpression.node.expression.leftHandSide =
+          parentStatement.node.declarations[0];
+        parentExpression.node.expression.rightHandSide =
+          parentStatement.node.initialValue;
         parentExpression.node.nodeType = 'Assignment';
       }
 
@@ -44,12 +51,17 @@ export default {
           path.getAncestorContainedWithin('rightHandSide') ||
           path.getAncestorContainedWithin('initialValue');
         const leftAncestor = path.getAncestorContainedWithin('leftHandSide');
-        const functionDefScope = scope.getAncestorOfScopeType('FunctionDefinition');
+        const functionDefScope = scope.getAncestorOfScopeType(
+          'FunctionDefinition',
+        );
 
+        // TODO turn this whole bit into more of a visitor, using state to store everything
         if (!functionDefScope) return;
-        if (parentExpression.node.expression.nodeType === 'UnaryOperation') return;
+        if (parentExpression.node.expression.nodeType === 'UnaryOperation')
+          return;
         // TODO mark secret states which are accessed to call a fn:
-        if (parentExpression.node.expression.nodeType === 'FunctionCall') return;
+        if (parentExpression.node.expression.nodeType === 'FunctionCall')
+          return;
 
         let referencedIndicator = functionDefScope.indicators[referencedBinding.id];
         const lhsNode = parentExpression.node.expression.leftHandSide;
@@ -67,6 +79,7 @@ export default {
               nodeName !== 'msg'))
         ) {
           logger.debug(`Found an accessed secret state ${node.name}`);
+          // TODO getReferencedBinding should return the VariableDeclaration binding if the input is a VariableDeclaration
           const lhs =
             lhsNode.nodeType === 'Identifier'
               ? scope.getReferencedBinding(lhsNode)

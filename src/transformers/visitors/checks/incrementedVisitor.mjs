@@ -4,6 +4,7 @@ import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
 
+// when we have an a++ and needs its increment to equal the node rep. 1
 const literalOneNode = {
   isConstant: false,
   isPure: true,
@@ -13,6 +14,7 @@ const literalOneNode = {
   value: '1',
 };
 
+// marks the parent ExpressionStatement
 const markParentIncrementation = (
   path,
   state,
@@ -40,12 +42,79 @@ const mixedOperatorsWarning = path => {
 
 /**
  * @desc:
- * Visitor will...
+ * Visitor checks each ExpressionStatement and decides whether it's an incrementation.
+ * Marks the ExpressionStatement and calls methods in Binding and Indicator to mark
+ * incrementation and whole/partitioned status (if known).
  */
 
 export default {
+  ExpressionStatement: {
+    enter(path, state) {
+      // starts here - if the path hasn't yet been marked as incremented, we find out if it is
+      if (path.isIncremented === undefined) {
+        state.unmarkedIncrementation = true;
+        state.increments = [];
+        state.decrements = [];
+      }
+    },
+
+    exit(path, state) {
+      // finishes here after looking through the expression
+      const { node, scope } = path;
+      const { incrementedIdentifier } = state;
+      const expressionNode = node.expression;
+
+      // if we haven't marked it yet, then it's not an incrementation - we mark as false
+      path.isIncremented ??= false;
+      path.isDecremented ??= false;
+      state.unmarkedIncrementation = false;
+
+      // we mark the expression node
+      const { isIncremented, isDecremented } = path;
+      expressionNode.isIncremented = isIncremented;
+      expressionNode.isDecremented = isDecremented;
+
+      // print if in debug mode
+      logger.debug(`statement is incremented? ${isIncremented}`);
+      if (isIncremented && !isDecremented) {
+        logger.debug(`increments? ${state.increments}`);
+      }
+      logger.debug(`statement is decremented? ${isDecremented}`);
+      if (isDecremented) {
+        logger.debug(`decrements? ${state.decrements}`);
+      }
+
+      // check for an unknown decremented state
+      if (
+        (incrementedIdentifier?.isUnknown ||
+          incrementedIdentifier?.baseExpression?.isUnknown) &&
+        isDecremented
+      ) {
+        throw new SyntaxUsageError(
+          "Can't nullify (that is, edit with knowledge of the state) an unknown state. Since we are taking away some value of the state, we must know it. Only incrementations like a += x can be marked as unknown.",
+          node,
+        );
+      }
+      // update binding
+      scope
+        .getReferencedBinding(incrementedIdentifier)
+        ?.updateIncrementation(path, state);
+
+      // update indicator
+      scope
+        .getReferencedIndicator(incrementedIdentifier, false)
+        ?.updateIncrementation(path, state);
+
+      // reset state
+      state.increments = [];
+      state.decrements = [];
+      state.incrementedIdentifier = {};
+    },
+  },
+
   Assignment: {
     enter(path, state) {
+      // here: we check whether the assignment is an incrementation
       if (!state.unmarkedIncrementation) return;
       const { node, scope } = path;
       const { operator, leftHandSide, rightHandSide } = node;
@@ -84,24 +153,27 @@ export default {
         return;
       }
 
+      // after +=, -=, %=, *=, /=, we can only deal with =
       if (operator !== '=')
         throw new TODOError(
           `Operator '${operator}' not yet supported. Please open an issue.`,
           node,
         );
 
-      // then, it depends what's on the RHS
-      // we may have a = a + b (binop below)
+      // then, it depends what's on the RHS of the assignment, so we continue
+      // we save the LHS node to help us later
       state.incrementedIdentifier = leftHandSide;
     },
   },
 
   UnaryOperation: {
     enter(path, state) {
+      // a unary operation (a++, a--) counts as an incrementation by 1
       if (!state.unmarkedIncrementation) return;
       const { node, scope } = path;
       const { subExpression, operator } = node;
       const lhsSecret = !!scope.getReferencedBinding(subExpression).isSecret;
+      // a++
       if (lhsSecret && operator.includes('+')) {
         markParentIncrementation(
           path,
@@ -113,6 +185,7 @@ export default {
         );
         return;
       }
+      // a--
       if (lhsSecret && operator.includes('-')) {
         markParentIncrementation(
           path,
@@ -128,6 +201,7 @@ export default {
 
   BinaryOperation: {
     enter(path, state) {
+      // a BinaryOperation can tell us if the RHS of an assignment is incremented
       if (!state.unmarkedIncrementation) return;
       const parentExpressionStatement = path.getAncestorOfType(
         'ExpressionStatement',
@@ -159,7 +233,7 @@ export default {
           precedingOperator.push(operand.operator);
         }
       }
-
+      // if we have mixed operators, we may have an underflow or not be able to tell whether this is increasing (incrementation) or decreasing (decrementation) the secret value
       if (
         precedingOperator.length > 2 &&
         precedingOperator.includes('+') &&
@@ -167,12 +241,12 @@ export default {
       )
         mixedOperatorsWarning(parentExpressionStatement);
 
-      // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a)
+      // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a = b + 2a)
       let discoveredLHS = 0;
       let isIncremented = {};
       // Goes through each operand and checks whether it's the lhsNode and whether it's +/- anything
       for (const [index, operand] of operands.entries()) {
-        // then we have an identifier
+        // below: we have an identifier
         if (operand.referencedDeclaration || operand.baseExpression) {
           // a = a + something
           if (
@@ -231,8 +305,9 @@ export default {
           ) {
             discoveredLHS -= 1;
           }
-          // if none, go to the next param
+          // if none, go to the next operand
         }
+        // if we have 1*a on the RHS and its incremented, mark the parent path
         if (discoveredLHS === 1 && isIncremented.incremented) {
           markParentIncrementation(
             path,
@@ -246,66 +321,6 @@ export default {
           markParentIncrementation(path, state, false, false, lhsNode);
         }
       }
-    },
-  },
-
-  ExpressionStatement: {
-    enter(path, state) {
-      // is incremented logic
-      if (path.isIncremented === undefined) {
-        state.unmarkedIncrementation = true;
-        state.increments = [];
-        state.decrements = [];
-      }
-    },
-
-    exit(path, state) {
-      // Here: indicator, binding, nodePath
-      const { node, scope } = path;
-      const { incrementedIdentifier } = state;
-      const expressionNode = node.expression;
-
-      path.isIncremented ??= false;
-      path.isDecremented ??= false;
-      state.unmarkedIncrementation = false;
-
-      const { isIncremented, isDecremented } = path;
-      expressionNode.isIncremented = isIncremented;
-      expressionNode.isDecremented = isDecremented;
-
-      logger.debug(`statement is incremented? ${isIncremented}`);
-      if (isIncremented && !isDecremented) {
-        logger.debug(`increments? ${state.increments}`);
-      }
-      logger.debug(`statement is decremented? ${isDecremented}`);
-      if (isDecremented) {
-        logger.debug(`decrements? ${state.decrements}`);
-      }
-
-      if (
-        (incrementedIdentifier?.isUnknown ||
-          incrementedIdentifier?.baseExpression?.isUnknown) &&
-        isDecremented
-      ) {
-        throw new SyntaxUsageError(
-          "Can't nullify (that is, edit with knowledge of the state) an unknown state. Since we are taking away some value of the state, we must know it. Only incrementations like a += x can be marked as unknown.",
-          node,
-        );
-      }
-      // update binding
-      scope
-        .getReferencedBinding(incrementedIdentifier)
-        ?.updateIncrementation(path, state);
-
-      // update indicator
-      scope
-        .getReferencedIndicator(incrementedIdentifier, false)
-        ?.updateIncrementation(path, state);
-
-      // reset state
-      state.increments = [];
-      state.decrements = [];
-      state.incrementedIdentifier = {};
     },
   },
 };

@@ -6,7 +6,8 @@ import { SyntaxUsageError } from '../../../error/errors.mjs';
 
 /**
  * @desc:
- * Visitor will...
+ * Visitor checks for errors in decorator usage and marks mappings with isKnown /
+ * isUnknown
 */
 
 export default {
@@ -33,15 +34,6 @@ export default {
       if (path.isRequireStatement()) return;
 
       const varDec = scope.getReferencedBinding(node);
-
-      // testing without the below
-
-      // if (varDec.secretVariable && path.getAncestorContainedWithin('leftHandSide')) {
-      //   // we have a parameter (at least, for now a secret non state var is a param)
-      //   // TODO: why?
-      //   // ans: there was a reason, I can't remember it -  I think it was extra complication in the circuit (having a private circuit input, then reassigning it, is needlessly complex)
-      //   throw new Error(`Cannot reassign secret function parameter ${node.name}.`);
-      // }
 
       if (!varDec.stateVariable) return;
 
