@@ -253,8 +253,8 @@ export default {
           if (
             operand.nodeType !== 'IndexAccess' &&
             operand.name === lhsNode.name &&
-            precedingOperator[index + 1].includes('+') && // we have ... + a + ...
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('+') && // we have ... + a + ...
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: false };
@@ -265,8 +265,8 @@ export default {
             operand.nodeType === 'IndexAccess' &&
             operand.baseExpression.name === lhsNode.baseExpression.name &&
             operand.indexExpression.name === lhsNode.indexExpression.name &&
-            precedingOperator[index + 1].includes('+') &&
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('+') &&
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: false };
@@ -276,8 +276,8 @@ export default {
           if (
             operand.nodeType !== 'IndexAccess' &&
             operand.name === lhsNode.name &&
-            precedingOperator[index + 1].includes('-') && // we have ... + a - ...
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('-') && // we have ... + a - ...
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
@@ -288,8 +288,8 @@ export default {
             operand.nodeType === 'IndexAccess' &&
             operand.baseExpression.name === lhsNode.baseExpression.name &&
             operand.indexExpression.name === lhsNode.indexExpression.name &&
-            precedingOperator[index + 1].includes('-') &&
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('-') &&
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
@@ -302,7 +302,7 @@ export default {
                 operand.baseExpression.name === lhsNode.baseExpression.name &&
                 operand.indexExpression.name ===
                   lhsNode.indexExpression.name)) &&
-            precedingOperator[index].includes('-') // we have a = b - a
+            precedingOperator[index]?.includes('-') // we have a = b - a
           ) {
             discoveredLHS -= 1;
           }

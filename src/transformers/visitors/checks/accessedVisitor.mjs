@@ -14,7 +14,13 @@ import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
 export default {
   ExpressionStatement: {
     enter(path, state) {
-      if (path.isIncremented) {
+      if (
+        path.isIncremented &&
+        path.scope.getReferencedBinding({
+          nodeType: 'Identifier',
+          referencedDeclaration: path.incrementedDeclaration,
+        }).isPartitioned
+      ) {
         state.inIncrementation = true;
         state.incrementedDeclaration = path.incrementedDeclaration;
       }
@@ -40,12 +46,13 @@ export default {
       const rightAncestor = path.getRhsAncestor();
       const lhsNode = path.getCorrespondingLhsNode();
       // TODO getReferencedBinding should return the VariableDeclaration binding if the input is a VariableDeclaration
-      const lhsBinding =
-        scope.getReferencedBinding(lhsNode) ||
-        scope.getReferencedBinding({
-          nodeType: 'Identifier',
-          referencedDeclaration: lhsNode.id,
-        });
+      const lhsBinding = lhsNode
+        ? scope.getReferencedBinding(lhsNode) ||
+          scope.getReferencedBinding({
+            nodeType: 'Identifier',
+            referencedDeclaration: lhsNode.id,
+          })
+        : null;
 
       // Check: is this a nonsecret param being used to edit a secret state?
       if (!referencedBinding?.isSecret) {
@@ -69,8 +76,6 @@ export default {
           (state.inIncrementation &&
             node.referencedDeclaration !== state.incrementedDeclaration))
       ) {
-        logger.debug(`Found an accessed secret state ${node.name}`);
-
         // BELOW - error checking
         // ------
 
@@ -105,6 +110,7 @@ export default {
         }
 
         // ------
+        logger.debug(`Found an accessed secret state ${node.name}`);
         scope.getReferencedBinding(node)?.updateAccessed(path);
         scope.getReferencedIndicator(node)?.updateAccessed(path);
         // @Node new property
