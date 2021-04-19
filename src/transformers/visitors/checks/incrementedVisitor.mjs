@@ -26,6 +26,7 @@ const markParentIncrementation = (
   const parent = path.getAncestorOfType('ExpressionStatement');
   parent.isIncremented = isIncremented;
   parent.isDecremented = isDecremented;
+  parent.incrementedDeclaration = incrementedIdentifier.referencedDeclaration;
   state.unmarkedIncrementation = false;
   state.incrementedIdentifier = incrementedIdentifier;
   isDecremented

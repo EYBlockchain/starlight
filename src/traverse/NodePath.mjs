@@ -371,6 +371,64 @@ export default class NodePath {
   }
 
   /**
+   * A helper to find if `this` path is in a rightHandSide container or another container which requires the value of`this` to be accessed
+   * @returns {NodePath || Boolean}
+   */
+  getRhsAncestor(onlyReturnContainerName = false) {
+    // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
+    const rhsContainers = [
+      'rightHandSide',
+      'initialValue', // as arg
+      'trueExpression', // a conditional requires value accessing
+      'falseExpression',
+      'indexExpression', // as arg
+      'subExpression',
+      'rightExpression',
+      'arguments', // a value used as an arg needs to be accessed
+    ];
+    for (const container of rhsContainers) {
+      const ancestor = this.getAncestorContainedWithin(container);
+      if (ancestor && !onlyReturnContainerName) return ancestor;
+      if (ancestor && onlyReturnContainerName) return container;
+    }
+    return false;
+  }
+
+  /**
+   * A getter to return the node corresponding to the LHS of a path in a RHS container
+   * @returns {Object || null || Boolean}
+   */
+  getCorrespondingLhsNode() {
+    const rhsContainer = this.getRhsAncestor(true);
+    let parent;
+
+    switch (rhsContainer) {
+      case 'rightHandSide':
+        parent = this.getAncestorOfType('Assignment');
+        return parent.node.leftHandSide;
+      case 'initialValue':
+        parent = this.getAncestorOfType('VariableDeclarationStatement');
+        return parent.node.declarations[0];
+      case 'subExpression':
+        // a++ - assigning itself
+        return this.node;
+      case 'rightExpression':
+        // TODO there may be nested binops, so this may not be the 'true' parent lhs
+        parent = this.getAncestorOfType('BinaryOperation');
+        return parent.node.leftExpression;
+      case 'arguments': // a value used as an arg needs to be accessed
+        parent = this.getAncestorOfType('FunctionCall');
+        return parent.node.declarations[0];
+      case 'trueExpression': // no assigment => no LHS
+      case 'falseExpression':
+      case 'indexExpression':
+        return false; // no assignment occurs
+      default:
+        return null; // this is not a RHS container
+    }
+  }
+
+  /**
    * Is this path.node a 'Statement' type?
    * @returns {Boolean}
    */

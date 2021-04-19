@@ -131,6 +131,23 @@ export class StateVariableIndicator {
     }
   }
 
+  updateAccessed(path) {
+    this.isWhole = true;
+    this.isAccessed = true;
+    const reason = { src: path.node.src, 0: `Accessed` };
+    this.isWholeReason ??= [];
+    this.isWholeReason.push(reason);
+    this.accessedPaths ??= [];
+    this.accessedPaths.push(path);
+    if (this.isMapping) {
+      const mappingKey = this.mappingKeys[
+        path.scope.getMappingKeyName(path.node)
+      ];
+      mappingKey.accessedPaths ??= [];
+      mappingKey.accessedPaths.push(path);
+    }
+  }
+
   updateIncrementation(path, state) {
     // TODO split if isMapping
     if (!path.isIncremented) {

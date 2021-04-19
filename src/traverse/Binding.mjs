@@ -154,6 +154,16 @@ export default class Binding {
     if (path.isModification()) this.addModifyingPath(path);
   }
 
+  updateAccessed(path) {
+    // The binding level tells us about the state everywhere, so we only need to update if it's whole/partitioned
+    // TODO split if isMapping
+    this.isWhole = true;
+    this.isAccessed = true;
+    const reason = { src: path.node.src, 0: `Accessed` };
+    this.isWholeReason ??= [];
+    this.isWholeReason.push(reason);
+  }
+
   updateIncrementation(path, state) {
     // The binding level tells us about the state everywhere, so we only need to update if it's whole/partitioned
     // We update the function level indicators with isIncremented

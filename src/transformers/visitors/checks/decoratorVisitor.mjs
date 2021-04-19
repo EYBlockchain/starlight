@@ -8,7 +8,7 @@ import { SyntaxUsageError } from '../../../error/errors.mjs';
  * @desc:
  * Visitor checks for errors in decorator usage and marks mappings with isKnown /
  * isUnknown
-*/
+ */
 
 export default {
   IndexAccess: {
