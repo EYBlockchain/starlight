@@ -204,133 +204,76 @@ export class Scope {
         }
         break;
       }
+
       case 'FunctionCall': {
         // here: we look for require statements and add any indicators
-        if (!path.isRequireStatement()) {
-          // TODO at the moment this prevents _any_ function call (internal or external). Update to only restrict external calls?
-          // Disallow the passing of secret variables to an external function:
-          node.arguments.forEach(arg => {
-            if (
-              arg.nodeType === 'Identifier' &&
-              this.getReferencedBinding(arg)?.isSecret
-            ) {
-              throw new TypeError(
-                `Passing secrets (${arg.name}) to external function calls is not yet supported, because the external contract being called might not be designed to hide anything. In fact, currently, this transpiler doesn't even support the passing of secrets to _any_ other function - we'll work on supporting internal function calls.`,
-              );
-            }
-          });
-        } else {
-          // NOTE: all of this require statement stuff feels like it could be put in a separate function... possibly even called from somewhere else?
-          // Require statement:
-          const requirement = node.arguments[0]; // only the 0th arg of a `require` statement contains logic; the other arg is a message.
-          if (
-            requirement.nodeType === 'BinaryOperation' &&
-            (path.isMsgSender(requirement.leftExpression) ||
-              path.isMsgSender(requirement.rightExpression))
-          ) {
-            // Here: either the lhs or rhs of require statement is msg.sender
-            // TODO  check if admin = state variable
-            const functionDefScope = this.getAncestorOfScopeType(
-              'FunctionDefinition',
+        if (!path.isRequireStatement()) break;
+
+        // NOTE: all of this require statement stuff feels like it could be put in a separate function... possibly even called from somewhere else?
+        // Require statement:
+        const requirement = node.arguments[0]; // only the 0th arg of a `require` statement contains logic; the other arg is a message.
+
+        if (requirement.nodeType !== 'BinaryOperation') return;
+
+        if (
+          path.isMsgSender(requirement.leftExpression) ||
+          path.isMsgSender(requirement.rightExpression)
+        ) {
+          // Here: either the lhs or rhs of require statement is msg.sender
+          // TODO  check if admin = state variable
+          const functionDefScope = this.getAncestorOfScopeType(
+            'FunctionDefinition',
+          );
+          const { operator } = requirement;
+
+          const ownerNode = path.isMsgSender(requirement.leftExpression)
+            ? requirement.rightExpression
+            : requirement.leftExpression;
+          const ownerBinding = this.getReferencedBinding(ownerNode);
+          if (!ownerBinding)
+            throw new Error(
+              `require(msg.sender...) doesn't refer to a variable.`,
             );
-            const { operator } = requirement;
 
-            const ownerNode = path.isMsgSender(requirement.leftExpression)
-              ? requirement.rightExpression
-              : requirement.leftExpression;
-            const ownerBinding = this.getReferencedBinding(ownerNode);
-            if (!ownerBinding)
+          switch (operator) {
+            // We consider 'require(msg.sender == ...)' and 'require(msg.sender != ...)'
+            // (TODO: there could feasibly be a '>' or something, but we don't support that yet.)
+            case '==':
+              // if ==, we store the restriction node
+              // We'll infer from `require(msg.sender == ownerNode)` that the caller of this function is restricted to one "owner".
+              // @Scope new properties
+              functionDefScope.callerRestriction = 'match';
+              functionDefScope.callerRestrictionNode = ownerNode;
+
+              break;
+            case '!=':
+              // We'll infer from `require(msg.sender != blacklistedAddress)` that the caller of this function is NOT allowed to be a particular blacklisted "blacklistedAddress".
+              // if != we store the 'blacklisted' address
+              // QUESTION: we don't seem to be storing any blacklisted node?
+              // @Scope new properties
+              functionDefScope.callerRestriction = 'notMatch';
+              break;
+            default:
               throw new Error(
-                `require(msg.sender...) doesn't refer to a variable.`,
+                `This kind of restriction on msg.sender isn't implemented yet!`,
               );
-
-            switch (operator) {
-              // We consider 'require(msg.sender == ...)' and 'require(msg.sender != ...)'
-              // (TODO: there could feasibly be a '>' or something, but we don't support that yet.)
-              case '==':
-                // if ==, we store the restriction node
-                // We'll infer from `require(msg.sender == ownerNode)` that the caller of this function is restricted to one "owner".
-                // @Scope new properties
-                functionDefScope.callerRestriction = 'match';
-                functionDefScope.callerRestrictionNode = ownerNode;
-
-                // @Node new property
-                node.requireStatementPrivate = !!ownerBinding?.isSecret;
-                break;
-              case '!=':
-                // We'll infer from `require(msg.sender != blacklistedAddress)` that the caller of this function is not allowed to be a particular blacklisted "blacklistedAddress".
-                // if != we store the 'blacklisted' address
-                // QUESTION: we don't seem to be storing any blacklisted node?
-                // @Scope new properties
-                functionDefScope.callerRestriction = 'notMatch';
-
-                // @Node new property
-                node.requireStatementPrivate = !!ownerBinding?.isSecret;
-                // functionDefScope.callerRestrictionNode = node.id;
-                break;
-              default:
-                throw new Error(
-                  `This kind of restriction on msg.sender isn't implemented yet!`,
-                );
-            }
-            break;
-            // otherwise, we have a require statement NOT on msg.sender
-          } else {
-            switch (requirement.nodeType) {
-              // if we have a restriction on a secret state, we note that this require statement is private and should be copied over to the zok file
-              case 'BinaryOperation':
-                [
-                  requirement.leftExpression,
-                  requirement.rightExpression,
-                ].forEach(exp => {
-                  if (exp.nodeType === 'Identifier') {
-                    // @Node new property
-                    node.requireStatementPrivate = !!this.getReferencedBinding(
-                      exp,
-                    ).isSecret;
-                  } else if (node.requireStatementPrivate !== true) {
-                    // QUESTION: when would this be triggered? How would node.requireStatementPrivate have been set to true before this point?
-                    node.requireStatementPrivate = false;
-                  }
-                });
-                break;
-              case 'IndexAccess':
-                if (requirement.baseExpression.nodeType === 'Identifier') {
-                  // @Node new property
-                  node.requireStatementPrivate = !!this.getReferencedBinding(
-                    requirement.baseExpression,
-                  ).isSecret;
-                }
-                if (
-                  requirement.indexExpression.nodeType === 'Identifier' &&
-                  !node.requireStatementPrivate
-                ) {
-                  // @Node new property
-                  node.requireStatementPrivate = !!this.getReferencedBinding(
-                    requirement.indexExpression,
-                  ).isSecret;
-                }
-                if (node.requireStatementPrivate !== true)
-                  node.requireStatementPrivate = false; // @Node new property
-                break;
-              case 'Identifier':
-                // @Node new property
-                node.requireStatementPrivate = !!this.getReferencedBinding(
-                  requirement,
-                ).isSecret;
-                break;
-              case 'Literal':
-                // here we probably have a bool, which can't be secret anyway QUESTION: why not? A bool can feasibly be secret.
-                break;
-              default:
-                throw new Error(
-                  `This kind of expression (${requirement.nodeType}) in a require statement isn't implemented yet!`,
-                );
-            }
           }
         }
+
+        // msg.sender might not be a 'top level' argument of the require statement - perhaps it's nested within some more complex expression. We look for it in order to throw an 'unsupported' error. TODO: figure out how to infer restrictions in this case.
+        const findMsgSenderVisitor = (path, state) => {
+          state.found ||= path.isMsgSender();
+        };
+        const subState = {};
+        path.traversePathsFast(findMsgSenderVisitor, subState);
+        if (subState.found)
+          throw new Error(
+            `msg.sender is nested deep within a require statement. That's currently unsupported, as it's tricky to infer ownership from this.`,
+          );
+
         break;
       }
+
       case 'ContractDefinition':
       case 'FunctionDefinition':
       case 'ArrayTypeName':
@@ -353,6 +296,7 @@ export class Scope {
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
         break;
+
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.
       default:

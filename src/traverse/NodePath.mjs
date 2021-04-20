@@ -102,15 +102,15 @@ export default class NodePath {
     }
   }
 
-  traverse(visitor, state) {
+  traverse(visitor, state = {}) {
     traverse(this, visitor, state);
   }
 
-  traversePathsFast(enter, state) {
+  traversePathsFast(enter, state = {}) {
     traversePathsFast(this, enter, state);
   }
 
-  traverseNodesFast(enter, state) {
+  traverseNodesFast(enter, state = {}) {
     traverseNodesFast(this.node, enter, state);
   }
 
