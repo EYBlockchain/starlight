@@ -112,11 +112,12 @@ class BoilerplateGenerator {
   addBP = {
     partitioned(bpType, extraParams = {}) {
       const { increments, decrements, name } = this;
-      increments.forEach((addend, i) =>
+      increments?.forEach((addend, i) =>
         this._addBP(bpType, { name: `${name}_${i}`, ...extraParams }),
       );
-      const startIndex = increments.length;
-      decrements.forEach((subtrahend, i) => {
+      const startIndex = increments?.length || 0;
+
+      decrements?.forEach((subtrahend, i) => {
         const j = startIndex + i;
         if (
           [
@@ -178,7 +179,7 @@ class BoilerplateGenerator {
       index = decrements.findIndex(node => subtrahendId === node.id);
       if (index === -1) throw notFoundErr;
       const indicesPerDecrementation = 4;
-      const startIndex = increments.length;
+      const startIndex = increments?.length || 0;
       index = startIndex + index * indicesPerDecrementation;
     } else {
       throw new Error('This should be unreachable.');
