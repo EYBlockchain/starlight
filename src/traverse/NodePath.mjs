@@ -372,7 +372,7 @@ export default class NodePath {
 
   /**
    * A helper to find if `this` path is in a rightHandSide container or another container which requires the value of`this` to be accessed
-   * @returns {NodePath || Boolean}
+   * @returns {NodePath || String || Boolean}
    */
   getRhsAncestor(onlyReturnContainerName = false) {
     // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
@@ -387,6 +387,26 @@ export default class NodePath {
       'arguments', // a value used as an arg needs to be accessed
     ];
     for (const container of rhsContainers) {
+      const ancestor = this.getAncestorContainedWithin(container);
+      if (ancestor && !onlyReturnContainerName) return ancestor;
+      if (ancestor && onlyReturnContainerName) return container;
+    }
+    return false;
+  }
+
+  /**
+   * A helper to find if `this` path is in a leftHandSide container or another container which requires the value of`this` to be modified
+   * @returns {NodePath || String || Boolean}
+   */
+  getLhsAncestor(onlyReturnContainerName = false) {
+    // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
+    const lhsContainers = [
+      'leftHandSide',
+      'declarations',
+      'subExpression',
+      'leftExpression',
+    ];
+    for (const container of lhsContainers) {
       const ancestor = this.getAncestorContainedWithin(container);
       if (ancestor && !onlyReturnContainerName) return ancestor;
       if (ancestor && onlyReturnContainerName) return container;
@@ -697,12 +717,7 @@ export default class NodePath {
         // prettier-ignore
         return (
             this.containerName !== 'indexExpression' &&
-            this.getAncestorContainedWithin('leftHandSide') &&
-            this.getAncestorOfType('Assignment')
-          ) ||
-          (
-            this.getAncestorOfType('UnaryOperation') &&
-            this.containerName !== 'indexExpression'
+            this.getLhsAncestor(true)
           );
       default:
         return false;
