@@ -19,7 +19,7 @@ export default {
         path.scope.getReferencedBinding({
           nodeType: 'Identifier',
           referencedDeclaration: path.incrementedDeclaration,
-        }).isPartitioned // if it's not partitioned, then its an overwrite, so we dont mark an incrementedDeclaration for this visitor
+        })?.isPartitioned // if it's not partitioned, then its an overwrite, so we dont mark an incrementedDeclaration for this visitor
       ) {
         state.inIncrementation = true;
         state.incrementedDeclaration = path.incrementedDeclaration;
@@ -118,9 +118,15 @@ export default {
               node,
             );
           }
+        } else if (rightAncestor.parent.nodeType === 'IndexAccess') {
+          // we still want to check params used as mapping keys here
+          if (!referencedBinding.stateVariable) return;
+          // TODO: consider errors for when we access a secret state to use it as a mappingKey
+          // e.g. should we allow this for public mappings? (probably not)
         }
         // end of error checking
         // ------
+        console.log(lhsNode);
         logger.debug(`Found an accessed secret state ${node.name}`);
         scope.getReferencedBinding(node)?.updateAccessed(path);
         scope.getReferencedIndicator(node)?.updateAccessed(path);

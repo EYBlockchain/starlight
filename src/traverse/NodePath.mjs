@@ -438,7 +438,7 @@ export default class NodePath {
         return parent.node.leftExpression;
       case 'arguments': // a value used as an arg needs to be accessed
         parent = this.getAncestorOfType('FunctionCall');
-        return parent.node.declarations[0];
+        return parent.node.declarations?.[0] || null;
       case 'trueExpression': // no assigment => no LHS
       case 'falseExpression':
       case 'indexExpression':

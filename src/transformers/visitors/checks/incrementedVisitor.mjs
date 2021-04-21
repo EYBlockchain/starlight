@@ -28,10 +28,32 @@ const markParentIncrementation = (
   parent.isDecremented = isDecremented;
   parent.incrementedDeclaration = incrementedIdentifier.referencedDeclaration;
   state.unmarkedIncrementation = false;
-  state.incrementedIdentifier = incrementedIdentifier;
+  state.incrementedIdentifier =
+    incrementedIdentifier.baseExpression || incrementedIdentifier;
   isDecremented
     ? state.decrements.push(increments)
     : state.increments.push(increments);
+};
+
+// gets NodePath for the thing being incremented
+// if no incrementation, gets the LHS NodePath so we can mark it as whole
+const getIncrementedPath = (path, state) => {
+  if (
+    !state.incrementedIdentifier &&
+    path.isNodeType('Identifier') &&
+    !path.isInType('indexExpression')
+  ) {
+    const lhsAncestor = path.getLhsAncestor();
+    if (lhsAncestor.nodeType === 'IndexAccess') {
+      // we want the incrementedPath to be the baseExpression if isMapping
+      state.incrementedIdentifier ??= lhsAncestor.node?.baseExpression;
+    } else if (lhsAncestor.nodeType === 'Identifier') {
+      state.incrementedPath = lhsAncestor;
+    }
+  }
+  if (state.incrementedIdentifier?.id === path.node.id)
+    state.incrementedPath = path;
+  state.stopTraversal = !!state.incrementedPath?.node;
 };
 
 const mixedOperatorsWarning = path => {
@@ -78,11 +100,19 @@ export default {
       // print if in debug mode
       logger.debug(`statement is incremented? ${isIncremented}`);
       if (isIncremented && !isDecremented) {
-        logger.debug(`increments? ${state.increments}`);
+        const incs = [];
+        state.increments.forEach(increment =>
+          incs.push(increment.name || increment.value),
+        );
+        logger.debug(`increments? ${incs}`);
       }
       logger.debug(`statement is decremented? ${isDecremented}`);
       if (isDecremented) {
-        logger.debug(`decrements? ${state.decrements}`);
+        const decs = [];
+        state.decrements.forEach(decrement =>
+          decs.push(decrement.name || decrement.value),
+        );
+        logger.debug(`decrements? ${decs}`);
       }
 
       // check for an unknown decremented state
@@ -96,6 +126,8 @@ export default {
           node,
         );
       }
+      // gets the NodePath class for whatever is on the LHS
+      path.traversePathsFast(getIncrementedPath, state);
       // update binding
       scope
         .getReferencedBinding(incrementedIdentifier)
@@ -110,6 +142,8 @@ export default {
       state.increments = [];
       state.decrements = [];
       state.incrementedIdentifier = {};
+      state.incrementedPath = {};
+      state.stopTraversal = false;
     },
   },
 
@@ -163,7 +197,7 @@ export default {
 
       // then, it depends what's on the RHS of the assignment, so we continue
       // we save the LHS node to help us later
-      state.incrementedIdentifier = leftHandSide;
+      state.incrementedIdentifier = leftHandSide.baseExpression || leftHandSide;
     },
   },
 

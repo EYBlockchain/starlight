@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
 import logger from '../utils/logger.mjs';
+import { SyntaxUsageError, ZKPError } from '../error/errors.mjs';
 import NodePath from './NodePath.mjs';
 import { bindingCache } from './cache.mjs';
 
@@ -112,6 +113,7 @@ export default class Binding {
   }
 
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
+  // @param referencingPath = NodePath of baseExpression
   addMappingKey(referencingPath) {
     const keyNode =
       referencingPath.parent.indexExpression.expression ||
@@ -152,6 +154,30 @@ export default class Binding {
   updateProperties(path) {
     this.addReferencingPath(path);
     if (path.isModification()) this.addModifyingPath(path);
+  }
+
+  updateOwnership(ownerNode) {
+    if (ownerNode.expression?.name === 'msg') ownerNode.name = 'msg';
+    if (this.isOwned && this.owner.name !== ownerNode.name) {
+      throw new ZKPError(
+        `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
+        this.node,
+      );
+    }
+    this.owner = ownerNode;
+    this.isOwned = true;
+    if (this.owner.typeDescriptions.typeIdentifier.includes('address'))
+      this.onChainKeyRegistry = true;
+    if (this.isMapping) {
+      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+        mappingKey.updateOwnership(ownerNode);
+      }
+    }
+  }
+
+  updateBlacklist(blacklistedNode) {
+    this.blacklist ??= [];
+    this.blacklist.push(blacklistedNode);
   }
 
   updateAccessed(path) {
@@ -207,6 +233,124 @@ export default class Binding {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
+    if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+  }
+
+  prelimTraversalErrorChecks() {
+    if (!this.isSecret) return;
+    if (this.isMapping) {
+      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+        mappingKey.prelimTraversalErrorChecks();
+      }
+    }
+    // warning: state is clearly whole, don't need known decorator
+    if (this.isKnown && this.isWhole) {
+      logger.warn(
+        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to:`,
+      );
+      this.isWholeReason.forEach(reason => {
+        console.log(reason[0]);
+      });
+    }
+    // error: no known/unknown mark on any incrementation(s)
+    if (
+      this.isIncremented &&
+      (this.isWhole ?? true) &&
+      !this.isDecremented &&
+      !this.isKnown &&
+      !this.isUnknown
+    ) {
+      throw new SyntaxUsageError(
+        `Secret state '${this.name}' incremented, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
+        this.node,
+      );
+    }
+    // error: conflicting unknown/whole state
+    if (this.isUnknown && this.isWhole) {
+      throw new SyntaxUsageError(
+        `Can't mark a whole state as 'unknown'`,
+        this.node,
+        this.isWholeReason,
+      );
+    }
+    // error: conflicting whole/partitioned state
+    if (this.isWhole && this.isPartitioned) {
+      throw new SyntaxUsageError(
+        `State cannot be whole and partitioned. The following reasons conflict.`,
+        this.node,
+        [...this.isWholeReason, ...this.isPartitionedReason],
+      );
+    }
+  }
+
+  /**
+   * Decides whether the state/each state in this scope is nullifiable
+   * This function exists solely to catch errors.
+   * If no errors are found, the calling code will simply carry on.
+   */
+  isNullifiable() {
+    if (this.kind !== 'VariableDeclaration') {
+      for (const [, binding] of Object.entries(this.path.scope.bindings)) {
+        binding.isNullifiable();
+      }
+    }
+    if (!this.isSecret) return;
+    // if (!this.isWhole) return; // commenting out because partitioned states are still useless if they aren't nullifiable.
+    if (!this.stateVariable) return;
+    if (this.node.isConstant || this.node.constant) return;
+    if (this.isMapping) {
+      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+        if (mappingKey.isMsgSender || mappingKey.referencedKeyIsParam) {
+          mappingKey.isNullifiable();
+          // if a msg sender or param key is nullifiable, then the entire mapping is nullifiable
+          return;
+        }
+      }
+      // we reach here, there's no msg sender/param keys, so we must check each one
+      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+        mappingKey.isNullifiable();
+      }
+      return;
+    }
+    if (this.isNullified !== true) {
+      throw new ZKPError(
+        `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
+        this.node,
+      );
+    }
+  }
+
+  /**
+   * Decides whether the state is owned.
+   * Infers ownership and marks the binding.
+   */
+  inferOwnership() {
+    if (this.kind !== 'VariableDeclaration') return;
+    let msgSenderEverywhere;
+    this.nullifyingPaths.forEach(path => {
+      const functionDefScope = path.scope.getAncestorOfScopeType(
+        'FunctionDefinition',
+      );
+      if (functionDefScope.callerRestriction === 'match') {
+        this.updateOwnership(functionDefScope.callerRestrictionNode);
+        return;
+      }
+      if (functionDefScope.callerRestriction === 'exclude') {
+        this.updateBlacklist(functionDefScope.callerRestrictionNode);
+      }
+      if (this.isMapping && this.addMappingKey(path).isMsgSender) {
+        // if its unassigned, we assign true
+        // if its true, it remains true
+        msgSenderEverywhere ??= true;
+      } else {
+        // if we find a single non-msg sender mapping key, then msg sender can't be the owner
+        msgSenderEverywhere = false;
+      }
+    });
+    if (msgSenderEverywhere)
+      this.updateOwnership(
+        this.addMappingKey(this.nullifyingPaths[0]).keyPath.node,
+      );
   }
 }
 
@@ -237,8 +381,13 @@ export class MappingKey {
       ? 'msg.sender'
       : keyPath.getReferencedNode().nodeType;
     this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
+    this.keyPath = keyPath;
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
+
+    this.name = this.isMsgSender
+      ? `${container.name}[msg.sender]`
+      : `${container.name}[${keyPath.node.name}]`;
 
     this.isReferenced = false;
     this.referenceCount = 0;
@@ -247,6 +396,10 @@ export class MappingKey {
     this.isModified = false;
     this.modificationCount = 0;
     this.modifyingPaths = []; // paths which reference this variable
+
+    this.isNullified = false;
+    this.nullificationCount = 0;
+    this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
   }
 
   updateProperties(path) {
@@ -254,6 +407,20 @@ export class MappingKey {
     if (path.isModification()) this.addModifyingPath(path);
 
     this.container.updateProperties(path);
+  }
+
+  updateOwnership(ownerNode) {
+    if (ownerNode.expression?.name === 'msg') ownerNode.name = 'msg';
+    if (this.isOwned && this.owner.name !== ownerNode.name) {
+      throw new ZKPError(
+        `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
+        this.node,
+      );
+    }
+    this.owner = ownerNode;
+    this.isOwned = true;
+    if (this.owner.typeDescriptions.typeIdentifier.includes('address'))
+      this.onChainKeyRegistry = true;
   }
 
   // TODO: move into commonFunctions (because it's the same function as included in the Binding class)
@@ -270,5 +437,61 @@ export class MappingKey {
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
       this.modifyingPaths.push(path);
     }
+  }
+
+  addNullifyingPath(path) {
+    this.isNullified = true;
+    ++this.nullificationCount;
+    this.nullifyingPaths.push(path);
+  }
+
+  prelimTraversalErrorChecks() {
+    // warning: state is clearly whole, don't need known decorator
+    if (this.isKnown && this.isWhole) {
+      logger.warn(
+        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to: ${this.isWholeReason}`,
+      );
+      this.isWholeReason?.forEach(reason => {
+        console.log(reason[0]);
+      });
+    }
+    // error: no known/unknown mark on any incrementation(s)
+    if (
+      this.isIncremented &&
+      (this.isWhole ?? true) &&
+      !this.isDecremented &&
+      !this.isKnown &&
+      !this.isUnknown
+    ) {
+      throw new SyntaxUsageError(
+        `Secret state '${this.name}' incremented, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
+        this.container.node,
+      );
+    }
+    // error: conflicting unknown/whole state
+    if (this.isUnknown && this.isWhole) {
+      throw new SyntaxUsageError(
+        `Can't mark a whole state as 'unknown'`,
+        this.node,
+        this.isWholeReason,
+      );
+    }
+    // error: conflicting whole/partitioned state
+    if (this.isWhole && this.isPartitioned) {
+      throw new SyntaxUsageError(
+        `State cannot be whole and partitioned. The following reasons conflict.`,
+        this.node,
+        [...this.isWholeReason, ...this.isPartitionedReason],
+      );
+    }
+  }
+
+  isNullifiable() {
+    if (this.isNullified) return;
+    // if (!this.isWhole) return; // commenting out because partitioned states are still useless if they aren't nullifiable.
+    throw new ZKPError(
+      `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
+      this.node,
+    );
   }
 }
