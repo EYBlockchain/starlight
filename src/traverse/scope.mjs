@@ -190,135 +190,10 @@ export class Scope {
           // Update the indicator of the stateVariable being referenced by this Identifier node, to reflect the information contained in this Identifier node:
           // @Indicator update properties
           referencedIndicator.update(path);
-
-          if (path.isModification()) {
-            // @Indicator update properties
-            contractDefScope.indicators.nullifiersRequired = true; // FIXME: I thought we didn't know yet? (because a modification (incrementation) to a partitioned state doesn't need a nullifier)
-          }
-
-          // FIXME: move to some other place? Inside the Indicator class?
-          if (referencedIndicator.isKnown && referencedIndicator.isUnknown) {
-            throw new Error(
-              `Secret state ${node.name} cannot be marked as both known and unknown in the same ${this.scopeType} scope`,
-            );
-          }
         }
         break;
       }
-      case 'FunctionCall': {
-        // here: we look for require statements and add any indicators
-        if (path.isRequireStatement()) {
-          // NOTE: all of this require statement stuff feels like it could be put in a separate function... possibly even called from somewhere else?
-          // Require statement:
-          const requirement = node.arguments[0]; // only the 0th arg of a `require` statement contains logic; the other arg is a message.
-          if (
-            requirement.nodeType === 'BinaryOperation' &&
-            (path.isMsgSender(requirement.leftExpression) ||
-              path.isMsgSender(requirement.rightExpression))
-          ) {
-            // Here: either the lhs or rhs of require statement is msg.sender
-            // TODO  check if admin = state variable
-            const functionDefScope = this.getAncestorOfScopeType(
-              'FunctionDefinition',
-            );
-            const { operator } = requirement;
-
-            const ownerNode = path.isMsgSender(requirement.leftExpression)
-              ? requirement.rightExpression
-              : requirement.leftExpression;
-            const ownerBinding = this.getReferencedBinding(ownerNode);
-            if (!ownerBinding)
-              throw new Error(
-                `require(msg.sender...) doesn't refer to a variable.`,
-              );
-
-            switch (operator) {
-              // We consider 'require(msg.sender == ...)' and 'require(msg.sender != ...)'
-              // (TODO: there could feasibly be a '>' or something, but we don't support that yet.)
-              case '==':
-                // if ==, we store the restriction node
-                // We'll infer from `require(msg.sender == ownerNode)` that the caller of this function is restricted to one "owner".
-                // @Scope new properties
-                functionDefScope.callerRestriction = 'match';
-                functionDefScope.callerRestrictionNode = ownerNode;
-
-                // @Node new property
-                node.requireStatementPrivate = !!ownerBinding?.isSecret;
-                break;
-              case '!=':
-                // We'll infer from `require(msg.sender != blacklistedAddress)` that the caller of this function is not allowed to be a particular blacklisted "blacklistedAddress".
-                // if != we store the 'blacklisted' address
-                // QUESTION: we don't seem to be storing any blacklisted node?
-                // @Scope new properties
-                functionDefScope.callerRestriction = 'notMatch';
-
-                // @Node new property
-                node.requireStatementPrivate = !!ownerBinding?.isSecret;
-                // functionDefScope.callerRestrictionNode = node.id;
-                break;
-              default:
-                throw new Error(
-                  `This kind of restriction on msg.sender isn't implemented yet!`,
-                );
-            }
-            break;
-            // otherwise, we have a require statement NOT on msg.sender
-          } else {
-            switch (requirement.nodeType) {
-              // if we have a restriction on a secret state, we note that this require statement is private and should be copied over to the zok file
-              case 'BinaryOperation':
-                [
-                  requirement.leftExpression,
-                  requirement.rightExpression,
-                ].forEach(exp => {
-                  if (exp.nodeType === 'Identifier') {
-                    // @Node new property
-                    node.requireStatementPrivate = !!this.getReferencedBinding(
-                      exp,
-                    ).isSecret;
-                  } else if (node.requireStatementPrivate !== true) {
-                    // QUESTION: when would this be triggered? How would node.requireStatementPrivate have been set to true before this point?
-                    node.requireStatementPrivate = false;
-                  }
-                });
-                break;
-              case 'IndexAccess':
-                if (requirement.baseExpression.nodeType === 'Identifier') {
-                  // @Node new property
-                  node.requireStatementPrivate = !!this.getReferencedBinding(
-                    requirement.baseExpression,
-                  ).isSecret;
-                }
-                if (
-                  requirement.indexExpression.nodeType === 'Identifier' &&
-                  !node.requireStatementPrivate
-                ) {
-                  // @Node new property
-                  node.requireStatementPrivate = !!this.getReferencedBinding(
-                    requirement.indexExpression,
-                  ).isSecret;
-                }
-                if (node.requireStatementPrivate !== true)
-                  node.requireStatementPrivate = false; // @Node new property
-                break;
-              case 'Identifier':
-                // @Node new property
-                node.requireStatementPrivate = !!this.getReferencedBinding(
-                  requirement,
-                ).isSecret;
-                break;
-              case 'Literal':
-                // here we probably have a bool, which can't be secret anyway QUESTION: why not? A bool can feasibly be secret.
-                break;
-              default:
-                throw new Error(
-                  `This kind of expression (${requirement.nodeType}) in a require statement isn't implemented yet!`,
-                );
-            }
-          }
-        }
-        break;
-      }
+      case 'FunctionCall':
       case 'ContractDefinition':
       case 'FunctionDefinition':
       case 'ArrayTypeName':
@@ -693,15 +568,16 @@ export class Scope {
     let keyName = keyIdentifierNode.name;
 
     // If the value of the mapping key is edited between mapping accesses then the below copes with that.
+    // NB: we can't use the modification count because this may refer to a mappingKey before its modified for the nth time
     if (keyBinding?.isModified) {
       let i = 0;
-      // TODO: please annotate or refactor to be easier to follow.
       // Consider each time the variable (which becomes the mapping's key) is edited throughout the scope:
       for (const modifyingPath of keyBinding.modifyingPaths) {
         // we have found the 'current' state (relative to the input node), so we don't need to move any further
         if (indexAccessNode.id < modifyingPath.node.id && i === 0) break;
 
         i++;
+
         if (
           modifyingPath.node.id < indexAccessNode.id && // a modification to the variable _before_ it was used as the mapping's key
           indexAccessNode.id < keyBinding.modifyingPaths[i]?.node.id
@@ -743,40 +619,40 @@ export class Scope {
    * Adds nullifyingPaths to the scope's nullifiedBindings (a subset of modifiedBindings)
    * @param {Object} - the NodePath of the left hand side identifier node
    */
-  addNullifyingPath(identifierPath) {
-    // TODO I don't think this is ever called
-    const { node, parent } = identifierPath;
-    const isMapping = node.typeDescriptions.typeString.includes('mapping');
-    let referencedBinding = this.getReferencedBinding(node);
-
-    if (isMapping) {
-      // we instead use the mapping[key] binding for most cases
-      const keyName = this.getMappingKeyName(parent);
-      referencedBinding = referencedBinding.mappingKeys[keyName];
-    }
-
-    if (
-      !referencedBinding.nullifyingPaths.some(
-        p => p.node.id === identifierPath.node.id,
-      )
-    ) {
-      // if the path hasn't been added - possibly not needed
-      // @Binding new property
-      referencedBinding.isNullified = true;
-      referencedBinding.nullifyingPaths.push(identifierPath);
-    }
-
-    if (isMapping) {
-      // @Binding new property
-      this.getReferencedBinding(node).isNullified = true; // mark the parent mapping
-    }
-
-    // update this scope, to say "the code in this scope 'nullifies' a variable declared elsewhere"
-    // @Scope @Binding updated property
-    this.nullifiedBindings[
-      identifierPath.node.referencedDeclaration
-    ] = this.getReferencedBinding(identifierPath.node);
-  }
+  // addNullifyingPath(identifierPath) {
+  //   // TODO I don't think this is ever called
+  //   const { node, parent } = identifierPath;
+  //   const isMapping = node.typeDescriptions.typeString.includes('mapping');
+  //   let referencedBinding = this.getReferencedBinding(node);
+  //
+  //   if (isMapping) {
+  //     // we instead use the mapping[key] binding for most cases
+  //     const keyName = this.getMappingKeyName(parent);
+  //     referencedBinding = referencedBinding.mappingKeys[keyName];
+  //   }
+  //
+  //   if (
+  //     !referencedBinding.nullifyingPaths.some(
+  //       p => p.node.id === identifierPath.node.id,
+  //     )
+  //   ) {
+  //     // if the path hasn't been added - possibly not needed
+  //     // @Binding new property
+  //     referencedBinding.isNullified = true;
+  //     referencedBinding.nullifyingPaths.push(identifierPath);
+  //   }
+  //
+  //   if (isMapping) {
+  //     // @Binding new property
+  //     this.getReferencedBinding(node).isNullified = true; // mark the parent mapping
+  //   }
+  //
+  //   // update this scope, to say "the code in this scope 'nullifies' a variable declared elsewhere"
+  //   // @Scope @Binding updated property
+  //   this.nullifiedBindings[
+  //     identifierPath.node.referencedDeclaration
+  //   ] = this.getReferencedBinding(identifierPath.node);
+  // }
 
   /**
    * Adds a caller restriction

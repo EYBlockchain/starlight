@@ -34,11 +34,12 @@ export default {
   Identifier: {
     enter(path, state) {
       // Here, if secret:
-      // 1) Check if in a RHS container
+      // 1) Check if in a 'RHS' container
       // 2) Check if NOT incrementing or WHOLE
       // e.g. a = 2b --> b accessed
       // e.g. a = a + b --> b accessed
       // e.g. a += 10, a whole --> a accessed
+      // e.g. myMapping[a] = x --> a accessed
       const { node, scope } = path;
       if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
@@ -126,7 +127,6 @@ export default {
         }
         // end of error checking
         // ------
-        console.log(lhsNode);
         logger.debug(`Found an accessed secret state ${node.name}`);
         scope.getReferencedBinding(node)?.updateAccessed(path);
         scope.getReferencedIndicator(node)?.updateAccessed(path);

@@ -95,9 +95,9 @@ export class StateVariableIndicator {
   // TODO / FIXME - THIS FUNCTION IS CURRENTLY JUST A COPY-PASTE FROM THE BINDING CLASS!
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
   addMappingKey(referencingPath) {
-    const keyNode =
-      referencingPath.parent.indexExpression.expression ||
-      referencingPath.parent.indexExpression; // FIXME: the keyNode should always be parent.indexExpression. The reason for the complication is to get 'Msg' for msg.sender, but it'd be better (and make it easier to expand to other struct (MemberAccess) keys in future) if we always use parent.indexExpression. In the case of msg.sender, the keyname would become msg.sender. At the moment, making that change causes the increments stuff to break. :(
+    // Just for accessing the mappingKey methods
+    const { scope } = referencingPath;
+    const keyNode = scope.getMappingKeyIdentifier(referencingPath.parent);
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
@@ -108,10 +108,7 @@ export class StateVariableIndicator {
     }
 
     // naming of the key within mappingKeys:
-    let keyName = keyNode.name;
-    const keyBinding = keyPath.getReferencedBinding();
-    if (keyBinding?.isModified)
-      keyName = `${keyName}_${keyBinding.modificationCount}`;
+    const keyName = scope.getMappingKeyName(referencingPath.parent);
 
     // add this mappingKey if it hasn't yet been added:
     const mappingKeyExists = !!this.mappingKeys[keyName];
