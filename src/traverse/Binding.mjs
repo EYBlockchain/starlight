@@ -1,4 +1,4 @@
-/* eslint-disable max-classes-per-file */
+/* eslint-disable max-classes-per-file, no-param-reassign */
 
 import logger from '../utils/logger.mjs';
 import { SyntaxUsageError, ZKPError } from '../error/errors.mjs';
@@ -195,11 +195,53 @@ export default class Binding {
     if (path.isModification()) this.addModifyingPath(path);
   }
 
-  updateOwnership(ownerNode) {
-    if (ownerNode.expression?.name === 'msg') ownerNode.name = 'msg';
+  updateOwnership(ownerNode, msgIsMappingKeyorMappingValue = false) {
+    if (
+      ownerNode.expression?.name === 'msg' &&
+      msgIsMappingKeyorMappingValue === 'value'
+    ) {
+      // here: the owner is msg.sender for mapping[key] = msg.sender
+      ownerNode.name = 'msg';
+      ownerNode.mappingOwnershipType = 'value';
+    } else if (ownerNode.expression?.name === 'msg') {
+      // here: the owner is msg.sender for mapping[msg.sender] = value
+      ownerNode.name = 'msg';
+      ownerNode.mappingOwnershipType = 'key';
+    }
+    if (!msgIsMappingKeyorMappingValue && ownerNode.baseExpression) {
+      // here: the key is not msg and we don't know if we have a key or value owner, if at all
+      // the input ownerNode is either 1. msg.sender or 2. whatever msg.sender most equal
+      // above deals with 1., here deals with 2. if isMapping
+      if (ownerNode.baseExpression.referencedDeclaration === this.id) {
+        // if the ownerNode is the same as this node, then the value rep. the owner
+        const thisPath = NodePath.getPath(ownerNode);
+        const binOpNode = thisPath.getAncestorOfType('BinaryOperation').node;
+        if (
+          binOpNode.operator !== '==' &&
+          !thisPath.isMsgSender(binOpNode.leftExpression) &&
+          !thisPath.isMsgSender(binOpNode.rightExpression)
+        )
+          throw new Error(`The new msg.sender ownership code didn't work!`);
+        // extracting this particular msg.sender node to maintain node.src
+        const thisMsgSenderNode = thisPath.isMsgSender(binOpNode.leftExpression)
+          ? binOpNode.leftExpression
+          : binOpNode.rightExpression;
+        this.updateOwnership(thisMsgSenderNode, 'value');
+        return;
+      }
+    }
     if (this.isOwned && this.owner.name !== ownerNode.name) {
       throw new ZKPError(
         `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
+        this.node,
+      );
+    }
+    if (
+      this.isOwned &&
+      this.owner.mappingOwnershipType !== ownerNode.mappingOwnershipType
+    ) {
+      throw new ZKPError(
+        `We found two distinct owners of a secret state - msg.sender when the mapping key is msg.sender, and when the mapping value is msg.sender, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
         this.node,
       );
     }
@@ -358,7 +400,8 @@ export default class Binding {
    */
   inferOwnership() {
     if (this.kind !== 'VariableDeclaration') return;
-    let msgSenderEverywhere;
+    let msgSenderEverywhereMappingKey;
+    let msgSenderEverywhereMappingValue;
     this.nullifyingPaths.forEach(path => {
       const functionDefScope = path.scope.getAncestorOfScopeType(
         'FunctionDefinition',
@@ -373,16 +416,31 @@ export default class Binding {
       if (this.isMapping && this.addMappingKey(path).isMsgSender) {
         // if its unassigned, we assign true
         // if its true, it remains true
-        msgSenderEverywhere ??= true;
+        msgSenderEverywhereMappingKey ??= true;
+      } else if (
+        this.isMapping &&
+        path.isMsgSender(path.parent.rightHandSide)
+      ) {
+        msgSenderEverywhereMappingValue ??= true;
       } else {
         // if we find a single non-msg sender mapping key, then msg sender can't be the owner
-        msgSenderEverywhere = false;
+        msgSenderEverywhereMappingKey = false;
+        msgSenderEverywhereMappingValue = false;
       }
     });
-    if (msgSenderEverywhere)
+    if (msgSenderEverywhereMappingKey && !msgSenderEverywhereMappingValue) {
+      // pass the msg.sender node to the updateOwnership method
       this.updateOwnership(
         this.addMappingKey(this.nullifyingPaths[0]).keyPath.node,
+        'key',
       );
+    } else if (msgSenderEverywhereMappingValue) {
+      // pass the msg.sender node to the updateOwnership method
+      this.updateOwnership(
+        this.nullifyingPaths[0].parent.rightHandSide,
+        'value',
+      );
+    }
   }
 }
 
@@ -442,7 +500,6 @@ export class MappingKey {
   }
 
   updateOwnership(ownerNode) {
-    if (ownerNode.expression?.name === 'msg') ownerNode.name = 'msg';
     if (this.isOwned && this.owner.name !== ownerNode.name) {
       throw new ZKPError(
         `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
