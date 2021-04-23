@@ -128,6 +128,9 @@ export class StateVariableIndicator {
 
   updateProperties(path) {
     this.addReferencingPath(path);
+    this.isUnknown ??= path.node.isUnknown;
+    this.isKnown ??= path.node.isKnown;
+    this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
@@ -309,6 +312,9 @@ export class MappingKey {
 
   updateProperties(path) {
     this.addReferencingPath(path);
+    this.isUnknown ??= path.node.isUnknown;
+    this.isKnown ??= path.node.isKnown;
+    this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) this.addModifyingPath(path);
 
     this.container.updateProperties(path);

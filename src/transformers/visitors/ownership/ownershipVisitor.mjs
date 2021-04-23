@@ -24,6 +24,7 @@ export default {
       const secretModifiedBindings = path.scope.filterBindings(a => a.isSecret);
       for (const [, binding] of Object.entries(secretModifiedBindings)) {
         binding.inferOwnership();
+        if (binding.owner) binding.ownerSetToZeroCheck();
         if (!binding.isOwned && binding.isWhole)
           logger.warn(
             `Warning: secret state ${binding.name} is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.`,

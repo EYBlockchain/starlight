@@ -1,7 +1,8 @@
-/* eslint-disable max-classes-per-file, no-param-reassign */
+/* eslint-disable max-classes-per-file, no-param-reassign, no-continue */
 
 import logger from '../utils/logger.mjs';
 import { SyntaxUsageError, ZKPError } from '../error/errors.mjs';
+import backtrace from '../error/backtrace.mjs';
 import NodePath from './NodePath.mjs';
 import { bindingCache } from './cache.mjs';
 
@@ -192,6 +193,9 @@ export default class Binding {
 
   updateProperties(path) {
     this.addReferencingPath(path);
+    this.isUnknown ??= path.node.isUnknown;
+    this.isKnown ??= path.node.isKnown;
+    this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) this.addModifyingPath(path);
   }
 
@@ -442,6 +446,74 @@ export default class Binding {
       );
     }
   }
+
+  ownerSetToZeroCheck() {
+    const ownerNode = this.owner;
+    const ownerBinding = this.path.scope.getReferencedBinding(ownerNode);
+    if (ownerNode.name === 'msg' &&
+        ownerNode.mappingOwnershipType === 'key') {
+      // the owner is represented by the mapping key - we look through the keys for 0
+      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+        const keyNode = mappingKey.keyPath.node;
+        if (
+          keyNode.nodeType === 'FunctionCall' &&
+          keyNode.arguments[0]?.value === '0'
+        ) {
+          // we have found an owner set to hardcoded 0
+          this.ownerSetToZeroWarning(keyNode);
+          if (this.reinitialisable)
+            mappingKey.keyPath.getAncestorOfType(
+              'ExpressionStatement',
+            ).isBurnStatement = true;
+        }
+      }
+    }
+    if (
+      (ownerNode.name === 'msg' &&
+        ownerNode.mappingOwnershipType === 'value') ||
+      ownerBinding
+    ) {
+      // the owner is represented by the mapping value - we look through the modifyingPaths for 0
+      for (const path of this.modifyingPaths) {
+        const assignmentNode = path.getAncestorOfType('Assignment')?.node;
+        if (!assignmentNode) continue;
+        if (
+          assignmentNode.rightHandSide.nodeType === 'FunctionCall' &&
+          assignmentNode.rightHandSide.arguments[0]?.value === '0' &&
+          (assignmentNode.leftHandSide.id === path.node.id ||
+            assignmentNode.leftHandSide.baseExpression.id === path.node.id)
+        ) {
+          // we have found an owner set to hardcoded 0
+          this.ownerSetToZeroWarning(assignmentNode);
+          if (this.reinitialisable)
+            path.getAncestorOfType(
+              'ExpressionStatement',
+            ).isBurnStatement = true;
+        }
+      }
+    }
+    if (this.reinitialisable && !this.isBurned)
+      throw new SyntaxUsageError(
+        `The state ${this.name} has been marked as reinitialisable but we can't find anywhere to burn a commitment ready for reinitialisation.`,
+        this.node,
+      );
+  }
+
+  ownerSetToZeroWarning(node = this.node) {
+    if (!this.reinitialisable) {
+      logger.warn(
+        `This line resets the public key inside the commitment (i.e. the owner) to 0. This means you relinquish ownership of the state and it can never be used again. \nIf you want the state to be burned and reset, mark the line where it is initialised as reinitialisable. Without doing so, you end up with a secret state of no owner which nobody can access.`,
+      );
+      backtrace.getSourceCode(node.src);
+    } else {
+      logger.debug(
+        `Found a statement which burns the secret state and allows it to be reinitialised. If this line isn't meant to do that, check why you are setting the address to 0.`,
+      );
+      backtrace.getSourceCode(node.src);
+      this.isBurned = true;
+      // TODO more useful indicators here
+    }
+  }
 }
 
 const commonFunctions = {
@@ -494,6 +566,9 @@ export class MappingKey {
 
   updateProperties(path) {
     this.addReferencingPath(path);
+    this.isUnknown ??= path.node.isUnknown;
+    this.isKnown ??= path.node.isKnown;
+    this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) this.addModifyingPath(path);
 
     this.container.updateProperties(path);

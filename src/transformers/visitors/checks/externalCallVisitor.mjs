@@ -24,7 +24,10 @@ export default {
         if (arg.nodeType !== 'Identifier') continue;
         const binding = scope.getReferencedBinding(arg);
         if (!binding?.isSecret) continue;
-        if (node.kind === 'typeConversion')
+        if (
+          node.kind === 'typeConversion' &&
+          node.arguments[0].nodeType !== 'Literal'
+        )
           throw new TODOError(
             `Type conversions of secret states. We plan to suppport conversions which can be replicated in a zero-knowledge circuit in the near future.`,
             node,
