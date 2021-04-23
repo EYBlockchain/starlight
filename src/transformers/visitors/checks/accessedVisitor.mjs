@@ -94,7 +94,7 @@ export default {
             `We couldn't find a node on the LHS of this RHS node. Please create an issue.`,
             node,
           );
-        if (lhsNode !== false) {
+        if (lhsNode !== false && !path.isInType('FunctionCall')) {
           // false is ok - we have something without a LHS, like a conditional
           if (!referencedBinding.stateVariable) {
             // we have a secret parameter on the RHS

@@ -591,7 +591,14 @@ export default class NodePath {
    * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
    * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
    */
-  isIncrementationOf(lhsNode, expressionNode = this.node) {}
+  isIncrementationOf(lhsNode, expressionNode = this.node) {
+    const { isIncremented, isDecremented } = expressionNode;
+    const incrementsThisNode =
+      expressionNode.incrementedDeclaration === lhsNode.referencedDeclaration;
+    return incrementsThisNode
+      ? { isIncremented, isDecremented }
+      : { isIncremented: false, isDecremented: false };
+  }
 
   /**
    * Checks whether a node represents `msg.sender`
@@ -671,6 +678,21 @@ export default class NodePath {
 
   isMapping(node = this.node) {
     return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
+  }
+
+  /**
+   * A mapping's key will contain an Identifier node pointing to a previously-declared variable.
+   * @param {Object} - the mapping's index access node.
+   * @returns {Node} - an Identifier node
+   */
+  getMappingKeyIdentifier(node = this.node) {
+    if (node.nodeType !== 'IndexAccess')
+      return this.getAncestorOfType('IndexAccess').getMappingKeyIdentifier();
+    const { indexExpression } = node;
+    const keyNode = this.isMsgSender(indexExpression)
+      ? indexExpression?.expression
+      : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
+    return keyNode;
   }
 
   /**

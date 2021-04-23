@@ -112,12 +112,54 @@ export default class Binding {
     }
   }
 
+  static getBinding(node) {
+    if (bindingCache.has(node)) return bindingCache.get(node);
+    logger.warn(`Node ${node.name} not found in bindingCache`);
+    return null;
+  }
+
+  /**
+   * Gets a mapping's indicator object for a particular key.
+   * @param {Object} - the mapping's index access node.
+   * @returns {String} - the name under which the mapping[key]'s indicator is stored
+   */
+  // TODO move to common functions
+  getMappingKeyName(path) {
+    const { node } = path;
+    if (node.nodeType !== 'IndexAccess')
+      return this.getMappingKeyName(path.getAncestorOfType('IndexAccess'));
+    const keyIdentifierNode = path.getMappingKeyIdentifier();
+    if (!keyIdentifierNode)
+      return node.indexExpression.name || node.indexExpression.value;
+    const keyBinding = path.isMsg(keyIdentifierNode)
+      ? null
+      : Binding.getBinding(path.getReferencedNode(keyIdentifierNode));
+    let keyName = keyIdentifierNode.name;
+
+    // If the value of the mapping key is edited between mapping accesses then the below copes with that.
+    // NB: we can't use the modification count because this may refer to a mappingKey before its modified for the nth time
+    if (keyBinding?.isModified) {
+      let i = 0;
+      // Consider each time the variable (which becomes the mapping's key) is edited throughout the scope:
+      for (const modifyingPath of keyBinding.modifyingPaths) {
+        // we have found the 'current' state (relative to the input node), so we don't need to move any further
+        if (node.id < modifyingPath.node.id && i === 0) break;
+        i++;
+        if (
+          modifyingPath.node.id < node.id && // a modification to the variable _before_ it was used as the mapping's key
+          node.id < keyBinding.modifyingPaths[i]?.node.id
+        )
+          break;
+      }
+      if (i > 0) keyName = `${keyIdentifierNode.name}_${i}`;
+    }
+    return keyName;
+  }
+
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
   // @param referencingPath = NodePath of baseExpression
   addMappingKey(referencingPath) {
-    // Just for accessing the mappingKey methods
-    const { scope } = referencingPath;
-    const keyNode = scope.getMappingKeyIdentifier(referencingPath.parent);
+    const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
@@ -128,7 +170,7 @@ export default class Binding {
     }
 
     // naming of the key within mappingKeys:
-    const keyName = scope.getMappingKeyName(referencingPath.parent);
+    const keyName = this.getMappingKeyName(referencingPath);
 
     // add this mappingKey if it hasn't yet been added:
     const mappingKeyExists = !!this.mappingKeys[keyName];
@@ -240,15 +282,6 @@ export default class Binding {
         mappingKey.prelimTraversalErrorChecks();
       }
     }
-    // warning: state is clearly whole, don't need known decorator
-    if (this.isKnown && this.isWhole) {
-      logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to:`,
-      );
-      this.isWholeReason.forEach(reason => {
-        console.log(reason[0]);
-      });
-    }
     // error: no known/unknown mark on any incrementation(s)
     if (
       this.isIncremented &&
@@ -292,24 +325,26 @@ export default class Binding {
       }
     }
     if (!this.isSecret) return;
-    // if (!this.isWhole) return; // commenting out because partitioned states are still useless if they aren't nullifiable.
     if (!this.stateVariable) return;
     if (this.node.isConstant || this.node.constant) return;
     if (this.isMapping) {
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
         if (mappingKey.isMsgSender || mappingKey.referencedKeyIsParam) {
-          mappingKey.isNullifiable();
+          if (mappingKey.isNullifiable()) return;
           // if a msg sender or param key is nullifiable, then the entire mapping is nullifiable
-          return;
         }
       }
       // we reach here, there's no msg sender/param keys, so we must check each one
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
-        mappingKey.isNullifiable();
+        if (!mappingKey.isNullifiable() && this.isWhole)
+          throw new ZKPError(
+            `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
+            this.node,
+          );
       }
       return;
     }
-    if (this.isNullified !== true) {
+    if (this.isNullified !== true && this.isWhole) {
       throw new ZKPError(
         `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
         this.node,
@@ -484,11 +519,11 @@ export class MappingKey {
   }
 
   isNullifiable() {
-    if (this.isNullified) return;
+    return !!this.isNullified;
     // if (!this.isWhole) return; // commenting out because partitioned states are still useless if they aren't nullifiable.
-    throw new ZKPError(
-      `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
-      this.node,
-    );
+    // throw new ZKPError(
+    //   `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
+    //   this.node,
+    // );
   }
 }

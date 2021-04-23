@@ -23,13 +23,16 @@ const markParentIncrementation = (
   incrementedIdentifier = {},
   increments = {},
 ) => {
+  incrementedIdentifier = incrementedIdentifier.baseExpression
+    ? incrementedIdentifier.baseExpression
+    : incrementedIdentifier;
   const parent = path.getAncestorOfType('ExpressionStatement');
   parent.isIncremented = isIncremented;
   parent.isDecremented = isDecremented;
   parent.incrementedDeclaration = incrementedIdentifier.referencedDeclaration;
+  parent.node.expression.incrementedDeclaration = parent.incrementedDeclaration;
   state.unmarkedIncrementation = false;
-  state.incrementedIdentifier =
-    incrementedIdentifier.baseExpression || incrementedIdentifier;
+  state.incrementedIdentifier = incrementedIdentifier;
   isDecremented
     ? state.decrements.push(increments)
     : state.increments.push(increments);
@@ -102,7 +105,7 @@ export default {
       if (isIncremented && !isDecremented) {
         const incs = [];
         state.increments.forEach(increment =>
-          incs.push(increment.name || increment.value),
+          incs.push(increment.name || increment.value || increment.nodeType),
         );
         logger.debug(`increments? ${incs}`);
       }
@@ -110,7 +113,7 @@ export default {
       if (isDecremented) {
         const decs = [];
         state.decrements.forEach(decrement =>
-          decs.push(decrement.name || decrement.value),
+          decs.push(decrement.name || decrement.value || decrement.nodeType),
         );
         logger.debug(`decrements? ${decs}`);
       }
@@ -215,7 +218,7 @@ export default {
           state,
           true,
           false,
-          subExpression,
+          subExpression.baseExpression || subExpression,
           literalOneNode,
         );
         return;
@@ -227,7 +230,7 @@ export default {
           state,
           true,
           true,
-          subExpression,
+          subExpression.baseExpression || subExpression,
           literalOneNode,
         );
       }
@@ -344,12 +347,16 @@ export default {
         }
         // if we have 1*a on the RHS and its incremented, mark the parent path
         if (discoveredLHS === 1 && isIncremented.incremented) {
+          // TODO this saves the .increments as the whole BinaryOperation node. This may include the incremented node itself.
+          // e.g. a += b + c => increments saved as the binop for b + c
+          // e.g. a = a + b + c => increments saved as the binop for a + b + c
+          // these should be considered the same but aren't - move back to individual operands?
           markParentIncrementation(
             path,
             state,
             isIncremented.incremented,
             isIncremented.decremented,
-            lhsNode,
+            lhsNode.baseExpression || lhsNode,
             node,
           );
         } else {

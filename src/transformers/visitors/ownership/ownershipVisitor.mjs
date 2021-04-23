@@ -28,6 +28,10 @@ export default {
           logger.warn(
             `Warning: secret state ${binding.name} is not owned. Without an owner, the state is initialised by the first caller submitting a dummy nullifier. This reveals when the state is initialised.`,
           );
+        if (!binding.isOwned && binding.isPartitioned)
+          logger.warn(
+            `Warning: secret state ${binding.name} is not owned. Without an owner, the state is incremented by anyone and only the initialisers of those values may nullify them.`,
+          );
         if (binding.isOwned)
           logger.debug(
             `The state ${binding.name} is owned by ${binding.owner.name}.`,

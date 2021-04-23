@@ -95,9 +95,7 @@ export class StateVariableIndicator {
   // TODO / FIXME - THIS FUNCTION IS CURRENTLY JUST A COPY-PASTE FROM THE BINDING CLASS!
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
   addMappingKey(referencingPath) {
-    // Just for accessing the mappingKey methods
-    const { scope } = referencingPath;
-    const keyNode = scope.getMappingKeyIdentifier(referencingPath.parent);
+    const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
@@ -108,7 +106,7 @@ export class StateVariableIndicator {
     }
 
     // naming of the key within mappingKeys:
-    const keyName = scope.getMappingKeyName(referencingPath.parent);
+    const keyName = this.binding.getMappingKeyName(referencingPath);
 
     // add this mappingKey if it hasn't yet been added:
     const mappingKeyExists = !!this.mappingKeys[keyName];
@@ -164,7 +162,7 @@ export class StateVariableIndicator {
   }
 
   updateIncrementation(path, state) {
-    if (!path.isIncremented) {
+    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
       this.isWholeReason ??= [];
@@ -184,7 +182,9 @@ export class StateVariableIndicator {
       this.isPartitionedReason ??= [];
       this.isPartitionedReason.push(reason);
     }
-    if (path.isDecremented) this.addNullifyingPath(state.incrementedPath);
+    // if its known, we already added the path
+    if (path.isDecremented && !state.incrementedIdentifier.isKnown)
+      this.addNullifyingPath(state.incrementedPath);
     // if its incremented anywhere, isIncremented = true
     // so we only assign if it's already falsey
     this.isIncremented ||= path.isIncremented;
@@ -241,7 +241,8 @@ export class StateVariableIndicator {
       }
     }
     // warning: state is clearly whole, don't need known decorator
-    if (this.isKnown && this.isWhole) {
+    // added not accessed because this flags incrementations marked as known, they need to be marked as known
+    if (this.isKnown && this.isWhole && !this.isIncremented) {
       logger.warn(
         `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to:`,
       );
