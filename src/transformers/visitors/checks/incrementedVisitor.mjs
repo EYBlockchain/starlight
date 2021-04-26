@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign, no-shadow */
-
+import config from 'config';
 import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
@@ -101,6 +101,7 @@ export default {
       expressionNode.isDecremented = isDecremented;
 
       // print if in debug mode
+      if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
       logger.debug(`statement is incremented? ${isIncremented}`);
       if (isIncremented && !isDecremented) {
         const incs = [];

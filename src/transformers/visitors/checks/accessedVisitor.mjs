@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
-// no-unused-vars <-- to reinstate eventually
+import config from 'config';
 import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
@@ -128,6 +128,7 @@ export default {
         // end of error checking
         // ------
         logger.debug(`Found an accessed secret state ${node.name}`);
+        if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
         scope.getReferencedBinding(node)?.updateAccessed(path);
         scope.getReferencedIndicator(node)?.updateAccessed(path);
         // @Node new property

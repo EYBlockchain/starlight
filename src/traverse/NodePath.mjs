@@ -449,6 +449,32 @@ export default class NodePath {
   }
 
   /**
+   * A getter to return the node corresponding to the RHS of a path in a LHS container
+   * @returns {Object || null || Boolean}
+   */
+  getCorrespondingRhsNode() {
+    const lhsContainer = this.getLhsAncestor(true);
+    let parent;
+    switch (lhsContainer) {
+      case 'leftHandSide':
+        parent = this.getAncestorOfType('Assignment');
+        return parent.node.rightHandSide;
+      case 'declarations':
+        parent = this.getAncestorOfType('VariableDeclarationStatement');
+        return parent.node.initialValue;
+      case 'subExpression':
+        // a++ - assigning itself
+        return this.node;
+      case 'leftExpression':
+        // TODO there may be nested binops, so this may not be the 'true' parent lhs
+        parent = this.getAncestorOfType('BinaryOperation');
+        return parent.node.rightExpression;
+      default:
+        return null; // this is not a RHS container
+    }
+  }
+
+  /**
    * Is this path.node a 'Statement' type?
    * @returns {Boolean}
    */

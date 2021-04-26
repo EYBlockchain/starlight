@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file, no-param-reassign, no-continue */
-
+import config from 'config';
 import logger from '../utils/logger.mjs';
 import { SyntaxUsageError, ZKPError } from '../error/errors.mjs';
 import backtrace from '../error/backtrace.mjs';
@@ -423,7 +423,7 @@ export default class Binding {
         msgSenderEverywhereMappingKey ??= true;
       } else if (
         this.isMapping &&
-        path.isMsgSender(path.parent.rightHandSide)
+        path.isMsgSender(path.getCorrespondingRhsNode())
       ) {
         msgSenderEverywhereMappingValue ??= true;
       } else {
@@ -448,10 +448,10 @@ export default class Binding {
   }
 
   ownerSetToZeroCheck() {
+    // TODO rename - this method also marks 'burn' statements
     const ownerNode = this.owner;
     const ownerBinding = this.path.scope.getReferencedBinding(ownerNode);
-    if (ownerNode.name === 'msg' &&
-        ownerNode.mappingOwnershipType === 'key') {
+    if (ownerNode.name === 'msg' && ownerNode.mappingOwnershipType === 'key') {
       // the owner is represented by the mapping key - we look through the keys for 0
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
         const keyNode = mappingKey.keyPath.node;
@@ -509,16 +509,14 @@ export default class Binding {
       logger.debug(
         `Found a statement which burns the secret state and allows it to be reinitialised. If this line isn't meant to do that, check why you are setting the address to 0.`,
       );
-      backtrace.getSourceCode(node.src);
+      if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
       this.isBurned = true;
       // TODO more useful indicators here
     }
   }
 }
 
-const commonFunctions = {
-
-};
+const commonFunctions = {};
 
 // add common functions as methods to the classes:
 // Object.assign(MappingKey.prototype, commonFunctions);
@@ -651,11 +649,8 @@ export class MappingKey {
   }
 
   isNullifiable() {
+    // in some cases, it's fine for certain mapping keys to not be nullifiable, as a parameter key means that any key is nullifiable
+    // so, we don't throw an error here
     return !!this.isNullified;
-    // if (!this.isWhole) return; // commenting out because partitioned states are still useless if they aren't nullifiable.
-    // throw new ZKPError(
-    //   `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
-    //   this.node,
-    // );
   }
 }

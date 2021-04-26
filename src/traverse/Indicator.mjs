@@ -170,7 +170,9 @@ export class StateVariableIndicator {
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
       this.isWholeReason ??= [];
       this.isWholeReason.push(reason);
-      if (state.incrementedPath) this.addNullifyingPath(state.incrementedPath);
+      // a reinitialised state does not require a nullifier
+      if (state.incrementedPath && !state.incrementedIdentifier.reinitialisable)
+        this.addNullifyingPath(state.incrementedPath);
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
@@ -201,7 +203,10 @@ export class StateVariableIndicator {
       this.decrements.push(dec);
     });
     if (this.isMapping) {
-      this.addMappingKey(state.incrementedPath).updateIncrementation(path, state);
+      this.addMappingKey(state.incrementedPath).updateIncrementation(
+        path,
+        state,
+      );
     }
   }
 
@@ -378,12 +383,13 @@ export class MappingKey {
   }
 
   updateIncrementation(path, state) {
-    if (!path.isIncremented) {
+    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
       this.isWholeReason ??= [];
       this.isWholeReason.push(reason);
-      if (state.incrementedPath) this.addNullifyingPath(state.incrementedPath);
+      if (state.incrementedPath && !state.incrementedIdentifier.reinitialisable)
+        this.addNullifyingPath(state.incrementedPath);
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
@@ -398,7 +404,8 @@ export class MappingKey {
       this.isPartitionedReason ??= [];
       this.isPartitionedReason.push(reason);
     }
-    if (path.isDecremented) this.addNullifyingPath(state.incrementedPath);
+    if (path.isDecremented && !state.incrementedIdentifier.isKnown)
+      this.addNullifyingPath(state.incrementedPath);
     // if its incremented anywhere, isIncremented = true
     // so we only assign if it's already falsey
     this.isIncremented ||= path.isIncremented;
