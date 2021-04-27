@@ -371,6 +371,110 @@ export default class NodePath {
   }
 
   /**
+   * A helper to find if `this` path is in a rightHandSide container or another container which requires the value of`this` to be accessed
+   * @returns {NodePath || String || Boolean}
+   */
+  getRhsAncestor(onlyReturnContainerName = false) {
+    // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
+    const rhsContainers = [
+      'rightHandSide',
+      'initialValue', // as arg
+      'trueExpression', // a conditional requires value accessing
+      'falseExpression',
+      'indexExpression', // as arg
+      'subExpression',
+      'rightExpression',
+      'arguments', // a value used as an arg needs to be accessed
+    ];
+    for (const container of rhsContainers) {
+      const ancestor = this.getAncestorContainedWithin(container);
+      if (ancestor && !onlyReturnContainerName) return ancestor;
+      if (ancestor && onlyReturnContainerName) return container;
+    }
+    return false;
+  }
+
+  /**
+   * A helper to find if `this` path is in a leftHandSide container or another container which requires the value of`this` to be modified
+   * @returns {NodePath || String || Boolean}
+   */
+  getLhsAncestor(onlyReturnContainerName = false) {
+    // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
+    const lhsContainers = [
+      'leftHandSide',
+      'declarations',
+      'subExpression',
+      'leftExpression',
+    ];
+    for (const container of lhsContainers) {
+      const ancestor = this.getAncestorContainedWithin(container);
+      if (ancestor && !onlyReturnContainerName) return ancestor;
+      if (ancestor && onlyReturnContainerName) return container;
+    }
+    return false;
+  }
+
+  /**
+   * A getter to return the node corresponding to the LHS of a path in a RHS container
+   * @returns {Object || null || Boolean}
+   */
+  getCorrespondingLhsNode() {
+    const rhsContainer = this.getRhsAncestor(true);
+    let parent;
+
+    switch (rhsContainer) {
+      case 'rightHandSide':
+        parent = this.getAncestorOfType('Assignment');
+        return parent.node.leftHandSide;
+      case 'initialValue':
+        parent = this.getAncestorOfType('VariableDeclarationStatement');
+        return parent.node.declarations[0];
+      case 'subExpression':
+        // a++ - assigning itself
+        return this.node;
+      case 'rightExpression':
+        // TODO there may be nested binops, so this may not be the 'true' parent lhs
+        parent = this.getAncestorOfType('BinaryOperation');
+        return parent.node.leftExpression;
+      case 'arguments': // a value used as an arg needs to be accessed
+        parent = this.getAncestorOfType('FunctionCall');
+        return parent.node.declarations?.[0] || false;
+      case 'trueExpression': // no assigment => no LHS
+      case 'falseExpression':
+      case 'indexExpression':
+        return false; // no assignment occurs
+      default:
+        return null; // this is not a RHS container
+    }
+  }
+
+  /**
+   * A getter to return the node corresponding to the RHS of a path in a LHS container
+   * @returns {Object || null || Boolean}
+   */
+  getCorrespondingRhsNode() {
+    const lhsContainer = this.getLhsAncestor(true);
+    let parent;
+    switch (lhsContainer) {
+      case 'leftHandSide':
+        parent = this.getAncestorOfType('Assignment');
+        return parent.node.rightHandSide;
+      case 'declarations':
+        parent = this.getAncestorOfType('VariableDeclarationStatement');
+        return parent.node.initialValue;
+      case 'subExpression':
+        // a++ - assigning itself
+        return this.node;
+      case 'leftExpression':
+        // TODO there may be nested binops, so this may not be the 'true' parent lhs
+        parent = this.getAncestorOfType('BinaryOperation');
+        return parent.node.rightExpression;
+      default:
+        return null; // this is not a RHS container
+    }
+  }
+
+  /**
    * Is this path.node a 'Statement' type?
    * @returns {Boolean}
    */
@@ -513,7 +617,14 @@ export default class NodePath {
    * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
    * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
    */
-  isIncrementationOf(lhsNode, expressionNode = this.node) {}
+  isIncrementationOf(lhsNode, expressionNode = this.node) {
+    const { isIncremented, isDecremented } = expressionNode;
+    const incrementsThisNode =
+      expressionNode.incrementedDeclaration === lhsNode.referencedDeclaration;
+    return incrementsThisNode
+      ? { isIncremented, isDecremented }
+      : { isIncremented: false, isDecremented: false };
+  }
 
   /**
    * Checks whether a node represents `msg.sender`
@@ -596,6 +707,21 @@ export default class NodePath {
   }
 
   /**
+   * A mapping's key will contain an Identifier node pointing to a previously-declared variable.
+   * @param {Object} - the mapping's index access node.
+   * @returns {Node} - an Identifier node
+   */
+  getMappingKeyIdentifier(node = this.node) {
+    if (node.nodeType !== 'IndexAccess')
+      return this.getAncestorOfType('IndexAccess').getMappingKeyIdentifier();
+    const { indexExpression } = node;
+    const keyNode = this.isMsgSender(indexExpression)
+      ? indexExpression?.expression
+      : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
+    return keyNode;
+  }
+
+  /**
    * Checks whether a node is a Solidity `require` statement.
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
@@ -639,12 +765,7 @@ export default class NodePath {
         // prettier-ignore
         return (
             this.containerName !== 'indexExpression' &&
-            this.getAncestorContainedWithin('leftHandSide') &&
-            this.getAncestorOfType('Assignment')
-          ) ||
-          (
-            this.getAncestorOfType('UnaryOperation') &&
-            this.containerName !== 'indexExpression'
+            this.getLhsAncestor(true)
           );
       default:
         return false;

@@ -66,10 +66,19 @@ export default {
         const srcStart = node.src.split(':')[0];
         if (toRedecorate.charStart === Number(srcStart)) {
           toRedecorate.added = true;
-          toRedecorate.decorator === 'known'
-            ? (node.isKnown = true)
-            : (node.isUnknown = true);
-          return;
+          switch (toRedecorate.decorator) {
+            case 'known':
+              node.isKnown = true;
+              return;
+            case 'unknown':
+              node.isUnknown = true;
+              return;
+            case 'reinitialisable':
+              node.reinitialisable = true;
+              return;
+            default:
+              return;
+          }
         }
       }
     },

@@ -26,7 +26,10 @@ export default {
         const referencedBinding = scope.getReferencedBinding(arg);
         if (!referencedBinding?.isSecret) continue;
 
-        if (node.kind === 'typeConversion')
+        if (
+          node.kind === 'typeConversion' &&
+          node.arguments[0].nodeType !== 'Literal'
+        )
           throw new TODOError(
             `Type conversions of secret states. We plan to suppport conversions which can be replicated in a zero-knowledge circuit in the near future.`,
             node,
@@ -45,6 +48,11 @@ export default {
         if (path.isExternalFunctionCall())
           throw new ZKPError(
             `We cannot support external function calls with secret arguments - they can't be hidden due to the nature of the blockchain`,
+            node,
+          );
+        if (node.kind === 'functionCall')
+          throw new TODOError(
+            `Internal function calls involving secret states. We plan to suppport these (by having Zokraes circuits call other circuits) in the near future.`,
             node,
           );
       }

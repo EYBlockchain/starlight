@@ -569,6 +569,7 @@ export default {
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
+        // TODO accessed states moved to indicators
         let referencedBinding =
           scope.getReferencedBinding(lhs) || scope.getReferencedBinding(lhs.baseExpression);
         const referencedNode = referencedBinding.node;

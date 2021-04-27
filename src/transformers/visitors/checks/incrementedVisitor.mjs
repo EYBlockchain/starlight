@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign, no-shadow */
-
+import config from 'config';
 import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
@@ -23,14 +23,40 @@ const markParentIncrementation = (
   incrementedIdentifier = {},
   increments = {},
 ) => {
+  incrementedIdentifier = incrementedIdentifier.baseExpression
+    ? incrementedIdentifier.baseExpression
+    : incrementedIdentifier;
   const parent = path.getAncestorOfType('ExpressionStatement');
   parent.isIncremented = isIncremented;
   parent.isDecremented = isDecremented;
+  parent.incrementedDeclaration = incrementedIdentifier.referencedDeclaration;
+  parent.node.expression.incrementedDeclaration = parent.incrementedDeclaration;
   state.unmarkedIncrementation = false;
   state.incrementedIdentifier = incrementedIdentifier;
   isDecremented
     ? state.decrements.push(increments)
     : state.increments.push(increments);
+};
+
+// gets NodePath for the thing being incremented
+// if no incrementation, gets the LHS NodePath so we can mark it as whole
+const getIncrementedPath = (path, state) => {
+  if (
+    !state.incrementedIdentifier &&
+    path.isNodeType('Identifier') &&
+    !path.isInType('indexExpression')
+  ) {
+    const lhsAncestor = path.getLhsAncestor();
+    if (lhsAncestor.nodeType === 'IndexAccess') {
+      // we want the incrementedPath to be the baseExpression if isMapping
+      state.incrementedIdentifier ??= lhsAncestor.node?.baseExpression;
+    } else if (lhsAncestor.nodeType === 'Identifier') {
+      state.incrementedPath = lhsAncestor;
+    }
+  }
+  if (state.incrementedIdentifier?.id === path.node.id)
+    state.incrementedPath = path;
+  state.stopTraversal = !!state.incrementedPath?.node;
 };
 
 const mixedOperatorsWarning = path => {
@@ -75,13 +101,22 @@ export default {
       expressionNode.isDecremented = isDecremented;
 
       // print if in debug mode
+      if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
       logger.debug(`statement is incremented? ${isIncremented}`);
       if (isIncremented && !isDecremented) {
-        logger.debug(`increments? ${state.increments}`);
+        const incs = [];
+        state.increments.forEach(increment =>
+          incs.push(increment.name || increment.value || increment.nodeType),
+        );
+        logger.debug(`increments? ${incs}`);
       }
       logger.debug(`statement is decremented? ${isDecremented}`);
       if (isDecremented) {
-        logger.debug(`decrements? ${state.decrements}`);
+        const decs = [];
+        state.decrements.forEach(decrement =>
+          decs.push(decrement.name || decrement.value || decrement.nodeType),
+        );
+        logger.debug(`decrements? ${decs}`);
       }
 
       // check for an unknown decremented state
@@ -95,6 +130,8 @@ export default {
           node,
         );
       }
+      // gets the NodePath class for whatever is on the LHS
+      path.traversePathsFast(getIncrementedPath, state);
       // update binding
       scope
         .getReferencedBinding(incrementedIdentifier)
@@ -109,6 +146,8 @@ export default {
       state.increments = [];
       state.decrements = [];
       state.incrementedIdentifier = {};
+      state.incrementedPath = {};
+      state.stopTraversal = false;
     },
   },
 
@@ -162,7 +201,7 @@ export default {
 
       // then, it depends what's on the RHS of the assignment, so we continue
       // we save the LHS node to help us later
-      state.incrementedIdentifier = leftHandSide;
+      state.incrementedIdentifier = leftHandSide.baseExpression || leftHandSide;
     },
   },
 
@@ -180,7 +219,7 @@ export default {
           state,
           true,
           false,
-          subExpression,
+          subExpression.baseExpression || subExpression,
           literalOneNode,
         );
         return;
@@ -192,7 +231,7 @@ export default {
           state,
           true,
           true,
-          subExpression,
+          subExpression.baseExpression || subExpression,
           literalOneNode,
         );
       }
@@ -252,8 +291,8 @@ export default {
           if (
             operand.nodeType !== 'IndexAccess' &&
             operand.name === lhsNode.name &&
-            precedingOperator[index + 1].includes('+') && // we have ... + a + ...
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('+') && // we have ... + a + ...
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: false };
@@ -264,8 +303,8 @@ export default {
             operand.nodeType === 'IndexAccess' &&
             operand.baseExpression.name === lhsNode.baseExpression.name &&
             operand.indexExpression.name === lhsNode.indexExpression.name &&
-            precedingOperator[index + 1].includes('+') &&
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('+') &&
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: false };
@@ -275,8 +314,8 @@ export default {
           if (
             operand.nodeType !== 'IndexAccess' &&
             operand.name === lhsNode.name &&
-            precedingOperator[index + 1].includes('-') && // we have ... + a - ...
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('-') && // we have ... + a - ...
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
@@ -287,8 +326,8 @@ export default {
             operand.nodeType === 'IndexAccess' &&
             operand.baseExpression.name === lhsNode.baseExpression.name &&
             operand.indexExpression.name === lhsNode.indexExpression.name &&
-            precedingOperator[index + 1].includes('-') &&
-            precedingOperator[index].includes('+') // otherwise we have a = b - a
+            precedingOperator[index + 1]?.includes('-') &&
+            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
@@ -301,7 +340,7 @@ export default {
                 operand.baseExpression.name === lhsNode.baseExpression.name &&
                 operand.indexExpression.name ===
                   lhsNode.indexExpression.name)) &&
-            precedingOperator[index].includes('-') // we have a = b - a
+            precedingOperator[index]?.includes('-') // we have a = b - a
           ) {
             discoveredLHS -= 1;
           }
@@ -309,12 +348,16 @@ export default {
         }
         // if we have 1*a on the RHS and its incremented, mark the parent path
         if (discoveredLHS === 1 && isIncremented.incremented) {
+          // TODO this saves the .increments as the whole BinaryOperation node. This may include the incremented node itself.
+          // e.g. a += b + c => increments saved as the binop for b + c
+          // e.g. a = a + b + c => increments saved as the binop for a + b + c
+          // these should be considered the same but aren't - move back to individual operands?
           markParentIncrementation(
             path,
             state,
             isIncremented.incremented,
             isIncremented.decremented,
-            lhsNode,
+            lhsNode.baseExpression || lhsNode,
             node,
           );
         } else {

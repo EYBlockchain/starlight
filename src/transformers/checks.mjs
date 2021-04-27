@@ -11,6 +11,7 @@ import incrementedVisitor from './visitors/checks/incrementedVisitor.mjs';
 import accessedVisitor from './visitors/checks/accessedVisitor.mjs';
 import wholeVisitor from './visitors/checks/wholeVisitor.mjs';
 import requireStatementVisitor from './visitors/checks/requireStatementVisitor.mjs';
+import errorChecksVisitor from './visitors/checks/errorChecksVisitor.mjs';
 
 /**
  * Inspired by the Transformer
@@ -58,6 +59,7 @@ function transformation1(oldAST) {
   logger.verbose('Accessed values marked');
   path.traverse(explode(wholeVisitor), state);
   path.traverse(explode(requireStatementVisitor), state);
+  path.traverse(explode(errorChecksVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.

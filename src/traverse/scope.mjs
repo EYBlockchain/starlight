@@ -10,6 +10,7 @@ import {
 } from './Indicator.mjs';
 import { scopeCache } from './cache.mjs';
 import backtrace from '../error/backtrace.mjs';
+import { TODOError } from '../error/errors.mjs';
 
 /**
  * Analogue of Array.filter, but for objects.
@@ -108,7 +109,7 @@ export class Scope {
    *  - Creates a binding if this is a new declaration of a contract/function/variable.
    *  - Updates the indicators for `this` scope, based on the nature of the `path`.
    */
-   // NOTE: suggestion for this function: only have properties of a @Scope be updated in the body of this function. @Node updates could (I suggest) be done before we reach this function. And @Binding / @Indicator updates (whilst they're triggered within here) should be done within the classes.
+  // NOTE: suggestion for this function: only have properties of a @Scope be updated in the body of this function. @Node updates could (I suggest) be done before we reach this function. And @Binding / @Indicator updates (whilst they're triggered within here) should be done within the classes.
   update(path) {
     const { node, parent } = path;
     const { name, id, nodeType } = node;
@@ -189,75 +190,6 @@ export class Scope {
           // Update the indicator of the stateVariable being referenced by this Identifier node, to reflect the information contained in this Identifier node:
           // @Indicator update properties
           referencedIndicator.update(path);
-
-          if (path.isModification()) {
-            // @Indicator update properties
-            contractDefScope.indicators.nullifiersRequired = true; // FIXME: I thought we didn't know yet? (because a modification (incrementation) to a partitioned state doesn't need a nullifier)
-          }
-
-          // FIXME: move to some other place? Inside the Indicator class?
-          if (referencedIndicator.isKnown && referencedIndicator.isUnknown) {
-            throw new Error(
-              `Secret state ${node.name} cannot be marked as both known and unknown in the same ${this.scopeType} scope`,
-            );
-          }
-        }
-        break;
-      }
-
-      case 'FunctionCall': {
-        // here: we look for require statements and add any indicators
-        if (!path.isRequireStatement()) break;
-
-        // NOTE: all of this require statement stuff feels like it could be put in a separate function... possibly even called from somewhere else?
-        // Require statement:
-        const requirement = node.arguments[0]; // only the 0th arg of a `require` statement contains logic; the other arg is a message.
-
-        if (requirement.nodeType !== 'BinaryOperation') return;
-
-        if (
-          path.isMsgSender(requirement.leftExpression) ||
-          path.isMsgSender(requirement.rightExpression)
-        ) {
-          // Here: either the lhs or rhs of require statement is msg.sender
-          // TODO  check if admin = state variable
-          const functionDefScope = this.getAncestorOfScopeType(
-            'FunctionDefinition',
-          );
-          const { operator } = requirement;
-
-          const ownerNode = path.isMsgSender(requirement.leftExpression)
-            ? requirement.rightExpression
-            : requirement.leftExpression;
-          const ownerBinding = this.getReferencedBinding(ownerNode);
-          if (!ownerBinding)
-            throw new Error(
-              `require(msg.sender...) doesn't refer to a variable.`,
-            );
-
-          switch (operator) {
-            // We consider 'require(msg.sender == ...)' and 'require(msg.sender != ...)'
-            // (TODO: there could feasibly be a '>' or something, but we don't support that yet.)
-            case '==':
-              // if ==, we store the restriction node
-              // We'll infer from `require(msg.sender == ownerNode)` that the caller of this function is restricted to one "owner".
-              // @Scope new properties
-              functionDefScope.callerRestriction = 'match';
-              functionDefScope.callerRestrictionNode = ownerNode;
-
-              break;
-            case '!=':
-              // We'll infer from `require(msg.sender != blacklistedAddress)` that the caller of this function is NOT allowed to be a particular blacklisted "blacklistedAddress".
-              // if != we store the 'blacklisted' address
-              // QUESTION: we don't seem to be storing any blacklisted node?
-              // @Scope new properties
-              functionDefScope.callerRestriction = 'notMatch';
-              break;
-            default:
-              throw new Error(
-                `This kind of restriction on msg.sender isn't implemented yet!`,
-              );
-          }
         }
 
         // msg.sender might not be a 'top level' argument of the require statement - perhaps it's nested within some more complex expression. We look for it in order to throw an 'unsupported' error. TODO: figure out how to infer restrictions in this case.
@@ -273,7 +205,7 @@ export class Scope {
 
         break;
       }
-
+      case 'FunctionCall':
       case 'ContractDefinition':
       case 'FunctionDefinition':
       case 'ArrayTypeName':
@@ -649,15 +581,16 @@ export class Scope {
     let keyName = keyIdentifierNode.name;
 
     // If the value of the mapping key is edited between mapping accesses then the below copes with that.
+    // NB: we can't use the modification count because this may refer to a mappingKey before its modified for the nth time
     if (keyBinding?.isModified) {
       let i = 0;
-      // TODO: please annotate or refactor to be easier to follow.
       // Consider each time the variable (which becomes the mapping's key) is edited throughout the scope:
       for (const modifyingPath of keyBinding.modifyingPaths) {
         // we have found the 'current' state (relative to the input node), so we don't need to move any further
         if (indexAccessNode.id < modifyingPath.node.id && i === 0) break;
 
         i++;
+
         if (
           modifyingPath.node.id < indexAccessNode.id && // a modification to the variable _before_ it was used as the mapping's key
           indexAccessNode.id < keyBinding.modifyingPaths[i]?.node.id
@@ -696,267 +629,58 @@ export class Scope {
   }
 
   /**
-   * Completes final checks on initial traversal:
-   * - ensures all secret states are either whole or partitioned
-   * - ensures no conflicting indicators
-   * - looks for missing/bad syntax which couldn't be picked up before
-   * @param {Indicator} secretVar - indicator object (fnDefScope) for secret state
-   */
-  // FIXME: the name suggests this function is checks only - but some data is also added to Indicators - suggest moving that functionality to a separate function.
-  indicatorChecks(secretVar) {
-    const contractDefScope = this.getAncestorOfScopeType('ContractDefinition');
-    const topBinding = contractDefScope.bindings[secretVar.id];
-
-    // warning: state is clearly whole, don't need known decorator
-    if (secretVar.isKnown && secretVar.isWhole)
-      logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${secretVar.name}' is trivially 'known' because it is 'whole', due to: ${secretVar.isWholeReason}`,
-      );
-
-    // error: conflicting unknown/whole state
-    if ((secretVar.isUnknown || secretVar.binding.isUnknown) && secretVar.isWhole) {
-      const wholeReason = [];
-      secretVar.isWholeReason.forEach(reason => {
-        backtrace.getSourceCode(reason.src);
-        wholeReason.push(reason[0]);
-      });
-
-      throw new Error(
-        `Can't mark a whole state as 'unknown'. The state '${secretVar.name}' is 'whole' due to: ${wholeReason}`,
-      );
-    }
-
-    // mark a state as partitioned (isIncremented and isUnknown)
-    if (
-      (topBinding.isUnknown || secretVar.isUnknown) &&
-      secretVar.isIncremented &&
-      !secretVar.isWhole
-    ) {
-      secretVar.isWhole = false;
-      secretVar.isPartitioned = true;
-      secretVar.isPartitionedReason = [`Incremented and marked as unknown`];
-
-      if (
-        topBinding.isPartitionedReason &&
-        !topBinding.isPartitionedReason.includes(
-          secretVar.isPartitionedReason[0],
-        )
-      ) {
-        // @Binding updated property
-        topBinding.isPartitionedReason.push(secretVar.isPartitionedReason[0]);
-      } else if (!topBinding.isPartitionedReason) {
-        // @Binding new property
-        topBinding.isPartitionedReason = secretVar.isPartitionedReason;
-      }
-    }
-
-    if (
-      secretVar.isIncremented &&
-      secretVar.isWhole === undefined &&
-      !secretVar.isDecremented
-    ) {
-      // state isIncremented, not isDecremented, and not yet marked as whole/partitioned
-      if (!secretVar.isKnown && !secretVar.isUnknown) {
-        // error: no known/unknown syntax at all
-        throw new Error(
-          `Secret value '${secretVar.name}' assigned to, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
-        );
-      }
-
-      // error: this should have been picked up in previous block (isIncremented and isUnknown)
-      if (secretVar.isUnknown)
-        throw new Error(`This should be unreachable code!`);
-
-      if (secretVar.isKnown) {
-        // @Indicator new property
-        // mark a known state as whole
-        secretVar.isWhole = true;
-        secretVar.isWholeReason = [`Marked as known`];
-      } else if (!topBinding.isUnknown) {
-        // warning: it's whole by default, may not be dev's intention
-        logger.warn(
-          `State '${secretVar.name}' will be treated as a whole state, because there are no 'unknown' decorators`,
-        );
-        // @Indicator new property
-        secretVar.isWhole = true;
-        secretVar.isWholeReason = [`No 'unknown' decorator or overwrites`];
-      }
-      // look for duplicates: PEDANTIC: Unnecessary duplicate 'unknown' decorator for secret state `a`.
-    }
-
-    if (secretVar.isWhole === false && secretVar.isDecremented) {
-      // partitioned/decremented state needs nullifiers
-      // @Indicator updated property
-      secretVar.isNullified = true;
-      secretVar.binding.isNullified = true;
-      contractDefScope.indicators.nullifiersRequired = true;
-      secretVar.oldCommitmentAccessRequired = true;
-      contractDefScope.indicators.oldCommitmentAccessRequired = true;
-    }
-
-    if (
-      secretVar.isWhole === false &&
-      secretVar.isIncremented &&
-      !secretVar.isDecremented
-    ) {
-      // partitioned/incremented state doesn't need nullifiers (in this function)
-      secretVar.isNullified = false;
-      secretVar.oldCommitmentAccessRequired = false;
-    } else {
-      // otherwise, we have a whole state which needs nullifiers at every edit
-      // @Indicator updated property
-      secretVar.isNullified = true;
-      secretVar.binding.isNullified = true;
-      contractDefScope.indicators.nullifiersRequired = true;
-      secretVar.oldCommitmentAccessRequired = true;
-      contractDefScope.indicators.oldCommitmentAccessRequired = true;
-    }
-
-    // here - mark the contract obj and check for conflicting indicators
-    // errors: contract and function scopes conflict
-    if (topBinding.isWhole && !secretVar.isWhole)
-      throw new Error(
-        `State ${secretVar.name} must be whole because: ${topBinding.isWholeReason}`,
-      );
-
-    if (topBinding.isPartitioned && secretVar.isWhole)
-      throw new Error(
-        `State ${secretVar.name} must be whole because: ${secretVar.isWholeReason}, but is partitioned: ${topBinding.isPartitionedReason}`,
-      );
-
-    // update contract scope with whole/partitioned reasons
-    // @Binding new property
-    topBinding.isWhole = secretVar.isWhole;
-    // @Binding new property
-    if (secretVar.isWhole !== undefined)
-      secretVar.binding.isWhole = secretVar.isWhole;
-
-    // @Binding new property
-    if (secretVar.isPartitioned !== undefined)
-      secretVar.binding.isPartitioned = secretVar.isPartitioned;
-
-    if (topBinding.isWhole === false && !topBinding.isPartitionedReason) {
-      // @Binding new property
-      topBinding.isPartitioned = true;
-      topBinding.isPartitionedReason = secretVar.isPartitionedReason;
-    } else if (topBinding.isWhole === false && topBinding.isPartitionedReason) {
-      if (!secretVar.isPartitionedReason) secretVar.isPartitionedReason = [];
-      secretVar.isPartitionedReason.forEach(reason => {
-        if (!topBinding.isPartitionedReason.includes(reason))
-          // @Binding updated property
-          topBinding.isPartitionedReason.push(reason);
-      });
-    } else if (!topBinding.isWholeReason) {
-      // @Binding new property
-      topBinding.isWholeReason = secretVar.isWholeReason;
-    } else {
-      if (!secretVar.isWholeReason) secretVar.isWholeReason = [];
-      secretVar.isWholeReason.forEach(reason => {
-        if (!topBinding.isWholeReason.includes(reason))
-          // @Binding new property
-          topBinding.isWholeReason.push(reason);
-      });
-    }
-    // logging
-    logger.debug(`Indicator: (at ${secretVar.name})`);
-    logger.debug('----------');
-    if (logger.level === 'debug') console.dir(this, { depth: 0 });
-    logger.debug('----------');
-    if (logger.level === 'debug') console.dir(this.indicators);
-    logger.debug('----------');
-    if (this.indicators[secretVar.id].mappingKeys) {
-      logger.debug(`Indicator.mappingKeys[${secretVar.name}]`);
-      if (logger.level === 'debug') console.dir(secretVar, { depth: 1 });
-      logger.debug('----------');
-    }
-    logger.debug(
-      `NB: Nullification traversals haven't been completed - so isNullified and nullifyingPaths will not be correct yet.`,
-    );
-    // logger.debug(`Contract level binding for state:`);
-    // if (logger.level === 'debug') console.dir(topScope, { depth: 0 });
-    // if (topScope.isWholeReason) {
-    //   logger.debug(topScope.isWholeReason);
-    // } else {
-    //   logger.debug(topScope.isPartitionedReason);
-    // }
-  }
-
-  /**
    * Adds nullifyingPaths to the scope's nullifiedBindings (a subset of modifiedBindings)
    * @param {Object} - the NodePath of the left hand side identifier node
    */
-  addNullifyingPath(identifierPath) {
-    const { node, parent } = identifierPath;
-    const isMapping = node.typeDescriptions.typeString.includes('mapping');
-    let referencedBinding = this.getReferencedBinding(node);
-
-    if (isMapping) {
-      // we instead use the mapping[key] binding for most cases
-      const keyName = this.getMappingKeyName(parent);
-      referencedBinding = referencedBinding.mappingKeys[keyName];
-    }
-
-    if (
-      !referencedBinding.nullifyingPaths.some(
-        p => p.node.id === identifierPath.node.id,
-      )
-    ) {
-      // if the path hasn't been added - possibly not needed
-      // @Binding new property
-      referencedBinding.isNullified = true;
-      referencedBinding.nullifyingPaths.push(identifierPath);
-    }
-
-    if (isMapping) {
-      // @Binding new property
-      this.getReferencedBinding(node).isNullified = true; // mark the parent mapping
-    }
-
-    // update this scope, to say "the code in this scope 'nullifies' a variable declared elsewhere"
-    // @Scope @Binding updated property
-    this.nullifiedBindings[
-      identifierPath.node.referencedDeclaration
-    ] = this.getReferencedBinding(identifierPath.node);
-  }
+  // addNullifyingPath(identifierPath) {
+  //   // TODO I don't think this is ever called
+  //   const { node, parent } = identifierPath;
+  //   const isMapping = node.typeDescriptions.typeString.includes('mapping');
+  //   let referencedBinding = this.getReferencedBinding(node);
+  //
+  //   if (isMapping) {
+  //     // we instead use the mapping[key] binding for most cases
+  //     const keyName = this.getMappingKeyName(parent);
+  //     referencedBinding = referencedBinding.mappingKeys[keyName];
+  //   }
+  //
+  //   if (
+  //     !referencedBinding.nullifyingPaths.some(
+  //       p => p.node.id === identifierPath.node.id,
+  //     )
+  //   ) {
+  //     // if the path hasn't been added - possibly not needed
+  //     // @Binding new property
+  //     referencedBinding.isNullified = true;
+  //     referencedBinding.nullifyingPaths.push(identifierPath);
+  //   }
+  //
+  //   if (isMapping) {
+  //     // @Binding new property
+  //     this.getReferencedBinding(node).isNullified = true; // mark the parent mapping
+  //   }
+  //
+  //   // update this scope, to say "the code in this scope 'nullifies' a variable declared elsewhere"
+  //   // @Scope @Binding updated property
+  //   this.nullifiedBindings[
+  //     identifierPath.node.referencedDeclaration
+  //   ] = this.getReferencedBinding(identifierPath.node);
+  // }
 
   /**
-   * Decides whether each state in this scope is nullifiable
-   * This function exists solely to catch errors.
-   * If no errors are found, the calling code will simply carry on.
+   * Adds a caller restriction
+   * @param {String} - the restriction (match or exclude)
+   * @param {Object} - the node of the restricted address
    */
-  isNullifiable() {
-    // for each state variable in the function def scope
-    for (const stateVarId of Object.keys(this.bindings)) {
-      // only modified states live in the indicators object, so we don't have to worry about filtering out secret params here (they're allowed to be non-nullified)
-      const stateVar = this.bindings[stateVarId];
-      if (!stateVar.isSecret) continue;
-      if (!stateVar.isWhole) continue;
-      if (stateVar.node.isConstant || stateVar.node.constant) continue;
-      // go through each mapping key, if mapping
-      if (stateVar.mappingKeys) {
-        for (const key of Object.keys(stateVar.mappingKeys)) {
-          // if the key is a parameter, then it can be any (user defined) key, so as long as isNullified = true, any key can be nullified
-          if (
-            stateVar.mappingKeys[key].isNullified === true &&
-            (stateVar.mappingKeys[key].referencedKeyIsParam ||
-              stateVar.mappingKeys[key].isMsgSender)
-          )
-            break; // this means any mapping[key] is nullifiable - good!
-          if (
-            stateVar.mappingKeys[key].isNullified !== true &&
-            !stateVar.mappingKeys[key].referencedKeyIsParam &&
-            !stateVar.mappingKeys[key].isMsgSender
-          )
-            throw new Error(
-              `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name}[${key}] editable or constant.`,
-            );
-        }
-      } else if (stateVar.isNullified !== true) {
-        throw new Error(
-          `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${stateVar.name} editable or constant.`,
-        );
-      }
-    }
+  addCallerRestriction(restriction, restrictedNode) {
+    if (this.callerRestriction && this.callerRestriction !== restriction)
+      throw new TODOError(
+        `We don't currently support two types of caller restriction in one scope (e.g. a whitelist and a blacklist.)`,
+        restrictedNode,
+      );
+    this.callerRestriction = restriction;
+    this.callerRestrictionNode = restrictedNode;
+    // TODO call binding/indicator methods here?
   }
 }
 

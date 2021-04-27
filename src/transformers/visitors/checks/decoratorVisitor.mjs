@@ -8,7 +8,7 @@ import { SyntaxUsageError } from '../../../error/errors.mjs';
  * @desc:
  * Visitor checks for errors in decorator usage and marks mappings with isKnown /
  * isUnknown
-*/
+ */
 
 export default {
   IndexAccess: {
@@ -18,6 +18,7 @@ export default {
       // @Node new properties
       if (node.isUnknown) node.baseExpression.isUnknown = true;
       if (node.isKnown) node.baseExpression.isKnown = true;
+      if (node.reinitialisable) node.baseExpression.reinitialisable = true;
     },
 
     exit(node, parent) {},
@@ -45,6 +46,14 @@ export default {
         );
       }
 
+      // node is decorated
+      if (!varDec.isSecret && node.reinitialisable) {
+        throw new SyntaxUsageError(
+          `Identifier '${node.name}' is decorated as 'reinitialisable' but is not decorated as 'secret'. Only secret states can be decorated as 'reinitialisable'.`,
+          node,
+        );
+      }
+
       if (!varDec.isSecret && node.isKnown) {
         backtrace.getSourceCode(varDec.node.src);
         backtrace.getSourceCode(node.src);
@@ -59,6 +68,12 @@ export default {
       )
         throw new SyntaxUsageError(
           `Variable ${node.name} is marked as both unknown and known. Try removing 'known' from decremented states`,
+          node,
+        );
+
+      if (varDec.isUnknown && node.reinitialisable)
+        throw new SyntaxUsageError(
+          `Variable ${node.name} is marked as both unknown and reinitialisable. You must know a state's value to be able to initialise it!`,
           node,
         );
 

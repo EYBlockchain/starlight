@@ -46,10 +46,10 @@ export class SyntaxUsageError extends SyntaxError {
   constructor(message, node, reasons) {
     Error.stackTraceLimit = 0;
     super(message);
-    backtrace.getSourceCode(node.src);
+    if (node) backtrace.getSourceCode(node.src);
     if (reasons) {
       reasons.forEach(reason => {
-        console.log(`Because of: ${reason} At:`);
+        console.log(`Because of: ${reason[0]} At:`);
         backtrace.getSourceCode(reason.src);
       });
     }
