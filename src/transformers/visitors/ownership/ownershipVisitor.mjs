@@ -21,8 +21,8 @@ export default {
     enter(path, state) {},
 
     exit(path, state) {
-      const secretModifiedBindings = path.scope.filterBindings(a => a.isSecret);
-      for (const [, binding] of Object.entries(secretModifiedBindings)) {
+      for (const [, binding] of Object.entries(path.scope.bindings)) {
+        if (!binding.isSecret) continue;
         binding.inferOwnership();
         if (binding.owner) binding.ownerSetToZeroCheck();
         if (!binding.isOwned && binding.isWhole)

@@ -72,7 +72,6 @@ export default class Binding {
     this.name = name;
     this.node = node;
     this.path = path;
-    this.scope = scope;
 
     if (['ContractDefinition', 'FunctionDefinition'].includes(nodeType)) return;
 
@@ -349,6 +348,15 @@ export default class Binding {
         this.isWholeReason,
       );
     }
+
+    // error: conflicting reinitialisable/partitioned state
+    if (this.reinitialisable && this.isPartitioned) {
+      throw new SyntaxUsageError(
+        `Can't mark a partitioned state as 'reinitialisable' - partitioned states do not need nullfiers to initialise/add to, so there's no need for this syntax.`,
+        this.node,
+        this.isPartitionedReason,
+      );
+    }
     // error: conflicting whole/partitioned state
     if (this.isWhole && this.isPartitioned) {
       throw new SyntaxUsageError(
@@ -450,7 +458,9 @@ export default class Binding {
   ownerSetToZeroCheck() {
     // TODO rename - this method also marks 'burn' statements
     const ownerNode = this.owner;
-    const ownerBinding = this.path.scope.getReferencedBinding(ownerNode);
+    const ownerBinding = this.path.getReferencedBinding(ownerNode);
+
+    // mapping[msg.sender] is owned by msg.sender => look for mapping[0]
     if (ownerNode.name === 'msg' && ownerNode.mappingOwnershipType === 'key') {
       // the owner is represented by the mapping key - we look through the keys for 0
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
@@ -468,35 +478,40 @@ export default class Binding {
         }
       }
     }
+    // mapping[key] = msg.sender is owned by msg.sender => look for mapping[key] = 0
+    // OR owner is some value (admin = address) => look for admin = 0
     if (
-      (ownerNode.name === 'msg' &&
-        ownerNode.mappingOwnershipType === 'value') ||
-      ownerBinding
+      ownerNode.name === 'msg' &&
+      ownerNode.mappingOwnershipType === 'value'
     ) {
       // the owner is represented by the mapping value - we look through the modifyingPaths for 0
-      for (const path of this.modifyingPaths) {
-        const assignmentNode = path.getAncestorOfType('Assignment')?.node;
-        if (!assignmentNode) continue;
-        if (
-          assignmentNode.rightHandSide.nodeType === 'FunctionCall' &&
-          assignmentNode.rightHandSide.arguments[0]?.value === '0' &&
-          (assignmentNode.leftHandSide.id === path.node.id ||
-            assignmentNode.leftHandSide.baseExpression.id === path.node.id)
-        ) {
-          // we have found an owner set to hardcoded 0
-          this.ownerSetToZeroWarning(assignmentNode);
-          if (this.reinitialisable)
-            path.getAncestorOfType(
-              'ExpressionStatement',
-            ).isBurnStatement = true;
-        }
-      }
+      this.searchModifyingPathsForZero();
+    } else if (ownerBinding) {
+      ownerBinding.searchModifyingPathsForZero();
     }
     if (this.reinitialisable && !this.isBurned)
       throw new SyntaxUsageError(
         `The state ${this.name} has been marked as reinitialisable but we can't find anywhere to burn a commitment ready for reinitialisation.`,
         this.node,
       );
+  }
+
+  searchModifyingPathsForZero() {
+    for (const path of this.modifyingPaths) {
+      const assignmentNode = path.getAncestorOfType('Assignment')?.node;
+      if (!assignmentNode) continue;
+      if (
+        assignmentNode.rightHandSide.nodeType === 'FunctionCall' &&
+        assignmentNode.rightHandSide.arguments[0]?.value === '0' &&
+        (assignmentNode.leftHandSide.id === path.node.id ||
+          assignmentNode.leftHandSide.baseExpression.id === path.node.id)
+      ) {
+        // we have found an owner set to hardcoded 0
+        this.ownerSetToZeroWarning(assignmentNode);
+        if (this.reinitialisable)
+          path.getAncestorOfType('ExpressionStatement').isBurnStatement = true;
+      }
+    }
   }
 
   ownerSetToZeroWarning(node = this.node) {
