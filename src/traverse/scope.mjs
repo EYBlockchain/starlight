@@ -146,6 +146,9 @@ export class Scope {
             `Couldn't find a referencedDeclaration node for the current Identifier node.  I.e. couldn't find a node with id ${node.referencedDeclaration}`,
           );
 
+        if (this.scopeType === 'FunctionDefinition')
+          this.indicators.update(path);
+
         // if (
         //   referencedBinding.isSecret &&
         //   this.scopeType === 'FunctionDefinition'

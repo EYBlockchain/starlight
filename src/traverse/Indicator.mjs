@@ -24,6 +24,23 @@ export class ContractDefinitionIndicator {
 }
 
 export class FunctionDefinitionIndicator {
+  constructor() {
+    this.zkSnarkVerificationRequired = false;
+    this.oldCommitmentAccessRequired = false;
+    this.nullifiersRequired = false;
+    this.newCommitmentsRequired = false;
+    this.initialisationRequired = false;
+  }
+
+  // A ContractDefinitionIndicator will be updated if (some time after its creation) we encounter an AST node which gives us more information about the contract's global states
+  // E.g. if we encounter a VariableDeclaration node for a secret state.
+  update(path) {
+    if (path.node.isSecret) {
+      // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
+      this.interactsWithSecret = true;
+    }
+  }
+
   // no constructor yet...
   //
   // BIG COMMENT FOR INFO ONLY
@@ -74,6 +91,7 @@ export class StateVariableIndicator {
     this.binding = referencedBinding;
     this.scope = path.scope;
     this.node = path.node;
+    this.parentIndincator = path.scope.indicators;
 
     this.isSecret = referencedBinding.isSecret; // only included to match bindings so that mappingKey class can be reused for both. Consider removing if things get too messy, and splitting mappingKey into two classes; one for Binding & one for StateVarIndicator
 
@@ -137,8 +155,7 @@ export class StateVariableIndicator {
   }
 
   updateFromBinding() {
-    // TODO - do we need this??
-    // it's possible we dont know in this fn scope whether a state is whole or not, but the binding (contract scope) will
+    // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
     this.isWhole ??= this.binding.isWhole;
     this.isWholeReason = this.isWhole
       ? this.binding.isWholeReason
@@ -147,12 +164,23 @@ export class StateVariableIndicator {
     this.isPartitionedReason = this.isPartitioned
       ? this.binding.isPartitionedReason
       : this.isPartitionedReason;
+    this.isOwned ??= this.binding.isOwned;
+    this.owner ??= this.binding.owner;
+    this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+    this.parentIndincator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+    if (this.isMapping) {
+      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+        mappingKey.updateFromBinding();
+      }
+    }
   }
 
   updateAccessed(path) {
     this.isWhole = true;
     this.isAccessed = true;
     this.oldCommitmentAccessRequired = true;
+    this.parentIndincator.oldCommitmentAccessRequired = true;
+    this.parentIndincator.initialisationRequired = true;
     const reason = { src: path.node.src, 0: `Accessed` };
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
@@ -171,8 +199,16 @@ export class StateVariableIndicator {
       this.isWholeReason ??= [];
       this.isWholeReason.push(reason);
       // a reinitialised state does not require a nullifier
-      if (state.incrementedPath && !state.incrementedIdentifier.reinitialisable)
+      if (
+        state.incrementedPath &&
+        !state.incrementedIdentifier.reinitialisable
+      ) {
+        this.parentIndincator.nullifiersRequired = true;
+        this.parentIndincator.newCommitmentsRequired = true;
+        this.parentIndincator.oldCommitmentAccessRequired = true;
+        this.parentIndincator.initialisationRequired = true;
         this.addNullifyingPath(state.incrementedPath);
+      }
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
@@ -186,10 +222,15 @@ export class StateVariableIndicator {
       this.isUnknown ??= true;
       this.isPartitionedReason ??= [];
       this.isPartitionedReason.push(reason);
+      this.parentIndincator.newCommitmentsRequired = true;
     }
     // if its known, we already added the path
-    if (path.isDecremented && !state.incrementedIdentifier.isKnown)
+    if (path.isDecremented && !state.incrementedIdentifier.isKnown) {
+      this.parentIndincator.nullifiersRequired = true;
+      this.parentIndincator.newCommitmentsRequired = true;
+      this.parentIndincator.oldCommitmentAccessRequired = true;
       this.addNullifyingPath(state.incrementedPath);
+    }
     // if its incremented anywhere, isIncremented = true
     // so we only assign if it's already falsey
     this.isIncremented ||= path.isIncremented;
@@ -224,6 +265,7 @@ export class StateVariableIndicator {
       this.modifyingPaths.push(path);
 
       this.newCommitmentRequired = true;
+      // TODO check usage of below when reinitialisable
       this.initialisationRequired = true; // Used? Probably for whole states?
 
       const { node } = path;
@@ -288,9 +330,13 @@ export class MappingKey {
    */
   constructor(container, keyPath) {
     this.container = container;
+    this.id = container.id;
 
     // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
     this.referencedKeyId = keyPath.node.referencedDeclaration;
+    this.referencedKeyName = keyPath.isMsg()
+      ? 'msg'
+      : keyPath.getReferencedNode().name;
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
       : keyPath.getReferencedNode().nodeType;
@@ -418,5 +464,21 @@ export class MappingKey {
     state.decrements.forEach(dec => {
       this.decrements.push(dec);
     });
+  }
+
+  updateFromBinding() {
+    // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
+    this.isWhole ??= this.binding.isWhole;
+    this.isWholeReason = this.isWhole
+      ? this.binding.isWholeReason
+      : this.isWholeReason;
+    this.isPartitioned ??= this.binding.isPartitioned;
+    this.isPartitionedReason = this.isPartitioned
+      ? this.binding.isPartitionedReason
+      : this.isPartitionedReason;
+    this.isOwned ??= this.binding.isOwned;
+    this.owner ??= this.binding.owner;
+    this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+    this.parentIndincator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
   }
 }

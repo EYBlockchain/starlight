@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign, no-shadow */
+/* eslint-disable no-param-reassign, no-shadow, no-continue */
 // no-unused-vars <-- to reinstate eventually
 
 /**
@@ -11,9 +11,10 @@
 export default {
   FunctionDefinition: {
     exit(path) {
-      // why here? Because we are looking for whether the secret state is whole per function scope
       const { scope } = path;
       for (const [, indicator] of Object.entries(scope.indicators)) {
+        // we may have a function indicator property we'd like to skip
+        if (!indicator.id) continue;
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
       }
