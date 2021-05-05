@@ -23,13 +23,13 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         nullifierRequired: indicator.isNullified,
         isOwned: indicator.isOwned,
         owner: indicator.isOwned
-          ? indicator.owner.node.name || indicator.owner.name
+          ? indicator.owner.node?.name || indicator.owner.name
           : null,
         ownerIsSecret: indicator.isOwned
-          ? indicator.owner.isSecret || indicator.owner.node.isSecret
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
           : null,
         ownerIsParam: indicator.isOwned
-          ? indicator.owner.isParam || !indicator.owner.node.stateVariable
+          ? indicator.owner.isParam || !indicator.owner.node?.stateVariable
           : null,
       };
     }
@@ -43,10 +43,10 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         nullifierRequired: indicator.isNullified,
         isOwned: indicator.isOwned,
         owner: indicator.isOwned
-          ? indicator.owner.node.name || indicator.owner.name
+          ? indicator.owner.node?.name || indicator.owner.name
           : null,
         ownerIsSecret: indicator.isOwned
-          ? indicator.owner.isSecret || indicator.owner.node.isSecret
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
           : null,
       };
     }
@@ -78,10 +78,10 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         nullifierRequired: indicator.isNullified,
         isOwned: indicator.isOwned,
         owner: indicator.isOwned
-          ? indicator.owner.node.name || indicator.owner.name
+          ? indicator.owner.node?.name || indicator.owner.name
           : null,
         ownerIsSecret: indicator.isOwned
-          ? indicator.owner.isSecret || indicator.owner.node.isSecret
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
           : null,
       };
     }
@@ -96,10 +96,10 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         isPartitioned: indicator.isPartitioned,
         isOwned: indicator.isOwned,
         owner: indicator.isOwned
-          ? indicator.owner.node.name || indicator.owner.name
+          ? indicator.owner.node?.name || indicator.owner.name
           : null,
         ownerIsSecret: indicator.isOwned
-          ? indicator.owner.isSecret || indicator.owner.node.isSecret
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
           : null,
       };
     }

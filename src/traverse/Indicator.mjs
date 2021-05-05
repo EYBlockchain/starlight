@@ -209,6 +209,7 @@ export class StateVariableIndicator {
         this.parentIndincator.initialisationRequired = true;
         this.addNullifyingPath(state.incrementedPath);
       }
+      // an incremented, but not decremented, state only needs a new commitment
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
@@ -222,6 +223,9 @@ export class StateVariableIndicator {
       this.isUnknown ??= true;
       this.isPartitionedReason ??= [];
       this.isPartitionedReason.push(reason);
+      this.parentIndincator.newCommitmentsRequired = true;
+      // we may have an incrementation not marked as unknown in this scope:
+    } else if (!path.isDecremented) {
       this.parentIndincator.newCommitmentsRequired = true;
     }
     // if its known, we already added the path
@@ -331,6 +335,7 @@ export class MappingKey {
   constructor(container, keyPath) {
     this.container = container;
     this.id = container.id;
+    this.node = container.node;
 
     // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
     this.referencedKeyId = keyPath.node.referencedDeclaration;
@@ -343,6 +348,7 @@ export class MappingKey {
     this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret; // only really used by binding.
+    this.isMapping = true;
 
     this.name = this.isMsgSender
       ? `${container.name}[msg.sender]`
@@ -468,17 +474,16 @@ export class MappingKey {
 
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
-    this.isWhole ??= this.binding.isWhole;
+    this.isWhole ??= this.container.binding.isWhole;
     this.isWholeReason = this.isWhole
-      ? this.binding.isWholeReason
+      ? this.container.binding.isWholeReason
       : this.isWholeReason;
-    this.isPartitioned ??= this.binding.isPartitioned;
+    this.isPartitioned ??= this.container.binding.isPartitioned;
     this.isPartitionedReason = this.isPartitioned
-      ? this.binding.isPartitionedReason
+      ? this.container.binding.isPartitionedReason
       : this.isPartitionedReason;
-    this.isOwned ??= this.binding.isOwned;
-    this.owner ??= this.binding.owner;
-    this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
-    this.parentIndincator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+    this.isOwned ??= this.container.binding.isOwned;
+    this.owner ??= this.container.binding.owner;
+    this.onChainKeyRegistry ??= this.container.binding.onChainKeyRegistry;
   }
 }

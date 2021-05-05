@@ -250,7 +250,10 @@ export default class Binding {
     }
     this.owner = ownerNode;
     this.isOwned = true;
-    if (this.owner.typeDescriptions.typeIdentifier.includes('address'))
+    if (
+      this.owner.typeDescriptions.typeIdentifier.includes('address') ||
+      this.owner.name === 'msg'
+    )
       this.onChainKeyRegistry = true;
     if (this.isMapping) {
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {

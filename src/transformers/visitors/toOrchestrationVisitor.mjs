@@ -199,6 +199,13 @@ export default {
 
         for (const stateVarIndicator of modifiedStateVariableIndicators) {
           let { name, id } = stateVarIndicator;
+          if (stateVarIndicator.isMapping) {
+            id = [id, stateVarIndicator.referencedKeyName];
+            name = name
+              .replace('[', '_')
+              .replace(']', '')
+              .replace('.sender', '');
+          }
           let incrementsString = '';
           if (stateVarIndicator.isIncremented) {
             stateVarIndicator.increments?.forEach(inc => {
@@ -227,18 +234,14 @@ export default {
           node._newASTPointer.parameters.modifiedStateVariables.push(
             modifiedStateVariableNode,
           );
-          // thisIntegrationTestFunction.parameters.modifiedStateVariables.push(
-          //   modifiedStateVariableNode,
-          // );
 
-          if (stateVarIndicator.referencedKeyName) {
-            id = [id, stateVarIndicator.referencedKeyName];
-            name = name.replace('[', '_').replace(']', '');
-          }
           if (stateVarIndicator.isWhole) {
             newNodes.initialisePreimageNode.privateStates[name] = {
               privateStateName: name,
             };
+          }
+
+          if (stateVarIndicator.isNullified) {
             newNodes.readPreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('ReadPreimage', {
@@ -246,8 +249,6 @@ export default {
               increment: incrementsString,
               indicator: stateVarIndicator,
             });
-          }
-          if (stateVarIndicator.isNullified) {
             newNodes.membershipWitnessNode.privateStates[
               name
             ] = buildPrivateStateNode('MembershipWitness', {
@@ -320,19 +321,29 @@ export default {
         // 6 - GenerateProof - all - per function
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
-        node._newASTPointer.body.statements.push(newNodes.readPreimageNode);
-        node._newASTPointer.body.statements.push(
-          newNodes.membershipWitnessNode,
-        );
-        node._newASTPointer.body.statements.push(
-          newNodes.calculateNullifierNode,
-        );
-        node._newASTPointer.body.statements.push(
-          newNodes.calculateCommitmentNode,
-        );
-        node._newASTPointer.body.statements.push(newNodes.generateProofNode);
-        node._newASTPointer.body.statements.push(newNodes.sendTransactionNode);
-        node._newASTPointer.body.statements.push(newNodes.writePreimageNode);
+        if (newNodes.readPreimageNode)
+          node._newASTPointer.body.statements.push(newNodes.readPreimageNode);
+        if (newNodes.membershipWitnessNode)
+          node._newASTPointer.body.statements.push(
+            newNodes.membershipWitnessNode,
+          );
+
+        if (newNodes.calculateNullifierNode)
+          node._newASTPointer.body.statements.push(
+            newNodes.calculateNullifierNode,
+          );
+        if (newNodes.calculateCommitmentNode)
+          node._newASTPointer.body.statements.push(
+            newNodes.calculateCommitmentNode,
+          );
+        if (newNodes.generateProofNode)
+          node._newASTPointer.body.statements.push(newNodes.generateProofNode);
+        if (newNodes.sendTransactionNode)
+          node._newASTPointer.body.statements.push(
+            newNodes.sendTransactionNode,
+          );
+        if (newNodes.writePreimageNode)
+          node._newASTPointer.body.statements.push(newNodes.writePreimageNode);
       }
     },
   },
@@ -440,12 +451,18 @@ export default {
         }
         // if its an incrementation, we need to know it happens but not copy it over
         if (node.expression.isIncremented && indicator.isPartitioned) {
+          const name = indicator.isMapping
+            ? indicator.name
+                .replace('[', '_')
+                .replace(']', '')
+                .replace('.sender', '')
+            : indicator.name;
           const newNode = buildNode(node.nodeType, {
             nodeType: node.nodeType,
             expression: {},
             incrementsSecretState: node.expression.isIncremented,
             decrementsSecretState: node.expression.isDecremented,
-            privateStateName: indicator.name,
+            privateStateName: name,
           });
 
           node._newASTPointer = newNode;
@@ -480,6 +497,10 @@ export default {
 
   VariableDeclaration: {
     enter(path, state) {
+      const interactsWithSecretVisitor = (thisPath, thisState) => {
+        if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
+          thisState.interactsWithSecret = true;
+      };
       const { node, parent, scope } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable - we've handled it.
@@ -487,13 +508,17 @@ export default {
         state.skipSubNodes = true;
         return;
       }
-      // we have a param or a local var dec
+      // we now have a param or a local var dec
       // TODO just use interactsWithSecret when thats added
       let modifiesSecretState = false;
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
-        if (scope.getReferencedBinding(refPath.node).isSecret)
-          modifiesSecretState = true;
+        const newState = {};
+        refPath.parentPath.traversePathsFast(
+          interactsWithSecretVisitor,
+          newState,
+        );
+        modifiesSecretState ||= newState.interactsWithSecret;
       });
 
       if (
@@ -505,7 +530,7 @@ export default {
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = buildNode(node.nodeType, {
         name: node.name,
-        isSecret: node.isSecret,
+        isSecret: node.isSecret || false,
         modifiesSecretState,
         typeName: {},
       });
@@ -581,7 +606,6 @@ export default {
 
   FunctionCall: {
     enter(path, state) {
-      // HACK: Not sure how to deal with FunctionCalls for Orchestration, so skipping them
       state.skipSubNodes = true;
     },
   },
