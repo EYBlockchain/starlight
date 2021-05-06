@@ -2,12 +2,13 @@
 
 import fs from 'fs';
 import pathjs from 'path';
+import prettier from 'prettier';
 import NodePath from '../traverse/NodePath.mjs';
 import logger from '../utils/logger.mjs';
 import { traversePathsFast } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toOrchestrationVisitor.mjs';
-import codeGenerator from '../codeGenerators/toOrchestration.mjs';
+import codeGenerator from '../codeGenerators/orchestration/nodejs/toOrchestration.mjs';
 import { ZappFilesBoilerplate } from '../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
 
 /**
@@ -74,7 +75,6 @@ export default function toOrchestration(ast, options) {
   const nodeFileData = codeGenerator(newAST);
 
   // logger.debug('nodeFileData:', nodeFileData)
-
   // save the node files to the output dir:
   logger.verbose(
     `Saving .mjs files to the zApp output directory ${options.orchestrationDirPath}...`,
@@ -85,14 +85,19 @@ export default function toOrchestration(ast, options) {
     logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     if (fileObj.filepath.includes('preimage.json')) continue;
-    fs.writeFileSync(filepath, fileObj.file);
+    const prettyFile = prettier.format(fileObj.file, { useTabs: true, parser: 'babel' });
+    fs.writeFileSync(filepath, prettyFile);
   }
-  const contractNode = ast.node.nodes.filter(n => n.nodeType === `ContractDefinition`)[0];
+  const contractNode = ast.node.nodes.filter(
+    n => n.nodeType === `ContractDefinition`,
+  )[0];
   const contractName = `${
     contractNode.name.charAt(0).toUpperCase() + contractNode.name.slice(1)
   }Shield`;
 
-  logger.verbose(`Saving backend files to the zApp output directory ${options.outputDirPath}...`);
+  logger.verbose(
+    `Saving backend files to the zApp output directory ${options.outputDirPath}...`,
+  );
   // HERE
   for (const fileObj of ZappFilesBoilerplate) {
     let file = fs.readFileSync(fileObj.readPath, 'utf8');

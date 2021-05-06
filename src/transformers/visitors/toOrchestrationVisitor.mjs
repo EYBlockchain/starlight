@@ -86,7 +86,7 @@ export default {
           fileExtension: '.mjs',
           nodes: [
             buildNode('Imports'),
-            buildNode('FunctionDefinition', { name: node.name }),
+            buildNode('FunctionDefinition', { name: node.name, contractName }),
           ],
         });
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
@@ -126,11 +126,10 @@ export default {
         const contractName = `${parent.name}Shield`;
         if (fnIndicator.initialisationRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
-        if (fnIndicator.oldCommitmentAccessRequired)
-          newNodes.readPreimageNode = buildNode('ReadPreimage', {
-            contractName,
-            onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
-          });
+        newNodes.readPreimageNode = buildNode('ReadPreimage', {
+          contractName,
+          onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
+        });
         if (fnIndicator.nullifiersRequired) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,
@@ -209,9 +208,13 @@ export default {
           let incrementsString = '';
           if (stateVarIndicator.isIncremented) {
             stateVarIndicator.increments?.forEach(inc => {
-              incrementsString += inc.name
-                ? `+ ${inc.name} `
-                : `+ ${inc.value} `;
+              if (inc === stateVarIndicator.increments[0]) {
+                incrementsString += inc.name || inc.value;
+              } else {
+                incrementsString += inc.name
+                  ? `+ ${inc.name} `
+                  : `+ ${inc.value} `;
+              }
             });
             stateVarIndicator.decrements?.forEach(dec => {
               incrementsString += dec.name
@@ -241,14 +244,16 @@ export default {
             };
           }
 
-          if (stateVarIndicator.isNullified) {
-            newNodes.readPreimageNode.privateStates[
-              name
-            ] = buildPrivateStateNode('ReadPreimage', {
+          newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
+            'ReadPreimage',
+            {
               id,
               increment: incrementsString,
               indicator: stateVarIndicator,
-            });
+            },
+          );
+
+          if (stateVarIndicator.isNullified) {
             newNodes.membershipWitnessNode.privateStates[
               name
             ] = buildPrivateStateNode('MembershipWitness', {

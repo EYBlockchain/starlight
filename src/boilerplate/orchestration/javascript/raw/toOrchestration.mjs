@@ -3,8 +3,16 @@ import fs from 'fs';
 const testReadPath = './src/boilerplate/common/generic-test.mjs';
 
 export const ZappFilesBoilerplate = [
-  { readPath: 'src/boilerplate/common/bin/setup', writePath: '/bin/setup', generic: false },
-  { readPath: 'src/boilerplate/common/bin/startup', writePath: '/bin/startup', generic: true },
+  {
+    readPath: 'src/boilerplate/common/bin/setup',
+    writePath: '/bin/setup',
+    generic: false,
+  },
+  {
+    readPath: 'src/boilerplate/common/bin/startup',
+    writePath: '/bin/startup',
+    generic: true,
+  },
   {
     readPath: 'src/boilerplate/common/config/default.js',
     writePath: '/config/default.js',
@@ -73,6 +81,7 @@ export const integrationTestBoilerplate = {
       throw new Error(err);
     }`,
   suffix: `});`,
+  // below regex extracts everything below the first 'describe' (i.e. the outer test function)
   function: `// eslint-disable-next-line func-names \n ${
     fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g)[0]
   }`,
@@ -124,18 +133,21 @@ export const generateProofBoilerplate = node => {
   const output = [];
   for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
     const lines = [];
-    let stateVarIdLines = stateNode.isMapping
-      ? [`\t${privateStateName}_stateVarId_key.integer,`]
+    const stateVarIdLines = stateNode.isMapping
+      ? [`\n\t\t\t\t\t\t\t\t${privateStateName}_stateVarId_key.integer,`]
       : [];
-    // [`\t${privateStateName}_stateVarId,`, `\t${privateStateName}_stateVarId_key.hex(32),`]
-    // : [`\t${privateStateName}_stateVarId,`];
+    node.parameters
+      .filter(
+        para =>
+          !privateStateNames.includes(para) &&
+          !output.join().includes(`${para}.integer`),
+      ) //  !== node.privateStateName)
+      .forEach(param => {
+        lines.push(`\t${param}.integer,`);
+        // if (stateNode.owner.includes(param)) stateVarIdLines = [];
+      });
     switch (stateNode.isWhole) {
       case true:
-        node.parameters
-          .filter(para => !privateStateNames.includes(para)) //  !== node.privateStateName)
-          .forEach(param => {
-            if (!lines.includes(`\t${param}.integer,`)) lines.push(`\t${param}.integer,`);
-          });
         output.push(`
             ${lines.join('  \n\t\t\t\t\t\t\t\t')}
             ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
@@ -157,28 +169,11 @@ export const generateProofBoilerplate = node => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            //    stateNode.increment.forEach(inc => {
-            //             lines.push(`\tvalue: ${inc.name}.integer,`);
-            //           });
-            node.parameters
-              .filter(para => !privateStateNames.includes(para)) //  !== node.privateStateName)
-              .forEach(param => {
-                if (
-                  !lines.includes(`\t${param}.integer,`) &&
-                  !output.join().includes(`${param}.integer`)
-                )
-                  lines.push(`\t${param}.integer,`);
-                if (stateNode.owner.includes(param)) stateVarIdLines = [];
-              });
-
             if (
               !output.join().includes(`\t${stateNode.increment}.integer`) &&
               !lines.includes(`\t${stateNode.increment}.integer,`)
             )
               output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
-            // lines[1] = `
-            //     \t${stateNode.increment}_newSalt.limbs(32, 8),
-            //     \t${stateNode.increment}_newCommitment.integer`;
             output.push(`
                 ${lines.join('  \n\t\t\t\t\t\t\t\t')}
                 ${stateVarIdLines.join('  \n\t\t\t\t\t\t\t\t')}
@@ -205,23 +200,9 @@ export const generateProofBoilerplate = node => {
           case false:
           default:
             // increment
-            // stateNode.increment.forEach(inc => {
-            //   lines.push(`\tvalue: ${inc.name}.integer,`);
-            // });
-            node.parameters
-              .filter(para => para !== node.privateStateName)
-              .forEach(param => {
-                if (
-                  !lines.includes(`\t${param}.integer,`) &&
-                  !output.join().includes(`${param}.integer`)
-                )
-                  lines.push(`\t${param}.integer,`);
-                if (stateNode.owner && stateNode.owner.includes(param)) stateVarIdLines = [];
-              });
-
             if (
-              !output.join().includes(`\t${stateNode.increment}.integer`) &&
-              !lines.includes(`\t${stateNode.increment}.integer,`)
+              !output.join().includes(`\t${stateNode.increment}.integer`)
+              // && !lines.includes(`\t${stateNode.increment}.integer,`)
             )
               output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
 
@@ -239,41 +220,50 @@ export const generateProofBoilerplate = node => {
 
 export const preimageBoilerPlate = node => {
   const output = [];
-  for (const [privateStateName, stateNode] of Object.entries(node.privateStates)) {
+  for (const [privateStateName, stateNode] of Object.entries(
+    node.privateStates,
+  )) {
     const lines = [];
     const stateVarIds = [];
     const initialiseParams = [];
     const preimageParams = [];
-    stateNode.parameters.forEach(param => {
-      // for each param which goes inside the commitment/ is used to calc commitment value
-      if (stateNode.isWhole)
-        lines.push(`const ${param}_prev = generalise(${privateStateName}_preimage.${param});`);
-      const id = stateNode.stateVarId[stateNode.parameters.indexOf(param)];
-      if (!stateNode.stateVarId[1]) stateVarIds.push(`\nconst ${param}_stateVarId = ${id};`);
-      if (
-        stateNode.stateVarId[1] &&
-        privateStateName.includes(stateNode.stateVarId[1]) &&
-        stateNode.stateVarId[1] !== 'msg'
-      ) {
-        stateVarIds.push(`\nlet ${param}_stateVarId = ${id};`);
-        stateVarIds.push(`\nconst ${param}_stateVarId_key = ${stateNode.stateVarId[1]};`);
-        stateVarIds.push(
-          `\n${param}_stateVarId = generalise(utils.mimcHash([generalise(${param}_stateVarId).bigInt, ${param}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
-        );
-      }
+    // stateNode.parameters.forEach(param => {
+    // for each param which goes inside the commitment/ is used to calc commitment value
+    if (stateNode.isWhole)
+      lines.push(
+        `const ${privateStateName}_prev = generalise(${privateStateName}_preimage.${privateStateName});`,
+      );
+    const id = stateNode.stateVarId[0]
+      ? stateNode.stateVarId[0]
+      : stateNode.stateVarId;
+    if (!stateNode.stateVarId[1])
+      stateVarIds.push(`\nconst ${privateStateName}_stateVarId = ${id};`);
+    if (
+      stateNode.stateVarId[1] &&
+      privateStateName.includes(stateNode.stateVarId[1]) &&
+      stateNode.stateVarId[1] !== 'msg'
+    ) {
+      stateVarIds.push(`\nlet ${privateStateName}_stateVarId = ${id};`);
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
+      );
+      stateVarIds.push(
+        `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+      );
+    }
 
-      if (stateNode.stateVarId[1] === 'msg' && privateStateName.includes('msg')) {
-        stateVarIds.push(`\nlet ${param}_stateVarId = ${id};`);
-        stateVarIds.push(
-          `\nconst ${param}_stateVarId_key = ${privateStateName}_newOwnerPublicKey;`,
-        );
-        stateVarIds.push(
-          `\n${param}_stateVarId = generalise(utils.mimcHash([generalise(${param}_stateVarId).bigInt, ${param}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
-        );
-      }
-      initialiseParams.push(`\nlet ${param}_prev = generalise(0);`);
-      preimageParams.push(`\t${param}: 0,`);
-    });
+    if (stateNode.stateVarId[1] === 'msg' && privateStateName.includes('msg')) {
+      stateVarIds.push(`\nlet ${privateStateName}_stateVarId = ${id};`);
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = ${privateStateName}_newOwnerPublicKey;`,
+      );
+      stateVarIds.push(
+        `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+      );
+    }
+    initialiseParams.push(`\nlet ${privateStateName}_prev = generalise(0);`);
+    preimageParams.push(`\t${privateStateName}: 0,`);
+    // });
     const newOwner = stateNode.isOwned ? stateNode.owner : null;
     let newOwnerStatment;
     switch (newOwner) {
@@ -365,13 +355,13 @@ export const OrchestrationCodeBoilerPlate = node => {
   const params = [];
   const states = [];
   const rtnparams = [];
-  const { privateStateName, increment } = node;
+  // const { privateStateName, increment } = node;
   switch (node.nodeType) {
     case 'Imports':
       // TODO proper db
       return {
         statements: [
-          `/* eslint-disable prettier/prettier, no-use-before-define, babel/camelcase */`,
+          `/* eslint-disable prettier/prettier, no-use-before-define, camelcase, no-unused-vars */`,
           `\nimport config from 'config';`,
           `\nimport utils from 'zkp-utils';`,
           `\nimport GN from 'general-number';`,
@@ -388,7 +378,9 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
     case 'FunctionDefinition':
       // the main function
-      lines.push(`\nconst instance = await getContractInstance('${node.contractName}');`);
+      lines.push(
+        `\nconst instance = await getContractInstance('${node.contractName}');`,
+      );
       node.inputParameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
@@ -407,7 +399,9 @@ export const OrchestrationCodeBoilerPlate = node => {
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
-      node.returnParameters.forEach(param => rtnparams.push(`, ${param.integer}`));
+      node.returnParameters.forEach(param =>
+        rtnparams.push(`, ${param.integer}`),
+      );
 
       return {
         signature: [
@@ -446,8 +440,6 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'ReadPreimage':
-      // please help with this terrible name
-      // TODO proper db
       lines[0] = preimageBoilerPlate(node);
       states[0] = node.onChainKeyRegistry ? `true` : `false`;
       return {
@@ -536,95 +528,109 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'MembershipWitness':
-      if (node.isPartitioned) {
-        return {
-          statements: [
-            `const ${privateStateName}_witness_0 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_0_oldCommitment).integer);
-            const ${privateStateName}_witness_1 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_1_oldCommitment).integer);
-            const ${privateStateName}_0_index = generalise(${privateStateName}_witness_0.index);
-            const ${privateStateName}_1_index = generalise(${privateStateName}_witness_1.index);
-            const ${privateStateName}_root = generalise(${privateStateName}_witness_0.root);
-            const ${privateStateName}_0_path = generalise(${privateStateName}_witness_0.path).all;
-            const ${privateStateName}_1_path = generalise(${privateStateName}_witness_1.path).all;\n`,
-          ],
-        };
+      for (const [privateStateName, stateNode] of Object.entries(
+        node.privateStates,
+      )) {
+        if (stateNode.isPartitioned) {
+          lines.push(
+            ...[
+              `const ${privateStateName}_witness_0 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_0_oldCommitment).integer);
+              const ${privateStateName}_witness_1 = await getMembershipWitness('${node.contractName}', generalise(${privateStateName}_1_oldCommitment).integer);
+              const ${privateStateName}_0_index = generalise(${privateStateName}_witness_0.index);
+              const ${privateStateName}_1_index = generalise(${privateStateName}_witness_1.index);
+              const ${privateStateName}_root = generalise(${privateStateName}_witness_0.root);
+              const ${privateStateName}_0_path = generalise(${privateStateName}_witness_0.path).all;
+              const ${privateStateName}_1_path = generalise(${privateStateName}_witness_1.path).all;\n`,
+            ],
+          );
+        }
+        if (stateNode.isWhole) {
+          lines.push(
+            ...[
+              `const emptyPath = new Array(32).fill(0);
+              const ${privateStateName}_witness = ${privateStateName}_witnessRequired
+              \t? await getMembershipWitness('${node.contractName}', ${privateStateName}_currentCommitment.integer)
+              \t: { index: 0, path: emptyPath, root: 0 };
+              const ${privateStateName}_index = generalise(${privateStateName}_witness.index);
+              const ${privateStateName}_root = generalise(${privateStateName}_witness.root);
+              const ${privateStateName}_path = generalise(${privateStateName}_witness.path).all;\n`,
+            ],
+          );
+        }
       }
-      if (node.isWhole) {
-        return {
-          statements: [
-            `const emptyPath = new Array(32).fill(0);
-            const ${privateStateName}_witness = ${privateStateName}_witnessRequired
-            \t? await getMembershipWitness('${node.contractName}', ${privateStateName}_currentCommitment.integer)
-            \t: { index: 0, path: emptyPath, root: 0 };
-            const ${privateStateName}_index = generalise(${privateStateName}_witness.index);
-            const ${privateStateName}_root = generalise(${privateStateName}_witness.root);
-            const ${privateStateName}_path = generalise(${privateStateName}_witness.path).all;\n`,
-          ],
-        };
-      }
-      return { statements: [] };
+      return { statements: lines };
 
     case 'CalculateNullifier':
-      if (node.isPartitioned) {
-        return {
-          statements: [
-            `\nlet ${privateStateName}_0_nullifier = generalise(utils.shaHash(${privateStateName}_stateVarId, secretKey.hex(32), ${privateStateName}_0_prevSalt.hex(32)));
-            let ${privateStateName}_1_nullifier = generalise(utils.shaHash(${privateStateName}_stateVarId, secretKey.hex(32), ${privateStateName}_1_prevSalt.hex(32)));
-            ${privateStateName}_0_nullifier = generalise(${privateStateName}_0_nullifier.hex(32, 31)); // truncate
-            ${privateStateName}_1_nullifier = generalise(${privateStateName}_1_nullifier.hex(32, 31)); // truncate`,
-          ],
-        };
+      for (const [privateStateName] of Object.entries(node.privateStates)) {
+        if (node.isPartitioned) {
+          lines.push(
+            ...[
+              `\nlet ${privateStateName}_0_nullifier = generalise(utils.shaHash(${privateStateName}_stateVarId, secretKey.hex(32), ${privateStateName}_0_prevSalt.hex(32)));
+              let ${privateStateName}_1_nullifier = generalise(utils.shaHash(${privateStateName}_stateVarId, secretKey.hex(32), ${privateStateName}_1_prevSalt.hex(32)));
+              ${privateStateName}_0_nullifier = generalise(${privateStateName}_0_nullifier.hex(32, 31)); // truncate
+              ${privateStateName}_1_nullifier = generalise(${privateStateName}_1_nullifier.hex(32, 31)); // truncate`,
+            ],
+          );
+        } else {
+          lines.push(
+            ...[
+              `\nlet ${privateStateName}_nullifier = ${privateStateName}_commitmentExists ? generalise(utils.shaHash(${privateStateName}_stateVarId, secretKey.hex(32), ${privateStateName}_prevSalt.hex(32))) : generalise(0);
+              \n${privateStateName}_nullifier = generalise(${privateStateName}_nullifier.hex(32, 31)); // truncate`,
+            ],
+          );
+        }
       }
       return {
-        statements: [
-          `\nlet ${privateStateName}_nullifier = ${privateStateName}_commitmentExists ? generalise(utils.shaHash(${privateStateName}_stateVarId, secretKey.hex(32), ${privateStateName}_prevSalt.hex(32))) : generalise(0);
-          \n${privateStateName}_nullifier = generalise(${privateStateName}_nullifier.hex(32, 31)); // truncate`,
-        ],
+        statements: lines,
       };
+
     case 'CalculateCommitment':
-      // if isMapping and we have the key to hash with the stateVarId
-      states[0] = `${privateStateName}_stateVarId`;
-      // if (node.stateVarId[1] && privateStateName.includes(node.stateVarId[1]))
-      //   states[0] = `generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32)`;
-      switch (node.isPartitioned) {
-        case undefined:
-        case false:
-          node.parameters.forEach(param => {
-            lines.push(`${param}.hex(32)`);
-          });
-          return {
-            statements: [
-              `\nconst ${privateStateName}_newSalt = generalise(utils.randomHex(32));`,
-              `\nlet ${privateStateName}_newCommitment = generalise(utils.shaHash(${states[0]}, ${lines}, ${privateStateName}_newOwnerPublicKey.hex(32), ${privateStateName}_newSalt.hex(32)));
-              \n${privateStateName}_newCommitment = generalise(${privateStateName}_newCommitment.hex(32, 31)); // truncate`,
-            ],
-          };
-        case true:
-        default:
-          switch (node.nullifierRequired) {
-            case true:
-              // decrement
-              return {
-                statements: [
-                  `\nconst ${privateStateName}_2_newSalt = generalise(utils.randomHex(32));`,
-                  `\nlet ${privateStateName}_change = parseInt(${privateStateName}_0_prev.integer, 10) + parseInt(${privateStateName}_1_prev.integer, 10) - parseInt(${increment}.integer, 10);`,
-                  `\n${privateStateName}_change = generalise(${privateStateName}_change);`,
-                  `\nlet ${privateStateName}_2_newCommitment = generalise(utils.shaHash(${states[0]}, ${privateStateName}_change.hex(32), publicKey.hex(32), ${privateStateName}_2_newSalt.hex(32)));
-                  \n${privateStateName}_2_newCommitment = generalise(${privateStateName}_2_newCommitment.hex(32, 31)); // truncate`,
-                ],
-              };
-            case false:
-            default:
-              // increment
-              return {
-                statements: [
-                  `\nconst ${privateStateName}_newSalt = generalise(utils.randomHex(32));`,
-                  `\nlet ${privateStateName}_newCommitment = generalise(utils.shaHash(${states[0]}, ${increment}.hex(32), ${privateStateName}_newOwnerPublicKey.hex(32), ${privateStateName}_newSalt.hex(32)));
-                  \n${privateStateName}_newCommitment = generalise(${privateStateName}_newCommitment.hex(32, 31)); // truncate`,
-                ],
-              };
-          }
+      for (const [, stateNode] of Object.entries(node.privateStates)) {
+        const { privateStateName, increment } = stateNode;
+        // if isMapping we have the key to hash with the stateVarId
+        states[0] = `${privateStateName}_stateVarId`;
+        switch (stateNode.isPartitioned) {
+          case undefined:
+          case false:
+            lines.push(
+              ...[
+                `\nconst ${privateStateName}_newSalt = generalise(utils.randomHex(32));`,
+                `\nlet ${privateStateName}_newCommitment = generalise(utils.shaHash(${states[0]}, ${privateStateName}.hex(32), ${privateStateName}_newOwnerPublicKey.hex(32), ${privateStateName}_newSalt.hex(32)));
+                \n${privateStateName}_newCommitment = generalise(${privateStateName}_newCommitment.hex(32, 31)); // truncate`,
+              ],
+            );
+            break;
+          case true:
+          default:
+            switch (stateNode.nullifierRequired) {
+              case true:
+                // decrement
+                lines.push(
+                  ...[
+                    `\nconst ${privateStateName}_2_newSalt = generalise(utils.randomHex(32));`,
+                    `\nlet ${privateStateName}_change = parseInt(${privateStateName}_0_prev.integer, 10) + parseInt(${privateStateName}_1_prev.integer, 10) - parseInt(${increment}.integer, 10);`,
+                    `\n${privateStateName}_change = generalise(${privateStateName}_change);`,
+                    `\nlet ${privateStateName}_2_newCommitment = generalise(utils.shaHash(${states[0]}, ${privateStateName}_change.hex(32), publicKey.hex(32), ${privateStateName}_2_newSalt.hex(32)));
+                    \n${privateStateName}_2_newCommitment = generalise(${privateStateName}_2_newCommitment.hex(32, 31)); // truncate`,
+                  ],
+                );
+                break;
+              case false:
+              default:
+                // increment
+                lines.push(
+                  ...[
+                    `\nconst ${privateStateName}_newSalt = generalise(utils.randomHex(32));`,
+                    `\nlet ${privateStateName}_newCommitment = generalise(utils.shaHash(${states[0]}, ${increment}.hex(32), ${privateStateName}_newOwnerPublicKey.hex(32), ${privateStateName}_newSalt.hex(32)));
+                    \n${privateStateName}_newCommitment = generalise(${privateStateName}_newCommitment.hex(32, 31)); // truncate`,
+                  ],
+                );
+            }
+        }
       }
+      return {
+        statements: lines,
+      };
 
     case 'GenerateProof':
       return {

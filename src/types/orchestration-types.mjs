@@ -28,11 +28,13 @@ export default function buildNode(nodeType, fields = {}) {
       const {
         name,
         body = buildNode('Block'),
-        parameters = buildNode('ParameterList')
+        parameters = buildNode('ParameterList'),
+        contractName
       } = fields;
       return {
         nodeType,
         name,
+        contractName,
         body,
         parameters,
         // Notice no return parameters. We always return the transaction rct.
