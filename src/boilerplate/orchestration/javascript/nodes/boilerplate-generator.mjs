@@ -22,15 +22,14 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
         isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
           : null,
         ownerIsSecret: indicator.isOwned
           ? indicator.owner.isSecret || indicator.owner.node?.isSecret
           : null,
-        ownerIsParam: indicator.isOwned
-          ? indicator.owner.isParam || !indicator.owner.node?.stateVariable
-          : null,
+        ownerIsParam: indicator.isOwned ? indicator.owner.isParam : null,
       };
     }
     case 'WritePreimage': {
@@ -42,6 +41,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
         isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
           : null,
@@ -77,6 +77,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
         isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
           : null,
@@ -86,15 +87,17 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'GenerateProof': {
-      const { increment, privateStateName, indicator = {} } = fields;
+      const { id, increment, privateStateName, indicator = {} } = fields;
       return {
         privateStateName,
+        stateVarId: id,
         nullifierRequired: indicator.isNullified,
         increment,
         isMapping: indicator.isMapping,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
           : null,

@@ -1,5 +1,13 @@
-/* eslint-disable consistent-return */
+/* eslint-disable import/no-cycle, consistent-return */
 import { buildBoilerplateNode } from '../boilerplate/orchestration/javascript/nodes/boilerplate-generator.mjs';
+
+/**
+ * @desc:
+ * Visitor transforms a `.zol` AST into a `.js` AST
+ * NB: the resulting `.js` AST is custom, and can only be interpreted by this
+ * repo's code generator. JS compilers will not be able to interpret this
+ * AST.
+ */
 
 /**
  * @param {string} nodeType - the type of node you'd like to build
@@ -56,20 +64,25 @@ export default function buildNode(nodeType, fields = {}) {
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, modifiesSecretState, isSecret, isAccessed } = fields;
+      const { name, type, interactsWithSecret, isSecret, isAccessed } = fields;
       return {
         nodeType,
         name,
         isSecret,
         isAccessed,
-        modifiesSecretState,
+        interactsWithSecret,
         typeName: buildNode('ElementaryTypeName', { name: type }),
       };
     }
     case 'VariableDeclarationStatement': {
-      const { declarations = [], initialValue = {} } = fields;
+      const {
+        declarations = [],
+        initialValue = {},
+        interactsWithSecret,
+      } = fields;
       return {
         nodeType,
+        interactsWithSecret,
         declarations,
         initialValue,
       };
@@ -95,6 +108,7 @@ export default function buildNode(nodeType, fields = {}) {
     case 'ExpressionStatement': {
       const {
         expression = {},
+        interactsWithSecret,
         incrementsSecretState,
         decrementsSecretState,
         privateStateName,
@@ -102,6 +116,7 @@ export default function buildNode(nodeType, fields = {}) {
       return {
         nodeType,
         expression,
+        interactsWithSecret,
         incrementsSecretState,
         decrementsSecretState,
         privateStateName,
@@ -113,6 +128,23 @@ export default function buildNode(nodeType, fields = {}) {
         nodeType,
         baseExpression,
         indexExpression,
+      };
+    }
+    case 'MemberAccess': {
+      const { name, expression = {} } = fields;
+      return {
+        nodeType,
+        name,
+        expression,
+      };
+    }
+    case 'TypeConversion': {
+      const { type, expression = {}, args = {} } = fields;
+      return {
+        nodeType,
+        type,
+        arguments: args,
+        expression,
       };
     }
     case 'MsgSender': {

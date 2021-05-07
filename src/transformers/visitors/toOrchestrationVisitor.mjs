@@ -5,6 +5,13 @@ import { traverse } from '../../traverse/traverse.mjs';
 import buildNode from '../../types/orchestration-types.mjs';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.mjs';
 
+// below stub will only work with a small subtree - passing a whole AST will always give true!
+// useful for subtrees like ExpressionStatements
+const interactsWithSecretVisitor = (thisPath, thisState) => {
+  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
+    thisState.interactsWithSecret = true;
+};
+
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.js` AST
@@ -197,7 +204,7 @@ export default {
         }
 
         for (const stateVarIndicator of modifiedStateVariableIndicators) {
-          let { name, id } = stateVarIndicator;
+          let { name, id, isIncremented } = stateVarIndicator;
           if (stateVarIndicator.isMapping) {
             id = [id, stateVarIndicator.referencedKeyName];
             name = name
@@ -206,8 +213,10 @@ export default {
               .replace('.sender', '');
           }
           let incrementsString = '';
-          if (stateVarIndicator.isIncremented) {
+          let incrementsArray = [];
+          if (isIncremented) {
             stateVarIndicator.increments?.forEach(inc => {
+              incrementsArray.push(inc.name || inc.value);
               if (inc === stateVarIndicator.increments[0]) {
                 incrementsString += inc.name || inc.value;
               } else {
@@ -217,11 +226,14 @@ export default {
               }
             });
             stateVarIndicator.decrements?.forEach(dec => {
+              incrementsArray.push(dec.name || dec.value);
               incrementsString += dec.name
                 ? `- ${dec.name} `
                 : `- ${dec.value} `;
             });
           }
+          if (!incrementsString) incrementsString = null;
+          if (!incrementsArray) incrementsArray = null;
 
           if (stateVarIndicator.isDecremented) {
             // TODO refactor
@@ -248,7 +260,7 @@ export default {
             'ReadPreimage',
             {
               id,
-              increment: incrementsString,
+              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             },
           );
@@ -258,13 +270,13 @@ export default {
               name
             ] = buildPrivateStateNode('MembershipWitness', {
               privateStateName: name,
-              increment: incrementsString,
+              increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
             });
             newNodes.calculateNullifierNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateNullifier', {
-              increment: incrementsString,
+              increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
             });
           }
@@ -274,35 +286,36 @@ export default {
             ] = buildPrivateStateNode('CalculateCommitment', {
               privateStateName: name,
               id,
-              increment: incrementsString,
+              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
               privateStateName: name,
-              increment: incrementsString,
+              id,
+              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
             newNodes.generateProofNode.parameters.push(name);
             newNodes.sendTransactionNode.privateStates[
               name
             ] = buildPrivateStateNode('SendTransaction', {
-              increment: incrementsString,
+              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
             newNodes.writePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('WritePreimage', {
               id,
-              increment: incrementsString,
+              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
           }
         }
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
-          if (param.isPrivate || param.isSecret || param.modifiesSecretState)
+          if (param.isPrivate || param.isSecret || param.interactsWithSecret)
             newNodes.generateProofNode.parameters.push(param.name);
         }
         // this adds other values we need in the tx
@@ -447,7 +460,7 @@ export default {
                 isSecret: true,
               }),
             ],
-            modifiesSecretState: true,
+            interactsWithSecret: true,
           });
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
@@ -477,7 +490,11 @@ export default {
         }
       }
       if (node.expression.nodeType !== 'FunctionCall') {
-        const newNode = buildNode(node.nodeType);
+        const newState = {};
+        path.traversePathsFast(interactsWithSecretVisitor, newState);
+        const newNode = buildNode(node.nodeType, {
+          interactsWithSecret: newState.interactsWithSecret,
+        });
         node._newASTPointer = newNode;
         parent._newASTPointer.push(newNode);
       }
@@ -502,10 +519,6 @@ export default {
 
   VariableDeclaration: {
     enter(path, state) {
-      const interactsWithSecretVisitor = (thisPath, thisState) => {
-        if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
-          thisState.interactsWithSecret = true;
-      };
       const { node, parent, scope } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable - we've handled it.
@@ -530,7 +543,7 @@ export default {
         parent.nodeType === 'VariableDeclarationStatement' &&
         modifiesSecretState
       )
-        parent._newASTPointer.modifiesSecretState = modifiesSecretState;
+        parent._newASTPointer.interactsWithSecret = modifiesSecretState;
 
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = buildNode(node.nodeType, {
@@ -556,6 +569,20 @@ export default {
       const newNode = buildNode(node.nodeType, { name: node.name });
 
       parent._newASTPointer[path.containerName] = newNode;
+    },
+
+    exit(path) {},
+  },
+
+  ElementaryTypeNameExpression: {
+    enter(path, state) {
+      const { node, parent } = path;
+      const newNode = buildNode('ElementaryTypeName', {
+        name: node.typeName.name,
+      });
+
+      parent._newASTPointer[path.containerName] = newNode;
+      state.skipSubNodes = true; // the subnodes are ElementaryTypeNames
     },
 
     exit(path) {},
@@ -588,10 +615,14 @@ export default {
   MemberAccess: {
     enter(path, state) {
       const { node, parent, scope } = path;
-      const indicator = scope.getReferencedIndicator(node, true);
-      const newNode = buildNode(node.nodeType, { name: indicator.name });
-      state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
-
+      if (path.isMsgSender()) {
+        const newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+        parent._newASTPointer[path.containerName] = newNode;
+        return;
+      }
+      const newNode = buildNode(node.nodeType, { name: node.memberName });
+      node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
 
@@ -611,7 +642,16 @@ export default {
 
   FunctionCall: {
     enter(path, state) {
-      state.skipSubNodes = true;
+      const { node, parent } = path;
+      if (node.kind !== 'typeConversion') {
+        state.skipSubNodes = true;
+        return;
+      }
+      const newNode = buildNode('TypeConversion', {
+        type: node.typeDescriptions.typeString,
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer[path.containerName] = newNode;
     },
   },
 };

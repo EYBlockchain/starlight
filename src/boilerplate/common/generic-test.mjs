@@ -37,7 +37,7 @@ describe('FUNCTION_NAME', async function () {
         // prints the tx
         console.log(tx);
         // reassigns leafIndex to the index of the first commitment added by this function
-        leafIndex = tx.events.NewLeaves.returnValues[0];
+        [leafIndex] = tx.events.NewLeaves.returnValues;
         // prints the new leaves (commitments) added by this function call
         console.log(`Merkle tree event returnValues:`);
         console.log(tx.events.NewLeaves.returnValues);

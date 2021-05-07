@@ -14,7 +14,7 @@ class BoilerplateGenerator {
 
     this.initialise(indicators);
 
-    bpCache.set(indicators, this);
+    bpCache.set({indicators}, this);
   }
 
   // Bump all important indicators (used by this class) to this 'top-level' of `this`.

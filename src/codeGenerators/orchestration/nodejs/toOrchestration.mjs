@@ -1,36 +1,14 @@
 /* eslint-disable import/no-cycle, no-param-reassign, consistent-return */
-import fs from 'fs';
-import path from 'path';
 import { OrchestrationCodeBoilerPlate } from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
 import fileGenerator from '../files/toOrchestration.mjs';
 
-// newline / tab beautification for '.zok' files
-// const beautify = code => {
-//   // can't be bothered writing this yet
-//   const lines = code.split('\n');
-//   let newCode = '';
-//   let tabCount = 0;
-//   for (const line of lines) {
-//     const chars = line.split('');
-//     let newLine = '';
-//     for (const char of chars) {
-//       switch (char) {
-//         case '[':
-//           ++tabCount;
-//           newLine += `${char}\\\n${'\t'.repeat(tabCount)}`;
-//           break;
-//         case ']':
-//           --tabCount;
-//           newLine += `\\\n${'\t'.repeat(tabCount)}${char}`;
-//           break;
-//         default:
-//           newLine += char;
-//       }
-//     }
-//     newCode += newLine;
-//   }
-//   return newCode;
-// };
+/**
+ * @desc:
+ * Visitor transforms a `.zol` AST into a `.js` AST
+ * NB: the resulting `.js` AST is custom, and can only be interpreted by this
+ * repo's code generator. JS compilers will not be able to interpret this
+ * AST.
+ */
 
 /**
  * @param {string} name - variable name
@@ -72,9 +50,8 @@ function codeGenerator(node) {
     }
 
     case 'VariableDeclarationStatement': {
-      // const declarations = node.declarations.map(codeGenerator).join(', ');
-      // const initialValue = codeGenerator(node.initialValue);
-      if (!node.modifiesSecretState) return;
+      if (!node.interactsWithSecret)
+        return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue.nodeType === 'Assignment') {
         if (node.declarations[0].isAccessed) {
           return `${getAccessedValue(
@@ -101,8 +78,10 @@ function codeGenerator(node) {
       return node.statements.map(codeGenerator).join(`\t`);
 
     case 'ExpressionStatement':
-      if (!node.incrementsSecretState)
+      if (!node.incrementsSecretState && node.interactsWithSecret)
         return `\n${codeGenerator(node.expression)};`;
+      if (!node.interactsWithSecret)
+        return `\n// non-secret line would go here but has been filtered out`;
       return `\n// increment would go here but has been filtered out`;
 
     case 'Assignment':
@@ -115,7 +94,13 @@ function codeGenerator(node) {
         node.operator
       } ${codeGenerator(node.rightExpression)}`;
 
+    case 'MsgSender':
+      return `publicKey.integer`;
+
+    case 'TypeConversion':
+      return `convertTo${node.type}(${codeGenerator(node.arguments)})`;
     case 'Literal':
+      return node.value;
     case 'Identifier':
       return node.name;
     case 'Folder':
@@ -137,7 +122,7 @@ function codeGenerator(node) {
       return `${OrchestrationCodeBoilerPlate(node).statements.join('')}`;
     // And if we haven't recognized the node, we'll throw an error.
     default:
-      throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
+      throw new TypeError(node.nodeType);
   }
 }
 
