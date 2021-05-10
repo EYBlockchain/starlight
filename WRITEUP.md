@@ -1,4 +1,4 @@
-# zappify :zap:
+# starlight :night_with_stars:
 
 Generate a zApp from a Solidity contract.
 
@@ -21,7 +21,7 @@ Generate a zApp from a Solidity contract.
       - [Indicators](#indicators)
     - [Preliminary traversals](#preliminary-traversals)
   - [Code Generation](#code-generation)
-- [What we done did so far](#what-we-done-did-so-far)
+- [Protocol](#protocol)
   - [Limitations](#limitations)
       - [Summary](#summary-1)
   - [Commitment structure](#commitment-structure)
@@ -35,9 +35,9 @@ Generate a zApp from a Solidity contract.
     - [Partitioned states](#partitioned-states)
     - [Identification of whole/partitioned with (un)known](#identification-of-wholepartitioned-with-unknown)
     - [Initialisation of whole states](#initialisation-of-whole-states)
+    - [Re-initialisation of whole states](#re-initialisation-of-whole-states)
     - [Examples](#examples)
   - [Ownership](#ownership)
-    - [whole vs partitioned states](#whole-vs-partitioned-states)
   - [Accessing private states](#accessing-private-states)
     - [Summary](#summary-4)
   - [Sharing private data](#sharing-private-data)
@@ -53,11 +53,11 @@ Generate a zApp from a Solidity contract.
 
 ## Induction :zap:
 
-zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? Zappify helps developers do just this...
+zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? starlight helps developers do just this...
 
 - Write a Solidity contract
 - Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
-- Zappify that baby
+- Run `zappify` on that baby
 - Get a fully working zApp in return
 
 _Solidity contract --> Zolidity contract --> zappify --> zApp_
@@ -104,8 +104,6 @@ They run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in 
 <img src= "doc/zappdir.png" width="250">
 
 Easy!
-
-(Not for us though...)
 
 ---
 
@@ -431,7 +429,7 @@ The code generator effectively just converts data in a node object into strings 
 
 ---
 
-## What we done did so far
+## Protocol
 
 
 ### Limitations
@@ -874,19 +872,22 @@ The solution, of course, is to enforce that a _nullifier_ be submitted in order 
 
 But how would the shield contract know that a commitment for `a` already exists in the commitment tree, when commitments hide what it is they represent?
 
-In fact, if we rewind to when Alice submitted her `commitment_0` for `a` to the shield contract. How would the shield contract have known Alice's was the _first_ commitment for `a` to ever have been submitted? Or, to put it another way, how would the shield contract have known to _not_ ask Alice for a nullifier?
+In fact, if we rewind to when Alice submitted her `commitment_0` for `a` to the shield contract. How would the shield contract have known Alice's was the _first_ commitment for `a` to ever have been submitted? Or, to put it another way, **how would the shield contract have known to _not_ ask Alice for a nullifier?**
 
-Well, it wouldn't know! There's no way for a shield contract to determine whether a commitment being submitted is the _first_ commitment to represent a particular secret state variable, because the shield contract doesn't know what any commitment represents. And so there's no way for the shield contract to determine when or when not a nullifier should be submitted.
+Well, it wouldn't know! There's no way for a shield contract to determine whether a commitment being submitted is the _first_ commitment to represent a particular secret state variable, because the shield contract doesn't know what any commitment represents. **And so there's no way for the shield contract to determine when or when not a nullifier should be submitted.**
 
 You could argue that if the tree is _empty_, the shield contract knows that an initial commitment for `a` hasn't yet been submitted (because _no_ commitments have been submitted). But such an emptiness check doesn't scale if there are _multiple_ whole states in a contract which need to be initialised (because the tree can only be empty once; thereafter it's unclear which states have or haven't been initialised, because commitments _hide_ that info). And such an emptiness check certainly won't scale when we move towards multiple private contracts all sharing the same commitment tree.
 
-You also might try to architect it so that the initialisation of a state variable's commitment is done in a separate function from the replacement of its commitments thereafter, and so the shield contract would know whether the state is being initialised from the function's signature (or the verification key being used to verify the proof). But our working example for this section is a single function. And this will be the case for whole states in general; we won't be able to separate initialisation from replacement.
+You also might try to architect it so that the initialisation of a state variable's commitment is done in a separate function from the replacement of its commitments thereafter, and so the shield contract would know whether the state is being initialised from the function's signature (or the verification key being used to verify the proof). But our working example for this section is a single function.
 
-You might argue that applications like Nightfall _separate_ initialisation of a state through 'Mint' from changes thereafter through 'Transfer'. But that's not what happens. Nightfall's states are 'partitioned' (not 'whole'), and partitioned states are implicitly initialised as `0`. Users never actively "initialise" partitioned states; they only increment or decrement the already-initialised state. Mint and transfer are both 'state update' functions; 'mint' is not a state initialisation function.
+You might argue that applications like Nightfall _separate_ initialisation of a state through 'Mint' from changes thereafter through 'Transfer'. But that's not what happens. Nightfall's states are 'partitioned' (not 'whole'), and partitioned states are implicitly initialised as `0`. Users never actively "initialise" partitioned states; they only increment or decrement the already-initialised state. Mint and transfer are both **'state update'** functions; 'mint' is not a state initialisation function.
+
+Aside: in some cases, we may want the _same_ state to be initialised more than once. This is an edge case where a state owner rescinds ownership of the state, and at some point later a different owner 'picks up' where they left off. This is discussed in the next section.
 
 Back to whole states...
 
 You might argue that a 'preventifier' could be submitted at the time of first initialising a secret state. A 'preventifier' is something uniquely derivable from a stateVarId, which would get submitted at the time of first initialising a secret state. If future transactions try to initialise a duplicate commitment for the same state, they'd be forced to submit a duplicate of the preventifier, and the smart contract would reject the transaction. Clearly, a preventifier can be derived by anyone, and so all observers of the blockchain would learn exactly what stateVarId just got initialised. That's not good for zero knowledge.
+
 Furthermore, adding an extra "thing" to be submitted alongside the 'staple' private tx ingredients of "commitments, nullifiers, and a historic commitment root" isn't great if we keep an eye on the future; where we'll wish to hide the function being executed. Some functions having "preventifiers" and some not would reduce the hiding of a function significantly.
 
 By now, we should be broadly convinced that the shield contract cannot distinguish between the initialisation of a whole state's commitment and the replacment of a state's commitment (because it cannot see what's inside a commitment), and therefore it cannot determine when or when not to demand a nullifier from the transactor.
@@ -957,7 +958,7 @@ Meanwhile, a non-mapping state (such as a `uint`) would still have the same prob
 
 **3)**
 
-In some cases, we might be able to adopt this approach. For example, if a publicly known `admin` owns a state (and is known to own it before deployment), then the first-submitted nullifier *can* have the corresponding admin's secret key. But this is an edge case - the state must have the same, pre-decided owner throughout its life hardcoded into the contract. (I think this `admin` address *could* be changed, but it would then lead to complications if the address was changed and two admins submitted rival nullifiers...).
+In some cases, we might be able to adopt this approach. For example, if a publicly known `admin` owns a state (and is known to own it before deployment), then the first-submitted nullifier *can* have the corresponding admin's secret key. But this is an edge case - the state must have the same, pre-decided owner throughout its life hardcoded into the contract. (This `admin` address *could* be changed, but it would then lead to complications if the address was changed and two admins submitted rival nullifiers...).
 
 More discussion needed on this option 3.
 
@@ -971,10 +972,120 @@ If a clear owner (for a whole state) _can_ be inferred from the original Solidit
 
 Partitioned states don't suffer from this problem, but they do have two main limitations. Firstly, unless the dev has been explicit, we can't avoid ending up with multiple owners of one state. Without any restriction on who can call a function which increments some unknown value, the caller can add any public key they want to the part they create.
 
-TODO ^^^ expand on this final point (if we haven't already) in a section of its own.
+<!-- TODO ^^^ expand on this final point (if we haven't already) in a section of its own.
 
 TODO: also talk about how a Nightfall-like contract is a nice edge case which means the public key and mapping key coincide.
+-->
 
+#### Re-initialisation of whole states
+
+In some edge cases, whole states need to be _reinitialised_. Let's take a look at an example:
+
+```solidity
+secret mapping(uint256 => address) public tokenOwners;
+IERC721 public erc721;
+
+constructor(address _erc721) {
+   erc721 = IERC721(_erc721);
+}
+
+function deposit(uint tokenId) public {
+    bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
+    require(success == true);
+    tokenOwners[tokenId] = msg.sender;
+}
+
+function transfer(secret address recipient, secret uint256 tokenId) public {
+    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+    tokenOwners[tokenId] = recipient;
+}
+
+function withdraw(uint256 tokenId) public {
+    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+    tokenOwners[tokenId] = address(0);
+    bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
+    require(success == true);
+}
+```
+
+You might recognise this as a simple NFT contract, which handles transferring non-fungibles between owners. The compiler will infer a few things:
+
+-   The owner of the state `tokenOwners[addr]` is `addr`, the value of the mapping
+-   The state `tokenOwners` is a mapping of whole states (since its value is an address which is overwritten)
+-   All three functions record a state change
+
+The compiler, unlike our human brains, sees this Zolidity contract and cannot tell the difference between the state changes in each function. We know, because of the function naming and external calls, that `deposit` is an initialisation and `withdraw` is a 'burn' which removes handling of the state from this contract. But starlight cant investigate every external call and tell us with certainty that the ERC721 functions safely allow these state transitions.
+
+This leads to a reinitialisation problem \- how does the caller of `deposit` provide a nullifier if their `tokenId` was previously owned?
+
+Theoretically, the previous owner of `tokenId` 100 (for instance) would have nullified the state in `withdraw`, submitting the nullifier `h(stateVarId, ownerSecretKey, salt_0)` for commitment `h(stateVarId, value = ownerPublicKey, ownerPublicKey, salt_0)`. The function would create a new commitment `h(stateVarId, value = 0, ownerPublicKey = 0, salt_1)`.
+
+In the background, the ERC721 contract would transfer token 100 from our Zolidity contract back to `msg.sender`, effectively removing it from our zApp. However, a commitment (representing value 0) still exists in the zApp, and if someone else owned token 100 later and wanted to `deposit` it into our zApp, they wouldn't be able to nullify that commitment!
+
+Essentially, the external ERC721 contract call means that the `deposit` function can safely _reinitialise_ a state. Without that call, we _would_ need a nullifier to prevent rival commitments.
+
+**So, how do we allow new owners to call `deposit` without needing a nullifier?**
+
+We introduce some new syntax -  `reinitialisable`.
+
+First, lets look at what the compiler says when we `zappify` this contract without `reinitialisable` syntax:
+
+
+```
+warn: This line resets the public key inside the commitment (i.e. the owner) to 0. This means you relinquish ownership of the state and it can never be used again.
+If you want the state to be burned and reset, mark the line where it is initialised as reinitialisable. Without doing so, you end up with a secret state of no owner which nobody can access.
+line 31
+tokenOwners[tokenId] = address(0);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+Because the `withdraw` function sets the owner - the value of the mapping `tokenOwners` - to zero, the compiler recognises that the state can't be nullified and used again! Let's mark the line `tokenOwners[tokenId] = msg.sender;` with `reinitialisable` and try again.
+
+```
+Found a statement which burns the secret state and allows it to be reinitialised. If this line isn't meant to do that, check why you are setting the address to 0.
+line 31
+tokenOwners[tokenId] = address(0);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+That's more like it! Indeed, the line resetting the value to zero is a burn statement, which allows the next owner of the state to _reinitialise_ it without a nullifier. This is what the Zolidity contract looks like now:
+
+```solidity
+secret mapping(uint256 => address) public tokenOwners;
+IERC721 public erc721;
+
+constructor(address _erc721) {
+   erc721 = IERC721(_erc721);
+}
+
+function deposit(uint tokenId) public {
+    bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
+    require(success == true);
+    reinitialisable tokenOwners[tokenId] = msg.sender;
+}
+
+function transfer(secret address recipient, secret uint256 tokenId) public {
+    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+    tokenOwners[tokenId] = recipient;
+}
+
+function withdraw(uint256 tokenId) public {
+    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+    tokenOwners[tokenId] = address(0);
+    bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
+    require(success == true);
+}
+```
+
+Now, any call in the zApp to `deposit` will not require a nullifier thanks to the `reinitialisable` syntax. The compiler is clever enough to look for a statement which gives up ownership (allowing a new initialisation), and finds one in `withdraw`. Without this statement, the new syntax is useless:
+
+```
+mapping(uint256 => address) public tokenOwners;
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[SyntaxUsageError: The state tokenOwners has been marked as reinitialisable but we can't find anywhere to burn a commitment ready for reinitialisation.]
+```
+
+Note that this is **only possible because the external call safely handles new ownership**. Using this syntax without being completely sure that the function prevents double spending or otherwise stealing states is **very unsafe**.
 
 #### Examples
 
@@ -1115,7 +1226,6 @@ In a `.zol` contract, ownership of secret states is difficult to infer. However,
 If we allow the caller to add any public key they wish, that might prevent an admin from being able to access some needed value. Meanwhile, if we fix a public key, then we lose transferability of ownership, and any resulting flexibility that the dev might have wanted.
 
 A general rule: **the _owner_ of a state must be able to nullify it wherever nullification happens**.
-TODO: is this a rule? Or is it the definition of nullification?
 
 Nullification is 'any operation' for whole states and 'decrementation' for partitioned states. Another way of saying this is: we can't allow an owner to be 'locked out' of editing their state. So, we look at wherever a state is nullified to see if there are any restrictions on who can access that nullification.
 
@@ -1126,7 +1236,6 @@ Some of the decisions below are tentative, and there are still some questions ov
 A traversal to determine ownership goes like this:
 
 For each secret state, we traverse the contract for nullifications and associated `msg.sender` restrictions:
--   ~~If there is the same user restriction on each nullification of the state (e.g. `require(msg.sender == admin)`) then this user is the owner.~~
 
 1. If, throughout the contract, for a particular secret state `a`, for all functions where `a` is nullified, we find that `msg.sender` is restricted to be precisely _one_ `address` (e.g. `require(msg.sender == someAddress);`) - then the owner of this address must be the owner of the commitment for `a`.
     - If `someAddress` is a public state, retain the `require` statements in the shield contract. Allow the owner of `someAddress` to add any `zkpPK` they want to the commitment for `a`. (If they lock themselves out from editing by adding a different PK, then "that's their own fault").
@@ -1226,10 +1335,9 @@ function withdraw(uint256 amount) {
 `h( stateVarId, mappingKey = ownerPK, value, salt )`
 - The circuit will include a PoKoSK for `ownerPK`
 
-TODO: MANY MANY MORE EXAMPLES
-
+<!-- START doctoc generated TOC please keep comment here to allow auto update
 #### whole vs partitioned states
-TODO: I got a bit lost; not sure where to add the below info:
+TODO: not sure where to add the below info:
 
 If we have a whole state and a clear owner, then we allow them to initialise the state, whether through the same contract requirements the dev wrote or through the circuit. Then once that state exists, only that single user can edit it.
 
@@ -1240,6 +1348,7 @@ Going back to whole states, we allow that user to add any PK they want. In most 
 Another method we considered is adding a *transferable* decorator in front of nullifying statements. Perhaps the developer wants a state to be as flexible as possible, with the current owner able to change the PK in the commitment with a nullification whenever they like. Or maybe they want a state to always belong to one person. The new decorator would allow this distinction.
 
 But, through many examples and discussions, it seems like wanting a *non*-transferable state is pretty rare. Plus, if you are the owner of a state and don't want to transfer editing rights then... just don't! You can keep it and do nothing. So, as long as we get the initial ownership of a state correct, the need for a *transferable* decorator mostly disappears.
+-->
 
 ---
 
@@ -1425,7 +1534,7 @@ Note, if the dev wrote something like `share balances[recipient] with admin`, an
 
 #### Placeholders
 
-Note: this section is pretty complicated, and it's so niche that it'll probably be on the backlog for ages.
+<!-- TODO: this section is pretty complicated, and it's so niche that it'll probably be on the backlog for ages. -->
 
 To ensure we're not over-fitting to nightfall, consider this partial code snippet, which doesn't use a `mapping(address => ...)`:
 
