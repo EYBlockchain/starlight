@@ -1,4 +1,4 @@
-# zappify :zap:
+# starlight :night_with_stars:
 
 Generate a zApp from a Solidity contract.
 
@@ -40,11 +40,11 @@ _"An easy cell to developers that increases their capacity to develop Zero Knowl
 
 ## Induction :zap:
 
-zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? Zappify helps developers do just this...
+zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? `starlight` helps developers do just this...
 
 - Write a Solidity contract
 - Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
-- Zappify that baby
+- Run `zappify` on that baby
 - Get a fully working zApp in return
 
 _Solidity contract --> Zolidity contract --> zappify --> zApp_
@@ -88,7 +88,7 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 
 Whilst the package is in early development, it isn't hosted on npm. To install:
 
-`cd zappify`
+`cd starlight`
 
 `npm i`
 
