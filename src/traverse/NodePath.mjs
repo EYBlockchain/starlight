@@ -764,7 +764,7 @@ export default class NodePath {
 
         // prettier-ignore
         return (
-            this.containerName !== 'indexExpression' &&
+            this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
             this.getLhsAncestor(true)
           );
       default:

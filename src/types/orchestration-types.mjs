@@ -115,9 +115,10 @@ export default function buildNode(nodeType, fields = {}) {
       };
     }
     case 'IndexAccess': {
-      const { baseExpression = {}, indexExpression = {} } = fields;
+      const { baseExpression = {}, indexExpression = {}, name } = fields;
       return {
         nodeType,
+        name,
         baseExpression,
         indexExpression,
       };

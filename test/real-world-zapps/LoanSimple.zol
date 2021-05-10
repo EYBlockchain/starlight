@@ -1,0 +1,83 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+import "./Loan-imports/IERC20.sol";
+
+contract Loan {
+
+    mapping(address => uint256) public lenderFees;
+    secret mapping(address => address) public borrowRequests;
+    secret mapping(address => uint256) public borrowRequestAmounts;
+    secret mapping(address => address) public amountOwedTo;
+    secret mapping(address => uint256) public amountOwed;
+    secret mapping(address => uint256) public balances;
+
+    IERC20 public erc20;
+    address public arbitrator;
+
+    constructor(address _erc20, address _arbitrator) {
+        erc20 = IERC20(_erc20);
+        arbitrator = _arbitrator;
+    }
+
+    // works - non-secret
+    function registerAsLender(uint fee, uint pot) public {
+        lenderFees[msg.sender] = fee;
+        bool success = erc20.transferFrom(msg.sender, address(this), pot);
+        require(success);
+
+    }
+    // works
+    function requestBorrow(secret address lender, secret uint amount) public {
+      // why a request, and not instant borrow? because we need to access the lender's secret balance to ensure they have enough
+      // require(lenderFees[lender] != 0); // commenting out to avoid secret/non-secret lookup clash
+      borrowRequests[msg.sender] = lender;
+      borrowRequestAmounts[msg.sender] = amount;
+      approveBorrow(msg.sender);
+    }
+
+    // no work :(
+    function approveBorrow(secret address borrower) public {
+      require(borrowRequests[borrower] == msg.sender);
+      // require(balances[msg.sender] >= borrowRequestAmounts[borrower]); // remove, since lender must pay borrower here anyway? i.e. they must nullify a commitment
+
+      // WHY NO WORK?
+      // because we have an accessed secret state on the RHS
+      balances[msg.sender] -= borrowRequestAmounts[borrower];
+      unknown balances[borrower] += borrowRequestAmounts[borrower];
+
+      // WHY NO WORK?
+      // because we have an accessed secret state on the RHS AND a public global state
+      amountOwed[borrower] = borrowRequestAmounts[borrower] * lenderFees[msg.sender];
+
+      // WHY NO WORK?
+      // because we have msg.sender on the RHS and we don't have code to assign msg.sender as a value
+      // (we DO have code to convert addresses to public keys when they are PKs in a commitment)
+      amountOwedTo[borrower] = msg.sender;
+    }
+
+    // works
+    function deposit(uint amount) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances[msg.sender] += amount;
+    }
+
+    // works
+    function withdraw(uint256 amount) public {
+        balances[msg.sender] -= amount;
+        bool success = erc20.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+    }
+
+    // works
+    function repay(secret uint256 amount, secret address lender) public {
+      // require(amountOwedTo[msg.sender] == lender); // can remove - this ensures you're repaying money you owe
+
+      balances[msg.sender] -= amount;
+      unknown balances[lender] += amount;
+      // clever thing the compiler does - it knows the below is a whole state which the borrower can only edit when they repay
+      amountOwed[msg.sender] -= amount;
+    }
+}

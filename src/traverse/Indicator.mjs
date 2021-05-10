@@ -210,6 +210,9 @@ export class StateVariableIndicator {
         this.parentIndincator.initialisationRequired = true;
         this.addNullifyingPath(state.incrementedPath);
       }
+      // a reinitialised state does require new commitments
+      this.parentIndincator.newCommitmentsRequired = true;
+      this.parentIndincator.initialisationRequired = true;
       // an incremented, but not decremented, state only needs a new commitment
     } else if (
       !path.isDecremented &&

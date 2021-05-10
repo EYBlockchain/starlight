@@ -30,7 +30,7 @@ _"Static, yet moving forward."_
 
 _"Received positively, with thunderous applause!"_
 
-_"Danger, danger! High vault (us)age!"_ ...there it is
+_"Danger, danger! High vault (us)age!"_
 
 _"Contains a battery of new ideas!"_
 
@@ -49,7 +49,7 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 
 _Solidity contract --> Zolidity contract --> zappify --> zApp_
 
-See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
+See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everything.
 
 ---
 
@@ -206,13 +206,6 @@ Use the flag `--write-all` instead of `--write <fileName`.
 
 `./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
 
-
-
----
-
-### R&D Notes & Ideas
-
-See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from decorated Solidity.
 
 ---
 

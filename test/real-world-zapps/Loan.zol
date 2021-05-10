@@ -1,0 +1,96 @@
+// SPDX-License-Identifier: CC0
+
+// TARGET CONTRACT FOR PHASE 2 OF DEVELOPMENT:
+
+pragma solidity ^0.8.0;
+
+import "./Loan-imports/IERC20.sol";
+
+contract Loan {
+
+    mapping(address => uint256) public lenderFees;
+
+    mapping(address => address) public approvedLenders;
+    mapping(address => uint256) public lendersAwaitingApproval;
+    mapping(address => uint256) public lenderPots;
+
+    secret mapping(address => address) public borrowRequests;
+    secret mapping(address => uint256) public borrowRequestAmounts;
+    secret mapping(address => address) public amountOwedTo;
+    secret mapping(address => uint256) public amountOwed;
+    secret mapping(address => uint256) public balances;
+
+    IERC20 public erc20;
+    address public arbitrator;
+
+    constructor(address _erc20, address _arbitrator) {
+        erc20 = IERC20(_erc20);
+        arbitrator = _arbitrator;
+    }
+
+    function registerAsLender(uint fee, uint pot) public {
+        //increaseAllowance
+        //checkBalance
+        lendersAwaitingApproval[msg.sender] = fee;
+        lenderPots[msg.sender] = pot;
+        // must increase allowance themselves?
+        // bool success = erc20.increaseAllowance(address(this), pot);
+        // require(success);
+    }
+
+    function approveLender(address lender) public {
+      require(msg.sender == arbitrator);
+      require(lendersAwaitingApproval[lender] != 0);
+      // approve ERC20?
+      approvedLenders[lender] = lender;
+      lenderFees[lender] = lendersAwaitingApproval[lender];
+      bool success = erc20.transferFrom(lender, address(this), lenderPots[lender]);
+      require(success);
+      // like a mint - can't hide this initial 'deposit' of the lender's pot
+      unknown balances[lender] += lenderPots[lender];
+      lendersAwaitingApproval[lender] = 0;
+      lenderPots[lender] = 0;
+    }
+
+    function requestBorrow(secret address lender, secret uint amount) public {
+      // why a request, and not instant borrow? because we need to access the lender's secret balance to ensure they have enough
+      require(approvedLenders[lender] == lender);
+      // LoanAgreement memory request;
+      // request.lender = lender;
+      // request.amount = amount;
+      borrowRequests[msg.sender] = lender;
+      borrowRequestAmounts[msg.sender] = amount;
+    }
+
+    function approveBorrow(secret address borrower) public {
+      require(borrowRequests[borrower] == msg.sender);
+      require(balances[msg.sender] >= borrowRequestAmounts[borrower]); // remove, since lender must pay borrower here anyway? i.e. they must nullify a commitment
+
+      balances[msg.sender] -= borrowRequestAmounts[borrower];
+      unknown balances[borrower] += borrowRequestAmounts[borrower];
+
+      amountOwed[borrower] = borrowRequestAmounts[borrower] * lenderFees[msg.sender];
+      amountOwedTo[borrower] = msg.sender;
+    }
+
+    function deposit(uint amount) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances[msg.sender] += amount;
+    }
+
+
+    function withdraw(uint256 amount) public {
+        balances[msg.sender] -= amount;
+        bool success = erc20.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+    }
+
+    function repay(secret uint256 amount, secret address lender) public {
+      require(amountOwedTo[msg.sender] == lender); // can remove - this ensures you're repaying money you owe
+
+      balances[msg.sender] -= amount;
+      unknown balances[lender] += amount;
+      amountOwed[msg.sender] -= amount;
+    }
+}

@@ -1,4 +1,3 @@
-# starlight :night_with_stars:
 
 Generate a zApp from a Solidity contract.
 
@@ -101,7 +100,7 @@ contract Assign {
 
 They run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in return:
 
-<img src= "doc/zappdir.png" width="250">
+<img src= "./zappdir.png" width="250">
 
 Easy!
 
@@ -124,11 +123,11 @@ _[Skip](#what-we-done-did-so-far) to the next big section. Or read on for detail
 
 At this stage, to transform the `.zol` file into an AST, we cheat a little. We actually first use `solc` to compile it as if it were a normal `.sol` file, to get a normal solidity AST. However, `solc` would throw a hundred errors at us if we kept the special decorators like `secret` in there.
 
-So the parsing stage (unlike a 'normal' compiler) looks through the code line by line and identifies decorators. It removes those decorators, saving their place, to output a working `.sol` file. We can then use `solc compile` to get a nice, ready-made Solidity AST! [Here](doc/littleast.json)'s a (very abridged) version of what the AST for the above example looks like.
+So the parsing stage (unlike a 'normal' compiler) looks through the code line by line and identifies decorators. It removes those decorators, saving their place, to output a working `.sol` file. We can then use `solc compile` to get a nice, ready-made Solidity AST! [Here](./littleast.json)'s a (very abridged) version of what the AST for the above example looks like.
 
 Graphically, that JSON AST translates to this:
 
-![ast](doc/ast.png)
+![ast](./ast.png)
 
 The parsing stage has saved all the locations of special `zol` decorators for us. So the above `dedecoratedAST` can be `redecorated`. We turn a secret variable node from something like:
 ```json
@@ -413,7 +412,7 @@ All this data is stored in a `WeakMap` cache, for retrieval by future traversals
 
 Below is a flow guide up to this step!
 
-![guide](doc/guide.png)
+![guide](./guide.png)
 
 ### Code Generation
 

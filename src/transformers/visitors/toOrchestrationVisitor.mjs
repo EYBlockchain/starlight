@@ -437,8 +437,12 @@ export default {
       // ExpressionStatements can contain an Assignment node.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
-        const { leftHandSide: lhs } = node.expression;
+        let { leftHandSide: lhs } = node.expression;
         const indicator = scope.getReferencedIndicator(lhs, true);
+
+        if (indicator.isMapping) {
+          lhs = lhs.baseExpression;
+        }
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
@@ -603,7 +607,11 @@ export default {
     enter(path, state) {
       const { node, parent, scope } = path;
       const indicator = scope.getReferencedIndicator(node, true);
-      const newNode = buildNode(node.nodeType, { name: indicator.name });
+      const name = indicator.name
+        .replace('[', '_')
+        .replace(']', '')
+        .replace('.sender', '');
+      const newNode = buildNode('Identifier', { name });
       state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
 
       parent._newASTPointer[path.containerName] = newNode;
