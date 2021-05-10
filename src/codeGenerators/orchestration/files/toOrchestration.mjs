@@ -8,10 +8,9 @@ const boilerplateNodeDir = './src/boilerplate/';
 
 /**
  * @desc:
- * Visitor transforms a `.zol` AST into a `.js` AST
- * NB: the resulting `.js` AST is custom, and can only be interpreted by this
- * repo's code generator. JS compilers will not be able to interpret this
- * AST.
+ * Code generator for the output orchestration files
+ * Handles all files except the complex function.mjs
+ * E.g. test files, imports, migrations...
  */
 
 /**

@@ -2,10 +2,8 @@ import buildBoilerplate from './boilerplate-generator.mjs';
 
 /**
  * @desc:
- * Visitor transforms a `.zol` AST into a `.js` AST
- * NB: the resulting `.js` AST is custom, and can only be interpreted by this
- * repo's code generator. JS compilers will not be able to interpret this
- * AST.
+ * Generates boilerplate for orchestration files
+ * Handles logic for ordering and naming inside a function.mjs file
  */
 
 export const sendTransactionBoilerplate = node => {

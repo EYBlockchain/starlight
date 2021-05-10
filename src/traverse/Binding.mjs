@@ -454,10 +454,10 @@ export default class Binding {
       );
     } else if (msgSenderEverywhereMappingValue) {
       // pass the msg.sender node to the updateOwnership method
-      this.updateOwnership(
-        this.nullifyingPaths[0].parent.rightHandSide,
-        'value',
-      );
+      const owner =
+        this.nullifyingPaths[0].parent.rightHandSide ||
+        this.nullifyingPaths[0].parentPath.parent.rightHandSide;
+      this.updateOwnership(owner, 'value');
     }
   }
 

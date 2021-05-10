@@ -4,10 +4,9 @@ import fileGenerator from '../files/toOrchestration.mjs';
 
 /**
  * @desc:
- * Visitor transforms a `.zol` AST into a `.js` AST
- * NB: the resulting `.js` AST is custom, and can only be interpreted by this
- * repo's code generator. JS compilers will not be able to interpret this
- * AST.
+ * Code generator for the output function e.g. myFunction.mjs
+ * Creates the .mjs file which extracts commitment data and communicates with
+ * Zokrates and Ethereum.
  */
 
 /**
@@ -108,6 +107,7 @@ function codeGenerator(node) {
     case 'EditableCommitmentCommonFilesBoilerplate':
     case 'SetupCommonFilesBoilerplate':
     case 'IntegrationTestBoilerplate':
+      // Separate files are handled by the fileGenerator
       return fileGenerator(node);
     case 'InitialisePreimage':
     case 'ReadPreimage':

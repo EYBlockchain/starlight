@@ -2,14 +2,6 @@
 import { buildBoilerplateNode } from '../boilerplate/orchestration/javascript/nodes/boilerplate-generator.mjs';
 
 /**
- * @desc:
- * Visitor transforms a `.zol` AST into a `.js` AST
- * NB: the resulting `.js` AST is custom, and can only be interpreted by this
- * repo's code generator. JS compilers will not be able to interpret this
- * AST.
- */
-
-/**
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
