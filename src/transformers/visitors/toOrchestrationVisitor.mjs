@@ -131,12 +131,13 @@ export default {
       const initialiseOrchestrationBoilerplateNodes = fnIndicator => {
         const newNodes = {};
         const contractName = `${parent.name}Shield`;
-        if (fnIndicator.initialisationRequired)
-          newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
-        newNodes.readPreimageNode = buildNode('ReadPreimage', {
+        newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
           contractName,
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
+        if (fnIndicator.initialisationRequired)
+          newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
+        newNodes.readPreimageNode = buildNode('ReadPreimage');
         if (fnIndicator.nullifiersRequired) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,
@@ -250,7 +251,10 @@ export default {
             modifiedStateVariableNode,
           );
 
-          if (stateVarIndicator.isWhole) {
+          if (
+            stateVarIndicator.isWhole &&
+            functionIndicator.initialisationRequired
+          ) {
             newNodes.initialisePreimageNode.privateStates[name] = {
               privateStateName: name,
             };
@@ -262,6 +266,9 @@ export default {
               id,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
             },
           );
 
@@ -294,6 +301,9 @@ export default {
             ] = buildPrivateStateNode('GenerateProof', {
               privateStateName: name,
               id,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
@@ -302,6 +312,9 @@ export default {
               name
             ] = buildPrivateStateNode('SendTransaction', {
               increment: isIncremented ? incrementsArray : undefined,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
               indicator: stateVarIndicator,
             });
             newNodes.writePreimageNode.privateStates[
@@ -324,13 +337,20 @@ export default {
             newNodes.sendTransactionNode.publicInputs.push(param.name);
         }
 
-        // the newNodes array is already ordered, however we need the initialisePreimageNode before any copied over statements
+        // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         if (newNodes.initialisePreimageNode)
           node._newASTPointer.body.statements.splice(
             0,
             0,
             newNodes.initialisePreimageNode,
           );
+
+        node._newASTPointer.body.statements.splice(
+          0,
+          0,
+          newNodes.InitialiseKeysNode,
+        );
+
         // 1 - InitialisePreimage - whole states - per state
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
         // 3 - MembershipWitness - nullifiersRequired - per state

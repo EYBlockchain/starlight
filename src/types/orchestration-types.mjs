@@ -167,6 +167,7 @@ export default function buildNode(nodeType, fields = {}) {
       };
     }
     case 'InitialisePreimage':
+    case 'InitialiseKeys':
     case 'ReadPreimage':
     case 'WritePreimage':
     case 'MembershipWitness':

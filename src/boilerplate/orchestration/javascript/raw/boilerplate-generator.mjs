@@ -17,6 +17,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
     parameters = [], // used for extra params in generateProof
     newOwnerStatment,
     increment,
+    reinitialisedOnly,
     onChainKeyRegistry = `false`,
   } = fields;
   switch (nodeType) {
@@ -63,6 +64,19 @@ export default function buildBoilerplate(nodeType, fields = {}) {
           }),
         ).${stateName};`;
 
+    case 'InitialiseKeys':
+      // once per function
+      return `
+      \n\n// Read dbs for keys and previous commitment values:
+      \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(32), '${contractName}', ${onChainKeyRegistry});
+      const keys = JSON.parse(
+                  fs.readFileSync(keyDb, 'utf-8', err => {
+                    console.log(err);
+                  }),
+                );
+              const secretKey = generalise(keys.secretKey);
+              const publicKey = generalise(keys.publicKey);`;
+
     case 'ReadPreimage':
       // once per state
       switch (fields.stateType) {
@@ -89,24 +103,21 @@ export default function buildBoilerplate(nodeType, fields = {}) {
             ${stateVarIds.join('\n')}
             \n`;
         case 'whole':
-          return `
-          ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
-            const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
-            const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
-            const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
-            ${stateVarIds.join('\n')}
-            \n`;
-        case 'preamble':
-          return `
-          \n\n// Read dbs for keys and previous commitment values:
-          \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(32), '${contractName}', ${onChainKeyRegistry});
-          const keys = JSON.parse(
-                      fs.readFileSync(keyDb, 'utf-8', err => {
-                        console.log(err);
-                      }),
-                    );
-                  const secretKey = generalise(keys.secretKey);
-                  const publicKey = generalise(keys.publicKey);`;
+          switch (reinitialisedOnly) {
+            case true:
+              return `
+                ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
+                ${stateVarIds.join('\n')}
+                \n`;
+            default:
+              return `
+              ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
+                const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
+                const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
+                const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
+                ${stateVarIds.join('\n')}
+                \n`;
+          }
         default:
           throw new TypeError(fields.stateType);
       }
@@ -206,20 +217,30 @@ export default function buildBoilerplate(nodeType, fields = {}) {
               \t${stateName}_2_newSalt.limbs(32, 8),
               \t${stateName}_2_newCommitment.integer`;
         case 'whole':
-          return `
-              ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \tsecretKey.limbs(32, 8),
-              \t${stateName}_nullifier.integer,
-              \t${stateName}_prev.limbs(32, 8),
-              \t${stateName}_prevSalt.limbs(32, 8),
-              \t!${stateName}_commitmentExists,
-              \tpublicKey.limbs(32, 8),
-              \t${stateName}_root.integer,
-              \t${stateName}_index.integer,
-              \t${stateName}_path.integer,
-              \t${stateName}_newOwnerPublicKey.limbs(32, 8),
-              \t${stateName}_newSalt.limbs(32, 8),
-              \t${stateName}_newCommitment.integer`;
+          switch (reinitialisedOnly) {
+            case true:
+              return `
+                  ${parameters.join('\n')}${stateVarIds.join('\n')}
+                  \tsecretKey.limbs(32, 8),
+                  \t${stateName}_newOwnerPublicKey.limbs(32, 8),
+                  \t${stateName}_newSalt.limbs(32, 8),
+                  \t${stateName}_newCommitment.integer`;
+            default:
+              return `
+                  ${parameters.join('\n')}${stateVarIds.join('\n')}
+                  \tsecretKey.limbs(32, 8),
+                  \t${stateName}_nullifier.integer,
+                  \t${stateName}_prev.limbs(32, 8),
+                  \t${stateName}_prevSalt.limbs(32, 8),
+                  \t!${stateName}_commitmentExists,
+                  \tpublicKey.limbs(32, 8),
+                  \t${stateName}_root.integer,
+                  \t${stateName}_index.integer,
+                  \t${stateName}_path.integer,
+                  \t${stateName}_newOwnerPublicKey.limbs(32, 8),
+                  \t${stateName}_newSalt.limbs(32, 8),
+                  \t${stateName}_newCommitment.integer`;
+          }
         default:
           throw new TypeError(fields.stateType);
       }

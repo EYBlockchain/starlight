@@ -37,8 +37,10 @@ export const sendTransactionBoilerplate = node => {
       case false:
       default:
         // whole
-        output[1].push(`${privateStateName}_root.integer`);
-        output[0].push(`${privateStateName}_nullifier.integer`);
+        if (!stateNode.reinitialisedOnly) {
+          output[1].push(`${privateStateName}_root.integer`);
+          output[0].push(`${privateStateName}_nullifier.integer`);
+        }
         output[2].push(`${privateStateName}_newCommitment.integer`);
         break;
     }
@@ -73,6 +75,7 @@ export const generateProofBoilerplate = node => {
           buildBoilerplate('GenerateProof', {
             stateName,
             stateType: 'whole',
+            reinitialisedOnly: stateNode.reinitialisedOnly,
             parameters,
             stateVarIds: stateVarIdLines,
           }),
@@ -180,6 +183,7 @@ export const preimageBoilerPlate = node => {
           newOwnerStatment = `${stateNode.stateVarId[1]};`;
         } else if (stateNode.mappingOwnershipType === 'value') {
           // TODO address type in the commitment
+          newOwnerStatment = `${privateStateName};`;
         } else {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
@@ -201,6 +205,7 @@ export const preimageBoilerPlate = node => {
           buildBoilerplate('ReadPreimage', {
             stateType: 'whole',
             stateName: privateStateName,
+            reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
             stateVarIds,
@@ -300,23 +305,25 @@ export const OrchestrationCodeBoilerPlate = node => {
         statements: lines,
       };
 
+    case 'InitialiseKeys':
+      states[0] = node.onChainKeyRegistry ? `true` : `false`;
+      return {
+        statements: [
+          `${buildBoilerplate(node.nodeType, {
+            contractName: node.contractName,
+            onChainKeyRegistry: states[0],
+          })}`,
+        ],
+      };
+
     case 'ReadPreimage':
       lines[0] = preimageBoilerPlate(node);
-      states[0] = node.onChainKeyRegistry ? `true` : `false`;
       for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isWhole)
           params.push(`\n${stateName} = generalise(${stateName});`);
       }
       return {
-        statements: [
-          `${params.join('\n')}
-          ${buildBoilerplate(node.nodeType, {
-            contractName: node.contractName,
-            onChainKeyRegistry: states[0],
-            stateType: 'preamble',
-          })}`,
-          lines[0].join('\n'),
-        ],
+        statements: [`${params.join('\n')}`, lines[0].join('\n')],
       };
 
     case 'WritePreimage':

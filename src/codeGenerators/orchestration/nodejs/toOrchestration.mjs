@@ -97,7 +97,13 @@ function codeGenerator(node) {
       return `publicKey.integer`;
 
     case 'TypeConversion':
-      return `convertTo${node.type}(${codeGenerator(node.arguments)})`;
+      switch (node.type) {
+        case 'address':
+          return `generalise(${codeGenerator(node.arguments)}).hex(32)`;
+        default:
+          // TODO
+          return;
+      }
     case 'Literal':
       return node.value;
     case 'Identifier':
@@ -110,6 +116,7 @@ function codeGenerator(node) {
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
     case 'InitialisePreimage':
+    case 'InitialiseKeys':
     case 'ReadPreimage':
     case 'WritePreimage':
     case 'MembershipWitness':
