@@ -1,7 +1,7 @@
 # starlight :night_with_stars:
 
 Generate a zApp from a Solidity contract.
-
+x
 ---
 
 ## Induction :zap:
@@ -10,7 +10,7 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 
 - Write a Solidity contract
 - Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
-- Run `zappify` on that baby
+- Run `zappify`
 - Get a fully working zApp in return
 
 _Solidity contract --> Zolidity contract --> zappify --> zApp_
@@ -50,6 +50,45 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
 
 ---
 
+## Quick User Guide
+
+Take a 'normal' smart contract, like this one:
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  uint256 private a;
+
+  function assign(uint256 value) public {
+    a = value;
+  }
+}
+```
+
+Then add `secret` in front of each declaration you want to keep secret:
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a; // <--- secret
+
+  function assign(secret uint256 value) public { // <--- secret
+    a = value;
+  }
+}
+```
+
+Run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in return!
+
+
+---
 ## Install
 
 Whilst the package is in early development, it isn't hosted on npm. To install:
@@ -97,6 +136,51 @@ E.g.:
                               bin is also at this level
 ```
 
+If you find errors to do with 'knownness' or 'unknownness', try to mark incrementations. If you have any secret states which can be **incremented** by other users, mark those incrementations as `unknown` (since the value may be unknown to the caller).
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a; // <--- secret
+
+  function add(secret uint256 value) public { // <--- secret
+    unknown a += value; // <--- may be unknown to the caller
+  }
+
+  function remove(secret uint256 value) public { // <--- secret
+    a -= value;
+  }
+}
+```
+
+However, if you want the incrementation to only be completed by the secret owner, mark it as known:
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a; // <--- secret
+
+  function add(secret uint256 value) public { // <--- secret
+    known a += value; // <--- must be known to the caller
+  }
+
+  function remove(secret uint256 value) public { // <--- secret
+    a -= value;
+  }
+}
+```
+
+Failing to mark incrementations will throw an error, because the compiler won't know what to do with the state. See the [write up](./doc/WRITEUP.md) for more details.
+
+If your input contract has any external imports, make sure those are stored in the `./contracts` directory (in root) and compile with `solc` 0.8.0.
 
 
 ---

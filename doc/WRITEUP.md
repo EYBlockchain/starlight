@@ -56,7 +56,7 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 
 - Write a Solidity contract
 - Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
-- Run `zappify` on that baby
+- Run `zappify`
 - Get a fully working zApp in return
 
 _Solidity contract --> Zolidity contract --> zappify --> zApp_
