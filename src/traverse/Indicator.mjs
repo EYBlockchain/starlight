@@ -2,6 +2,7 @@
 
 import NodePath from './NodePath.mjs';
 import logger from '../utils/logger.mjs';
+import backtrace from '../error/backtrace.mjs';
 import { SyntaxUsageError } from '../error/errors.mjs';
 
 export class ContractDefinitionIndicator {
@@ -25,7 +26,9 @@ export class ContractDefinitionIndicator {
 
 export class FunctionDefinitionIndicator {
   constructor() {
+    // TODO possibly unused:
     this.zkSnarkVerificationRequired = false;
+
     this.oldCommitmentAccessRequired = false;
     this.nullifiersRequired = false;
     this.newCommitmentsRequired = false;
@@ -91,7 +94,7 @@ export class StateVariableIndicator {
     this.binding = referencedBinding;
     this.scope = path.scope;
     this.node = path.node;
-    this.parentIndincator = path.scope.indicators;
+    this.parentIndicator = path.scope.indicators;
 
     this.isSecret = referencedBinding.isSecret; // only included to match bindings so that mappingKey class can be reused for both. Consider removing if things get too messy, and splitting mappingKey into two classes; one for Binding & one for StateVarIndicator
 
@@ -103,6 +106,8 @@ export class StateVariableIndicator {
 
     this.nullificationCount = 0;
     this.nullifyingPaths = [];
+
+    this.burningPaths = [];
 
     if (path.isMappingIdentifier()) {
       this.isMapping = true;
@@ -167,7 +172,7 @@ export class StateVariableIndicator {
     this.isOwned ??= this.binding.isOwned;
     this.owner ??= this.binding.owner;
     this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
-    this.parentIndincator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+    this.parentIndicator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     if (this.isMapping) {
       this.mappingOwnershipType = this.owner.mappingOwnershipType;
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
@@ -180,8 +185,8 @@ export class StateVariableIndicator {
     this.isWhole = true;
     this.isAccessed = true;
     this.oldCommitmentAccessRequired = true;
-    this.parentIndincator.oldCommitmentAccessRequired = true;
-    this.parentIndincator.initialisationRequired = true;
+    this.parentIndicator.oldCommitmentAccessRequired = true;
+    this.parentIndicator.initialisationRequired = true;
     const reason = { src: path.node.src, 0: `Accessed` };
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
@@ -204,14 +209,17 @@ export class StateVariableIndicator {
         state.incrementedPath &&
         !state.incrementedIdentifier.reinitialisable
       ) {
-        this.parentIndincator.nullifiersRequired = true;
-        this.parentIndincator.newCommitmentsRequired = true;
-        this.parentIndincator.oldCommitmentAccessRequired = true;
-        this.parentIndincator.initialisationRequired = true;
+        this.parentIndicator.nullifiersRequired = true;
+        // we don't need new commitments if this is a burn statement -  we work this out later
+        if (!this.binding.reinitialisable)
+          this.parentIndicator.newCommitmentsRequired = true;
+        this.parentIndicator.oldCommitmentAccessRequired = true;
+        this.parentIndicator.initialisationRequired = true;
         this.addNullifyingPath(state.incrementedPath);
       }
       // a reinitialised state does require new commitments
-      this.parentIndincator.newCommitmentsRequired = true;
+      if (state.incrementedIdentifier.reinitialisable)
+        this.parentIndicator.newCommitmentsRequired = true;
       // an incremented, but not decremented, state only needs a new commitment
     } else if (
       !path.isDecremented &&
@@ -226,16 +234,16 @@ export class StateVariableIndicator {
       this.isUnknown ??= true;
       this.isPartitionedReason ??= [];
       this.isPartitionedReason.push(reason);
-      this.parentIndincator.newCommitmentsRequired = true;
+      this.parentIndicator.newCommitmentsRequired = true;
       // we may have an incrementation not marked as unknown in this scope:
     } else if (!path.isDecremented) {
-      this.parentIndincator.newCommitmentsRequired = true;
+      this.parentIndicator.newCommitmentsRequired = true;
     }
     // if its known, we already added the path
     if (path.isDecremented && !state.incrementedIdentifier.isKnown) {
-      this.parentIndincator.nullifiersRequired = true;
-      this.parentIndincator.newCommitmentsRequired = true;
-      this.parentIndincator.oldCommitmentAccessRequired = true;
+      this.parentIndicator.nullifiersRequired = true;
+      this.parentIndicator.newCommitmentsRequired = true;
+      this.parentIndicator.oldCommitmentAccessRequired = true;
       this.addNullifyingPath(state.incrementedPath);
     }
     // if its incremented anywhere, isIncremented = true
@@ -271,7 +279,6 @@ export class StateVariableIndicator {
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
       this.modifyingPaths.push(path);
 
-      this.newCommitmentRequired = true;
       // TODO check usage of below when reinitialisable
       this.initialisationRequired = true; // Used? Probably for whole states?
 
@@ -288,6 +295,12 @@ export class StateVariableIndicator {
     this.nullifyingPaths.push(path);
     this.binding.addNullifyingPath(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+  }
+
+  addBurningPath(path) {
+    this.isBurned = true;
+    this.burningPaths.push(path);
+    if (this.isMapping) this.addMappingKey(path).addBurningPath(path);
   }
 
   prelimTraversalErrorChecks() {
@@ -323,6 +336,37 @@ export class StateVariableIndicator {
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
     }
+  }
+
+  updateNewCommitmentsRequired() {
+    // if we have burn statements, there are some scopes where we don't need new commitments at all
+    if (!this.isBurned && this.isSecret && this.isModified) {
+      this.parentIndicator.newCommitmentsRequired = true;
+      this.newCommitmentRequired = true;
+      if (this.isMapping) {
+        for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+          mappingKey.newCommitmentRequired = true;
+        }
+      }
+      return;
+    }
+    if (!this.isSecret || !this.isBurned) return;
+    let burnedOnly = true;
+    this.modifyingPaths.forEach(path => {
+      // if we have a modifyingPath which is NOT a burningPath, then we do need new commitments
+      if (!this.burningPaths.some(p => p.node.id === path.node.id)) {
+        logger.warn(
+          `The state ${this.name} is being burned (ownership is being revoked and the state ready for reset) and edited in the same scope (${this.scope.scopeName}). \nThat edit may be useless and the output commmitment scheme may not work. Make sure you know what you're doing here.`,
+        );
+        backtrace.getSourceCode(path.node.src);
+        backtrace.getSourceCode(this.burningPaths[0].node.src);
+        this.parentIndicator.newCommitmentsRequired = true;
+        if (this.isMapping)
+          this.addMappingKey(path).newCommitmentRequired = true;
+        burnedOnly = false;
+      }
+    });
+    this.newCommitmentRequired = !burnedOnly;
   }
 }
 
@@ -368,6 +412,8 @@ export class MappingKey {
     this.isNullified = false;
     this.nullificationCount = 0;
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
+
+    this.burningPaths = [];
   }
 
   updateProperties(path) {
@@ -394,7 +440,6 @@ export class MappingKey {
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
       this.modifyingPaths.push(path);
 
-      this.newCommitmentRequired = true;
       this.initialisationRequired = true; // Used? Probably for whole states?
 
       const { node } = path;
@@ -407,6 +452,11 @@ export class MappingKey {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
+  }
+
+  addBurningPath(path) {
+    this.isBurned = true;
+    this.burningPaths.push(path);
   }
 
   prelimTraversalErrorChecks() {

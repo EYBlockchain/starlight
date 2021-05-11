@@ -17,6 +17,7 @@ export default {
         if (!indicator.id) continue;
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
+        indicator.updateNewCommitmentsRequired();
       }
     },
   },

@@ -17,7 +17,8 @@ export default function buildBoilerplate(nodeType, fields = {}) {
     parameters = [], // used for extra params in generateProof
     newOwnerStatment,
     increment,
-    reinitialisedOnly,
+    reinitialisedOnly = false,
+    burnedOnly = false,
     onChainKeyRegistry = `false`,
   } = fields;
   switch (nodeType) {
@@ -226,20 +227,35 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                   \t${stateName}_newSalt.limbs(32, 8),
                   \t${stateName}_newCommitment.integer`;
             default:
-              return `
-                  ${parameters.join('\n')}${stateVarIds.join('\n')}
-                  \tsecretKey.limbs(32, 8),
-                  \t${stateName}_nullifier.integer,
-                  \t${stateName}_prev.limbs(32, 8),
-                  \t${stateName}_prevSalt.limbs(32, 8),
-                  \t!${stateName}_commitmentExists,
-                  \tpublicKey.limbs(32, 8),
-                  \t${stateName}_root.integer,
-                  \t${stateName}_index.integer,
-                  \t${stateName}_path.integer,
-                  \t${stateName}_newOwnerPublicKey.limbs(32, 8),
-                  \t${stateName}_newSalt.limbs(32, 8),
-                  \t${stateName}_newCommitment.integer`;
+              switch (burnedOnly) {
+                case true:
+                  return `
+                      ${parameters.join('\n')}${stateVarIds.join('\n')}
+                      \tsecretKey.limbs(32, 8),
+                      \t${stateName}_nullifier.integer,
+                      \t${stateName}_prev.limbs(32, 8),
+                      \t${stateName}_prevSalt.limbs(32, 8),
+                      \t!${stateName}_commitmentExists,
+                      \tpublicKey.limbs(32, 8),
+                      \t${stateName}_root.integer,
+                      \t${stateName}_index.integer,
+                      \t${stateName}_path.integer`;
+                default:
+                  return `
+                      ${parameters.join('\n')}${stateVarIds.join('\n')}
+                      \tsecretKey.limbs(32, 8),
+                      \t${stateName}_nullifier.integer,
+                      \t${stateName}_prev.limbs(32, 8),
+                      \t${stateName}_prevSalt.limbs(32, 8),
+                      \t!${stateName}_commitmentExists,
+                      \tpublicKey.limbs(32, 8),
+                      \t${stateName}_root.integer,
+                      \t${stateName}_index.integer,
+                      \t${stateName}_path.integer,
+                      \t${stateName}_newOwnerPublicKey.limbs(32, 8),
+                      \t${stateName}_newSalt.limbs(32, 8),
+                      \t${stateName}_newCommitment.integer`;
+              }
           }
         default:
           throw new TypeError(fields.stateType);
@@ -270,13 +286,19 @@ export default function buildBoilerplate(nodeType, fields = {}) {
             \tcommitment: ${stateName}_2_newCommitment.integer,
             };`;
         case 'whole':
-          return `
-            \npreimage.${stateName} = {
-            \t${stateName}: ${stateName}.integer,
-            \tsalt: ${stateName}_newSalt.integer,
-            \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
-            \tcommitment: ${stateName}_newCommitment.integer,
-            };`;
+          switch (burnedOnly) {
+            case true:
+              return `
+                \npreimage.${stateName} = {};`;
+            default:
+              return `
+                \npreimage.${stateName} = {
+                \t${stateName}: ${stateName}.integer,
+                \tsalt: ${stateName}_newSalt.integer,
+                \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
+                \tcommitment: ${stateName}_newCommitment.integer,
+                };`;
+          }
         default:
           throw new TypeError(fields.stateType);
       }

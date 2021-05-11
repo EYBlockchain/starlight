@@ -34,13 +34,14 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'WritePreimage': {
-      const { id, increment, indicator = {} } = fields;
+      const { id, increment, burnedOnly, indicator = {} } = fields;
       return {
         increment,
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
+        burnedOnly,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -92,6 +93,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         id,
         increment,
         reinitialisedOnly,
+        burnedOnly,
         privateStateName,
         indicator = {},
       } = fields;
@@ -99,6 +101,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         privateStateName,
         stateVarId: id,
         reinitialisedOnly,
+        burnedOnly,
         nullifierRequired: indicator.isNullified,
         increment,
         isMapping: indicator.isMapping,
@@ -115,12 +118,18 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'SendTransaction': {
-      const { increment, reinitialisedOnly, indicator = {} } = fields;
+      const {
+        increment,
+        reinitialisedOnly,
+        burnedOnly,
+        indicator = {},
+      } = fields;
       return {
         increment,
         isPartitioned: indicator.isPartitioned,
         isWhole: indicator.isWhole,
         reinitialisedOnly,
+        burnedOnly,
         nullifierRequired: indicator.isNullified,
       };
     }

@@ -174,7 +174,8 @@ export default {
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
       if (
-        functionIndicator.newCommitmentsRequired &&
+        (functionIndicator.newCommitmentsRequired ||
+          functionIndicator.nullifiersRequired) &&
         scope.modifiesSecretState()
       ) {
         const newNodes = initialiseOrchestrationBoilerplateNodes(
@@ -287,7 +288,7 @@ export default {
               indicator: stateVarIndicator,
             });
           }
-          if (stateVarIndicator.isModified) {
+          if (stateVarIndicator.newCommitmentRequired) {
             newNodes.calculateCommitmentNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateCommitment', {
@@ -296,6 +297,8 @@ export default {
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
+          }
+          if (stateVarIndicator.isModified) {
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -304,6 +307,9 @@ export default {
               reinitialisedOnly:
                 stateVarIndicator.reinitialisable &&
                 !stateVarIndicator.isNullified,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentRequired,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
@@ -315,6 +321,9 @@ export default {
               reinitialisedOnly:
                 stateVarIndicator.reinitialisable &&
                 !stateVarIndicator.isNullified,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentRequired,
               indicator: stateVarIndicator,
             });
             newNodes.writePreimageNode.privateStates[
@@ -323,6 +332,9 @@ export default {
               id,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentRequired,
             });
           }
         }

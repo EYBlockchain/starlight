@@ -41,7 +41,8 @@ export const sendTransactionBoilerplate = node => {
           output[1].push(`${privateStateName}_root.integer`);
           output[0].push(`${privateStateName}_nullifier.integer`);
         }
-        output[2].push(`${privateStateName}_newCommitment.integer`);
+        if (!stateNode.burnedOnly)
+          output[2].push(`${privateStateName}_newCommitment.integer`);
         break;
     }
   }
@@ -76,6 +77,7 @@ export const generateProofBoilerplate = node => {
             stateName,
             stateType: 'whole',
             reinitialisedOnly: stateNode.reinitialisedOnly,
+            burnedOnly: stateNode.burnedOnly,
             parameters,
             stateVarIds: stateVarIdLines,
           }),
@@ -358,6 +360,7 @@ export const OrchestrationCodeBoilerPlate = node => {
               buildBoilerplate(node.nodeType, {
                 stateName,
                 stateType: 'whole',
+                burnedOnly: stateNode.burnedOnly,
               }),
             );
         }
@@ -495,12 +498,12 @@ export const OrchestrationCodeBoilerPlate = node => {
       // params[2] = arr of commitments
       if (params[0][1][0]) params[0][1] = `${params[0][1]},`; // root - single input
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
-      if (params[0][2][0]) params[0][2] = `[${params[0][2]}]`; // commitments - array
+      if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst tx = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]}, proof)
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} proof)
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,
