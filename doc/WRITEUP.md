@@ -1,3 +1,4 @@
+# starlight :night_with_stars:
 
 Generate a zApp from a Solidity contract.
 
@@ -44,7 +45,6 @@ Generate a zApp from a Solidity contract.
     - [Details](#details)
     - [Placeholders](#placeholders)
   - [Key management](#key-management)
-- [Overflow / underflow checks](#overflow--underflow-checks)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -512,7 +512,7 @@ myMapping[key] = value, is stored at storage slot `hash( key, id )`
  name     key                                            key  id  
 ```
 
-**We don't follow these rules (^^^) exactly, but we're inspired by them...** Loosely copying these rules gives us confidence that our commitment preimage layouts probably won't cause collisions. You'll seein the next section that we choose to swap the key and the id around, because we're not mental.
+**We don't follow these rules (^^^) exactly, but we're inspired by them...** Loosely copying these rules gives us confidence that our commitment preimage layouts probably won't cause collisions. You'll see in the next section that we choose to swap the key and the id around, because we're not mental.
 
 #### zApps' commitment structures
 
@@ -531,9 +531,7 @@ contract MyContract {
 }
 ```
 
-_Notice we're not using proper storage slots yet; but instead we're using the unique id's of the `VariableDeclaration` nodes for each variable from the solidity AST. If that sends a shiver of fear of collisions down your spine, you might be right once we introduce arrays and structs and such. We'll probably need to adopt the 'base' storage slot layout of Solidity, but that requires a bit of extra data extraction and parsing of `solc` outputs that we haven't been bothered to tackle yet._
-
-_Each node in our AST has an id:_
+Each node in our AST has an id:
 ```json
 {
     "id": 3,
@@ -569,8 +567,6 @@ These commitments have nullifiers of structure:
 ```solidity
 h(ownerSecretKey, salt)
 ```
-
-_**TODO** once we start considering a commitment tree which holds secret states from _many_ different private contracts, we might also need to include an identifier of the private contract's 'address'._
 
 _Why didn't we simply store the state's name in the commitment? Names may not be unique; a pesky developer might name a function and a variable `x`, or shadow-declare a variable. Such an approach is more complicated._
 
@@ -635,7 +631,7 @@ require(msg.sender == someAddress);
 ```
 Which would translate to a PoKoSK in the circuit, again doing the same job as a PK in the commitment. In the example of a Nightfall-like zApp, the owner's PK would be added to the mapping key field, and would not be needed.
 
-However, there is one key (haha) problem with never having a PK in the commitment - transferring of ownership. With Nightfall, the mapping key would be changed to the receiver's address, so the PoKoSK in the circuit would change accordingly - great! What about other secrets?
+However, there is one key problem with never having a PK in the commitment - transferring of ownership. With Nightfall, the mapping key would be changed to the receiver's address, so the PoKoSK in the circuit would change accordingly - great! What about other secrets?
 
 Let's say we have a secret state `a` which is represented by a commitment `h(aVarId, value, salt)`. The dev wants a user of the zApp to be able to transfer ownership (i.e. nullification rights) to an other user. That's fine - and a good use of the zApp - so we should allow it. With the 'no PK in the commitment' rule, ownership is transferred by messaging the new user the salt. This seems ok, because this is how Nightfall's token transfer happens, but the previous owner *still knows the preimage to the nullifer*, meaning they can nullify it at any time, including after transferring ownership. Even if they don't, they still know when the new owner nullifies the commitment.
 
@@ -647,11 +643,9 @@ Adding a public key *sometimes* solves this. It does mean that the compiler need
 
 \*Looking for any address as a mapping key isn't enough here - there could be a zApp which secretly stores customer information by their address, but is editable by (and owned by) a system admin.
 
-*Sometimes* also means that commitment structures are not uniform, which could be confusing to a Solidity dev who isn't familiar with zkp (and it's not as pretty). Plus, it implies that some secrets are owned and some are not - which is even more confusing, because a secret has to be secret to *someone*, or it's not secret! If we don't specify that someone, then the secret state is nullifiable by anyone who knows the salt, which could be a long list of previous owners.
+*Sometimes* also means that commitment structures are not uniform, which could be confusing to a Solidity dev who isn't familiar with zkp. Plus, it implies that some secrets are owned and some are not - which is even more confusing, because a secret has to be secret to *someone*, or it's not secret! If we don't specify that someone, then the secret state is nullifiable by anyone who knows the salt, which could be a long list of previous owners.
 
-This is a long explanation of why we eventually went with *always*. We infer ownership by looking for who can initialise and nullify the state (discussed below).
-
-Another good reason for always adding a PK to the commitment is 'Zexe does it'.
+This is a long explanation of why we eventually went with *always*. We infer ownership by looking for who can initialise and nullify the state (discussed [below](#ownership)).
 
 ---
 
@@ -875,21 +869,27 @@ In fact, if we rewind to when Alice submitted her `commitment_0` for `a` to the 
 
 Well, it wouldn't know! There's no way for a shield contract to determine whether a commitment being submitted is the _first_ commitment to represent a particular secret state variable, because the shield contract doesn't know what any commitment represents. **And so there's no way for the shield contract to determine when or when not a nullifier should be submitted.**
 
-You could argue that if the tree is _empty_, the shield contract knows that an initial commitment for `a` hasn't yet been submitted (because _no_ commitments have been submitted). But such an emptiness check doesn't scale if there are _multiple_ whole states in a contract which need to be initialised (because the tree can only be empty once; thereafter it's unclear which states have or haven't been initialised, because commitments _hide_ that info). And such an emptiness check certainly won't scale when we move towards multiple private contracts all sharing the same commitment tree.
+---
 
-You also might try to architect it so that the initialisation of a state variable's commitment is done in a separate function from the replacement of its commitments thereafter, and so the shield contract would know whether the state is being initialised from the function's signature (or the verification key being used to verify the proof). But our working example for this section is a single function.
+Why?
 
-You might argue that applications like Nightfall _separate_ initialisation of a state through 'Mint' from changes thereafter through 'Transfer'. But that's not what happens. Nightfall's states are 'partitioned' (not 'whole'), and partitioned states are implicitly initialised as `0`. Users never actively "initialise" partitioned states; they only increment or decrement the already-initialised state. Mint and transfer are both **'state update'** functions; 'mint' is not a state initialisation function.
+You could argue that if the tree is _empty_, the shield contract knows that an initial commitment for `a` hasn't yet been submitted (because _no_ commitments have been submitted). But such an emptiness check doesn't scale if there are **multiple whole states** in a contract which need to be initialised (because the tree can only be empty once; thereafter it's unclear which states have or haven't been initialised, because commitments _hide_ that info). And such an emptiness check certainly won't scale when we move towards multiple private contracts all sharing the same commitment tree.
 
-Aside: in some cases, we may want the _same_ state to be initialised more than once. This is an edge case where a state owner rescinds ownership of the state, and at some point later a different owner 'picks up' where they left off. This is discussed in the next section.
+You also might try to architect it so that the initialisation of a state variable's commitment is done in a separate function from the replacement of its commitments thereafter, and so the shield contract would know whether the state is being initialised from the function's signature (or the verification key being used to verify the proof). But our working example for this section is a single function. It's reasonable for a dev to want a single function which initialises on the first call, and edits thereafter.
+
+You might argue that applications like Nightfall do this by separating initialisation of a state through 'Mint' from changes thereafter through 'Transfer'. But that's not what happens. Nightfall's states are 'partitioned' (not 'whole'), and partitioned states are implicitly initialised as `0`. Users never actively "initialise" partitioned states; they only increment or decrement the already-initialised state. Mint and transfer are both **'state update'** functions; 'mint' is not a state initialisation function.
+
+_Aside: in some cases, we may want the same state to be initialised more than once. This is an edge case where a state owner rescinds ownership of the state, and at some point later a different owner 'picks up' where they left off. This is discussed in the [next section](#re-initialisation-of-whole-states)._
 
 Back to whole states...
 
-You might argue that a 'preventifier' could be submitted at the time of first initialising a secret state. A 'preventifier' is something uniquely derivable from a stateVarId, which would get submitted at the time of first initialising a secret state. If future transactions try to initialise a duplicate commitment for the same state, they'd be forced to submit a duplicate of the preventifier, and the smart contract would reject the transaction. Clearly, a preventifier can be derived by anyone, and so all observers of the blockchain would learn exactly what stateVarId just got initialised. That's not good for zero knowledge.
+You might argue that a 'preventifier' could be submitted at the time of first initialising a secret state. A 'preventifier' is something uniquely derivable from a stateVarId, which would get submitted at the time of first initialising a secret state. If future transactions try to initialise a duplicate commitment for the same state, they'd be forced to submit a duplicate of the preventifier, and the smart contract would reject the transaction. Clearly, a preventifier can be derived by anyone, and so all observers of the blockchain would learn exactly **what stateVarId just got initialised**. That's not good for zero knowledge.
 
-Furthermore, adding an extra "thing" to be submitted alongside the 'staple' private tx ingredients of "commitments, nullifiers, and a historic commitment root" isn't great if we keep an eye on the future; where we'll wish to hide the function being executed. Some functions having "preventifiers" and some not would reduce the hiding of a function significantly.
+Furthermore, adding an extra field to be submitted alongside the 'staple' private tx ingredients of "commitments, nullifiers, and a historic commitment root" isn't great if we keep an eye on the future; where we'll wish to hide the function being executed. Some functions having "preventifiers" and some not would **reduce the hiding of a function significantly**.
 
-By now, we should be broadly convinced that the shield contract cannot distinguish between the initialisation of a whole state's commitment and the replacment of a state's commitment (because it cannot see what's inside a commitment), and therefore it cannot determine when or when not to demand a nullifier from the transactor.
+---
+
+By now, we should be broadly convinced that the shield contract **cannot** distinguish between the initialisation of a whole state's commitment and the replacment of a state's commitment (because it cannot see what's inside a commitment), and therefore it cannot determine when or when not to demand a nullifier from the transactor.
 
 It follows, that every transaction which edits a whole state must _always_ submit a nullifier for that state. If a shield contract is incapable of determining when a transaction is an attempt at initialisation, it will have to treat that transaction like any other and demand a nullifier.
 
@@ -911,6 +911,8 @@ We came up with three options to this "dummy nullifier" problem:
 `h(randomId, ownerSecretKey, salt)`
 1. The contract deployer (or some contract admin) will initialise the state:
 `h(adminSecretKey, salt)`
+
+_Spoiler alert: we've chosen option 1. [Skip](#re-initialisation-of-whole-states) our reasoning if you like._
 
 **1)**
 
@@ -971,10 +973,6 @@ If a clear owner (for a whole state) _can_ be inferred from the original Solidit
 
 Partitioned states don't suffer from this problem, but they do have two main limitations. Firstly, unless the dev has been explicit, we can't avoid ending up with multiple owners of one state. Without any restriction on who can call a function which increments some unknown value, the caller can add any public key they want to the part they create.
 
-<!-- TODO ^^^ expand on this final point (if we haven't already) in a section of its own.
-
-TODO: also talk about how a Nightfall-like contract is a nice edge case which means the public key and mapping key coincide.
--->
 
 #### Re-initialisation of whole states
 
@@ -1009,7 +1007,7 @@ function withdraw(uint256 tokenId) public {
 
 You might recognise this as a simple NFT contract, which handles transferring non-fungibles between owners. The compiler will infer a few things:
 
--   The owner of the state `tokenOwners[addr]` is `addr`, the value of the mapping
+-   The [owner](#ownership) of the state `tokenOwners[tokenId] = addr` is `addr`, the value of the mapping
 -   The state `tokenOwners` is a mapping of whole states (since its value is an address which is overwritten)
 -   All three functions record a state change
 
@@ -1017,9 +1015,27 @@ The compiler, unlike our human brains, sees this Zolidity contract and cannot te
 
 This leads to a reinitialisation problem \- how does the caller of `deposit` provide a nullifier if their `tokenId` was previously owned?
 
-Theoretically, the previous owner of `tokenId` 100 (for instance) would have nullified the state in `withdraw`, submitting the nullifier `h(stateVarId, ownerSecretKey, salt_0)` for commitment `h(stateVarId, value = ownerPublicKey, ownerPublicKey, salt_0)`. The function would create a new commitment `h(stateVarId, value = 0, ownerPublicKey = 0, salt_1)`.
+---
+
+Theoretically, the previous owner of `tokenId` 100 (for instance) would have nullified the state in `withdraw`, submitting the nullifier:
+
+`h(stateVarId, ownerSecretKey, salt_0)`
+
+for commitment:
+
+`h(stateVarId, value = ownerPublicKey, ownerPublicKey, salt_0)`,
+
+where `stateVarId` is `h(tokenOwners_id, 100)`.
+
+ The `withdraw` function would create a new commitment `h(stateVarId, value = 0, ownerPublicKey = 0, salt_1)`.
 
 In the background, the ERC721 contract would transfer token 100 from our Zolidity contract back to `msg.sender`, effectively removing it from our zApp. However, a commitment (representing value 0) still exists in the zApp, and if someone else owned token 100 later and wanted to `deposit` it into our zApp, they wouldn't be able to nullify that commitment!
+
+The user would try and submit their new commitment `h(stateVarId, value = newOwnerPublicKey, newOwnerPublicKey, salt_2)`, alongside a dummy nullifier (as described above), since from their point of view the state `tokenOwners[100]` is being initialised.
+
+However, the contract would revert because a dummy nullifier has already been submitted! The new owner would have to submit a nullifier corresponding to the commitment `h(stateVarId, 0, 0, salt_1)`, which is impossible, as they don't know `salt_1` and nobody knows the secret key corresponding to the public key 0!
+
+---
 
 Essentially, the external ERC721 contract call means that the `deposit` function can safely _reinitialise_ a state. Without that call, we _would_ need a nullifier to prevent rival commitments.
 
@@ -1038,7 +1054,7 @@ tokenOwners[tokenId] = address(0);
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ```
 
-Because the `withdraw` function sets the owner - the value of the mapping `tokenOwners` - to zero, the compiler recognises that the state can't be nullified and used again! Let's mark the line `tokenOwners[tokenId] = msg.sender;` with `reinitialisable` and try again.
+Because the `withdraw` function sets the owner - the value of the mapping `tokenOwners` - to zero, the compiler recognises that the state can't be nullified and used again! Let's mark the line `tokenOwners[tokenId] = msg.sender;` in `deposit` with `reinitialisable` and try again.
 
 ```
 Found a statement which burns the secret state and allows it to be reinitialised. If this line isn't meant to do that, check why you are setting the address to 0.
@@ -1334,20 +1350,6 @@ function withdraw(uint256 amount) {
 `h( stateVarId, mappingKey = ownerPK, value, salt )`
 - The circuit will include a PoKoSK for `ownerPK`
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update
-#### whole vs partitioned states
-TODO: not sure where to add the below info:
-
-If we have a whole state and a clear owner, then we allow them to initialise the state, whether through the same contract requirements the dev wrote or through the circuit. Then once that state exists, only that single user can edit it.
-
-However, partitioned states can have many different incrementers who edit without nullifying. Like the [charity pot example](#partitioned-states), the dev could reasonably write a contributing function with no caller restrictions. So if we allow the commitment creator to add any PK they want, they could lock out the admin.
-
-Going back to whole states, we allow that user to add any PK they want. In most cases they would add their own, and it is possible they could add some silly value which means that commitment can never be spent. At the moment our stance is: that's your own silly fault, and we'll allow it.
-
-Another method we considered is adding a *transferable* decorator in front of nullifying statements. Perhaps the developer wants a state to be as flexible as possible, with the current owner able to change the PK in the commitment with a nullification whenever they like. Or maybe they want a state to always belong to one person. The new decorator would allow this distinction.
-
-But, through many examples and discussions, it seems like wanting a *non*-transferable state is pretty rare. Plus, if you are the owner of a state and don't want to transfer editing rights then... just don't! You can keep it and do nothing. So, as long as we get the initial ownership of a state correct, the need for a *transferable* decorator mostly disappears.
--->
 
 ---
 
@@ -1470,6 +1472,8 @@ Option 2 can be achieved by encrypting the data _within_ the transaction's snark
 
 To this end, we find we need some new `zol` syntax...
 
+**NOTE: This new syntax has not yet been added to starlight**
+
 Consider the below examples:
 
 **Example 1**
@@ -1489,7 +1493,7 @@ To a human brain, we can fairly quickly realise that the secret `value` and its 
 - Seeing that whenever ths secret mapping is nullified, its key is `msg.sender`;
 - Inferring from this that the owner of a commitment to such a mapping's value must be the mapping's key. I.e. that `comm = h(h(0, key = addr), value, ownerPK = addr, salt)`
 
-Here, the compiler would generate zApp code to enforce the sharing of the secrets `value` and `salt` with the messaging public key of the `recipient`. (SEE <INSERT LINK TO SUBHEADING> SECTION ON LINKING ETH ADDRESSES, COMMITMENT OWNERSHIP PUBLIC KEYS, AND MESSAGING PUBLIC KEYS... a difficult topic in itself).
+Here, the compiler would generate zApp code to enforce the sharing of the secrets `value` and `salt` with the messaging public [key](#key-management) of the `recipient`.
 
 **Example 2**
 
@@ -1535,7 +1539,7 @@ Note, if the dev wrote something like `share balances[recipient] with admin`, an
 
 <!-- TODO: this section is pretty complicated, and it's so niche that it'll probably be on the backlog for ages. -->
 
-To ensure we're not over-fitting to nightfall, consider this partial code snippet, which doesn't use a `mapping(address => ...)`:
+Consider this partial code snippet, which doesn't use a `mapping(address => ...)`:
 
 ```solidity
 // balls in buckets, indexed by bucketId
@@ -1593,11 +1597,9 @@ Pretty obscure example.
 
 ### Key management
 
-UNFINISHED SECTION - I haven't got to the "Aaah, my brain!" part yet...
-
 This is a surprisingly tricky topic. Fasten your seatbelt.
 
-We need to be aware of three types of keypair
+We need to be aware of three types of keypair:
 
 | Secret Key | Public Key | PK a.k.a. | About  |
 |:----------:|:----------:|:---------:|:-------|
@@ -1612,7 +1614,6 @@ Consider the following `zol` code snippet, which isn't a sensible contract, but 
 contract WierdEscrow {
   secret mapping(address => uint) balances;
   secret mapping(address => uint) creditRatings;
-  mapping(address => uint) // I can't think of a nice function, but a public mapping might be a nice additional thing to illustrate (showing that no corresponding ownerPK or msgPK is needed in this case)
   address admin;
 
   function transfer(secret uint value, secret address recipient) {
@@ -1633,7 +1634,7 @@ contract WierdEscrow {
 }
 ```
 
-Let's go through it line by line (ish):
+Let's go through some lines:
 
 - `secret mapping(address => uint) balances;`:
 `balances` is secret. The mapping's key is an `address`. Every time the state is nullified (throughout the contract), the key is `msg.sender`. Therefore both the mapping's key and the ownerPK (within the commitment) will be the same:
@@ -1645,21 +1646,19 @@ Let's go through it line by line (ish):
 
 
 - `balances[msg.sender] -= value;`
-Since this is a secret state being edited, `msg.sender` might not appear on-chain (EDIT: THE FUNCTION WOULD NEED TO BE DECORATED 'ANON' TO ENSURE HIDING OF MSG.SENDER... TODO!!!). A PoKoSK would be needed within the circuit, so that a nullifier may be calculated, so as to prove that the `msg.sender` of the function is permitted to edit this state. But an Ethereum address (`ethPK`) is not efficient to calculate from its `ethSK` within a circuit; so the circuit must instead deal with an `(ownerSK)`
+Since this is a secret state being edited, `msg.sender` might not appear on-chain. A PoKoSK would be needed within the circuit, so that a nullifier may be calculated, so as to prove that the `msg.sender` of the function is permitted to edit this state. But an Ethereum address (`ethPK`) is not efficient to calculate from its `ethSK` within a circuit; so the circuit must instead deal with an `ownerSK`
 
-UNFINISHED SECTION - I haven't got to the "Aaah, my brain!" part yet...
+We must ensure that the owner of a state, for instance `admin` and the Ethereum address's corresponding `ownerPK`, is aware of changes to their secret. We know that an Ethereum address must be linked to an `ownerPK`, because we perform `msg.sender` checks in the contract and then ensure that the correct key exists inside the commitment. If we have a partitioned state where any user can increment a secret state they don't own (e.g. `balances[recipient]`), then we should broadcast that increment to the correct user without revealing secret information.
 
+**NB: starlight currently does not support `share with` syntax and broadcasting data**
 
-## Overflow / underflow checks
+In its current form, the compiler produces a shield contract which, if such restrictions on ownership exists, contains a mapping of public keys:
 
-If we have an expression `a -= b`, which must be translated into a circuit, then the circuit will also need to check that `a > b`.
+`mapping(address => uint256) public zkpPublicKeys;`
 
-If we have an expression `a += b`, which must be translated into a circuit, then the circuit will also need to check that `a + b < p`, for the field modulus `p`.
+This mapping is used to complete any check in the original Zolidity contract which requires Ethereum addresses and secret states. It's a temporary solution until we develop broadcasting encrypted data.
 
-If we have an expression `a / b`, we won't be able to perform `a / b` inside the circuit (without unexpected results). We'll need to pass in `a` and solution `c` as inputs and demonstrate that:
-- `a * c == b`
-- `a * c < p` <-- not sure how to do this.
-TODO: flagging this as a very tricky thing to solve! Probably need to do the calculation in binary.
+##Write-up authors:
 
-If we have an expression `a * b`, we'll need to ensure `a * b < p`.
-TODO: flagging this as a very tricky thing to solve! Probably need to do the calculation in binary.
+ - MirandaWood
+ - IAmMichaelConnor

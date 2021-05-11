@@ -2,40 +2,6 @@
 
 Generate a zApp from a Solidity contract.
 
-_"So good it Hertz."_
-
-_"An electrifying experience."_
-
-_"I was shocked."_
-
-_"Watts up?"_
-
-_"Join the privacy resistance"_
-
-_"Current privacy tech at its best."_
-
-_"Ohm my gosh!"_
-
-_"Free of charge"_
-
-_"A brilliantly conducted project."_
-
-_"Creates circuits; but not electrical ones."_
-
-_"There's a clever pun around secure key vaults and volts to be had..."_
-
-_"Do complicated maths, while staying grounded!"_
-
-_"Static, yet moving forward."_
-
-_"Received positively, with thunderous applause!"_
-
-_"Danger, danger! High vault (us)age!"_
-
-_"Contains a battery of new ideas!"_
-
-_"An easy cell to developers that increases their capacity to develop Zero Knowledge solutions."_"
-
 ---
 
 ## Induction :zap:
@@ -161,15 +127,15 @@ Run trusted setups on all circuit files:
 
 Finally, run a test, which executes the function privately, using some test parameters:
 
-`npm test`
+`npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
 
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
 **NB: rerunning the test will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
 
-#### preliminary traversals
+#### Preliminary traversals
 
-Preliminary traversals populate the `binding` and `indicator` objects. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
+Preliminary traversals populate the `binding` and `indicator` classes. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
 
 `npm run-script test-prelim`  
 
@@ -213,6 +179,11 @@ Use the flag `--write-all` instead of `--write <fileName`.
 
 - [solc](https://github.com/ethereum/solc-js)
 - [zokrates](https://github.com/Zokrates/ZoKrates)
+
+Authors:
+
+ - MirandaWood
+ - IAmMichaelConnor
 
 Inspirational works:
 - [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)
