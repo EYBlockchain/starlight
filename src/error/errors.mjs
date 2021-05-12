@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
 import backtrace from './backtrace.mjs'
-
+// Remove after traversals done
 export class ParseError extends Error {
   constructor(message) {
     super(message);
@@ -13,27 +13,65 @@ export class ParseError extends Error {
   }
 }
 
-export class UnsupportedSyntaxError extends Error {
+export class SyntaxError extends Error {
   constructor(message) {
+    Error.stackTraceLimit = 0;
     super(message);
     this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
   }
 }
 
-export class SyntaxError extends Error {
-  constructor(message) {
-    super(message);
+export class SyntaxTypeError extends SyntaxError {
+  // when our decorators are used on an incorrect type
+  constructor(node, decorator) {
+    Error.stackTraceLimit = 0;
+    super(
+      `Decorator '${decorator}' cannot be added to node of type '${node.nodeType}'.`,
+    );
+    // TODO - a 'help' note for each decorator? Or just direct to readme?
+    switch (decorator) {
+      case 'secret':
+      case 'unknown':
+      case 'known':
+        break;
+      default:
+    }
+    backtrace.getSourceCode(node.src);
     this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class SyntaxUsageError extends SyntaxError {
+  // when our decorators are used incorrectly e.g. an unknown whole state
+  constructor(message, node, reasons) {
+    Error.stackTraceLimit = 0;
+    super(message);
+    if (node) backtrace.getSourceCode(node.src);
+    if (reasons) {
+      reasons.forEach(reason => {
+        console.log(`Because of: ${reason[0]} At:`);
+        backtrace.getSourceCode(reason.src);
+      });
+    }
+    this.name = this.constructor.name;
   }
 }
 
 export class TODOError extends Error {
-  constructor(message) {
-    super(`TODO: zappify doesn't yet support this feature. ${message}`);
+  constructor(message, node) {
+    Error.stackTraceLimit = 0;
+    super(`TODO: zappify doesn't yet support this feature: ${message}`);
+    if (node) backtrace.getSourceCode(node.src);
     this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class ZKPError extends Error {
+  constructor(message, node) {
+    Error.stackTraceLimit = 0;
+    super(message);
+    if (node) backtrace.getSourceCode(node.src);
+    this.name = this.constructor.name;
   }
 }
 

@@ -1,5 +1,11 @@
 /* eslint-disable no-param-reassign */
 
+/**
+ * @desc:
+ * EXAMPLE ONLY
+ * @deprecated - some of the logic here is now out of date and won't work.
+*/
+
 const getNodeLocation = () => {}; // dummy - the original getNodeLocation has been removed.
 
 export default {

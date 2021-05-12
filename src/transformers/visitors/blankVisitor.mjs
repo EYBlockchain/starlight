@@ -5,6 +5,12 @@ import logger from '../../utils/logger.mjs';
 import circuitTypes from '../../types/zokrates-types.mjs';
 import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
+
+/**
+ * @desc:
+ * TEMPLATE - for easy copy-pasting to start building a new visitor.
+*/
+
 export default {
   SourceUnit: {
     enter(path, state) {},
@@ -13,8 +19,6 @@ export default {
   },
 
   PragmaDirective: {
-    // TODO: We should probably check that the `.zol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
-    // However, for now, we'll just inherit the Pragma of the original and hope.
     enter(path, state) {},
     exit(path, state) {},
   },

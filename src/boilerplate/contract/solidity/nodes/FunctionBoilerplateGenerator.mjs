@@ -71,7 +71,7 @@ class FunctionBoilerplateGenerator {
 
       for (const indicator of Object.values(indicators)) {
         if (indicator.isMapping) {
-          for (const ind of Object.values(indicator.mappingKey)) {
+          for (const ind of Object.values(indicator.mappingKeys)) {
             if (ind.isNullified) nullifiersRequired = true;
             if (ind.oldCommitmentAccessRequired) oldCommitmentAccessRequired = true;
             if (ind.newCommitmentRequired) newCommitmentRequired = true;

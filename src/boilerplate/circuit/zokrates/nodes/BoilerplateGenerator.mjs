@@ -14,7 +14,7 @@ class BoilerplateGenerator {
 
     this.initialise(indicators);
 
-    bpCache.set(indicators, this);
+    bpCache.set({indicators}, this);
   }
 
   // Bump all important indicators (used by this class) to this 'top-level' of `this`.
@@ -47,7 +47,7 @@ class BoilerplateGenerator {
   initialise(indicators) {
     this.indicators = indicators;
     if (indicators.isMapping) {
-      for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKey)) {
+      for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
         mappingKeyIndicator.isMapping = true; // TODO: put isMapping in every mappingKeys indicator during prelim traversals
         this.assignIndicators(mappingKeyIndicator);
         this.mappingKeyName = mappingKeyName;
@@ -62,7 +62,7 @@ class BoilerplateGenerator {
   }
 
   refresh(mappingKeyName) {
-    const mappingKeyIndicator = this.indicators.mappingKey[mappingKeyName];
+    const mappingKeyIndicator = this.indicators.mappingKeys[mappingKeyName];
     this.assignIndicators(mappingKeyIndicator);
     this.mappingKeyName = mappingKeyName;
     this.mappingName = this.indicators.name;

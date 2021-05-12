@@ -1,62 +1,28 @@
-# zappify :zap:
+# starlight :night_with_stars:
 
 Generate a zApp from a Solidity contract.
-
-_"So good it Hertz."_
-
-_"An electrifying experience."_
-
-_"I was shocked."_
-
-_"Watts up?"_
-
-_"Join the privacy resistance"_
-
-_"Current privacy tech at its best."_
-
-_"Ohm my gosh!"_
-
-_"Free of charge"_
-
-_"A brilliantly conducted project."_
-
-_"Creates circuits; but not electrical ones."_
-
-_"There's a clever pun around secure key vaults and volts to be had..."_
-
-_"Do complicated maths, while staying grounded!"_
-
-_"Static, yet moving forward."_
-
-_"Received positively, with thunderous applause!"_
-
-_"Danger, danger! High vault (us)age!"_ ...there it is
-
-_"Contains a battery of new ideas!"_
-
-_"An easy cell to developers that increases their capacity to develop Zero Knowledge solutions."_"
 
 ---
 
 ## Induction :zap:
 
-zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? Zappify helps developers do just this...
+zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? `starlight` helps developers do just this...
 
 - Write a Solidity contract
 - Add a few new privacy decorators to the contract (to get a 'Zolidity' contract)
-- Zappify that baby
+- Run `zappify`
 - Get a fully working zApp in return
 
 _Solidity contract --> Zolidity contract --> zappify --> zApp_
 
-See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
+See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everything.
 
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
+- [Quick User Guide](#quick-user-guide)
 - [Install](#install)
 - [Run](#run)
   - [CLI options](#cli-options)
@@ -64,13 +30,12 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 - [Developer](#developer)
   - [Testing](#testing)
     - [full zapp](#full-zapp)
-    - [preliminary traversals](#preliminary-traversals)
+    - [Preliminary traversals](#preliminary-traversals)
       - [To test a single file:](#to-test-a-single-file)
       - [Adding new test cases](#adding-new-test-cases)
       - [Updating test cases](#updating-test-cases)
       - [Adding/Updating _all_ test cases](#addingupdating-_all_-test-cases)
     - [circuit](#circuit)
-  - [R&D Notes & Ideas](#rd-notes--ideas)
 - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -84,11 +49,50 @@ See [here](./WRITEUP.md) for an enormously detailed explanation of everything.
 
 ---
 
+## Quick User Guide
+
+Take a 'normal' smart contract, like this one:
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  uint256 private a;
+
+  function assign(uint256 value) public {
+    a = value;
+  }
+}
+```
+
+Then add `secret` in front of each declaration you want to keep secret:
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a; // <--- secret
+
+  function assign(secret uint256 value) public { // <--- secret
+    a = value;
+  }
+}
+```
+
+Run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in return!
+
+
+---
 ## Install
 
 Whilst the package is in early development, it isn't hosted on npm. To install:
 
-`cd zappify`
+`cd starlight`
 
 `npm i`
 
@@ -131,6 +135,51 @@ E.g.:
                               bin is also at this level
 ```
 
+If you find errors to do with 'knownness' or 'unknownness', try to mark incrementations. If you have any secret states which can be **incremented** by other users, mark those incrementations as `unknown` (since the value may be unknown to the caller).
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a; // <--- secret
+
+  function add(secret uint256 value) public { // <--- secret
+    unknown a += value; // <--- may be unknown to the caller
+  }
+
+  function remove(secret uint256 value) public { // <--- secret
+    a -= value;
+  }
+}
+```
+
+However, if you want the incrementation to only be completed by the secret owner, mark it as known:
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a; // <--- secret
+
+  function add(secret uint256 value) public { // <--- secret
+    known a += value; // <--- must be known to the caller
+  }
+
+  function remove(secret uint256 value) public { // <--- secret
+    a -= value;
+  }
+}
+```
+
+Failing to mark incrementations will throw an error, because the compiler won't know what to do with the state. See the [write up](./doc/WRITEUP.md) for more details.
+
+If your input contract has any external imports, make sure those are stored in the `./contracts` directory (in root) and compile with `solc` 0.8.0.
 
 
 ---
@@ -161,15 +210,15 @@ Run trusted setups on all circuit files:
 
 Finally, run a test, which executes the function privately, using some test parameters:
 
-`npm test`
+`npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
 
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
 **NB: rerunning the test will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
 
-#### preliminary traversals
+#### Preliminary traversals
 
-Preliminary traversals populate the `binding` and `indicator` objects. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
+Preliminary traversals populate the `binding` and `indicator` classes. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
 
 `npm run-script test-prelim`  
 
@@ -204,15 +253,8 @@ Use the flag `--write-all` instead of `--write <fileName`.
 
 `docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
 
-`./zokrates compile --light -i code/assign.zok` <-- it should compile
+`./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
 
-
-
----
-
-### R&D Notes & Ideas
-
-See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a flavour. The notes contain examples of inferring commitment and protocol structures from decorated Solidity.
 
 ---
 
@@ -220,6 +262,11 @@ See (very incomplete) [preliminary notes](./doc/sprinkles-prelim-notes.md) for a
 
 - [solc](https://github.com/ethereum/solc-js)
 - [zokrates](https://github.com/Zokrates/ZoKrates)
+
+Authors:
+
+ - MirandaWood
+ - IAmMichaelConnor
 
 Inspirational works:
 - [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)

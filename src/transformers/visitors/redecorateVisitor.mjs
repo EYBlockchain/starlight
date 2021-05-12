@@ -1,372 +1,87 @@
-/* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
+/* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
 import logger from '../../utils/logger.mjs';
 import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
+/**
+ * @desc:
+ * Visitor creates a `.zol` AST from a `.sol` AST.
+ * Using a custom object `toRedecorate` (=`state`) from the 'dedecoration'
+ * phase, this Visitor adds properties to `.sol` AST nodes. The properties
+ * which get added represent 'Zolidity' decorators that the user originally used
+ * to label states (e.g. as `secret`/`unknown`/ etc.) but that were removed
+ * during the 'dedecoration' phase in order to generate a `.sol` AST using solc.
+ */
+
 export default {
-  SourceUnit: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  PragmaDirective: {
-    enter(path, state) {},
-    exit(path, state) {},
-  },
-
-  ContractDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  FunctionDefinition: {
-    enter(path, state) {
-      const { node } = path;
-      for (const line of state) {
-        switch (line.type) {
-          case 'function':
-            if (line.nodeId) break;
-            if (node.kind === 'function' && node.name === line.name) line.nodeId = node.id;
-            break;
-          case 'constructor':
-            if (line.nodeId) break;
-            if (node.kind === 'constructor' && node.name === line.name) line.nodeId = node.id;
-            break;
-          default:
-            break;
-          // line.nodeId = findNodeId(solAST, line);
-        }
-        if (line.nodeId === node.id) {
-          switch (line.keyword) {
-            default:
-              break;
-            case 'secret':
-              node.isSecret = true;
-              break;
-            // case 'known':
-            //   node.isKnown = true;
-            //   break;
-            // case 'unknown':
-            //   node.isUnknown = true;
-            //   break;
-          }
-        }
-      }
-    },
-
-    exit(path, state) {},
-  },
-
-  ParameterList: {
-    enter(path, state) {
-      const { node } = path;
-      const functionName = path.parent.name;
-      for (const line of state) {
-        switch (line.type) {
-          case 'param':
-            if (line.nodeId) break;
-            for (const param of node.parameters) {
-              if (param.name === line.name && line.oldline.includes(functionName)) {
-                line.nodeId = param.id;
-                if (line.keyword === 'secret') {
-                  param.isSecret = true;
-                } else {
-                  throw new Error(`Parameters can't be marked as known/unknown`);
-                }
-              }
-            }
-            break;
-          default:
-            break;
-        }
-      }
-    },
-
-    exit(path) {},
-  },
-
-  Block: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
   VariableDeclarationStatement: {
-    enter(path, state) {
-      const { node } = path;
-      for (const line of state) {
-        switch (line.type) {
-          case 'global':
-            if (line.nodeId) break;
-            if (node.declarations[0].name === line.name) line.nodeId = node.declarations[0].id;
-            break;
-          default:
-            break;
-        }
-        if (line.nodeId === node.declarations[0].id) {
-          switch (line.keyword) {
-            default:
-              break;
-            case 'secret':
-              node.declarations[0].isSecret = true;
-              break;
-            case 'known':
-              node.declarations[0].isKnown = true;
-              break;
-            case 'unknown':
-              node.declarations[0].isUnknown = true;
-              break;
-          }
+    enter(node, state) {
+      // we only care about statements if they contain a secret declaration
+      // a VariableDeclarationStatement which holds a VariableDeclaration has one only one declaration
+      if (node.declarations[0].nodeType !== 'VariableDeclaration') return;
+      const varDec = node.declarations[0];
+      // for each decorator we have to re-add...
+      for (const toRedecorate of state) {
+        // skip if the decorator is not secret (can't be a variable dec) or if its already been added
+        if (toRedecorate.added || toRedecorate.decorator !== 'secret') continue;
+        // extract the char number
+        const srcStart = varDec.src.split(':')[0];
+        // if it matches the one we removed, throw warning
+        if (toRedecorate.charStart === Number(srcStart)) {
+          logger.warn(
+            `Superfluous 'secret' decorator used for a local declaration. If the variable interacts with a secret state, it will automatically be kept secret.`,
+          );
+          return;
         }
       }
     },
-
-    exit(path) {},
-  },
-
-  BinaryOperation: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Assignment: {
-    enter(path, state) {
-      const operators = ['+', '-', '*', '/', '%'];
-      const eqOperators = [' = ', '+= ', '-= '];
-      let op;
-      let eqop;
-      const { node } = path;
-      for (const line of state) {
-        switch (line.type) {
-          case 'assignment':
-            if (line.nodeId) break;
-            for (const operator of operators) {
-              if (line.rhs.includes(operator)) {
-                op = operator;
-                break;
-              }
-            }
-            for (const eqOperator of eqOperators) {
-              if (line.newline.includes(eqOperator)) {
-                // TODO more than one operator e.g. a = b + 7 - c;
-                eqop = eqOperator.trim();
-                break;
-              }
-            }
-            // we have an assignment we still need to redecorate:
-            if (line.name === node.leftHandSide.name) {
-              // we have an identifier with name = name of assigned secret var
-              // check: operator, rhs type
-              switch (node.rightHandSide.nodeType) {
-                case 'Identifier':
-                  if (line.rhs.replace(';', '') !== node.rightHandSide.name) {
-                    break;
-                  } else if (node.operator === eqop) {
-                    line.nodeId = node.leftHandSide.id;
-                    break;
-                  }
-                  break;
-                case 'Literal':
-                  if (!line.rhs.includes(node.rightHandSide.value)) {
-                    break;
-                  } else {
-                    line.nodeId = node.leftHandSide.id;
-                    break;
-                  }
-                case 'BinaryOperation':
-                  if (!op) break;
-                  if (op && node.rightHandSide.operator.includes(op)) {
-                    if (
-                      node.rightHandSide.rightExpression.name &&
-                      line.rhs.includes(node.rightHandSide.rightExpression.name) &&
-                      line.rhs.includes(node.rightHandSide.leftExpression.name)
-                    ) {
-                      line.nodeId = node.leftHandSide.id;
-                      break;
-                    }
-                    if (
-                      node.rightHandSide.rightExpression.name &&
-                      line.rhs.includes(node.rightHandSide.rightExpression.value) &&
-                      line.rhs.includes(node.rightHandSide.leftExpression.name)
-                    ) {
-                      line.nodeId = node.leftHandSide.id;
-                      break;
-                    }
-                    if (node.rightHandSide.leftExpression.nodeType === 'BinaryOperation') {
-                      if (
-                        (line.rhs.includes(node.rightHandSide.leftExpression.leftExpression.name) ||
-                          line.rhs.includes(
-                            node.rightHandSide.leftExpression.leftExpression.value,
-                          )) &&
-                        (line.rhs.includes(
-                          node.rightHandSide.leftExpression.rightExpression.name,
-                        ) ||
-                          line.rhs.includes(
-                            node.rightHandSide.leftExpression.rightExpression.value,
-                          )) &&
-                        (line.rhs.includes(node.rightHandSide.rightExpression.value) ||
-                          line.rhs.includes(node.rightHandSide.rightExpression.value))
-                      ) {
-                        line.nodeId = node.leftHandSide.id;
-                        break;
-                      }
-                    }
-                  }
-                  break;
-                default:
-                  break;
-              }
-            } else if (node.leftHandSide.nodeType === 'IndexAccess') {
-              const key =
-                node.leftHandSide.indexExpression.expression || node.leftHandSide.indexExpression;
-              if (!line.name.includes(node.leftHandSide.baseExpression.name)) break;
-              if (!line.name.includes(key.name)) break;
-              // copied and pasted from above -- TODO not repeat code!
-              // ---
-              switch (node.rightHandSide.nodeType) {
-                case 'Identifier':
-                  if (line.rhs.replace(';', '') !== node.rightHandSide.name) {
-                    break;
-                  } else if (node.operator === eqop) {
-                    line.nodeId = node.leftHandSide.id;
-                    break;
-                  }
-                  break;
-                case 'Literal':
-                  if (!line.rhs.includes(node.rightHandSide.value)) {
-                    break;
-                  } else {
-                    line.nodeId = node.leftHandSide.id;
-                    break;
-                  }
-                case 'BinaryOperation':
-                  if (!op) break;
-                  if (op && node.rightHandSide.operator.includes(op)) {
-                    if (
-                      line.rhs.includes(node.rightHandSide.rightExpression.name) &&
-                      line.rhs.includes(node.rightHandSide.leftExpression.baseExpression.name) &&
-                      (line.rhs.includes(node.rightHandSide.leftExpression.indexExpression.name) ||
-                        line.rhs.includes(
-                          node.rightHandSide.leftExpression.indexExpression.expression.name,
-                        ))
-                    ) {
-                      line.nodeId = node.leftHandSide.id;
-                      break;
-                    }
-                    if (
-                      node.rightHandSide.leftExpression.baseExpression &&
-                      line.rhs.includes(node.rightHandSide.rightExpression.value) &&
-                      line.rhs.includes(node.rightHandSide.leftExpression.baseExpression.name) &&
-                      line.rhs.includes(node.rightHandSide.leftExpression.indexExpression.name)
-                    ) {
-                      line.nodeId = node.leftHandSide.id;
-                      break;
-                    }
-                    break;
-                  }
-                  break;
-                default:
-                  break;
-              }
-              // ----
-            }
-            // error checking:
-            if (line.nodeId === node.leftHandSide.id) {
-              switch (line.keyword) {
-                default:
-                  break;
-                case 'secret':
-                  logger.warn(`Warning: secret keyword used for assignment after declaration...`);
-                  for (const check of state) {
-                    if (check.type === 'global' && check.name === line.name) {
-                      logger.warn(
-                        `...but the declaration has correctly been marked as secret, so that's ok`,
-                      );
-                      line.parentNodeId = check.nodeId;
-                      break;
-                    } else if (check.type === line.type && check.name === line.name) {
-                      throw new Error(
-                        `...and the declaration hasn't been marked as secret, so the assignment can't be secret!`,
-                      );
-                    }
-                  }
-                  break;
-                case 'known':
-                  node.leftHandSide.isKnown = true;
-                  break;
-                case 'unknown':
-                  node.leftHandSide.isUnknown = true;
-                  break;
-              }
-            }
-
-            break;
-          default:
-            break;
-        }
-      }
-    },
-
-    exit(path, state) {},
-  },
-
-  ExpressionStatement: {
-    enter(path, state) {},
-
-    exit(node, parent) {},
   },
 
   VariableDeclaration: {
-    enter(path, state) {
-      const { node } = path;
-      for (const line of state) {
-        switch (line.type) {
-          case 'global':
-            if (line.nodeId) break;
-            if (node.name === line.name) line.nodeId = node.id;
-            break;
-          default:
-            break;
-        }
-        if (line.nodeId === node.id) {
-          switch (line.keyword) {
-            default:
-              break;
-            case 'secret':
-              node.isSecret = true;
-              break;
-            // case 'known':
-            //   node.isKnown = true;
-            //   break;
-            // case 'unknown':
-            //   node.isUnknown = true;
-            //   break;
-          }
+    enter(node, state) {
+      // for each decorator we have to re-add...
+      for (const toRedecorate of state) {
+        // skip if the decorator is not secret (can't be a variable dec) or if its already been added
+        if (toRedecorate.added || toRedecorate.decorator !== 'secret') continue;
+        // extract the char number
+        const srcStart = node.src.split(':')[0];
+        // if it matches the one we removed, add it back to the AST
+        if (toRedecorate.charStart === Number(srcStart)) {
+          toRedecorate.added = true;
+          node.isSecret = true;
+          return;
         }
       }
     },
-
-    exit(path) {},
-  },
-
-  ElementaryTypeName: {
-    enter(path) {},
 
     exit(path) {},
   },
 
   Identifier: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Literal: {
-    enter(path) {},
+    enter(node, state) {
+      // see varDec for comments
+      for (const toRedecorate of state) {
+        if (toRedecorate.added || toRedecorate.decorator === 'secret') continue;
+        const srcStart = node.src.split(':')[0];
+        if (toRedecorate.charStart === Number(srcStart)) {
+          toRedecorate.added = true;
+          switch (toRedecorate.decorator) {
+            case 'known':
+              node.isKnown = true;
+              return;
+            case 'unknown':
+              node.isUnknown = true;
+              return;
+            case 'reinitialisable':
+              node.reinitialisable = true;
+              return;
+            default:
+              return;
+          }
+        }
+      }
+    },
 
     exit(path) {},
   },

@@ -1,7 +1,7 @@
 import logger from '../utils/logger.mjs';
 import explode from './visitors/explode.mjs';
-import nullifiedVisitor from './visitors/ownership/nullifiedVisitor.mjs';
 import ownershipVisitor from './visitors/ownership/ownershipVisitor.mjs';
+import errorChecksVisitor from './visitors/ownership/errorChecksVisitor.mjs';
 
 /**
  * Inspired by the Transformer
@@ -16,9 +16,9 @@ function transformation1(ast) {
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  ast.traverse(explode(nullifiedVisitor), state);
-  logger.verbose('All states nullifiable and nullifications marked');
   ast.traverse(explode(ownershipVisitor), state);
+  logger.verbose('Performing final error checks on the zol AST...');
+  ast.traverse(explode(errorChecksVisitor), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.

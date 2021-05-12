@@ -1,129 +1,78 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
+/**
+ * @desc:
+ * Visitor will throw errors when certain nodeTypes are traversed.
+ * Namely: nodeTypes for complex Solidity syntax which we haven't written
+ * support for yet.
+ */
+
 import cloneDeep from 'lodash.clonedeep';
+import { TODOError, ZKPError } from '../../../error/errors.mjs';
 
 export default {
+  FunctionCall: {
+    enter(node) {
+      if (
+        node.kind === 'functionCall' &&
+        node.expression.typeDescriptions.typeIdentifier.includes(`_internal_`)
+      )
+        throw new TODOError(
+          `Internal function calls involving any states. This doesn't work because we assume all Identifiers refer to a VariableDeclaration, when they can refer to a FunctionDefinition.`,
+          node,
+        );
+    },
+  },
+
   StructuredDocumentation: {
-    enter(path, state) {
-      throw new Error('Unsupported Solidity');
+    enter(node) {
+      throw new TODOError(`Solidity type ${node.nodeType}`, node);
     },
 
     exit(path, state) {},
   },
 
   InlineAssembly: {
-    enter(path, state) {
-      throw new Error('Unsupported Solidity');
+    enter(node, state) {
+      throw new TODOError(
+        `Solidity type ${node.nodeType}. We plan to handle non-secret assembly in the future.`,
+        node,
+      );
     },
 
     exit(path, state) {},
   },
 
   EnumDefinition: {
-    // TODO we can work on this later
-    enter(path, state) {
-      throw new Error('Unsupported Solidity');
+    enter(node, state) {
+      throw new TODOError(
+        `Solidity type ${node.nodeType}. We plan to handle enums in the near future.`,
+        node,
+      );
     },
 
     exit(path, state) {},
   },
 
   StructDefinition: {
-    enter(path, state) {
-      throw new Error('Unsupported Solidity');
+    enter(node, state) {
+      throw new TODOError(
+        `Solidity type ${node.nodeType}. We plan to handle structs in the near future.`,
+        node,
+      );
     },
 
     exit(path, state) {},
   },
 
   WhileStatement: {
-    enter(path, state) {
-      throw new Error('Unsupported Solidity');
+    enter(node, state) {
+      throw new ZKPError(
+        'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
+        node,
+      );
     },
 
     exit(path, state) {},
-  },
-
-  SourceUnit: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  PragmaDirective: {
-    enter(path, state) {},
-    exit(path, state) {},
-  },
-
-  ContractDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  FunctionDefinition: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  ParameterList: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Block: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  VariableDeclarationStatement: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  BinaryOperation: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Assignment: {
-    enter(path, state) {},
-
-    exit(path, state) {},
-  },
-
-  ExpressionStatement: {
-    enter(path, state) {},
-
-    exit(node, parent) {},
-  },
-
-  VariableDeclaration: {
-    enter(path, state) {},
-
-    exit(path) {},
-  },
-
-  ElementaryTypeName: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Identifier: {
-    enter(path) {},
-
-    exit(path) {},
-  },
-
-  Literal: {
-    enter(path) {},
-
-    exit(path) {},
   },
 };

@@ -1,15 +1,24 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, no-unused-vars */
 
 import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
+import { SyntaxUsageError } from '../../../error/errors.mjs';
+
+/**
+ * @desc:
+ * Visitor checks for errors in decorator usage and marks mappings with isKnown /
+ * isUnknown
+ */
 
 export default {
   IndexAccess: {
     enter(path, state) {
       const { node, parent } = path;
       // node.isUnknown gets added during the 'parsing' stage
+      // @Node new properties
       if (node.isUnknown) node.baseExpression.isUnknown = true;
       if (node.isKnown) node.baseExpression.isKnown = true;
+      if (node.reinitialisable) node.baseExpression.reinitialisable = true;
     },
 
     exit(node, parent) {},
@@ -27,20 +36,21 @@ export default {
 
       const varDec = scope.getReferencedBinding(node);
 
-      if (varDec.secretVariable && path.getAncestorContainedWithin('leftHandSide')) {
-        // we have a parameter (at least, for now a secret non state var is a param)
-        // TODO: why?
-        throw new Error(`Cannot reassign secret function parameter ${node.name}.`);
-      }
-
       if (!varDec.stateVariable) return;
 
       // node is decorated
       if (!varDec.isSecret && node.isUnknown) {
-        backtrace.getSourceCode(varDec.node.src);
-        backtrace.getSourceCode(node.src);
-        throw new SyntaxError(
+        throw new SyntaxUsageError(
           `Identifier '${node.name}' is decorated as 'unknown' but is not decorated as 'secret'. Only secret states can be decorated as 'unknown'.`,
+          node,
+        );
+      }
+
+      // node is decorated
+      if (!varDec.isSecret && node.reinitialisable) {
+        throw new SyntaxUsageError(
+          `Identifier '${node.name}' is decorated as 'reinitialisable' but is not decorated as 'secret'. Only secret states can be decorated as 'reinitialisable'.`,
+          node,
         );
       }
 
@@ -52,25 +62,22 @@ export default {
         );
       }
 
-      // Collect all paths which reference this variable throughout the contract.
-      let refPaths;
-      if (varDec.mappingKey) {
-        refPaths = [];
-        Object.keys(varDec.mappingKey).forEach(key => {
-          varDec.mappingKey[key].referencingPaths.forEach(referencingPath => {
-            refPaths.push(referencingPath);
-          });
-        });
-      } else {
-        refPaths = varDec.referencingPaths;
-      }
+      if (
+        (varDec.isKnown && node.isUnknown) ||
+        (varDec.isUnknown && node.isKnown)
+      )
+        throw new SyntaxUsageError(
+          `Variable ${node.name} is marked as both unknown and known. Try removing 'known' from decremented states`,
+          node,
+        );
 
-      // TODO: doesn't this result in lots of duplicate checks, every time an Indicator is encountered? Shouldn't this loop happen at the 'binding' level, rather than at the 'per node' level?
-      refPaths.forEach(p => {
-        if ((p.node.isKnown && node.isUnknown) || (p.node.isUnknown && node.isKnown))
-          throw new Error(`Identifier ${node.name} is marked as unknown and known.`);
-      });
+      if (varDec.isUnknown && node.reinitialisable)
+        throw new SyntaxUsageError(
+          `Variable ${node.name} is marked as both unknown and reinitialisable. You must know a state's value to be able to initialise it!`,
+          node,
+        );
 
+      // @Binding new properties
       if (node.isKnown) varDec.isKnown = node.isKnown;
       if (node.isUnknown) varDec.isUnknown = node.isUnknown;
     },

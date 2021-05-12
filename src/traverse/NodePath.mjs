@@ -1,6 +1,10 @@
-/* eslint-disable no-param-reassign, no-shadow */
+/* eslint-disable no-param-reassign, no-shadow, import/no-cycle */
 
-import { traverse, traverseNodesFast, traversePathsFast } from './traverse.mjs';
+import {
+  traverse,
+  traverseNodesFast,
+  traversePathsFast,
+} from './traverse.mjs';
 import logger from '../utils/logger.mjs';
 import { pathCache } from './cache.mjs';
 import { Scope } from './Scope.mjs';
@@ -43,7 +47,14 @@ export default class NodePath {
   constructor({ node, parent, key, container, index, parentPath }) {
     if (pathCache.has(node)) return pathCache.get(node);
 
-    NodePath.validateConstructorArgs({ node, parent, container, key, index, parentPath });
+    NodePath.validateConstructorArgs({
+      node,
+      parent,
+      container,
+      key,
+      index,
+      parentPath,
+    });
 
     this.node = node;
     this.parent = parent;
@@ -62,21 +73,32 @@ export default class NodePath {
     pathCache.set(node, this);
   }
 
-  static validateConstructorArgs({ node, parent, key, container, index, parentPath }) {
+  static validateConstructorArgs({
+    node,
+    parent,
+    key,
+    container,
+    index,
+    parentPath,
+  }) {
     if (!parent) throw new Error(`Can't create a path without a parent`);
     if (!node) throw new Error(`Can't create a path without a node`);
     if (!container) throw new Error(`Can't create a path without a container`);
     if (!key && key !== 0) throw new Error(`Can't create a path without a key`);
     if (parent[key] !== container) throw new Error(`container !== parent[key]`);
     if (Array.isArray(container)) {
-      if (!index && index !== 0) throw new Error(`index must exist for a container of type array`);
+      if (!index && index !== 0)
+        throw new Error(`index must exist for a container of type array`);
       if (container[index] !== node)
-        throw new Error(`parent[key][index] !== node for a container of type 'array'`);
+        throw new Error(
+          `parent[key][index] !== node for a container of type 'array'`,
+        );
     } else {
       if (index || index === 0) {
         logger.warn(`index shouldn't exist for a non-array container`);
       }
-      if (node !== container) throw new Error(`container !== node for a non-array container`);
+      if (node !== container)
+        throw new Error(`container !== node for a non-array container`);
     }
   }
 
@@ -149,7 +171,9 @@ export default class NodePath {
   queryAncestors(callback) {
     const path = this || null;
     if (!path) return null; // No more paths to look at. So not found anywhere.
-    return callback(path) || (path.parentPath?.queryAncestors(callback) ?? null);
+    return (
+      callback(path) || (path.parentPath?.queryAncestors(callback) ?? null)
+    );
   }
 
   /**
@@ -318,6 +342,15 @@ export default class NodePath {
   }
 
   /**
+   * Returns whether `this` is of a particular nodeType
+   * @param {String} nodeType
+   * @returns {Boolean}
+   */
+  isNodeType(nodeType) {
+    return this.node.nodeType === nodeType;
+  }
+
+  /**
    * A helper to find if `this` path is a descendant of a particular nodeType or @param {array} nodeTypes
    * @returns {Boolean}
    */
@@ -331,6 +364,114 @@ export default class NodePath {
     }
 
     return false;
+  }
+
+  isInNodeType(args) {
+    return this.isNodeType(args);
+  }
+
+  /**
+   * A helper to find if `this` path is in a rightHandSide container or another container which requires the value of`this` to be accessed
+   * @returns {NodePath || String || Boolean}
+   */
+  getRhsAncestor(onlyReturnContainerName = false) {
+    // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
+    const rhsContainers = [
+      'rightHandSide',
+      'initialValue', // as arg
+      'trueExpression', // a conditional requires value accessing
+      'falseExpression',
+      'indexExpression', // as arg
+      'subExpression',
+      'rightExpression',
+      'arguments', // a value used as an arg needs to be accessed
+    ];
+    for (const container of rhsContainers) {
+      const ancestor = this.getAncestorContainedWithin(container);
+      if (ancestor && !onlyReturnContainerName) return ancestor;
+      if (ancestor && onlyReturnContainerName) return container;
+    }
+    return false;
+  }
+
+  /**
+   * A helper to find if `this` path is in a leftHandSide container or another container which requires the value of`this` to be modified
+   * @returns {NodePath || String || Boolean}
+   */
+  getLhsAncestor(onlyReturnContainerName = false) {
+    // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
+    const lhsContainers = [
+      'leftHandSide',
+      'declarations',
+      'subExpression',
+      'leftExpression',
+    ];
+    for (const container of lhsContainers) {
+      const ancestor = this.getAncestorContainedWithin(container);
+      if (ancestor && !onlyReturnContainerName) return ancestor;
+      if (ancestor && onlyReturnContainerName) return container;
+    }
+    return false;
+  }
+
+  /**
+   * A getter to return the node corresponding to the LHS of a path in a RHS container
+   * @returns {Object || null || Boolean}
+   */
+  getCorrespondingLhsNode() {
+    const rhsContainer = this.getRhsAncestor(true);
+    let parent;
+
+    switch (rhsContainer) {
+      case 'rightHandSide':
+        parent = this.getAncestorOfType('Assignment');
+        return parent.node.leftHandSide;
+      case 'initialValue':
+        parent = this.getAncestorOfType('VariableDeclarationStatement');
+        return parent.node.declarations[0];
+      case 'subExpression':
+        // a++ - assigning itself
+        return this.node;
+      case 'rightExpression':
+        // TODO there may be nested binops, so this may not be the 'true' parent lhs
+        parent = this.getAncestorOfType('BinaryOperation');
+        return parent.node.leftExpression;
+      case 'arguments': // a value used as an arg needs to be accessed
+        parent = this.getAncestorOfType('FunctionCall');
+        return parent.node.declarations?.[0] || false;
+      case 'trueExpression': // no assigment => no LHS
+      case 'falseExpression':
+      case 'indexExpression':
+        return false; // no assignment occurs
+      default:
+        return null; // this is not a RHS container
+    }
+  }
+
+  /**
+   * A getter to return the node corresponding to the RHS of a path in a LHS container
+   * @returns {Object || null || Boolean}
+   */
+  getCorrespondingRhsNode() {
+    const lhsContainer = this.getLhsAncestor(true);
+    let parent;
+    switch (lhsContainer) {
+      case 'leftHandSide':
+        parent = this.getAncestorOfType('Assignment');
+        return parent.node.rightHandSide;
+      case 'declarations':
+        parent = this.getAncestorOfType('VariableDeclarationStatement');
+        return parent.node.initialValue;
+      case 'subExpression':
+        // a++ - assigning itself
+        return this.node;
+      case 'leftExpression':
+        // TODO there may be nested binops, so this may not be the 'true' parent lhs
+        parent = this.getAncestorOfType('BinaryOperation');
+        return parent.node.rightExpression;
+      default:
+        return null; // this is not a RHS container
+    }
   }
 
   /**
@@ -365,23 +506,26 @@ export default class NodePath {
 
   isFunctionParameterDeclaration() {
     const functionParameters = this.getFunctionParameters();
-    return functionParameters.some(node => node === this.node);
+    return functionParameters?.some(node => node === this.node);
   }
 
   isFunctionParameter(node = this.node) {
-    const referencedBinding = this.scope.getReferencedBinding(node);
-    return referencedBinding.path.isFunctionParameterDeclaration();
+    const referencedBinding = this.getScope().getReferencedBinding(node); // there will be cases where the reference is a special type like 'msg.sender' which doesn't have a binding.
+    return referencedBinding?.path.isFunctionParameterDeclaration() ?? false;
   }
 
   isFunctionReturnParameterDeclaration() {
     return (
-      this.parent.nodeType === 'ParameterList' && this.parent.containerName === 'returnParameters'
+      this.parent.nodeType === 'ParameterList' &&
+      this.parent.containerName === 'returnParameters'
     );
   }
 
   isFunctionReturnParameter(node = this.node) {
-    const referencedBinding = this.scope.getReferencedBinding(node);
-    return referencedBinding.path.isFunctionReturnParameterDeclaration();
+    const referencedBinding = this.getScope().getReferencedBinding(node);
+    return (
+      referencedBinding?.path.isFunctionReturnParameterDeclaration() ?? false
+    );
   }
 
   // TODO: this will capture `memory` delcarations as well. In future we might want to split out identification of memory (heap) variables from stack variables.
@@ -389,7 +533,9 @@ export default class NodePath {
   isLocalStackVariableDeclaration() {
     return (
       this.isInFunctionBodyStatement() &&
-      ['VariableDeclaration', 'VariableDeclarationStatement'].includes(this.nodeType)
+      ['VariableDeclaration', 'VariableDeclarationStatement'].includes(
+        this.nodeType,
+      )
     );
   }
 
@@ -401,7 +547,11 @@ export default class NodePath {
   }
 
   isExternalContractInstanceDeclaration(node = this.node) {
-    if (!['VariableDeclaration', 'VariableDeclarationStatement'].includes(node.nodeType))
+    if (
+      !['VariableDeclaration', 'VariableDeclarationStatement'].includes(
+        node.nodeType,
+      )
+    )
       return false;
     if (!node.typeDescriptions?.typeString.includes('contract')) return false;
 
@@ -409,7 +559,8 @@ export default class NodePath {
     const referencedContractId = node.typeName?.referencedDeclaration;
     const thisContractDefinition = this.getContractDefinition(node).node;
     const sourceUnit = this.getSourceUnit(node).node;
-    const exportedSymbolsId = sourceUnit?.exportedSymbols?.[thisContractDefinition.name]?.[0];
+    const exportedSymbolsId =
+      sourceUnit?.exportedSymbols?.[thisContractDefinition.name]?.[0];
 
     if (!exportedSymbolsId) return false;
 
@@ -452,7 +603,12 @@ export default class NodePath {
    * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
    * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
    */
-  isIncrementation(expressionNode = this.node) {}
+  isIncrementation(expressionNode = this.node) {
+    return {
+      isIncremented: expressionNode.isIncremented,
+      isDecremented: expressionNode.isIncremented,
+    };
+  }
 
   /**
    * Decides whether an expression is an incrementation of some node (`lhsNode`).
@@ -461,7 +617,14 @@ export default class NodePath {
    * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
    * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
    */
-  isIncrementationOf(lhsNode, expressionNode = this.node) {}
+  isIncrementationOf(lhsNode, expressionNode = this.node) {
+    const { isIncremented, isDecremented } = expressionNode;
+    const incrementsThisNode =
+      expressionNode.incrementedDeclaration === lhsNode.referencedDeclaration;
+    return incrementsThisNode
+      ? { isIncremented, isDecremented }
+      : { isIncremented: false, isDecremented: false };
+  }
 
   /**
    * Checks whether a node represents `msg.sender`
@@ -519,7 +682,10 @@ export default class NodePath {
    * @returns {Boolean}
    */
   isMappingDeclaration(node = this.node) {
-    if (node.nodeType === 'VariableDeclaration' && node.typeName.nodeType === 'Mapping')
+    if (
+      node.nodeType === 'VariableDeclaration' &&
+      node.typeName.nodeType === 'Mapping'
+    )
       return true;
     return false;
   }
@@ -530,14 +696,29 @@ export default class NodePath {
    * @returns {Boolean}
    */
   isMappingIdentifier(node = this.node) {
-    if (node.nodeType !== 'IndexAccess') return false;
+    if (!['IndexAccess', 'Identifier'].includes(node.nodeType)) return false;
     // It could be a mapping or it could be an array. The only way to tell is to trace it all the way back to its referencedDeclaration.
-    const varDecNode = this.getReferencedNode(node);
+    const varDecNode = this.getReferencedNode(node); // If it's an IndexAccess node, it will look at the IndexAccess.baseExpression through getReferencedDeclarationId().
     return this.isMappingDeclaration(varDecNode);
   }
 
   isMapping(node = this.node) {
     return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
+  }
+
+  /**
+   * A mapping's key will contain an Identifier node pointing to a previously-declared variable.
+   * @param {Object} - the mapping's index access node.
+   * @returns {Node} - an Identifier node
+   */
+  getMappingKeyIdentifier(node = this.node) {
+    if (node.nodeType !== 'IndexAccess')
+      return this.getAncestorOfType('IndexAccess').getMappingKeyIdentifier();
+    const { indexExpression } = node;
+    const keyNode = this.isMsgSender(indexExpression)
+      ? indexExpression?.expression
+      : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
+    return keyNode;
   }
 
   /**
@@ -566,7 +747,26 @@ export default class NodePath {
       case 'FunctionCall':
         return node.expression.name === 'require';
       case 'Identifier':
-        return node.name === 'require' && node.referencedDeclaration > 4294967200; // negative referencedDeclarations are special
+        return (
+          node.name === 'require' && node.referencedDeclaration > 4294967200
+        );
+      default:
+        return false;
+    }
+  }
+
+  isModification() {
+    switch (this.nodeType) {
+      case 'Identifier':
+        // Currently, the only state variable 'modifications' we're aware of are:
+        //   - when a state variable is referenced on the LHS of an assignment;
+        //   - a unary operator
+
+        // prettier-ignore
+        return (
+            this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
+            this.getLhsAncestor(true)
+          );
       default:
         return false;
     }
@@ -582,6 +782,9 @@ export default class NodePath {
     const { nodeType } = referencingNode;
     let id;
     switch (nodeType) {
+      case 'VariableDeclaration':
+        id = this.node.id;
+        break;
       case 'Identifier':
         id = referencingNode.referencedDeclaration;
         break;
@@ -599,10 +802,36 @@ export default class NodePath {
   }
 
   /**
+   * @returns {Binding || null} - the binding of the node being referred-to by `this`.
+   */
+  getReferencedBinding(referencingNode = this.node) {
+    return this.getScope().getReferencedBinding(referencingNode);
+  }
+
+  /**
    * @returns {Node || null} - the node being referred-to by the input referencingNode.
    */
   getReferencedNode(referencingNode = this.node) {
-    return this.scope.getReferencedNode(referencingNode);
+    return this.getScope().getReferencedNode(referencingNode);
+  }
+
+  /**
+   * @returns {Node || null} - the node being referred-to by the input referencingNode.
+   */
+  getReferencedPath(referencingNode = this.node) {
+    return this.getScope().getReferencedPath(referencingNode);
+  }
+
+  /**
+   * The callback must return something falsey if it can't find what it's
+   * looking for. Otherwise, (if it finds what it's looking for) it can return
+   * whatever it wants.
+   * @param {Function} callback
+   * @param {Node} referencingNode optional
+   * @returns { ? || falsey} - depends on the callback
+   */
+  queryReferencedPath(callback, referencingNode = this.node) {
+    return callback(this.getReferencedPath(referencingNode)) ?? null;
   }
 
   /**
@@ -667,7 +896,10 @@ export default class NodePath {
 
     const visitor2 = (path, state) => {
       for (const refId of Object.keys(state)) {
-        if (path.node.referencedDeclaration === refId && path.containerName === 'leftHandSide')
+        if (
+          path.node.referencedDeclaration === refId &&
+          path.containerName === 'leftHandSide'
+        )
           state[refId].push(path);
       }
     };
@@ -689,22 +921,21 @@ export default class NodePath {
     }
   }
 
+  getScope() {
+    if (this.scope) return this.scope;
+    const scope = this.queryAncestors(path => path.scope);
+    if (!scope) throw new Error('Expect every node to be within a scope.');
+    return scope;
+  }
+
   setScope() {
     if (this.node.nodeType === 'SourceUnit') {
       this.scope = new Scope(this);
       return;
     }
 
-    let path = this.parentPath;
-    let nearestAncestorScope;
-    // move up the path 'tree', until a scope is found
-    while (path && !nearestAncestorScope) {
-      nearestAncestorScope = path.scope;
-      path = path.parentPath;
-    }
-
-    nearestAncestorScope.update(this);
-
+    const nearestAncestorScope = this.getScope();
     this.scope = this.isScopable() ? new Scope(this) : nearestAncestorScope;
+    nearestAncestorScope.update(this);
   }
 }
