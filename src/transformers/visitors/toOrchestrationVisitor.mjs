@@ -12,6 +12,56 @@ const interactsWithSecretVisitor = (thisPath, thisState) => {
     thisState.interactsWithSecret = true;
 };
 
+// collects increments and decrements into a string (for new commitment calculation) and array
+// (for collecting zokrates inputs)
+const collectIncrements = stateVarIndicator => {
+  const incrementsArray = [];
+  let incrementsString = '';
+  // TODO sometimes decrements are added to .increments
+  // current fix -  prevent duplicates
+  for (const inc of stateVarIndicator.increments) {
+    if (!inc.name) inc.name = inc.value;
+
+    if (incrementsArray.some(existingInc => inc.name === existingInc.name))
+      continue;
+    incrementsArray.push({
+      name: inc.name,
+      precedingOperator: inc.precedingOperator,
+    });
+
+    if (inc === stateVarIndicator.increments[0]) {
+      incrementsString += inc.value
+        ? `parseInt(${inc.name}, 10)`
+        : `parseInt(${inc.name}.integer, 10)`;
+    } else {
+      incrementsString += inc.value
+        ? ` ${inc.precedingOperator} parseInt(${inc.name}, 10)`
+        : ` ${inc.precedingOperator} parseInt(${inc.name}.integer, 10)`;
+    }
+  }
+  for (const dec of stateVarIndicator.decrements) {
+    if (!dec.name) dec.name = dec.value;
+    if (incrementsArray.some(existingInc => dec.name === existingInc.name))
+      continue;
+    incrementsArray.push({
+      name: dec.name,
+      precedingOperator: dec.precedingOperator,
+    });
+
+    if (!stateVarIndicator.decrements[1] && !stateVarIndicator.increments[0]) {
+      incrementsString += dec.value
+        ? `parseInt(${dec.name}, 10)`
+        : `parseInt(${dec.name}.integer, 10)`;
+    } else {
+      // if we have decrements, this str represents the value we must take away
+      // => it's a positive value with +'s
+      incrementsString += dec.value
+        ? ` + parseInt(${dec.name}, 10)`
+        : ` + parseInt(${dec.name}.integer, 10)`;
+    }
+  }
+  return { incrementsArray, incrementsString };
+};
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.js` AST
@@ -212,26 +262,9 @@ export default {
               .replace(']', '')
               .replace('.sender', '');
           }
-          let incrementsString = '';
-          let incrementsArray = [];
-          if (isIncremented) {
-            stateVarIndicator.increments?.forEach(inc => {
-              incrementsArray.push(inc.name || inc.value);
-              if (inc === stateVarIndicator.increments[0]) {
-                incrementsString += inc.name || inc.value;
-              } else {
-                incrementsString += inc.name
-                  ? `+ ${inc.name} `
-                  : `+ ${inc.value} `;
-              }
-            });
-            stateVarIndicator.decrements?.forEach(dec => {
-              incrementsArray.push(dec.name || dec.value);
-              incrementsString += dec.name
-                ? `- ${dec.name} `
-                : `- ${dec.value} `;
-            });
-          }
+          let { incrementsArray, incrementsString } = collectIncrements(
+            stateVarIndicator,
+          );
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
@@ -241,6 +274,7 @@ export default {
             node._newASTPointer.decrementedSecretStates.push(name);
             node._newASTPointer.decrementsSecretState = true;
           }
+
           const modifiedStateVariableNode = buildNode('VariableDeclaration', {
             name,
             isSecret: stateVarIndicator.isSecret,
@@ -260,7 +294,7 @@ export default {
             'ReadPreimage',
             {
               id,
-              increment: isIncremented ? incrementsArray : undefined,
+              increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
             },
           );
@@ -270,13 +304,11 @@ export default {
               name
             ] = buildPrivateStateNode('MembershipWitness', {
               privateStateName: name,
-              increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
             });
             newNodes.calculateNullifierNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateNullifier', {
-              increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
             });
           }
@@ -286,7 +318,6 @@ export default {
             ] = buildPrivateStateNode('CalculateCommitment', {
               privateStateName: name,
               id,
-              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
             newNodes.generateProofNode.privateStates[
@@ -301,14 +332,12 @@ export default {
             newNodes.sendTransactionNode.privateStates[
               name
             ] = buildPrivateStateNode('SendTransaction', {
-              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
             newNodes.writePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('WritePreimage', {
               id,
-              increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
           }
@@ -404,7 +433,7 @@ export default {
   BinaryOperation: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
+      const newNode = buildNode(node.nodeType, { operator: node.operator });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -429,7 +458,6 @@ export default {
 
   ExpressionStatement: {
     enter(path, state) {
-      // TODO refactor
       // We sometimes do need to copy over statements if we need to work out the new commitment value
       // e.g. secret x; x = y +2 => we need to copy over this line to the node file to construct the new commitment
       const { node, parent, scope } = path;
@@ -453,7 +481,10 @@ export default {
         ) {
           let accessed = false;
           indicator.accessedPaths?.forEach(obj => {
-            if (obj.node.id === lhs.id) accessed = true;
+            if (
+              obj.getAncestorOfType('ExpressionStatement').node.id === node.id
+            )
+              accessed = true;
           });
 
           const newNode = buildNode('VariableDeclarationStatement', {

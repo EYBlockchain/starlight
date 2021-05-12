@@ -68,6 +68,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
       switch (fields.stateType) {
         case 'increment':
           return `
+            \nconst ${stateName}_newCommitmentValue = generalise(${increment});
             ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
             \n`;
@@ -78,8 +79,9 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                 console.log(err);
               }),
             );
-            \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${increment}.integer)[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
-            \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${increment}.integer)[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
+            \nconst ${stateName}_newCommitmentValue = generalise(${increment});
+            \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer)[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
+            \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer)[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
 
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
@@ -159,12 +161,12 @@ export default function buildBoilerplate(nodeType, fields = {}) {
         case 'increment':
           return `
           \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
-          \nlet ${stateName}_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${increment}.hex(32), ${stateName}_newOwnerPublicKey.hex(32), ${stateName}_newSalt.hex(32)));
+          \nlet ${stateName}_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${stateName}_newCommitmentValue.hex(32), ${stateName}_newOwnerPublicKey.hex(32), ${stateName}_newSalt.hex(32)));
           \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32, 31)); // truncate`;
         case 'decrement':
           return `
             \nconst ${stateName}_2_newSalt = generalise(utils.randomHex(32));
-            \nlet ${stateName}_change = parseInt(${stateName}_0_prev.integer, 10) + parseInt(${stateName}_1_prev.integer, 10) - parseInt(${increment}.integer, 10);
+            \nlet ${stateName}_change = parseInt(${stateName}_0_prev.integer, 10) + parseInt(${stateName}_1_prev.integer, 10) - parseInt(${stateName}_newCommitmentValue.integer, 10);
             \n${stateName}_change = generalise(${stateName}_change);
             \nlet ${stateName}_2_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${stateName}_change.hex(32), publicKey.hex(32), ${stateName}_2_newSalt.hex(32)));
             \n${stateName}_2_newCommitment = generalise(${stateName}_2_newCommitment.hex(32, 31)); // truncate`;
@@ -233,7 +235,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
         case 'increment':
           return `
             \npreimage[${stateName}_newCommitment.hex(32)] = {
-            \tvalue: ${increment}.integer,
+            \tvalue: ${stateName}_newCommitmentValue.integer,
             \tsalt: ${stateName}_newSalt.integer,
             \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
             \tcommitment: ${stateName}_newCommitment.integer,

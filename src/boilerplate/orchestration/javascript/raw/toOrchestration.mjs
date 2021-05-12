@@ -83,12 +83,15 @@ export const generateProofBoilerplate = node => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            if (
-              !output.join().includes(`\t${stateNode.increment}.integer`) &&
-              !parameters.includes(`\t${stateNode.increment}.integer,`)
-            )
-              output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
-
+            stateNode.increment.forEach(inc => {
+              // +inc.name tries to convert into a number -  we don't want to add constants here
+              if (
+                !output.join().includes(`\t${inc.name}.integer`) &&
+                !parameters.includes(`\t${inc.name}.integer,`) &&
+                !+inc.name
+              )
+                output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
+            });
             output.push(
               buildBoilerplate('GenerateProof', {
                 stateName,
@@ -101,8 +104,13 @@ export const generateProofBoilerplate = node => {
           case false:
           default:
             // increment
-            if (!output.join().includes(`\t${stateNode.increment}.integer`))
-              output.push(`\n\t\t\t\t\t\t\t\t${stateNode.increment}.integer`);
+            stateNode.increment.forEach(inc => {
+              if (
+                !output.join().includes(`\t${inc.name}.integer`) &&
+                !+inc.name
+              )
+                output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
+            });
             output.push(
               buildBoilerplate('GenerateProof', {
                 stateName,
@@ -201,7 +209,6 @@ export const preimageBoilerPlate = node => {
           buildBoilerplate('ReadPreimage', {
             stateType: 'whole',
             stateName: privateStateName,
-            increment: stateNode.increment,
             newOwnerStatment,
             stateVarIds,
           }),
@@ -229,6 +236,7 @@ export const preimageBoilerPlate = node => {
               buildBoilerplate('ReadPreimage', {
                 stateType: 'increment',
                 stateName: privateStateName,
+                increment: stateNode.increment,
                 newOwnerStatment,
                 stateVarIds,
               }),
@@ -339,7 +347,6 @@ export const OrchestrationCodeBoilerPlate = node => {
                   buildBoilerplate(node.nodeType, {
                     stateName,
                     stateType: 'increment',
-                    increment: stateNode.increment,
                   }),
                 );
                 break;
@@ -420,14 +427,12 @@ export const OrchestrationCodeBoilerPlate = node => {
 
     case 'CalculateCommitment':
       for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
-        const { increment } = stateNode;
         switch (stateNode.isPartitioned) {
           case undefined:
           case false:
             lines.push(
               buildBoilerplate(node.nodeType, {
                 stateName,
-                increment,
                 stateType: 'whole',
               }),
             );
@@ -440,7 +445,6 @@ export const OrchestrationCodeBoilerPlate = node => {
                 lines.push(
                   buildBoilerplate(node.nodeType, {
                     stateName,
-                    increment,
                     stateType: 'decrement',
                   }),
                 );
@@ -451,7 +455,6 @@ export const OrchestrationCodeBoilerPlate = node => {
                 lines.push(
                   buildBoilerplate(node.nodeType, {
                     stateName,
-                    increment,
                     stateType: 'increment',
                   }),
                 );
