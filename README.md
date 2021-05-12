@@ -1,7 +1,7 @@
 # starlight :night_with_stars:
 
 Generate a zApp from a Solidity contract.
-x
+
 ---
 
 ## Induction :zap:
@@ -22,7 +22,7 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
+- [Quick User Guide](#quick-user-guide)
 - [Install](#install)
 - [Run](#run)
   - [CLI options](#cli-options)
@@ -30,13 +30,12 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
 - [Developer](#developer)
   - [Testing](#testing)
     - [full zapp](#full-zapp)
-    - [preliminary traversals](#preliminary-traversals)
+    - [Preliminary traversals](#preliminary-traversals)
       - [To test a single file:](#to-test-a-single-file)
       - [Adding new test cases](#adding-new-test-cases)
       - [Updating test cases](#updating-test-cases)
       - [Adding/Updating _all_ test cases](#addingupdating-_all_-test-cases)
     - [circuit](#circuit)
-  - [R&D Notes & Ideas](#rd-notes--ideas)
 - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
