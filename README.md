@@ -212,6 +212,8 @@ Finally, run a test, which executes the function privately, using some test para
 
 `npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
 
+It's impossible for a compiler to tell which order functions must be called in, or the range of inputs that will work. Dont't worry - If you know how to test the input Zolidity contract, you'll know how to test the zApp. The signatures of the original functions are the same as the output nodejs functions. There are instructions in the output `test.mjs` on how to edit it.
+
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
 **NB: rerunning the test will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
