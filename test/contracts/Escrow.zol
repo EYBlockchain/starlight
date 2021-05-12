@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0
 
-// TARGET CONTRACT FOR PHASE 2 OF DEVELOPMENT:
-
 pragma solidity ^0.8.0;
 
 import "./Escrow-imports/IERC20.sol";
