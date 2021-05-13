@@ -17,7 +17,11 @@ export const boilerplateContractsDir = './contracts'; // relative to process.cwd
  * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
-const collectImportFiles = (file, contextDirPath = boilerplateContractsDir) => {
+const collectImportFiles = (
+  file,
+  contextDirPath = boilerplateContractsDir,
+  fileName = '',
+) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(line => line.startsWith('import'));
   let localFiles = [];
@@ -32,19 +36,35 @@ const collectImportFiles = (file, contextDirPath = boilerplateContractsDir) => {
   // collect the import files and their paths:
   for (const p of localFilePaths) {
     if (p.includes('IVerifier')) {
-      localFilePaths.push('./verify/Verifier.sol');
       localFilePaths.push('./Migrations.sol'); // TODO fix bodge
     }
     const absPath = path.resolve(contextDirPath, p);
     const relPath = path.relative('.', absPath);
     const f = fs.readFileSync(relPath, 'utf8');
+    const n = path.basename(absPath, path.extname(absPath));
+    // if import is an interface, we need to deploy contract e.g. IERC20 -> deploy ERC20
+    if (
+      n.startsWith(`I`) &&
+      f.replace(/{.*$/, '').includes('interface') &&
+      fileName !== n.substring(1) // otherwise we're trying to import this file's interface
+    ) {
+      // if we import an interface, we must find the original contract
+      // we assume that any interface begins with I (substring(1)) and the remaining chars are the original contract name
+      const newLocalPath = p.replace(n, n.substring(1));
+      const newPath = relPath.replace(n, n.substring(1));
+      const check = fs.existsSync(newPath);
+      if (check) {
+        localFilePaths.push(newLocalPath);
+      }
+    }
+
     localFiles.push({
       filepath: relPath, // the path to which we'll copy the file.
       file: f,
     });
 
     localFiles = localFiles.concat(
-      collectImportFiles(f, path.dirname(relPath)),
+      collectImportFiles(f, path.dirname(relPath), n),
     );
   }
 

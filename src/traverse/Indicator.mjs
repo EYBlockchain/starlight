@@ -64,12 +64,11 @@ export class FunctionDefinitionIndicator {
     this.parentIndicator = scope.parentScope.indicators;
   }
 
-  // A ContractDefinitionIndicator will be updated if (some time after its creation) we encounter an AST node which gives us more information about the contract's global states
-  // E.g. if we encounter a VariableDeclaration node for a secret state.
   update(path) {
     if (path.node.isSecret) {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.interactsWithSecret = true;
+      this.zkSnarkVerificationRequired = true;
     }
   }
 
@@ -246,6 +245,7 @@ export class StateVariableIndicator {
     this.oldCommitmentAccessRequired = true;
     this.parentIndicator.oldCommitmentAccessRequired = true;
     this.parentIndicator.initialisationRequired = true;
+    this.parentIndicator.parentIndicator.oldCommitmentAccessRequired = true;
     const reason = { src: path.node.src, 0: `Accessed` };
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
