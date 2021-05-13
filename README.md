@@ -4,7 +4,7 @@ Generate a zApp from a Solidity contract.
 
 ---
 
-## Induction :zap:
+## Introduction
 
 zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? `starlight` helps developers do just this...
 

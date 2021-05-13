@@ -123,6 +123,7 @@ export function buildNode(nodeType, fields = {}) {
       const {
         name,
         visibility,
+        isConstructor,
         body = buildNode('Block'),
         parameters = buildNode('ParameterList'),
         // returnParameters = buildNode('ParameterList'), // TODO
@@ -131,6 +132,7 @@ export function buildNode(nodeType, fields = {}) {
         nodeType,
         name,
         visibility,
+        isConstructor,
         body,
         parameters,
         // returnParameters,
@@ -144,7 +146,11 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'Block': {
-      const { preStatements = [], statements = [], postStatements = [] } = fields;
+      const {
+        preStatements = [],
+        statements = [],
+        postStatements = [],
+      } = fields;
       return {
         nodeType,
         preStatements,
@@ -153,14 +159,23 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'VariableDeclaration': {
-      const { name, typeString, visibility, storageLocation, isSecret, declarationType } = fields;
+      const {
+        name,
+        typeString,
+        visibility,
+        storageLocation,
+        isSecret,
+        declarationType,
+      } = fields;
       return {
         nodeType,
         name,
         visibility,
         storageLocation,
         typeDescriptions: { typeString },
-        typeName: buildNode('ElementaryTypeName', { typeDescriptions: { typeString } }),
+        typeName: buildNode('ElementaryTypeName', {
+          typeDescriptions: { typeString },
+        }),
         isSecret,
         declarationType,
       };
