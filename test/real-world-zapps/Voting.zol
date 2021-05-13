@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Voting {
+
+    secret mapping (uint256 => uint256) public proposalVotes;
+    mapping (uint256 => bytes32) public proposals;
+    mapping (address => bool) public hasVoted;
+    mapping (address => bool) public canPropose;
+    address public admin;
+
+    constructor (address _admin) {
+      admin = _admin;
+      canPropose[admin] = true;
+    }
+
+    function vote(secret uint256 proposalId) public {
+      require(hasVoted[msg.sender] == false); // this is a secret test
+      require(proposals[proposalId] != bytes32(0));
+      unknown proposalVotes[proposalId] += 1;
+      hasVoted[msg.sender] = true;
+    }
+
+    function propose(uint256 proposalId, bytes32 proposalName) public {
+        require(canPropose[msg.sender]);
+        proposals[proposalId] = proposalName;
+    }
+
+    function approve(address proposer) public {
+      require(msg.sender == admin);
+      canPropose[proposer] = true;
+    }
+
+    function strikeVote(secret uint256 proposalId) public {
+      require(msg.sender == admin);
+      proposalVotes[proposalId] -= 1;
+    }
+}

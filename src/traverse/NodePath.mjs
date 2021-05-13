@@ -764,7 +764,7 @@ export default class NodePath {
 
         // prettier-ignore
         return (
-            this.containerName !== 'indexExpression' &&
+            this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
             this.getLhsAncestor(true)
           );
       default:
@@ -782,6 +782,9 @@ export default class NodePath {
     const { nodeType } = referencingNode;
     let id;
     switch (nodeType) {
+      case 'VariableDeclaration':
+        id = this.node.id;
+        break;
       case 'Identifier':
         id = referencingNode.referencedDeclaration;
         break;
@@ -932,8 +935,7 @@ export default class NodePath {
     }
 
     const nearestAncestorScope = this.getScope();
-    nearestAncestorScope.update(this);
-
     this.scope = this.isScopable() ? new Scope(this) : nearestAncestorScope;
+    nearestAncestorScope.update(this);
   }
 }

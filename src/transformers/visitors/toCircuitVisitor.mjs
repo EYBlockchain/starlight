@@ -304,6 +304,22 @@ const visitor = {
     },
   },
 
+  ElementaryTypeNameExpression: {
+    enter(path, state) {
+      // HACK to get ElementaryTypeNameExpressions working
+      const { node, parent } = path;
+
+      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = buildNode(
+        'ElementaryTypeName',
+        {
+          name: node.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
+        },
+      );
+      state.skipSubNodes = true;
+    },
+  },
+
   ElementaryTypeName: {
     enter(path) {
       const { node, parent } = path;
@@ -314,9 +330,12 @@ const visitor = {
         );
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('ElementaryTypeName', {
-        name: node.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
-      });
+      parent._newASTPointer[path.containerName] = buildNode(
+        'ElementaryTypeName',
+        {
+          name: node.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
+        },
+      );
     },
   },
 
@@ -373,6 +392,7 @@ const visitor = {
     enter(path, state) {
       const { node, parent } = path;
       let newNode;
+      // TODO typeConversion
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 

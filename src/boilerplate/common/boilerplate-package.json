@@ -8,12 +8,13 @@
     "private contract",
     "zapp",
     "zappify",
+    "starlight",
     "zk-snark",
     "compiler",
     "transpiler",
     "solidity"
   ],
-  "author": "Zappify",
+  "author": "starlight",
   "license": "CC0-1.0",
   "dependencies": {
     "@babel/register": "^7.11.5",

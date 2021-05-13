@@ -213,7 +213,7 @@ export default class Binding {
     }
     if (!msgIsMappingKeyorMappingValue && ownerNode.baseExpression) {
       // here: the key is not msg and we don't know if we have a key or value owner, if at all
-      // the input ownerNode is either 1. msg.sender or 2. whatever msg.sender most equal
+      // the input ownerNode is either 1. msg.sender or 2. whatever msg.sender must equal
       // above deals with 1., here deals with 2. if isMapping
       if (ownerNode.baseExpression.referencedDeclaration === this.id) {
         // if the ownerNode is the same as this node, then the value rep. the owner
@@ -232,6 +232,8 @@ export default class Binding {
         this.updateOwnership(thisMsgSenderNode, 'value');
         return;
       }
+    } else {
+      ownerNode.mappingOwnershipType = msgIsMappingKeyorMappingValue;
     }
     if (this.isOwned && this.owner.name !== ownerNode.name) {
       throw new ZKPError(
@@ -248,9 +250,13 @@ export default class Binding {
         this.node,
       );
     }
+    ownerNode.isParam = NodePath.getPath(ownerNode).isFunctionParameter();
     this.owner = ownerNode;
     this.isOwned = true;
-    if (this.owner.typeDescriptions.typeIdentifier.includes('address'))
+    if (
+      this.owner.typeDescriptions.typeIdentifier.includes('address') ||
+      this.owner.name === 'msg'
+    )
       this.onChainKeyRegistry = true;
     if (this.isMapping) {
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
@@ -448,10 +454,10 @@ export default class Binding {
       );
     } else if (msgSenderEverywhereMappingValue) {
       // pass the msg.sender node to the updateOwnership method
-      this.updateOwnership(
-        this.nullifyingPaths[0].parent.rightHandSide,
-        'value',
-      );
+      const owner =
+        this.nullifyingPaths[0].parent.rightHandSide ||
+        this.nullifyingPaths[0].parentPath.parent.rightHandSide;
+      this.updateOwnership(owner, 'value');
     }
   }
 

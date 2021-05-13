@@ -146,6 +146,9 @@ export class Scope {
             `Couldn't find a referencedDeclaration node for the current Identifier node.  I.e. couldn't find a node with id ${node.referencedDeclaration}`,
           );
 
+        if (this.scopeType === 'FunctionDefinition')
+          this.indicators.update(path);
+
         // if (
         //   referencedBinding.isSecret &&
         //   this.scopeType === 'FunctionDefinition'
@@ -610,7 +613,7 @@ export class Scope {
     const { indicators } = this;
     for (const stateVarId of Object.keys(indicators)) {
       const indicator = indicators[stateVarId];
-      if (indicator.isModified && indicator.binding.isSecret) return true;
+      if (indicator?.isModified && indicator.binding?.isSecret) return true;
     }
     return false;
   }
