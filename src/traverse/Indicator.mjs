@@ -21,15 +21,47 @@ export class ContractDefinitionIndicator {
       this.zkSnarkVerificationRequired = true;
     }
   }
+
+  updateIncrementation(path, state) {
+    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
+      // a reinitialised state does require new commitments
+      this.newCommitmentsRequired = true;
+      this.initialisationRequired = true;
+      // a reinitialised state does not require a nullifier
+      if (
+        state.incrementedPath &&
+        !state.incrementedIdentifier.reinitialisable
+      ) {
+        this.nullifiersRequired = true;
+        this.oldCommitmentAccessRequired = true;
+      }
+      // an incremented, but not decremented, state only needs a new commitment
+    } else if (
+      !path.isDecremented &&
+      (state.incrementedIdentifier.isUnknown ||
+        state.incrementedIdentifier.baseExpression?.isUnknown)
+    ) {
+      this.newCommitmentsRequired = true;
+      // we may have an incrementation not marked as unknown in this scope:
+    } else if (!path.isDecremented) {
+      this.newCommitmentsRequired = true;
+    }
+    if (path.isDecremented && !state.incrementedIdentifier.isKnown) {
+      this.nullifiersRequired = true;
+      this.newCommitmentsRequired = true;
+      this.oldCommitmentAccessRequired = true;
+    }
+  }
 }
 
 export class FunctionDefinitionIndicator {
-  constructor() {
+  constructor(scope) {
     this.zkSnarkVerificationRequired = false;
     this.oldCommitmentAccessRequired = false;
     this.nullifiersRequired = false;
     this.newCommitmentsRequired = false;
     this.initialisationRequired = false;
+    this.parentIndicator = scope.parentScope.indicators;
   }
 
   // A ContractDefinitionIndicator will be updated if (some time after its creation) we encounter an AST node which gives us more information about the contract's global states
@@ -38,6 +70,38 @@ export class FunctionDefinitionIndicator {
     if (path.node.isSecret) {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.interactsWithSecret = true;
+    }
+  }
+
+  updateIncrementation(path, state) {
+    this.parentIndicator.updateIncrementation(path, state);
+    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
+      // a reinitialised state does require new commitments
+      this.newCommitmentsRequired = true;
+      this.initialisationRequired = true;
+      // a reinitialised state does not require a nullifier
+      if (
+        state.incrementedPath &&
+        !state.incrementedIdentifier.reinitialisable
+      ) {
+        this.nullifiersRequired = true;
+        this.oldCommitmentAccessRequired = true;
+      }
+      // an incremented, but not decremented, state only needs a new commitment
+    } else if (
+      !path.isDecremented &&
+      (state.incrementedIdentifier.isUnknown ||
+        state.incrementedIdentifier.baseExpression?.isUnknown)
+    ) {
+      this.newCommitmentsRequired = true;
+      // we may have an incrementation not marked as unknown in this scope:
+    } else if (!path.isDecremented) {
+      this.newCommitmentsRequired = true;
+    }
+    if (path.isDecremented && !state.incrementedIdentifier.isKnown) {
+      this.nullifiersRequired = true;
+      this.newCommitmentsRequired = true;
+      this.oldCommitmentAccessRequired = true;
     }
   }
 
@@ -91,7 +155,7 @@ export class StateVariableIndicator {
     this.binding = referencedBinding;
     this.scope = path.scope;
     this.node = path.node;
-    this.parentIndincator = path.scope.indicators;
+    this.parentIndicator = path.scope.indicators;
 
     this.isSecret = referencedBinding.isSecret; // only included to match bindings so that mappingKey class can be reused for both. Consider removing if things get too messy, and splitting mappingKey into two classes; one for Binding & one for StateVarIndicator
 
@@ -167,7 +231,7 @@ export class StateVariableIndicator {
     this.isOwned ??= this.binding.isOwned;
     this.owner ??= this.binding.owner;
     this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
-    this.parentIndincator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+    this.parentIndicator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     if (this.isMapping) {
       this.mappingOwnershipType = this.owner.mappingOwnershipType;
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
@@ -180,8 +244,8 @@ export class StateVariableIndicator {
     this.isWhole = true;
     this.isAccessed = true;
     this.oldCommitmentAccessRequired = true;
-    this.parentIndincator.oldCommitmentAccessRequired = true;
-    this.parentIndincator.initialisationRequired = true;
+    this.parentIndicator.oldCommitmentAccessRequired = true;
+    this.parentIndicator.initialisationRequired = true;
     const reason = { src: path.node.src, 0: `Accessed` };
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
@@ -194,6 +258,7 @@ export class StateVariableIndicator {
   }
 
   updateIncrementation(path, state) {
+    this.parentIndicator.updateIncrementation(path, state);
     if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
@@ -204,15 +269,8 @@ export class StateVariableIndicator {
         state.incrementedPath &&
         !state.incrementedIdentifier.reinitialisable
       ) {
-        this.parentIndincator.nullifiersRequired = true;
-        this.parentIndincator.newCommitmentsRequired = true;
-        this.parentIndincator.oldCommitmentAccessRequired = true;
-        this.parentIndincator.initialisationRequired = true;
         this.addNullifyingPath(state.incrementedPath);
       }
-      // a reinitialised state does require new commitments
-      this.parentIndincator.newCommitmentsRequired = true;
-      this.parentIndincator.initialisationRequired = true;
       // an incremented, but not decremented, state only needs a new commitment
     } else if (
       !path.isDecremented &&
@@ -227,16 +285,9 @@ export class StateVariableIndicator {
       this.isUnknown ??= true;
       this.isPartitionedReason ??= [];
       this.isPartitionedReason.push(reason);
-      this.parentIndincator.newCommitmentsRequired = true;
-      // we may have an incrementation not marked as unknown in this scope:
-    } else if (!path.isDecremented) {
-      this.parentIndincator.newCommitmentsRequired = true;
     }
     // if its known, we already added the path
     if (path.isDecremented && !state.incrementedIdentifier.isKnown) {
-      this.parentIndincator.nullifiersRequired = true;
-      this.parentIndincator.newCommitmentsRequired = true;
-      this.parentIndincator.oldCommitmentAccessRequired = true;
       this.addNullifyingPath(state.incrementedPath);
     }
     // if its incremented anywhere, isIncremented = true

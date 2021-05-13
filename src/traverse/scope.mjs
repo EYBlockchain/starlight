@@ -98,7 +98,7 @@ export class Scope {
         break;
       case 'FunctionDefinition':
         // @Indicator_FnDef new properties
-        this.indicators = new FunctionDefinitionIndicator();
+        this.indicators = new FunctionDefinitionIndicator(this);
         break;
       default:
     }
