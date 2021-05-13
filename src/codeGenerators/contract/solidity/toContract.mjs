@@ -2,7 +2,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import logger from '../../../utils/logger.mjs';
 import ContractBP from '../../../boilerplate/contract/solidity/raw/ContractBoilerplateGenerator.mjs';
 import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoilerplateGenerator.mjs';
 
