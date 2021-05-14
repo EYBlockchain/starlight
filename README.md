@@ -34,11 +34,6 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
 - [Developer](#developer)
   - [Testing](#testing)
     - [full zapp](#full-zapp)
-    - [Preliminary traversals](#preliminary-traversals)
-      - [To test a single file:](#to-test-a-single-file)
-      - [Adding new test cases](#adding-new-test-cases)
-      - [Updating test cases](#updating-test-cases)
-      - [Adding/Updating _all_ test cases](#addingupdating-_all_-test-cases)
     - [circuit](#circuit)
   - [Contributing](#contributing)
 - [License](#license)
@@ -237,37 +232,6 @@ It's impossible for a transpiler to tell which order functions must be called in
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
 **NB: rerunning the test will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
-
-#### Preliminary traversals
-
-Preliminary traversals populate the `binding` and `indicator` classes. This is some complex code, which is easy to break (when adding new functionality). To ensure none of this code gets accidentally broken, we have a test which compares actual vs expected objects, for a range of input contracts. (See code [here](./test/prelim-traversals/index.mjs))
-
-`npm run-script test-prelim`  
-
-##### To test a single file:
-
-`npm run-script test-prelim -- --input fileName.zol`
-
-(Note all test-prelim files are stored in `./test/prelim-traversals/test-data` so no path is needed as input).
-
-##### Adding new test cases
-
-You can automate the creation of 'expected outputs' for these tests.
-
-1. Create a `.zol` file, around which you'd like a test to be created. For this example, suppose it's called `example-1.zol`.
-1. Save it in `./test/prelim-traversals/test-data`.
-1. Run `npm run-script test-prelim -- --write example-1`. This will run `zappify` on the file, and write output data to a file called `example-1.json`.
-1. Future tests will use `example-1.json` as the 'expected' outcome of the test.
-
-##### Updating test cases
-
-Run the steps above.  
-**Warning:** this will overwrite existing 'expected' data with new data.
-
-##### Adding/Updating _all_ test cases
-
-Use the flag `--write-all` instead of `--write <fileName`.  
-**Warning:** this will overwrite all 'expected' test files. Only use if you know what you're doing.
 
 #### circuit
 
