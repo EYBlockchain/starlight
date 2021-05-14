@@ -1,12 +1,18 @@
 - The code in this repository is CC0 1.0 Universal licensed. See below for the license.
-- This repository contains some modules of code and portions of code from Babel (https://github.com/babel/babel). All such code has been modified for use in this repository. See below for Babel's MIT license and copyright notice. Babel's copyright notice is also included in relevant modules.
-- This repository contains some portions of code from The Super Tiny Compiler (https://github.com/jamiebuilds/the-super-tiny-compiler). All such portions of code have been considerably modified for use in this repository. See below for The Super Tiny Compiler's CC-BY-4.0 License.
+- This repository contains some modules of code and portions of code from Babel
+ (https://github.com/babel/babel). All such code has been modified for use in
+ this repository. See below for Babel's MIT license and copyright notice.
+ Babel's copyright notice is also included in relevant modules.
+- This repository contains some portions of code from The Super Tiny Compiler
+ (https://github.com/jamiebuilds/the-super-tiny-compiler). All such portions of
+ code have been considerably modified for use in this repository. See below for
+ The Super Tiny Compiler's CC-BY-4.0 License.
 
 
 ---
 
 
-The code in this repository is CC0 1.0 Universal licensed. See below for the license:
+The code in this repository is CC0 1.0 Universal licensed. See here for the license:
 
 Creative Commons Legal Code
 
@@ -134,7 +140,7 @@ express Statement of Purpose.
 ---
 
 
-This repository contains some modules of code and portions of code from Babel (https://github.com/babel/babel). All such code has been modified for use in this repository. See below for Babel's MIT license and copyright notice:
+This repository contains some modules of code and portions of code from Babel (https://github.com/babel/babel). All such code has been modified for use in this repository. See here for Babel's MIT license and copyright notice:
 
 MIT License
 
@@ -163,7 +169,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ---
 
 
-This repository contains some portions of code from The Super Tiny Compiler (https://github.com/jamiebuilds/the-super-tiny-compiler). All such portions of code have been considerably modified for use in this repository. See below for The Super Tiny Compiler's CC-BY-4.0 License:
+This repository contains some portions of code from The Super Tiny Compiler (https://github.com/jamiebuilds/the-super-tiny-compiler). All such portions of code have been considerably modified for use in this repository. See here for The Super Tiny Compiler's CC-BY-4.0 License:
 
 Creative Commons Attribution 4.0 International
 
