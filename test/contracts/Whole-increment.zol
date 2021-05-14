@@ -7,6 +7,6 @@ contract MyContract {
     secret uint256 private a;
 
     function incr(secret uint256 param1) public {
-        a += param1;
+        known a += param1;
     }
 }

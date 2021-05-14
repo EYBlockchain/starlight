@@ -21,7 +21,7 @@ contract MyContract {
       b[key] = b[key] - param2;
     }
 
-    function incra(secret uint256 param3, uint256 param4) public {
-      a += param3 - param4 - 5;
+    function incra(secret uint256 param3) public {
+      a += param3;
     }
 }
