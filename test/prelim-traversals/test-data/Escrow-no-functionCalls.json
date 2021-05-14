@@ -1,6 +1,0 @@
-{
-  "scopes": null,
-  "errorType": "TypeError",
-  "errorMessage": "Cannot read property 'some' of undefined",
-  "warningMessages": null
-}

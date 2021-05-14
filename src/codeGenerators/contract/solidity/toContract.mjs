@@ -2,7 +2,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import logger from '../../../utils/logger.mjs';
 import ContractBP from '../../../boilerplate/contract/solidity/raw/ContractBoilerplateGenerator.mjs';
 import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoilerplateGenerator.mjs';
 
@@ -18,7 +17,11 @@ export const boilerplateContractsDir = './contracts'; // relative to process.cwd
  * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
-const collectImportFiles = (file, contextDirPath = boilerplateContractsDir) => {
+const collectImportFiles = (
+  file,
+  contextDirPath = boilerplateContractsDir,
+  fileName = '',
+) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(line => line.startsWith('import'));
   let localFiles = [];
@@ -33,18 +36,36 @@ const collectImportFiles = (file, contextDirPath = boilerplateContractsDir) => {
   // collect the import files and their paths:
   for (const p of localFilePaths) {
     if (p.includes('IVerifier')) {
-      localFilePaths.push('./verify/Verifier.sol');
       localFilePaths.push('./Migrations.sol'); // TODO fix bodge
     }
     const absPath = path.resolve(contextDirPath, p);
     const relPath = path.relative('.', absPath);
     const f = fs.readFileSync(relPath, 'utf8');
+    const n = path.basename(absPath, path.extname(absPath));
+    // if import is an interface, we need to deploy contract e.g. IERC20 -> deploy ERC20
+    if (
+      n.startsWith(`I`) &&
+      f.replace(/{.*$/, '').includes('interface') &&
+      fileName !== n.substring(1) // otherwise we're trying to import this file's interface
+    ) {
+      // if we import an interface, we must find the original contract
+      // we assume that any interface begins with I (substring(1)) and the remaining chars are the original contract name
+      const newLocalPath = p.replace(n, n.substring(1));
+      const newPath = relPath.replace(n, n.substring(1));
+      const check = fs.existsSync(newPath);
+      if (check) {
+        localFilePaths.push(newLocalPath);
+      }
+    }
+
     localFiles.push({
       filepath: relPath, // the path to which we'll copy the file.
       file: f,
     });
 
-    localFiles = localFiles.concat(collectImportFiles(f, path.dirname(relPath)));
+    localFiles = localFiles.concat(
+      collectImportFiles(f, path.dirname(relPath), n),
+    );
   }
 
   // remove duplicate files after recursion:
@@ -78,19 +99,16 @@ function codeGenerator(node) {
     //   return verifierInterfaceFileBoilerplate();
 
     case 'SourceUnit': {
-      const license = node.license ? `// SPDX-License-Identifier: ${node.license}` : '';
-      const file = `${license}\n\n${node.nodes.map(codeGenerator).join('\n\n')}`;
-      let filepath = path.join(boilerplateContractsDir, `${node.name}Shield.sol`);
-
-      if (node.mainPrivateFunctionName) {
-        filepath = path.join(
-          boilerplateContractsDir,
-          `${
-            node.mainPrivateFunctionName.charAt(0).toUpperCase() +
-            node.mainPrivateFunctionName.slice(1)
-          }Shield.sol`,
-        );
-      }
+      const license = node.license
+        ? `// SPDX-License-Identifier: ${node.license}`
+        : '';
+      const file = `${license}\n\n${node.nodes
+        .map(codeGenerator)
+        .join('\n\n')}`;
+      const filepath = path.join(
+        boilerplateContractsDir,
+        `${node.name}Shield.sol`,
+      );
 
       const fileData = [
         {
@@ -110,13 +128,7 @@ function codeGenerator(node) {
       return `import "${node.file}";`;
 
     case 'ContractDefinition': {
-      let name = `${node.name}Shield`;
-      if (node.mainPrivateFunctionName) {
-        name = `${
-          node.mainPrivateFunctionName.charAt(0).toUpperCase() +
-          node.mainPrivateFunctionName.slice(1)
-        }Shield`;
-      }
+      const name = `${node.name}Shield`;
       const contractDeclaration = `contract ${name}`;
       // TODO: an InheritanceSpecifier is a nodeType in itself, so should be recursed into as its own 'case' in this 'switch' statement.
       const inheritanceSpecifiers = node.baseContracts
@@ -135,7 +147,9 @@ function codeGenerator(node) {
 
     case 'FunctionDefinition': {
       // prettier-ignore
-      const functionSignature = `${node.name !== 'constructor' ? 'function ' : ''}${node.name} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
+      const functionSignature = `${
+        node.isConstructor ? 'constructor ' : 'function '
+      }${node.name} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
       return `
         ${functionSignature}
@@ -187,14 +201,14 @@ function codeGenerator(node) {
       return codeGenerator(node.expression);
 
     case 'Assignment':
-      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(
-        node.rightHandSide,
-      )};`;
+      return `${codeGenerator(node.leftHandSide)} ${
+        node.operator
+      } ${codeGenerator(node.rightHandSide)};`;
 
     case 'BinaryOperation':
-      return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
-        node.rightExpression,
-      )}`;
+      return `${codeGenerator(node.leftExpression)} ${
+        node.operator
+      } ${codeGenerator(node.rightExpression)}`;
 
     case 'Identifier':
       return node.name;

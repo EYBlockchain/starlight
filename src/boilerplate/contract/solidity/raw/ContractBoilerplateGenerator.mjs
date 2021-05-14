@@ -60,7 +60,7 @@ class ContractBoilerplateGenerator {
             ${[
               ...(nullifiersRequired ? [`uint[] newNullifiers;`] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
-              ...(nullifiersRequired ? [`uint[] newCommitments;`] : []),
+              ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
               `uint[] customInputs;`, // TODO: consider whether we need to identify when / when not to include this.
             ].join('\n\t\t\t\t\t\t')}
           }`,

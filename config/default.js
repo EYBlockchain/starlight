@@ -1,5 +1,4 @@
 module.exports = {
-  // TODO: do we need this?
   types: ['uint256', 'mapping', 'address'],
   functionTypes: ['function', 'constructor', 'receive', 'fallback'],
   decorators: ['secret', 'known', 'unknown'],

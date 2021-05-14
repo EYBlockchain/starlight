@@ -1,12 +1,10 @@
 {
-  "name": "zappify",
+  "name": "starlight",
   "version": "0.0.1",
   "description": "Create a zApp from Solidity",
   "main": "bin/index.mjs",
   "scripts": {
-    "setup-zkp": "node /app/src/utils/zkp-setup.mjs -i assign",
     "write-vk": "node /app/write-vk.mjs -i assign",
-    "test": "./bin/startup && docker-compose run zappify npx mocha --exit --require @babel/register 'test/test.mjs'",
     "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs",
     "test-prelim-lite": "mocha --require @babel/register ./test/prelim-traversals/index.mjs",
     "format": "prettier --write \"**/*.{json,css,scss,md}\"",
@@ -17,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EYBlockchain/zappify.git"
+    "url": "git+https://github.com/EYBlockchain/starlight.git"
   },
   "keywords": [
     "private contract",
@@ -27,6 +25,7 @@
     "compiler",
     "transpiler",
     "solidity",
+    "starlight",
     "smart contract",
     "circuit",
     "zokrates"
@@ -34,9 +33,9 @@
   "author": "iAmMichaelConnor, MirandaWood, LijuJoseJJ, Westlad, ChaitanyaKonda",
   "license": "CC0-1.0",
   "bugs": {
-    "url": "https://github.com/EYBlockchain/zappify/issues"
+    "url": "https://github.com/EYBlockchain/starlight/issues"
   },
-  "homepage": "https://github.com/EYBlockchain/zappify#readme",
+  "homepage": "https://github.com/EYBlockchain/starlight#readme",
   "dependencies": {
     "@babel/register": "^7.13.8",
     "@babel/runtime": "^7.13.10",
@@ -53,6 +52,7 @@
     "zkp-utils": "^1.0.8"
   },
   "devDependencies": {
+    "@babel/plugin-syntax-class-properties": "^7.12.13",
     "eslint": "^7.22.0",
     "eslint-config-codfish": "^9.0.2",
     "mocha": "^8.2.1",

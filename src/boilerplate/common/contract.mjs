@@ -109,7 +109,7 @@ export async function registerKey(_secretKey, contractName, registerWithContract
   const publicKey = generalise(utils.shaHash(secretKey.hex(32)));
   if (registerWithContract) {
     const instance = await getContractInstance(contractName);
-    await instance.methods.registerKey(publicKey.integer).send({
+    await instance.methods.registerZKPPublicKey(publicKey.integer).send({
       from: config.web3.options.defaultAccount,
       gas: config.web3.options.defaultGas,
     });

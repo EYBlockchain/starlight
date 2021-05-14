@@ -22,8 +22,10 @@ export default {
       const args = node.arguments;
       for (const arg of args) {
         if (arg.nodeType !== 'Identifier') continue;
-        const binding = scope.getReferencedBinding(arg);
-        if (!binding?.isSecret) continue;
+        if (arg.name === 'this') continue; // you won't find a binding for such a special reference
+        const referencedBinding = scope.getReferencedBinding(arg);
+        if (!referencedBinding?.isSecret) continue;
+
         if (
           node.kind === 'typeConversion' &&
           node.arguments[0].nodeType !== 'Literal'
@@ -32,15 +34,18 @@ export default {
             `Type conversions of secret states. We plan to suppport conversions which can be replicated in a zero-knowledge circuit in the near future.`,
             node,
           );
-        if (node.kind === 'functionCall' && node.expression.name === 'require')
+
+        if (path.isRequireStatement())
           throw new TODOError(
             `Require statements involving secret states. We plan to suppport these (by replicating them with Zokrates assert statements) in the near future.`,
             node,
           );
-        if (
-          node.kind === 'functionCall' &&
-          node.expression.typeDescriptions.typeIdentifier.includes(`_external_`)
-        )
+
+        // if (
+        //   node.kind === 'functionCall' &&
+        //   node.expression.typeDescriptions.typeIdentifier.includes(`_external_`)
+        // )
+        if (path.isExternalFunctionCall())
           throw new ZKPError(
             `We cannot support external function calls with secret arguments - they can't be hidden due to the nature of the blockchain`,
             node,

@@ -65,22 +65,8 @@ class FunctionBoilerplateGenerator {
     getIndicators() {
       const { indicators } = this.scope;
 
-      let nullifiersRequired = false;
-      let oldCommitmentAccessRequired = false;
-      let newCommitmentRequired = false;
-
-      for (const indicator of Object.values(indicators)) {
-        if (indicator.isMapping) {
-          for (const ind of Object.values(indicator.mappingKeys)) {
-            if (ind.isNullified) nullifiersRequired = true;
-            if (ind.oldCommitmentAccessRequired) oldCommitmentAccessRequired = true;
-            if (ind.newCommitmentRequired) newCommitmentRequired = true;
-          }
-        }
-        if (indicator.isNullified) nullifiersRequired = true;
-        if (indicator.oldCommitmentAccessRequired) oldCommitmentAccessRequired = true;
-        if (indicator.newCommitmentRequired) newCommitmentRequired = true;
-      }
+      const { nullifiersRequired, oldCommitmentAccessRequired } = indicators;
+      const newCommitmentRequired = indicators.newCommitmentsRequired;
 
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentRequired };
     },
