@@ -27,10 +27,15 @@ export default {
       traverseNodesFast(node, getContractNamesVisitor, subState);
       if (!contractNames) throw new Error('No contracts in AST');
       if (contractNames.length > 1)
-        throw new Error('Only 1 contract per solidity file is currently supported');
+        throw new Error(
+          'Only 1 contract per solidity file is currently supported',
+        );
 
       // Create a 'SourceUnit' node.
-      const newNode = buildNode('SourceUnit', { name: contractNames[0], license: node.license });
+      const newNode = buildNode('SourceUnit', {
+        name: contractNames[0],
+        license: node.license,
+      });
 
       parent._newASTPointer.push(newNode);
       node._newASTPointer = parent._newASTPointer;
@@ -47,7 +52,9 @@ export default {
       const { literals } = node;
 
       // parent._newASTPointer[0] is the SourceUnit created earlier by this visitor module.
-      parent._newASTPointer[0].nodes.push(buildNode('PragmaDirective', { literals }));
+      parent._newASTPointer[0].nodes.push(
+        buildNode('PragmaDirective', { literals }),
+      );
       // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
     exit(path, state) {},
@@ -59,7 +66,9 @@ export default {
       const { file } = node;
 
       // parent._newASTPointer[0] is the SourceUnit created earlier by this visitor module.
-      parent._newASTPointer[0].nodes.push(buildNode('ImportDirective', { file }));
+      parent._newASTPointer[0].nodes.push(
+        buildNode('ImportDirective', { file }),
+      );
       // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
     exit(path, state) {},
@@ -85,7 +94,9 @@ export default {
       const contractNodes = node._newASTPointer;
 
       // base contracts (`contract MyContract is BaseContract`)
-      const contractIndex = sourceUnitNodes.findIndex(n => n.name === node.name);
+      const contractIndex = sourceUnitNodes.findIndex(
+        n => n.name === node.name,
+      );
       sourceUnitNodes[contractIndex].baseContracts.push(
         buildNode('InheritanceSpecifier', {
           nodeType: 'UserDefinedTypeName',
@@ -129,7 +140,8 @@ export default {
       );
 
       if (state.mainPrivateFunctionName) {
-        parent._newASTPointer[0].mainPrivateFunctionName = state.mainPrivateFunctionName; // TODO fix bodge
+        parent._newASTPointer[0].mainPrivateFunctionName =
+          state.mainPrivateFunctionName; // TODO fix bodge
         parent._newASTPointer[0].nodes.forEach(node => {
           if (node.nodeType === 'ContractDefinition')
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
@@ -141,9 +153,11 @@ export default {
   FunctionDefinition: {
     enter(path, state) {
       const { node, parent } = path;
+      const isConstructor = node.kind === 'constructor';
       const newNode = buildNode('FunctionDefinition', {
         name: node.name,
-        visibility: node.kind === 'constructor' ? '' : 'external',
+        visibility: isConstructor ? '' : 'external',
+        isConstructor,
       });
 
       node._newASTPointer = newNode;
@@ -160,18 +174,12 @@ export default {
       const { parameters } = newFunctionDefinitionNode.parameters;
       const { postStatements } = newFunctionDefinitionNode.body;
 
-      const newCommitmentsRequired = scope.someIndicator(i => i.newCommitmentRequired);
-
       parameters.push(
         ...buildNode('FunctionBoilerplate', {
           bpSection: 'parameters',
           scope,
         }),
       );
-
-      if (newCommitmentsRequired) {
-        state.mainPrivateFunctionName = node.name; // TODO fix bodge // NO IDEA WHAT THIS DOES ANYMORE
-      }
 
       postStatements.push(
         ...buildNode('FunctionBoilerplate', {
@@ -243,7 +251,9 @@ export default {
   Assignment: {
     enter(path, state) {
       const { node, parent, scope } = path;
-      const binding = scope.getReferencedBinding(node.leftHandSide.baseExpression); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
+      const binding = scope.getReferencedBinding(
+        node.leftHandSide.baseExpression,
+      ); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
       if (binding?.isSecret) {
         // Don't copy over code which should be secret! It shouldn't appear in a public shield contract; only in the circuit! So skip subnodes.
         state.skipSubNodes = true;
@@ -314,9 +324,14 @@ export default {
       const { node, parent } = path;
 
       // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('ElementaryTypeName', {
-        typeDescriptions: { typeString: node.typeDescriptions.typeString || node.name },
-      });
+      parent._newASTPointer[path.containerName] = buildNode(
+        'ElementaryTypeName',
+        {
+          typeDescriptions: {
+            typeString: node.typeDescriptions.typeString || node.name,
+          },
+        },
+      );
     },
 
     exit(path) {},

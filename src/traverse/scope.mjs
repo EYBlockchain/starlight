@@ -1,5 +1,32 @@
 /* eslint-disable no-shadow, no-param-reassign, no-use-before-define, no-continue */
 
+/**
+This file contains portions of code from Babel (https://github.com/babel/babel). All such code has been modified for use in this repository. See below for Babel's MIT license and copyright notice:
+
+MIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
 import Binding from './Binding.mjs';
@@ -98,7 +125,7 @@ export class Scope {
         break;
       case 'FunctionDefinition':
         // @Indicator_FnDef new properties
-        this.indicators = new FunctionDefinitionIndicator();
+        this.indicators = new FunctionDefinitionIndicator(this);
         break;
       default:
     }
@@ -194,6 +221,18 @@ export class Scope {
           // @Indicator update properties
           referencedIndicator.update(path);
         }
+
+        // msg.sender might not be a 'top level' argument of the require statement - perhaps it's nested within some more complex expression. We look for it in order to throw an 'unsupported' error. TODO: figure out how to infer restrictions in this case.
+        const findMsgSenderVisitor = (path, state) => {
+          state.found ||= path.isMsgSender();
+        };
+        const subState = {};
+        path.traversePathsFast(findMsgSenderVisitor, subState);
+        if (subState.found)
+          throw new Error(
+            `msg.sender is nested deep within a require statement. That's currently unsupported, as it's tricky to infer ownership from this.`,
+          );
+
         break;
       }
       case 'FunctionCall':
@@ -219,6 +258,7 @@ export class Scope {
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
         break;
+
       // And again, if we haven't recognized the nodeType then we'll throw an
       // error.
       default:

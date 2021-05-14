@@ -1,10 +1,10 @@
-# starlight :night_with_stars:
+# starlight :stars:
 
 Generate a zApp from a Solidity contract.
 
 ---
 
-## Induction :zap:
+## Introduction
 
 zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? `starlight` helps developers do just this...
 
@@ -17,6 +17,8 @@ _Solidity contract --> Zolidity contract --> zappify --> zApp_
 
 See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everything.
 
+**Note that this code and any compiled code has not yet completed a security review and therefore we strongly recommend that you do not use it in production or to transfer items of material value. We take no responsibility for any loss you may incur through the use of this code.**
+
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -27,6 +29,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
 - [Run](#run)
   - [CLI options](#cli-options)
 - [Troubleshooting](#troubleshooting)
+  - [Installation](#installation)
+  - [Compilation](#compilation)
 - [Developer](#developer)
   - [Testing](#testing)
     - [full zapp](#full-zapp)
@@ -36,6 +40,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
       - [Updating test cases](#updating-test-cases)
       - [Adding/Updating _all_ test cases](#addingupdating-_all_-test-cases)
     - [circuit](#circuit)
+  - [Contributing](#contributing)
+- [License](#license)
 - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -44,8 +50,14 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
 
 ## Requirements
 
-- Tested with Node.js v15 or higher.
+To run the `zappify` command:
+- Node.js v15 or higher.  
   (Known issues with v13).
+
+To run the resulting zApp:
+- Node.js v15 or higher.  
+- Docker (with 16GB RAM recommended)
+- Mac and Linux machines with at least 16GB of memory and 10GB of disk space are supported.
 
 ---
 
@@ -84,7 +96,9 @@ contract Assign {
 }
 ```
 
-Run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in return!
+Save this decorated file with a `.zol` extension ('zolidity').
+
+Run `zappify -i <./path/to/file>.zol` and get an entire standalone zApp in return!
 
 
 ---
@@ -92,13 +106,15 @@ Run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in retur
 
 Whilst the package is in early development, it isn't hosted on npm. To install:
 
+Clone the repo.
+
 `cd starlight`
 
 `npm i`
 
 `npm i -g ./`
 
-This will create a symlink to your node.js bin, allowing you to run the commands specified in the '`"bin":`' field of the `package.json`; namely the `zappify` command.
+This will create a symlink to your node.js bin, allowing you to run the commands specified in the `"bin":` field of the `package.json`; namely the `zappify` command.
 
 ## Run
 
@@ -121,6 +137,8 @@ This will create a symlink to your node.js bin, allowing you to run the commands
 
 ## Troubleshooting
 
+### Installation
+
 If the `zappify` command isn't working, try the [Install](#install) steps again. You might need to try `npm i --force -g ./`.
 
 In very rare cases, you might need to navigate to your node.js innards and delete zappify from the `bin` and `lib/node_modules`.
@@ -134,6 +152,8 @@ E.g.:
                               ^
                               bin is also at this level
 ```
+
+### Compilation
 
 If you find errors to do with 'knownness' or 'unknownness', try to mark incrementations. If you have any secret states which can be **incremented** by other users, mark those incrementations as `unknown` (since the value may be unknown to the caller).
 
@@ -177,7 +197,7 @@ contract Assign {
 }
 ```
 
-Failing to mark incrementations will throw an error, because the compiler won't know what to do with the state. See the [write up](./doc/WRITEUP.md) for more details.
+Failing to mark incrementations will throw an error, because the transpiler won't know what to do with the state. See the [write up](./doc/WRITEUP.md) for more details.
 
 If your input contract has any external imports, make sure those are stored in the `./contracts` directory (in root) and compile with `solc` 0.8.0.
 
@@ -190,7 +210,7 @@ If your input contract has any external imports, make sure those are stored in t
 
 #### full zapp
 
-To test an entire output zApp:
+To test an entire zApp, which has been output by the transpiler:
 
 Having already run `zappify`, the newly-created zApp will be located in the output dir you specified (or in a dir called `./zapps`, by default). Step into that directory:
 
@@ -211,6 +231,8 @@ Run trusted setups on all circuit files:
 Finally, run a test, which executes the function privately, using some test parameters:
 
 `npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
+
+It's impossible for a transpiler to tell which order functions must be called in, or the range of inputs that will work. Don't worry - If you know how to test the input Zolidity contract, you'll know how to test the zApp. The signatures of the original functions are the same as the output nodejs functions. There are instructions in the output `test.mjs` on how to edit it.
 
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
@@ -255,18 +277,34 @@ Use the flag `--write-all` instead of `--write <fileName`.
 
 `./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
 
+### Contributing
 
+See [here](doc/CONTRIBUTIONS.md) for our contribution guidelines.
+
+
+---
+
+## License
+
+[CC0 1.0 Universal](./LICENSE)
+
+**Notes:**
+- This repository contains some modules of code and portions of code from Babel (https://github.com/babel/babel). All such code has been modified for use in this repository. Babel is MIT licensed. See [LICENSE](./LICENSE) file.
+- This repository contains some portions of code from The Super Tiny Compiler (https://github.com/jamiebuilds/the-super-tiny-compiler). All such portions of code have been modified for use in this repository. The Super Tiny Compiler is CC-BY-4.0 licensed. See [LICENSE](./LICENSE) file.
 ---
 
 ## Acknowledgements
 
-- [solc](https://github.com/ethereum/solc-js)
-- [zokrates](https://github.com/Zokrates/ZoKrates)
-
 Authors:
 
  - MirandaWood
- - IAmMichaelConnor
+ - iAmMichaelConnor
+
+Important packages:
+
+- [solc-js](https://github.com/ethereum/solc-js)
+- [zokrates](https://github.com/Zokrates/ZoKrates)
+
 
 Inspirational works:
 - [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)

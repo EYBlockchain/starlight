@@ -1,12 +1,16 @@
-# starlight :night_with_stars:
+# starlight :stars:
 
-Generate a zApp from a Solidity contract.
+_Generate a zApp from a Solidity contract._
+
+This high-level document explains what the transpiler is, how it works, and how we came to make certain design decisions.
+
+
+**Authors:** Michael Connor, Miranda Wood
 
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Overview](#overview)
 - [Compiler architecture](#compiler-architecture)
@@ -50,7 +54,7 @@ Generate a zApp from a Solidity contract.
 
 ---
 
-## Induction :zap:
+## Introduction
 
 zApps are zero-knowledge applications. They're like dApps (decentralised applications), but with privacy. zApps are tricky to write, but Solidity contracts are lovely to write. So why not try to write a zApp with Solidity? starlight helps developers do just this...
 
