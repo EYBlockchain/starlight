@@ -29,6 +29,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
 - [Run](#run)
   - [CLI options](#cli-options)
 - [Troubleshooting](#troubleshooting)
+  - [Installation](#installation)
+  - [Compilation](#compilation)
 - [Developer](#developer)
   - [Testing](#testing)
     - [full zapp](#full-zapp)
@@ -38,6 +40,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everythin
       - [Updating test cases](#updating-test-cases)
       - [Adding/Updating _all_ test cases](#addingupdating-_all_-test-cases)
     - [circuit](#circuit)
+  - [Contributing](#contributing)
+- [License](#license)
 - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->

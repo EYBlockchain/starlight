@@ -1,3 +1,13 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Contributing to Starlight](#contributing-to-starlight)
+  - [Branch policy](#branch-policy)
+  - [Commit policy](#commit-policy)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Contributing to Starlight
 
 As an auditor, EY has to comply with strict procedures to ensure that we maintain independence from any organisations we audit. Accordingly, we would be very grateful to receive PRs for bug fixes or efficiency improvements to the existing code. New features should be added by forking this repository.
