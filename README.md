@@ -91,7 +91,7 @@ contract Assign {
 
 Save this decorated file with a `.zol` extension ('zolidity').
 
-Run `zappify -i <./path/to/file>.zol` and get an entire standalone zapp in return!
+Run `zappify -i <./path/to/file>.zol` and get an entire standalone zApp in return!
 
 
 ---
@@ -273,15 +273,27 @@ Use the flag `--write-all` instead of `--write <fileName`.
 
 ---
 
-## Acknowledgements
+## License
 
-- [solc](https://github.com/ethereum/solc-js)
-- [zokrates](https://github.com/Zokrates/ZoKrates)
+[CC0 1.0 Universal](./LICENSE)
+
+**Notes:**
+- This repository contains some modules of code and portions of code from Babel (https://github.com/babel/babel). All such code has been modified for use in this repository. Babel is MIT licensed. See [LICENSE](./LICENSE) file.
+- This repository contains some portions of code from The Super Tiny Compiler (https://github.com/jamiebuilds/the-super-tiny-compiler). All such portions of code have been modified for use in this repository. The Super Tiny Compiler is CC-BY-4.0 licensed. See [LICENSE](./LICENSE) file.
+---
+
+## Acknowledgements
 
 Authors:
 
  - MirandaWood
  - iAmMichaelConnor
+
+Important packages:
+
+- [solc-js](https://github.com/ethereum/solc-js)
+- [zokrates](https://github.com/Zokrates/ZoKrates)
+
 
 Inspirational works:
 - [Babel handbook](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md#toc-scopes)
