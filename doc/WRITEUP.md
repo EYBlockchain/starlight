@@ -1,4 +1,4 @@
-# starlight :night_with_stars:
+# starlight :stars:
 
 _Generate a zApp from a Solidity contract._
 

@@ -1,4 +1,4 @@
-# starlight :night_with_stars:
+# starlight :stars:
 
 Generate a zApp from a Solidity contract.
 
@@ -16,6 +16,8 @@ zApps are zero-knowledge applications. They're like dApps (decentralised applica
 _Solidity contract --> Zolidity contract --> zappify --> zApp_
 
 See [here](./doc/WRITEUP.md) for an enormously detailed explanation of everything.
+
+**Note that this code and any compiled code has not yet completed a security review and therefore we strongly recommend that you do not use it in production or to transfer items of material value. We take no responsibility for any loss you may incur through the use of this code.**
 
 ---
 
@@ -51,6 +53,7 @@ To run the `zappify` command:
 To run the resulting zApp:
 - Node.js v15 or higher.  
 - Docker (with 16GB RAM recommended)
+- Mac and Linux machines with at least 16GB of memory and 10GB of disk space are supported.
 
 ---
 
@@ -269,6 +272,10 @@ Use the flag `--write-all` instead of `--write <fileName`.
 `docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
 
 `./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
+
+### Contributing
+
+See [here](doc/CONTRIBUTIONS.md) for our contribution guidelines.
 
 
 ---
