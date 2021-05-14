@@ -25,18 +25,7 @@ const errorCheckVisitor = (thisPath, decoratorObj) => {
  */
 
 function transformation1(oldAST, toRedecorate) {
-  // const dummyParent = {
-  //   ast: oldAST,
-  // };
-  //
-  // const path = new NodePath({
-  //   parent: dummyParent,
-  //   key: 'ast', // since parent.ast = node
-  //   container: oldAST,
-  //   node: oldAST,
-  // });
-
-  // NB: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
+  // HACK: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
   traverseNodesFastVisitor(oldAST, explode(redecorateVisitor), toRedecorate);
 
   // we check for decorators we couldn't re-add
