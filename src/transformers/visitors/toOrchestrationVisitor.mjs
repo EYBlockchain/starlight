@@ -4,6 +4,7 @@ import logger from '../../utils/logger.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 import buildNode from '../../types/orchestration-types.mjs';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.mjs';
+import { TODOError } from '../../error/errors.mjs';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -249,6 +250,11 @@ export default {
           }
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
+          if (incrementsArray.length > 1)
+            throw new TODOError(
+              `Multiple increments. The logic to include multiple increments is rather complicated and is in progress!`,
+              stateVarIndicator.modifyingPaths[0].node,
+            );
 
           if (stateVarIndicator.isDecremented) {
             // TODO refactor
