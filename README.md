@@ -27,7 +27,7 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the t
 
 ## Warnings
 
-**Note that this is an experimantal prototype which is still under development. Only a small subset of Solidity syntax is so-far supported.**  
+**Note that this is an experimental prototype which is still under development. Not all Solidity syntax is currently supported.**  
 
 **This code has not yet completed a security review and therefore we strongly recommend that you do not use it in production. We take no responsibility for any loss you may incur through the use of this code.**
 
