@@ -1,5 +1,6 @@
 /* eslint-disable consistent-return */
 import BP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerator.mjs';
+import { StateVariableIndicator } from '../traverse/Indicator.mjs';
 
 // TODO: I don't think this is ever used; only the Solidity version ever gets visited. Can probably delete this function...
 export function getVisitableKeys(nodeType) {
@@ -49,6 +50,7 @@ const generateBoilerplate = ({ indicators, bpSection }) => {
   const bpArray = [];
   // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
   for (const indicatorObj of Object.values(indicators)) {
+    if (!(indicatorObj instanceof StateVariableIndicator)) continue; // eslint-disable-line no-continue
     const bp = new BP(indicatorObj);
     bpArray.push(...bp[bpSection]);
   }
