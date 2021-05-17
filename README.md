@@ -257,7 +257,7 @@ All the above use Docker in the background. If you'd like to see the Docker logg
 
 ### Contributing
 
-See [here](doc/CONTRIBUTIONS.md) for our contribution guidelines.
+See [here](./CONTRIBUTIONS.md) for our contribution guidelines.
 
 
 ---
