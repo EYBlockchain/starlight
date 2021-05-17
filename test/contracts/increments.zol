@@ -18,7 +18,7 @@ contract MyContract {
     }
 
     function decrb(secret uint256 param2, uint256 key) public {
-      b[key] = b[key] - param2;
+      b[key] -= param2;
     }
 
     function incra(secret uint256 param3) public {
