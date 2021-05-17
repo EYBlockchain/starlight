@@ -261,6 +261,7 @@ export default {
             node._newASTPointer.decrementedSecretStates ??= [];
             node._newASTPointer.decrementedSecretStates.push(name);
             node._newASTPointer.decrementsSecretState = true;
+            thisIntegrationTestFunction.decrementsSecretState = true;
           }
           const modifiedStateVariableNode = buildNode('VariableDeclaration', {
             name,
