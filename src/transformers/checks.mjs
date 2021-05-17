@@ -10,6 +10,7 @@ import decoratorVisitor from './visitors/checks/decoratorVisitor.mjs';
 import incrementedVisitor from './visitors/checks/incrementedVisitor.mjs';
 import accessedVisitor from './visitors/checks/accessedVisitor.mjs';
 import requireStatementVisitor from './visitors/checks/requireStatementVisitor.mjs';
+import localDeclarationsVisitor from './visitors/checks/localDeclarationsVisitor.mjs';
 
 /**
  * Inspired by the Transformer
@@ -57,6 +58,8 @@ function transformation1(oldAST) {
   logger.verbose('Accessed values marked');
   path.traverse(explode(requireStatementVisitor), state);
   logger.verbose('Require statements labelled public / private');
+  path.traverse(explode(localDeclarationsVisitor), state);
+  logger.verbose('Checked for unsupported local variable declarations');
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
