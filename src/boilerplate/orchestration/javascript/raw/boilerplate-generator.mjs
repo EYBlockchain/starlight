@@ -45,8 +45,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
       \n // Initialise commitment preimage of whole state:
       \nlet ${stateName}_commitmentExists = true;
       let ${stateName}_witnessRequired = true;
-      if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8').${stateName}
-    ).${stateName}) {
+      if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${stateName}.${stateName}) {
           const preimage = {};
           preimage.${stateName} = {
           \t${stateName}: 0,
