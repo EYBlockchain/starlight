@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
-import logger from '../../utils/logger.mjs';
+// import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/solidity-types.mjs';
 import { traverseNodesFast } from '../../traverse/traverse.mjs';
 

@@ -56,9 +56,11 @@ export default function toCircuit(ast, options) {
   // transpile to a circuit AST:
   logger.verbose('Transforming the .zol AST to a contract AST...');
   const newAST = transformation1(ast);
-  const newASTFilePath = pathjs.join(options.circuitsDirPath, `${options.inputFileName}_ast.json`);
-  // console.log('\n\n\nNEWAST:')
-  // console.dir(newAST, { depth: 10 });
+  const newASTFilePath = pathjs.join(
+    options.circuitsDirPath,
+    `${options.inputFileName}_ast.json`,
+  );
+
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
   // generate the circuit files from the newly created circuit AST:
@@ -66,7 +68,9 @@ export default function toCircuit(ast, options) {
   const circuitFileData = codeGenerator(newAST);
 
   // save the circuit files to the output dir:
-  logger.verbose(`Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`);
+  logger.verbose(
+    `Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`,
+  );
   for (const fileObj of circuitFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);

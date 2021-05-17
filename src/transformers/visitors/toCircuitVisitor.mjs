@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 import cloneDeep from 'lodash.clonedeep';
-import logger from '../../utils/logger.mjs';
+// import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/zokrates-types.mjs';
 import NP from '../../traverse/NodePath.mjs';
 
@@ -38,10 +38,9 @@ const visitor = {
         // Let's create a new circuit File to represent this function.
         // We'll add a new 'File' node to our newAST:
 
-        // console.log('\n\n\nEntering FunctionDefinition node...')
-        // console.log('SCOPE:', scope);
-
-        const newFunctionDefinitionNode = buildNode('FunctionDefinition', { name: 'main' });
+        const newFunctionDefinitionNode = buildNode('FunctionDefinition', {
+          name: 'main',
+        });
         const newImportStatementListNode = buildNode('ImportStatementList');
 
         const { indicators } = scope;
@@ -208,13 +207,6 @@ const visitor = {
 
             if (!lhsIndicator.isPartitioned) break;
 
-            // console.log('\n\n\nIN EXPRESSION STATEMENT')
-            // console.log('\n\n\npath', path)
-            // console.log('\n\n\nlhs', lhs)
-            // console.log('\n\n\nrhs', rhs)
-            // console.log('\n\n\nscope.indicators', scope.indicators)
-            // console.log('\n\n\nlhsIndicator', lhsIndicator)
-
             const rhsPath = NP.getPath(rhs);
             // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
             const tempRHSPath = cloneDeep(rhsPath);
@@ -226,7 +218,9 @@ const visitor = {
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
+                  mappingKeyName:
+                    lhs.indexExpression?.name ||
+                    lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
@@ -238,7 +232,9 @@ const visitor = {
                 indicators: lhsIndicator,
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
+                  mappingKeyName:
+                    lhs.indexExpression?.name ||
+                    lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
@@ -286,7 +282,8 @@ const visitor = {
 
       let declarationType;
       // TODO: `memery` declarations and `returnParameter` declarations
-      if (path.isLocalStackVariableDeclaration()) declarationType = 'localStack';
+      if (path.isLocalStackVariableDeclaration())
+        declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
 
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
@@ -345,7 +342,9 @@ const visitor = {
       const { name } = node;
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('Identifier', { name });
+      parent._newASTPointer[path.containerName] = buildNode('Identifier', {
+        name,
+      });
     },
   },
 
@@ -360,7 +359,9 @@ const visitor = {
         );
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('Literal', { value });
+      parent._newASTPointer[path.containerName] = buildNode('Literal', {
+        value,
+      });
     },
   },
 
@@ -368,7 +369,8 @@ const visitor = {
     enter(path, state) {
       const { parent } = path;
 
-      if (!path.isMsgSender()) throw new Error(`Struct property access isn't yet supported.`);
+      if (!path.isMsgSender())
+        throw new Error(`Struct property access isn't yet supported.`);
 
       // What follows assumes this node represents msg.sender:
       const newNode = buildNode('MsgSender');
@@ -391,7 +393,6 @@ const visitor = {
   FunctionCall: {
     enter(path, state) {
       const { node, parent } = path;
-      let newNode;
       // TODO typeConversion
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.

@@ -8,10 +8,6 @@ import codeGenerator from '../../../../codeGenerators/circuit/zokrates/toCircuit
 class BoilerplateGenerator {
   generateBoilerplate(node) {
     const { bpSection, bpType, ...otherParams } = node;
-    // console.log('bpType', bpType)
-    // console.log('bpSection', bpSection)
-    // console.log('this[bpType]', this[bpType])
-    // console.log('this[bpType][bpSection]', this[bpType][bpSection])
     return this?.[bpType]?.[bpSection]?.(otherParams) ?? [];
   }
 
