@@ -147,7 +147,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
             ${stateName}_1_nullifier = generalise(${stateName}_1_nullifier.hex(32, 31)); // truncate`;
         case 'whole':
           return `
-            let ${stateName}_nullifier = ${stateName}_commitmentExists ? generalise(utils.shaHash(${stateName}_stateVarId, secretKey.hex(32), ${stateName}_prevSalt.hex(32))) : generalise(0);
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? generalise(utils.shaHash(${stateName}_stateVarId, secretKey.hex(32), ${stateName}_prevSalt.hex(32))) : generalise(utils.shaHash(${stateName}_stateVarId, generalise(0).hex(32), ${stateName}_prevSalt.hex(32)));
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32, 31)); // truncate`;
         default:
           throw new TypeError(fields.stateType);
@@ -208,12 +208,11 @@ export default function buildBoilerplate(nodeType, fields = {}) {
         case 'whole':
           return `
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \tsecretKey.limbs(32, 8),
+              \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
               \t${stateName}_nullifier.integer,
-              \t${stateName}_prev.limbs(32, 8),
+              \t${stateName}_prev.integer,
               \t${stateName}_prevSalt.limbs(32, 8),
-              \t!${stateName}_commitmentExists,
-              \tpublicKey.limbs(32, 8),
+              \t${stateName}_commitmentExists ? 0 : 1,
               \t${stateName}_root.integer,
               \t${stateName}_index.integer,
               \t${stateName}_path.integer,

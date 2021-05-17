@@ -14,7 +14,7 @@ import fileGenerator from '../files/toOrchestration.mjs';
  * @returns {string} - code line which will extract an accessed value from the user db
  */
 const getAccessedValue = name => {
-  return `\nlet { ${name} } = ${name}_preimage;`;
+  return `\nlet { ${name} } = generalise(${name}_preimage);`;
 };
 
 /**
@@ -22,7 +22,7 @@ const getAccessedValue = name => {
  * @returns {Object} - { filepath: 'path/to/file.mjs', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
-function codeGenerator(node) {
+function codeGenerator(node, options = {}) {
   // We do a special kind of traversal which outputs files and their contents
   // Separate files and folders are handled by fileGenerator
   // This codeGenerator deals with complex function code
@@ -84,7 +84,14 @@ function codeGenerator(node) {
       return `\n// increment would go here but has been filtered out`;
 
     case 'Assignment':
-      return `${codeGenerator(node.leftHandSide)} ${
+      if (node.operator === '+=' || node.operator === '-=') {
+        return `${codeGenerator(node.leftHandSide, {
+          lhs: true,
+        })} = ${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
+          0,
+        )} ${codeGenerator(node.rightHandSide)}`;
+      }
+      return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
         node.operator
       } ${codeGenerator(node.rightHandSide)}`;
 
@@ -101,7 +108,8 @@ function codeGenerator(node) {
     case 'Literal':
       return node.value;
     case 'Identifier':
-      return node.name;
+      if (options?.lhs) return node.name;
+      return `parseInt(${node.name}.integer, 10)`;
     case 'Folder':
     case 'File':
     case 'EditableCommitmentCommonFilesBoilerplate':

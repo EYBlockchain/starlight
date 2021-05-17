@@ -132,7 +132,7 @@ export const preimageBoilerPlate = node => {
     // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
     if (!stateNode.stateVarId[1]) {
       stateVarIds.push(
-        `\nconst ${privateStateName}_stateVarId = ${stateNode.stateVarId};`,
+        `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
       );
     } else {
       // if is a mapping...
