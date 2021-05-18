@@ -84,7 +84,7 @@ function codeGenerator(node, options = {}) {
       return `\n// increment would go here but has been filtered out`;
 
     case 'Assignment':
-      if (node.operator === '+=' || node.operator === '-=') {
+      if (['+=', '-=', '*='].includes(node.operator)) {
         return `${codeGenerator(node.leftHandSide, {
           lhs: true,
         })} = ${codeGenerator(node.leftHandSide)} ${node.operator.charAt(

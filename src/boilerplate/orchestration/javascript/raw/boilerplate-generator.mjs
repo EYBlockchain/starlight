@@ -232,9 +232,9 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.limbs(32, 8),
                       \t${stateName}_nullifier.integer,
-                      \t${stateName}_prev.limbs(32, 8),
+                      \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
-                      \t!${stateName}_commitmentExists,
+                      \t${stateName}_commitmentExists ? 0 : 1,
                       \t${stateName}_root.integer,
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer`;
@@ -243,9 +243,9 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
                       \t${stateName}_nullifier.integer,
-                      \t${stateName}_prev.limbs(32, 8),
+                      \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
-                      \t!${stateName}_commitmentExists,
+                      \t${stateName}_commitmentExists ? 0 : 1,
                       \t${stateName}_root.integer,
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
