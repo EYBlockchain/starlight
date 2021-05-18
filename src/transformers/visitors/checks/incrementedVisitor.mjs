@@ -345,6 +345,9 @@ export default {
             discoveredLHS -= 1;
           }
           // if none, go to the next operand
+          if (operand.indexExpression?.expression?.name === 'msg')
+            operand.indexExpression.name ??= `msg.sender`;
+          operand.name ??= `${operand.baseExpression.name}[${operand.indexExpression.name}]`;
         }
         // if we have 1*a on the RHS and its incremented, mark the parent path
         if (discoveredLHS === 1 && isIncremented.incremented) {

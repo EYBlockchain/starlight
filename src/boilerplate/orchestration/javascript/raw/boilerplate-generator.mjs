@@ -47,8 +47,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
       \n // Initialise commitment preimage of whole state:
       \nlet ${stateName}_commitmentExists = true;
       let ${stateName}_witnessRequired = true;
-      if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8').${stateName}
-    ).${stateName}) {
+      if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${stateName}.${stateName}) {
           const preimage = {};
           preimage.${stateName} = {
           \t${stateName}: 0,
@@ -159,7 +158,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
             ${stateName}_1_nullifier = generalise(${stateName}_1_nullifier.hex(32, 31)); // truncate`;
         case 'whole':
           return `
-            let ${stateName}_nullifier = ${stateName}_commitmentExists ? generalise(utils.shaHash(${stateName}_stateVarId, secretKey.hex(32), ${stateName}_prevSalt.hex(32))) : generalise(0);
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? generalise(utils.shaHash(${stateName}_stateVarId, secretKey.hex(32), ${stateName}_prevSalt.hex(32))) : generalise(utils.shaHash(${stateName}_stateVarId, generalise(0).hex(32), ${stateName}_prevSalt.hex(32)));
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32, 31)); // truncate`;
         default:
           throw new TypeError(fields.stateType);
@@ -236,19 +235,17 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                       \t${stateName}_prev.limbs(32, 8),
                       \t${stateName}_prevSalt.limbs(32, 8),
                       \t!${stateName}_commitmentExists,
-                      \tpublicKey.limbs(32, 8),
                       \t${stateName}_root.integer,
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer`;
                 default:
                   return `
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \tsecretKey.limbs(32, 8),
+                      \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_prev.limbs(32, 8),
                       \t${stateName}_prevSalt.limbs(32, 8),
                       \t!${stateName}_commitmentExists,
-                      \tpublicKey.limbs(32, 8),
                       \t${stateName}_root.integer,
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,

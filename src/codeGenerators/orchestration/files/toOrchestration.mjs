@@ -124,11 +124,9 @@ const prepareIntegrationTest = node => {
     // the user may not have enough commitments to do so
     let removeSecondCall = false;
     const paramTypes = fn.parameters.parameters.map(obj => obj.typeName.name);
-    fn.parameters.modifiedStateVariables.forEach(param => {
-      if (param.isDecremented) {
-        removeSecondCall = true;
-      }
-    });
+    if (fn.decrementsSecretState) {
+      removeSecondCall = true;
+    }
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(
       /FUNCTION_SIG_1/g,

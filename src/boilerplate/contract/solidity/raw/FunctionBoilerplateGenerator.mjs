@@ -5,10 +5,6 @@ import codeGenerator from '../../../../codeGenerators/contract/solidity/toContra
 class FunctionBoilerplateGenerator {
   generateBoilerplate(node) {
     const { bpSection, bpCategory, ...otherParams } = node;
-    // console.log('bpType', bpType)
-    // console.log('bpSection', bpSection)
-    // console.log('this[bpType]', this[bpType])
-    // console.log('this[bpType][bpSection]', this[bpType][bpSection])
     return this?.[bpCategory]?.[bpSection]?.(otherParams) ?? [];
   }
 

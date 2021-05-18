@@ -4,6 +4,7 @@ import logger from '../../utils/logger.mjs';
 import { traverse } from '../../traverse/traverse.mjs';
 import buildNode from '../../types/orchestration-types.mjs';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.mjs';
+import { TODOError } from '../../error/errors.mjs';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -11,7 +12,17 @@ const interactsWithSecretVisitor = (thisPath, thisState) => {
   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
     thisState.interactsWithSecret = true;
 };
-
+// fix for increment names
+// FIXME in pending PR
+const fixIncrementName = (stateVarIndicator, inc) => {
+  if (inc.nodeType === 'BinaryOperation' && !inc.name) {
+    if (inc.leftExpression.name === stateVarIndicator.name)
+      inc.name = inc.rightExpression.name;
+    if (inc.rightExpression.name === stateVarIndicator.name)
+      inc.name = inc.leftExpression.name;
+    inc.name ??= `${inc.leftExpression.name} ${inc.operator} ${inc.rightExpression.name}`;
+  }
+};
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.js` AST
@@ -218,7 +229,10 @@ export default {
           let incrementsArray = [];
           if (isIncremented) {
             stateVarIndicator.increments?.forEach(inc => {
-              incrementsArray.push(inc.name || inc.value);
+              fixIncrementName(stateVarIndicator, inc);
+              // TODO move duplicate check to incrementedVisitor
+              if (!incrementsArray.includes(inc.name))
+                incrementsArray.push(inc.name || inc.value);
               if (inc === stateVarIndicator.increments[0]) {
                 incrementsString += inc.name || inc.value;
               } else {
@@ -228,7 +242,9 @@ export default {
               }
             });
             stateVarIndicator.decrements?.forEach(dec => {
-              incrementsArray.push(dec.name || dec.value);
+              fixIncrementName(stateVarIndicator, dec);
+              if (!incrementsArray.includes(dec.name))
+                incrementsArray.push(dec.name || dec.value);
               incrementsString += dec.name
                 ? `- ${dec.name} `
                 : `- ${dec.value} `;
@@ -236,12 +252,18 @@ export default {
           }
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
+          if (incrementsArray.length > 1)
+            throw new TODOError(
+              `Multiple increments. The logic to include multiple increments is rather complicated and is in progress!`,
+              stateVarIndicator.modifyingPaths[0].node,
+            );
 
           if (stateVarIndicator.isDecremented) {
             // TODO refactor
             node._newASTPointer.decrementedSecretStates ??= [];
             node._newASTPointer.decrementedSecretStates.push(name);
             node._newASTPointer.decrementsSecretState = true;
+            thisIntegrationTestFunction.decrementsSecretState = true;
           }
           const modifiedStateVariableNode = buildNode('VariableDeclaration', {
             name,
@@ -436,7 +458,7 @@ export default {
   BinaryOperation: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
+      const newNode = buildNode(node.nodeType, { operator: node.operator });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -543,10 +565,18 @@ export default {
         const indicator = scope.getReferencedIndicator(lhs, true);
         let increments = '';
         indicator.increments.forEach(inc => {
-          increments += inc.name ? `+ ${inc.name} ` : `+ ${inc.value} `;
+          fixIncrementName(indicator, inc);
+          increments +=
+            inc.name && !increments.includes(inc.name)
+              ? `+ ${inc.name} `
+              : `+ ${inc.value} `;
         });
         indicator.decrements.forEach(dec => {
-          increments += dec.name ? `- ${dec.name} ` : `- ${dec.value} `;
+          fixIncrementName(indicator, dec);
+          increments +=
+            dec.name && !increments.includes(dec.name)
+              ? `- ${dec.name} `
+              : `- ${dec.value} `;
         });
         path.node._newASTPointer.increments = increments;
       }

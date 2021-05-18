@@ -236,7 +236,7 @@ export class StateVariableIndicator {
     this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     this.parentIndicator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     if (this.isMapping) {
-      this.mappingOwnershipType = this.owner.mappingOwnershipType;
+      this.mappingOwnershipType = this.owner?.mappingOwnershipType;
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
         mappingKey.updateFromBinding();
       }
@@ -585,7 +585,7 @@ export class MappingKey {
       : this.isPartitionedReason;
     this.isOwned ??= this.container.binding.isOwned;
     this.owner ??= this.container.binding.owner;
-    this.mappingOwnershipType = this.owner.mappingOwnershipType;
+    this.mappingOwnershipType = this.owner?.mappingOwnershipType;
     this.onChainKeyRegistry ??= this.container.binding.onChainKeyRegistry;
   }
 }

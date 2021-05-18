@@ -51,14 +51,15 @@ export default {
       const rightAncestor = path.getRhsAncestor();
       const lhsNode = path.getCorrespondingLhsNode();
       // TODO getReferencedBinding should return the VariableDeclaration binding if the input is a VariableDeclaration
-      const lhsBinding = lhsNode
-        ? scope.getReferencedBinding(lhsNode) ||
-          scope.getReferencedBinding({
-            nodeType: 'Identifier',
-            referencedDeclaration: lhsNode.id,
-          })
-        : null;
-
+      const lhsBinding =
+        lhsNode?.nodeType === 'Identifier' ||
+        lhsNode?.nodeType === 'IndexAccess'
+          ? scope.getReferencedBinding(lhsNode) ||
+            scope.getReferencedBinding({
+              nodeType: 'Identifier',
+              referencedDeclaration: lhsNode.id,
+            })
+          : scope.bindings[lhsNode?.id];
       // Check: is this a nonsecret param being used to edit a secret state?
       if (!referencedBinding?.isSecret) {
         // non-secret...
