@@ -34,7 +34,7 @@ import {
 } from './traverse.mjs';
 import logger from '../utils/logger.mjs';
 import { pathCache } from './cache.mjs';
-import { Scope } from './Scope.mjs';
+import { Scope } from './scope.mjs';
 
 /**
 A NodePath is required as a way of 'connecting' a node to its parent (and its parent, and so on...). We can't assign a `.parent` to a `node` (to create `node.parent`), because we'd end up with a cyclic reference; the parent already contains the node, so the node can't then contain the parent!
