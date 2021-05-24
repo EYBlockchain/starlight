@@ -68,7 +68,7 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
   - Secret structs would require an extension of the current commitment scheme to involve more than one secret value hidden inside the commitment. This adds extra hashing (therefore constraints) and extra fields to check at each nullification.
 
 - If statements:
-  - Similarly to internal function calls, Zokrates supports these, but in a rather different format. Exporting if statements from Solidity to the DSL would need type conversions, line-by-line transpiling (since Zokrates if statements are one-liners), and logic checks.
+  - Similarly to internal function calls, Zokrates supports these, but in a rather different format. Exporting if statements from Solidity to the DSL would need type conversions, line-by-line transpiling (since Zokrates if statements are one-liners), and logic checks. See [this issue](https://github.com/EYBlockchain/starlight/issues/33) for more details.
 
 - Secret owners:
   - We do support fixed owners of a state e.g. the address `admin` owning some secret state `reports`. However, having a secret owner requires the user to open the commitment representing `admin`, prove it's the *current* commitment (not an old one which has been nullified), and prove that they own it.
