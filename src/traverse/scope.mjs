@@ -201,7 +201,7 @@ export class Scope {
         // 2) Update the indicators of this scope:
         const referencedNode = referencedBinding.node;
         if (
-          referencedNode.stateVariable &&
+          // referencedNode.stateVariable &&
           this.isInScopeType('FunctionDefinition')
         ) {
           const functionDefScope = this.getAncestorOfScopeType(

@@ -221,6 +221,14 @@ export class StateVariableIndicator {
     }
   }
 
+  updateInteractsWithSecret() {
+    this.interactsWithSecret = true;
+  }
+
+  updateInteractsWithPublic() {
+    this.interactsWithPublic = true;
+  }
+
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
     this.isWhole ??= this.binding.isWhole;
@@ -505,6 +513,14 @@ export class MappingKey {
   addBurningPath(path) {
     this.isBurned = true;
     this.burningPaths.push(path);
+  }
+
+  updateInteractsWithSecret() {
+    this.interactsWithSecret = true;
+  }
+
+  updateInteractsWithPublic() {
+    this.interactsWithPublic = true;
   }
 
   prelimTraversalErrorChecks() {

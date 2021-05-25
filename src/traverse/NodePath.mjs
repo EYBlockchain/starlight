@@ -726,7 +726,7 @@ export default class NodePath {
     if (!['IndexAccess', 'Identifier'].includes(node.nodeType)) return false;
     // It could be a mapping or it could be an array. The only way to tell is to trace it all the way back to its referencedDeclaration.
     const varDecNode = this.getReferencedNode(node); // If it's an IndexAccess node, it will look at the IndexAccess.baseExpression through getReferencedDeclarationId().
-    return this.isMappingDeclaration(varDecNode);
+    return this.isMappingDeclaration(varDecNode || node);
   }
 
   isMapping(node = this.node) {
@@ -932,6 +932,26 @@ export default class NodePath {
     };
     traversePathsFast(rootNodePath, visitor2, state);
     return state;
+  }
+
+  markContainsSecret() {
+    let path = this;
+    while ((path = path.parentPath)) {
+      path.containsSecret ??= true;
+      path.node.containsSecret ??= true;
+      const indicator = path.scope.getReferencedIndicator(path.node);
+      if (indicator) indicator.updateInteractsWithSecret();
+    }
+  }
+
+  markContainsPublic() {
+    let path = this;
+    while ((path = path.parentPath)) {
+      path.containsPublic ??= true;
+      path.node.containsPublic ??= true;
+      const indicator = path.scope.getReferencedIndicator(path.node);
+      if (indicator) indicator.updateInteractsWithPublic();
+    }
   }
 
   // SCOPE
