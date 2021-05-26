@@ -34,6 +34,7 @@ import {
   ContractDefinitionIndicator,
   FunctionDefinitionIndicator,
   StateVariableIndicator,
+  LocalVariableIndicator,
 } from './Indicator.mjs';
 import { scopeCache } from './cache.mjs';
 import backtrace from '../error/backtrace.mjs';
@@ -153,6 +154,9 @@ export class Scope {
       case 'VariableDeclaration':
         if (this.scopeType === 'ContractDefinition')
           this.indicators.update(path);
+        if (this.scopeType === 'FunctionDefinition')
+          this.indicators[id] =
+            this.indicators[id] ?? new LocalVariableIndicator(path);
         break;
 
       // An Identifier node is a special case, because it refers to an alread-defined variable whose bindings and indicators have already been initialised. So rather than initialise indicators/bindings, we must update them with the information of this new Identifier node.
@@ -176,13 +180,12 @@ export class Scope {
         if (this.scopeType === 'FunctionDefinition')
           this.indicators.update(path);
 
-        // if (
-        //   referencedBinding.isSecret &&
-        //   this.scopeType === 'FunctionDefinition'
-        // ) {
-        //   // @scope_FnDef new property
-        //   this.interactsWithSecret = true; // NOTE: unused. TODO: more functionality around 'tainting' secrets with public stuff and vice versa.
-        // }
+        if (
+          referencedBinding.isSecret &&
+          this.scopeType === 'FunctionDefinition'
+        ) {
+          this.containsSecret = true;
+        }
 
         // Update the binding of the stateVariable being referenced by this Identifier node, to reflect the information contained in this Identifier node:
         // @Binding update properties
@@ -201,7 +204,7 @@ export class Scope {
         // 2) Update the indicators of this scope:
         const referencedNode = referencedBinding.node;
         if (
-          // referencedNode.stateVariable &&
+          referencedNode.stateVariable &&
           this.isInScopeType('FunctionDefinition')
         ) {
           const functionDefScope = this.getAncestorOfScopeType(

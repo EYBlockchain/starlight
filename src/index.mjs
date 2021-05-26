@@ -24,17 +24,17 @@ const zappify = options => {
 
   let path = checks(zolAST, options);
 
-  // path = ownership(path, options);
-  //
-  // if (options.isTest && options.testType === 'prelim') return path;
-  //
-  // toOrchestration(path, options);
-  //
-  // toCircuit(zolAST, options);
-  //
-  // toContract(zolAST, options);
-  //
-  // if (options.isTest) return path.scope.indicators;
+  path = ownership(path, options);
+
+  if (options.isTest && options.testType === 'prelim') return path;
+
+  toOrchestration(path, options);
+
+  toCircuit(zolAST, options);
+
+  toContract(zolAST, options);
+
+  if (options.isTest) return path.scope.indicators;
 
   return path;
 };

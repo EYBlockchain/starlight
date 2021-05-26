@@ -138,6 +138,68 @@ export class FunctionDefinitionIndicator {
   //   newCommitmentRequired: true,
   // }
 }
+/**
+ * Within a Function's scope, for each local variable that gets declared, we
+ * create a 'LocalVariableIndicator'.
+ */
+export class LocalVariableIndicator {
+  /** @param {NodePath} path the path of the localVariable for which we're creating an indicator
+   */
+  constructor(path) {
+    this.id = path.node.id;
+    this.name = path.node.name;
+    this.scope = path.scope;
+    this.node = path.node;
+    this.parentIndicator = path.scope.indicators;
+
+    this.referenceCount = 0;
+    this.referencingPaths = [];
+
+    this.modificationCount = 0;
+    this.modifyingPaths = [];
+
+    if (path.isInType('VariableDeclarationStatement')) {
+      this.initialValue = path.getAncestorOfType(
+        'VariableDeclarationStatement',
+      ).node.initialValue;
+    }
+
+    this.isParam = path.isInType('ParameterList');
+  }
+
+  update(path) {
+    this.addReferencingPath(path);
+    this.isUnknown ??= path.node.isUnknown;
+    this.isKnown ??= path.node.isKnown;
+    this.reinitialisable ??= path.node.reinitialisable;
+    if (path.isModification()) {
+      this.addModifyingPath(path);
+    }
+  }
+
+  addReferencingPath(path) {
+    this.isReferenced = true;
+    ++this.referenceCount;
+    if (!this.referencingPaths.some(p => p.node.id === path.node.id))
+      this.referencingPaths.push(path);
+  }
+
+  addModifyingPath(path) {
+    this.isModified = true;
+    ++this.modificationCount;
+    if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
+      this.modifyingPaths.push(path);
+    }
+  }
+
+  updateInteractsWithSecret() {
+    this.interactsWithSecret = true;
+  }
+
+  updateInteractsWithPublic() {
+    this.interactsWithPublic = true;
+  }
+}
 
 /**
  * Within a Function's scope, for each state variable that gets mentioned, we

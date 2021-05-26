@@ -36,14 +36,17 @@ export default {
 
     exit(path, state) {
       for (const [index, ind] of Object.entries(path.scope.indicators)) {
-        if (ind.modifyingPaths) {
-          console.log('variable:', ind.name, 'in scope:', path.node.name);
-          console.log('interactsWithSecret:', ind.interactsWithSecret);
-          console.log('interactsWithPublic:', ind.interactsWithPublic);
-          ind.modifyingPaths.forEach(modPath => {
-            console.log(modPath.node);
-          });
-        }
+        console.log('variable:', ind.name, 'in scope:', path.node.name);
+        if (!ind.name) console.log(index);
+        console.dir(ind, { depth: 0 });
+        // if (ind.modifyingPaths) {
+        //   console.log('variable:', ind.name, 'in scope:', path.node.name);
+        //   console.log('interactsWithSecret:', ind.interactsWithSecret);
+        //   console.log('interactsWithPublic:', ind.interactsWithPublic);
+        //   ind.modifyingPaths.forEach(modPath => {
+        //     console.log(modPath.node);
+        //   });
+        // }
       }
     },
   },
