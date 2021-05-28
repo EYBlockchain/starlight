@@ -1,4 +1,4 @@
-/* eslint-disable max-classes-per-file */
+/* eslint-disable max-classes-per-file, no-param-reassign */
 
 import NodePath from './NodePath.mjs';
 import logger from '../utils/logger.mjs';
@@ -158,6 +158,8 @@ export class LocalVariableIndicator {
     this.modificationCount = 0;
     this.modifyingPaths = [];
 
+    this.interactsWith = [];
+
     if (path.isInType('VariableDeclarationStatement')) {
       this.initialValue = path.getAncestorOfType(
         'VariableDeclarationStatement',
@@ -169,9 +171,6 @@ export class LocalVariableIndicator {
 
   update(path) {
     this.addReferencingPath(path);
-    this.isUnknown ??= path.node.isUnknown;
-    this.isKnown ??= path.node.isKnown;
-    this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
@@ -192,12 +191,20 @@ export class LocalVariableIndicator {
     }
   }
 
-  updateInteractsWithSecret() {
+  addSecretInteractingPath(path) {
     this.interactsWithSecret = true;
+    path.isSecret = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+    }
   }
 
-  updateInteractsWithPublic() {
+  addPublicInteractingPath(path) {
     this.interactsWithPublic = true;
+    path.isPublic = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+    }
   }
 }
 
@@ -232,6 +239,8 @@ export class StateVariableIndicator {
     this.nullifyingPaths = [];
 
     this.burningPaths = [];
+
+    this.interactsWith = [];
 
     if (path.isMappingIdentifier()) {
       this.isMapping = true;
@@ -283,12 +292,20 @@ export class StateVariableIndicator {
     }
   }
 
-  updateInteractsWithSecret() {
+  addSecretInteractingPath(path) {
     this.interactsWithSecret = true;
+    path.isSecret = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+    }
   }
 
-  updateInteractsWithPublic() {
+  addPublicInteractingPath(path) {
     this.interactsWithPublic = true;
+    path.isPublic = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+    }
   }
 
   updateFromBinding() {
@@ -532,6 +549,8 @@ export class MappingKey {
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
 
     this.burningPaths = [];
+
+    this.interactsWith = [];
   }
 
   updateProperties(path) {
@@ -577,12 +596,22 @@ export class MappingKey {
     this.burningPaths.push(path);
   }
 
-  updateInteractsWithSecret() {
+  addSecretInteractingPath(path) {
     this.interactsWithSecret = true;
+    path.isSecret = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+      this.container.addSecretInteractingPath(path);
+    }
   }
 
-  updateInteractsWithPublic() {
+  addPublicInteractingPath(path) {
     this.interactsWithPublic = true;
+    path.isPublic = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+      this.container.addPublicInteractingPath(path);
+    }
   }
 
   prelimTraversalErrorChecks() {

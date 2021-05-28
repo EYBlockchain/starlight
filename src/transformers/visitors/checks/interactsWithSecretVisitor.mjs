@@ -14,20 +14,26 @@ import { SyntaxUsageError } from '../../../error/errors.mjs';
 // useful for subtrees like ExpressionStatements
 const markSubtreeInteractsWithSecret = (thisPath, thisState) => {
   const { node, scope } = thisPath;
-  if (node.nodeType !== 'Identifier') return;
+  if (!['Identifier', 'VariableDeclarationStatement'].includes(node.nodeType))
+    return;
   thisPath.interactsWithSecret = true;
   node.interactsWithSecret = true;
   const indicator = scope.getReferencedIndicator(node, true);
-  if (indicator) indicator.updateInteractsWithSecret();
+  // we don't want to add itself as an interacted with path
+  if (indicator && thisState.secretPath.node.id !== node.id)
+    indicator.addSecretInteractingPath(thisState.secretPath);
 };
 
 const markSubtreeInteractsWithPublic = (thisPath, thisState) => {
   const { node, scope } = thisPath;
-  if (node.nodeType !== 'Identifier') return;
+  if (!['Identifier', 'VariableDeclarationStatement'].includes(node.nodeType))
+    return;
   thisPath.interactsWithPublic = true;
   node.interactsWithPublic = true;
   const indicator = scope.getReferencedIndicator(node, true);
-  if (indicator) indicator.updateInteractsWithPublic();
+  // we don't want to add itself as an interacted with path
+  if (indicator && thisState.publicPath.node.id !== node.id)
+    indicator.addPublicInteractingPath(thisState.publicPath);
 };
 
 export default {
@@ -36,17 +42,17 @@ export default {
 
     exit(path, state) {
       for (const [index, ind] of Object.entries(path.scope.indicators)) {
-        console.log('variable:', ind.name, 'in scope:', path.node.name);
-        if (!ind.name) console.log(index);
-        console.dir(ind, { depth: 0 });
-        // if (ind.modifyingPaths) {
-        //   console.log('variable:', ind.name, 'in scope:', path.node.name);
-        //   console.log('interactsWithSecret:', ind.interactsWithSecret);
-        //   console.log('interactsWithPublic:', ind.interactsWithPublic);
-        //   ind.modifyingPaths.forEach(modPath => {
-        //     console.log(modPath.node);
-        //   });
-        // }
+        if (ind.name) {
+          console.log(`------`);
+          console.log('variable:', ind.name, 'in scope:', path.node.name);
+          ind.interactsWith.forEach(interaction => {
+            console.log(
+              `interacts with ${interaction.isSecret ? 'secret' : 'public'}`,
+            );
+            console.log(interaction.node);
+          });
+          console.log(`------`);
+        }
       }
     },
   },
@@ -56,10 +62,14 @@ export default {
 
     exit(path, state) {
       const { node, scope } = path;
+      const expressionPath =
+        path.getAncestorOfType('ExpressionStatement') || path.parentPath;
       if (path.isExternalFunctionCall()) {
         path.markContainsPublic();
         // below ensures that the return value and args are marked as interactsWithPublic
-        path.parentPath.traversePathsFast(markSubtreeInteractsWithPublic);
+        expressionPath.traversePathsFast(markSubtreeInteractsWithPublic, {
+          publicPath: path,
+        });
       }
     },
   },
@@ -74,11 +84,15 @@ export default {
       if (scope.getReferencedBinding(node).isSecret) {
         path.markContainsSecret();
         if (expressionPath)
-          expressionPath.traversePathsFast(markSubtreeInteractsWithSecret);
-      } else {
+          expressionPath.traversePathsFast(markSubtreeInteractsWithSecret, {
+            secretPath: path,
+          });
+      } else if (scope.getReferencedBinding(node).stateVariable) {
         path.markContainsPublic();
         if (expressionPath)
-          expressionPath.traversePathsFast(markSubtreeInteractsWithPublic);
+          expressionPath.traversePathsFast(markSubtreeInteractsWithPublic, {
+            publicPath: path,
+          });
       }
     },
   },
