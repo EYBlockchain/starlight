@@ -40,21 +40,7 @@ export default {
   FunctionDefinition: {
     enter(path, state) {},
 
-    exit(path, state) {
-      for (const [index, ind] of Object.entries(path.scope.indicators)) {
-        if (ind.name) {
-          console.log(`------`);
-          console.log('variable:', ind.name, 'in scope:', path.node.name);
-          ind.interactsWith.forEach(interaction => {
-            console.log(
-              `interacts with ${interaction.isSecret ? 'secret' : 'public'}`,
-            );
-            console.log(interaction.node);
-          });
-          console.log(`------`);
-        }
-      }
-    },
+    exit(path, state) {},
   },
 
   FunctionCall: {
@@ -80,7 +66,9 @@ export default {
     exit(path, state) {
       const { node, scope } = path;
       if (!scope.getReferencedBinding(node)) return;
-      const expressionPath = path.getAncestorOfType('ExpressionStatement');
+      const expressionPath =
+        path.getAncestorOfType('ExpressionStatement') ||
+        path.getAncestorOfType('VariableDeclarationStatement');
       if (scope.getReferencedBinding(node).isSecret) {
         path.markContainsSecret();
         if (expressionPath)
