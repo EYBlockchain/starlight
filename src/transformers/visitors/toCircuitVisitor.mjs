@@ -17,6 +17,7 @@ const visitor = {
   ContractDefinition: {
     enter(path) {
       const { node, parent } = path;
+      console.log('\n\nCONDEF SCOPE', path.scope);
       node._newASTPointer = parent._newASTPointer;
     },
   },
@@ -25,6 +26,8 @@ const visitor = {
     // parent._newASTPointer location is Folder.files[].
     enter(path, state) {
       const { node, parent, scope } = path;
+      console.log('\n\nNODE NAME', node.name);
+      console.log('\nFNDEF INDICATORS', path.scope.indicators);
       if (node.kind === 'constructor') {
         // We currently treat all constructors as publicly executed functions.
         state.skipSubNodes = true;
@@ -71,7 +74,7 @@ const visitor = {
       }
     },
 
-    exit(path) {
+    exit(path, state) {
       const { node, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
@@ -97,6 +100,17 @@ const visitor = {
           indicators,
         }),
       );
+
+      if (state.msgSenderParam) {
+        node._newASTPointer.parameters.parameters.unshift(
+          buildNode('VariableDeclaration', {
+            name: 'msgSender',
+            declarationType: 'parameter',
+            type: 'field',
+          }),
+        ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
+        delete state.msgSenderParam; // reset
+      }
     },
   },
 
@@ -257,7 +271,26 @@ const visitor = {
       }
 
       // Otherwise, copy this ExpressionStatement into the circuit's language.
-      newNode = buildNode('ExpressionStatement');
+
+      // But, let's check to see if this ExpressionStatement is an Assignment to a state variable. If it's the _first_ such assignment, we'll need to mutate this ExpressionStatement node into a VariableDeclarationStatement.
+
+      let isVarDec = false;
+      if (
+        node.expression.nodeType === 'Assignment' &&
+        node.expression.operator === '='
+      ) {
+        const assignmentNode = node.expression;
+        const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
+        const referencedIndicator = scope.getReferencedIndicator(lhs);
+        if (
+          lhs.id === referencedIndicator.referencingPaths[0].node.id ||
+          lhs.id === referencedIndicator.referencingPaths[0].parent.id // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+        ) {
+          isVarDec = true;
+        }
+      }
+
+      newNode = buildNode('ExpressionStatement', { isVarDec });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -305,6 +338,8 @@ const visitor = {
     enter(path, state) {
       // HACK to get ElementaryTypeNameExpressions working
       const { node, parent } = path;
+
+      console.log('\n\n\nPARENT:', parent);
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode(
@@ -374,9 +409,29 @@ const visitor = {
 
       // What follows assumes this node represents msg.sender:
       const newNode = buildNode('MsgSender');
+
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = newNode;
       state.skipSubNodes = true;
+      state.msgSenderParam = true; // helps us lazily notify the FunctionDefinition node to include a msgSender parameter upon exit.
+
+      // const findCircuitASTAncestor = (path, callback) => {
+      //   do {
+      //     if (callback(path?._newASTPointer)) return path._newASTPointer;
+      //   } while ((path = path.parentPath));
+      //   return null;
+      // };
+      //
+      // const findCircuitASTFunctionDefinition = path => {
+      //   return findCircuitASTAncestor(
+      //     path,
+      //     p => p?.nodeType === 'FunctionDefinition',
+      //   );
+      // };
+      //
+      // // We also push msgSender as a parameter to the circuit.
+      // const fnDef = findCircuitASTFunctionDefinition(path.parentPath);
+      // fnDef.node.parameters.parameters.unshift(newNode);
     },
   },
 
@@ -392,8 +447,7 @@ const visitor = {
 
   FunctionCall: {
     enter(path, state) {
-      const { node, parent } = path;
-      // TODO typeConversion
+      const { parent } = path;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 
@@ -414,6 +468,15 @@ const visitor = {
 
         // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
         state.skipSubNodes = true;
+      }
+
+      if (path.isZero()) {
+        // The path represents 0. E.g. "address(0)", so we don't need to traverse further into it.
+        state.skipSubNodes = true;
+
+        // Let's replace this thing with a '0' in the new AST:
+        const newNode = buildNode('Literal', { value: 0 });
+        parent._newASTPointer[path.containerName] = newNode;
       }
     },
   },

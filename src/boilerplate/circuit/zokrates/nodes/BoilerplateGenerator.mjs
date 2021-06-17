@@ -5,9 +5,13 @@
 const bpCache = new WeakMap();
 
 class BoilerplateGenerator {
+  bpSections = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
+
   constructor(indicators) {
+    // Through prior traversals, a BoilerplateGenerator class for this set of indicators might already be stored in memory:
     if (bpCache.has(indicators)) return bpCache.get(indicators);
 
+    // Initialise bpSections - we'll then only push boilerplate to certain sections if this class's indicators contain certain booleans (see generateBoilerplate()).
     this.bpSections.forEach(bpSection => {
       this[bpSection] = [];
     });
@@ -71,6 +75,7 @@ class BoilerplateGenerator {
 
   generateBoilerplateStatement(bpType, extraParams) {
     if (this.isMapping) {
+      // Depending on the mapping key being used in the current statement being considered by the compiler, there will be different indicators. We'll need to 'refresh' the indicators that this class is looking at, each time we encounter a new statement.
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
@@ -87,8 +92,6 @@ class BoilerplateGenerator {
       ...this[bpType](extraParams),
     };
   }
-
-  bpSections = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
 
   _addBP = (bpType, extraParams) => {
     this.bpSections.forEach(bpSection => {
