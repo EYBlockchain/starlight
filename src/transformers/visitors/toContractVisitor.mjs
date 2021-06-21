@@ -456,7 +456,6 @@ export default {
           const isSecret = p.getReferencedNode()?.isSecret;
 
           if (isSecret) {
-            console.log('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFound secret node', p.node);
             state.secretFound = true;
           }
         };

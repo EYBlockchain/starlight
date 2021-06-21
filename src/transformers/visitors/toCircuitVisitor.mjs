@@ -17,7 +17,6 @@ const visitor = {
   ContractDefinition: {
     enter(path) {
       const { node, parent } = path;
-      console.log('\n\nCONDEF SCOPE', path.scope);
       node._newASTPointer = parent._newASTPointer;
     },
   },
@@ -26,8 +25,6 @@ const visitor = {
     // parent._newASTPointer location is Folder.files[].
     enter(path, state) {
       const { node, parent, scope } = path;
-      console.log('\n\nNODE NAME', node.name);
-      console.log('\nFNDEF INDICATORS', path.scope.indicators);
       if (node.kind === 'constructor') {
         // We currently treat all constructors as publicly executed functions.
         state.skipSubNodes = true;
@@ -336,10 +333,7 @@ const visitor = {
 
   ElementaryTypeNameExpression: {
     enter(path, state) {
-      // HACK to get ElementaryTypeNameExpressions working
       const { node, parent } = path;
-
-      console.log('\n\n\nPARENT:', parent);
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode(
