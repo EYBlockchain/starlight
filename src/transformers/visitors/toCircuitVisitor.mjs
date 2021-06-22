@@ -408,24 +408,6 @@ const visitor = {
       parent._newASTPointer[path.containerName] = newNode;
       state.skipSubNodes = true;
       state.msgSenderParam = true; // helps us lazily notify the FunctionDefinition node to include a msgSender parameter upon exit.
-
-      // const findCircuitASTAncestor = (path, callback) => {
-      //   do {
-      //     if (callback(path?._newASTPointer)) return path._newASTPointer;
-      //   } while ((path = path.parentPath));
-      //   return null;
-      // };
-      //
-      // const findCircuitASTFunctionDefinition = path => {
-      //   return findCircuitASTAncestor(
-      //     path,
-      //     p => p?.nodeType === 'FunctionDefinition',
-      //   );
-      // };
-      //
-      // // We also push msgSender as a parameter to the circuit.
-      // const fnDef = findCircuitASTFunctionDefinition(path.parentPath);
-      // fnDef.node.parameters.parameters.unshift(newNode);
     },
   },
 

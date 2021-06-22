@@ -272,7 +272,6 @@ export default {
     enter(path, state) {
       const { node, parent } = path;
 
-      // Otherwise, copy this ExpressionStatement into the circuit's language.
       const newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
