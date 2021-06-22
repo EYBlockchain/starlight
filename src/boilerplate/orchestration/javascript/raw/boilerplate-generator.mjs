@@ -221,7 +221,6 @@ export default function buildBoilerplate(nodeType, fields = {}) {
             case true:
               return `
                   ${parameters.join('\n')}${stateVarIds.join('\n')}
-                  \tsecretKey.limbs(32, 8),
                   \t${stateName}_newOwnerPublicKey.limbs(32, 8),
                   \t${stateName}_newSalt.limbs(32, 8),
                   \t${stateName}_newCommitment.integer`;
