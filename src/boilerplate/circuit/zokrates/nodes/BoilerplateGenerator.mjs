@@ -33,6 +33,7 @@ class BoilerplateGenerator {
     isMapping,
     increments,
     decrements,
+    burnedOnly,
   }) {
     Object.assign(this, {
       id,
@@ -45,6 +46,7 @@ class BoilerplateGenerator {
       isMapping,
       increments,
       decrements,
+      burnedOnly,
     });
   }
 
@@ -106,6 +108,7 @@ class BoilerplateGenerator {
           ...(this.isWhole && { isWhole: this.isWhole }),
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
           ...(this.isMapping && { isMapping: this.isMapping }),
+          // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }),
           ...this[bpType](extraParams),
         })
         .filter(Boolean);
@@ -154,7 +157,7 @@ class BoilerplateGenerator {
       addBP('oldCommitmentPreimage');
       addBP('oldCommitmentExistence');
     }
-    if (this.newCommitmentRequired) {
+    if (this.newCommitmentRequired && !this.burnedOnly) {
       addBP('newCommitment');
     }
   }
