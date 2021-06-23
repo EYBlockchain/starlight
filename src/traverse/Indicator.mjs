@@ -106,6 +106,23 @@ export class FunctionDefinitionIndicator {
     }
   }
 
+  updateNewCommitmentsRequired() {
+    // if we have burn statements, there are some scopes where we don't need new commitments at all
+    let burnedOnly = true;
+    for (const [, stateVarIndicator] of Object.entries(this)) {
+      if (!(stateVarIndicator instanceof StateVariableIndicator)) continue; // eslint-disable-line no-continue, no-use-before-define
+      // if we have a indicator which is NOT burned, then we do need new commitments
+      if (
+        stateVarIndicator.isSecret &&
+        (!stateVarIndicator.isBurned || stateVarIndicator.newCommitmentRequired)
+      ) {
+        burnedOnly = false;
+        break;
+      }
+    }
+    this.newCommitmentsRequired = !burnedOnly;
+  }
+
   // no constructor yet...
   //
   // BIG COMMENT FOR INFO ONLY
