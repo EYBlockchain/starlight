@@ -185,6 +185,8 @@ export default {
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
+      thisIntegrationTestFunction.newCommitmentsRequired =
+        functionIndicator.newCommitmentsRequired;
       if (
         (functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
