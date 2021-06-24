@@ -5,9 +5,13 @@
 const bpCache = new WeakMap();
 
 class BoilerplateGenerator {
+  bpSections = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
+
   constructor(indicators) {
+    // Through prior traversals, a BoilerplateGenerator class for this set of indicators might already be stored in memory:
     if (bpCache.has(indicators)) return bpCache.get(indicators);
 
+    // Initialise bpSections - we'll then only push boilerplate to certain sections if this class's indicators contain certain booleans (see generateBoilerplate()).
     this.bpSections.forEach(bpSection => {
       this[bpSection] = [];
     });
@@ -29,6 +33,7 @@ class BoilerplateGenerator {
     isMapping,
     increments,
     decrements,
+    burnedOnly,
   }) {
     Object.assign(this, {
       id,
@@ -41,6 +46,7 @@ class BoilerplateGenerator {
       isMapping,
       increments,
       decrements,
+      burnedOnly,
     });
   }
 
@@ -71,6 +77,7 @@ class BoilerplateGenerator {
 
   generateBoilerplateStatement(bpType, extraParams) {
     if (this.isMapping) {
+      // Depending on the mapping key being used in the current statement being considered by the compiler, there will be different indicators. We'll need to 'refresh' the indicators that this class is looking at, each time we encounter a new statement.
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
@@ -88,8 +95,6 @@ class BoilerplateGenerator {
     };
   }
 
-  bpSections = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
-
   _addBP = (bpType, extraParams) => {
     this.bpSections.forEach(bpSection => {
       this[bpSection] = this[bpSection]
@@ -103,6 +108,7 @@ class BoilerplateGenerator {
           ...(this.isWhole && { isWhole: this.isWhole }),
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
           ...(this.isMapping && { isMapping: this.isMapping }),
+          // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }),
           ...this[bpType](extraParams),
         })
         .filter(Boolean);
@@ -151,7 +157,7 @@ class BoilerplateGenerator {
       addBP('oldCommitmentPreimage');
       addBP('oldCommitmentExistence');
     }
-    if (this.newCommitmentRequired) {
+    if (this.newCommitmentRequired && !this.burnedOnly) {
       addBP('newCommitment');
     }
   }

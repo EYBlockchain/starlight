@@ -101,12 +101,14 @@ function codeGenerator(node, options = {}) {
       } ${codeGenerator(node.rightExpression)}`;
 
     case 'MsgSender':
-      return `publicKey.integer`;
+      // if we need to convert an owner's address to a zkp PK, it will not appear here
+      // below is when we need to extract the eth address to use as a param
+      return `msgSender.integer`;
 
     case 'TypeConversion':
       switch (node.type) {
         case 'address':
-          return `generalise(${codeGenerator(node.arguments)}).hex(32)`;
+          return `generalise(${codeGenerator(node.arguments)}).hex(20)`;
         default:
           // TODO
           return;
@@ -115,7 +117,14 @@ function codeGenerator(node, options = {}) {
       return node.value;
     case 'Identifier':
       if (options?.lhs) return node.name;
-      return `parseInt(${node.name}.integer, 10)`;
+      switch (node.subType) {
+        default:
+        case 'uint256':
+          return `parseInt(${node.name}.integer, 10)`;
+        case 'address':
+          return `${node.name}.integer`;
+      }
+
     case 'Folder':
     case 'File':
     case 'EditableCommitmentCommonFilesBoilerplate':

@@ -21,6 +21,8 @@ export default {
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();
       }
+      // finally, we update commitments req for the whole function
+      scope.indicators.updateNewCommitmentsRequired();
     },
   },
 

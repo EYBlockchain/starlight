@@ -1,7 +1,6 @@
 /* eslint-disable import/no-cycle, no-nested-ternary */
 import fs from 'fs';
 import path from 'path';
-import logger from '../../../utils/logger.mjs';
 import BP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.mjs';
 
 const bp = new BP();
@@ -87,12 +86,39 @@ function codeGenerator(node) {
         `;
     }
 
-    case 'ParameterList':
-      return BP.uniqueify(node.parameters.flatMap(codeGenerator)).join(',\\\n\t');
+    case 'ParameterList': {
+      const paramList = BP.uniqueify(node.parameters.flatMap(codeGenerator));
+
+      // we also need to identify and remove duplicate params prefixed with conflicting 'public'/'private' keywords (prioritising 'public')
+      const slicedParamList = paramList.map(p =>
+        p.replace('public ', '').replace('private ', ''),
+      );
+      const linesToDelete = []; // we'll collect duplicate params here
+      for (let i = 0; i < paramList.length; i++) {
+        for (let j = i + 1; j < slicedParamList.length; j++) {
+          if (slicedParamList[i] === slicedParamList[j]) {
+            if (paramList[i].includes('private'))
+              linesToDelete.push(paramList[i]);
+            if (paramList[j].includes('private'))
+              linesToDelete.push(paramList[j]);
+          }
+        }
+      }
+      for (let i = 0; i < linesToDelete.length; i++) {
+        // remove duplicate params
+        paramList.splice(paramList.indexOf(linesToDelete[i]), 1);
+      }
+
+      return paramList.join(',\\\n\t');
+    }
 
     case 'VariableDeclaration': {
       const visibility =
-        node.declarationType === 'parameter' ? (node.isPrivate ? 'private ' : 'public ') : '\t\t';
+        node.declarationType === 'parameter'
+          ? node.isPrivate
+            ? 'private '
+            : 'public '
+          : '\t\t';
       return `${visibility}${codeGenerator(node.typeName)} ${node.name}`;
     }
 
@@ -112,12 +138,16 @@ function codeGenerator(node) {
       return [...preStatements, ...statements, ...postStatements].join('\n\n');
     }
 
-    case 'ExpressionStatement':
-      return codeGenerator(node.expression);
+    case 'ExpressionStatement': {
+      if (node.isVarDec) {
+        return `
+        field ${codeGenerator(node.expression)}`;
+      }
+      return codeGenerator(node.expression) ?? '';
+    }
 
     case 'Assignment':
-      return `
-        ${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
+      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
@@ -129,6 +159,12 @@ function codeGenerator(node) {
 
     case 'Literal':
       return node.value;
+
+    case 'IndexAccess':
+      return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression)}`;
+
+    case 'MsgSender':
+      return 'msgSender';
 
     case 'Assert':
       return `

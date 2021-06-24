@@ -141,6 +141,7 @@ export default {
 
     exit(path, state) {
       const { node, parent, scope } = path;
+      node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       const initialiseOrchestrationBoilerplateNodes = fnIndicator => {
         const newNodes = {};
         const contractName = `${parent.name}Shield`;
@@ -186,6 +187,8 @@ export default {
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
+      thisIntegrationTestFunction.newCommitmentsRequired =
+        functionIndicator.newCommitmentsRequired;
       if (
         (functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
@@ -200,6 +203,10 @@ export default {
         // 4 - CalculateNullifier - nullifiersRequired - per state
         // 5 - CalculateCommitment - newCommitmentRequired - per state
         // 6 - GenerateProof - all - per function
+        if (state.msgSenderParam) {
+          newNodes.generateProofNode.parameters.push(`msgSender`);
+          delete state.msgSenderParam; // reset
+        }
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
         const modifiedStateVariableIndicators = [];
@@ -659,7 +666,10 @@ export default {
   Identifier: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, { name: node.name });
+      const newNode = buildNode(node.nodeType, {
+        name: node.name,
+        subType: node.typeDescriptions.typeString,
+      });
 
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -675,7 +685,10 @@ export default {
         .replace('[', '_')
         .replace(']', '')
         .replace('.sender', '');
-      const newNode = buildNode('Identifier', { name });
+      const newNode = buildNode('Identifier', {
+        name,
+        subType: node.typeDescriptions.typeString,
+      });
       state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
 
       parent._newASTPointer[path.containerName] = newNode;
@@ -691,6 +704,9 @@ export default {
         const newNode = buildNode('MsgSender');
         state.skipSubNodes = true;
         parent._newASTPointer[path.containerName] = newNode;
+        const newState = {};
+        path.parentPath.traversePathsFast(interactsWithSecretVisitor, newState);
+        if (newState.interactsWithSecret) state.msgSenderParam = true;
         return;
       }
       const newNode = buildNode(node.nodeType, { name: node.memberName });

@@ -182,10 +182,16 @@ export const preimageBoilerPlate = node => {
           newOwnerStatment = `publicKey;`;
         } else if (stateNode.mappingOwnershipType === 'key') {
           // the stateVarId[1] is the mapping key
-          newOwnerStatment = `${stateNode.stateVarId[1]};`;
+          newOwnerStatment = `${stateNode.stateVarId[1]};`; // above logic ensures this is a zkpKey
         } else if (stateNode.mappingOwnershipType === 'value') {
-          // TODO address type in the commitment
-          newOwnerStatment = `${privateStateName};`;
+          // TODO test below
+          // if the private state is an address (as here) its still in eth form - we need to convert
+          newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
+          \nif (${privateStateName}_newOwnerPublicKey === 0) {
+            console.log('WARNING: Public key for given eth address not found - reverting to your public key');
+            ${privateStateName}_newOwnerPublicKey = publicKey;
+          }
+          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
@@ -267,6 +273,9 @@ export const OrchestrationCodeBoilerPlate = node => {
         `\n\n// Initialisation of variables:
         \nconst instance = await getContractInstance('${node.contractName}');`,
       );
+      if (node.msgSenderParam)
+        lines.push(`
+              \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
       node.inputParameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);

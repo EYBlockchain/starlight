@@ -146,10 +146,11 @@ export default function buildNode(nodeType, fields = {}) {
       };
     }
     case 'Identifier': {
-      const { name } = fields;
+      const { name, subType = '' } = fields;
       return {
         nodeType,
         name,
+        subType,
       };
     }
     case 'Literal': {
