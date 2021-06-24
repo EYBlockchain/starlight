@@ -326,6 +326,15 @@ export default class NodePath {
   }
 
   /**
+   * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
+   * @returns {NodePath || null} the parameters of the function.
+   */
+  getFunctionDefinition(node = this.node) {
+    const path = NodePath.getPath(node);
+    return path.getAncestorOfType('FunctionDefinition') || null;
+  }
+
+  /**
    * Callable from a ContractDefinition node only
    * @returns {Array[String] || null} the parameters of the function.
    */
@@ -605,6 +614,26 @@ export default class NodePath {
     // The `expression` for an external function call will be a MemberAccess nodeType. myExternalContract.functionName
     if (functionNode.nodeType !== 'MemberAccess') return false;
     return this.isExternalContractInstance(functionNode);
+  }
+
+  isTypeConversion() {
+    return (
+      this.nodeType === 'FunctionCall' && this.node.kind === 'typeConversion'
+    );
+  }
+
+  /*
+  The original requirement which led to this function was "how do we identify address(0) as zero".
+  @WARNING: incomplete. Don't use this function without understanding what it does. You might need to add to it (e.g. to add functionality to identify a simple Literal representing zero)
+  */
+  isZero() {
+    if (
+      this.isTypeConversion() &&
+      this.node.arguments.length === 1 &&
+      this.node.arguments[0].value === '0'
+    )
+      return true;
+    return false;
   }
 
   /**

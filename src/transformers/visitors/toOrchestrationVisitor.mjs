@@ -139,15 +139,17 @@ export default {
 
     exit(path, state) {
       const { node, parent, scope } = path;
+      node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       const initialiseOrchestrationBoilerplateNodes = fnIndicator => {
         const newNodes = {};
         const contractName = `${parent.name}Shield`;
-        if (fnIndicator.initialisationRequired)
-          newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
-        newNodes.readPreimageNode = buildNode('ReadPreimage', {
+        newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
           contractName,
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
+        if (fnIndicator.initialisationRequired)
+          newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
+        newNodes.readPreimageNode = buildNode('ReadPreimage');
         if (fnIndicator.nullifiersRequired) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,
@@ -183,8 +185,11 @@ export default {
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
+      thisIntegrationTestFunction.newCommitmentsRequired =
+        functionIndicator.newCommitmentsRequired;
       if (
-        functionIndicator.newCommitmentsRequired &&
+        (functionIndicator.newCommitmentsRequired ||
+          functionIndicator.nullifiersRequired) &&
         scope.modifiesSecretState()
       ) {
         const newNodes = initialiseOrchestrationBoilerplateNodes(
@@ -196,6 +201,10 @@ export default {
         // 4 - CalculateNullifier - nullifiersRequired - per state
         // 5 - CalculateCommitment - newCommitmentRequired - per state
         // 6 - GenerateProof - all - per function
+        if (state.msgSenderParam) {
+          newNodes.generateProofNode.parameters.push(`msgSender`);
+          delete state.msgSenderParam; // reset
+        }
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
         const modifiedStateVariableIndicators = [];
@@ -272,7 +281,10 @@ export default {
             modifiedStateVariableNode,
           );
 
-          if (stateVarIndicator.isWhole) {
+          if (
+            stateVarIndicator.isWhole &&
+            functionIndicator.initialisationRequired
+          ) {
             newNodes.initialisePreimageNode.privateStates[name] = {
               privateStateName: name,
             };
@@ -284,6 +296,9 @@ export default {
               id,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
             },
           );
 
@@ -302,7 +317,7 @@ export default {
               indicator: stateVarIndicator,
             });
           }
-          if (stateVarIndicator.isModified) {
+          if (stateVarIndicator.newCommitmentRequired) {
             newNodes.calculateCommitmentNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateCommitment', {
@@ -311,11 +326,19 @@ export default {
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
+          }
+          if (stateVarIndicator.isModified) {
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
               privateStateName: name,
               id,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentRequired,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
@@ -324,6 +347,12 @@ export default {
               name
             ] = buildPrivateStateNode('SendTransaction', {
               increment: isIncremented ? incrementsArray : undefined,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentRequired,
               indicator: stateVarIndicator,
             });
             newNodes.writePreimageNode.privateStates[
@@ -332,6 +361,9 @@ export default {
               id,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentRequired,
             });
           }
         }
@@ -346,13 +378,20 @@ export default {
             newNodes.sendTransactionNode.publicInputs.push(param.name);
         }
 
-        // the newNodes array is already ordered, however we need the initialisePreimageNode before any copied over statements
+        // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         if (newNodes.initialisePreimageNode)
           node._newASTPointer.body.statements.splice(
             0,
             0,
             newNodes.initialisePreimageNode,
           );
+
+        node._newASTPointer.body.statements.splice(
+          0,
+          0,
+          newNodes.InitialiseKeysNode,
+        );
+
         // 1 - InitialisePreimage - whole states - per state
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
         // 3 - MembershipWitness - nullifiersRequired - per state
@@ -625,7 +664,10 @@ export default {
   Identifier: {
     enter(path) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, { name: node.name });
+      const newNode = buildNode(node.nodeType, {
+        name: node.name,
+        subType: node.typeDescriptions.typeString,
+      });
 
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -641,7 +683,10 @@ export default {
         .replace('[', '_')
         .replace(']', '')
         .replace('.sender', '');
-      const newNode = buildNode('Identifier', { name });
+      const newNode = buildNode('Identifier', {
+        name,
+        subType: node.typeDescriptions.typeString,
+      });
       state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
 
       parent._newASTPointer[path.containerName] = newNode;
@@ -657,6 +702,9 @@ export default {
         const newNode = buildNode('MsgSender');
         state.skipSubNodes = true;
         parent._newASTPointer[path.containerName] = newNode;
+        const newState = {};
+        path.parentPath.traversePathsFast(interactsWithSecretVisitor, newState);
+        if (newState.interactsWithSecret) state.msgSenderParam = true;
         return;
       }
       const newNode = buildNode(node.nodeType, { name: node.memberName });

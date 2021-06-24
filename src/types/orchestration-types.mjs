@@ -146,10 +146,11 @@ export default function buildNode(nodeType, fields = {}) {
       };
     }
     case 'Identifier': {
-      const { name } = fields;
+      const { name, subType = '' } = fields;
       return {
         nodeType,
         name,
+        subType,
       };
     }
     case 'Literal': {
@@ -167,6 +168,7 @@ export default function buildNode(nodeType, fields = {}) {
       };
     }
     case 'InitialisePreimage':
+    case 'InitialiseKeys':
     case 'ReadPreimage':
     case 'WritePreimage':
     case 'MembershipWitness':

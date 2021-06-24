@@ -37,9 +37,12 @@ export const sendTransactionBoilerplate = node => {
       case false:
       default:
         // whole
-        output[1].push(`${privateStateName}_root.integer`);
-        output[0].push(`${privateStateName}_nullifier.integer`);
-        output[2].push(`${privateStateName}_newCommitment.integer`);
+        if (!stateNode.reinitialisedOnly) {
+          output[1].push(`${privateStateName}_root.integer`);
+          output[0].push(`${privateStateName}_nullifier.integer`);
+        }
+        if (!stateNode.burnedOnly)
+          output[2].push(`${privateStateName}_newCommitment.integer`);
         break;
     }
   }
@@ -73,6 +76,8 @@ export const generateProofBoilerplate = node => {
           buildBoilerplate('GenerateProof', {
             stateName,
             stateType: 'whole',
+            reinitialisedOnly: stateNode.reinitialisedOnly,
+            burnedOnly: stateNode.burnedOnly,
             parameters,
             stateVarIds: stateVarIdLines,
           }),
@@ -177,9 +182,16 @@ export const preimageBoilerPlate = node => {
           newOwnerStatment = `publicKey;`;
         } else if (stateNode.mappingOwnershipType === 'key') {
           // the stateVarId[1] is the mapping key
-          newOwnerStatment = `${stateNode.stateVarId[1]};`;
+          newOwnerStatment = `${stateNode.stateVarId[1]};`; // above logic ensures this is a zkpKey
         } else if (stateNode.mappingOwnershipType === 'value') {
-          // TODO address type in the commitment
+          // TODO test below
+          // if the private state is an address (as here) its still in eth form - we need to convert
+          newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
+          \nif (${privateStateName}_newOwnerPublicKey === 0) {
+            console.log('WARNING: Public key for given eth address not found - reverting to your public key');
+            ${privateStateName}_newOwnerPublicKey = publicKey;
+          }
+          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
@@ -201,6 +213,7 @@ export const preimageBoilerPlate = node => {
           buildBoilerplate('ReadPreimage', {
             stateType: 'whole',
             stateName: privateStateName,
+            reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
             stateVarIds,
@@ -260,6 +273,9 @@ export const OrchestrationCodeBoilerPlate = node => {
         `\n\n// Initialisation of variables:
         \nconst instance = await getContractInstance('${node.contractName}');`,
       );
+      if (node.msgSenderParam)
+        lines.push(`
+              \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
       node.inputParameters.forEach(param => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
@@ -300,23 +316,25 @@ export const OrchestrationCodeBoilerPlate = node => {
         statements: lines,
       };
 
+    case 'InitialiseKeys':
+      states[0] = node.onChainKeyRegistry ? `true` : `false`;
+      return {
+        statements: [
+          `${buildBoilerplate(node.nodeType, {
+            contractName: node.contractName,
+            onChainKeyRegistry: states[0],
+          })}`,
+        ],
+      };
+
     case 'ReadPreimage':
       lines[0] = preimageBoilerPlate(node);
-      states[0] = node.onChainKeyRegistry ? `true` : `false`;
       for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isWhole)
           params.push(`\n${stateName} = generalise(${stateName});`);
       }
       return {
-        statements: [
-          `${params.join('\n')}
-          ${buildBoilerplate(node.nodeType, {
-            contractName: node.contractName,
-            onChainKeyRegistry: states[0],
-            stateType: 'preamble',
-          })}`,
-          lines[0].join('\n'),
-        ],
+        statements: [`${params.join('\n')}`, lines[0].join('\n')],
       };
 
     case 'WritePreimage':
@@ -351,6 +369,7 @@ export const OrchestrationCodeBoilerPlate = node => {
               buildBoilerplate(node.nodeType, {
                 stateName,
                 stateType: 'whole',
+                burnedOnly: stateNode.burnedOnly,
               }),
             );
         }
@@ -488,12 +507,12 @@ export const OrchestrationCodeBoilerPlate = node => {
       // params[2] = arr of commitments
       if (params[0][1][0]) params[0][1] = `${params[0][1]},`; // root - single input
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
-      if (params[0][2][0]) params[0][2] = `[${params[0][2]}]`; // commitments - array
+      if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst tx = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]}, proof)
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} proof)
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,

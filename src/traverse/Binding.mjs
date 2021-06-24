@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file, no-param-reassign, no-continue */
 import config from 'config';
 import logger from '../utils/logger.mjs';
-import { SyntaxUsageError, ZKPError } from '../error/errors.mjs';
+import { SyntaxUsageError, ZKPError, TODOError } from '../error/errors.mjs';
 import backtrace from '../error/backtrace.mjs';
 import NodePath from './NodePath.mjs';
 import { bindingCache } from './cache.mjs';
@@ -164,8 +164,9 @@ export default class Binding {
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
     if (keyNode.nodeType !== 'Identifier') {
-      throw new Error(
+      throw new TODOError(
         `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
+        keyNode,
       );
     }
 
@@ -470,6 +471,7 @@ export default class Binding {
     if (ownerNode.name === 'msg' && ownerNode.mappingOwnershipType === 'key') {
       // the owner is represented by the mapping key - we look through the keys for 0
       for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+        // TODO we can't yet set mappingKeys to anything not an identifier
         const keyNode = mappingKey.keyPath.node;
         if (
           keyNode.nodeType === 'FunctionCall' &&
@@ -477,10 +479,13 @@ export default class Binding {
         ) {
           // we have found an owner set to hardcoded 0
           this.ownerSetToZeroWarning(keyNode);
-          if (this.reinitialisable)
-            mappingKey.keyPath.getAncestorOfType(
+          if (this.reinitialisable) {
+            const burnPath = mappingKey.keyPath.getAncestorOfType(
               'ExpressionStatement',
-            ).isBurnStatement = true;
+            );
+            burnPath.isBurnStatement = true;
+            // TODO call updateBurnStatement in indicator
+          }
         }
       }
     }
@@ -514,8 +519,10 @@ export default class Binding {
       ) {
         // we have found an owner set to hardcoded 0
         this.ownerSetToZeroWarning(assignmentNode);
-        if (this.reinitialisable)
+        if (this.reinitialisable) {
           path.getAncestorOfType('ExpressionStatement').isBurnStatement = true;
+          path.scope.getReferencedIndicator(path.node).addBurningPath(path);
+        }
       }
     }
   }

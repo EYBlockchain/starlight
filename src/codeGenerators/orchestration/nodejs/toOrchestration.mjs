@@ -84,7 +84,7 @@ function codeGenerator(node, options = {}) {
       return `\n// increment would go here but has been filtered out`;
 
     case 'Assignment':
-      if (node.operator === '+=' || node.operator === '-=') {
+      if (['+=', '-=', '*='].includes(node.operator)) {
         return `${codeGenerator(node.leftHandSide, {
           lhs: true,
         })} = ${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
@@ -101,15 +101,30 @@ function codeGenerator(node, options = {}) {
       } ${codeGenerator(node.rightExpression)}`;
 
     case 'MsgSender':
-      return `publicKey.integer`;
+      // if we need to convert an owner's address to a zkp PK, it will not appear here
+      // below is when we need to extract the eth address to use as a param
+      return `msgSender.integer`;
 
     case 'TypeConversion':
-      return `convertTo${node.type}(${codeGenerator(node.arguments)})`;
+      switch (node.type) {
+        case 'address':
+          return `generalise(${codeGenerator(node.arguments)}).hex(20)`;
+        default:
+          // TODO
+          return;
+      }
     case 'Literal':
       return node.value;
     case 'Identifier':
       if (options?.lhs) return node.name;
-      return `parseInt(${node.name}.integer, 10)`;
+      switch (node.subType) {
+        default:
+        case 'uint256':
+          return `parseInt(${node.name}.integer, 10)`;
+        case 'address':
+          return `${node.name}.integer`;
+      }
+
     case 'Folder':
     case 'File':
     case 'EditableCommitmentCommonFilesBoilerplate':
@@ -118,6 +133,7 @@ function codeGenerator(node, options = {}) {
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
     case 'InitialisePreimage':
+    case 'InitialiseKeys':
     case 'ReadPreimage':
     case 'WritePreimage':
     case 'MembershipWitness':

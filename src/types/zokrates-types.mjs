@@ -153,10 +153,11 @@ export function buildNode(nodeType, fields = {}) {
       };
     }
     case 'ExpressionStatement': {
-      const { expression = {} } = fields;
+      const { expression = {}, isVarDec = false } = fields;
       return {
         nodeType,
         expression,
+        isVarDec, // this informs the codeGenerator that it should _declare_ the lhs of the assignment (below this expressionStatement) as a field.
       };
     }
     case 'IndexAccess': {

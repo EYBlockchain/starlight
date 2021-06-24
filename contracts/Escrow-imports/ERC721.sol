@@ -36,6 +36,30 @@ contract ERC721 is IERC721 {
         _symbol = symbol_;
     }
 
+    function uint2str(uint256 _i ) internal pure returns (string memory str)
+      {
+       if (_i == 0)
+         {
+           return "0";
+         }
+       uint256 j = _i;
+       uint256 length;
+       while (j != 0)
+         {
+           length++;
+           j /= 10;
+         }
+       bytes memory bstr = new bytes(length);
+       uint256 k = length;
+       j = _i;
+       while (j != 0)
+       {
+         bstr[--k] = bytes1(uint8(48 + j % 10));
+         j /= 10;
+       }
+       str = string(bstr);
+}
+
     /**
      * @dev See {IERC721-balanceOf}.
      */
@@ -56,26 +80,26 @@ contract ERC721 is IERC721 {
     /**
      * @dev See {IERC721Metadata-name}.
      */
-    function name() public view virtual override returns (string memory) {
+    function name() public view returns (string memory) {
         return _name;
     }
 
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
-    function symbol() public view virtual override returns (string memory) {
+    function symbol() public view returns (string memory) {
         return _symbol;
     }
 
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
         string memory baseURI = _baseURI();
         return bytes(baseURI).length > 0
-            ? string(abi.encodePacked(baseURI, tokenId.toString()))
+            ? string(abi.encodePacked(baseURI, uint2str(tokenId)))
             : '';
     }
 
@@ -94,7 +118,7 @@ contract ERC721 is IERC721 {
         address owner = ERC721.ownerOf(tokenId);
         require(to != owner, "ERC721: approval to current owner");
 
-        require(_msgSender() == owner || isApprovedForAll(owner, _msgSender()),
+        require(msg.sender == owner || isApprovedForAll(owner, msg.sender),
             "ERC721: approve caller is not owner nor approved for all"
         );
 
@@ -114,10 +138,10 @@ contract ERC721 is IERC721 {
      * @dev See {IERC721-setApprovalForAll}.
      */
     function setApprovalForAll(address operator, bool approved) public virtual override {
-        require(operator != _msgSender(), "ERC721: approve to caller");
+        require(operator != msg.sender, "ERC721: approve to caller");
 
-        _operatorApprovals[_msgSender()][operator] = approved;
-        emit ApprovalForAll(_msgSender(), operator, approved);
+        _operatorApprovals[msg.sender][operator] = approved;
+        emit ApprovalForAll(msg.sender, operator, approved);
     }
 
     /**
@@ -130,9 +154,9 @@ contract ERC721 is IERC721 {
     /**
      * @dev See {IERC721-transferFrom}.
      */
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override returns (bool) {
         //solhint-disable-next-line max-line-length
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+        require(_isApprovedOrOwner(msg.sender, tokenId), "ERC721: transfer caller is not owner nor approved");
 
         _transfer(from, to, tokenId);
         return true;
@@ -141,7 +165,7 @@ contract ERC721 is IERC721 {
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override returns (bool) {
         safeTransferFrom(from, to, tokenId, "");
         return true;
     }
@@ -150,7 +174,7 @@ contract ERC721 is IERC721 {
      * @dev See {IERC721-safeTransferFrom}.
      */
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public virtual override {
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+        require(_isApprovedOrOwner(msg.sender, tokenId), "ERC721: transfer caller is not owner nor approved");
         _safeTransfer(from, to, tokenId, _data);
     }
 
@@ -301,6 +325,20 @@ contract ERC721 is IERC721 {
     }
 
     /**
+     * @dev WARNING - for demo purposes only; infinite supply.
+     */
+    function mint(address _account, uint256 tokenId) public {
+      _mint(_account, tokenId);
+    }
+
+    /**
+     * @dev WARNING - for demo purposes only; infinite supply.
+     */
+    function burn(uint256 tokenId) public {
+      _burn(tokenId);
+    }
+
+    /**
      * @dev Approve `to` to operate on `tokenId`
      *
      * Emits a {Approval} event.
@@ -323,22 +361,23 @@ contract ERC721 is IERC721 {
     function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory _data)
         private returns (bool)
     {
-        if (to.isContract()) {
-            try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, _data) returns (bytes4 retval) {
-                return retval == IERC721Receiver(to).onERC721Received.selector;
-            } catch (bytes memory reason) {
-                if (reason.length == 0) {
-                    revert("ERC721: transfer to non ERC721Receiver implementer");
-                } else {
-                    // solhint-disable-next-line no-inline-assembly
-                    assembly {
-                        revert(add(32, reason), mload(reason))
-                    }
-                }
-            }
-        } else {
+        // @dev WARNING - below removed for demo purposes only
+        // if (to.isContract()) {
+        //     try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, _data) returns (bytes4 retval) {
+        //         return retval == IERC721Receiver(to).onERC721Received.selector;
+        //     } catch (bytes memory reason) {
+        //         if (reason.length == 0) {
+        //             revert("ERC721: transfer to non ERC721Receiver implementer");
+        //         } else {
+        //             // solhint-disable-next-line no-inline-assembly
+        //             assembly {
+        //                 revert(add(32, reason), mload(reason))
+        //             }
+        //         }
+        //     }
+        // } else {
             return true;
-        }
+        //}
     }
 
     /**
