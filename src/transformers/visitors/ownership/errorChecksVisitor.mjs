@@ -1,6 +1,8 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 // no-unused-vars <-- to reinstate eventually
 
+import { StateVariableIndicator } from '../../../traverse/Indicator.mjs';
+
 /**
  * @desc:
  * Visitor checks each indicator and binding for errors, now we've done all the prelim traversals
@@ -14,7 +16,7 @@ export default {
       const { scope } = path;
       for (const [, indicator] of Object.entries(scope.indicators)) {
         // we may have a function indicator property we'd like to skip
-        if (!indicator.id) continue;
+        if (!(indicator instanceof StateVariableIndicator)) continue;
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();

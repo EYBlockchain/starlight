@@ -12,6 +12,7 @@ import accessedVisitor from './visitors/checks/accessedVisitor.mjs';
 import requireStatementVisitor from './visitors/checks/requireStatementVisitor.mjs';
 import localDeclarationsVisitor from './visitors/checks/localDeclarationsVisitor.mjs';
 import msgSenderParam from './visitors/checks/msgSenderParam.mjs';
+import interactsWithSecretVisitor from './visitors/checks/interactsWithSecretVisitor.mjs';
 
 /**
  * Inspired by the Transformer
@@ -53,6 +54,8 @@ function transformation1(oldAST) {
   logger.verbose('No unsupported external calls');
   path.traverse(explode(decoratorVisitor), state);
   logger.verbose('No conflicting known/unknown decorators');
+  path.traverse(explode(interactsWithSecretVisitor), state);
+  logger.verbose('Secret interacts marked');
   path.traverse(explode(incrementedVisitor), state);
   logger.verbose('Incrementations marked');
   path.traverse(explode(accessedVisitor), state);

@@ -34,6 +34,7 @@ import {
   ContractDefinitionIndicator,
   FunctionDefinitionIndicator,
   StateVariableIndicator,
+  LocalVariableIndicator,
 } from './Indicator.mjs';
 import { scopeCache } from './cache.mjs';
 import backtrace from '../error/backtrace.mjs';
@@ -153,6 +154,9 @@ export class Scope {
       case 'VariableDeclaration':
         if (this.scopeType === 'ContractDefinition')
           this.indicators.update(path);
+        if (this.scopeType === 'FunctionDefinition')
+          this.indicators[id] =
+            this.indicators[id] ?? new LocalVariableIndicator(path);
         break;
 
       // An Identifier node is a special case, because it refers to an alread-defined variable whose bindings and indicators have already been initialised. So rather than initialise indicators/bindings, we must update them with the information of this new Identifier node.
@@ -173,16 +177,22 @@ export class Scope {
             `Couldn't find a referencedDeclaration node for the current Identifier node.  I.e. couldn't find a node with id ${node.referencedDeclaration}`,
           );
 
+        const functionDefScope = this.getAncestorOfScopeType(
+          'FunctionDefinition',
+        );
+        const contractDefScope = this.getAncestorOfScopeType(
+          'ContractDefinition',
+        );
+
         if (this.scopeType === 'FunctionDefinition')
           this.indicators.update(path);
 
-        // if (
-        //   referencedBinding.isSecret &&
-        //   this.scopeType === 'FunctionDefinition'
-        // ) {
-        //   // @scope_FnDef new property
-        //   this.interactsWithSecret = true; // NOTE: unused. TODO: more functionality around 'tainting' secrets with public stuff and vice versa.
-        // }
+        if (
+          referencedBinding.isSecret &&
+          this.scopeType === 'FunctionDefinition'
+        ) {
+          this.containsSecret = true;
+        }
 
         // Update the binding of the stateVariable being referenced by this Identifier node, to reflect the information contained in this Identifier node:
         // @Binding update properties
@@ -204,13 +214,6 @@ export class Scope {
           referencedNode.stateVariable &&
           this.isInScopeType('FunctionDefinition')
         ) {
-          const functionDefScope = this.getAncestorOfScopeType(
-            'FunctionDefinition',
-          );
-          const contractDefScope = this.getAncestorOfScopeType(
-            'ContractDefinition',
-          );
-
           functionDefScope.indicators[referencedId] =
             functionDefScope.indicators[referencedId] ??
             new StateVariableIndicator(path);
@@ -220,6 +223,10 @@ export class Scope {
           // Update the indicator of the stateVariable being referenced by this Identifier node, to reflect the information contained in this Identifier node:
           // @Indicator update properties
           referencedIndicator.update(path);
+        }
+
+        if (!referencedNode.stateVariable) {
+          functionDefScope.indicators[referencedId].update(path);
         }
 
         // msg.sender might not be a 'top level' argument of the require statement - perhaps it's nested within some more complex expression. We look for it in order to throw an 'unsupported' error. TODO: figure out how to infer restrictions in this case.
@@ -365,8 +372,15 @@ export class Scope {
 
     if (!path.isMapping(referencingNode)) return indicator;
 
+    // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
+    const indexAccessNode =
+      referencingNode.nodeType === 'IndexAccess'
+        ? referencingNode
+        : NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')
+            .node;
+
     return mappingKeyIndicatorOnly
-      ? indicator.mappingKeys[this.getMappingKeyName(referencingNode)]
+      ? indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)]
       : indicator;
   }
 

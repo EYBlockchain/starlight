@@ -1,4 +1,4 @@
-/* eslint-disable max-classes-per-file */
+/* eslint-disable max-classes-per-file, no-param-reassign */
 
 import NodePath from './NodePath.mjs';
 import logger from '../utils/logger.mjs';
@@ -155,6 +155,75 @@ export class FunctionDefinitionIndicator {
   //   newCommitmentRequired: true,
   // }
 }
+/**
+ * Within a Function's scope, for each local variable that gets declared, we
+ * create a 'LocalVariableIndicator'.
+ */
+export class LocalVariableIndicator {
+  /** @param {NodePath} path the path of the localVariable for which we're creating an indicator
+   */
+  constructor(path) {
+    this.id = path.node.id;
+    this.name = path.node.name;
+    this.scope = path.scope;
+    this.node = path.node;
+    this.parentIndicator = path.scope.indicators;
+
+    this.referenceCount = 0;
+    this.referencingPaths = [];
+
+    this.modificationCount = 0;
+    this.modifyingPaths = [];
+
+    this.interactsWith = [];
+
+    if (path.isInType('VariableDeclarationStatement')) {
+      this.initialValue = path.getAncestorOfType(
+        'VariableDeclarationStatement',
+      ).node.initialValue;
+    }
+
+    this.isParam = path.isInType('ParameterList');
+  }
+
+  update(path) {
+    this.addReferencingPath(path);
+    if (path.isModification()) {
+      this.addModifyingPath(path);
+    }
+  }
+
+  addReferencingPath(path) {
+    this.isReferenced = true;
+    ++this.referenceCount;
+    if (!this.referencingPaths.some(p => p.node.id === path.node.id))
+      this.referencingPaths.push(path);
+  }
+
+  addModifyingPath(path) {
+    this.isModified = true;
+    ++this.modificationCount;
+    if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
+      this.modifyingPaths.push(path);
+    }
+  }
+
+  addSecretInteractingPath(path) {
+    this.interactsWithSecret = true;
+    path.isSecret = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+    }
+  }
+
+  addPublicInteractingPath(path) {
+    this.interactsWithPublic = true;
+    path.isPublic = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+    }
+  }
+}
 
 /**
  * Within a Function's scope, for each state variable that gets mentioned, we
@@ -187,6 +256,8 @@ export class StateVariableIndicator {
     this.nullifyingPaths = [];
 
     this.burningPaths = [];
+
+    this.interactsWith = [];
 
     if (path.isMappingIdentifier()) {
       this.isMapping = true;
@@ -235,6 +306,22 @@ export class StateVariableIndicator {
     this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) {
       this.addModifyingPath(path);
+    }
+  }
+
+  addSecretInteractingPath(path) {
+    this.interactsWithSecret = true;
+    path.isSecret = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+    }
+  }
+
+  addPublicInteractingPath(path) {
+    this.interactsWithPublic = true;
+    path.isPublic = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
     }
   }
 
@@ -479,6 +566,8 @@ export class MappingKey {
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
 
     this.burningPaths = [];
+
+    this.interactsWith = [];
   }
 
   updateProperties(path) {
@@ -522,6 +611,24 @@ export class MappingKey {
   addBurningPath(path) {
     this.isBurned = true;
     this.burningPaths.push(path);
+  }
+
+  addSecretInteractingPath(path) {
+    this.interactsWithSecret = true;
+    path.isSecret = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+      this.container.addSecretInteractingPath(path);
+    }
+  }
+
+  addPublicInteractingPath(path) {
+    this.interactsWithPublic = true;
+    path.isPublic = true;
+    if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
+      this.interactsWith.push(path);
+      this.container.addPublicInteractingPath(path);
+    }
   }
 
   prelimTraversalErrorChecks() {

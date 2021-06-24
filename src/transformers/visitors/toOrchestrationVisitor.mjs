@@ -20,6 +20,8 @@ const fixIncrementName = (stateVarIndicator, inc) => {
       inc.name = inc.rightExpression.name;
     if (inc.rightExpression.name === stateVarIndicator.name)
       inc.name = inc.leftExpression.name;
+    inc.leftExpression.name ??= `generalise(${inc.leftExpression.value})`;
+    inc.rightExpression.name ??= `generalise(${inc.rightExpression.value})`;
     inc.name ??= `${inc.leftExpression.name} ${inc.operator} ${inc.rightExpression.name}`;
   }
 };
