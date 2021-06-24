@@ -5,10 +5,6 @@ import codeGenerator from '../../../../codeGenerators/contract/solidity/toContra
 class FunctionBoilerplateGenerator {
   generateBoilerplate(node) {
     const { bpSection, bpCategory, ...otherParams } = node;
-    // console.log('bpType', bpType)
-    // console.log('bpSection', bpSection)
-    // console.log('this[bpType]', this[bpType])
-    // console.log('this[bpType][bpSection]', this[bpType][bpSection])
     return this?.[bpCategory]?.[bpSection]?.(otherParams) ?? [];
   }
 
@@ -65,7 +61,10 @@ class FunctionBoilerplateGenerator {
         ...(customInputs?.length ?
           [`
           inputs.customInputs = new uint[](${customInputs.length});
-        	${customInputs.map((name, i) => `inputs.customInputs[${i}] = ${name};`).join('\n')}`]
+        	${customInputs.map((name, i) => {
+            if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
+            return `inputs.customInputs[${i}] = ${name};`;
+          }).join('\n')}`]
           : []),
 
         ...(newNullifiers ? [`

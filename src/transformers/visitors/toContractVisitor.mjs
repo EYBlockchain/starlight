@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
-import logger from '../../utils/logger.mjs';
+// import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/solidity-types.mjs';
 import { traverseNodesFast } from '../../traverse/traverse.mjs';
 
@@ -251,9 +251,9 @@ export default {
   Assignment: {
     enter(path, state) {
       const { node, parent, scope } = path;
-      const binding = scope.getReferencedBinding(
-        node.leftHandSide.baseExpression,
-      ); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
+
+      const binding = scope.getReferencedBinding(node.leftHandSide); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
+
       if (binding?.isSecret) {
         // Don't copy over code which should be secret! It shouldn't appear in a public shield contract; only in the circuit! So skip subnodes.
         state.skipSubNodes = true;
@@ -272,7 +272,6 @@ export default {
     enter(path, state) {
       const { node, parent } = path;
 
-      // Otherwise, copy this ExpressionStatement into the circuit's language.
       const newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
@@ -451,6 +450,21 @@ export default {
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 
       if (path.isRequireStatement()) {
+        // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
+        const findSecretSubnode = (p, state) => {
+          const isSecret = p.getReferencedNode()?.isSecret;
+
+          if (isSecret) {
+            state.secretFound = true;
+          }
+        };
+        const subState = { secretFound: false };
+        path.traversePathsFast(findSecretSubnode, subState);
+        if (subState.secretFound) {
+          state.skipSubNodes = true;
+          return;
+        }
+
         // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least).
         // For now, we'll copy these into Solidity:
         newNode = buildNode('FunctionCall');
@@ -465,6 +479,7 @@ export default {
 
       if (path.isExternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
+        // TODO: need a warning message to this effect ^^^
 
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;

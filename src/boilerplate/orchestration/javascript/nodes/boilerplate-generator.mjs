@@ -14,13 +14,14 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'ReadPreimage': {
-      const { id, increment, indicator = {} } = fields;
+      const { id, increment, reinitialisedOnly, indicator = {} } = fields;
       return {
         increment,
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
+        reinitialisedOnly,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -33,13 +34,14 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'WritePreimage': {
-      const { id, increment, indicator = {} } = fields;
+      const { id, increment, burnedOnly, indicator = {} } = fields;
       return {
         increment,
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
+        burnedOnly,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -87,10 +89,19 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'GenerateProof': {
-      const { id, increment, privateStateName, indicator = {} } = fields;
+      const {
+        id,
+        increment,
+        reinitialisedOnly,
+        burnedOnly,
+        privateStateName,
+        indicator = {},
+      } = fields;
       return {
         privateStateName,
         stateVarId: id,
+        reinitialisedOnly,
+        burnedOnly,
         nullifierRequired: indicator.isNullified,
         increment,
         isMapping: indicator.isMapping,
@@ -107,11 +118,18 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'SendTransaction': {
-      const { increment, indicator = {} } = fields;
+      const {
+        increment,
+        reinitialisedOnly,
+        burnedOnly,
+        indicator = {},
+      } = fields;
       return {
         increment,
         isPartitioned: indicator.isPartitioned,
         isWhole: indicator.isWhole,
+        reinitialisedOnly,
+        burnedOnly,
         nullifierRequired: indicator.isNullified,
       };
     }
@@ -127,6 +145,14 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
  */
 export function buildBoilerplateNode(nodeType, fields = {}) {
   switch (nodeType) {
+    case 'InitialiseKeys': {
+      const { onChainKeyRegistry, contractName } = fields;
+      return {
+        nodeType,
+        contractName,
+        onChainKeyRegistry,
+      };
+    }
     case 'InitialisePreimage': {
       const { privateStates = {} } = fields;
       return {
@@ -135,16 +161,10 @@ export function buildBoilerplateNode(nodeType, fields = {}) {
       };
     }
     case 'ReadPreimage': {
-      const {
-        contractName,
-        onChainKeyRegistry = false,
-        privateStates = {},
-      } = fields;
+      const { privateStates = {} } = fields;
       return {
         nodeType,
         privateStates,
-        contractName,
-        onChainKeyRegistry,
       };
     }
     case 'WritePreimage': {

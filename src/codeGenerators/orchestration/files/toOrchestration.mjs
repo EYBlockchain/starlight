@@ -123,12 +123,14 @@ const prepareIntegrationTest = node => {
     // we remove the second call to the blockchain if we are decrementing
     // the user may not have enough commitments to do so
     let removeSecondCall = false;
+    let removeMerkleTreeTest = false;
     const paramTypes = fn.parameters.parameters.map(obj => obj.typeName.name);
-    fn.parameters.modifiedStateVariables.forEach(param => {
-      if (param.isDecremented) {
-        removeSecondCall = true;
-      }
-    });
+    if (fn.decrementsSecretState) {
+      removeSecondCall = true;
+    }
+    if (!fn.newCommitmentsRequired) {
+      removeMerkleTreeTest = true;
+    }
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(
       /FUNCTION_SIG_1/g,
@@ -140,10 +142,20 @@ const prepareIntegrationTest = node => {
     );
     // remove second call
     if (removeSecondCall) {
+      // regex: matches everything after `describe('Second Call'`
       const toRemove = fnboilerplate.match(
         /describe\('Second Call'?[\s\S]*/g,
       )[0];
       fnboilerplate = fnboilerplate.replace(toRemove, `\n});`);
+    }
+
+    // remove merkle tree test
+    if (removeMerkleTreeTest) {
+      // regex: matches everything between 'it('should update the merkle tree'' and the first '});'
+      const toRemove = fnboilerplate.match(
+        /it\('should update the merkle tree'?[\s\S]*?}\);/g,
+      )[0];
+      fnboilerplate = fnboilerplate.replace(toRemove, `\n`);
     }
     // replace function imports at top of file
     const fnimport = genericTestFile.fnimport.replace(

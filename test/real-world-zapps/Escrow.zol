@@ -27,8 +27,8 @@ contract Escrow {
     }
 
     function withdraw(uint256 amount) public {
-        balances[msg.sender] -= amount;
         bool success = erc20.transfer(msg.sender, amount);
         require(success, "ERC20 transfer failed");
+        balances[msg.sender] -= amount;
     }
 }

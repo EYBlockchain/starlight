@@ -8,10 +8,6 @@ import codeGenerator from '../../../../codeGenerators/circuit/zokrates/toCircuit
 class BoilerplateGenerator {
   generateBoilerplate(node) {
     const { bpSection, bpType, ...otherParams } = node;
-    // console.log('bpType', bpType)
-    // console.log('bpSection', bpSection)
-    // console.log('this[bpType]', this[bpType])
-    // console.log('this[bpType][bpSection]', this[bpType][bpSection])
     return this?.[bpType]?.[bpSection]?.(otherParams) ?? [];
   }
 
@@ -163,14 +159,16 @@ class BoilerplateGenerator {
         `
         // ${x}_oldCommitment_commitment: existence check
 
-        field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])
+        field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])`,
 
+        `
         field ${x}_commitmentRoot_check = checkRoot(\\
           ${x}_oldCommitment_membershipWitness_siblingPath,\\
           ${x}_oldCommitment_commitment_truncated,\\
           ${x}_oldCommitment_membershipWitness_index\\
-        )
+        )`,
 
+        `
         assert(\\
           field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(${x}_commitmentRoot_check)[8..256]\\
         )`,

@@ -2,6 +2,7 @@
 
 import NodePath from './NodePath.mjs';
 import logger from '../utils/logger.mjs';
+import backtrace from '../error/backtrace.mjs';
 import { SyntaxUsageError } from '../error/errors.mjs';
 
 export class ContractDefinitionIndicator {
@@ -57,6 +58,7 @@ export class ContractDefinitionIndicator {
 export class FunctionDefinitionIndicator {
   constructor(scope) {
     this.zkSnarkVerificationRequired = false;
+
     this.oldCommitmentAccessRequired = false;
     this.nullifiersRequired = false;
     this.newCommitmentsRequired = false;
@@ -102,6 +104,23 @@ export class FunctionDefinitionIndicator {
       this.newCommitmentsRequired = true;
       this.oldCommitmentAccessRequired = true;
     }
+  }
+
+  updateNewCommitmentsRequired() {
+    // if we have burn statements, there are some scopes where we don't need new commitments at all
+    let burnedOnly = true;
+    for (const [, stateVarIndicator] of Object.entries(this)) {
+      if (!(stateVarIndicator instanceof StateVariableIndicator)) continue; // eslint-disable-line no-continue, no-use-before-define
+      // if we have a indicator which is NOT burned, then we do need new commitments
+      if (
+        stateVarIndicator.isSecret &&
+        (!stateVarIndicator.isBurned || stateVarIndicator.newCommitmentRequired)
+      ) {
+        burnedOnly = false;
+        break;
+      }
+    }
+    this.newCommitmentsRequired = !burnedOnly;
   }
 
   // no constructor yet...
@@ -166,6 +185,8 @@ export class StateVariableIndicator {
 
     this.nullificationCount = 0;
     this.nullifyingPaths = [];
+
+    this.burningPaths = [];
 
     if (path.isMappingIdentifier()) {
       this.isMapping = true;
@@ -323,7 +344,6 @@ export class StateVariableIndicator {
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
       this.modifyingPaths.push(path);
 
-      this.newCommitmentRequired = true;
       // TODO check usage of below when reinitialisable
       this.initialisationRequired = true; // Used? Probably for whole states?
 
@@ -340,6 +360,12 @@ export class StateVariableIndicator {
     this.nullifyingPaths.push(path);
     this.binding.addNullifyingPath(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+  }
+
+  addBurningPath(path) {
+    this.isBurned = true;
+    this.burningPaths.push(path);
+    if (this.isMapping) this.addMappingKey(path).addBurningPath(path);
   }
 
   prelimTraversalErrorChecks() {
@@ -375,6 +401,37 @@ export class StateVariableIndicator {
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
     }
+  }
+
+  updateNewCommitmentsRequired() {
+    // if we have burn statements, there are some scopes where we don't need new commitments at all
+    if (!this.isBurned && this.isSecret && this.isModified) {
+      this.parentIndicator.newCommitmentsRequired = true;
+      this.newCommitmentRequired = true;
+      if (this.isMapping) {
+        for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+          mappingKey.newCommitmentRequired = true;
+        }
+      }
+      return;
+    }
+    if (!this.isSecret || !this.isBurned) return;
+    let burnedOnly = true;
+    this.modifyingPaths.forEach(path => {
+      // if we have a modifyingPath which is NOT a burningPath, then we do need new commitments
+      if (!this.burningPaths.some(p => p.node.id === path.node.id)) {
+        logger.warn(
+          `The state ${this.name} is being burned (ownership is being revoked and the state ready for reset) and edited in the same scope (${this.scope.scopeName}). \nThat edit may be useless and the output commmitment scheme may not work. Make sure you know what you're doing here.`,
+        );
+        backtrace.getSourceCode(path.node.src);
+        backtrace.getSourceCode(this.burningPaths[0].node.src);
+        this.parentIndicator.newCommitmentsRequired = true;
+        if (this.isMapping)
+          this.addMappingKey(path).newCommitmentRequired = true;
+        burnedOnly = false;
+      }
+    });
+    this.newCommitmentRequired = !burnedOnly;
   }
 }
 
@@ -420,6 +477,8 @@ export class MappingKey {
     this.isNullified = false;
     this.nullificationCount = 0;
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
+
+    this.burningPaths = [];
   }
 
   updateProperties(path) {
@@ -446,7 +505,6 @@ export class MappingKey {
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
       this.modifyingPaths.push(path);
 
-      this.newCommitmentRequired = true;
       this.initialisationRequired = true; // Used? Probably for whole states?
 
       const { node } = path;
@@ -459,6 +517,11 @@ export class MappingKey {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
+  }
+
+  addBurningPath(path) {
+    this.isBurned = true;
+    this.burningPaths.push(path);
   }
 
   prelimTraversalErrorChecks() {

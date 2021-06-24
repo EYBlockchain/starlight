@@ -45,7 +45,7 @@ class ContractBoilerplateGenerator {
 
       return [
         'importStatements',
-        ...(containsCustomConstructorFunction ? 'constructor' : []),
+        ...(containsCustomConstructorFunction ? [] : ['constructor']),
         'stateVariableDeclarations',
         'registerZKPPublicKey', // TODO: this is only needed if conversion between zkp PK's and Eth PK's is required.
         'verify',

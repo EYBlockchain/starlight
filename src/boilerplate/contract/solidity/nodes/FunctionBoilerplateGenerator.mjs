@@ -65,10 +65,10 @@ class FunctionBoilerplateGenerator {
     getIndicators() {
       const { indicators } = this.scope;
 
-      const { nullifiersRequired, oldCommitmentAccessRequired } = indicators;
+      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam } = indicators;
       const newCommitmentRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentRequired };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentRequired, msgSenderParam };
     },
 
     parameters() {
@@ -76,10 +76,10 @@ class FunctionBoilerplateGenerator {
       return { ...indicators };
     },
 
+// MIKE: you need to create a new msgSenderParam field of the Indicator class for the deposit function (by writing a new prelim traversal). Then using that indicator, you can pick up here.
     postStatements() {
       const { scope } = this;
       const { path } = scope;
-      // const { path } = scope;
 
       const params = path.getFunctionParameters();
       const publicParams = params?.filter(p => !p.isSecret).map(p => p.name);
@@ -87,6 +87,9 @@ class FunctionBoilerplateGenerator {
       const functionName = path.node.name;
 
       const indicators = this.customFunction.getIndicators.bind(this)();
+
+      // special check for msgSender param. If found, prepend a msgSender uint256 param to the contact's function.
+      if (indicators.msgSenderParam) publicParams.unshift('msgSender');
 
       return {
         ...(publicParams?.length && { customInputs: publicParams }),

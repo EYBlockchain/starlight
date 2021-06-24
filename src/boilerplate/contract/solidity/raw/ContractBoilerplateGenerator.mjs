@@ -5,11 +5,6 @@ import codeGenerator from '../../../../codeGenerators/contract/solidity/toContra
 class ContractBoilerplateGenerator {
   generateBoilerplate(node) {
     const { bpSection, bpCategory, ...otherParams } = node;
-    // console.log('bpCategory', bpCategory)
-    // console.log('bpSection', bpSection)
-    // console.log('this', this)
-    // console.log('this[bpCategory]', this[bpCategory])
-    // console.log('this[bpCategory][bpSection]', this[bpCategory][bpSection])
     return this?.[bpCategory]?.[bpSection]?.(otherParams) ?? [];
   }
 
@@ -134,7 +129,7 @@ class ContractBoilerplateGenerator {
           uint256[] memory inputs = new uint256[](${[
           'customInputs.length',
           ...(newNullifiers ? ['newNullifiers.length'] : []),
-          ...(commitmentRoot ? ['(commitmentRoot > 0 ? 1 : 0)'] : []),
+          ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
           ...(newCommitments ? ['newCommitments.length'] : []),
         ].join(' + ')});`,
 
@@ -153,7 +148,7 @@ class ContractBoilerplateGenerator {
     		  }`] : []),
 
         ...(commitmentRoot ? [`
-          if (commitmentRoot > 0) inputs[k++] = commitmentRoot;`] : []),
+          if (newNullifiers.length > 0) inputs[k++] = commitmentRoot;`] : []), // assumes nullifiers always get submitted with commitmentRoot (and vice versa)
 
         ...(newCommitments ? [`
           for (uint i = 0; i < newCommitments.length; i++) {

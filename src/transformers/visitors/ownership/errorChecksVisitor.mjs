@@ -17,7 +17,10 @@ export default {
         if (!indicator.id) continue;
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
+        indicator.updateNewCommitmentsRequired();
       }
+      // finally, we update commitments req for the whole function
+      scope.indicators.updateNewCommitmentsRequired();
     },
   },
 

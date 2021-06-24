@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 import cloneDeep from 'lodash.clonedeep';
-import logger from '../../utils/logger.mjs';
+// import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/zokrates-types.mjs';
 import NP from '../../traverse/NodePath.mjs';
 
@@ -38,10 +38,9 @@ const visitor = {
         // Let's create a new circuit File to represent this function.
         // We'll add a new 'File' node to our newAST:
 
-        // console.log('\n\n\nEntering FunctionDefinition node...')
-        // console.log('SCOPE:', scope);
-
-        const newFunctionDefinitionNode = buildNode('FunctionDefinition', { name: 'main' });
+        const newFunctionDefinitionNode = buildNode('FunctionDefinition', {
+          name: 'main',
+        });
         const newImportStatementListNode = buildNode('ImportStatementList');
 
         const { indicators } = scope;
@@ -72,7 +71,7 @@ const visitor = {
       }
     },
 
-    exit(path) {
+    exit(path, state) {
       const { node, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
@@ -98,6 +97,17 @@ const visitor = {
           indicators,
         }),
       );
+
+      if (state.msgSenderParam) {
+        node._newASTPointer.parameters.parameters.unshift(
+          buildNode('VariableDeclaration', {
+            name: 'msgSender',
+            declarationType: 'parameter',
+            type: 'field',
+          }),
+        ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
+        delete state.msgSenderParam; // reset
+      }
     },
   },
 
@@ -208,13 +218,6 @@ const visitor = {
 
             if (!lhsIndicator.isPartitioned) break;
 
-            // console.log('\n\n\nIN EXPRESSION STATEMENT')
-            // console.log('\n\n\npath', path)
-            // console.log('\n\n\nlhs', lhs)
-            // console.log('\n\n\nrhs', rhs)
-            // console.log('\n\n\nscope.indicators', scope.indicators)
-            // console.log('\n\n\nlhsIndicator', lhsIndicator)
-
             const rhsPath = NP.getPath(rhs);
             // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
             const tempRHSPath = cloneDeep(rhsPath);
@@ -226,7 +229,9 @@ const visitor = {
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
+                  mappingKeyName:
+                    lhs.indexExpression?.name ||
+                    lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
@@ -238,7 +243,9 @@ const visitor = {
                 indicators: lhsIndicator,
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName: lhs.indexExpression?.name || lhs.indexExpression.expression.name,
+                  mappingKeyName:
+                    lhs.indexExpression?.name ||
+                    lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
@@ -261,7 +268,26 @@ const visitor = {
       }
 
       // Otherwise, copy this ExpressionStatement into the circuit's language.
-      newNode = buildNode('ExpressionStatement');
+
+      // But, let's check to see if this ExpressionStatement is an Assignment to a state variable. If it's the _first_ such assignment, we'll need to mutate this ExpressionStatement node into a VariableDeclarationStatement.
+
+      let isVarDec = false;
+      if (
+        node.expression.nodeType === 'Assignment' &&
+        node.expression.operator === '='
+      ) {
+        const assignmentNode = node.expression;
+        const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
+        const referencedIndicator = scope.getReferencedIndicator(lhs);
+        if (
+          lhs.id === referencedIndicator.referencingPaths[0].node.id ||
+          lhs.id === referencedIndicator.referencingPaths[0].parent.id // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+        ) {
+          isVarDec = true;
+        }
+      }
+
+      newNode = buildNode('ExpressionStatement', { isVarDec });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -286,7 +312,8 @@ const visitor = {
 
       let declarationType;
       // TODO: `memery` declarations and `returnParameter` declarations
-      if (path.isLocalStackVariableDeclaration()) declarationType = 'localStack';
+      if (path.isLocalStackVariableDeclaration())
+        declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
 
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
@@ -306,7 +333,6 @@ const visitor = {
 
   ElementaryTypeNameExpression: {
     enter(path, state) {
-      // HACK to get ElementaryTypeNameExpressions working
       const { node, parent } = path;
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
@@ -345,7 +371,9 @@ const visitor = {
       const { name } = node;
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('Identifier', { name });
+      parent._newASTPointer[path.containerName] = buildNode('Identifier', {
+        name,
+      });
     },
   },
 
@@ -360,7 +388,9 @@ const visitor = {
         );
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('Literal', { value });
+      parent._newASTPointer[path.containerName] = buildNode('Literal', {
+        value,
+      });
     },
   },
 
@@ -368,13 +398,16 @@ const visitor = {
     enter(path, state) {
       const { parent } = path;
 
-      if (!path.isMsgSender()) throw new Error(`Struct property access isn't yet supported.`);
+      if (!path.isMsgSender())
+        throw new Error(`Struct property access isn't yet supported.`);
 
       // What follows assumes this node represents msg.sender:
       const newNode = buildNode('MsgSender');
+
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = newNode;
       state.skipSubNodes = true;
+      state.msgSenderParam = true; // helps us lazily notify the FunctionDefinition node to include a msgSender parameter upon exit.
     },
   },
 
@@ -390,9 +423,7 @@ const visitor = {
 
   FunctionCall: {
     enter(path, state) {
-      const { node, parent } = path;
-      let newNode;
-      // TODO typeConversion
+      const { parent } = path;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 
@@ -413,6 +444,15 @@ const visitor = {
 
         // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
         state.skipSubNodes = true;
+      }
+
+      if (path.isZero()) {
+        // The path represents 0. E.g. "address(0)", so we don't need to traverse further into it.
+        state.skipSubNodes = true;
+
+        // Let's replace this thing with a '0' in the new AST:
+        const newNode = buildNode('Literal', { value: 0 });
+        parent._newASTPointer[path.containerName] = newNode;
       }
     },
   },

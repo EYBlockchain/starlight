@@ -20,12 +20,14 @@ class BackTrace {
     const lineStart = stringToStart.lastIndexOf('\r\n') + 2;
     const lines = stringToStart.split('\r\n');
     const startLineNumber = lines.length;
-    const lineEnd = getNthOccurenceOfSubstring(contract, '\r\n', startLineNumber);
+    const lineEnd = getNthOccurenceOfSubstring(
+      contract,
+      '\r\n',
+      startLineNumber,
+    );
     const line = contract.substring(lineStart, lineEnd);
     const srcStartWithinLine = srcStart - lineStart;
     const pointerLine = ' '.repeat(srcStartWithinLine) + '^'.repeat(srcLength);
-    // console.log('src:', src);
-    // console.log(srcCode);
     console.log('line', startLineNumber);
     console.log(line);
     console.log(pointerLine);

@@ -39,10 +39,12 @@ describe('FUNCTION_NAME', async function () {
         // prints the tx
         console.log(tx);
         // reassigns leafIndex to the index of the first commitment added by this function
-        [leafIndex] = tx.events.NewLeaves.returnValues;
-        // prints the new leaves (commitments) added by this function call
-        console.log(`Merkle tree event returnValues:`);
-        console.log(tx.events.NewLeaves.returnValues);
+        if (tx.events.NewLeaves) {
+          leafIndex = tx.events.NewLeaves.returnValues[0];
+          // prints the new leaves (commitments) added by this function call
+          console.log(`Merkle tree event returnValues:`);
+          console.log(tx.events.NewLeaves.returnValues);
+        }
         await sleep(10);
       } catch (err) {
         logger.error(err);
@@ -68,8 +70,10 @@ describe('FUNCTION_NAME', async function () {
       try {
         // this calls your function a second time for incremental cases
         const { tx } = await FUNCTION_NAME(FUNCTION_SIG_2);
-        console.log(`Merkle tree event returnValues:`);
-        console.log(tx.events.NewLeaves.returnValues);
+        if (tx.events.NewLeaves) {
+          console.log(`Merkle tree event returnValues:`);
+          console.log(tx.events.NewLeaves.returnValues);
+        }
       } catch (err) {
         logger.error(err);
         process.exit(1);
