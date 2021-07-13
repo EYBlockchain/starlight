@@ -371,6 +371,16 @@ export default function buildBoilerplate(nodeType, fields = {}) {
           generic: true,
         },
         {
+          readPath: 'src/boilerplate/common/boilerplate-Dockerfile.mongo',
+          writePath: './Dockerfile.mongo',
+          generic: true,
+        },
+        {
+          readPath: 'src/boilerplate/common/setup-admin-user.js',
+          writePath: './setup-admin-user.js',
+          generic: true,
+        },
+        {
           readPath: 'src/boilerplate/common/entrypoint.sh',
           writePath: './entrypoint.sh',
           generic: true,
