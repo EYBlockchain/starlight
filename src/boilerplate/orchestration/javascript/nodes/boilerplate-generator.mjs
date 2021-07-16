@@ -14,7 +14,13 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'ReadPreimage': {
-      const { id, increment, reinitialisedOnly, indicator = {} } = fields;
+      const {
+        id,
+        increment,
+        reinitialisedOnly,
+        accessedOnly,
+        indicator = {},
+      } = fields;
       return {
         increment,
         stateVarId: id,
@@ -22,6 +28,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
         reinitialisedOnly,
+        accessedOnly,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -53,10 +60,16 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
       };
     }
     case 'MembershipWitness': {
-      const { increment, privateStateName, indicator = {} } = fields;
+      const {
+        increment,
+        privateStateName,
+        accessedOnly,
+        indicator = {},
+      } = fields;
       return {
         increment,
         privateStateName,
+        accessedOnly,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
       };
@@ -94,6 +107,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         increment,
         reinitialisedOnly,
         burnedOnly,
+        accessedOnly,
         privateStateName,
         indicator = {},
       } = fields;
@@ -102,6 +116,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         stateVarId: id,
         reinitialisedOnly,
         burnedOnly,
+        accessedOnly,
         nullifierRequired: indicator.isNullified,
         increment,
         isMapping: indicator.isMapping,
@@ -122,6 +137,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         increment,
         reinitialisedOnly,
         burnedOnly,
+        accessedOnly,
         indicator = {},
       } = fields;
       return {
@@ -130,6 +146,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         isWhole: indicator.isWhole,
         reinitialisedOnly,
         burnedOnly,
+        accessedOnly,
         nullifierRequired: indicator.isNullified,
       };
     }

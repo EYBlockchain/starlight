@@ -247,11 +247,29 @@ export default {
         }
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
+
+        // this only includes accessed states which are not modified
+        const accessedStateIndicators = [];
+
         const modifiedStateVariableIndicators = [];
+
         for (const [id, stateVarIndicator] of Object.entries(
           functionIndicator,
         )) {
-          if (!stateVarIndicator?.isSecret) continue;
+          if (stateVarIndicator?.isAccessed && !stateVarIndicator?.isModified) {
+            if (stateVarIndicator.isMapping) {
+              for (const [, mappingKey] of Object.entries(
+                stateVarIndicator.mappingKeys,
+              )) {
+                accessedStateIndicators.push(mappingKey);
+              }
+            } else {
+              accessedStateIndicators.push(stateVarIndicator);
+            }
+            continue;
+          }
+          if (!stateVarIndicator?.isSecret || !stateVarIndicator?.isModified)
+            continue;
           if (stateVarIndicator.isMapping) {
             for (const [, mappingKey] of Object.entries(
               stateVarIndicator.mappingKeys,
@@ -272,16 +290,11 @@ export default {
               .replace(']', '')
               .replace('.sender', '');
           }
-          let { incrementsArray, incrementsString } = collectIncrements(
-            stateVarIndicator,
-          );
+          let { incrementsArray, incrementsString } = isIncremented
+            ? collectIncrements(stateVarIndicator)
+            : { 0: null, 1: null };
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
-          if (incrementsArray.length > 1)
-            throw new TODOError(
-              `Multiple increments. The logic to include multiple increments is rather complicated and is in progress!`,
-              stateVarIndicator.modifyingPaths[0].node,
-            );
 
           if (stateVarIndicator.isDecremented) {
             // TODO refactor
@@ -374,6 +387,66 @@ export default {
                 !stateVarIndicator.newCommitmentRequired,
             });
           }
+        }
+
+        for (const stateVarIndicator of accessedStateIndicators) {
+          // these ONLY require :
+          // Init and ReadPreimage
+          // MembershipWitness
+          // CalculateNullifier
+          // GenerateProof
+          // SendTransaction
+
+          let { name, id } = stateVarIndicator;
+          if (stateVarIndicator.isMapping) {
+            id = [id, stateVarIndicator.referencedKeyName];
+            name = name
+              .replace('[', '_')
+              .replace(']', '')
+              .replace('.sender', '');
+          }
+          newNodes.initialisePreimageNode.privateStates[name] = {
+            privateStateName: name,
+            accessedOnly: true,
+          };
+
+          newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
+            'ReadPreimage',
+            {
+              id,
+              indicator: stateVarIndicator,
+              accessedOnly: true,
+            },
+          );
+
+          newNodes.membershipWitnessNode.privateStates[
+            name
+          ] = buildPrivateStateNode('MembershipWitness', {
+            privateStateName: name,
+            indicator: stateVarIndicator,
+            accessedOnly: true,
+          });
+          newNodes.calculateNullifierNode.privateStates[
+            name
+          ] = buildPrivateStateNode('CalculateNullifier', {
+            indicator: stateVarIndicator,
+          });
+
+          newNodes.generateProofNode.privateStates[
+            name
+          ] = buildPrivateStateNode('GenerateProof', {
+            privateStateName: name,
+            id,
+            accessedOnly: true,
+            indicator: stateVarIndicator,
+          });
+          // newNodes.generateProofNode.parameters.push(name);
+          newNodes.sendTransactionNode.privateStates[
+            name
+          ] = buildPrivateStateNode('SendTransaction', {
+            indicator: stateVarIndicator,
+            accessedOnly: true,
+          });
         }
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
@@ -502,6 +575,11 @@ export default {
       // e.g. secret x; x = y +2 => we need to copy over this line to the node file to construct the new commitment
       const { node, parent, scope } = path;
       let isMapping;
+      const newState = {};
+      path.traversePathsFast(interactsWithSecretVisitor, newState);
+      const { interactsWithSecret } = newState;
+      // we mark this to grab anything we need from the db / contract
+      state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
       if (node.expression.nodeType === 'Assignment') {
         const assignmentNode = node.expression;
@@ -552,6 +630,7 @@ export default {
             : indicator.name;
           const newNode = buildNode(node.nodeType, {
             nodeType: node.nodeType,
+            interactsWithSecret,
             expression: {},
             incrementsSecretState: node.expression.isIncremented,
             decrementsSecretState: node.expression.isDecremented,
@@ -565,36 +644,22 @@ export default {
         }
       }
       if (node.expression.nodeType !== 'FunctionCall') {
-        const newState = {};
-        path.traversePathsFast(interactsWithSecretVisitor, newState);
         const newNode = buildNode(node.nodeType, {
-          interactsWithSecret: newState.interactsWithSecret,
+          interactsWithSecret,
         });
         node._newASTPointer = newNode;
         parent._newASTPointer.push(newNode);
       }
     },
 
-    exit(path) {
+    exit(path, state) {
       const { node, scope } = path;
       const { leftHandSide: lhs } = node.expression;
+      // reset
+      delete state.interactsWithSecret;
       if (path.node._newASTPointer?.incrementsSecretState) {
         const indicator = scope.getReferencedIndicator(lhs, true);
-        let increments = '';
-        indicator.increments.forEach(inc => {
-          fixIncrementName(indicator, inc);
-          increments +=
-            inc.name && !increments.includes(inc.name)
-              ? `+ ${inc.name} `
-              : `+ ${inc.value} `;
-        });
-        indicator.decrements.forEach(dec => {
-          fixIncrementName(indicator, dec);
-          increments +=
-            dec.name && !increments.includes(dec.name)
-              ? `- ${dec.name} `
-              : `- ${dec.value} `;
-        });
+        const increments = collectIncrements(indicator).incrementsString;
         path.node._newASTPointer.increments = increments;
       }
     },
@@ -672,14 +737,31 @@ export default {
   },
 
   Identifier: {
-    enter(path) {
-      const { node, parent } = path;
+    enter(path, state) {
+      const { node, parent, scope } = path;
       const newNode = buildNode(node.nodeType, {
         name: node.name,
         subType: node.typeDescriptions.typeString,
       });
+      const indicator = scope.getReferencedIndicator(node);
+      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
 
       parent._newASTPointer[path.containerName] = newNode;
+
+      // we may need this identifier in the mjs file to edit a secret state
+      // we check this here
+      if (
+        state.interactsWithSecret && // we only need to import something if it interactsWithSecret
+        !path.isFunctionParameter() && // we already deal with params
+        indicator.binding?.stateVariable && // we can't import local variables
+        ((indicator.isSecret && !indicator.isModified) || !indicator.isSecret) // we already deal with secret modified states
+      ) {
+        fnDefNode.node._newASTPointer.parameters.importedStateVariables ??= [];
+        node.isSecret = indicator.isSecret;
+        fnDefNode.node._newASTPointer.parameters.importedStateVariables.push(
+          node,
+        );
+      }
     },
 
     exit(path) {},

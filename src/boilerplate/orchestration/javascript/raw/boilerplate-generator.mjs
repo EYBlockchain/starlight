@@ -19,6 +19,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
     increment,
     reinitialisedOnly = false,
     burnedOnly = false,
+    accessedOnly = false,
     onChainKeyRegistry = `false`,
   } = fields;
   switch (nodeType) {
@@ -43,26 +44,38 @@ export default function buildBoilerplate(nodeType, fields = {}) {
     case 'InitialisePreimage':
       // once per state
       // only whole states
-      return `
-      \n // Initialise commitment preimage of whole state:
-      \nlet ${stateName}_commitmentExists = true;
-      let ${stateName}_witnessRequired = true;
-      if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${stateName}.${stateName}) {
-          const preimage = {};
-          preimage.${stateName} = {
-          \t${stateName}: 0,
-          \tsalt: 0,
-          \tcommitment: 0,
-          };
-          fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
-          ${stateName}_commitmentExists = false;
-          ${stateName}_witnessRequired = false;
-        }
-      \nconst ${stateName}_preimage = JSON.parse(
-          fs.readFileSync(db, 'utf-8', err => {
-            console.log(err);
-          }),
-        ).${stateName};`;
+      switch (accessedOnly) {
+        case true:
+          return `
+          \n // Initialise commitment preimage of whole accessed state:
+          \nlet ${stateName}_commitmentExists = true;
+          \nconst ${stateName}_preimage = JSON.parse(
+              fs.readFileSync(db, 'utf-8', err => {
+                console.log(err);
+              }),
+            ).${stateName};`;
+        default:
+          return `
+            \n // Initialise commitment preimage of whole state:
+            \nlet ${stateName}_commitmentExists = true;
+            let ${stateName}_witnessRequired = true;
+            if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${stateName}.${stateName}) {
+                const preimage = {};
+                preimage.${stateName} = {
+                \t${stateName}: 0,
+                \tsalt: 0,
+                \tcommitment: 0,
+                };
+                fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+                ${stateName}_commitmentExists = false;
+                ${stateName}_witnessRequired = false;
+              }
+            \nconst ${stateName}_preimage = JSON.parse(
+                fs.readFileSync(db, 'utf-8', err => {
+                  console.log(err);
+                }),
+              ).${stateName};`;
+      }
 
     case 'InitialiseKeys':
       // once per function
@@ -112,13 +125,23 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                 ${stateVarIds.join('\n')}
                 \n`;
             default:
-              return `
-              ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
-                const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
-                const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
-                const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
-                ${stateVarIds.join('\n')}
-                \n`;
+              switch (accessedOnly) {
+                case true:
+                  return `
+                    const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
+                    const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
+                    const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
+                    ${stateVarIds.join('\n')}
+                    \n`;
+                default:
+                  return `
+                  ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
+                    const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
+                    const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
+                    const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
+                    ${stateVarIds.join('\n')}
+                    \n`;
+              }
           }
         default:
           throw new TypeError(fields.stateType);
@@ -142,6 +165,12 @@ export default function buildBoilerplate(nodeType, fields = {}) {
             const ${stateName}_witness = ${stateName}_witnessRequired
             \t? await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer)
             \t: { index: 0, path: emptyPath, root: 0 };
+            const ${stateName}_index = generalise(${stateName}_witness.index);
+            const ${stateName}_root = generalise(${stateName}_witness.root);
+            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`;
+        case 'accessedOnly':
+          return `
+            const ${stateName}_witness = await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer);
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);
             const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`;
@@ -240,7 +269,18 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer`;
                 default:
-                  return `
+                  switch (accessedOnly) {
+                    case true:
+                      return `
+                          ${parameters.join('\n')}${stateVarIds.join('\n')}
+                          \tsecretKey.limbs(32, 8),
+                          \t${stateName}_nullifier.integer,
+                          \t${stateName}_prev.integer,
+                          \t${stateName}_prevSalt.limbs(32, 8),
+                          \t${stateName}_index.integer,
+                          \t${stateName}_path.integer`;
+                    default:
+                      return `
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
                       \t${stateName}_nullifier.integer,
@@ -253,6 +293,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
                       \t${stateName}_newOwnerPublicKey.limbs(32, 8),
                       \t${stateName}_newSalt.limbs(32, 8),
                       \t${stateName}_newCommitment.integer`;
+                  }
               }
           }
         default:

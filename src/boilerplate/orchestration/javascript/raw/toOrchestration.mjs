@@ -1,3 +1,5 @@
+/* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
+
 import buildBoilerplate from './boilerplate-generator.mjs';
 
 /**
@@ -12,9 +14,11 @@ export const sendTransactionBoilerplate = node => {
   output[0] = [];
   output[1] = [];
   output[2] = [];
+  output[3] = [];
   // output[0] = arr of nullifiers
   // output[1] = root(s)
   // output[2] = arr of commitments
+  // output[3] = arr of nullifiers to check, not add (for accessed states)
   for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
     switch (stateNode.isPartitioned) {
       case true:
@@ -37,12 +41,17 @@ export const sendTransactionBoilerplate = node => {
       case false:
       default:
         // whole
-        if (!stateNode.reinitialisedOnly) {
-          output[1].push(`${privateStateName}_root.integer`);
-          output[0].push(`${privateStateName}_nullifier.integer`);
+        if (stateNode.accessedOnly) {
+          output[3].push(`${privateStateName}_nullifier.integer`);
+        } else {
+          if (!stateNode.reinitialisedOnly) {
+            output[1].push(`${privateStateName}_root.integer`);
+            output[0].push(`${privateStateName}_nullifier.integer`);
+          }
+          if (!stateNode.burnedOnly)
+            output[2].push(`${privateStateName}_newCommitment.integer`);
         }
-        if (!stateNode.burnedOnly)
-          output[2].push(`${privateStateName}_newCommitment.integer`);
+
         break;
     }
   }
@@ -60,6 +69,7 @@ export const generateProofBoilerplate = node => {
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];
     // we add any extra params the circuit needs
+    // TODO
     node.parameters
       .filter(
         para =>
@@ -78,6 +88,7 @@ export const generateProofBoilerplate = node => {
             stateType: 'whole',
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
+            accessedOnly: stateNode.accessedOnly,
             parameters,
             stateVarIds: stateVarIdLines,
           }),
@@ -93,6 +104,7 @@ export const generateProofBoilerplate = node => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
                 !parameters.includes(`\t${inc.name}.integer,`) &&
+                !privateStateNames.includes(inc.name) &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
@@ -173,6 +185,18 @@ export const preimageBoilerPlate = node => {
       stateVarIds.push(
         `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
       );
+    }
+
+    if (stateNode.accessedOnly) {
+      output.push(
+        buildBoilerplate('ReadPreimage', {
+          stateType: 'whole',
+          stateName: privateStateName,
+          accessedOnly: true,
+          stateVarIds,
+        }),
+      );
+      continue;
     }
 
     initialiseParams.push(`\nlet ${privateStateName}_prev = generalise(0);`);
@@ -297,6 +321,23 @@ export const OrchestrationCodeBoilerPlate = node => {
         );
       });
 
+      // node.parameters.importedStateVariables?.forEach(param => {
+      //   if (param.isSecret) {
+      //     lines.push(`let { ${param.name} } = JSON.parse(
+      //       fs.readFileSync(db, 'utf-8', err => {
+      //         console.log('Couldnt find required secret state - have you initialised it?');
+      //         console.log(err);
+      //       }),
+      //     );
+      //     ${param.name} = ${param.name}.value ? generalise(${param.name}.value) : generalise(${param.name}.${param.name});`);
+      //   } else {
+      //     lines.push(
+      //       `let ${param.name} = await instance.methods.${param.name}().call() || 0;
+      //       ${param.name} = generalise(${param.name})`,
+      //     );
+      //   }
+      // });
+
       if (node.decrementsSecretState) {
         node.decrementedSecretStates.forEach(decrementedState => {
           states.push(` _${decrementedState}_0_oldCommitment = 0`);
@@ -318,8 +359,13 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'InitialisePreimage':
-      for (const [stateName] of Object.entries(node.privateStates)) {
-        lines.push(buildBoilerplate(node.nodeType, { stateName }));
+      for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+        lines.push(
+          buildBoilerplate(node.nodeType, {
+            stateName,
+            accessedOnly: stateNode.accessedOnly,
+          }),
+        );
       }
       return {
         statements: lines,
@@ -339,7 +385,11 @@ export const OrchestrationCodeBoilerPlate = node => {
     case 'ReadPreimage':
       lines[0] = preimageBoilerPlate(node);
       for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isWhole)
+        if (stateNode.accessedOnly) {
+          params.push(
+            `\nconst ${stateName} = generalise(${stateName}_preimage.${stateName});`,
+          );
+        } else if (stateNode.isWhole)
           params.push(`\n${stateName} = generalise(${stateName});`);
       }
       return {
@@ -409,7 +459,15 @@ export const OrchestrationCodeBoilerPlate = node => {
             }),
           );
         }
-        if (stateNode.isWhole) {
+        if (stateNode.accessedOnly) {
+          lines.push(
+            buildBoilerplate(node.nodeType, {
+              stateName,
+              contractName: node.contractName,
+              stateType: 'accessedOnly',
+            }),
+          );
+        } else if (stateNode.isWhole) {
           lines.push(
             buildBoilerplate(node.nodeType, {
               stateName,
@@ -512,11 +570,12 @@ export const OrchestrationCodeBoilerPlate = node => {
       if (params[0][1][0]) params[0][1] = `${params[0][1]},`; // root - single input
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
+      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst tx = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} proof)
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof)
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,

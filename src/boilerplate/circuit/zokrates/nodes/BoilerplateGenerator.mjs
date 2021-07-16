@@ -1,6 +1,50 @@
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 
+
+// collects increments and decrements into a string (for new commitment calculation) and array
+// (for collecting zokrates inputs)
+const collectIncrements = stateVarIndicator => {
+  const incrementsArray = [];
+  let incrementsString = '';
+  // TODO sometimes decrements are added to .increments
+  // current fix -  prevent duplicates
+  for (const inc of stateVarIndicator.increments) {
+    if (!inc.name) inc.name = inc.value;
+
+    if (incrementsArray.some(existingInc => inc.name === existingInc.name))
+      continue;
+    incrementsArray.push({
+      name: inc.name,
+      precedingOperator: inc.precedingOperator,
+    });
+
+    if (inc === stateVarIndicator.increments[0]) {
+      incrementsString += `${inc.name}`;
+    } else {
+      incrementsString += ` ${inc.precedingOperator} ${inc.name}`;
+    }
+  }
+  for (const dec of stateVarIndicator.decrements) {
+    if (!dec.name) dec.name = dec.value;
+    if (incrementsArray.some(existingInc => dec.name === existingInc.name))
+      continue;
+    incrementsArray.push({
+      name: dec.name,
+      precedingOperator: dec.precedingOperator,
+    });
+
+    if (!stateVarIndicator.decrements[1] && !stateVarIndicator.increments[0]) {
+      incrementsString += `${dec.name}`;
+    } else {
+      // if we have decrements, this str represents the value we must take away
+      // => it's a positive value with +'s
+      incrementsString += ` + ${dec.name}`;
+    }
+  }
+  return { incrementsArray, incrementsString };
+};
+
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 const bpCache = new WeakMap();
 
@@ -81,6 +125,7 @@ class BoilerplateGenerator {
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
+
     return {
       nodeType: 'BoilerplateStatement',
       bpSection: 'statements',
@@ -96,6 +141,9 @@ class BoilerplateGenerator {
   }
 
   _addBP = (bpType, extraParams) => {
+    if (this.isPartitioned) {
+      this.newCommitmentValue = collectIncrements(this).incrementsString;
+    }
     this.bpSections.forEach(bpSection => {
       this[bpSection] = this[bpSection]
         .concat({
@@ -108,6 +156,8 @@ class BoilerplateGenerator {
           ...(this.isWhole && { isWhole: this.isWhole }),
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
           ...(this.isMapping && { isMapping: this.isMapping }),
+          ...(this.isAccessed && { isAccessed: this.isAccessed }),
+          ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
           // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }),
           ...this[bpType](extraParams),
         })
@@ -116,31 +166,27 @@ class BoilerplateGenerator {
   };
 
   addBP = {
+    // M - HERE main changes
     partitioned(bpType, extraParams = {}) {
       const { increments, decrements, name } = this;
-      increments?.forEach((addend, i) =>
-        this._addBP(bpType, { name: `${name}_${i}`, ...extraParams }),
-      );
-      const startIndex = increments?.length || 0;
-
-      decrements?.forEach((subtrahend, i) => {
-        const j = startIndex + i;
-        if (
-          [
-            'PoKoSK',
-            'nullification',
-            'oldCommitmentPreimage',
-            'oldCommitmentExistence',
-            'mapping',
-          ].includes(bpType)
-        ) {
-          this._addBP(bpType, { name: `${name}_${j}`, ...extraParams });
-          this._addBP(bpType, { name: `${name}_${j + 1}`, ...extraParams });
-        }
-        if (['newCommitment', 'mapping'].includes(bpType)) {
-          this._addBP(bpType, { name: `${name}_${j + 2}`, ...extraParams });
-        }
-      });
+      const j = 0;
+      if (
+        [
+          'PoKoSK',
+          'nullification',
+          'oldCommitmentPreimage',
+          'oldCommitmentExistence',
+          'mapping',
+        ].includes(bpType)
+      ) {
+        this._addBP(bpType, { name: `${name}_${j}`, ...extraParams });
+        this._addBP(bpType, { name: `${name}_${j + 1}`, ...extraParams });
+      }
+      if (this.isNullified && ['newCommitment', 'mapping'].includes(bpType)) {
+        this._addBP(bpType, { name: `${name}_${j + 2}`, ...extraParams });
+      } else if (['newCommitment', 'mapping'].includes(bpType)) {
+        this._addBP(bpType, { name: `${name}_${j}`, ...extraParams });
+      }
     },
 
     whole: this._addBP,
@@ -212,17 +258,17 @@ class BoilerplateGenerator {
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
   // TODO: Code for incrementation & decrementation might be able to be merged, given they're very similar.
   incrementation = ({ addendId }) => {
-    const startIndex = this.getIndex({ addendId });
+    //const startIndex = this.getIndex({ addendId });
     return {
-      startIndex,
+      // startIndex,
       addend: {},
     };
   };
 
   decrementation = ({ subtrahendId }) => {
-    const startIndex = this.getIndex({ subtrahendId });
+    //const startIndex = this.getIndex({ subtrahendId });
     return {
-      startIndex,
+      // startIndex,
       subtrahend: {},
     };
   };

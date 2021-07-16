@@ -180,6 +180,7 @@ function codeGenerator(node) {
       if (node.declarationType === 'localStack') {
         return `${typeString}${constant}${storageLocation}${name}`; // no semicolon
       }
+      if (node.isSecret) return '';
       return `
         ${typeString}${constant}${storageLocation}${visibility}${name};`;
     }

@@ -25,6 +25,7 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired,
       nullifiersRequired,
       newCommitmentsRequired,
+      containsAccessedState,
     }) {
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
@@ -54,6 +55,7 @@ class ContractBoilerplateGenerator {
           struct Inputs {
             ${[
               ...(nullifiersRequired ? [`uint[] newNullifiers;`] : []),
+              ...(containsAccessedState ? [`uint[] checkNullifiers;`] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
               ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
               `uint[] customInputs;`, // TODO: consider whether we need to identify when / when not to include this.
@@ -92,6 +94,7 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
+      containsAccessedState: checkNullifiers,
     }) {
       const verifyFunctionSignature = `
         function verify(
@@ -109,6 +112,9 @@ class ContractBoilerplateGenerator {
         ...(newNullifiers ? [`
           uint[] memory newNullifiers = _inputs.newNullifiers;`] : []),
 
+        ...(checkNullifiers ? [`
+          uint[] memory checkNullifiers = _inputs.checkNullifiers;`] : []),
+
         ...(commitmentRoot ? [`
           uint commitmentRoot = _inputs.commitmentRoot;`] : []),
 
@@ -121,6 +127,12 @@ class ContractBoilerplateGenerator {
       			require(nullifiers[n] == 0, "Nullifier already exists");
       			nullifiers[n] = n;
       		}`] : []),
+
+        ...(checkNullifiers ? [`
+          for (uint i; i < checkNullifiers.length; i++) {
+            uint n = checkNullifiers[i];
+            require(nullifiers[n] == 0, "Nullifier already exists");
+          }`] : []),
 
         ...(commitmentRoot ? [`
           require(commitmentRoots[commitmentRoot] == commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
@@ -154,6 +166,11 @@ class ContractBoilerplateGenerator {
           for (uint i = 0; i < newCommitments.length; i++) {
       			inputs[k++] = newCommitments[i];
       		}`] : []),
+
+        ...(checkNullifiers ? [`
+          for (uint i = 0; i < checkNullifiers.length; i++) {
+            inputs[k++] = checkNullifiers[i];
+          }`] : []),
 
         `
           bool result = verifier.verify(proof, inputs, vks[functionId]);`,

@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign, no-shadow */
+/* eslint-disable no-param-reassign, no-shadow, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
 // import logger from '../../utils/logger.mjs';
@@ -62,12 +62,8 @@ const visitor = {
         const files = parent._newASTPointer;
         files.push(newNode);
       } else {
-        // Not sure what to do 'else', yet.
-        // If there are no global state modifications / 'references', then (currently) a circuit isn't needed for this function. In future, this could be a helper function which supports some other state-editing function, in which case a circuit would be needed.
-        // I suppose other functions for which newFile = true (i.e. functions which actually modify secret state) will need to include any helper functions they reference within the circuit file (or import them).
-        throw new Error(
-          `Not yet supported. We haven't yet written code which can transpile functions which don't modify secret states.`,
-        );
+        // a non secret function - we skip it for circuits
+        state.skipSubNodes = true;
       }
     },
 

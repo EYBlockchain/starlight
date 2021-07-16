@@ -190,7 +190,10 @@ export default {
       if (
         (incrementedIdentifier?.isUnknown ||
           incrementedIdentifier?.baseExpression?.isUnknown) &&
-        isDecremented
+        isDecremented &&
+        // if we have a = a + b - c, a can be unknown as long as b > c
+        // if we have a = a - <anything> this error should throw:
+        state.increments[0]?.precedingOperator === '-'
       ) {
         throw new SyntaxUsageError(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state. Since we are taking away some value of the state, we must know it. Only incrementations like a += x can be marked as unknown.",
@@ -249,12 +252,18 @@ export default {
         markParentIncrementation(path, state, true, true, leftHandSide, [
           rightHandSide,
         ]);
-        if (rightHandSide.operator?.includes('-')) mixedOperatorsWarning(path);
+        if (rightHandSide.operator?.includes('+')) mixedOperatorsWarning(path);
         return;
       }
 
       // a *= something, a /= something
-      if (operator === '%=' || operator === '/=' || operator === '*=') {
+      // OR lhs non-secret - we don't care about those
+      if (
+        operator === '%=' ||
+        operator === '/=' ||
+        operator === '*=' ||
+        !lhsSecret
+      ) {
         markParentIncrementation(path, state, false, false, leftHandSide);
         return;
       }
@@ -398,10 +407,14 @@ export default {
           isIncremented.incremented &&
           assignmentOp === '='
         ) {
-          // TODO this saves the .increments as the whole BinaryOperation node. This may include the incremented node itself.
-          // e.g. a += b + c => increments saved as the binop for b + c
-          // e.g. a = a + b + c => increments saved as the binop for a + b + c
-          // these should be considered the same but aren't - move back to individual operands?
+          // a = a + b - c - d counts as an incrementation since the 1st operator is a plus
+          // the mixed operators warning will have been given
+          if (
+            precedingOperator.includes('+') &&
+            precedingOperator.includes('-') &&
+            precedingOperator[0] === '+'
+          )
+            isIncremented.decremented = false;
           markParentIncrementation(
             path,
             state,
@@ -415,14 +428,24 @@ export default {
           isIncremented.incremented &&
           (assignmentOp === '+=' || assignmentOp === '-=')
         ) {
-          markParentIncrementation(
-            path,
-            state,
-            isIncremented.incremented,
-            isIncremented.decremented,
-            lhsNode.baseExpression || lhsNode,
-            { operands, precedingOperator },
-          );
+          if (assignmentOp === '+=')
+            markParentIncrementation(
+              path,
+              state,
+              isIncremented.incremented,
+              false, // we assume a += is always an overall increase in value
+              lhsNode.baseExpression || lhsNode,
+              { operands, precedingOperator },
+            );
+          if (assignmentOp === '-=')
+            markParentIncrementation(
+              path,
+              state,
+              isIncremented.incremented,
+              true, // we assume a -= is always an overall decrease in value
+              lhsNode.baseExpression || lhsNode,
+              { operands, precedingOperator },
+            );
         } else {
           markParentIncrementation(path, state, false, false, lhsNode);
         }
