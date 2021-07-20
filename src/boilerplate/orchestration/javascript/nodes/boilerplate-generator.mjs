@@ -8,9 +8,11 @@ import buildNode from '../../../../types/orchestration-types.mjs';
 export function buildPrivateStateNode(nodeType, fields = {}) {
   switch (nodeType) {
     case 'InitialisePreimage': {
-      const { privateStateName } = fields;
+      const { privateStateName, indicator = {} } = fields;
       return {
         privateStateName,
+        mappingKey: indicator.referencedKeyName || null,
+        mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
       };
     }
     case 'ReadPreimage': {
@@ -26,6 +28,8 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
+        mappingKey: indicator.referencedKeyName || null,
+        mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
         reinitialisedOnly,
         accessedOnly,
@@ -47,6 +51,8 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
+        mappingKey: indicator.referencedKeyName || null,
+        mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
         burnedOnly,
         isOwned: indicator.isOwned,

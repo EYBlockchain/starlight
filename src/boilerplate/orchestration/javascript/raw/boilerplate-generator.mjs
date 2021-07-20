@@ -17,6 +17,8 @@ export default function buildBoilerplate(nodeType, fields = {}) {
     parameters = [], // used for extra params in generateProof
     newOwnerStatment,
     increment,
+    mappingKey,
+    mappingName,
     reinitialisedOnly = false,
     burnedOnly = false,
     accessedOnly = false,
@@ -44,6 +46,8 @@ export default function buildBoilerplate(nodeType, fields = {}) {
     case 'InitialisePreimage':
       // once per state
       // only whole states
+      // if not a mapping, mappingName = stateName, mappingKey = ''
+      // If a mapping, mappingKey = `[keyValue]`
       switch (accessedOnly) {
         case true:
           return `
@@ -53,28 +57,27 @@ export default function buildBoilerplate(nodeType, fields = {}) {
               fs.readFileSync(db, 'utf-8', err => {
                 console.log(err);
               }),
-            ).${stateName};`;
+            ).${mappingName}${mappingKey};`;
         default:
           return `
             \n // Initialise commitment preimage of whole state:
             \nlet ${stateName}_commitmentExists = true;
             let ${stateName}_witnessRequired = true;
-            if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${stateName}.${stateName}) {
-                const preimage = {};
-                preimage.${stateName} = {
-                \t${stateName}: 0,
-                \tsalt: 0,
-                \tcommitment: 0,
-                };
-                fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+            \nlet ${stateName}_preimage = {
+            \t${stateName}: 0,
+            \tsalt: 0,
+            \tcommitment: 0,
+            };
+            if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName}${mappingKey}) {
                 ${stateName}_commitmentExists = false;
                 ${stateName}_witnessRequired = false;
-              }
-            \nconst ${stateName}_preimage = JSON.parse(
-                fs.readFileSync(db, 'utf-8', err => {
-                  console.log(err);
-                }),
-              ).${stateName};`;
+              } else {
+                ${stateName}_preimage = JSON.parse(
+                    fs.readFileSync(db, 'utf-8', err => {
+                      console.log(err);
+                    }),
+                  ).${mappingName}${mappingKey};
+              }`;
       }
 
     case 'InitialiseKeys':
@@ -92,54 +95,56 @@ export default function buildBoilerplate(nodeType, fields = {}) {
 
     case 'ReadPreimage':
       // once per state
+      // if not a mapping, mappingName = stateName, mappingKey = ''
+      // If a mapping, mappingKey = `[keyValue]`
       switch (fields.stateType) {
         case 'increment':
           return `
+            ${stateVarIds.join('\n')}
             \nconst ${stateName}_newCommitmentValue = generalise(${increment});
             ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
-            ${stateVarIds.join('\n')}
             \n`;
         case 'decrement':
           return `
+            ${stateVarIds.join('\n')}
             \nconst ${stateName}_preimage = JSON.parse(
               fs.readFileSync(db, 'utf-8', err => {
                 console.log(err);
               }),
-            ).${stateName};
+            ).${mappingName}${mappingKey};
             \nconst ${stateName}_newCommitmentValue = generalise(${increment});
-            \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, '${stateName}')[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
-            \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, '${stateName}')[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
+            \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
+            \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
 
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
             const ${stateName}_1_prevSalt = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].salt);
             const ${stateName}_0_prev = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].value);
             const ${stateName}_1_prev = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].value);
-            ${stateVarIds.join('\n')}
             \n`;
         case 'whole':
           switch (reinitialisedOnly) {
             case true:
               return `
-                ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
                 ${stateVarIds.join('\n')}
+                ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
                 \n`;
             default:
               switch (accessedOnly) {
                 case true:
                   return `
+                    ${stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
                     const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
-                    ${stateVarIds.join('\n')}
                     \n`;
                 default:
                   return `
-                  ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
+                    ${stateVarIds.join('\n')}
+                    ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
                     const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
-                    ${stateVarIds.join('\n')}
                     \n`;
               }
           }
@@ -224,7 +229,7 @@ export default function buildBoilerplate(nodeType, fields = {}) {
       switch (fields.stateType) {
         case 'increment':
           return `
-              ${stateVarIds.join('\n')}
+              ${parameters.join('\n')}${stateVarIds.join('\n')}
               \t${stateName}_newOwnerPublicKey.limbs(32, 8),
               \t${stateName}_newSalt.limbs(32, 8),
               \t${stateName}_newCommitment.integer`;
@@ -305,11 +310,12 @@ export default function buildBoilerplate(nodeType, fields = {}) {
       break;
     case 'WritePreimage':
       // once per state
+      // if not a mapping, mappingName = stateName, mappingKey = ''
+      // If a mapping, mappingKey = `[keyValue]`
       switch (fields.stateType) {
         case 'increment':
           return `
-            \n if (!preimage.${stateName}) preimage.${stateName} = {};
-            \npreimage.${stateName}[${stateName}_newCommitment.hex(32)] = {
+            \npreimage.${mappingName}${mappingKey}[${stateName}_newCommitment.hex(32)] = {
             \tvalue: ${stateName}_newCommitmentValue.integer,
             \tsalt: ${stateName}_newSalt.integer,
             \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
@@ -317,9 +323,9 @@ export default function buildBoilerplate(nodeType, fields = {}) {
             };`;
         case 'decrement':
           return `
-            \npreimage.${stateName}[generalise(${stateName}_0_oldCommitment).hex(32)].isNullified = true;
-            \npreimage.${stateName}[generalise(${stateName}_1_oldCommitment).hex(32)].isNullified = true;
-            \npreimage.${stateName}[${stateName}_2_newCommitment.hex(32)] = {
+            \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_0_oldCommitment).hex(32)].isNullified = true;
+            \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_1_oldCommitment).hex(32)].isNullified = true;
+            \npreimage.${mappingName}${mappingKey}[${stateName}_2_newCommitment.hex(32)] = {
             \tvalue: ${stateName}_change.integer,
             \tsalt: ${stateName}_2_newSalt.integer,
             \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
@@ -329,10 +335,10 @@ export default function buildBoilerplate(nodeType, fields = {}) {
           switch (burnedOnly) {
             case true:
               return `
-                \npreimage.${stateName} = {};`;
+                \npreimage.${mappingName}${mappingKey} = {};`;
             default:
               return `
-                \npreimage.${stateName} = {
+                \npreimage.${stateName}${mappingKey} = {
                 \t${stateName}: ${stateName}.integer,
                 \tsalt: ${stateName}_newSalt.integer,
                 \tpublicKey: ${stateName}_newOwnerPublicKey.integer,

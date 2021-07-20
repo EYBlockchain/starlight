@@ -69,7 +69,6 @@ export const generateProofBoilerplate = node => {
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];
     // we add any extra params the circuit needs
-    // TODO
     node.parameters
       .filter(
         para =>
@@ -124,6 +123,7 @@ export const generateProofBoilerplate = node => {
             stateNode.increment.forEach(inc => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
+                !parameters.includes(`\t${inc.name}.integer,`) &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
@@ -262,6 +262,10 @@ export const preimageBoilerPlate = node => {
                 stateType: 'decrement',
                 stateName: privateStateName,
                 increment: stateNode.increment,
+                mappingKey: stateNode.mappingKey
+                  ? `[${privateStateName}_stateVarId_key.integer]`
+                  : ``,
+                mappingName: stateNode.mappingName || privateStateName,
                 newOwnerStatment,
                 stateVarIds,
               }),
@@ -321,23 +325,6 @@ export const OrchestrationCodeBoilerPlate = node => {
         );
       });
 
-      // node.parameters.importedStateVariables?.forEach(param => {
-      //   if (param.isSecret) {
-      //     lines.push(`let { ${param.name} } = JSON.parse(
-      //       fs.readFileSync(db, 'utf-8', err => {
-      //         console.log('Couldnt find required secret state - have you initialised it?');
-      //         console.log(err);
-      //       }),
-      //     );
-      //     ${param.name} = ${param.name}.value ? generalise(${param.name}.value) : generalise(${param.name}.${param.name});`);
-      //   } else {
-      //     lines.push(
-      //       `let ${param.name} = await instance.methods.${param.name}().call() || 0;
-      //       ${param.name} = generalise(${param.name})`,
-      //     );
-      //   }
-      // });
-
       if (node.decrementsSecretState) {
         node.decrementedSecretStates.forEach(decrementedState => {
           states.push(` _${decrementedState}_0_oldCommitment = 0`);
@@ -360,10 +347,26 @@ export const OrchestrationCodeBoilerPlate = node => {
 
     case 'InitialisePreimage':
       for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+        let mappingKey;
+        switch (stateNode.mappingKey) {
+          case 'msg':
+            // msg.sender => key is _newOwnerPublicKey
+            mappingKey = `[${stateName}_newOwnerPublicKey.integer]`;
+            break;
+          case null:
+            // not a mapping => no key
+            mappingKey = ``;
+            break;
+          default:
+            // any other => a param or accessed var
+            mappingKey = `[${stateNode.mappingKey}.integer]`;
+        }
         lines.push(
           buildBoilerplate(node.nodeType, {
             stateName,
             accessedOnly: stateNode.accessedOnly,
+            mappingKey,
+            mappingName: stateNode.mappingName || stateName,
           }),
         );
       }
@@ -407,15 +410,32 @@ export const OrchestrationCodeBoilerPlate = node => {
                   buildBoilerplate(node.nodeType, {
                     stateName,
                     stateType: 'decrement',
+                    mappingKey: stateNode.mappingKey
+                      ? `[${stateName}_stateVarId_key.integer]`
+                      : ``,
+                    mappingName: stateNode.mappingName || stateName,
                   }),
                 );
                 break;
               case false:
               default:
+                if (stateNode.mappingKey) {
+                  lines.push(`
+                  \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
+                  \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
+                } else {
+                  lines.push(`
+                  \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};`);
+                }
+
                 lines.push(
                   buildBoilerplate(node.nodeType, {
                     stateName,
                     stateType: 'increment',
+                    mappingKey: stateNode.mappingKey
+                      ? `[${stateName}_stateVarId_key.integer]`
+                      : ``,
+                    mappingName: stateNode.mappingName || stateName,
                   }),
                 );
                 break;
@@ -428,6 +448,10 @@ export const OrchestrationCodeBoilerPlate = node => {
                 stateName,
                 stateType: 'whole',
                 burnedOnly: stateNode.burnedOnly,
+                mappingKey: stateNode.mappingKey
+                  ? `[${stateName}_stateVarId_key.integer]`
+                  : ``,
+                mappingName: stateNode.mappingName || stateName,
               }),
             );
         }

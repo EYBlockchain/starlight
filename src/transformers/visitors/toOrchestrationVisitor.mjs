@@ -317,9 +317,12 @@ export default {
             stateVarIndicator.isWhole &&
             functionIndicator.initialisationRequired
           ) {
-            newNodes.initialisePreimageNode.privateStates[name] = {
+            newNodes.initialisePreimageNode.privateStates[
+              name
+            ] = buildPrivateStateNode('InitialisePreimage', {
               privateStateName: name,
-            };
+              indicator: stateVarIndicator,
+            });
           }
 
           newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
@@ -676,7 +679,7 @@ export default {
       }
       // we now have a param or a local var dec
       // TODO just use interactsWithSecret when thats added
-      let modifiesSecretState = false;
+      let interactsWithSecret = false;
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState = {};
@@ -684,20 +687,20 @@ export default {
           interactsWithSecretVisitor,
           newState,
         );
-        modifiesSecretState ||= newState.interactsWithSecret;
+        interactsWithSecret ||= newState.interactsWithSecret;
       });
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&
-        modifiesSecretState
+        interactsWithSecret
       )
-        parent._newASTPointer.interactsWithSecret = modifiesSecretState;
+        parent._newASTPointer.interactsWithSecret = interactsWithSecret;
 
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = buildNode(node.nodeType, {
         name: node.name,
         isSecret: node.isSecret || false,
-        modifiesSecretState,
+        interactsWithSecret,
         typeName: {},
       });
       node._newASTPointer = newNode;
