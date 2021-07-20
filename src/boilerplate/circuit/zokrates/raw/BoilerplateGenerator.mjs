@@ -216,14 +216,30 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, isWhole, newCommitmentValue }) {
-      if (!isWhole && !newCommitmentValue) throw new Error('PATH');
+    postStatements({ name: x, isWhole, isNullified, newCommitmentValue }) {
+      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       const y = isWhole ? x : newCommitmentValue;
+      const lines = [];
+      if (!isWhole && isNullified) {
+        // decrement
+        const i = parseInt(x.slice(-1), 10);
+        const x0 = x.slice(0, -1) + `${i-2}`;
+        const x1 = x.slice(0, -1) + `${i-1}`;
+        lines.push(
+          `assert(${x0} + ${x1} > ${y})
+          // TODO: assert no under/overflows
+
+          u32[8] ${x}_newCommitment_value = field_to_u32_8((${x0} + ${x1}) - (${y}))`
+        );
+      } else {
+        lines.push(`u32[8] ${x}_newCommitment_value = field_to_u32_8(${y})`);
+      }
+
       return [
         `
         // prepare secret state '${x}' for commitment
 
-        u32[8] ${x}_newCommitment_value = field_to_u32_8(${y})
+        ${lines}
 
         // ${x}_newCommitment_commitment - preimage check
 
@@ -313,7 +329,7 @@ class BoilerplateGenerator {
       // const x2 = `${x}_${i}`;
 
       return [
-        `// Testing skipping decrementation of ${x}`
+        `// Testing moved decrementation of ${x}`
         // `
         // // The below represents the decrementation '${x} = ${x} - ${y}':
         //

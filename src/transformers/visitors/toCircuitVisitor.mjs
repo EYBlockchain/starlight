@@ -276,8 +276,12 @@ const visitor = {
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
         const referencedIndicator = scope.getReferencedIndicator(lhs);
         if (
-          lhs.id === referencedIndicator.referencingPaths[0].node.id ||
-          lhs.id === referencedIndicator.referencingPaths[0].parent.id // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+          (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
+            lhs.id === referencedIndicator.referencingPaths[0].parent.id) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+          !(
+            referencedIndicator.isWhole &&
+            referencedIndicator.oldCommitmentAccessRequired
+          ) // FIX - sometimes a variable will be declared twice when we insert oldCommitmentPreimage preStatements before an overwrite - we check here
         ) {
           isVarDec = true;
         }

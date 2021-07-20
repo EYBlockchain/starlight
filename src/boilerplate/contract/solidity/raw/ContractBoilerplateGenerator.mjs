@@ -141,6 +141,7 @@ class ContractBoilerplateGenerator {
           uint256[] memory inputs = new uint256[](${[
           'customInputs.length',
           ...(newNullifiers ? ['newNullifiers.length'] : []),
+          ...(checkNullifiers ? ['checkNullifiers.length'] : []),
           ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
           ...(newCommitments ? ['newCommitments.length'] : []),
         ].join(' + ')});`,

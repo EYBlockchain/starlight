@@ -123,12 +123,12 @@ export async function registerKey(_secretKey, contractName, registerWithContract
   return publicKey;
 }
 
-export function getInputCommitments(publicKey, value) {
+export function getInputCommitments(publicKey, value, stateName) {
   const commitments = JSON.parse(
     fs.readFileSync(db, 'utf-8', err => {
       console.log(err);
     }),
-  );
+  )[stateName];
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );

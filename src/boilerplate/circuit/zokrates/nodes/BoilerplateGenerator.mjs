@@ -155,6 +155,7 @@ class BoilerplateGenerator {
           // only include if they exist:
           ...(this.isWhole && { isWhole: this.isWhole }),
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
+          ...(this.isNullified && { isNullified: this.isNullified }),
           ...(this.isMapping && { isMapping: this.isMapping }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
@@ -256,7 +257,6 @@ class BoilerplateGenerator {
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
-  // TODO: Code for incrementation & decrementation might be able to be merged, given they're very similar.
   incrementation = ({ addendId }) => {
     //const startIndex = this.getIndex({ addendId });
     return {
