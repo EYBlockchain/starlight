@@ -25,7 +25,7 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired,
       nullifiersRequired,
       newCommitmentsRequired,
-      containsAccessedState,
+      containsAccessedOnlyState,
     }) {
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
@@ -55,7 +55,7 @@ class ContractBoilerplateGenerator {
           struct Inputs {
             ${[
               ...(nullifiersRequired ? [`uint[] newNullifiers;`] : []),
-              ...(containsAccessedState ? [`uint[] checkNullifiers;`] : []),
+              ...(containsAccessedOnlyState ? [`uint[] checkNullifiers;`] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
               ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
               `uint[] customInputs;`, // TODO: consider whether we need to identify when / when not to include this.
@@ -94,7 +94,7 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
-      containsAccessedState: checkNullifiers,
+      containsAccessedOnlyState: checkNullifiers,
     }) {
       const verifyFunctionSignature = `
         function verify(

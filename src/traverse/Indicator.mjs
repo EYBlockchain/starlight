@@ -354,8 +354,10 @@ export class StateVariableIndicator {
     this.parentIndicator.oldCommitmentAccessRequired = true;
     this.parentIndicator.initialisationRequired = true;
     this.parentIndicator.parentIndicator.oldCommitmentAccessRequired = true;
-    this.parentIndicator.containsAccessedState = true;
-    this.parentIndicator.parentIndicator.containsAccessedState = true;
+    if (!this.isModified) {
+      this.parentIndicator.containsAccessedOnlyState = true;
+      this.parentIndicator.parentIndicator.containsAccessedOnlyState = true;
+    }
     const reason = { src: path.node.src, 0: `Accessed` };
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);

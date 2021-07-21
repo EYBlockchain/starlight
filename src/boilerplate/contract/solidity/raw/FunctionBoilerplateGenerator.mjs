@@ -36,7 +36,7 @@ class FunctionBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentRequired: newCommitments,
-      containsAccessedState: checkNullifiers,
+      containsAccessedOnlyState: checkNullifiers,
     }) {
       return [
         ...(newNullifiers ? [`uint256[] calldata newNullifiers`] : []),
@@ -54,7 +54,7 @@ class FunctionBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentRequired: newCommitments,
-      containsAccessedState: checkNullifiers,
+      containsAccessedOnlyState: checkNullifiers,
     }) {
       // prettier-ignore
       return [
