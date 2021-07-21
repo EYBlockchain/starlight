@@ -179,6 +179,7 @@ function codeGenerator(node) {
 
     // And if we haven't recognized the node, we'll throw an error.
     default:
+      if (!Object.keys(node).length) return ''; // we have empty nodes when subnodes are skipped
       throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
   }
 }

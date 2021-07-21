@@ -3,6 +3,7 @@
 import cloneDeep from 'lodash.clonedeep';
 // import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/zokrates-types.mjs';
+import { TODOError } from '../../error/errors.mjs';
 import NP from '../../traverse/NodePath.mjs';
 
 /**
@@ -425,11 +426,11 @@ const visitor = {
 
   FunctionCall: {
     enter(path, state) {
-      const { parent } = path;
+      const { parent, node } = path;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 
-      if (path.isRequireStatement()) {
+      if (path.isRequireStatement() && !node.requireStatementPrivate) {
         // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least)
         state.skipSubNodes = true;
         return;
@@ -439,6 +440,9 @@ const visitor = {
         // node._newASTPointer = newNode;
         // parent._newASTPointer[path.containerName] = newNode;
         // return;
+      }
+      if (node.requireStatementPrivate) {
+        throw new TODOError('Secret assert statements', node);
       }
 
       if (path.isExternalFunctionCall() || path.isExportedSymbol()) {
