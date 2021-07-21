@@ -425,7 +425,7 @@ export const OrchestrationCodeBoilerPlate = node => {
                   \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
                 } else {
                   lines.push(`
-                  \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};`);
+                  \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
                 }
 
                 lines.push(
