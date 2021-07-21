@@ -597,10 +597,9 @@ export default class NodePath {
     const sourceUnit = this.getSourceUnit(node).node;
     const exportedSymbolsId =
       sourceUnit?.exportedSymbols?.[thisContractDefinition.name]?.[0];
-
     if (!exportedSymbolsId) return false;
 
-    return referencedContractId === exportedSymbolsId;
+    return referencedContractId !== exportedSymbolsId;
   }
 
   isExternalContractInstance(node = this.node) {
@@ -613,7 +612,7 @@ export default class NodePath {
     const { expression: functionNode } = this.node; // the function being called
     // The `expression` for an external function call will be a MemberAccess nodeType. myExternalContract.functionName
     if (functionNode.nodeType !== 'MemberAccess') return false;
-    return this.isExternalContractInstance(functionNode);
+    return this.isExternalContractInstance(functionNode.expression);
   }
 
   isTypeConversion() {
@@ -755,7 +754,7 @@ export default class NodePath {
     if (!['IndexAccess', 'Identifier'].includes(node.nodeType)) return false;
     // It could be a mapping or it could be an array. The only way to tell is to trace it all the way back to its referencedDeclaration.
     const varDecNode = this.getReferencedNode(node); // If it's an IndexAccess node, it will look at the IndexAccess.baseExpression through getReferencedDeclarationId().
-    return this.isMappingDeclaration(varDecNode);
+    return this.isMappingDeclaration(varDecNode || node);
   }
 
   isMapping(node = this.node) {
@@ -838,8 +837,11 @@ export default class NodePath {
     const { nodeType } = referencingNode;
     let id;
     switch (nodeType) {
+      case 'VariableDeclarationStatement':
+        id = this.getReferencedDeclarationId(referencingNode.declarations[0]);
+        break;
       case 'VariableDeclaration':
-        id = this.node.id;
+        id = referencingNode.id;
         break;
       case 'Identifier':
         id = referencingNode.referencedDeclaration;
@@ -961,6 +963,30 @@ export default class NodePath {
     };
     traversePathsFast(rootNodePath, visitor2, state);
     return state;
+  }
+
+  markContainsSecret() {
+    let path = this;
+    while ((path = path.parentPath)) {
+      path.containsSecret ??= true;
+      path.node.containsSecret ??= true;
+      const indicator = path.scope.getReferencedIndicator(path.node, true);
+      // we don't want to add itself as an interacted with path
+      if (indicator && this.node.referencedDeclaration !== indicator.id)
+        indicator.addSecretInteractingPath(this);
+    }
+  }
+
+  markContainsPublic() {
+    let path = this;
+    while ((path = path.parentPath)) {
+      path.containsPublic ??= true;
+      path.node.containsPublic ??= true;
+      const indicator = path.scope.getReferencedIndicator(path.node, true);
+      // we don't want to add itself as an interacted with path
+      if (indicator && this.node.referencedDeclaration !== indicator.id)
+        indicator.addPublicInteractingPath(this);
+    }
   }
 
   // SCOPE

@@ -145,6 +145,14 @@ export default {
         !referencedBinding.isPartitioned && // if this is a partitioned incremented, it would have been marked already
         ['*=', '+=', '-='].includes(leftAncestor.parent.operator)
       ) {
+        if (
+          !referencedBinding.isWhole &&
+          !referencedBinding.isKnown &&
+          !referencedBinding.isUnknown
+        )
+          logger.warn(
+            `We don't know whether this state ${node.name} is whole or partitioned - but since there are no known/unknown decorators, we assume its a whole state which nobody but the owner can edit.`,
+          );
         logger.debug(
           `Found an accessed secret state ${node.name} (accessed in ${leftAncestor.parent.operator} operation)`,
         );
