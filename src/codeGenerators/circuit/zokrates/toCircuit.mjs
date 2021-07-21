@@ -179,8 +179,7 @@ function codeGenerator(node) {
 
     // And if we haven't recognized the node, we'll throw an error.
     default:
-      return;
-    // throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
+      throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
   }
 }
 

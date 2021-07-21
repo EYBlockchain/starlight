@@ -1,5 +1,5 @@
 module.exports = {
-  log_level: 'debug',
+  log_level: 'info',
   zokrates: {
     url: 'http://zokrates:80',
   },

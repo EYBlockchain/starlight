@@ -134,13 +134,6 @@ const visitor = {
         );
       }
 
-      // HACK: this hack ignores all local stack variables and assumes they'll be picked up in Solidity. A future enhancement will be to only ignore local stack variables which interact solely with non-secret states. Local stack variabels which _do_ interact with secret states can probably be brought into the circuit eventually.
-      if (path.isLocalStackVariableDeclaration()) {
-        // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
-        state.skipSubNodes = true;
-        return;
-      }
-
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
@@ -295,7 +288,7 @@ const visitor = {
 
   VariableDeclaration: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       if (node.stateVariable) {
         // Then the node represents assignment of a state variable.
         // State variables don't get declared within a circuit;
@@ -304,7 +297,6 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
-
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
@@ -315,6 +307,16 @@ const visitor = {
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
+
+      if (
+        declarationType === 'localStack' &&
+        !node.isSecret &&
+        !scope.getReferencedIndicator(node).interactsWithSecret
+      ) {
+        // we don't want to add non secret local vars
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+      }
 
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {

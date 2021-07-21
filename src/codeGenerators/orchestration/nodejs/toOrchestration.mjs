@@ -64,9 +64,9 @@ function codeGenerator(node, options = {}) {
         node.initialValue.operator &&
         !node.initialValue.operator.includes('=')
       )
-        return `\nlet ${node.declarations[0].name} = ${codeGenerator(
+        return `\nlet ${node.declarations[0].name} = generalise(${codeGenerator(
           node.initialValue,
-        )};`;
+        )});`;
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
