@@ -36,11 +36,13 @@ class FunctionBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentRequired: newCommitments,
+      containsAccessedOnlyState: checkNullifiers,
     }) {
       return [
         ...(newNullifiers ? [`uint256[] calldata newNullifiers`] : []),
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
         ...(newCommitments ? [`uint256[] calldata newCommitments`] : []),
+        ...(checkNullifiers ? [`uint256[] calldata checkNullifiers`] : []),
         `uint256[] calldata proof`,
       ];
     },
@@ -52,6 +54,7 @@ class FunctionBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentRequired: newCommitments,
+      containsAccessedOnlyState: checkNullifiers,
     }) {
       // prettier-ignore
       return [
@@ -69,6 +72,9 @@ class FunctionBoilerplateGenerator {
 
         ...(newNullifiers ? [`
           inputs.newNullifiers = newNullifiers;`] : []),
+
+        ...(checkNullifiers ? [`
+          inputs.checkNullifiers = checkNullifiers;`] : []),
 
         ...(commitmentRoot ? [`
           inputs.commitmentRoot = commitmentRoot;`] : []),

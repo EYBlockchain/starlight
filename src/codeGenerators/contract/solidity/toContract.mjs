@@ -163,6 +163,7 @@ function codeGenerator(node) {
       return node.parameters.flatMap(codeGenerator).filter(Boolean).join(', ');
 
     case 'VariableDeclaration': {
+      if (node.isSecret) return '';
       let { typeString } = node.typeDescriptions;
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
       const constant = node.constant ? ' constant' : '';
@@ -174,7 +175,6 @@ function codeGenerator(node) {
       const name = ` ${node.name}`;
 
       if (node.declarationType === 'parameter') {
-        if (node.isSecret) return '';
         return `${typeString}${constant}${storageLocation}${name}`;
       }
       if (node.declarationType === 'localStack') {
@@ -186,6 +186,7 @@ function codeGenerator(node) {
 
     case 'VariableDeclarationStatement': {
       const declarations = node.declarations.map(codeGenerator).join(', ');
+      if (declarations === '') return declarations; // when all are secret, we ignore them
       const initialValue = codeGenerator(node.initialValue);
       return `
           ${declarations} = ${initialValue};`;

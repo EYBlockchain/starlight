@@ -354,6 +354,10 @@ export class StateVariableIndicator {
     this.parentIndicator.oldCommitmentAccessRequired = true;
     this.parentIndicator.initialisationRequired = true;
     this.parentIndicator.parentIndicator.oldCommitmentAccessRequired = true;
+    if (!this.isModified) {
+      this.parentIndicator.containsAccessedOnlyState = true;
+      this.parentIndicator.parentIndicator.containsAccessedOnlyState = true;
+    }
     const reason = { src: path.node.src, 0: `Accessed` };
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
@@ -474,6 +478,7 @@ export class StateVariableIndicator {
     }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
+      console.log('err 3');
       throw new SyntaxUsageError(
         `Can't mark a whole state as 'unknown'`,
         this.node,

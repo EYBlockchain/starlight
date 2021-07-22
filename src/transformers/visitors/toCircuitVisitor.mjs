@@ -1,8 +1,9 @@
-/* eslint-disable no-param-reassign, no-shadow */
+/* eslint-disable no-param-reassign, no-shadow, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
 // import logger from '../../utils/logger.mjs';
 import { buildNode } from '../../types/zokrates-types.mjs';
+import { TODOError } from '../../error/errors.mjs';
 import NP from '../../traverse/NodePath.mjs';
 
 /**
@@ -62,12 +63,8 @@ const visitor = {
         const files = parent._newASTPointer;
         files.push(newNode);
       } else {
-        // Not sure what to do 'else', yet.
-        // If there are no global state modifications / 'references', then (currently) a circuit isn't needed for this function. In future, this could be a helper function which supports some other state-editing function, in which case a circuit would be needed.
-        // I suppose other functions for which newFile = true (i.e. functions which actually modify secret state) will need to include any helper functions they reference within the circuit file (or import them).
-        throw new Error(
-          `Not yet supported. We haven't yet written code which can transpile functions which don't modify secret states.`,
-        );
+        // a non secret function - we skip it for circuits
+        state.skipSubNodes = true;
       }
     },
 
@@ -136,13 +133,6 @@ const visitor = {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
         );
-      }
-
-      // HACK: this hack ignores all local stack variables and assumes they'll be picked up in Solidity. A future enhancement will be to only ignore local stack variables which interact solely with non-secret states. Local stack variabels which _do_ interact with secret states can probably be brought into the circuit eventually.
-      if (path.isLocalStackVariableDeclaration()) {
-        // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
-        state.skipSubNodes = true;
-        return;
       }
 
       const newNode = buildNode('VariableDeclarationStatement');
@@ -280,8 +270,12 @@ const visitor = {
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
         const referencedIndicator = scope.getReferencedIndicator(lhs);
         if (
-          lhs.id === referencedIndicator.referencingPaths[0].node.id ||
-          lhs.id === referencedIndicator.referencingPaths[0].parent.id // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+          (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
+            lhs.id === referencedIndicator.referencingPaths[0].parent.id) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+          !(
+            referencedIndicator.isWhole &&
+            referencedIndicator.oldCommitmentAccessRequired
+          ) // FIX - sometimes a variable will be declared twice when we insert oldCommitmentPreimage preStatements before an overwrite - we check here
         ) {
           isVarDec = true;
         }
@@ -295,7 +289,7 @@ const visitor = {
 
   VariableDeclaration: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       if (node.stateVariable) {
         // Then the node represents assignment of a state variable.
         // State variables don't get declared within a circuit;
@@ -304,7 +298,6 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
-
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
@@ -315,6 +308,16 @@ const visitor = {
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
+
+      if (
+        declarationType === 'localStack' &&
+        !node.isSecret &&
+        !scope.getReferencedIndicator(node).interactsWithSecret
+      ) {
+        // we don't want to add non secret local vars
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+      }
 
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
@@ -423,11 +426,11 @@ const visitor = {
 
   FunctionCall: {
     enter(path, state) {
-      const { parent } = path;
+      const { parent, node } = path;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 
-      if (path.isRequireStatement()) {
+      if (path.isRequireStatement() && !node.requireStatementPrivate) {
         // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least)
         state.skipSubNodes = true;
         return;
@@ -437,6 +440,9 @@ const visitor = {
         // node._newASTPointer = newNode;
         // parent._newASTPointer[path.containerName] = newNode;
         // return;
+      }
+      if (node.requireStatementPrivate) {
+        throw new TODOError('Secret assert statements', node);
       }
 
       if (path.isExternalFunctionCall() || path.isExportedSymbol()) {

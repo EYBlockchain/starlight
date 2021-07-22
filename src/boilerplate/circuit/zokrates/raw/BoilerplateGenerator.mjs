@@ -78,7 +78,7 @@ class BoilerplateGenerator {
         )`,
       ];
 
-      if (this.isWhole) {
+      if (this.isWhole && !(this.isAccessed && !this.isNullified)) {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [
           `
@@ -142,19 +142,19 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, isWhole }) {
+    parameters({ name: x, isWhole, isAccessed, isNullified }) {
       const lines = [
         `public field commitmentRoot`,
         `private field ${x}_oldCommitment_membershipWitness_index`,
         `private field[32] ${x}_oldCommitment_membershipWitness_siblingPath`,
       ];
-      if (isWhole) {
+      if (isWhole && !(isAccessed && !isNullified)) {
         lines.unshift(`private bool ${x}_oldCommitment_isDummy`);
       }
       return lines;
     },
 
-    postStatements({ name: x, isWhole }) {
+    postStatements({ name: x, isWhole, isAccessed, isNullified }) {
       const lines = [
         `
         // ${x}_oldCommitment_commitment: existence check
@@ -174,7 +174,7 @@ class BoilerplateGenerator {
         )`,
       ];
 
-      if (isWhole) {
+      if (isWhole && !(isAccessed && !isNullified)) {
         // initialisation of whole states requires a dummy oldCommitment to be ignored.
         lines.splice(
           -1,
@@ -216,12 +216,30 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x }) {
+    postStatements({ name: x, isWhole, isNullified, newCommitmentValue }) {
+      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
+      const y = isWhole ? x : newCommitmentValue;
+      const lines = [];
+      if (!isWhole && isNullified) {
+        // decrement
+        const i = parseInt(x.slice(-1), 10);
+        const x0 = x.slice(0, -1) + `${i-2}`;
+        const x1 = x.slice(0, -1) + `${i-1}`;
+        lines.push(
+          `assert(${x0} + ${x1} > ${y})
+          // TODO: assert no under/overflows
+
+          u32[8] ${x}_newCommitment_value = field_to_u32_8((${x0} + ${x1}) - (${y}))`
+        );
+      } else {
+        lines.push(`u32[8] ${x}_newCommitment_value = field_to_u32_8(${y})`);
+      }
+
       return [
         `
         // prepare secret state '${x}' for commitment
 
-        u32[8] ${x}_newCommitment_value = field_to_u32_8(${x})
+        ${lines}
 
         // ${x}_newCommitment_commitment - preimage check
 
@@ -278,13 +296,21 @@ class BoilerplateGenerator {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
 
-    statements({ name: x, startIndex: i, addend }) {
-      const y = codeGenerator(addend);
-      return [
-        `
-        // The below represents the incrementation '${x} = ${x} + ${y}':
+    statements({ name: x, startIndex: i, addends }) {
+      // let y = codeGenerator(addends[0]);
+      //
+      // for (const addend of addends) {
+      //   if (addend !== addend[0])
+      //     y += `${addend.precedingOperator} ${codeGenerator(addend)}`;
+      // }
 
-        field ${x}_${i} = ${y}`,
+
+      return [
+        `// Testing skipping incrementation of ${x}`
+        // `
+        // // The below represents the incrementation '${x} = ${x} + ${y}':
+        //
+        // field ${x}_${i} = ${y}`,
       ];
     },
   };
@@ -296,20 +322,21 @@ class BoilerplateGenerator {
     },
 
     statements({ name: x, startIndex, subtrahend }) {
-      const y = codeGenerator(subtrahend);
-      let i = startIndex;
-      const x0 = `${x}_${i++}`;
-      const x1 = `${x}_${i++}`;
-      const x2 = `${x}_${i}`;
+      // const y = codeGenerator(subtrahend);
+      // let i = startIndex;
+      // const x0 = `${x}_${i++}`;
+      // const x1 = `${x}_${i++}`;
+      // const x2 = `${x}_${i}`;
 
       return [
-        `
-        // The below represents the decrementation '${x} = ${x} - ${y}':
-
-        assert(${x0} + ${x1} > ${y})
-        // TODO: assert no under/overflows
-
-        field ${x2} = (${x0} + ${x1}) - ${y}`,
+        `// Testing moved decrementation of ${x}`
+        // `
+        // // The below represents the decrementation '${x} = ${x} - ${y}':
+        //
+        // assert(${x0} + ${x1} > ${y})
+        // // TODO: assert no under/overflows
+        //
+        // field ${x2} = (${x0} + ${x1}) - ${y}`,
       ];
     },
   };

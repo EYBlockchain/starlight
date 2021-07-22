@@ -104,7 +104,11 @@ export async function deploy(userAddress, userAddressPassword, contractName, con
   return deployedContractAddress;
 }
 
-export async function registerKey(_secretKey, contractName, registerWithContract) {
+export async function registerKey(
+  _secretKey,
+  contractName,
+  registerWithContract,
+) {
   const secretKey = generalise(_secretKey);
   const publicKey = generalise(utils.shaHash(secretKey.hex(32)));
   if (registerWithContract) {
@@ -123,20 +127,17 @@ export async function registerKey(_secretKey, contractName, registerWithContract
   return publicKey;
 }
 
-export function getInputCommitments(publicKey, value) {
-  const commitments = JSON.parse(
-    fs.readFileSync(db, 'utf-8', err => {
-      console.log(err);
-    }),
-  );
+export function getInputCommitments(publicKey, value, commitments) {
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );
   possibleCommitments.sort(
-    (preimageA, preimageB) => parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
+    (preimageA, preimageB) =>
+      parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
   );
   if (
-    parseInt(possibleCommitments[0][1].value, 10) + parseInt(possibleCommitments[1][1].value, 10) >=
+    parseInt(possibleCommitments[0][1].value, 10) +
+      parseInt(possibleCommitments[1][1].value, 10) >=
     parseInt(value, 10)
   ) {
     return [possibleCommitments[0][0], possibleCommitments[1][0]];

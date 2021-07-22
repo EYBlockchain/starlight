@@ -14,6 +14,21 @@ const literalOneNode = {
   value: '1',
 };
 
+const collectIncrements = (increments, incrementedIdentifier) => {
+  const { operands, precedingOperator } = increments;
+  const newIncrements = [];
+  for (const [index, operand] of operands.entries()) {
+    operand.precedingOperator = precedingOperator[index];
+    if (
+      operand.name !== incrementedIdentifier.name &&
+      operand.baseExpression?.name !== incrementedIdentifier.name &&
+      !newIncrements.some(inc => inc.id === operand.id)
+    )
+      newIncrements.push(operand);
+  }
+  return newIncrements;
+};
+
 // marks the parent ExpressionStatement
 const markParentIncrementation = (
   path,
@@ -21,7 +36,7 @@ const markParentIncrementation = (
   isIncremented,
   isDecremented,
   incrementedIdentifier = {},
-  increments = {},
+  increments = [],
 ) => {
   incrementedIdentifier = incrementedIdentifier.baseExpression
     ? incrementedIdentifier.baseExpression
@@ -33,9 +48,20 @@ const markParentIncrementation = (
   parent.node.expression.incrementedDeclaration = parent.incrementedDeclaration;
   state.unmarkedIncrementation = false;
   state.incrementedIdentifier = incrementedIdentifier;
-  isDecremented
-    ? state.decrements.push(increments)
-    : state.increments.push(increments);
+  if (increments.operands)
+    increments = collectIncrements(increments, incrementedIdentifier);
+  increments.forEach(inc => {
+    if (
+      inc.precedingOperator === '-' &&
+      !state.decrements.some(existingInc => existingInc.id === inc.id)
+    ) {
+      state.decrements.push(inc);
+    } else if (
+      !state.increments.some(existingInc => existingInc.id === inc.id)
+    ) {
+      state.increments.push(inc);
+    }
+  });
 };
 
 // gets NodePath for the thing being incremented
@@ -64,6 +90,47 @@ const mixedOperatorsWarning = path => {
   logger.warn(
     `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Make sure that incrementing (a = a + ...) always increases the secret state value while decrementing (a = a - ...) decreases it. \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c. Similarly, we assume a = a - b + c is a decrementation, so c - b < a.`,
   );
+};
+
+const binOpToIncrements = (path, state) => {
+  const parentExpressionStatement = path.getAncestorOfType(
+    'ExpressionStatement',
+  );
+  const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
+  const assignmentOp = parentExpressionStatement?.node.expression?.operator;
+  const { operator, leftExpression, rightExpression } = path.node;
+  const operands = [leftExpression, rightExpression];
+  const precedingOperator = ['+', operator];
+
+  // if we dont have any + or -, it can't be an incrementation
+  if (
+    !operator.includes('+') &&
+    !operator.includes('-') &&
+    !assignmentOp.includes('+') &&
+    !assignmentOp.includes('-')
+  ) {
+    markParentIncrementation(path, state, false, false, lhsNode);
+    return;
+  }
+
+  // fills an array of operands
+  // e.g. if we have a = b - c + a + d, operands = [b, c, a, d]
+  for (const [index, operand] of operands.entries()) {
+    if (operand.nodeType === 'BinaryOperation') {
+      operands[index] = operand.leftExpression;
+      operands.push(operand.rightExpression);
+      precedingOperator.push(operand.operator);
+    }
+  }
+  // if we have mixed operators, we may have an underflow or not be able to tell whether this is increasing (incrementation) or decreasing (decrementation) the secret value
+  if (
+    precedingOperator.length > 2 &&
+    precedingOperator.includes('+') &&
+    precedingOperator.includes('-')
+  )
+    mixedOperatorsWarning(parentExpressionStatement);
+
+  return { operands, precedingOperator };
 };
 
 /**
@@ -123,7 +190,10 @@ export default {
       if (
         (incrementedIdentifier?.isUnknown ||
           incrementedIdentifier?.baseExpression?.isUnknown) &&
-        isDecremented
+        isDecremented &&
+        // if we have a = a + b - c, a can be unknown as long as b > c
+        // if we have a = a - <anything> this error should throw:
+        state.increments[0]?.precedingOperator === '-'
       ) {
         throw new SyntaxUsageError(
           "Can't nullify (that is, edit with knowledge of the state) an unknown state. Since we are taking away some value of the state, we must know it. Only incrementations like a += x can be marked as unknown.",
@@ -160,40 +230,46 @@ export default {
       const lhsSecret = !!scope.getReferencedBinding(leftHandSide).isSecret;
 
       // a += something, -= something
-      if (lhsSecret && operator === '+=') {
-        markParentIncrementation(
-          path,
-          state,
-          true,
-          false,
-          leftHandSide,
+      if (
+        lhsSecret &&
+        operator === '+=' &&
+        rightHandSide.nodeType !== 'BinaryOperation'
+      ) {
+        rightHandSide.precedingOperator = '+';
+        markParentIncrementation(path, state, true, false, leftHandSide, [
           rightHandSide,
-        );
+        ]);
         if (rightHandSide.operator?.includes('-')) mixedOperatorsWarning(path);
         return;
       }
 
-      if (lhsSecret && operator === '-=') {
-        markParentIncrementation(
-          path,
-          state,
-          true,
-          true,
-          leftHandSide,
+      if (
+        lhsSecret &&
+        operator === '-=' &&
+        rightHandSide.nodeType !== 'BinaryOperation'
+      ) {
+        rightHandSide.precedingOperator = '-';
+        markParentIncrementation(path, state, true, true, leftHandSide, [
           rightHandSide,
-        );
-        if (rightHandSide.operator?.includes('-')) mixedOperatorsWarning(path);
+        ]);
+        if (rightHandSide.operator?.includes('+')) mixedOperatorsWarning(path);
         return;
       }
 
       // a *= something, a /= something
-      if (operator === '%=' || operator === '/=' || operator === '*=') {
+      // OR lhs non-secret - we don't care about those
+      if (
+        operator === '%=' ||
+        operator === '/=' ||
+        operator === '*=' ||
+        !lhsSecret
+      ) {
         markParentIncrementation(path, state, false, false, leftHandSide);
         return;
       }
 
       // after +=, -=, %=, *=, /=, we can only deal with =
-      if (operator !== '=')
+      if (operator !== '=' && operator !== '+=' && operator !== '-=')
         throw new TODOError(
           `Operator '${operator}' not yet supported. Please open an issue.`,
           node,
@@ -214,6 +290,7 @@ export default {
       const lhsSecret = !!scope.getReferencedBinding(subExpression).isSecret;
       // a++
       if (lhsSecret && operator.includes('+')) {
+        literalOneNode.precedingOperator = '+';
         markParentIncrementation(
           path,
           state,
@@ -226,6 +303,7 @@ export default {
       }
       // a--
       if (lhsSecret && operator.includes('-')) {
+        literalOneNode.precedingOperator = '-';
         markParentIncrementation(
           path,
           state,
@@ -246,43 +324,17 @@ export default {
         'ExpressionStatement',
       );
       const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
+      const assignmentOp = parentExpressionStatement?.node.expression?.operator;
       // if we don't have a parent expression or that expression can't hold an incrementation, we exit
       if (!lhsNode) return;
-      const { node, scope } = path;
-      const { operator, leftExpression, rightExpression } = node;
-      const operands = [leftExpression, rightExpression];
-      const precedingOperator = ['+', operator];
-      const lhsSecret = !!scope.getReferencedBinding(lhsNode).isSecret;
 
-      // TODO: do we need this? Do we care if its secret?
-      if (!lhsSecret) return;
-
-      // if we dont have any + or -, it can't be an incrementation
-      if (!operator.includes('+') && !operator.includes('-')) {
-        markParentIncrementation(path, state, false, false, lhsNode);
-        return;
-      }
-
-      // fills an array of operands
-      // e.g. if we have a = b - c + a + d, operands = [b, c, a, d]
-      for (const [index, operand] of operands.entries()) {
-        if (operand.nodeType === 'BinaryOperation') {
-          operands[index] = operand.leftExpression;
-          operands.push(operand.rightExpression);
-          precedingOperator.push(operand.operator);
-        }
-      }
-      // if we have mixed operators, we may have an underflow or not be able to tell whether this is increasing (incrementation) or decreasing (decrementation) the secret value
-      if (
-        precedingOperator.length > 2 &&
-        precedingOperator.includes('+') &&
-        precedingOperator.includes('-')
-      )
-        mixedOperatorsWarning(parentExpressionStatement);
+      const { operands, precedingOperator } = binOpToIncrements(path, state);
 
       // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a = b + 2a)
       let discoveredLHS = 0;
       let isIncremented = {};
+      if (assignmentOp === '+=' || assignmentOp === '-=')
+        isIncremented.incremented = true;
       // Goes through each operand and checks whether it's the lhsNode and whether it's +/- anything
       for (const [index, operand] of operands.entries()) {
         // below: we have an identifier
@@ -350,19 +402,50 @@ export default {
           operand.name ??= `${operand.baseExpression.name}[${operand.indexExpression.name}]`;
         }
         // if we have 1*a on the RHS and its incremented, mark the parent path
-        if (discoveredLHS === 1 && isIncremented.incremented) {
-          // TODO this saves the .increments as the whole BinaryOperation node. This may include the incremented node itself.
-          // e.g. a += b + c => increments saved as the binop for b + c
-          // e.g. a = a + b + c => increments saved as the binop for a + b + c
-          // these should be considered the same but aren't - move back to individual operands?
+        if (
+          discoveredLHS === 1 &&
+          isIncremented.incremented &&
+          assignmentOp === '='
+        ) {
+          // a = a + b - c - d counts as an incrementation since the 1st operator is a plus
+          // the mixed operators warning will have been given
+          if (
+            precedingOperator.includes('+') &&
+            precedingOperator.includes('-') &&
+            precedingOperator[0] === '+'
+          )
+            isIncremented.decremented = false;
           markParentIncrementation(
             path,
             state,
             isIncremented.incremented,
             isIncremented.decremented,
             lhsNode.baseExpression || lhsNode,
-            node,
+            { operands, precedingOperator },
           );
+        } else if (
+          discoveredLHS === 0 &&
+          isIncremented.incremented &&
+          (assignmentOp === '+=' || assignmentOp === '-=')
+        ) {
+          if (assignmentOp === '+=')
+            markParentIncrementation(
+              path,
+              state,
+              isIncremented.incremented,
+              false, // we assume a += is always an overall increase in value
+              lhsNode.baseExpression || lhsNode,
+              { operands, precedingOperator },
+            );
+          if (assignmentOp === '-=')
+            markParentIncrementation(
+              path,
+              state,
+              isIncremented.incremented,
+              true, // we assume a -= is always an overall decrease in value
+              lhsNode.baseExpression || lhsNode,
+              { operands, precedingOperator },
+            );
         } else {
           markParentIncrementation(path, state, false, false, lhsNode);
         }
