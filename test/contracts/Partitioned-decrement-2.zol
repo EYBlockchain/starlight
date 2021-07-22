@@ -2,6 +2,10 @@
 
 pragma solidity ^0.8.0;
 
+// WARNING - the output shield contract is large and will not compile due to stack too deep
+// removing intermediate variables works
+// output zApp is still correct and all other components work
+
 contract MyContract {
 
     secret uint256 private a;
