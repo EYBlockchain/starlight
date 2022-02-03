@@ -15,6 +15,8 @@ services:
       - ./migrations/:/app/migrations/
       - ./truffle-config.js:/app/truffle-config.js
       - ./circuits/:/app/circuits:delegated
+      - ./proving-files/:/app/output:delegated # temporary solution to write-vk issue
+      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs # "
       - ./orchestration/:/app/orchestration:delegated
       - ./test/:/app/test:delegated
       - ./config/:/app/config:delegated
@@ -26,15 +28,15 @@ services:
       - zapp_network
 
   zokrates:
-    image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.4
-    #command: npm run zok
+    image: ghcr.io/eyblockchain/zokrates-worker-m1
+    platform: linux/amd64
     volumes:
       - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated
       - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs
       - ./orchestration/common/db/:/app/orchestration/common/db:delegated
     environment:
-      PROVING_SCHEME: 'gm17'
+      PROVING_SCHEME: 'g16'
     ports:
       - '8080:80'
     networks:
