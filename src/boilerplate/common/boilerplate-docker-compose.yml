@@ -29,7 +29,7 @@ services:
 
   zokrates:
     image: ghcr.io/eyblockchain/zokrates-worker-m1
-    platform: linux/amd64
+    platform: linux/arm64/v8
     volumes:
       - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated

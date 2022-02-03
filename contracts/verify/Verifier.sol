@@ -32,7 +32,7 @@ contract Verifier is Ownable {
 
   using Pairing for *;
 
-  struct Proof_GM16 {
+  struct Proof_G16 {
       Pairing.G1Point A;
       Pairing.G2Point B;
       Pairing.G1Point C;
@@ -63,7 +63,7 @@ contract Verifier is Ownable {
       }
   }
 
-  function verificationCalculation(uint256[] memory _proof, uint256[] memory _inputs, uint256[] memory _vk) public returns (uint) {
+  function verificationCalculation(uint256[] memory _proof, uint256[] memory _publicInputs, uint256[] memory _vk) public returns (uint) {
 
     Proof_G16 memory proof;
     Pairing.G1Point memory vk_dot_inputs;
@@ -98,17 +98,9 @@ contract Verifier is Ownable {
           vk_dot_inputs,
           sm_qpih
         );
+      }
 
       vk_dot_inputs = Pairing.addition(vk_dot_inputs, vk.gamma_abc[0]);
-
-      /**
-       * e(A*G^{alpha}, B*H^{beta}) = e(G^{alpha}, H^{beta}) * e(G^{psi}, H^{gamma})
-       *                              * e(C, H)
-       * where psi = \sum_{i=0}^l input_i pvk.query[i]
-       */
-      if (!Pairing.pairingProd4(vk.Galpha, vk.Hbeta, vk_dot_inputs, vk.Hgamma, proof.C, vk.H, Pairing.negate(Pairing.addition(proof.A, vk.Galpha)), Pairing.addition2(proof.B, vk.Hbeta))) {
-          return 1;
-      }
 
 
       /**
@@ -127,6 +119,5 @@ contract Verifier is Ownable {
         }
       }
       return 0;
-
   }
 }
