@@ -178,6 +178,7 @@ export const preimageBoilerPlate = node => {
         stateNode.stateVarId[1] === 'msg' &&
         privateStateName.includes('msg')
       ) {
+        // TODO make sure this line goes before _newOwnerPublicKey in every case
         stateVarIds.push(
           `\nconst ${privateStateName}_stateVarId_key = ${privateStateName}_newOwnerPublicKey;`,
         );
