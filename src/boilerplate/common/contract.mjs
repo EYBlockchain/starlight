@@ -28,7 +28,7 @@ export async function getContractAddress(contractName) {
   let errorCount = 0;
 
   if (!deployedAddress) {
-    while (errorCount < 20) {
+    while (errorCount < 25) {
       try {
         const contractInterface = await getContractInterface(contractName);
         const networkId = await web3.eth.net.getId();
@@ -45,8 +45,8 @@ export async function getContractAddress(contractName) {
         if (deployedAddress) break;
       } catch (err) {
         errorCount++;
-        logger.warn('Unable to get a contract address - will try again in 3 seconds');
-        await new Promise(resolve => setTimeout(() => resolve(), 3000));
+        logger.warn('Unable to get a contract address - will try again in 5 seconds');
+        await new Promise(resolve => setTimeout(() => resolve(), 5000));
       }
     }
   }
@@ -128,6 +128,8 @@ export async function registerKey(
 }
 
 export function getInputCommitments(publicKey, value, commitments) {
+  console.log(`possibleCommitments`);
+  console.log(commitments);
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );
@@ -135,6 +137,7 @@ export function getInputCommitments(publicKey, value, commitments) {
     (preimageA, preimageB) =>
       parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
   );
+  console.log(possibleCommitments);
   if (
     parseInt(possibleCommitments[0][1].value, 10) +
       parseInt(possibleCommitments[1][1].value, 10) >=
