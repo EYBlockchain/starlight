@@ -128,8 +128,6 @@ export async function registerKey(
 }
 
 export function getInputCommitments(publicKey, value, commitments) {
-  console.log(`possibleCommitments`);
-  console.log(commitments);
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );
@@ -137,7 +135,6 @@ export function getInputCommitments(publicKey, value, commitments) {
     (preimageA, preimageB) =>
       parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
   );
-  console.log(possibleCommitments);
   if (
     parseInt(possibleCommitments[0][1].value, 10) +
       parseInt(possibleCommitments[1][1].value, 10) >=
