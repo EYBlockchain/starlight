@@ -178,9 +178,8 @@ export const preimageBoilerPlate = node => {
         stateNode.stateVarId[1] === 'msg' &&
         privateStateName.includes('msg')
       ) {
-        // TODO make sure this line goes before _newOwnerPublicKey in every case
         stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = ${privateStateName}_newOwnerPublicKey;`,
+          `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
         );
       }
       stateVarIds.push(
@@ -215,7 +214,7 @@ export const preimageBoilerPlate = node => {
           newOwnerStatment = `publicKey;`;
         } else if (stateNode.mappingOwnershipType === 'key') {
           // the stateVarId[1] is the mapping key
-          newOwnerStatment = `${stateNode.stateVarId[1]};`; // above logic ensures this is a zkpKey
+          newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
         } else if (stateNode.mappingOwnershipType === 'value') {
           // TODO test below
           // if the private state is an address (as here) its still in eth form - we need to convert
