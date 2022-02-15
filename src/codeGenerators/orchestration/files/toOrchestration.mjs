@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import buildBoilerplate from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.mjs';
 import codeGenerator from '../nodejs/toOrchestration.mjs';
+import logger from '../../../utils/logger.mjs';
 
 const boilerplateNodeDir = './src/boilerplate/';
 
@@ -231,6 +232,9 @@ const prepareMigrationsFile = (file, node) => {
             importedContractName === 'ERC721'
           ) {
             // HACK ERC contracts are commonly used, so we support them in migrations
+            logger.warn(
+              `It looks like you're using an ERC contract - please make sure you increase the allowance of the shield contract before testing!`,
+            );
             customDeployments += `await deployer.deploy(${importedContractName}, 'MyCoin', 'MC'); \n`;
           } else {
             customDeployments += `await deployer.deploy(${importedContractName}); \n`;
