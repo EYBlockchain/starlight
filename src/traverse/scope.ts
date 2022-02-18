@@ -27,24 +27,26 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import logger from '../utils/logger.mjs';
-import NodePath from './NodePath.mjs';
-import Binding from './Binding.mjs';
+import logger from '../utils/logger.js';
+import NodePath from './NodePath.js';
+import { Binding, VariableBinding } from './Binding.js';
+import { State } from './traverse.js'
 import {
+  Indicator,
   ContractDefinitionIndicator,
   FunctionDefinitionIndicator,
   StateVariableIndicator,
   LocalVariableIndicator,
-} from './Indicator.mjs';
-import { scopeCache } from './cache.mjs';
-import backtrace from '../error/backtrace.mjs';
-import { TODOError } from '../error/errors.mjs';
+  MappingKey
+} from './Indicator.js';
+import { scopeCache } from './cache.js';
+import { TODOError } from '../error/errors.js';
 
 /**
  * Analogue of Array.filter, but for objects.
  * The callback will take as input each 'value' of the input obj.
  */
-const filterObject = (obj, callback) => {
+const filterObject = (obj: any, callback: CallableFunction) => {
   const filteredObject = Object.keys(obj).reduce((acc, key) => {
     if (!callback(obj[key])) delete acc[key];
     return acc;
@@ -56,43 +58,58 @@ const filterObject = (obj, callback) => {
  * Analogue of Array.some, but for objects.
  * The callback will take as input each 'value' of the input obj.
  */
-const someObject = (obj, callback) => {
+const someObject = (obj: any, callback: CallableFunction) => {
   for (const value of Object.values(obj)) {
     if (callback(value)) return true;
   }
   return false;
 };
 
-/**
- * Analogue of Array.every, but for objects.
- * The callback will take as input each 'value' of the input obj.
- */
-const everyObject = (obj, callback) => {
-  let result = true;
-  for (const value of Object.values(obj)) {
-    result = !!callback(value);
-    if (result === false) return result;
-  }
-  return result;
-};
-
-/**
- * Analogue of Array.includes, but for objects.
- * The callback will take as input each 'value' of the input obj.
- */
-const includesObject = (obj, valueToFind) => {
-  for (const value of Object.values(obj)) {
-    if (value === valueToFind) return true;
-  }
-  return false;
-};
+// /**
+//  * Analogue of Array.every, but for objects.
+//  * The callback will take as input each 'value' of the input obj.
+//  */
+// const everyObject = (obj: any, callback: CallableFunction) => {
+//   let result = true;
+//   for (const value of Object.values(obj)) {
+//     result = !!callback(value);
+//     if (result === false) return result;
+//   }
+//   return result;
+// };
+//
+// /**
+//  * Analogue of Array.includes, but for objects.
+//  * The callback will take as input each 'value' of the input obj.
+//  */
+// const includesObject = (obj: any, valueToFind: any) => {
+//   for (const value of Object.values(obj)) {
+//     if (value === valueToFind) return true;
+//   }
+//   return false;
+// };
 
 export class Scope {
+
+  scopeId: number;
+  scopeName: string;
+  scopeType: string;
+  path: NodePath;
+  bindings: any;
+  referencedBindings: any; // keys are AST node `id`s
+  modifiedBindings: any; // keys are AST node `id`s
+  nullifiedBindings: any;
+  indicators: any; // keys are stateVariable names
+  containsSecret?: boolean;
+  containsPublic?: boolean;
+
+  callerRestriction?: string;
+  callerRestrictionNode?: any;
   /**
    * @param {NodePath} path - the nodePath of the node around which we're
    * getting / creating 'scope'
    */
-  constructor(path) {
+  constructor(path: NodePath) {
     const { node } = path;
     const cachedScope = scopeCache.get(node);
     if (cachedScope?.path) return cachedScope;
@@ -113,7 +130,7 @@ export class Scope {
   }
 
   get parentScope() {
-    const parentPath = this.path.findAncestorFromParent(p => p.isScopable());
+    const parentPath = this.path.findAncestorFromParent((p: NodePath) => p.isScopable());
     return parentPath ? parentPath.scope : undefined;
   }
 
@@ -138,9 +155,9 @@ export class Scope {
    *  - Updates the indicators for `this` scope, based on the nature of the `path`.
    */
   // NOTE: suggestion for this function: only have properties of a @Scope be updated in the body of this function. @Node updates could (I suggest) be done before we reach this function. And @Binding / @Indicator updates (whilst they're triggered within here) should be done within the classes.
-  update(path) {
-    const { node, parent } = path;
-    const { name, id, nodeType } = node;
+  update(path: NodePath) {
+    const { node } = path;
+    const { id, nodeType } = node;
 
     if (this.bindings[id])
       throw new Error(
@@ -180,14 +197,15 @@ export class Scope {
         const functionDefScope = this.getAncestorOfScopeType(
           'FunctionDefinition',
         );
-        const contractDefScope = this.getAncestorOfScopeType(
-          'ContractDefinition',
-        );
+        // const contractDefScope = this.getAncestorOfScopeType(
+        //   'ContractDefinition',
+        // );
 
         if (this.scopeType === 'FunctionDefinition')
           this.indicators.update(path);
 
         if (
+          referencedBinding instanceof VariableBinding &&
           referencedBinding.isSecret &&
           this.scopeType === 'FunctionDefinition'
         ) {
@@ -230,10 +248,10 @@ export class Scope {
         }
 
         // msg.sender might not be a 'top level' argument of the require statement - perhaps it's nested within some more complex expression. We look for it in order to throw an 'unsupported' error. TODO: figure out how to infer restrictions in this case.
-        const findMsgSenderVisitor = (path, state) => {
+        const findMsgSenderVisitor = (path: NodePath, state: State) => {
           state.found ||= path.isMsgSender();
         };
-        const subState = {};
+        const subState: State = {};
         path.traversePathsFast(findMsgSenderVisitor, subState);
         if (subState.found)
           throw new Error(
@@ -284,8 +302,8 @@ export class Scope {
    * or `null` if the `callback` never returns a truthy value.
    * @returns {Scope || null}
    */
-  findAncestor(callback) {
-    let scope = this;
+  findAncestor(callback: CallableFunction): Scope | null {
+    let scope: Scope = this;
     do {
       if (callback(scope)) return scope;
     } while ((scope = scope.parentScope));
@@ -298,7 +316,7 @@ export class Scope {
    * for. Otherwise, (if it finds what it's looking for) it can return whatever
    * it wants.
    */
-  queryAncestors(callback) {
+  queryAncestors(callback: CallableFunction): any {
     const scope = this;
     if (!scope) return null; // No more scope to look at. So not found anywhere.
     return (
@@ -311,8 +329,8 @@ export class Scope {
    * A helper to find if a given scope is a descendant of a particular @param {string} scopeType
    * @returns {Boolean}
    */
-  isInScopeType(scopeType) {
-    let scope = this;
+  isInScopeType(scopeType: string): boolean {
+    let scope: Scope = this;
     while (scope) {
       if (scope.scopeType === scopeType) return true;
       scope = scope.parentScope;
@@ -325,18 +343,18 @@ export class Scope {
    * @param {string} nodeType - a valid scopeType.
    * Get the first @return {Scope || null} matching the given scopeType, in which the input `scope` is contained (including the input scope itself in the search).
    */
-  getAncestorOfScopeType(scopeType) {
-    return this.findAncestor(scope => scope.scopeType === scopeType);
+  getAncestorOfScopeType(scopeType: string): Scope {
+    return this.findAncestor((scope: Scope) => scope.scopeType === scopeType);
   }
 
   /**
    * @returns {Binding || null} - the binding of the VariableDeclaration being referred-to by the input referencingNode. The returned binding might be in a higher-level (ancestor) scope.
    */
-  getReferencedBinding(referencingNode) {
+  getReferencedBinding(referencingNode: any): Binding | null {
     const node = referencingNode;
     const id = this.path.getReferencedDeclarationId(node);
     if (!id) return null; // if the node doesn't refer to another variable
-    return this.queryAncestors(s => {
+    return this.queryAncestors((s: Scope) => {
       return s.bindings[id];
     });
   }
@@ -344,11 +362,11 @@ export class Scope {
   /**
    * @returns {String || null} the name of an exported symbol, if one exists for the given `id`
    */
-  getReferencedExportedSymbolName(node) {
-    const id = node.referencedDeclaration;
+  getReferencedExportedSymbolName(node: any): string | null {
+    const id: number = node.referencedDeclaration;
     if (!id) return null;
     const { path } = this;
-    const exportedSymbols = path.getSourceUnit()?.node.exportedSymbols;
+    const exportedSymbols: { string: number[] } = path.getSourceUnit()?.node.exportedSymbols;
     if (!exportedSymbols) return null;
     for (const [name, ids] of Object.entries(exportedSymbols)) {
       if (ids.some(_id => _id === id)) return name;
@@ -364,7 +382,7 @@ export class Scope {
    *   false - the entire (outer) mapping's indicator will be returned.
    * @returns {Indicator || null} - the indicator of the variable being referred-to by the input referencingNode.
    */
-  getReferencedIndicator(referencingNode, mappingKeyIndicatorOnly = false) {
+  getReferencedIndicator(referencingNode: any, mappingKeyIndicatorOnly: boolean = false): StateVariableIndicator | MappingKey | null {
     const { path } = this;
     const indicator = this.getIndicatorById(
       path.getReferencedDeclarationId(referencingNode),
@@ -387,7 +405,7 @@ export class Scope {
   /**
    * @returns {Node || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.
    */
-  getReferencedNode(referencingNode) {
+  getReferencedNode(referencingNode: any): any | null {
     const binding = this.getReferencedBinding(referencingNode);
     return binding?.node || null;
   }
@@ -395,7 +413,7 @@ export class Scope {
   /**
    * @returns {Node || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.
    */
-  getReferencedPath(referencingNode) {
+  getReferencedPath(referencingNode: any): NodePath {
     const binding = this.getReferencedBinding(referencingNode);
     return binding?.path || null;
   }
@@ -403,8 +421,8 @@ export class Scope {
   /**
    * @returns {Object} - all bindings from all ancestor scopes.
    */
-  getAncestorBindings() {
-    let scope = this;
+  getAncestorBindings(): any {
+    let scope: Scope = this;
     let result = {};
     do {
       const { bindings } = scope;
@@ -418,7 +436,7 @@ export class Scope {
    * @param {Array<string>} booleanKeys - an array of strings of the boolean keys of a binding object. NOTE: only filters `this` scope. Use filterAncestorBindings to filter all bindings from `this` and higher scopes.
    * @returns {Object} - a set of bindings, filtered according to the booleanKeys
    */
-  filterBindingsByBooleans(booleanKeys) {
+  filterBindingsByBooleans(booleanKeys: string[]): any {
     let result = {};
     if (!Array.isArray(booleanKeys))
       throw new Error('booleanKeys param must be an array.');
@@ -451,7 +469,7 @@ export class Scope {
    * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
    * @returns {Object} - a set of bindings from this scope, filtered according to the callback
    */
-  filterBindings(callback) {
+  filterBindings(callback: CallableFunction): any {
     const { bindings } = this;
     const result = filterObject(bindings, callback);
     return result;
@@ -461,7 +479,7 @@ export class Scope {
    * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.some prototype)
    * @returns {Boolean} - true if one of the values of the object is evaluated as 'true' by the callback
    */
-  someBinding(callback) {
+  someBinding(callback: CallableFunction): boolean {
     const result = someObject(this.bindings, callback);
     return result;
   }
@@ -470,7 +488,7 @@ export class Scope {
    * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
    * @returns {Object} - a set of bindings from this scope, filtered according to the callback
    */
-  filterAncestorBindings(callback) {
+  filterAncestorBindings(callback: CallableFunction): any {
     const ancestorBindings = this.getAncestorBindings();
     const result = filterObject(ancestorBindings, callback);
     return result;
@@ -480,7 +498,7 @@ export class Scope {
    * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
    * @returns {Object} - a set of modifiedBindings from this scope, filtered according to the callback
    */
-  filterModifiedBindings(callback) {
+  filterModifiedBindings(callback: CallableFunction): any {
     const { modifiedBindings } = this;
     const result = filterObject(modifiedBindings, callback);
     return result;
@@ -490,7 +508,7 @@ export class Scope {
    * @param {Function} callback - a callback which takes a binding object as input and returns a boolean (same as the Array.filter prototype)
    * @returns {Object} - a set of modifiedBindings from this scope, filtered according to the callback
    */
-  filterReferencedBindings(callback) {
+  filterReferencedBindings(callback: CallableFunction): any {
     const { referencedBindings } = this;
     const result = filterObject(referencedBindings, callback);
     return result;
@@ -500,11 +518,11 @@ export class Scope {
    * @param {Array<string>} booleanKeys - an array of strings of the boolean keys of a FunctionDefinition scope's indicator object.
    * @returns {Object} - a FunctionDefinition scope's indicators, filtered according to the booleanKeys
    */
-  filterIndicatorsByBooleans(booleanKeys) {
+  filterIndicatorsByBooleans(booleanKeys: string[]): any {
     let result = {};
     if (!Array.isArray(booleanKeys))
       throw new Error('booleanKeys param must be an array.');
-    let validBooleanKeys;
+    let validBooleanKeys: string[];
     switch (this.scopeType) {
       case 'FunctionDefinition':
         validBooleanKeys = [
@@ -554,7 +572,7 @@ export class Scope {
    * @param {Function} callback - a callback which takes an indicator object as input and returns a boolean (same as the Array.filter prototype)
    * @returns {Object} - a FunctionDefinition scope's indicators, filtered according to the callback
    */
-  filterIndicators(callback) {
+  filterIndicators(callback: CallableFunction): any {
     const result = filterObject(this.indicators, callback);
     return result;
   }
@@ -563,7 +581,7 @@ export class Scope {
    * @param {Function} callback - a callback which takes an indicator object as input and returns a boolean (same as the Array.some prototype)
    * @returns {Boolean} - true if one of the values of the object is evaluated as 'true' by the callback
    */
-  someIndicator(callback) {
+  someIndicator(callback: CallableFunction): boolean {
     const result = someObject(this.indicators, callback);
     return result;
   }
@@ -573,7 +591,7 @@ export class Scope {
    * @param {Number} id - an AST node's id.
    * @returns {Indicator Object || null}
    */
-  getIndicatorById(id) {
+  getIndicatorById(id: number): any | null {
     return this.indicators[id] || null;
   }
 
@@ -582,8 +600,10 @@ export class Scope {
    * @param {Number} id - an AST node's id.
    * @returns {Indicator Object || null}
    */
-  getIndicatorByName(name) {
-    for (const indicator of Object.values(this.indicators)) {
+  getIndicatorByName(name: string): any | null {
+    let indicator: Indicator;
+    const indicators: Indicator[] = Object.values(this.indicators);
+    for (indicator of indicators) {
       if (indicator.name === name) return indicator;
     }
     return null;
@@ -596,7 +616,7 @@ export class Scope {
    * @param {Object} - the mapping's index access node.
    * @returns {Node} - an Identifier node
    */
-  getMappingKeyIdentifier(indexAccessNode) {
+  getMappingKeyIdentifier(indexAccessNode: any): any {
     if (indexAccessNode.nodeType !== 'IndexAccess') return null;
 
     const { path } = this;
@@ -612,7 +632,7 @@ export class Scope {
    * @param {Object} - the mapping's index access node.
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
-  getMappingKeyName(indexAccessNode) {
+  getMappingKeyName(indexAccessNode: any): string | null {
     if (indexAccessNode.nodeType !== 'IndexAccess') return null;
 
     const keyIdentifierNode = this.getMappingKeyIdentifier(indexAccessNode);
@@ -621,8 +641,10 @@ export class Scope {
         indexAccessNode.indexExpression.name ||
         indexAccessNode.indexExpression.value
       );
-    const keyBinding = this.getReferencedBinding(keyIdentifierNode);
+    const keyBinding: Binding = this.getReferencedBinding(keyIdentifierNode);
     let keyName = keyIdentifierNode.name;
+
+    if (!(keyBinding instanceof VariableBinding)) return;
 
     // If the value of the mapping key is edited between mapping accesses then the below copes with that.
     // NB: we can't use the modification count because this may refer to a mappingKey before its modified for the nth time
@@ -649,7 +671,7 @@ export class Scope {
   /**
    * @returns {Boolean} - if some stateVariable is modified within the scope (of a FunctionDefinition scope).
    */
-  modifiesSecretState() {
+  modifiesSecretState(): boolean {
     if (this.scopeType !== 'FunctionDefinition') return false;
     const { indicators } = this;
     for (const stateVarId of Object.keys(indicators)) {
@@ -662,7 +684,7 @@ export class Scope {
   /**
    * @returns {Boolean} - if some stateVariable is nullified within the scope (of a FunctionDefinition scope).
    */
-  nullifiesSecretState() {
+  nullifiesSecretState(): boolean {
     if (this.scopeType !== 'FunctionDefinition') return false;
     const { indicators } = this;
     for (const stateVarId of Object.keys(indicators)) {
@@ -716,7 +738,7 @@ export class Scope {
    * @param {String} - the restriction (match or exclude)
    * @param {Object} - the node of the restricted address
    */
-  addCallerRestriction(restriction, restrictedNode) {
+  addCallerRestriction(restriction: string, restrictedNode: any) {
     if (this.callerRestriction && this.callerRestriction !== restriction)
       throw new TODOError(
         `We don't currently support two types of caller restriction in one scope (e.g. a whitelist and a blacklist.)`,

@@ -9,7 +9,7 @@ import config from 'config';
 const { createLogger, format, transports } = winston;
 const { inspect } = util;
 
-function formatWithInspect(val) {
+function formatWithInspect(val: any) {
   return `${val instanceof Object ? '\n' : ''} ${inspect(val, {
     depth: null,
     colors: true,
@@ -17,12 +17,13 @@ function formatWithInspect(val) {
 }
 
 export default createLogger({
-  level: config.log_level || 'info', // can be also edited using CLI option --log-level
+  level: config.get('log_level') || 'info', // can be also edited using CLI option --log-level
   format: winston.format.combine(
     format.errors({ stack: true }),
     format.colorize(),
     format.printf(info => {
-      const splatArgs = info[Symbol.for('splat')];
+      const index: string = Symbol.for('splat') as unknown as string; // fix for ts compiler: https://github.com/Microsoft/TypeScript/issues/24587#issuecomment-460650063
+      const splatArgs = info[index];
       let log = `${info.level}: ${info.message}`;
 
       // append splat messages to log

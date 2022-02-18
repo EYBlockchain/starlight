@@ -10,7 +10,7 @@ import backtrace from '../error/backtrace.mjs';
 import logger from '../utils/logger.mjs';
 
 // regex: matches all cases of 'known' unless they are directly preceded by 'un'
-const decorators = ['secret', 'unknown', /\w*(?<!un)known/g, 'reinitialisable'];
+const decorators = [/secret/g, /unknown/g, /\w*(?<!un)known/g, /reinitialisable/g];
 
 function tidy(_line) {
   let line = _line;

@@ -1,11 +1,20 @@
 /* eslint-disable max-classes-per-file, no-param-reassign */
 
-import NodePath from './NodePath.mjs';
-import logger from '../utils/logger.mjs';
-import backtrace from '../error/backtrace.mjs';
-import { SyntaxUsageError } from '../error/errors.mjs';
+import NodePath from './NodePath.js';
+import Scope from './scope.js';
+import { VariableBinding } from './Binding.js';
+import logger from '../utils/logger.js';
+import backtrace from '../error/backtrace.js';
+import { SyntaxUsageError } from '../error/errors.js';
+
 
 export class ContractDefinitionIndicator {
+  zkSnarkVerificationRequired: boolean;
+  oldCommitmentAccessRequired: boolean;
+  nullifiersRequired: boolean;
+  newCommitmentsRequired: boolean;
+  initialisationRequired: boolean = false;
+  containsAccessedOnlyState: boolean = false;
   constructor() {
     this.zkSnarkVerificationRequired = false;
     this.oldCommitmentAccessRequired = false;
@@ -15,7 +24,7 @@ export class ContractDefinitionIndicator {
 
   // A ContractDefinitionIndicator will be updated if (some time after its creation) we encounter an AST node which gives us more information about the contract's global states
   // E.g. if we encounter a VariableDeclaration node for a secret state.
-  update(path) {
+  update(path: NodePath) {
     if (path.node.isSecret) {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.newCommitmentsRequired = true;
@@ -23,7 +32,7 @@ export class ContractDefinitionIndicator {
     }
   }
 
-  updateIncrementation(path, state) {
+  updateIncrementation(path: NodePath, state: any) {
     if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
@@ -55,18 +64,20 @@ export class ContractDefinitionIndicator {
   }
 }
 
-export class FunctionDefinitionIndicator {
-  constructor(scope) {
-    this.zkSnarkVerificationRequired = false;
+export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
 
-    this.oldCommitmentAccessRequired = false;
-    this.nullifiersRequired = false;
-    this.newCommitmentsRequired = false;
+  parentIndicator: ContractDefinitionIndicator;
+  interactsWithSecret: boolean = false;
+  interactsWithPublic: boolean = false;
+  onChainKeyRegistry: boolean = false;
+
+  constructor(scope: Scope) {
+    super();
     this.initialisationRequired = false;
     this.parentIndicator = scope.parentScope.indicators;
   }
 
-  update(path) {
+  update(path: NodePath) {
     if (path.node.isSecret) {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.interactsWithSecret = true;
@@ -74,7 +85,7 @@ export class FunctionDefinitionIndicator {
     }
   }
 
-  updateIncrementation(path, state) {
+  updateIncrementation(path: NodePath, state: any) {
     this.parentIndicator.updateIncrementation(path, state);
     if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       // a reinitialised state does require new commitments
@@ -114,7 +125,7 @@ export class FunctionDefinitionIndicator {
       // if we have a indicator which is NOT burned, then we do need new commitments
       if (
         stateVarIndicator.isSecret &&
-        (!stateVarIndicator.isBurned || stateVarIndicator.newCommitmentRequired)
+        (!stateVarIndicator.isBurned || stateVarIndicator.newCommitmentsRequired)
       ) {
         burnedOnly = false;
         break;
@@ -159,10 +170,29 @@ export class FunctionDefinitionIndicator {
  * Within a Function's scope, for each local variable that gets declared, we
  * create a 'LocalVariableIndicator'.
  */
-export class LocalVariableIndicator {
+export class LocalVariableIndicator extends FunctionDefinitionIndicator {
+
+  parentIndicator: FunctionDefinitionIndicator;
+  id: number;
+  name: string;
+  scope: Scope;
+  node: any;
+
+  isReferenced: boolean = false;
+  referenceCount: number;
+  referencingPaths: NodePath[];
+  isModified: boolean = false;
+  modificationCount: number;
+  modifyingPaths: NodePath[];
+  interactsWith: NodePath[];
+  isParam: boolean;
+
+  initialValue?: any;
+
   /** @param {NodePath} path the path of the localVariable for which we're creating an indicator
    */
-  constructor(path) {
+  constructor(path: NodePath) {
+    super(path.scope);
     this.id = path.node.id;
     this.name = path.node.name;
     this.scope = path.scope;
@@ -186,21 +216,21 @@ export class LocalVariableIndicator {
     this.isParam = path.isInType('ParameterList');
   }
 
-  update(path) {
+  update(path: NodePath) {
     this.addReferencingPath(path);
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
   }
 
-  addReferencingPath(path) {
+  addReferencingPath(path: NodePath) {
     this.isReferenced = true;
     ++this.referenceCount;
     if (!this.referencingPaths.some(p => p.node.id === path.node.id))
       this.referencingPaths.push(path);
   }
 
-  addModifyingPath(path) {
+  addModifyingPath(path: NodePath) {
     this.isModified = true;
     ++this.modificationCount;
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
@@ -208,7 +238,7 @@ export class LocalVariableIndicator {
     }
   }
 
-  addSecretInteractingPath(path) {
+  addSecretInteractingPath(path: NodePath) {
     this.interactsWithSecret = true;
     path.isSecret = true;
     if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
@@ -216,7 +246,7 @@ export class LocalVariableIndicator {
     }
   }
 
-  addPublicInteractingPath(path) {
+  addPublicInteractingPath(path: NodePath) {
     this.interactsWithPublic = true;
     path.isPublic = true;
     if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
@@ -229,13 +259,65 @@ export class LocalVariableIndicator {
  * Within a Function's scope, for each state variable that gets mentioned, we
  * create a 'StateVariableIndicator'.
  */
-export class StateVariableIndicator {
+export class StateVariableIndicator extends FunctionDefinitionIndicator {
+
+  parentIndicator: FunctionDefinitionIndicator;
+  id: number;
+  name: string;
+  scope: Scope;
+  binding: VariableBinding;
+  node: any;
+
+  isSecret: boolean;
+  isUnknown: boolean = false;
+  isKnown: boolean = false;
+
+  isMapping?: boolean;
+  mappingKeys?: any;
+  mappingOwnershipType?: string;
+
+  isReferenced: boolean = false;
+  referenceCount: number;
+  referencingPaths: NodePath[];
+  isModified: boolean = false;
+  modificationCount: number;
+  modifyingPaths: NodePath[];
+  isNullified: boolean = false;
+  nullificationCount: number;
+  nullifyingPaths: NodePath[];
+  isAccessed: boolean = false;
+  accessedPaths?: NodePath[];
+
+  isIncremented: boolean = false;
+  increments?: any[];
+  isDecremented: boolean = false;
+  decrements?: any[];
+  isWhole: boolean = false;
+  isPartitioned: boolean = false;
+
+  isWholeReason?: {}[];
+  isPartitionedReason?: {}[];
+
+  isBurned: boolean = false;
+  burningPaths: NodePath[];
+  reinitialisable: boolean = false;
+  interactsWith: NodePath[];
+  isParam: boolean;
+
+  isOwned: boolean = false;
+  owner?: any;
+
+  initialValue?: any;
+
   /** @param {NodePath} path the path of the stateVariable for which we're creating an indicator
    */
-  constructor(path) {
+  constructor(path: NodePath) {
+    super(path.scope);
     const referencedBinding = path.getReferencedBinding();
     const referencedId = referencedBinding.id;
     const referencedName = referencedBinding.name;
+
+    if (!(referencedBinding instanceof VariableBinding)) throw new TypeError(`Variable indicator for ${referencedName} cannot find a variable binding`);
 
     this.id = referencedId;
     this.name = referencedName;
@@ -244,7 +326,7 @@ export class StateVariableIndicator {
     this.node = path.node;
     this.parentIndicator = path.scope.indicators;
 
-    this.isSecret = referencedBinding.isSecret; // only included to match bindings so that mappingKey class can be reused for both. Consider removing if things get too messy, and splitting mappingKey into two classes; one for Binding & one for StateVarIndicator
+    this.isSecret = referencedBinding.isSecret;
 
     this.referenceCount = 0;
     this.referencingPaths = [];
@@ -267,7 +349,7 @@ export class StateVariableIndicator {
 
   // TODO / FIXME - THIS FUNCTION IS CURRENTLY JUST A COPY-PASTE FROM THE BINDING CLASS!
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
-  addMappingKey(referencingPath) {
+  addMappingKey(referencingPath: NodePath) {
     const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
@@ -291,7 +373,7 @@ export class StateVariableIndicator {
 
   // A StateVariableIndicator will be updated if (some time after its creation) we encounter an AST node which refers to this state variable.
   // E.g. if we encounter an Identifier node.
-  update(path) {
+  update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
     } else {
@@ -299,7 +381,7 @@ export class StateVariableIndicator {
     }
   }
 
-  updateProperties(path) {
+  updateProperties(path: NodePath) {
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
     this.isKnown ??= path.node.isKnown;
@@ -309,7 +391,7 @@ export class StateVariableIndicator {
     }
   }
 
-  addSecretInteractingPath(path) {
+  addSecretInteractingPath(path: NodePath) {
     this.interactsWithSecret = true;
     path.isSecret = true;
     if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
@@ -317,7 +399,7 @@ export class StateVariableIndicator {
     }
   }
 
-  addPublicInteractingPath(path) {
+  addPublicInteractingPath(path: NodePath) {
     this.interactsWithPublic = true;
     path.isPublic = true;
     if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
@@ -341,13 +423,14 @@ export class StateVariableIndicator {
     this.parentIndicator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     if (this.isMapping) {
       this.mappingOwnershipType = this.owner?.mappingOwnershipType;
-      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
         mappingKey.updateFromBinding();
       }
     }
   }
 
-  updateAccessed(path) {
+  updateAccessed(path: NodePath) {
     this.isWhole = true;
     this.isAccessed = true;
     this.oldCommitmentAccessRequired = true;
@@ -369,7 +452,7 @@ export class StateVariableIndicator {
     }
   }
 
-  updateIncrementation(path, state) {
+  updateIncrementation(path: NodePath, state: any) {
     this.parentIndicator.updateIncrementation(path, state);
     if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       this.isWhole = true;
@@ -408,10 +491,10 @@ export class StateVariableIndicator {
     this.isDecremented ||= path.isDecremented;
     this.increments ??= [];
     this.decrements ??= [];
-    state.increments.forEach(inc => {
+    state.increments.forEach((inc: any) => {
       this.increments.push(inc);
     });
-    state.decrements.forEach(dec => {
+    state.decrements.forEach((dec: any) => {
       this.decrements.push(dec);
     });
     if (this.isMapping) {
@@ -422,14 +505,14 @@ export class StateVariableIndicator {
     }
   }
 
-  addReferencingPath(path) {
+  addReferencingPath(path: NodePath) {
     this.isReferenced = true;
     ++this.referenceCount;
     if (!this.referencingPaths.some(p => p.node.id === path.node.id))
       this.referencingPaths.push(path);
   }
 
-  addModifyingPath(path) {
+  addModifyingPath(path: NodePath) {
     this.isModified = true;
     ++this.modificationCount;
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
@@ -444,7 +527,7 @@ export class StateVariableIndicator {
     }
   }
 
-  addNullifyingPath(path) {
+  addNullifyingPath(path: NodePath) {
     this.isNullified = true;
     this.oldCommitmentAccessRequired = true;
     ++this.nullificationCount;
@@ -453,7 +536,7 @@ export class StateVariableIndicator {
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
   }
 
-  addBurningPath(path) {
+  addBurningPath(path: NodePath) {
     this.isBurned = true;
     this.burningPaths.push(path);
     if (this.isMapping) this.addMappingKey(path).addBurningPath(path);
@@ -462,7 +545,8 @@ export class StateVariableIndicator {
   prelimTraversalErrorChecks() {
     if (!this.isSecret) return;
     if (this.isMapping) {
-      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
         mappingKey.prelimTraversalErrorChecks();
       }
     }
@@ -499,10 +583,11 @@ export class StateVariableIndicator {
     // if we have burn statements, there are some scopes where we don't need new commitments at all
     if (!this.isBurned && this.isSecret && this.isModified) {
       this.parentIndicator.newCommitmentsRequired = true;
-      this.newCommitmentRequired = true;
+      this.newCommitmentsRequired = true;
       if (this.isMapping) {
-        for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
-          mappingKey.newCommitmentRequired = true;
+        const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+        for (const [, mappingKey] of mappingKeys) {
+          mappingKey.newCommitmentsRequired = true;
         }
       }
       return;
@@ -519,24 +604,33 @@ export class StateVariableIndicator {
         backtrace.getSourceCode(this.burningPaths[0].node.src);
         this.parentIndicator.newCommitmentsRequired = true;
         if (this.isMapping)
-          this.addMappingKey(path).newCommitmentRequired = true;
+          this.addMappingKey(path).newCommitmentsRequired = true;
         burnedOnly = false;
       }
     });
-    this.newCommitmentRequired = !burnedOnly;
+    this.newCommitmentsRequired = !burnedOnly;
   }
 }
 
 /**
  * If a Binding/StateVarIndicator represents a mapping, it will contain a MappingKey class.
  */
-export class MappingKey {
+export class MappingKey extends StateVariableIndicator {
+
+  container: any;
+  referencedKeyId: number;
+  referencedKeyNodeType: string;
+  referencedKeyIsParam: boolean; // is a function parameter - used for finding owner
+  referencedKeyName: string;
+  keyPath: NodePath;
+  isMsgSender: boolean; // used for finding owner
   /**
    * A mappingKey can be contained within a binding or an indicator class.
    * @param { Binding || StateVarIndicator } container
    * @param { NodePath } keyPath
    */
-  constructor(container, keyPath) {
+  constructor(container: any, keyPath: NodePath) {
+    super(keyPath)
     this.container = container;
     this.id = container.id;
     this.node = container.node;
@@ -558,24 +652,9 @@ export class MappingKey {
       ? `${container.name}[msg.sender]`
       : `${container.name}[${keyPath.node.name}]`;
 
-    this.isReferenced = false;
-    this.referenceCount = 0;
-    this.referencingPaths = []; // paths which reference this variable
-
-    this.isModified = false;
-    this.modificationCount = 0;
-    this.modifyingPaths = []; // paths which reference this variable
-
-    this.isNullified = false;
-    this.nullificationCount = 0;
-    this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
-
-    this.burningPaths = [];
-
-    this.interactsWith = [];
   }
 
-  updateProperties(path) {
+  updateProperties(path: NodePath) {
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
     this.isKnown ??= path.node.isKnown;
@@ -586,14 +665,14 @@ export class MappingKey {
   }
 
   // TODO: move into commonFunctions (because it's the same function as included in the Indicator class)
-  addReferencingPath(path) {
+  addReferencingPath(path: NodePath) {
     this.isReferenced = true;
     ++this.referenceCount;
     if (!this.referencingPaths.some(p => p.node.id === path.node.id))
       this.referencingPaths.push(path);
   }
 
-  addModifyingPath(path) {
+  addModifyingPath(path: NodePath) {
     this.isModified = true;
     ++this.modificationCount;
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
@@ -607,18 +686,18 @@ export class MappingKey {
     }
   }
 
-  addNullifyingPath(path) {
+  addNullifyingPath(path: NodePath) {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
   }
 
-  addBurningPath(path) {
+  addBurningPath(path: NodePath) {
     this.isBurned = true;
     this.burningPaths.push(path);
   }
 
-  addSecretInteractingPath(path) {
+  addSecretInteractingPath(path: NodePath) {
     this.interactsWithSecret = true;
     path.isSecret = true;
     if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
@@ -627,7 +706,7 @@ export class MappingKey {
     }
   }
 
-  addPublicInteractingPath(path) {
+  addPublicInteractingPath(path: NodePath) {
     this.interactsWithPublic = true;
     path.isPublic = true;
     if (!this.interactsWith.some(p => p.node.id === path.node.id)) {
@@ -664,7 +743,7 @@ export class MappingKey {
     }
   }
 
-  updateIncrementation(path, state) {
+  updateIncrementation(path: NodePath, state: any) {
     if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
@@ -694,10 +773,10 @@ export class MappingKey {
     this.isDecremented ||= path.isDecremented;
     this.increments ??= [];
     this.decrements ??= [];
-    state.increments.forEach(inc => {
+    state.increments.forEach((inc: any) => {
       this.increments.push(inc);
     });
-    state.decrements.forEach(dec => {
+    state.decrements.forEach((dec: any) => {
       this.decrements.push(dec);
     });
   }

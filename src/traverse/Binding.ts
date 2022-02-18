@@ -1,14 +1,28 @@
 /* eslint-disable max-classes-per-file, no-param-reassign, no-continue */
 import config from 'config';
-import logger from '../utils/logger.mjs';
-import { SyntaxUsageError, ZKPError, TODOError } from '../error/errors.mjs';
-import backtrace from '../error/backtrace.mjs';
-import NodePath from './NodePath.mjs';
-import { bindingCache } from './cache.mjs';
+import logger from '../utils/logger.js';
+import { SyntaxUsageError, ZKPError, TODOError } from '../error/errors.js';
+import backtrace from '../error/backtrace.js';
+import NodePath from './NodePath.js';
+import { bindingCache } from './cache.js';
 
-export default class Binding {
+export class Binding {
+
+  kind: string; // QUESTION: why not just call it nodeType? In future will 'kind' differ from nodeType?
+  id: number;
+  name: string;
+  node: any;
+  path: NodePath;
+
+  isReferenced: boolean = false;
+  referenceCount: number = 0;
+  referencingPaths: NodePath[] = [];
+
+  onChainKeyRegistry?: boolean;
+
+
   // Exists to catch nodeTypes for which a binding makes no sense
-  static isBindable(nodeType) {
+  static isBindable(nodeType: string): boolean {
     switch (nodeType) {
       case 'ContractDefinition':
       case 'FunctionDefinition':
@@ -47,25 +61,30 @@ export default class Binding {
    * @param {NodePath} path
    * @returns {Binding || null}
    */
-  static create(path) {
+  static create(path: NodePath): Binding {
     const { node } = path;
 
     if (!this.isBindable(node.nodeType)) return null;
 
     const cachedBinding = bindingCache.get(node);
     if (cachedBinding) return cachedBinding;
-
-    const binding = new Binding(path);
+    let binding: Binding;
+    if (node.nodeType === 'VariableDeclaration') {
+      binding = new VariableBinding(path);
+    } else {
+      binding = new Binding(path);
+    }
     bindingCache.set(node, binding);
     return binding;
   }
 
-  constructor(path) {
+  constructor(path: NodePath) {
     const {
       node: { name, id, nodeType },
       node,
-      scope,
     } = path;
+
+    if (path.isNodeType('VariableDeclaration')) throw new TypeError(`Binding for ${name} must be a VariableBinding`);
 
     this.kind = nodeType; // QUESTION: why not just call it nodeType? In future will 'kind' differ from nodeType?
     this.id = id;
@@ -73,49 +92,95 @@ export default class Binding {
     this.node = node;
     this.path = path;
 
-    if (['ContractDefinition', 'FunctionDefinition'].includes(nodeType)) return;
-
-    if (path.isNodeType('VariableDeclaration')) {
-      this.stateVariable = node.stateVariable;
-
-      this.isReferenced = false;
-      this.referenceCount = 0;
-      this.referencingPaths = []; // array of paths of `Identifier` nodes which reference this variable
-
-      this.isModified = false;
-      this.modificationCount = 0;
-      this.modifyingPaths = []; // array of paths of `Identifier` nodes which modify this variable
-      // NOTE: modification _is_ nullification, unless it's a partitioned state being incremented (in which case there's no nullifier). So nullifyingPaths is a subset of modifyingPaths.
-
-      this.isNullified = false;
-      this.nullificationCount = 0;
-      this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
-
-      this.increments = []; // array of nodes
-      this.decrements = []; // array of nodes
-
-      this.isMapping = false;
-      this.mappingKeys = null; // object of objects, indexed by node id.
-
-      this.isSecret = node.isSecret ?? false;
-      this.isKnown = false;
-      this.isWhole = false;
-      this.isPartitioned = false;
-
-      this.isOwned = false;
-      this.owner = null; // object of objects, indexed by node id.
-
-      if (path.isMappingDeclaration()) {
-        this.isMapping = true;
-        this.mappingKeys = {};
-      }
-    }
   }
 
-  static getBinding(node) {
+  static getBinding(node: any) {
     if (bindingCache.has(node)) return bindingCache.get(node);
     logger.warn(`Node ${node.name} not found in bindingCache`);
     return null;
+  }
+
+  update(path: NodePath) {
+    this.updateProperties(path);
+  }
+
+  updateProperties(path: NodePath) {
+    this.addReferencingPath(path);
+  }
+
+  addReferencingPath(path: NodePath) {
+    this.isReferenced = true;
+    ++this.referenceCount;
+    if (!this.referencingPaths.some(p => p.node.id === path.node.id))
+      this.referencingPaths.push(path);
+  }
+
+  isNullifiable() {
+    const bindings: [string, VariableBinding][] = Object.entries(this.path.scope.bindings);
+    for (const [, binding] of bindings) {
+      binding.isNullifiable();
+    }
+  }
+}
+
+export class VariableBinding extends Binding {
+  isSecret: boolean;
+  stateVariable: boolean;
+
+  isModified: boolean;
+  modificationCount: number = 0;
+  modifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which modify this variable
+  // NOTE: modification _is_ nullification, unless it's a partitioned state being incremented (in which case there's no nullifier). So nullifyingPaths is a subset of modifyingPaths.
+
+  isNullified: boolean = false;
+  nullificationCount: number = 0;
+  nullifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which nullify this binding
+
+  increments: any[] = []; // array of nodes
+  decrements: any[] = []; // array of nodes
+
+  isMapping: boolean = false;
+  mappingKeys: any = {}; // object of objects, indexed by node id.
+
+  isKnown: boolean = false;
+  isUnknown: boolean = false;
+  isIncremented: boolean = false;
+  isDecremented: boolean = false;
+  isWhole: boolean = false;
+  isAccessed: boolean = false;
+  isPartitioned: boolean = false;
+  isBurned: boolean = false;
+  reinitialisable?: boolean;
+
+  isWholeReason?: {}[];
+  isPartitionedReason?: {}[];
+
+  blacklist?: any[];
+
+
+
+
+  isOwned: boolean = false;
+  owner: any = null; // object of objects, indexed by node id.
+
+  constructor(path: NodePath) {
+    super(path);
+    const {
+      node: { name },
+      node,
+    } = path;
+
+    if (!path.isNodeType('VariableDeclaration')) throw new TypeError(`Binding for ${name} cannot be a VariableBinding`);
+
+    this.stateVariable = node.stateVariable;
+
+    this.isSecret = node.isSecret ?? false;
+
+
+    if (path.isMappingDeclaration()) {
+      this.isMapping = true;
+      this.mappingKeys = {};
+    }
   }
 
   /**
@@ -123,8 +188,7 @@ export default class Binding {
    * @param {Object} - the mapping's index access node.
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
-  // TODO move to common functions
-  getMappingKeyName(path) {
+  getMappingKeyName(path: NodePath): string {
     const { node } = path;
     if (node.nodeType !== 'IndexAccess')
       return this.getMappingKeyName(path.getAncestorOfType('IndexAccess'));
@@ -158,7 +222,7 @@ export default class Binding {
 
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
   // @param referencingPath = NodePath of baseExpression
-  addMappingKey(referencingPath) {
+  addMappingKey(referencingPath: NodePath): MappingKeyBinding {
     const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
@@ -176,14 +240,14 @@ export default class Binding {
     // add this mappingKey if it hasn't yet been added:
     const mappingKeyExists = !!this.mappingKeys[keyName];
     if (!mappingKeyExists)
-      this.mappingKeys[keyName] = new MappingKey(this, keyPath);
+      this.mappingKeys[keyName] = new MappingKeyBinding(this, keyPath);
 
     return this.mappingKeys[keyName];
   }
 
   // A binding will be updated if (some time after its creation) we encounter an AST node which refers to this binding's variable.
   // E.g. if we encounter an Identifier node.
-  update(path) {
+  update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
     } else {
@@ -191,7 +255,7 @@ export default class Binding {
     }
   }
 
-  updateProperties(path) {
+  updateProperties(path: NodePath) {
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
     this.isKnown ??= path.node.isKnown;
@@ -199,7 +263,7 @@ export default class Binding {
     if (path.isModification()) this.addModifyingPath(path);
   }
 
-  updateOwnership(ownerNode, msgIsMappingKeyorMappingValue = false) {
+  updateOwnership(ownerNode: any, msgIsMappingKeyorMappingValue?: string | null) {
     if (
       ownerNode.expression?.name === 'msg' &&
       msgIsMappingKeyorMappingValue === 'value'
@@ -260,18 +324,19 @@ export default class Binding {
     )
       this.onChainKeyRegistry = true;
     if (this.isMapping) {
-      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
         mappingKey.updateOwnership(ownerNode);
       }
     }
   }
 
-  updateBlacklist(blacklistedNode) {
+  updateBlacklist(blacklistedNode: any) {
     this.blacklist ??= [];
     this.blacklist.push(blacklistedNode);
   }
 
-  updateAccessed(path) {
+  updateAccessed(path: NodePath) {
     // The binding level tells us about the state everywhere, so we only need to update if it's whole/partitioned
     // TODO split if isMapping
     this.isWhole = true;
@@ -281,7 +346,7 @@ export default class Binding {
     this.isWholeReason.push(reason);
   }
 
-  updateIncrementation(path, state) {
+  updateIncrementation(path: NodePath, state: any) {
     // The binding level tells us about the state everywhere, so we only need to update if it's whole/partitioned
     // We update the function level indicators with isIncremented
     // TODO split if isMapping
@@ -306,21 +371,14 @@ export default class Binding {
     }
   }
 
-  addReferencingPath(path) {
-    this.isReferenced = true;
-    ++this.referenceCount;
-    if (!this.referencingPaths.some(p => p.node.id === path.node.id))
-      this.referencingPaths.push(path);
-  }
-
-  addModifyingPath(path) {
+  addModifyingPath(path: NodePath) {
     this.isModified = true;
     ++this.modificationCount;
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id))
       this.modifyingPaths.push(path);
   }
 
-  addNullifyingPath(path) {
+  addNullifyingPath(path: NodePath) {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
@@ -330,7 +388,8 @@ export default class Binding {
   prelimTraversalErrorChecks() {
     if (!this.isSecret) return;
     if (this.isMapping) {
-      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
         mappingKey.prelimTraversalErrorChecks();
       }
     }
@@ -381,23 +440,19 @@ export default class Binding {
    * If no errors are found, the calling code will simply carry on.
    */
   isNullifiable() {
-    if (this.kind !== 'VariableDeclaration') {
-      for (const [, binding] of Object.entries(this.path.scope.bindings)) {
-        binding.isNullifiable();
-      }
-    }
     if (!this.isSecret) return;
     if (!this.stateVariable) return;
     if (this.node.isConstant || this.node.constant) return;
     if (this.isMapping) {
-      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
         if (mappingKey.isMsgSender || mappingKey.referencedKeyIsParam) {
           if (mappingKey.isNullifiable()) return;
           // if a msg sender or param key is nullifiable, then the entire mapping is nullifiable
         }
       }
       // we reach here, there's no msg sender/param keys, so we must check each one
-      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+      for (const [, mappingKey] of mappingKeys) {
         if (!mappingKey.isNullifiable() && this.isWhole)
           throw new ZKPError(
             `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
@@ -420,8 +475,8 @@ export default class Binding {
    */
   inferOwnership() {
     if (this.kind !== 'VariableDeclaration') return;
-    let msgSenderEverywhereMappingKey;
-    let msgSenderEverywhereMappingValue;
+    let msgSenderEverywhereMappingKey: boolean;
+    let msgSenderEverywhereMappingValue: boolean;
     this.nullifyingPaths.forEach(path => {
       const functionDefScope = path.scope.getAncestorOfScopeType(
         'FunctionDefinition',
@@ -471,7 +526,8 @@ export default class Binding {
     // mapping[msg.sender] is owned by msg.sender => look for mapping[0]
     if (ownerNode.name === 'msg' && ownerNode.mappingOwnershipType === 'key') {
       // the owner is represented by the mapping key - we look through the keys for 0
-      for (const [, mappingKey] of Object.entries(this.mappingKeys)) {
+      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
         // TODO we can't yet set mappingKeys to anything not an identifier
         const keyNode = mappingKey.keyPath.node;
         if (
@@ -498,7 +554,7 @@ export default class Binding {
     ) {
       // the owner is represented by the mapping value - we look through the modifyingPaths for 0
       this.searchModifyingPathsForZero();
-    } else if (ownerBinding) {
+    } else if (ownerBinding && ownerBinding instanceof VariableBinding) {
       ownerBinding.searchModifyingPathsForZero();
     }
     if (this.reinitialisable && !this.isBurned)
@@ -538,14 +594,12 @@ export default class Binding {
       logger.debug(
         `Found a statement which burns the secret state and allows it to be reinitialised. If this line isn't meant to do that, check why you are setting the address to 0.`,
       );
-      if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
+      if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
       this.isBurned = true;
       // TODO more useful indicators here
     }
   }
 }
-
-const commonFunctions = {};
 
 // add common functions as methods to the classes:
 // Object.assign(MappingKey.prototype, commonFunctions);
@@ -555,13 +609,21 @@ const commonFunctions = {};
 /**
  * If a Binding/StateVarIndicator represents a mapping, it will contain a MappingKey class.
  */
-export class MappingKey {
+export class MappingKeyBinding extends VariableBinding {
+
+  container: any;
+  referencedKeyId: number;
+  referencedKeyNodeType: string;
+  referencedKeyIsParam: boolean; // is a function parameter - used for finding owner
+  keyPath: NodePath;
+  isMsgSender: boolean; // used for finding owner
   /**
    * A mappingKey can be contained within a binding or an indicator class.
    * @param { Binding || StateVarIndicator } container
    * @param { NodePath } keyPath
    */
-  constructor(container, keyPath) {
+  constructor(container: any, keyPath: NodePath) {
+    super(keyPath);
     this.container = container;
 
     // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
@@ -591,7 +653,7 @@ export class MappingKey {
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
   }
 
-  updateProperties(path) {
+  updateProperties(path: NodePath) {
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
     this.isKnown ??= path.node.isKnown;
@@ -601,7 +663,7 @@ export class MappingKey {
     this.container.updateProperties(path);
   }
 
-  updateOwnership(ownerNode) {
+  updateOwnership(ownerNode: any) {
     if (this.isOwned && this.owner.name !== ownerNode.name) {
       throw new ZKPError(
         `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
@@ -615,14 +677,14 @@ export class MappingKey {
   }
 
   // TODO: move into commonFunctions (because it's the same function as included in the Binding class)
-  addReferencingPath(path) {
+  addReferencingPath(path: NodePath) {
     this.isReferenced = true;
     ++this.referenceCount;
     if (!this.referencingPaths.some(p => p.node.id === path.node.id))
       this.referencingPaths.push(path);
   }
 
-  addModifyingPath(path) {
+  addModifyingPath(path: NodePath) {
     this.isModified = true;
     ++this.modificationCount;
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
@@ -630,7 +692,7 @@ export class MappingKey {
     }
   }
 
-  addNullifyingPath(path) {
+  addNullifyingPath(path: NodePath) {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);

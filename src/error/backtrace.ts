@@ -1,9 +1,11 @@
-const getNthOccurenceOfSubstring = (string, subString, n) => {
+const getNthOccurenceOfSubstring = (string: string, subString: string, n: number) => {
   return string.split(subString, n).join(subString).length;
 };
 
 class BackTrace {
-  setSolContract(contract) {
+  contract: any;
+
+  setSolContract(contract: any) {
     this.contract = contract;
   }
 
@@ -11,7 +13,7 @@ class BackTrace {
     return this.contract;
   }
 
-  getSourceCode(src) {
+  getSourceCode(src: string) {
     const { contract } = this;
     const [srcStart, srcLength] = src.split(':');
     const srcEnd = Number(srcStart) + Number(srcLength);
@@ -26,8 +28,8 @@ class BackTrace {
       startLineNumber,
     );
     const line = contract.substring(lineStart, lineEnd);
-    const srcStartWithinLine = srcStart - lineStart;
-    const pointerLine = ' '.repeat(srcStartWithinLine) + '^'.repeat(srcLength);
+    const srcStartWithinLine = Number(srcStart) - lineStart;
+    const pointerLine = ' '.repeat(srcStartWithinLine) + '^'.repeat(Number(srcLength));
     console.log('line', startLineNumber);
     console.log(line);
     console.log(pointerLine);

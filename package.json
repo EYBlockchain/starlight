@@ -32,6 +32,7 @@
   ],
   "author": "iAmMichaelConnor, MirandaWood, LijuJoseJJ, Westlad, ChaitanyaKonda",
   "license": "CC0-1.0",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/EYBlockchain/starlight/issues"
   },
@@ -39,9 +40,10 @@
   "dependencies": {
     "@babel/register": "^7.13.8",
     "@babel/runtime": "^7.13.10",
+    "@types/config": "^0.0.41",
     "chai": "^4.2.0",
     "commander": "^7.0.0",
-    "config": "^3.3.3",
+    "config": "^3.3.7",
     "eslint": "^7.26.0",
     "figlet": "^1.5.0",
     "general-number": "^1.0.1",
@@ -52,10 +54,20 @@
     "zkp-utils": "^1.0.8"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/plugin-syntax-class-properties": "^7.12.13",
     "eslint": "^7.26.0",
     "eslint-config-codfish": "^9.0.2",
     "mocha": "^8.2.1",
     "prettier": "^2.2.1"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ]
   }
 }

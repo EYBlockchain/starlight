@@ -31,10 +31,13 @@ import {
   traverse,
   traverseNodesFast,
   traversePathsFast,
-} from './traverse.mjs';
-import logger from '../utils/logger.mjs';
-import { pathCache } from './cache.mjs';
-import { Scope } from './Scope.mjs';
+  State
+} from './traverse.js';
+import logger from '../utils/logger.js';
+import { pathCache } from './cache.js';
+import { Scope } from './Scope.js';
+import { Binding } from './Binding.js';
+
 
 /**
 A NodePath is required as a way of 'connecting' a node to its parent (and its parent, and so on...). We can't assign a `.parent` to a `node` (to create `node.parent`), because we'd end up with a cyclic reference; the parent already contains the node, so the node can't then contain the parent!
@@ -49,6 +52,23 @@ export default class NodePath {
   @param {string} listKey - OPTIONAL - only required if `container` is an array.
   @param {NodePath} parentPath - OPTIONAL - since a parentPath won't exist for the top-most node of the tree.
   */
+  node: any;
+  nodeType: string;
+  parent: any;
+  container: any;
+  containerName: string | number;
+  key: string | number;
+  index?: number | null;
+  parentPath: NodePath;
+  inList: boolean;
+  scope?: Scope;
+  isSecret?: boolean;
+  isPublic?: boolean;
+  containsSecret?: boolean;
+  containsPublic?: boolean;
+  isIncremented?: boolean;
+  isDecremented?: boolean;
+  isBurnStatement?: boolean;
   /**
    * `container` naming conventions explained:
    * (note: these naming conventions DIFFER from those of babel)
@@ -80,7 +100,7 @@ export default class NodePath {
       container,
       key,
       index,
-      parentPath,
+      // parentPath,
     });
 
     this.node = node;
@@ -106,7 +126,7 @@ export default class NodePath {
     key,
     container,
     index,
-    parentPath,
+    // parentPath,
   }) {
     if (!parent) throw new Error(`Can't create a path without a parent`);
     if (!node) throw new Error(`Can't create a path without a node`);
@@ -129,19 +149,19 @@ export default class NodePath {
     }
   }
 
-  traverse(visitor, state = {}) {
+  traverse(visitor: any, state: State) {
     traverse(this, visitor, state);
   }
 
-  traversePathsFast(enter, state = {}) {
+  traversePathsFast(enter: Function, state: State) {
     traversePathsFast(this, enter, state);
   }
 
-  traverseNodesFast(enter, state = {}) {
+  traverseNodesFast(enter: Function, state: State) {
     traverseNodesFast(this.node, enter, state);
   }
 
-  static getPath(node) {
+  static getPath(node: any) {
     if (pathCache.has(node)) return pathCache.get(node);
     throw new Error('Node not found in pathCache');
   }
@@ -149,9 +169,9 @@ export default class NodePath {
   /**
    @returns {string} - a human-readable path
    */
-  getLocation() {
+  getLocation(): string {
     const parts = [];
-    let path = this;
+    let path: NodePath = this;
     do {
       const part = path.inList ? `${path.key}[${path.index}]` : path.key;
       parts.unshift(part);
@@ -167,8 +187,8 @@ export default class NodePath {
    * or `null` if the `callback` never returns a truthy value.
    * @return {NodePath || null}
    */
-  findAncestor(callback) {
-    let path = this;
+  findAncestor(callback: any): NodePath | null {
+    let path: NodePath = this;
     do {
       if (callback(path)) return path;
     } while ((path = path.parentPath));
@@ -179,8 +199,8 @@ export default class NodePath {
    * Same as findAncestor, but starting at this path's parent.
    * @return {NodePath || null}
    */
-  findAncestorFromParent(callback) {
-    let path = this;
+  findAncestorFromParent(callback: any): NodePath | null {
+    let path: NodePath = this;
     while ((path = path.parentPath)) {
       if (callback(path)) return path;
     }
@@ -195,7 +215,7 @@ export default class NodePath {
    * whatever it wants.
    * @returns { ? || falsey} - depends on the callback
    */
-  queryAncestors(callback) {
+  queryAncestors(callback: any): any {
     const path = this || null;
     if (!path) return null; // No more paths to look at. So not found anywhere.
     return (
@@ -209,8 +229,8 @@ export default class NodePath {
    * NOTE: The current node path is included in this.
    * @returns {Array[NodePath]}
    */
-  getAncestry() {
-    let path = this;
+  getAncestry(): NodePath[] {
+    let path: NodePath = this;
     const paths = [];
     do {
       paths.push(path);
@@ -222,7 +242,7 @@ export default class NodePath {
    * A helper to find if `this` path is an ancestor of @param {NodePath} maybeDescendant
    * @returns {Boolean}
    */
-  isAncestor(maybeDescendant) {
+  isAncestor(maybeDescendant: NodePath): boolean {
     return maybeDescendant.isDescendant(this);
   }
 
@@ -230,13 +250,13 @@ export default class NodePath {
    * A helper to find if `this` path is a descendant of @param {NodePath} maybeAncestor
    * @returns {Boolean}
    */
-  isDescendant(maybeAncestor) {
-    return !!this.findAncestorFromParent(path => path === maybeAncestor);
+  isDescendant(maybeAncestor: NodePath): boolean {
+    return !!this.findAncestorFromParent((path: NodePath) => path === maybeAncestor);
   }
 
   // SIBLINGS
 
-  getSiblingNode(index) {
+  getSiblingNode(index: any) {
     if (!this.inList) return null;
     return this.container[index];
   }
@@ -258,11 +278,11 @@ export default class NodePath {
   }
 
   getPrevSiblingNode() {
-    return this.getSiblingNode(this.key - 1);
+    return this.getSiblingNode(this.key as number - 1);
   }
 
   getNextSiblingNode() {
-    return this.getSiblingNode(this.key + 1);
+    return this.getSiblingNode(this.key as number + 1);
   }
 
   getAllNextSiblingNodes() {
@@ -295,23 +315,23 @@ export default class NodePath {
    * @param {string} nodeType - a valid Solidity nodeType.
    * Get the first @return {NodePath || null} matching the given nodeType, in which `this` is contained (including `this` in the search).
    */
-  getAncestorOfType(nodeType) {
-    return this.findAncestor(path => path.node.nodeType === nodeType);
+  getAncestorOfType(nodeType: string): NodePath | null {
+    return this.findAncestor((path: NodePath) => path.node.nodeType === nodeType);
   }
 
   /**
    * @param {string} containerName - e.g. parameters, nodes, statements, declarations, imports, ...
    * Get the first @return {NodePath || null} whose containerName matches the given containerName (including `this` in the search)
    */
-  getAncestorContainedWithin(containerName) {
-    return this.findAncestor(path => path.containerName === containerName);
+  getAncestorContainedWithin(containerName: string): NodePath | null {
+    return this.findAncestor((path: NodePath) => path.containerName === containerName);
   }
 
   /**
    * Callable from any nodeType below (or equal to) a 'SourceUnit' node.
    * @returns {NodePath || null} the parameters of the function.
    */
-  getSourceUnit(node = this.node) {
+  getSourceUnit(node: any = this.node): NodePath | null {
     const path = NodePath.getPath(node);
     return path.getAncestorOfType('SourceUnit') || null;
   }
@@ -320,7 +340,7 @@ export default class NodePath {
    * Callable from any nodeType below (or equal to) a 'ContractDefinition' node.
    * @returns {NodePath || null} the parameters of the function.
    */
-  getContractDefinition(node = this.node) {
+  getContractDefinition(node: any = this.node): NodePath | null {
     const path = NodePath.getPath(node);
     return path.getAncestorOfType('ContractDefinition') || null;
   }
@@ -329,7 +349,7 @@ export default class NodePath {
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
    * @returns {NodePath || null} the parameters of the function.
    */
-  getFunctionDefinition(node = this.node) {
+  getFunctionDefinition(node: any = this.node): NodePath | null {
     const path = NodePath.getPath(node);
     return path.getAncestorOfType('FunctionDefinition') || null;
   }
@@ -338,14 +358,14 @@ export default class NodePath {
    * Callable from a ContractDefinition node only
    * @returns {Array[String] || null} the parameters of the function.
    */
-  getFunctionNames(contractDefinitionNode = this.node) {
+  getFunctionNames(contractDefinitionNode = this.node): string[] | null {
     if (contractDefinitionNode.nodeType !== 'ContractDefinition') return null;
-    const entryVisitor = (node, state) => {
+    const entryVisitor = (node: any, state: State) => {
       if (node.nodeType !== 'FunctionDefinition') return;
       state.functionNames.push(node.name);
       state.skipSubNodes = true;
     };
-    const state = { functionNames: [] };
+    const state: State = { functionNames: [], skipSubNodes: false };
     traverseNodesFast(contractDefinitionNode, entryVisitor, state);
     return state.functionNames;
   }
@@ -354,7 +374,7 @@ export default class NodePath {
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
    * @returns {Array[Node] || null} the parameters of the function.
    */
-  getFunctionParameters() {
+  getFunctionParameters(): any[] | null {
     const functionDefinition = this.getAncestorOfType('FunctionDefinition');
     return functionDefinition?.node?.parameters?.parameters ?? null;
   }
@@ -363,7 +383,7 @@ export default class NodePath {
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
    * @returns {Array[Node] || null} the parameters of the function.
    */
-  getFunctionReturnParameters() {
+  getFunctionReturnParameters(): any[] | null {
     const functionDefinition = this.getAncestorOfType('FunctionDefinition');
     return functionDefinition?.node?.returnParameters?.parameters ?? null;
   }
@@ -372,7 +392,7 @@ export default class NodePath {
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
    * @returns {Array[Node] || null} the statements of the function.
    */
-  getFunctionBodyStatements() {
+  getFunctionBodyStatements(): any[] | null {
     const functionDefinition = this.getAncestorOfType('FunctionDefinition');
     return functionDefinition?.node?.body?.statements ?? null;
   }
@@ -382,7 +402,7 @@ export default class NodePath {
    * @param {String} nodeType
    * @returns {Boolean}
    */
-  isNodeType(nodeType) {
+  isNodeType(nodeType: string): boolean {
     return this.node.nodeType === nodeType;
   }
 
@@ -390,8 +410,8 @@ export default class NodePath {
    * A helper to find if `this` path is a descendant of a particular nodeType or @param {array} nodeTypes
    * @returns {Boolean}
    */
-  isInType(...nodeTypes) {
-    let path = this;
+  isInType(...nodeTypes: string[]): boolean {
+    let path: NodePath = this;
     while (path) {
       for (const nodeType of nodeTypes) {
         if (path.node.nodeType === nodeType) return true;
@@ -402,15 +422,11 @@ export default class NodePath {
     return false;
   }
 
-  isInNodeType(args) {
-    return this.isNodeType(args);
-  }
-
   /**
    * A helper to find if `this` path is in a rightHandSide container or another container which requires the value of`this` to be accessed
    * @returns {NodePath || String || Boolean}
    */
-  getRhsAncestor(onlyReturnContainerName = false) {
+  getRhsAncestor(onlyReturnContainerName:boolean = false): NodePath | string | boolean {
     // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
     const rhsContainers = [
       'rightHandSide',
@@ -434,7 +450,7 @@ export default class NodePath {
    * A helper to find if `this` path is in a leftHandSide container or another container which requires the value of`this` to be modified
    * @returns {NodePath || String || Boolean}
    */
-  getLhsAncestor(onlyReturnContainerName = false) {
+  getLhsAncestor(onlyReturnContainerName:boolean = false): NodePath | string | boolean {
     // NB ordering matters. An identifier can exist in an arguments container which itself is in an initialValue container. We want the parent.
     const lhsContainers = [
       'leftHandSide',
@@ -454,9 +470,9 @@ export default class NodePath {
    * A getter to return the node corresponding to the LHS of a path in a RHS container
    * @returns {Object || null || Boolean}
    */
-  getCorrespondingLhsNode() {
+  getCorrespondingLhsNode(): any {
     const rhsContainer = this.getRhsAncestor(true);
-    let parent;
+    let parent : NodePath;
 
     switch (rhsContainer) {
       case 'rightHandSide':
@@ -488,9 +504,9 @@ export default class NodePath {
    * A getter to return the node corresponding to the RHS of a path in a LHS container
    * @returns {Object || null || Boolean}
    */
-  getCorrespondingRhsNode() {
+  getCorrespondingRhsNode(): any {
     const lhsContainer = this.getLhsAncestor(true);
-    let parent;
+    let parent: NodePath;
     switch (lhsContainer) {
       case 'leftHandSide':
         parent = this.getAncestorOfType('Assignment');
@@ -514,7 +530,7 @@ export default class NodePath {
    * Is this path.node a 'Statement' type?
    * @returns {Boolean}
    */
-  isStatement() {
+  isStatement(): boolean {
     const statementNodeTypes = [
       'ExpressionStatement',
       'VariableDeclarationStatement',
@@ -528,7 +544,7 @@ export default class NodePath {
    * Is this path.node a 'Statement' type which is _within_ a function's body?
    * @returns {Boolean}
    */
-  isFunctionBodyStatement() {
+  isFunctionBodyStatement(): boolean {
     return this.containerName === 'statements';
   }
 
@@ -536,28 +552,28 @@ export default class NodePath {
    * Is this path.node a descendant of a statement which is _within_ a function's body?
    * @returns {Boolean}
    */
-  isInFunctionBodyStatement() {
-    return !!this.queryAncestors(path => path.isFunctionBodyStatement());
+  isInFunctionBodyStatement(): boolean {
+    return !!this.queryAncestors((path: NodePath) => path.isFunctionBodyStatement());
   }
 
-  isFunctionParameterDeclaration() {
+  isFunctionParameterDeclaration(): boolean {
     const functionParameters = this.getFunctionParameters();
     return functionParameters?.some(node => node === this.node);
   }
 
-  isFunctionParameter(node = this.node) {
+  isFunctionParameter(node: any = this.node): boolean  {
     const referencedBinding = this.getScope().getReferencedBinding(node); // there will be cases where the reference is a special type like 'msg.sender' which doesn't have a binding.
     return referencedBinding?.path.isFunctionParameterDeclaration() ?? false;
   }
 
-  isFunctionReturnParameterDeclaration() {
+  isFunctionReturnParameterDeclaration(): boolean {
     return (
       this.parent.nodeType === 'ParameterList' &&
       this.parent.containerName === 'returnParameters'
     );
   }
 
-  isFunctionReturnParameter(node = this.node) {
+  isFunctionReturnParameter(node: any = this.node): boolean {
     const referencedBinding = this.getScope().getReferencedBinding(node);
     return (
       referencedBinding?.path.isFunctionReturnParameterDeclaration() ?? false
@@ -566,7 +582,7 @@ export default class NodePath {
 
   // TODO: this will capture `memory` delcarations as well. In future we might want to split out identification of memory (heap) variables from stack variables.
   // NOTE: this does not consider function parameters to be local stack variables.
-  isLocalStackVariableDeclaration() {
+  isLocalStackVariableDeclaration(): boolean {
     return (
       this.isInFunctionBodyStatement() &&
       ['VariableDeclaration', 'VariableDeclarationStatement'].includes(
@@ -577,12 +593,12 @@ export default class NodePath {
 
   // TODO: this will capture `memory` delcarations as well. In future we might want to split out identification of memory (heap) variables from stack variables.
   // NOTE: this does not consider function parameters to be local stack variables.
-  isLocalStackVariable(node = this.node) {
+  isLocalStackVariable(node: any = this.node): boolean {
     const referencedBinding = this.scope.getReferencedBinding(node);
     return referencedBinding.path.isLocalStackVariableDeclaration();
   }
 
-  isExternalContractInstanceDeclaration(node = this.node) {
+  isExternalContractInstanceDeclaration(node: any = this.node): boolean {
     if (
       !['VariableDeclaration', 'VariableDeclarationStatement'].includes(
         node.nodeType,
@@ -598,16 +614,15 @@ export default class NodePath {
     const exportedSymbolsId =
       sourceUnit?.exportedSymbols?.[thisContractDefinition.name]?.[0];
     if (!exportedSymbolsId) return false;
-
     return referencedContractId !== exportedSymbolsId;
   }
 
-  isExternalContractInstance(node = this.node) {
+  isExternalContractInstance(node: any = this.node): boolean {
     const varDecNode = this.getReferencedNode(node);
     return this.isExternalContractInstanceDeclaration(varDecNode);
   }
 
-  isExternalFunctionCall() {
+  isExternalFunctionCall(): boolean {
     if (this.nodeType !== 'FunctionCall') return false;
     const { expression: functionNode } = this.node; // the function being called
     // The `expression` for an external function call will be a MemberAccess nodeType. myExternalContract.functionName
@@ -638,10 +653,10 @@ export default class NodePath {
   /**
    * @returns {String || null} the name of an exported symbol, if one exists for the given `id`
    */
-  getReferencedExportedSymbolName(node = this.node) {
-    const id = node.referencedDeclaration;
+  getReferencedExportedSymbolName(node: any = this.node): string | null {
+    const id: number = node.referencedDeclaration;
     if (!id) return null;
-    const exportedSymbols = this.getSourceUnit()?.node.exportedSymbols;
+    const exportedSymbols: { string: number[] } = this.getSourceUnit()?.node.exportedSymbols;
     if (!exportedSymbols) return null;
     for (const [name, ids] of Object.entries(exportedSymbols)) {
       if (ids.some(_id => _id === id)) return name;
@@ -658,7 +673,7 @@ export default class NodePath {
    * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
    * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
    */
-  isIncrementation(expressionNode = this.node) {
+  isIncrementation(expressionNode: any = this.node): any {
     return {
       isIncremented: expressionNode.isIncremented,
       isDecremented: expressionNode.isIncremented,
@@ -672,7 +687,7 @@ export default class NodePath {
    * @param {Object} lhsNode - the left hand side node, usually an Identifier. We're checking whether this lhsNode is being incremented by the expressionNode.
    * @returns {Object {bool, bool}} - { isIncremented, isDecremented }
    */
-  isIncrementationOf(lhsNode, expressionNode = this.node) {
+  isIncrementationOf(lhsNode: any, expressionNode: any = this.node): any {
     const { isIncremented, isDecremented } = expressionNode;
     const incrementsThisNode =
       expressionNode.incrementedDeclaration === lhsNode.referencedDeclaration;
@@ -686,7 +701,7 @@ export default class NodePath {
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
-  isMsgSender(node = this.node) {
+  isMsgSender(node: any = this.node): boolean {
     return (
       node.nodeType === 'MemberAccess' &&
       node.memberName === 'sender' &&
@@ -700,7 +715,7 @@ export default class NodePath {
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
-  isMsg(node = this.node) {
+  isMsg(node: any = this.node): boolean {
     return (
       node.nodeType === 'Identifier' &&
       node.name === 'msg' &&
@@ -714,7 +729,7 @@ export default class NodePath {
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
-  isThis(node = this.node) {
+  isThis(node: any = this.node): boolean {
     return (
       node.nodeType === 'Identifier' &&
       node.name === 'this' &&
@@ -727,7 +742,7 @@ export default class NodePath {
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
-  isExportedSymbol(node = this.node) {
+  isExportedSymbol(node: any = this.node): boolean {
     return !!this.getReferencedExportedSymbolName(node);
   }
 
@@ -736,7 +751,7 @@ export default class NodePath {
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
-  isMappingDeclaration(node = this.node) {
+  isMappingDeclaration(node: any = this.node): boolean {
     if (
       node.nodeType === 'VariableDeclaration' &&
       node.typeName.nodeType === 'Mapping'
@@ -750,14 +765,14 @@ export default class NodePath {
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
-  isMappingIdentifier(node = this.node) {
+  isMappingIdentifier(node: any = this.node): boolean {
     if (!['IndexAccess', 'Identifier'].includes(node.nodeType)) return false;
     // It could be a mapping or it could be an array. The only way to tell is to trace it all the way back to its referencedDeclaration.
     const varDecNode = this.getReferencedNode(node); // If it's an IndexAccess node, it will look at the IndexAccess.baseExpression through getReferencedDeclarationId().
     return this.isMappingDeclaration(varDecNode || node);
   }
 
-  isMapping(node = this.node) {
+  isMapping(node: any = this.node): boolean {
     return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
   }
 
@@ -766,7 +781,7 @@ export default class NodePath {
    * @param {Object} - the mapping's index access node.
    * @returns {Node} - an Identifier node
    */
-  getMappingKeyIdentifier(node = this.node) {
+  getMappingKeyIdentifier(node: any = this.node): any {
     if (node.nodeType !== 'IndexAccess')
       return this.getAncestorOfType('IndexAccess').getMappingKeyIdentifier();
     const { indexExpression } = node;
@@ -781,7 +796,7 @@ export default class NodePath {
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
-  isRequireStatement(node = this.node) {
+  isRequireStatement(node: any = this.node): boolean {
     /* `require` statements are often contained within the following structure:
         {
           nodeType: 'ExpressionStatement',
@@ -833,9 +848,9 @@ export default class NodePath {
    * @param {Node} node - OPTIONAL - the node which references some other node
    * @return {Number || null} - the id of the node being referenced by the input node.
    */
-  getReferencedDeclarationId(referencingNode = this.node) {
+  getReferencedDeclarationId(referencingNode = this.node): number | null {
     const { nodeType } = referencingNode;
-    let id;
+    let id: number;
     switch (nodeType) {
       case 'VariableDeclarationStatement':
         id = this.getReferencedDeclarationId(referencingNode.declarations[0]);
@@ -862,21 +877,21 @@ export default class NodePath {
   /**
    * @returns {Binding || null} - the binding of the node being referred-to by `this`.
    */
-  getReferencedBinding(referencingNode = this.node) {
+  getReferencedBinding(referencingNode: any = this.node): Binding {
     return this.getScope().getReferencedBinding(referencingNode);
   }
 
   /**
    * @returns {Node || null} - the node being referred-to by the input referencingNode.
    */
-  getReferencedNode(referencingNode = this.node) {
+  getReferencedNode(referencingNode = this.node): any {
     return this.getScope().getReferencedNode(referencingNode);
   }
 
   /**
    * @returns {Node || null} - the node being referred-to by the input referencingNode.
    */
-  getReferencedPath(referencingNode = this.node) {
+  getReferencedPath(referencingNode = this.node): NodePath {
     return this.getScope().getReferencedPath(referencingNode);
   }
 
@@ -888,7 +903,7 @@ export default class NodePath {
    * @param {Node} referencingNode optional
    * @returns { ? || falsey} - depends on the callback
    */
-  queryReferencedPath(callback, referencingNode = this.node) {
+  queryReferencedPath(callback: any, referencingNode: any = this.node): any | null {
     return callback(this.getReferencedPath(referencingNode)) ?? null;
   }
 
@@ -898,7 +913,7 @@ export default class NodePath {
    * This function will collect (within the scope of nodes beneath `beneathNodeType`) all nodePaths which reference the same node(s).
    * @return {Object} = { refDecId: [path, path, path] }, where the array of paths is all paths which refer to the same referenceDeclaration id.
    */
-  getAllNodesWhichReferenceTheSame(beneathNodeType = 'Block') {
+  getAllNodesWhichReferenceTheSame(beneathNodeType: string = 'Block'): any {
     // We'll search all subnodes for referencedDeclarations.
     // Later, we'll find nodes `beneathNodeType` which reference the same.
     const state = {};
@@ -906,7 +921,7 @@ export default class NodePath {
     if (refId) {
       state[refId] = [];
     } else {
-      const visitor1 = (path, state) => {
+      const visitor1 = (path: NodePath, state: State) => {
         const refId = path.node.referencedDeclaration;
         if (refId) state[refId] = []; // initialise an array to which we'll push nodes which reference the same referencedDeclaration node.
       };
@@ -917,7 +932,7 @@ export default class NodePath {
     const rootNodePath = this.getAncestorOfType(beneathNodeType);
     if (!rootNodePath) return {};
 
-    const visitor2 = (path, state) => {
+    const visitor2 = (path: NodePath, state: State) => {
       for (const refId of Object.keys(state)) {
         if (path.node.referencedDeclaration === refId) state[refId].push(path);
       }
@@ -932,7 +947,7 @@ export default class NodePath {
    * This function will collect (within the scope of nodes beneath `beneathNodeType`) all nodePaths which modify the same node(s).
    * @return {Object} = { refDecId: [path, path, path] }, where the array of paths is all paths which _modify_ the same referenceDeclaration id.
    */
-  getAllNodesWhichModifyTheSame(beneathNodeType = 'Block') {
+  getAllNodesWhichModifyTheSame(beneathNodeType: string = 'Block'): any {
     // We'll search all subnodes for referencedDeclarations on the LHS.
     // Later, we'll find nodes `beneathNodeType` which modify the same nodes.
     const state = {};
@@ -941,7 +956,7 @@ export default class NodePath {
     if (refId && this.containerName === 'leftHandSide') {
       state[refId] = [];
     } else {
-      const visitor1 = (path, state) => {
+      const visitor1 = (path: NodePath, state: State) => {
         const refId = path.node.referencedDeclaration;
         if (refId && path.containerName === 'leftHandSide') state[refId] = []; // initialise an array to which we'll push nodes which modify the same referencedDeclaration node.
       };
@@ -952,7 +967,7 @@ export default class NodePath {
     const rootNodePath = this.getAncestorOfType(beneathNodeType);
     if (!rootNodePath) return {};
 
-    const visitor2 = (path, state) => {
+    const visitor2 = (path: NodePath, state: State) => {
       for (const refId of Object.keys(state)) {
         if (
           path.node.referencedDeclaration === refId &&
@@ -966,7 +981,7 @@ export default class NodePath {
   }
 
   markContainsSecret() {
-    let path = this;
+    let path: NodePath = this;
     while ((path = path.parentPath)) {
       path.containsSecret ??= true;
       path.node.containsSecret ??= true;
@@ -978,7 +993,7 @@ export default class NodePath {
   }
 
   markContainsPublic() {
-    let path = this;
+    let path : NodePath = this;
     while ((path = path.parentPath)) {
       path.containsPublic ??= true;
       path.node.containsPublic ??= true;
@@ -992,7 +1007,7 @@ export default class NodePath {
   // SCOPE
 
   // checks whether this path's nodeType is one which signals the beginning of a new scope
-  isScopable() {
+  isScopable(): boolean {
     switch (this.node.nodeType) {
       case 'SourceUnit':
       case 'ContractDefinition':
@@ -1003,9 +1018,9 @@ export default class NodePath {
     }
   }
 
-  getScope() {
+  getScope(): Scope {
     if (this.scope) return this.scope;
-    const scope = this.queryAncestors(path => path.scope);
+    const scope = this.queryAncestors((path: NodePath) => path.scope);
     if (!scope) throw new Error('Expect every node to be within a scope.');
     return scope;
   }

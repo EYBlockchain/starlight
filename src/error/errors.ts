@@ -1,9 +1,9 @@
 /* eslint-disable max-classes-per-file */
 
-import backtrace from './backtrace.mjs'
+import backtrace from './backtrace.js'
 // Remove after traversals done
 export class ParseError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     // Ensure the name of this error is the same as the class name
     this.name = this.constructor.name;
@@ -14,7 +14,7 @@ export class ParseError extends Error {
 }
 
 export class SyntaxError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     Error.stackTraceLimit = 0;
     super(message);
     this.name = this.constructor.name;
@@ -23,7 +23,7 @@ export class SyntaxError extends Error {
 
 export class SyntaxTypeError extends SyntaxError {
   // when our decorators are used on an incorrect type
-  constructor(node, decorator) {
+  constructor(node: any, decorator: string) {
     Error.stackTraceLimit = 0;
     super(
       `Decorator '${decorator}' cannot be added to node of type '${node.nodeType}'.`,
@@ -43,12 +43,12 @@ export class SyntaxTypeError extends SyntaxError {
 
 export class SyntaxUsageError extends SyntaxError {
   // when our decorators are used incorrectly e.g. an unknown whole state
-  constructor(message, node, reasons) {
+  constructor(message: string, node: any, reasons?: any) {
     Error.stackTraceLimit = 0;
     super(message);
     if (node) backtrace.getSourceCode(node.src);
     if (reasons) {
-      reasons.forEach(reason => {
+      reasons.forEach((reason: any) => {
         console.log(`Because of: ${reason[0]} At:`);
         backtrace.getSourceCode(reason.src);
       });
@@ -58,7 +58,7 @@ export class SyntaxUsageError extends SyntaxError {
 }
 
 export class TODOError extends Error {
-  constructor(message, node) {
+  constructor(message: string, node: any) {
     Error.stackTraceLimit = 0;
     super(`TODO: zappify doesn't yet support this feature: ${message}`);
     if (node) backtrace.getSourceCode(node.src);
@@ -67,7 +67,7 @@ export class TODOError extends Error {
 }
 
 export class ZKPError extends Error {
-  constructor(message, node) {
+  constructor(message: string, node: any) {
     Error.stackTraceLimit = 0;
     super(message);
     if (node) backtrace.getSourceCode(node.src);
@@ -76,7 +76,7 @@ export class ZKPError extends Error {
 }
 
 export class FilingError extends Error {
-  constructor(message) {
+  constructor(message: any) {
     Error.stackTraceLimit = 0;
     super(message);
     this.name = this.constructor.name;

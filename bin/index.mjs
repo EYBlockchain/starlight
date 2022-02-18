@@ -5,7 +5,7 @@ import path from 'path';
 import commander from 'commander';
 
 import mkdirs from './mkdirs.mjs';
-import zappify from '../src/index.mjs';
+import zappify from '../built/index.js';
 import logger from '../src/utils/logger.mjs';
 import { FilingError } from '../src/error/errors.mjs';
 

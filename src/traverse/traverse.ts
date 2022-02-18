@@ -32,13 +32,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 
-import logger from '../utils/logger.mjs';
-import NodePath from './NodePath.mjs';
-import { getVisitableKeys } from '../types/solidity-types.mjs';
+import logger from '../utils/logger.js';
+import NodePath from './NodePath.js';
+import { getVisitableKeys } from '../types/solidity-types.js';
+
+export interface State {
+ stopTraversal?: boolean;
+ skipSubNodes?: boolean;
+ found?: boolean;
+ functionNames?: string[];
+}
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
-export function traverse(path, visitor, state = {}) {
+export function traverse(path: NodePath, visitor: any, state?: State) {
   logger.debug(
     'pathLocation:',
     `${path.getLocation()} = ${path.node.nodeType} ${path.node.name || ''}`,
@@ -77,6 +84,7 @@ export function traverse(path, visitor, state = {}) {
         parent: node,
         key,
         container: subNode,
+        index: key,
         node: subNode,
         parentPath: path,
       });
@@ -92,7 +100,7 @@ export function traverse(path, visitor, state = {}) {
  * Fast traversal function for quick searching of a subtree. No scoping calcs.
  * @param {function} enter - a visitor function.
  */
-export function traverseNodesFast(node, enter, state = {}) {
+export function traverseNodesFast(node: any, enter: any, state?: State): void {
   if (!node) return;
   if (state?.stopTraversal || state?.skipSubNodes) return;
 
@@ -120,7 +128,7 @@ export function traverseNodesFast(node, enter, state = {}) {
  * Fast traversal function for quick searching of a subtree. No scoping calcs. Allows seperate enter() methods per node type.
  * @param {function} enter - a visitor function.
  */
-export function traverseNodesFastVisitor(node, visitor, state = {}) {
+export function traverseNodesFastVisitor(node: any, visitor: any, state?: State) {
   if (!node) return;
   if (state?.stopTraversal || state?.skipSubNodes) return;
 
@@ -152,7 +160,7 @@ export function traverseNodesFastVisitor(node, visitor, state = {}) {
  * Fast traversal function for quick searching of a subtree. No scoping calcs.
  * @param {function} enter - a visitor function.
  */
-export function traversePathsFast(path, enter, state = {}) {
+export function traversePathsFast(path: NodePath, enter: any, state?: State) {
   if (!path) return;
   if (state?.stopTraversal || state?.skipSubNodes) return;
 
@@ -184,6 +192,7 @@ export function traversePathsFast(path, enter, state = {}) {
         parent: node,
         key,
         container: subNode,
+        index: key,
         node: subNode,
         parentPath: path,
       });
