@@ -6,13 +6,13 @@ Reads an input file line by line and passes each line for further processing
 
 import fs from 'fs';
 import path from 'path';
-import backtrace from '../error/backtrace.mjs';
-import logger from '../utils/logger.mjs';
+import backtrace from '../error/backtrace.js';
+import logger from '../utils/logger.js';
 
 // regex: matches all cases of 'known' unless they are directly preceded by 'un'
 const decorators = [/secret/g, /unknown/g, /\w*(?<!un)known/g, /reinitialisable/g];
 
-function tidy(_line) {
+function tidy(_line: string): string {
   let line = _line;
   // trim multiple spaces to a single space:
   line = line.replace(/\s+/g, ' ');
@@ -21,7 +21,7 @@ function tidy(_line) {
   return line;
 }
 
-function inComment(file, char) {
+function inComment(file: any, char: number): boolean {
   // are we in a comment?
   let aComment = false;
   let aMultiComment = false;
@@ -51,7 +51,10 @@ function inComment(file, char) {
  *                     decorator keywords should be reinstated after
  *                     running 'solc'.
  */
-function removeDecorators(options) {
+function removeDecorators(options: any): {
+    deDecoratedFile: string;
+    toRedecorate: any[];
+} {
   logger.verbose(`Parsing decorated file ${options.inputFilePath}... `);
   const decLines = fs
     .readFileSync(options.inputFilePath, 'utf-8')

@@ -2,7 +2,7 @@ import removeDecorators from './parse/removeDecorators.js';
 import redecorate from './parse/redecorate.js';
 import compile from './solc.mjs';
 
-import checks from './transformers/checks.js';
+// import checks from './transformers/checks.js';
 // import ownership from './transformers/ownership.mjs';
 // import toCircuit from './transformers/toCircuit.mjs';
 // import toContract from './transformers/toContract.mjs';
@@ -22,7 +22,7 @@ const zappify = options => {
 
   const zolAST = redecorate(solAST, toRedecorate, options);
 
-  let path = checks(zolAST, options);
+  // let path = checks(zolAST, options);
   //
   // path = ownership(path, options);
   //
@@ -35,7 +35,7 @@ const zappify = options => {
   // toContract(zolAST, options);
   //
   // if (options.isTest) return path.scope.indicators;
-  console.log(path);
+  console.log(zolAST);
   return zolAST;
 };
 

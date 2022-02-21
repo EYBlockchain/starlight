@@ -3,7 +3,7 @@
 import ContractBP from '../boilerplate/contract/solidity/nodes/ContractBoilerplateGenerator.mjs';
 import FunctionBP from '../boilerplate/contract/solidity/nodes/FunctionBoilerplateGenerator.mjs';
 
-export function getVisitableKeys(nodeType) {
+export function getVisitableKeys(nodeType: string): string[] {
   switch (nodeType) {
     case 'SourceUnit':
     case 'ContractDefinition':
@@ -61,7 +61,7 @@ export function getVisitableKeys(nodeType) {
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
-export function buildNode(nodeType, fields = {}) {
+export function buildNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'SourceUnit': {
       const { name, license, nodes = [] } = fields;

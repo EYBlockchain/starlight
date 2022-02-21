@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
-import cloneDeep from 'lodash.clonedeep';
-import logger from '../../utils/logger.mjs';
-import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
+// import cloneDeep from 'lodash.clonedeep';
+import logger from '../../utils/logger.js';
+// import { traverse, traverseNodesFast } from '../../traverse/traverse.js';
 
 /**
  * @desc:
@@ -16,7 +16,7 @@ import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
 export default {
   VariableDeclarationStatement: {
-    enter(node, state) {
+    enter(node: any, state: any) {
       // we only care about statements if they contain a secret declaration
       // a VariableDeclarationStatement which holds a VariableDeclaration has one only one declaration
       if (node.declarations[0].nodeType !== 'VariableDeclaration') return;
@@ -39,7 +39,7 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(node, state) {
+    enter(node: any, state: any) {
       // for each decorator we have to re-add...
       for (const toRedecorate of state) {
         // skip if the decorator is not secret (can't be a variable dec) or if its already been added
@@ -54,12 +54,10 @@ export default {
         }
       }
     },
-
-    exit(path) {},
   },
 
   Identifier: {
-    enter(node, state) {
+    enter(node: any, state: any) {
       // see varDec for comments
       for (const toRedecorate of state) {
         if (toRedecorate.added || toRedecorate.decorator === 'secret') continue;
@@ -82,7 +80,5 @@ export default {
         }
       }
     },
-
-    exit(path) {},
   },
 };

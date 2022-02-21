@@ -4,13 +4,13 @@ import fs from 'fs';
 import {
   traverseNodesFast,
   traverseNodesFastVisitor,
-} from '../traverse/traverse.mjs';
-import logger from '../utils/logger.mjs';
-import { SyntaxTypeError, SyntaxError } from '../error/errors.mjs';
-import explode from '../transformers/visitors/explode.mjs';
-import redecorateVisitor from '../transformers/visitors/redecorateVisitor.mjs';
+} from '../traverse/traverse.js';
+import logger from '../utils/logger.js';
+import { SyntaxTypeError, SyntaxError } from '../error/errors.js';
+import explode from '../transformers/visitors/explode.js';
+import redecorateVisitor from '../transformers/visitors/redecorateVisitor.js';
 
-const errorCheckVisitor = (thisPath, decoratorObj) => {
+const errorCheckVisitor = (thisPath: any, decoratorObj: any) => {
   // extract the char number
   const srcStart = thisPath.node.src.split(':')[0];
   // if it matches the one we removed, throw error
@@ -24,7 +24,7 @@ const errorCheckVisitor = (thisPath, decoratorObj) => {
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 
-function transformation1(oldAST, toRedecorate) {
+function transformation1(oldAST: any, toRedecorate: any) {
   // HACK: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
   traverseNodesFastVisitor(oldAST, explode(redecorateVisitor), toRedecorate);
 
@@ -42,7 +42,7 @@ function transformation1(oldAST, toRedecorate) {
 }
 
 // A transformer function which will accept an ast.
-export default function redecorate(ast, toRedecorate, options) {
+export default function redecorate(ast: any, toRedecorate: any, options: any) {
   logger.verbose(`Creating decorated ast... `);
   const newAST = transformation1(ast, toRedecorate);
 

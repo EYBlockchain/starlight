@@ -34,7 +34,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Lazy syntax: if multiple nodeTypes share the same `enter` & `exit`
  * functions, then you can write `'NodeType1|NodeType2': { enter(), exit() }`
  */
-function explode(visitor) {
+function explode(visitor: any): any {
   if (visitor._exploded) return visitor;
   visitor._exploded = true;
 

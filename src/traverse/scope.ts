@@ -32,7 +32,6 @@ import NodePath from './NodePath.js';
 import { Binding, VariableBinding } from './Binding.js';
 import { State } from './traverse.js'
 import {
-  Indicator,
   ContractDefinitionIndicator,
   FunctionDefinitionIndicator,
   StateVariableIndicator,
@@ -601,8 +600,8 @@ export class Scope {
    * @returns {Indicator Object || null}
    */
   getIndicatorByName(name: string): any | null {
-    let indicator: Indicator;
-    const indicators: Indicator[] = Object.values(this.indicators);
+    let indicator: StateVariableIndicator;
+    const indicators: StateVariableIndicator[] = Object.values(this.indicators);
     for (indicator of indicators) {
       if (indicator.name === name) return indicator;
     }
