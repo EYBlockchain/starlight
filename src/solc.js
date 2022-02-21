@@ -1,8 +1,8 @@
 import solc from 'solc';
 import fs from 'fs';
 import path from 'path';
-import logger from './utils/logger.mjs';
-import { FilingError } from './error/errors.mjs';
+import logger from './utils/logger.js';
+import { FilingError } from './error/errors.js';
 // import config from 'config';
 // import { releases } from './solc-versions-list';
 

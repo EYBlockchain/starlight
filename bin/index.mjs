@@ -6,8 +6,8 @@ import commander from 'commander';
 
 import mkdirs from './mkdirs.mjs';
 import zappify from '../built/index.js';
-import logger from '../src/utils/logger.mjs';
-import { FilingError } from '../src/error/errors.mjs';
+import logger from '../built/utils/logger.js';
+import { FilingError } from '../built/error/errors.js';
 
 const { Command } = commander;
 const program = new Command();
