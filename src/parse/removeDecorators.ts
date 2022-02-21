@@ -6,6 +6,7 @@ Reads an input file line by line and passes each line for further processing
 
 import fs from 'fs';
 import path from 'path';
+import { ToRedecorate } from './redecorate.js'
 import backtrace from '../error/backtrace.js';
 import logger from '../utils/logger.js';
 
@@ -21,7 +22,8 @@ function tidy(_line: string): string {
   return line;
 }
 
-function inComment(file: any, char: number): boolean {
+function inComment(file: string, char: number): boolean {
+  // our 'file' is actually a very long string here!
   // are we in a comment?
   let aComment = false;
   let aMultiComment = false;
@@ -53,7 +55,7 @@ function inComment(file: any, char: number): boolean {
  */
 function removeDecorators(options: any): {
     deDecoratedFile: string;
-    toRedecorate: any[];
+    toRedecorate: ToRedecorate[];
 } {
   logger.verbose(`Parsing decorated file ${options.inputFilePath}... `);
   const decLines = fs

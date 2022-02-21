@@ -84,8 +84,6 @@ export class Binding {
       node,
     } = path;
 
-    if (path.isNodeType('VariableDeclaration')) throw new TypeError(`Binding for ${name} must be a VariableBinding`);
-
     this.kind = nodeType; // QUESTION: why not just call it nodeType? In future will 'kind' differ from nodeType?
     this.id = id;
     this.name = name;

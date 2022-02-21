@@ -30,7 +30,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import logger from '../utils/logger.js';
 import NodePath from './NodePath.js';
 import { Binding, VariableBinding } from './Binding.js';
-import { State } from './traverse.js'
 import {
   ContractDefinitionIndicator,
   FunctionDefinitionIndicator,
@@ -247,10 +246,10 @@ export class Scope {
         }
 
         // msg.sender might not be a 'top level' argument of the require statement - perhaps it's nested within some more complex expression. We look for it in order to throw an 'unsupported' error. TODO: figure out how to infer restrictions in this case.
-        const findMsgSenderVisitor = (path: NodePath, state: State) => {
+        const findMsgSenderVisitor = (path: NodePath, state: any) => {
           state.found ||= path.isMsgSender();
         };
-        const subState: State = {};
+        let subState = {found: false};
         path.traversePathsFast(findMsgSenderVisitor, subState);
         if (subState.found)
           throw new Error(
@@ -349,7 +348,7 @@ export class Scope {
   /**
    * @returns {Binding || null} - the binding of the VariableDeclaration being referred-to by the input referencingNode. The returned binding might be in a higher-level (ancestor) scope.
    */
-  getReferencedBinding(referencingNode: any): Binding | null {
+  getReferencedBinding(referencingNode: any): VariableBinding | null {
     const node = referencingNode;
     const id = this.path.getReferencedDeclarationId(node);
     if (!id) return null; // if the node doesn't refer to another variable

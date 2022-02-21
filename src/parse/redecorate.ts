@@ -10,6 +10,12 @@ import { SyntaxTypeError, SyntaxError } from '../error/errors.js';
 import explode from '../transformers/visitors/explode.js';
 import redecorateVisitor from '../transformers/visitors/redecorateVisitor.js';
 
+export class ToRedecorate {
+  decorator: string;
+  charStart: number;
+  added?: boolean;
+}
+
 const errorCheckVisitor = (thisPath: any, decoratorObj: any) => {
   // extract the char number
   const srcStart = thisPath.node.src.split(':')[0];
@@ -24,7 +30,7 @@ const errorCheckVisitor = (thisPath: any, decoratorObj: any) => {
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 
-function transformation1(oldAST: any, toRedecorate: any) {
+function transformation1(oldAST: any, toRedecorate: ToRedecorate[]) {
   // HACK: ordinarily the 2nd parameter `state` is an object. toRedecorate is an array (special kind of object). Not ideal, but it works.
   traverseNodesFastVisitor(oldAST, explode(redecorateVisitor), toRedecorate);
 

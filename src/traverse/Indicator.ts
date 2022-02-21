@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file, no-param-reassign */
 
 import NodePath from './NodePath.js';
-import Scope from './scope.js';
+import Scope from './Scope.js';
 import { VariableBinding } from './Binding.js';
 import logger from '../utils/logger.js';
 import backtrace from '../error/backtrace.js';

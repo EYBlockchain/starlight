@@ -1,8 +1,9 @@
 /* eslint-disable no-param-reassign, no-shadow */
 import config from 'config';
-import logger from '../../../utils/logger.mjs';
-import backtrace from '../../../error/backtrace.mjs';
-import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
+import logger from '../../../utils/logger.js';
+import backtrace from '../../../error/backtrace.js';
+import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
+import NodePath from '../../../traverse/NodePath.js';
 
 // when we have an a++ and needs its increment to equal the node rep. 1
 const literalOneNode = {
@@ -12,9 +13,10 @@ const literalOneNode = {
   lValueRequested: false,
   nodeType: 'Literal',
   value: '1',
+  precedingOperator: '',
 };
 
-const collectIncrements = (increments, incrementedIdentifier) => {
+const collectIncrements = (increments: any, incrementedIdentifier: any) => {
   const { operands, precedingOperator } = increments;
   const newIncrements = [];
   for (const [index, operand] of operands.entries()) {
@@ -31,12 +33,12 @@ const collectIncrements = (increments, incrementedIdentifier) => {
 
 // marks the parent ExpressionStatement
 const markParentIncrementation = (
-  path,
-  state,
-  isIncremented,
-  isDecremented,
-  incrementedIdentifier = {},
-  increments = [],
+  path: NodePath,
+  state: any,
+  isIncremented: boolean,
+  isDecremented: boolean,
+  incrementedIdentifier?: any,
+  increments?: any,
 ) => {
   incrementedIdentifier = incrementedIdentifier.baseExpression
     ? incrementedIdentifier.baseExpression
@@ -50,14 +52,14 @@ const markParentIncrementation = (
   state.incrementedIdentifier = incrementedIdentifier;
   if (increments.operands)
     increments = collectIncrements(increments, incrementedIdentifier);
-  increments.forEach(inc => {
+  increments.forEach((inc: any) => {
     if (
       inc.precedingOperator === '-' &&
-      !state.decrements.some(existingInc => existingInc.id === inc.id)
+      !state.decrements.some((existingInc: any) => existingInc.id === inc.id)
     ) {
       state.decrements.push(inc);
     } else if (
-      !state.increments.some(existingInc => existingInc.id === inc.id)
+      !state.increments.some((existingInc: any) => existingInc.id === inc.id)
     ) {
       state.increments.push(inc);
     }
@@ -66,17 +68,17 @@ const markParentIncrementation = (
 
 // gets NodePath for the thing being incremented
 // if no incrementation, gets the LHS NodePath so we can mark it as whole
-const getIncrementedPath = (path, state) => {
+const getIncrementedPath = (path: NodePath, state: any) => {
   if (
     !state.incrementedIdentifier &&
     path.isNodeType('Identifier') &&
     !path.isInType('indexExpression')
   ) {
     const lhsAncestor = path.getLhsAncestor();
-    if (lhsAncestor.nodeType === 'IndexAccess') {
+    if (lhsAncestor instanceof NodePath && lhsAncestor.nodeType === 'IndexAccess') {
       // we want the incrementedPath to be the baseExpression if isMapping
       state.incrementedIdentifier ??= lhsAncestor.node?.baseExpression;
-    } else if (lhsAncestor.nodeType === 'Identifier') {
+    } else if (lhsAncestor instanceof NodePath && lhsAncestor.nodeType === 'Identifier') {
       state.incrementedPath = lhsAncestor;
     }
   }
@@ -85,14 +87,14 @@ const getIncrementedPath = (path, state) => {
   state.stopTraversal = !!state.incrementedPath?.node;
 };
 
-const mixedOperatorsWarning = path => {
+const mixedOperatorsWarning = (path: NodePath) => {
   backtrace.getSourceCode(path.node.src);
   logger.warn(
     `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Make sure that incrementing (a = a + ...) always increases the secret state value while decrementing (a = a - ...) decreases it. \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c. Similarly, we assume a = a - b + c is a decrementation, so c - b < a.`,
   );
 };
 
-const binOpToIncrements = (path, state) => {
+const binOpToIncrements = (path: NodePath, state: any) => {
   const parentExpressionStatement = path.getAncestorOfType(
     'ExpressionStatement',
   );
@@ -142,7 +144,7 @@ const binOpToIncrements = (path, state) => {
 
 export default {
   ExpressionStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // starts here - if the path hasn't yet been marked as incremented, we find out if it is
       if (path.isIncremented === undefined) {
         state.unmarkedIncrementation = true;
@@ -151,7 +153,7 @@ export default {
       }
     },
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       // finishes here after looking through the expression
       const { node, scope } = path;
       const { incrementedIdentifier } = state;
@@ -168,11 +170,11 @@ export default {
       expressionNode.isDecremented = isDecremented;
 
       // print if in debug mode
-      if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
+      if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
       logger.debug(`statement is incremented? ${isIncremented}`);
       if (isIncremented && !isDecremented) {
         const incs = [];
-        state.increments.forEach(increment =>
+        state.increments.forEach((increment: any) =>
           incs.push(increment.name || increment.value || increment.nodeType),
         );
         logger.debug(`increments? ${incs}`);
@@ -180,7 +182,7 @@ export default {
       logger.debug(`statement is decremented? ${isDecremented}`);
       if (isDecremented) {
         const decs = [];
-        state.decrements.forEach(decrement =>
+        state.decrements.forEach((decrement: any) =>
           decs.push(decrement.name || decrement.value || decrement.nodeType),
         );
         logger.debug(`decrements? ${decs}`);
@@ -222,7 +224,7 @@ export default {
   },
 
   Assignment: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // here: we check whether the assignment is an incrementation
       if (!state.unmarkedIncrementation) return;
       const { node, scope } = path;
@@ -282,7 +284,7 @@ export default {
   },
 
   UnaryOperation: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // a unary operation (a++, a--) counts as an incrementation by 1
       if (!state.unmarkedIncrementation) return;
       const { node, scope } = path;
@@ -317,7 +319,7 @@ export default {
   },
 
   BinaryOperation: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // a BinaryOperation can tell us if the RHS of an assignment is incremented
       if (!state.unmarkedIncrementation) return;
       const parentExpressionStatement = path.getAncestorOfType(
@@ -332,7 +334,7 @@ export default {
 
       // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a = b + 2a)
       let discoveredLHS = 0;
-      let isIncremented = {};
+      let isIncremented: { incremented: boolean, decremented: boolean };
       if (assignmentOp === '+=' || assignmentOp === '-=')
         isIncremented.incremented = true;
       // Goes through each operand and checks whether it's the lhsNode and whether it's +/- anything

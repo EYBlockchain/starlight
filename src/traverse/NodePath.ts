@@ -30,8 +30,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import {
   traverse,
   traverseNodesFast,
-  traversePathsFast,
-  State
+  traversePathsFast
 } from './traverse.js';
 import logger from '../utils/logger.js';
 import { pathCache } from './cache.js';
@@ -67,6 +66,7 @@ export default class NodePath {
   containsSecret?: boolean;
   containsPublic?: boolean;
   isIncremented?: boolean;
+  incrementedDeclaration?: any;
   isDecremented?: boolean;
   isBurnStatement?: boolean;
   /**
@@ -149,15 +149,15 @@ export default class NodePath {
     }
   }
 
-  traverse(visitor: any, state: State) {
+  traverse(visitor: any, state: any) {
     traverse(this, visitor, state);
   }
 
-  traversePathsFast(enter: Function, state: State) {
+  traversePathsFast(enter: Function, state: any) {
     traversePathsFast(this, enter, state);
   }
 
-  traverseNodesFast(enter: Function, state: State) {
+  traverseNodesFast(enter: Function, state: any) {
     traverseNodesFast(this.node, enter, state);
   }
 
@@ -360,12 +360,12 @@ export default class NodePath {
    */
   getFunctionNames(contractDefinitionNode = this.node): string[] | null {
     if (contractDefinitionNode.nodeType !== 'ContractDefinition') return null;
-    const entryVisitor = (node: any, state: State) => {
+    const entryVisitor = (node: any, state: any) => {
       if (node.nodeType !== 'FunctionDefinition') return;
       state.functionNames.push(node.name);
       state.skipSubNodes = true;
     };
-    const state: State = { functionNames: [], skipSubNodes: false };
+    const state = { functionNames: [], skipSubNodes: false };
     traverseNodesFast(contractDefinitionNode, entryVisitor, state);
     return state.functionNames;
   }
@@ -921,7 +921,7 @@ export default class NodePath {
     if (refId) {
       state[refId] = [];
     } else {
-      const visitor1 = (path: NodePath, state: State) => {
+      const visitor1 = (path: NodePath, state: any) => {
         const refId = path.node.referencedDeclaration;
         if (refId) state[refId] = []; // initialise an array to which we'll push nodes which reference the same referencedDeclaration node.
       };
@@ -932,7 +932,7 @@ export default class NodePath {
     const rootNodePath = this.getAncestorOfType(beneathNodeType);
     if (!rootNodePath) return {};
 
-    const visitor2 = (path: NodePath, state: State) => {
+    const visitor2 = (path: NodePath, state: any) => {
       for (const refId of Object.keys(state)) {
         if (path.node.referencedDeclaration === refId) state[refId].push(path);
       }
@@ -956,7 +956,7 @@ export default class NodePath {
     if (refId && this.containerName === 'leftHandSide') {
       state[refId] = [];
     } else {
-      const visitor1 = (path: NodePath, state: State) => {
+      const visitor1 = (path: NodePath, state: any) => {
         const refId = path.node.referencedDeclaration;
         if (refId && path.containerName === 'leftHandSide') state[refId] = []; // initialise an array to which we'll push nodes which modify the same referencedDeclaration node.
       };
@@ -967,7 +967,7 @@ export default class NodePath {
     const rootNodePath = this.getAncestorOfType(beneathNodeType);
     if (!rootNodePath) return {};
 
-    const visitor2 = (path: NodePath, state: State) => {
+    const visitor2 = (path: NodePath, state: any) => {
       for (const refId of Object.keys(state)) {
         if (
           path.node.referencedDeclaration === refId &&
