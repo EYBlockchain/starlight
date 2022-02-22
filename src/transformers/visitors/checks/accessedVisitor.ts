@@ -1,9 +1,9 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 import config from 'config';
-import logger from '../../../utils/logger.mjs';
-import backtrace from '../../../error/backtrace.mjs';
-import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
-
+import logger from '../../../utils/logger.js';
+import backtrace from '../../../error/backtrace.js';
+import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
+import NodePath from '../../../traverse/NodePath.js';
 /**
  * @desc:
  * Visitor checks whether a secret state is 'accessed'.
@@ -13,7 +13,7 @@ import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
 
 export default {
   ExpressionStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       if (
         path.isIncremented &&
         path.scope.getReferencedBinding({
@@ -25,14 +25,14 @@ export default {
         state.incrementedDeclaration = path.incrementedDeclaration;
       }
     },
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       state.inIncrementation = false;
       state.incrementedDeclaration = null;
     },
   },
 
   Identifier: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // Here, if secret:
       // 1) Check if in a 'RHS' container
       // 2) Check if NOT incrementing or WHOLE
@@ -120,7 +120,7 @@ export default {
               node,
             );
           }
-        } else if (rightAncestor.parent.nodeType === 'IndexAccess') {
+        } else if (rightAncestor instanceof NodePath && rightAncestor.parent.nodeType === 'IndexAccess') {
           // we still want to check params used as mapping keys here
           if (!referencedBinding.stateVariable) return;
           // TODO: consider errors for when we access a secret state to use it as a mappingKey
@@ -161,6 +161,6 @@ export default {
       }
     },
 
-    exit(path, state) {},
+    exit(path: NodePath, state: any) {},
   },
 };
