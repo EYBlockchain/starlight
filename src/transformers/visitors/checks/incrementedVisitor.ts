@@ -50,9 +50,9 @@ const markParentIncrementation = (
   parent.node.expression.incrementedDeclaration = parent.incrementedDeclaration;
   state.unmarkedIncrementation = false;
   state.incrementedIdentifier = incrementedIdentifier;
-  if (increments.operands)
+  if (increments?.operands)
     increments = collectIncrements(increments, incrementedIdentifier);
-  increments.forEach((inc: any) => {
+  increments?.forEach((inc: any) => {
     if (
       inc.precedingOperator === '-' &&
       !state.decrements.some((existingInc: any) => existingInc.id === inc.id)

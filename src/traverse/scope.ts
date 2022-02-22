@@ -29,13 +29,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import logger from '../utils/logger.js';
 import NodePath from './NodePath.js';
+import MappingKey from './MappingKey.js';
 import { Binding, VariableBinding } from './Binding.js';
 import {
   ContractDefinitionIndicator,
   FunctionDefinitionIndicator,
   StateVariableIndicator,
-  LocalVariableIndicator,
-  MappingKey
+  LocalVariableIndicator
 } from './Indicator.js';
 import { scopeCache } from './cache.js';
 import { TODOError } from '../error/errors.js';

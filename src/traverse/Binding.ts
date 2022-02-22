@@ -4,6 +4,7 @@ import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError, TODOError } from '../error/errors.js';
 import backtrace from '../error/backtrace.js';
 import NodePath from './NodePath.js';
+import MappingKey from './MappingKey.js';
 import { bindingCache } from './cache.js';
 
 export class Binding {
@@ -168,7 +169,9 @@ export class VariableBinding extends Binding {
       node,
     } = path;
 
-    if (!path.isNodeType('VariableDeclaration')) throw new TypeError(`Binding for ${name} cannot be a VariableBinding`);
+    if (!path.isNodeType('VariableDeclaration') && !path.getAncestorOfType('IndexAccess')) {
+      throw new TypeError(`Binding for ${name} cannot be a VariableBinding`);
+    }
 
     this.stateVariable = node.stateVariable;
 
@@ -220,7 +223,7 @@ export class VariableBinding extends Binding {
 
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
   // @param referencingPath = NodePath of baseExpression
-  addMappingKey(referencingPath: NodePath): MappingKeyBinding {
+  addMappingKey(referencingPath: NodePath): MappingKey {
     const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
@@ -238,7 +241,7 @@ export class VariableBinding extends Binding {
     // add this mappingKey if it hasn't yet been added:
     const mappingKeyExists = !!this.mappingKeys[keyName];
     if (!mappingKeyExists)
-      this.mappingKeys[keyName] = new MappingKeyBinding(this, keyPath);
+      this.mappingKeys[keyName] = new MappingKey(this, keyPath);
 
     return this.mappingKeys[keyName];
   }
@@ -322,7 +325,7 @@ export class VariableBinding extends Binding {
     )
       this.onChainKeyRegistry = true;
     if (this.isMapping) {
-      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
         mappingKey.updateOwnership(ownerNode);
       }
@@ -386,7 +389,7 @@ export class VariableBinding extends Binding {
   prelimTraversalErrorChecks() {
     if (!this.isSecret) return;
     if (this.isMapping) {
-      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
         mappingKey.prelimTraversalErrorChecks();
       }
@@ -442,7 +445,7 @@ export class VariableBinding extends Binding {
     if (!this.stateVariable) return;
     if (this.node.isConstant || this.node.constant) return;
     if (this.isMapping) {
-      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
         if (mappingKey.isMsgSender || mappingKey.referencedKeyIsParam) {
           if (mappingKey.isNullifiable()) return;
@@ -524,7 +527,7 @@ export class VariableBinding extends Binding {
     // mapping[msg.sender] is owned by msg.sender => look for mapping[0]
     if (ownerNode.name === 'msg' && ownerNode.mappingOwnershipType === 'key') {
       // the owner is represented by the mapping key - we look through the keys for 0
-      const mappingKeys: [string, MappingKeyBinding][] = Object.entries(this.mappingKeys);
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
         // TODO we can't yet set mappingKeys to anything not an identifier
         const keyNode = mappingKey.keyPath.node;
@@ -596,151 +599,5 @@ export class VariableBinding extends Binding {
       this.isBurned = true;
       // TODO more useful indicators here
     }
-  }
-}
-
-// add common functions as methods to the classes:
-// Object.assign(MappingKey.prototype, commonFunctions);
-//
-// Object.assign(Binding.prototype, commonFunctions);
-
-/**
- * If a Binding/StateVarIndicator represents a mapping, it will contain a MappingKey class.
- */
-export class MappingKeyBinding extends VariableBinding {
-
-  container: any;
-  referencedKeyId: number;
-  referencedKeyNodeType: string;
-  referencedKeyIsParam: boolean; // is a function parameter - used for finding owner
-  keyPath: NodePath;
-  isMsgSender: boolean; // used for finding owner
-  /**
-   * A mappingKey can be contained within a binding or an indicator class.
-   * @param { Binding || StateVarIndicator } container
-   * @param { NodePath } keyPath
-   */
-  constructor(container: any, keyPath: NodePath) {
-    super(keyPath);
-    this.container = container;
-
-    // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
-    this.referencedKeyId = keyPath.node.referencedDeclaration;
-    this.referencedKeyNodeType = keyPath.isMsg()
-      ? 'msg.sender'
-      : keyPath.getReferencedNode().nodeType;
-    this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
-    this.keyPath = keyPath;
-    this.isMsgSender = keyPath.isMsg(); // used for finding owner
-    this.isSecret = container.isSecret;
-
-    this.name = this.isMsgSender
-      ? `${container.name}[msg.sender]`
-      : `${container.name}[${keyPath.node.name}]`;
-
-    this.isReferenced = false;
-    this.referenceCount = 0;
-    this.referencingPaths = []; // paths which reference this variable
-
-    this.isModified = false;
-    this.modificationCount = 0;
-    this.modifyingPaths = []; // paths which reference this variable
-
-    this.isNullified = false;
-    this.nullificationCount = 0;
-    this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
-  }
-
-  updateProperties(path: NodePath) {
-    this.addReferencingPath(path);
-    this.isUnknown ??= path.node.isUnknown;
-    this.isKnown ??= path.node.isKnown;
-    this.reinitialisable ??= path.node.reinitialisable;
-    if (path.isModification()) this.addModifyingPath(path);
-
-    this.container.updateProperties(path);
-  }
-
-  updateOwnership(ownerNode: any) {
-    if (this.isOwned && this.owner.name !== ownerNode.name) {
-      throw new ZKPError(
-        `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
-        this.node,
-      );
-    }
-    this.owner = ownerNode;
-    this.isOwned = true;
-    if (this.owner.typeDescriptions.typeIdentifier.includes('address'))
-      this.onChainKeyRegistry = true;
-  }
-
-  // TODO: move into commonFunctions (because it's the same function as included in the Binding class)
-  addReferencingPath(path: NodePath) {
-    this.isReferenced = true;
-    ++this.referenceCount;
-    if (!this.referencingPaths.some(p => p.node.id === path.node.id))
-      this.referencingPaths.push(path);
-  }
-
-  addModifyingPath(path: NodePath) {
-    this.isModified = true;
-    ++this.modificationCount;
-    if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
-      this.modifyingPaths.push(path);
-    }
-  }
-
-  addNullifyingPath(path: NodePath) {
-    this.isNullified = true;
-    ++this.nullificationCount;
-    this.nullifyingPaths.push(path);
-  }
-
-  prelimTraversalErrorChecks() {
-    // warning: state is clearly whole, don't need known decorator
-    if (this.isKnown && this.isWhole) {
-      logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to: ${this.isWholeReason}`,
-      );
-      this.isWholeReason?.forEach(reason => {
-        console.log(reason[0]);
-      });
-    }
-    // error: no known/unknown mark on any incrementation(s)
-    if (
-      this.isIncremented &&
-      (this.isWhole ?? true) &&
-      !this.isDecremented &&
-      !this.isKnown &&
-      !this.isUnknown
-    ) {
-      throw new SyntaxUsageError(
-        `Secret state '${this.name}' incremented, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
-        this.container.node,
-      );
-    }
-    // error: conflicting unknown/whole state
-    if (this.isUnknown && this.isWhole) {
-      console.log('err 2');
-      throw new SyntaxUsageError(
-        `Can't mark a whole state as 'unknown'`,
-        this.node,
-        this.isWholeReason,
-      );
-    }
-    // error: conflicting whole/partitioned state
-    if (this.isWhole && this.isPartitioned) {
-      throw new SyntaxUsageError(
-        `State cannot be whole and partitioned. The following reasons conflict.`,
-        this.node,
-        [...this.isWholeReason, ...this.isPartitionedReason],
-      );
-    }
-  }
-
-  isNullifiable() {
-    // in some cases, it's fine for certain mapping keys to not be nullifiable, as a parameter key means that any key is nullifiable
-    // so, we don't throw an error here
-    return !!this.isNullified;
   }
 }
