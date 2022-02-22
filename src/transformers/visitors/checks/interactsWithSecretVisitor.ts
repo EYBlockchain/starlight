@@ -1,8 +1,10 @@
 /* eslint-disable no-param-reassign, no-unused-vars */
 
-import logger from '../../../utils/logger.mjs';
-import backtrace from '../../../error/backtrace.mjs';
-import { SyntaxUsageError } from '../../../error/errors.mjs';
+import logger from '../../../utils/logger.js';
+import backtrace from '../../../error/backtrace.js';
+import { SyntaxUsageError } from '../../../error/errors.js';
+import NodePath from '../../../traverse/NodePath.js';
+
 
 /**
  * @desc:
@@ -12,7 +14,7 @@ import { SyntaxUsageError } from '../../../error/errors.mjs';
 
 // below visitors will only work with a small subtree - passing a whole AST is not advised!
 // useful for subtrees like ExpressionStatements
-const markSubtreeInteractsWithSecret = (thisPath, thisState) => {
+const markSubtreeInteractsWithSecret = (thisPath: any, thisState: any) => {
   const { node, scope } = thisPath;
   if (!['Identifier', 'VariableDeclarationStatement'].includes(node.nodeType))
     return;
@@ -24,7 +26,7 @@ const markSubtreeInteractsWithSecret = (thisPath, thisState) => {
     indicator.addSecretInteractingPath(thisState.secretPath);
 };
 
-const markSubtreeInteractsWithPublic = (thisPath, thisState) => {
+const markSubtreeInteractsWithPublic = (thisPath: any, thisState: any) => {
   const { node, scope } = thisPath;
   if (!['Identifier', 'VariableDeclarationStatement'].includes(node.nodeType))
     return;
@@ -38,15 +40,15 @@ const markSubtreeInteractsWithPublic = (thisPath, thisState) => {
 
 export default {
   FunctionDefinition: {
-    enter(path, state) {},
+    enter(path: NodePath, state: any) {},
 
-    exit(path, state) {},
+    exit(path: NodePath, state: any) {},
   },
 
   FunctionCall: {
-    enter(path, state) {},
+    enter(path: NodePath, state: any) {},
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       const { node, scope } = path;
       const expressionPath =
         path.getAncestorOfType('ExpressionStatement') || path.parentPath;
@@ -61,9 +63,9 @@ export default {
   },
 
   Identifier: {
-    enter(path, state) {},
+    enter(path: NodePath, state: any) {},
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       const { node, scope } = path;
       if (!scope.getReferencedBinding(node)) return;
       const expressionPath =
