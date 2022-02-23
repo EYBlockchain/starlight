@@ -1,14 +1,8 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
-import cloneDeep from 'lodash.clonedeep';
 import logger from '../../../utils/logger.js';
 import { TODOError } from '../../../error/errors.js';
-import {
-  traverse,
-  traverseNodesFast,
-  traversePathsFast,
-} from '../../../traverse/traverse.js';
-import { VariableBinding } from 'src/traverse/Binding.js';
+import { VariableBinding } from '../../../traverse/Binding.js';
 import NodePath from '../../../traverse/NodePath.js';
 
 

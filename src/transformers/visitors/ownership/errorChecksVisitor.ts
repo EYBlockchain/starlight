@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 // no-unused-vars <-- to reinstate eventually
 
-import { VariableBinding } from 'src/traverse/Binding.js';
+import { VariableBinding } from '../../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../../traverse/Indicator.js';
 import NodePath from '../../../traverse/NodePath.js';
 
