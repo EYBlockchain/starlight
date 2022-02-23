@@ -13,23 +13,27 @@ export default class MappingKey {
   path: NodePath;
   isSecret: boolean;
 
-  isReferenced: boolean = false;
+  isReferenced?: boolean;
   referenceCount: number = 0;
   referencingPaths: NodePath[] = [];
 
   isModified: boolean;
   modificationCount: number = 0;
   modifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which modify this variable
+
+  isAccessed?: boolean;
+  accessedPaths: NodePath[] = [];
   // NOTE: modification _is_ nullification, unless it's a partitioned state being incremented (in which case there's no nullifier). So nullifyingPaths is a subset of modifyingPaths.
 
-  isNullified: boolean = false;
+  isNullified?: boolean;
   nullificationCount: number = 0;
   nullifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which nullify this binding
-  isBurned: boolean = false;
+  isBurned?: boolean;
   burningPaths: NodePath[];
 
   container: any;
   referencedKeyId: number;
+  referencedKeyName: string;
   referencedKeyNodeType: string;
   referencedKeyIsParam: boolean; // is a function parameter - used for finding owner
   keyPath: NodePath;
@@ -40,32 +44,37 @@ export default class MappingKey {
   interactsWithSecret: boolean;
   newCommitmentsRequired: boolean;
 
-  isMapping: boolean = false;
+  isMapping: boolean = true;
   mappingKeys: any = {}; // object of objects, indexed by node id.
 
-  isKnown: boolean = false;
-  isUnknown: boolean = false;
-  isIncremented: boolean = false;
+  isKnown?:boolean;
+  isUnknown?:boolean;
+  isIncremented?:boolean;
   increments: any[] = [];
   decrements: any[] = [];
-  isDecremented: boolean = false;
-  isWhole: boolean = false;
-  isAccessed: boolean = false;
-  isPartitioned: boolean = false;
+  isDecremented?: boolean;
+  isWhole?: boolean;
+
+  isPartitioned?: boolean;
   isWholeReason?: {}[];
   isPartitionedReason?: {}[];
 
   reinitialisable?: boolean;
-  isOwned: boolean = false;
+  isOwned?: boolean;
   mappingOwnershipType?: string;
   onChainKeyRegistry?: boolean;
   owner: any = null; // object of objects, indexed by node id.
 
   constructor(container: any, keyPath: NodePath) {
     this.container = container;
+    this.id = container.id;
+    this.node = container.node;
 
     // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
     this.referencedKeyId = keyPath.node.referencedDeclaration;
+    this.referencedKeyName = keyPath.isMsg()
+      ? 'msg'
+      : keyPath.getReferencedNode().name;
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
       : keyPath.getReferencedNode().nodeType;
