@@ -1,7 +1,10 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 // no-unused-vars <-- to reinstate eventually
 
-import { StateVariableIndicator } from '../../../traverse/Indicator.mjs';
+import { VariableBinding } from 'src/traverse/Binding.js';
+import { StateVariableIndicator } from '../../../traverse/Indicator.js';
+import NodePath from '../../../traverse/NodePath.js';
+
 
 /**
  * @desc:
@@ -12,7 +15,7 @@ import { StateVariableIndicator } from '../../../traverse/Indicator.mjs';
 
 export default {
   FunctionDefinition: {
-    exit(path) {
+    exit(path: NodePath) {
       const { scope } = path;
       for (const [, indicator] of Object.entries(scope.indicators)) {
         // we may have a function indicator property we'd like to skip
@@ -27,15 +30,17 @@ export default {
   },
 
   ContractDefinition: {
-    exit(path) {
+    exit(path: NodePath) {
       // bindings are contract scope level, so we track global states here
       const { scope } = path;
       for (const [, binding] of Object.entries(scope.bindings)) {
+        if (!(binding instanceof VariableBinding)) continue;
         binding.prelimTraversalErrorChecks();
       }
       // if no errors, we then check everything is nullifiable
       for (const [, binding] of Object.entries(scope.bindings)) {
         // TODO find contract level binding and call once
+        if (!(binding instanceof VariableBinding)) continue;
         binding.isNullifiable();
       }
     },

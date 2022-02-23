@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 
-import logger from '../../../utils/logger.mjs';
-import { ZKPError, TODOError } from '../../../error/errors.mjs';
+import { TODOError, ZKPError } from '../../../error/errors.js';
+import NodePath from '../../../traverse/NodePath.js';
 
 /**
  * @desc:
@@ -10,7 +10,7 @@ import { ZKPError, TODOError } from '../../../error/errors.mjs';
 
 export default {
   FunctionCall: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, scope } = path;
 
       // TODO: `require` statements are 'FunctionCall' nodes, and they should be able to have secret states as arguments

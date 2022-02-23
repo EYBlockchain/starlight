@@ -1,8 +1,10 @@
 /* eslint-disable no-param-reassign, no-unused-vars */
 
-import logger from '../../../utils/logger.mjs';
-import backtrace from '../../../error/backtrace.mjs';
-import { SyntaxUsageError } from '../../../error/errors.mjs';
+import config from 'config';
+import logger from '../../../utils/logger.js';
+import backtrace from '../../../error/backtrace.js';
+import { SyntaxUsageError } from '../../../error/errors.js';
+import NodePath from '../../../traverse/NodePath.js';
 
 /**
  * @desc:
@@ -12,7 +14,7 @@ import { SyntaxUsageError } from '../../../error/errors.mjs';
 
 export default {
   IndexAccess: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       // node.isUnknown gets added during the 'parsing' stage
       // @Node new properties
@@ -21,13 +23,13 @@ export default {
       if (node.reinitialisable) node.baseExpression.reinitialisable = true;
     },
 
-    exit(node, parent) {},
+    exit(path: NodePath, parent: any) {},
   },
 
   Identifier: {
-    enter(path, state) {},
+    enter(path: NodePath, state: any) {},
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       const { node, scope, parent } = path;
       if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
