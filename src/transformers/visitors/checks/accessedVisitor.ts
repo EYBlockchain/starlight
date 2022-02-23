@@ -4,6 +4,7 @@ import logger from '../../../utils/logger.js';
 import backtrace from '../../../error/backtrace.js';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
 import NodePath from '../../../traverse/NodePath.js';
+import { StateVariableIndicator } from '../../../traverse/Indicator.js';
 /**
  * @desc:
  * Visitor checks whether a secret state is 'accessed'.
@@ -25,7 +26,7 @@ export default {
         state.incrementedDeclaration = path.incrementedDeclaration;
       }
     },
-    exit(path: NodePath, state: any) {
+    exit(state: any) {
       state.inIncrementation = false;
       state.incrementedDeclaration = null;
     },
@@ -129,9 +130,10 @@ export default {
         // end of error checking
         // ------
         logger.debug(`Found an accessed secret state ${node.name}`);
-        if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
+        if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
         scope.getReferencedBinding(node)?.updateAccessed(path);
-        scope.getReferencedIndicator(node)?.updateAccessed(path);
+        const indicator = scope.getReferencedIndicator(node);
+        if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
         // @Node new property
         node.accessedSecretState = true;
         return;
@@ -157,10 +159,11 @@ export default {
           `Found an accessed secret state ${node.name} (accessed in ${leftAncestor.parent.operator} operation)`,
         );
         scope.getReferencedBinding(node)?.updateAccessed(path);
-        scope.getReferencedIndicator(node)?.updateAccessed(path);
+        const indicator = scope.getReferencedIndicator(node);
+        if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
       }
     },
 
-    exit(path: NodePath, state: any) {},
+    exit() {},
   },
 };

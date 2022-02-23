@@ -3,7 +3,7 @@ import redecorate from './parse/redecorate.js';
 import compile from './solc.js';
 
 import checks from './transformers/checks.js';
-// import ownership from './transformers/ownership.mjs';
+import ownership from './transformers/ownership.js';
 // import toCircuit from './transformers/toCircuit.mjs';
 // import toContract from './transformers/toContract.mjs';
 // import toOrchestration from './transformers/toOrchestration.mjs';
@@ -23,8 +23,8 @@ const zappify = (options: any) => {
   const zolAST = redecorate(solAST, toRedecorate, options);
 
   let path = checks(zolAST);
-  //
-  // path = ownership(path, options);
+
+  path = ownership(path);
   //
   // if (options.isTest && options.testType === 'prelim') return path;
   //
