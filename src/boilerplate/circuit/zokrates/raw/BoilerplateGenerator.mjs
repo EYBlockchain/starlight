@@ -40,7 +40,7 @@ class BoilerplateGenerator {
     importStatements() {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
-        `from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256`,
+        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768`,
       ];
     },
@@ -137,7 +137,7 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/pack/bool/pack256.zok" import main as bool_256_to_field`,
-        `from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256`,
+        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot`,
       ];
     },
@@ -192,7 +192,7 @@ class BoilerplateGenerator {
     importStatements() {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
-        `from "utils/pack/u32/unpack256ToBits.zok" import main as u32_8_to_bool_256`,
+        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
         `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,

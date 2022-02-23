@@ -7,6 +7,10 @@ contract MyContract {
   secret mapping(address => uint256) private a;
   address public admin;
 
+  constructor () {
+    admin = msg.sender;
+  }
+
   function increment(secret uint256 param2) public {
     unknown a[msg.sender] += param2;
   }

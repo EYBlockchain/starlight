@@ -23,15 +23,18 @@ export const generateProof = async (functionName, inputs) => {
       data: {
         folderpath,
         inputs,
-        backend: 'libsnark',
-        provingScheme: 'gm17',
+        backend: 'bellman',
+        provingScheme: 'g16',
       },
       timeout: 3600000, // 1 hour
     };
 
     const response = await axios(axiosConfig);
 
-    logger.http('Zokrates responded to the generateProof request', response.data);
+    logger.http(
+      'Zokrates responded to the generateProof request',
+      response.data,
+    );
     return response.data;
   } catch (error) {
     throw new Error(error);
@@ -45,7 +48,7 @@ export const generateProof = async (functionName, inputs) => {
  * @return {Object} vk
  */
 export const generateKeys = async circuitFileName => {
-  const filepath = `./${circuitFileName}`;
+  const filepath = `${circuitFileName}`;
   // logger.info('Generating Keys for Circuit: ', circuitFileName);
   try {
     const axiosConfig = {
@@ -57,15 +60,17 @@ export const generateKeys = async circuitFileName => {
       data: {
         filepath,
         curve: 'bn128',
-        provingScheme: 'gm17',
-        backend: 'libsnark',
+        provingScheme: 'g16',
+        backend: 'bellman',
       },
       timeout: 3600000, // 1 hour
     };
     const response = await axios(axiosConfig);
     const { vk } = response.data;
     delete vk.raw;
-    logger.info(`ZoKrates Microservice generated Keys for circuit: ${circuitFileName}`);
+    logger.info(
+      `ZoKrates Microservice generated Keys for circuit: ${circuitFileName}`,
+    );
     console.log(vk);
 
     return vk;

@@ -28,7 +28,7 @@ export async function getContractAddress(contractName) {
   let errorCount = 0;
 
   if (!deployedAddress) {
-    while (errorCount < 20) {
+    while (errorCount < 25) {
       try {
         const contractInterface = await getContractInterface(contractName);
         const networkId = await web3.eth.net.getId();
@@ -45,8 +45,8 @@ export async function getContractAddress(contractName) {
         if (deployedAddress) break;
       } catch (err) {
         errorCount++;
-        logger.warn('Unable to get a contract address - will try again in 3 seconds');
-        await new Promise(resolve => setTimeout(() => resolve(), 3000));
+        logger.warn('Unable to get a contract address - will try again in 5 seconds');
+        await new Promise(resolve => setTimeout(() => resolve(), 5000));
       }
     }
   }

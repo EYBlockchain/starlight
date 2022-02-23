@@ -17,6 +17,6 @@ docker-compose -f docker-compose.zapp.yml run zapp node /app/orchestration/commo
 
 printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml run zokrates node /app/write-vk.mjs -i ''
+docker-compose -f docker-compose.zapp.yml run zapp node /app/write-vk.mjs -i ''
 
 printf "\n${GREEN}*** Finished! ***${NC}\n"

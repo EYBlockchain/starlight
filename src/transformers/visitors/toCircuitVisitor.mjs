@@ -128,11 +128,27 @@ const visitor = {
 
   VariableDeclarationStatement: {
     enter(path, state) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       if (node.stateVariable) {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
         );
+      }
+
+      let declarationType;
+      if (path.isLocalStackVariableDeclaration())
+        declarationType = 'localStack';
+      if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
+
+      if (
+        declarationType === 'localStack' &&
+        !node.isSecret &&
+        !scope.getReferencedIndicator(node).interactsWithSecret
+      ) {
+        // we don't want to add non secret local vars
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+        return;
       }
 
       const newNode = buildNode('VariableDeclarationStatement');
@@ -317,6 +333,7 @@ const visitor = {
         // we don't want to add non secret local vars
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
+        return;
       }
 
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.

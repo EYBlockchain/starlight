@@ -36,9 +36,9 @@ def main(private field[32] siblingPath, private field leafValue, private field l
     field nodeValue = leafValue
     field[2] preimage = [0, 0]
 
-    for field i in 0..32 do
-        field j = 31 - i // iterator for the siblingPath
-        field k = 127 - i // iterator for the leafIndexBits
+    for u32 i in 0..32 do
+        u32 j = 31 - i // iterator for the siblingPath
+        u32 k = 127 - i // iterator for the leafIndexBits
         preimage = orderLeftRight(leafIndexBits[k], nodeValue, siblingPath[j])
         nodeValue = mimc2(preimage)
     endfor
