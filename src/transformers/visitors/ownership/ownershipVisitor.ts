@@ -1,13 +1,16 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
 import cloneDeep from 'lodash.clonedeep';
-import logger from '../../../utils/logger.mjs';
-import { TODOError } from '../../../error/errors.mjs';
+import logger from '../../../utils/logger.js';
+import { TODOError } from '../../../error/errors.js';
 import {
   traverse,
   traverseNodesFast,
   traversePathsFast,
-} from '../../../traverse/traverse.mjs';
+} from '../../../traverse/traverse.js';
+import { VariableBinding } from 'src/traverse/Binding.js';
+import NodePath from '../../../traverse/NodePath.js';
+
 
 /**
  * @desc:
@@ -18,10 +21,11 @@ import {
 
 export default {
   ContractDefinition: {
-    enter(path, state) {},
+    enter(path: NodePath, state: any) {},
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       for (const [, binding] of Object.entries(path.scope.bindings)) {
+        if (!(binding instanceof VariableBinding)) continue;
         if (!binding.isSecret) continue;
         binding.inferOwnership();
         if (binding.owner) binding.ownerSetToZeroCheck();
@@ -47,7 +51,7 @@ export default {
   },
 
   FunctionCall: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // Here: look for requirements on msg.sender
       const { node, scope } = path;
       if (!path.isRequireStatement()) return;

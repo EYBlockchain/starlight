@@ -1,9 +1,8 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 import config from 'config';
-import logger from '../../../utils/logger.js';
-import backtrace from '../../../error/backtrace.js';
-import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
-import NodePath from '../../../traverse/NodePath.js';
+import logger from '../../../utils/logger.mjs';
+import backtrace from '../../../error/backtrace.mjs';
+import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
 
 /**
  * @desc:
@@ -14,7 +13,7 @@ import NodePath from '../../../traverse/NodePath.js';
 
 export default {
   ExpressionStatement: {
-    enter(path: NodePath, state: any) {
+    enter(path, state) {
       if (
         path.isIncremented &&
         path.scope.getReferencedBinding({
@@ -26,14 +25,14 @@ export default {
         state.incrementedDeclaration = path.incrementedDeclaration;
       }
     },
-    exit(path: NodePath, state: any) {
+    exit(path, state) {
       state.inIncrementation = false;
       state.incrementedDeclaration = null;
     },
   },
 
   Identifier: {
-    enter(path: NodePath, state: any) {
+    enter(path, state) {
       // Here, if secret:
       // 1) Check if in a 'RHS' container
       // 2) Check if NOT incrementing or WHOLE
@@ -121,7 +120,7 @@ export default {
               node,
             );
           }
-        } else if (rightAncestor instanceof NodePath && rightAncestor.parent.nodeType === 'IndexAccess') {
+        } else if (rightAncestor.parent.nodeType === 'IndexAccess') {
           // we still want to check params used as mapping keys here
           if (!referencedBinding.stateVariable) return;
           // TODO: consider errors for when we access a secret state to use it as a mappingKey
@@ -130,7 +129,7 @@ export default {
         // end of error checking
         // ------
         logger.debug(`Found an accessed secret state ${node.name}`);
-        if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
+        if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
         scope.getReferencedBinding(node)?.updateAccessed(path);
         scope.getReferencedIndicator(node)?.updateAccessed(path);
         // @Node new property
@@ -162,6 +161,6 @@ export default {
       }
     },
 
-    exit(path: NodePath, state: any) {},
+    exit(path, state) {},
   },
 };
