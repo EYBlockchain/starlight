@@ -17,16 +17,23 @@ export const boilerplateContractsDir = './contracts'; // relative to process.cwd
  * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
+
+interface localFile
+{
+  filepath: string,
+  file: string,
+}
+
 const collectImportFiles = (
   file: string,
-  contextDirPath :string = boilerplateContractsDir,
+  contextDirPath: string = boilerplateContractsDir,
   fileName: string = '',
 ) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(line => line.startsWith('import'));
-  let localFiles = [];
+  let localFiles: localFile[] = [];
   // parse for imports of local files:
-  const localFilePaths = ImportStatementList.reduce((acc, line) => {
+  const localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
     let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
     importFilePath += path.extname(importFilePath) === '.sol' ? '' : '.sol'; // ensure file extension.
     if (importFilePath) acc.push(importFilePath);
@@ -133,7 +140,7 @@ function codeGenerator(node: any) {
       // TODO: an InheritanceSpecifier is a nodeType in itself, so should be recursed into as its own 'case' in this 'switch' statement.
       const inheritanceSpecifiers = node.baseContracts
         ? ` is ${node.baseContracts
-            .reduce((acc, cur) => {
+            .reduce((acc: string[], cur: any) => {
               if (cur.nodeType === 'InheritanceSpecifier') {
                 acc.push(cur.baseName.name);
               }
@@ -164,7 +171,7 @@ function codeGenerator(node: any) {
 
     case 'VariableDeclaration': {
       if (node.isSecret) return '';
-      let { typeString } = node.typeDescriptions;
+      let typeString: string = node.typeDescriptions;
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
       const constant = node.constant ? ' constant' : '';
       const visibility = node.visibility ? ` ${node.visibility}` : '';
@@ -185,7 +192,7 @@ function codeGenerator(node: any) {
     }
 
     case 'VariableDeclarationStatement': {
-      const declarations = node.declarations.map(codeGenerator).join(', ');
+      const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
       const initialValue = codeGenerator(node.initialValue);
       return `
@@ -193,9 +200,9 @@ function codeGenerator(node: any) {
     }
 
     case 'Block': {
-      const preStatements = node.preStatements.flatMap(codeGenerator);
-      const statements = node.statements.flatMap(codeGenerator);
-      const postStatements = node.postStatements.flatMap(codeGenerator);
+      const preStatements: string = node.preStatements.flatMap(codeGenerator);
+      const statements: string = node.statements.flatMap(codeGenerator);
+      const postStatements: string = node.postStatements.flatMap(codeGenerator);
       return [...preStatements, ...statements, ...postStatements].join('\n');
     }
     case 'ExpressionStatement':

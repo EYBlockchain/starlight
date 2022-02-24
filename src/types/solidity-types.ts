@@ -81,7 +81,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodes,
       };
     }
-    case 'PragmaDirective': {
+    case 'PragmaDirective': { 
       const { literals } = fields;
       return {
         nodeType,

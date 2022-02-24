@@ -9,13 +9,21 @@ import { pathCache } from '../traverse/cache.js'; // done
 import explode from './visitors/explode.js'; // done
 import visitor from './visitors/toContractVisitor.js'; // done
 import codeGenerator from '../codeGenerators/contract/solidity/toContract.js'; //
+import { AST } from 'eslint';
 
 /**
  * Inspired by the Transformer
  * https://github.com/jamiebuilds/the-super-tiny-compiler
+ * 
  */
 
-function transformation1(oldAST: any) {
+ interface AST
+{
+  nodeType: string,
+  files: any[], 
+}
+
+function transformation1(oldAST: object): AST {
   const newAST = {
     nodeType: 'Folder',
     files: [],
@@ -54,7 +62,7 @@ function transformation1(oldAST: any) {
 }
 
 // A transformer function which will accept an ast.
-export default function toContract(ast: any, options: any) {
+export default function toContract(ast: object, options: any) {
   // transpile to a contract AST:
   logger.debug('Transforming the .zol AST to a solidity AST...');
   const newAST = transformation1(ast);

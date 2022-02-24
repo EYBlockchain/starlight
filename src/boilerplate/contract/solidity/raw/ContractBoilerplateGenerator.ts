@@ -8,7 +8,7 @@ class ContractBoilerplateGenerator {
     return this?.[bpCategory]?.[bpSection]?.(otherParams) ?? [];
   }
 
-  static uniqueify(arr: any) {
+  static uniqueify(arr: any[]) {
     return Array.from(new Set(arr));
   }
 

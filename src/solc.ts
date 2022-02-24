@@ -35,7 +35,7 @@ import { FilingError } from './error/errors.js';
 //   return solcVersion;
 // };
 
-function tidy(_line) {
+function tidy(_line: string) {
   // trim whitespace
   let line = _line.replace(/\s+/g, ' ').replace(/^\s/, '');
   // remove comments
@@ -44,13 +44,13 @@ function tidy(_line) {
   return line;
 }
 
-const buildSources = (file, options) => {
+const buildSources = (file: any, options: any) => {
   const sources = {};
   const contractsFiles = [];
   const rl = file.split('\n');
   if (!options.topDir) options.topDir = path.dirname(options.inputFilePath);
 
-  rl.forEach(line => {
+  rl.forEach((line: string) => {
     line = tidy(line);
     if (line && line.startsWith('import')) {
       let relPath = line.substring(8, line.length - 3);
@@ -89,7 +89,8 @@ const buildSources = (file, options) => {
   return sources;
 };
 
-const createSolcInput = solidityFile => {
+
+const createSolcInput = (solidityFile: string): any => {
   const input = {
     language: 'Solidity',
     sources: {
@@ -123,13 +124,13 @@ const createSolcInput = solidityFile => {
  * Shows when there were errors during compilation.
  * @param {Object} compiled - the output object from running solc
  */
-const errorHandling = compiled => {
+const errorHandling = (compiled: any) => {
   if (!compiled) {
     throw new FilingError(`solc didn't create any output...`);
   } else if (compiled.errors) {
     // something went wrong.
     logger.error(`solc errors:`);
-    compiled.errors.map(error => logger.error(error.formattedMessage));
+    compiled.errors.map((error: any) => logger.error(error.formattedMessage));
     throw new FilingError(
       'Solc Compilation Error: Make sure your .sol contract compiles without Zappify decorators.',
     );
@@ -139,7 +140,7 @@ const errorHandling = compiled => {
 /**
   Compiles a solidity file and saves the output(s) (namely the AST) to file.
 */
-const compile = (solidityFile, options) => {
+const compile = (solidityFile: string, options: any) => {
   const sources = buildSources(solidityFile, options);
   const params = createSolcInput(solidityFile);
   const findImports = _import => {
