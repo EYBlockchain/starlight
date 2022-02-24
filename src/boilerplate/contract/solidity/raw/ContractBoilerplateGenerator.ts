@@ -1,19 +1,19 @@
 /* eslint-disable import/no-cycle */
 
-import codeGenerator from '../../../../codeGenerators/contract/solidity/toContract.mjs';
+import codeGenerator from '../../../../codeGenerators/contract/solidity/toContract.js';
 
 class ContractBoilerplateGenerator {
-  generateBoilerplate(node) {
+  generateBoilerplate(node: any) {
     const { bpSection, bpCategory, ...otherParams } = node;
     return this?.[bpCategory]?.[bpSection]?.(otherParams) ?? [];
   }
 
-  static uniqueify(arr) {
+  static uniqueify(arr: any) {
     return Array.from(new Set(arr));
   }
 
   contract = {
-    importStatements({ newCommitmentsRequired }) {
+    importStatements({ newCommitmentsRequired }): string[] {
       return [
         `import "./verify/IVerifier.sol";`,
         ...(newCommitmentsRequired ? [`import "./merkle-tree/MerkleTree.sol";`] : []),
@@ -26,7 +26,7 @@ class ContractBoilerplateGenerator {
       nullifiersRequired,
       newCommitmentsRequired,
       containsAccessedOnlyState,
-    }) {
+    }): string[] {
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
       return [
@@ -64,7 +64,7 @@ class ContractBoilerplateGenerator {
       ];
     },
 
-    constructor() {
+    constructor(): string[] {
       // This boilerplate will only be used if the .zol developer didn't write their own constructor. If they already wrote a constructor, we add this boilerplate in the FunctionBoilerplate generator.
       return [
         `
@@ -80,7 +80,7 @@ class ContractBoilerplateGenerator {
       ];
     },
 
-    registerZKPPublicKey() {
+    registerZKPPublicKey(): string[] {
       return [
         `
         function registerZKPPublicKey(uint256 pk) external {
@@ -95,7 +95,7 @@ class ContractBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
-    }) {
+    }): string[] {
       const verifyFunctionSignature = `
         function verify(
       		uint256[] calldata proof,
@@ -106,7 +106,7 @@ class ContractBoilerplateGenerator {
 
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
-      const verifyStatements = [
+      const verifyStatements: string[] = [
         'uint[] memory customInputs = _inputs.customInputs;', // TODO: do we need an indicator for when there are / aren't custom inputs? At the moment they're always assumed:
 
         ...(newNullifiers ? [`

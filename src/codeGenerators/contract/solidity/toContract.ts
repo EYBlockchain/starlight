@@ -2,8 +2,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import ContractBP from '../../../boilerplate/contract/solidity/raw/ContractBoilerplateGenerator.mjs';
-import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoilerplateGenerator.mjs';
+import ContractBP from '../../../boilerplate/contract/solidity/raw/ContractBoilerplateGenerator.js';
+import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoilerplateGenerator.js';
 
 const contractBP = new ContractBP();
 const functionBP = new FunctionBP();
@@ -18,9 +18,9 @@ export const boilerplateContractsDir = './contracts'; // relative to process.cwd
  * The filepath will be used when saving the file into the new zApp's dir.
  */
 const collectImportFiles = (
-  file,
-  contextDirPath = boilerplateContractsDir,
-  fileName = '',
+  file: string,
+  contextDirPath :string = boilerplateContractsDir,
+  fileName: string = '',
 ) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(line => line.startsWith('import'));
@@ -76,7 +76,7 @@ const collectImportFiles = (
   return uniqueLocalFiles;
 };
 
-function codeGenerator(node) {
+function codeGenerator(node: any) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder': {

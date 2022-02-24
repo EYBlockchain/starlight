@@ -1,21 +1,21 @@
 /* eslint-disable no-param-reassign */
 
-import fs from 'fs';
-import pathjs from 'path';
-import NodePath from '../traverse/NodePath.mjs';
-import logger from '../utils/logger.mjs';
-import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.mjs';
-import { pathCache } from '../traverse/cache.mjs';
-import explode from './visitors/explode.mjs';
-import visitor from './visitors/toContractVisitor.mjs';
-import codeGenerator from '../codeGenerators/contract/solidity/toContract.mjs';
+import fs from 'fs';  //done
+import pathjs from 'path'; // done
+import NodePath from '../traverse/NodePath.js'; //  done
+import logger from '../utils/logger.js'; // done
+import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.js'; // done
+import { pathCache } from '../traverse/cache.js'; // done
+import explode from './visitors/explode.js'; // done
+import visitor from './visitors/toContractVisitor.js'; // done
+import codeGenerator from '../codeGenerators/contract/solidity/toContract.js'; //
 
 /**
  * Inspired by the Transformer
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 
-function transformation1(oldAST) {
+function transformation1(oldAST: any) {
   const newAST = {
     nodeType: 'Folder',
     files: [],
@@ -31,14 +31,16 @@ function transformation1(oldAST) {
   };
 
   const path = new NodePath({
+    parentPath: null,
     parent: dummyParent,
     key: 'ast', // since parent.ast = node
+    index: null,
     container: oldAST,
     node: oldAST,
-  }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
-
+  });
+  
   // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
-  traversePathsFast(path, p => delete p.node._newASTPointer);
+  traversePathsFast(path, (p: typeof path) => delete p.node._newASTPointer);
 
   path.parent._newASTPointer = newAST.files;
 
@@ -52,7 +54,7 @@ function transformation1(oldAST) {
 }
 
 // A transformer function which will accept an ast.
-export default function toContract(ast, options) {
+export default function toContract(ast: any, options: any) {
   // transpile to a contract AST:
   logger.debug('Transforming the .zol AST to a solidity AST...');
   const newAST = transformation1(ast);

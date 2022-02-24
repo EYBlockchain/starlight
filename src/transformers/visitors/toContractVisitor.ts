@@ -1,8 +1,9 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 // import logger from '../../utils/logger.mjs';
-import { buildNode } from '../../types/solidity-types.mjs';
-import { traverseNodesFast } from '../../traverse/traverse.mjs';
+import { buildNode } from '../../types/solidity-types.js';
+import { traverseNodesFast } from '../../traverse/traverse.js';
+import NodePath from '../../traverse/NodePath.js';
 
 /**
  * @desc:
@@ -12,13 +13,13 @@ import { traverseNodesFast } from '../../traverse/traverse.mjs';
 
 export default {
   SourceUnit: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
 
       // Figure out a sensible fileName:
       const contractNames = [];
       const subState = { contractNames, skipSubNodes: false };
-      const getContractNamesVisitor = (node, state) => {
+      const getContractNamesVisitor = (node: any, state: any) => {
         if (node.nodeType === 'ContractDefinition') {
           state.contractNames.push(node.name);
           state.skipSubNodes = true;
@@ -41,13 +42,13 @@ export default {
       node._newASTPointer = parent._newASTPointer;
     },
 
-    exit(path, state) {},
+    exit(path: NodePath, state: any) {},
   },
 
   PragmaDirective: {
     // TODO: We should probably check that the `.zol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { literals } = node;
 
@@ -57,11 +58,11 @@ export default {
       );
       // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
-    exit(path, state) {},
+    exit(path: NodePath, state: any) {},
   },
 
   ImportDirective: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { file } = node;
 
@@ -71,11 +72,11 @@ export default {
       );
       // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
-    exit(path, state) {},
+    exit(path: NodePath, state: any) {},
   },
 
   ContractDefinition: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const isShieldContract = scope.indicators.zkSnarkVerificationRequired;
 
@@ -88,14 +89,14 @@ export default {
       parent._newASTPointer[0].nodes.push(newNode);
     },
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const sourceUnitNodes = parent._newASTPointer[0].nodes;
       const contractNodes = node._newASTPointer;
 
       // base contracts (`contract MyContract is BaseContract`)
       const contractIndex = sourceUnitNodes.findIndex(
-        n => n.name === node.name,
+        (n: any) => n.name === node.name,
       );
       sourceUnitNodes[contractIndex].baseContracts.push(
         buildNode('InheritanceSpecifier', {
@@ -151,7 +152,7 @@ export default {
   },
 
   FunctionDefinition: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
       const newNode = buildNode('FunctionDefinition', {
@@ -164,7 +165,7 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, scope } = path;
 
@@ -191,29 +192,29 @@ export default {
   },
 
   ParameterList: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   Block: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   VariableDeclarationStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       if (node.stateVariable) {
         throw new Error(
@@ -228,11 +229,11 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   BinaryOperation: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { operator } = node;
 
@@ -245,11 +246,11 @@ export default {
       }
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   Assignment: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
 
       const binding = scope.getReferencedBinding(node.leftHandSide); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
@@ -265,11 +266,11 @@ export default {
       parent._newASTPointer.expression = newNode;
     },
 
-    exit(path, state) {},
+    exit(path: NodePath, state: any) {},
   },
 
   ExpressionStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
 
       const newNode = buildNode('ExpressionStatement');
@@ -277,11 +278,11 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(path, parent) {},
+    exit(path: NodePath, parent: any) {},
   },
 
   VariableDeclaration: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
 
       if (path.isFunctionReturnParameterDeclaration())
@@ -315,11 +316,11 @@ export default {
       }
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   ElementaryTypeName: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
 
       // no pointer needed, because this is a leaf, so we won't be recursing any further.
@@ -333,12 +334,12 @@ export default {
       );
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   // e.g. for the statement `address(this)`, `address()` is an ElementaryTypeNameExpression for the ElementaryTypeName `address`
   ElementaryTypeNameExpression: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('ElementaryTypeNameExpression');
 
@@ -346,11 +347,11 @@ export default {
       parent._newASTPointer[path.containerName] = newNode;
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   Identifier: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { name } = node;
 
@@ -364,11 +365,11 @@ export default {
       }
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   Literal: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { value, kind } = node;
 
@@ -388,11 +389,11 @@ export default {
       }
     },
 
-    exit(path) {},
+    exit(path: NodePath) {},
   },
 
   MemberAccess: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
 
       let newNode;
@@ -415,7 +416,7 @@ export default {
   },
 
   IndexAccess: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
 
       const newNode = buildNode('IndexAccess');
@@ -429,7 +430,7 @@ export default {
   },
 
   Mapping: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
 
       const newNode = buildNode('Mapping');
@@ -443,7 +444,7 @@ export default {
   },
 
   FunctionCall: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       let newNode;
 
