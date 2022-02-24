@@ -15,9 +15,8 @@ import NodePath from '../../../traverse/NodePath.js';
 
 export default {
   ContractDefinition: {
-    enter(path: NodePath, state: any) {},
 
-    exit(path: NodePath, state: any) {
+    exit(path: NodePath) {
       for (const [, binding] of Object.entries(path.scope.bindings)) {
         if (!(binding instanceof VariableBinding)) continue;
         if (!binding.isSecret) continue;
@@ -45,7 +44,7 @@ export default {
   },
 
   FunctionCall: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       // Here: look for requirements on msg.sender
       const { node, scope } = path;
       if (!path.isRequireStatement()) return;
