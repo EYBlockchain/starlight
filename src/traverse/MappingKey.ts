@@ -214,19 +214,6 @@ export default class MappingKey {
         console.log(reason[0]);
       });
     }
-    // error: no known/unknown mark on any incrementation(s)
-    if (
-      this.isIncremented &&
-      (this.isWhole ?? true) &&
-      !this.isDecremented &&
-      !this.isKnown &&
-      !this.isUnknown
-    ) {
-      throw new SyntaxUsageError(
-        `Secret state '${this.name}' incremented, but known-ness unknown. Please let us know the known-ness by specifying known/unknown, and if you don't know, let us know.`,
-        this.container.node,
-      );
-    }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
       console.log('err 2');
