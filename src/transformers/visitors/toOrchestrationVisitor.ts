@@ -1,21 +1,22 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
-import logger from '../../utils/logger.mjs';
-import { traverse } from '../../traverse/traverse.mjs';
-import buildNode from '../../types/orchestration-types.mjs';
-import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.mjs';
-import { TODOError } from '../../error/errors.mjs';
+// import logger from '../../utils/logger.js';
+import NodePath from '../../traverse/NodePath.js';
+import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
+import MappingKey from '../../traverse/MappingKey.js'
+import buildNode from '../../types/orchestration-types.js';
+import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
-const interactsWithSecretVisitor = (thisPath, thisState) => {
+const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
     thisState.interactsWithSecret = true;
 };
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
-const collectIncrements = stateVarIndicator => {
+const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
   const incrementsArray = [];
   let incrementsString = '';
   // TODO sometimes decrements are added to .increments
@@ -73,7 +74,7 @@ const collectIncrements = stateVarIndicator => {
 
 export default {
   ContractDefinition: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       node._newASTPointer = parent._newASTPointer;
 
@@ -102,8 +103,8 @@ export default {
       }
     },
 
-    exit(path, state) {
-      const { node, parent, scope } = path;
+    exit(path: NodePath, state: any) {
+      const { node } = path;
       for (const file of node._newASTPointer) {
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           file.constructorParams = state.constructorParams;
@@ -118,8 +119,8 @@ export default {
   },
 
   ImportDirective: {
-    enter(path, state) {
-      const { node, parent } = path;
+    enter(path: NodePath, state: any) {
+      const { node } = path;
       state.contractImports ??= [];
       state.contractImports.push({
         absolutePath: node.absolutePath,
@@ -128,16 +129,13 @@ export default {
       // we assume all import statements come before all functions
     },
 
-    exit(path) {},
   },
 
   FunctionDefinition: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
 
-      let newFile = false;
       if (scope.modifiesSecretState()) {
-        newFile = true;
         const contractName = `${parent.name}Shield`;
         const newNode = buildNode('File', {
           fileName: node.name, // the name of this function
@@ -177,11 +175,11 @@ export default {
       }
     },
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
-      const initialiseOrchestrationBoilerplateNodes = fnIndicator => {
-        const newNodes = {};
+      const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
+        const newNodes: any = {};
         const contractName = `${parent.name}Shield`;
         newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
           contractName,
@@ -212,8 +210,8 @@ export default {
         return newNodes;
       };
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
-      const functionIndicator = scope.indicators;
-      let thisIntegrationTestFunction = {};
+      const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
+      let thisIntegrationTestFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           for (const fn of file.nodes[0].functions) {
@@ -251,9 +249,9 @@ export default {
         // this only includes accessed states which are not modified
         const accessedStateIndicators = [];
 
-        const modifiedStateVariableIndicators = [];
-
-        for (const [id, stateVarIndicator] of Object.entries(
+        const modifiedStateVariableIndicators: any[] = []; // array of StateVarIndicator or MappingKey
+        let stateVarIndicator: StateVariableIndicator | MappingKey;
+        for ([, stateVarIndicator] of Object.entries(
           functionIndicator,
         )) {
           if (stateVarIndicator?.isAccessed && !stateVarIndicator?.isModified) {
@@ -281,9 +279,10 @@ export default {
           }
         }
 
-        for (const stateVarIndicator of modifiedStateVariableIndicators) {
-          let { name, id, isIncremented } = stateVarIndicator;
-          if (stateVarIndicator.isMapping) {
+        for (stateVarIndicator of modifiedStateVariableIndicators) {
+          let id: number | (number | string)[] = stateVarIndicator.id;
+          let { name, isIncremented } = stateVarIndicator;
+          if (stateVarIndicator instanceof MappingKey) {
             id = [id, stateVarIndicator.referencedKeyName];
             name = name
               .replace('[', '_')
@@ -292,7 +291,7 @@ export default {
           }
           let { incrementsArray, incrementsString } = isIncremented
             ? collectIncrements(stateVarIndicator)
-            : { 0: null, 1: null };
+            : { incrementsArray: null, incrementsString: null };
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
@@ -350,7 +349,7 @@ export default {
               indicator: stateVarIndicator,
             });
           }
-          if (stateVarIndicator.newCommitmentRequired) {
+          if (stateVarIndicator.newCommitmentsRequired) {
             newNodes.calculateCommitmentNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateCommitment', {
@@ -370,7 +369,7 @@ export default {
                 !stateVarIndicator.isNullified,
               burnedOnly:
                 stateVarIndicator.isBurned &&
-                !stateVarIndicator.newCommitmentRequired,
+                !stateVarIndicator.newCommitmentsRequired,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
@@ -387,7 +386,7 @@ export default {
               indicator: stateVarIndicator,
               burnedOnly:
                 stateVarIndicator.isBurned &&
-                !stateVarIndicator.newCommitmentRequired,
+                !stateVarIndicator.newCommitmentsRequired,
             });
           }
         }
@@ -512,53 +511,46 @@ export default {
   },
 
   ParameterList: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
     },
-
-    exit(path, state) {
-      const { node, parent } = path;
-    },
   },
 
   Block: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
     },
 
-    exit(path) {},
   },
 
   VariableDeclarationStatement: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
 
-    exit(path) {},
   },
 
   BinaryOperation: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { operator: node.operator });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
 
-    exit(path) {},
   },
 
   Assignment: {
-    enter(path, state) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { operator: node.operator });
       node._newASTPointer = newNode;
@@ -569,23 +561,20 @@ export default {
       }
     },
 
-    exit(path, state) {},
   },
 
   ExpressionStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // We sometimes do need to copy over statements if we need to work out the new commitment value
       // e.g. secret x; x = y +2 => we need to copy over this line to the node file to construct the new commitment
       const { node, parent, scope } = path;
-      let isMapping;
-      const newState = {};
+      const newState: any = {};
       path.traversePathsFast(interactsWithSecretVisitor, newState);
       const { interactsWithSecret } = newState;
       // we mark this to grab anything we need from the db / contract
       state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
       if (node.expression.nodeType === 'Assignment') {
-        const assignmentNode = node.expression;
         let { leftHandSide: lhs } = node.expression;
         const indicator = scope.getReferencedIndicator(lhs, true);
 
@@ -655,7 +644,7 @@ export default {
       }
     },
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       const { node, scope } = path;
       const { leftHandSide: lhs } = node.expression;
       // reset
@@ -669,7 +658,7 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (node.stateVariable) {
         // then the node represents assignment of a state variable - we've handled it.
@@ -682,7 +671,7 @@ export default {
       let interactsWithSecret = false;
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
-        const newState = {};
+        const newState: any = {};
         refPath.parentPath.traversePathsFast(
           interactsWithSecretVisitor,
           newState,
@@ -711,22 +700,20 @@ export default {
       }
     },
 
-    exit(path) {},
   },
 
   ElementaryTypeName: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { name: node.name });
 
       parent._newASTPointer[path.containerName] = newNode;
     },
 
-    exit(path) {},
   },
 
   ElementaryTypeNameExpression: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const newNode = buildNode('ElementaryTypeName', {
         name: node.typeName.name,
@@ -736,11 +723,10 @@ export default {
       state.skipSubNodes = true; // the subnodes are ElementaryTypeNames
     },
 
-    exit(path) {},
   },
 
   Identifier: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const newNode = buildNode(node.nodeType, {
         name: node.name,
@@ -756,7 +742,7 @@ export default {
       if (
         state.interactsWithSecret && // we only need to import something if it interactsWithSecret
         !path.isFunctionParameter() && // we already deal with params
-        indicator.binding?.stateVariable && // we can't import local variables
+        indicator instanceof StateVariableIndicator && // we can't import local variables
         ((indicator.isSecret && !indicator.isModified) || !indicator.isSecret) // we already deal with secret modified states
       ) {
         fnDefNode.node._newASTPointer.parameters.importedStateVariables ??= [];
@@ -767,11 +753,10 @@ export default {
       }
     },
 
-    exit(path) {},
   },
 
   IndexAccess: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const indicator = scope.getReferencedIndicator(node, true);
       const name = indicator.name
@@ -787,17 +772,16 @@ export default {
       parent._newASTPointer[path.containerName] = newNode;
     },
 
-    exit(path) {},
   },
 
   MemberAccess: {
-    enter(path, state) {
-      const { node, parent, scope } = path;
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
       if (path.isMsgSender()) {
         const newNode = buildNode('MsgSender');
         state.skipSubNodes = true;
         parent._newASTPointer[path.containerName] = newNode;
-        const newState = {};
+        const newState: any = {};
         path.parentPath.traversePathsFast(interactsWithSecretVisitor, newState);
         if (newState.interactsWithSecret) state.msgSenderParam = true;
         return;
@@ -807,22 +791,19 @@ export default {
       parent._newASTPointer[path.containerName] = newNode;
     },
 
-    exit(path) {},
   },
 
   Literal: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { value: node.value });
 
       parent._newASTPointer[path.containerName] = newNode;
     },
-
-    exit(path) {},
   },
 
   FunctionCall: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;

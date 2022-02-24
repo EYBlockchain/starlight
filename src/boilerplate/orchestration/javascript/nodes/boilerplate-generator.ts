@@ -1,11 +1,11 @@
 /* eslint-disable consistent-return */
-import buildNode from '../../../../types/orchestration-types.mjs';
+import buildNode from '../../../../types/orchestration-types.js';
 
 /**
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
-export function buildPrivateStateNode(nodeType, fields = {}) {
+export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'InitialisePreimage': {
       const { privateStateName, indicator = {} } = fields;
@@ -166,7 +166,7 @@ export function buildPrivateStateNode(nodeType, fields = {}) {
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
-export function buildBoilerplateNode(nodeType, fields = {}) {
+export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'InitialiseKeys': {
       const { onChainKeyRegistry, contractName } = fields;

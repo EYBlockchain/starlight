@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
-import buildBoilerplate from './boilerplate-generator.mjs';
+import buildBoilerplate from './boilerplate-generator.js';
 
 /**
  * @desc:
@@ -8,7 +8,7 @@ import buildBoilerplate from './boilerplate-generator.mjs';
  * Handles logic for ordering and naming inside a function.mjs file
  */
 
-export const sendTransactionBoilerplate = node => {
+export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
   const output = [];
   output[0] = [];
@@ -19,7 +19,9 @@ export const sendTransactionBoilerplate = node => {
   // output[1] = root(s)
   // output[2] = arr of commitments
   // output[3] = arr of nullifiers to check, not add (for accessed states)
-  for (const [privateStateName, stateNode] of Object.entries(privateStates)) {
+  let privateStateName: string;
+  let stateNode: any;
+  for ([privateStateName, stateNode] of Object.entries(privateStates)) {
     switch (stateNode.isPartitioned) {
       case true:
         switch (stateNode.nullifierRequired) {
@@ -58,10 +60,12 @@ export const sendTransactionBoilerplate = node => {
   return output;
 };
 
-export const generateProofBoilerplate = node => {
+export const generateProofBoilerplate = (node: any) => {
   const output = [];
   const privateStateNames = Object.keys(node.privateStates);
-  for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+  let stateName: string;
+  let stateNode: any;
+  for ([stateName, stateNode] of Object.entries(node.privateStates)) {
     const parameters = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
     const stateVarIdLines =
@@ -71,11 +75,11 @@ export const generateProofBoilerplate = node => {
     // we add any extra params the circuit needs
     node.parameters
       .filter(
-        para =>
+        (para: string) =>
           !privateStateNames.includes(para) &&
           !output.join().includes(`${para}.integer`),
       )
-      .forEach(param => {
+      .forEach((param: string) => {
         parameters.push(`\t${param}.integer,`);
       });
     // then we build boilerplate code per state
@@ -98,7 +102,7 @@ export const generateProofBoilerplate = node => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            stateNode.increment.forEach(inc => {
+            stateNode.increment.forEach((inc: any) => {
               // +inc.name tries to convert into a number -  we don't want to add constants here
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
@@ -120,7 +124,7 @@ export const generateProofBoilerplate = node => {
           case false:
           default:
             // increment
-            stateNode.increment.forEach(inc => {
+            stateNode.increment.forEach((inc: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
                 !parameters.includes(`\t${inc.name}.integer,`) &&
@@ -144,11 +148,11 @@ export const generateProofBoilerplate = node => {
   return output;
 };
 
-export const preimageBoilerPlate = node => {
+export const preimageBoilerPlate = (node: any) => {
   const output = [];
-  for (const [privateStateName, stateNode] of Object.entries(
-    node.privateStates,
-  )) {
+  let privateStateName: string;
+  let stateNode: any;
+  for ([privateStateName, stateNode] of Object.entries(node.privateStates)) {
     const stateVarIds = [];
     const initialiseParams = [];
     const preimageParams = [];
@@ -204,7 +208,7 @@ export const preimageBoilerPlate = node => {
 
     // ownership (PK in commitment)
     const newOwner = stateNode.isOwned ? stateNode.owner : null;
-    let newOwnerStatment;
+    let newOwnerStatment: string;
     switch (newOwner) {
       case null:
         newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
@@ -291,15 +295,17 @@ export const preimageBoilerPlate = node => {
 
 /**
  * Parses the boilerplate import statements, and grabs any common statements.
- * @param {Object} options - must always include stage, for some cases includes other info
- * @return {Object} - common statements
+ * @param node - must always include stage, for some cases includes other info
+ * @return - common statements
  */
 
-export const OrchestrationCodeBoilerPlate = node => {
+export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const lines = [];
   const params = [];
   const states = [];
   const rtnparams = [];
+  let stateName: string;
+  let stateNode: any;
   switch (node.nodeType) {
     case 'Imports':
       return { statements: buildBoilerplate(node.nodeType) };
@@ -313,12 +319,12 @@ export const OrchestrationCodeBoilerPlate = node => {
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
-      node.inputParameters.forEach(param => {
+      node.inputParameters.forEach((param: string) => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
       });
 
-      node.parameters.modifiedStateVariables.forEach(param => {
+      node.parameters.modifiedStateVariables.forEach((param: any) => {
         states.push(`_${param.name}_newOwnerPublicKey = 0`);
         lines.push(
           `\nlet ${param.name}_newOwnerPublicKey = generalise(_${param.name}_newOwnerPublicKey);`,
@@ -326,12 +332,12 @@ export const OrchestrationCodeBoilerPlate = node => {
       });
 
       if (node.decrementsSecretState) {
-        node.decrementedSecretStates.forEach(decrementedState => {
+        node.decrementedSecretStates.forEach((decrementedState: string) => {
           states.push(` _${decrementedState}_0_oldCommitment = 0`);
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
-      node.returnParameters.forEach(param =>
+      node.returnParameters.forEach((param: any) =>
         rtnparams.push(`, ${param.integer}`),
       );
       if (params) params[params.length - 1] += `,`;
@@ -346,8 +352,8 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'InitialisePreimage':
-      for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
-        let mappingKey;
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        let mappingKey: string;
         switch (stateNode.mappingKey) {
           case 'msg':
             // msg.sender => key is _newOwnerPublicKey
@@ -387,7 +393,7 @@ export const OrchestrationCodeBoilerPlate = node => {
 
     case 'ReadPreimage':
       lines[0] = preimageBoilerPlate(node);
-      for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.accessedOnly) {
           params.push(
             `\nconst ${stateName} = generalise(${stateName}_preimage.${stateName});`,
@@ -400,7 +406,7 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'WritePreimage':
-      for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         // TODO commitments with more than one value inside
         switch (stateNode.isPartitioned) {
           case true:
@@ -473,7 +479,7 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'MembershipWitness':
-      for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isPartitioned) {
           lines.push(
             buildBoilerplate(node.nodeType, {
@@ -506,7 +512,7 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'CalculateNullifier':
-      for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isPartitioned) {
           lines.push(
             buildBoilerplate(node.nodeType, {
@@ -528,7 +534,7 @@ export const OrchestrationCodeBoilerPlate = node => {
       };
 
     case 'CalculateCommitment':
-      for (const [stateName, stateNode] of Object.entries(node.privateStates)) {
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         switch (stateNode.isPartitioned) {
           case undefined:
           case false:
@@ -582,7 +588,7 @@ export const OrchestrationCodeBoilerPlate = node => {
 
     case 'SendTransaction':
       if (node.publicInputs[0]) {
-        node.publicInputs.forEach(input => {
+        node.publicInputs.forEach((input: string) => {
           lines.push(`${input}.integer`);
         });
         lines[lines.length - 1] += `, `;
