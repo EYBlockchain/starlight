@@ -1,15 +1,14 @@
 /* eslint-disable no-param-reassign */
 
-import fs from 'fs';  //done
-import pathjs from 'path'; // done
-import NodePath from '../traverse/NodePath.js'; //  done
-import logger from '../utils/logger.js'; // done
-import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.js'; // done
-import { pathCache } from '../traverse/cache.js'; // done
-import explode from './visitors/explode.js'; // done
-import visitor from './visitors/toContractVisitor.js'; // done
-import codeGenerator from '../codeGenerators/contract/solidity/toContract.js'; //
-import { AST } from 'eslint';
+import fs from 'fs';  
+import pathjs from 'path'; 
+import NodePath from '../traverse/NodePath.js';
+import logger from '../utils/logger.js';
+import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.js';
+import { pathCache } from '../traverse/cache.js';
+import explode from './visitors/explode.js';
+import visitor from './visitors/toContractVisitor.js';
+import codeGenerator from '../codeGenerators/contract/solidity/toContract.js';
 
 /**
  * Inspired by the Transformer
@@ -17,13 +16,7 @@ import { AST } from 'eslint';
  * 
  */
 
- interface AST
-{
-  nodeType: string,
-  files: any[], 
-}
-
-function transformation1(oldAST: object): AST {
+function transformation1(oldAST: object): any {
   const newAST = {
     nodeType: 'Folder',
     files: [],

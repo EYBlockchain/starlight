@@ -290,7 +290,7 @@ export default {
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
         );
 
-      let declarationType;
+      let declarationType: string;
       // TODO: `memery` declarations and `returnParameter` declarations
       if (node.stateVariable) {
         declarationType = 'state'; // not really needed, since we already have 'stateVariable'
@@ -396,7 +396,7 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
 
-      let newNode;
+      let newNode: any;
 
       if (path.isMsgSender()) {
         newNode = buildNode('MsgSender');
@@ -446,7 +446,7 @@ export default {
   FunctionCall: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      let newNode;
+      let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 

@@ -87,7 +87,7 @@ function codeGenerator(node: any) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder': {
-      const files = node.files.flatMap(codeGenerator);
+      const files: string = node.files.flatMap(codeGenerator);
       return files;
     }
 
