@@ -164,7 +164,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
   //   oldCommitmentAccessRequired: true,
   //   isNullified: true,
   //   initialisationRequired: true,
-  //   newCommitmentRequired: true,
+  //   newCommitmentsRequired: true,
   // }
 }
 /**

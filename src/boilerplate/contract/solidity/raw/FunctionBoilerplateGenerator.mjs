@@ -35,7 +35,7 @@ class FunctionBoilerplateGenerator {
     parameters({
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
-      newCommitmentRequired: newCommitments,
+      newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
     }) {
       return [
@@ -53,7 +53,7 @@ class FunctionBoilerplateGenerator {
       customInputs, // array of custom input names
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
-      newCommitmentRequired: newCommitments,
+      newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
     }) {
       // prettier-ignore

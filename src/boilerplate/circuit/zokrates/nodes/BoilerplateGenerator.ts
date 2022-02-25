@@ -58,7 +58,7 @@ class BoilerplateGenerator {
   isPartitioned?: boolean;
   isNullified?: boolean;
   isAccessed?: boolean;
-  newCommitmentRequired?: boolean;
+  newCommitmentsRequired?: boolean;
   isMapping: boolean;
   increments: any;
   decrements: any;
@@ -67,7 +67,7 @@ class BoilerplateGenerator {
   mappingName: string;
   indicators: any;
   newCommitmentValue: any;
-  
+
 
   bpSections: string[] = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
 
@@ -95,7 +95,7 @@ class BoilerplateGenerator {
       isPartitioned,
       isNullified,
       isAccessed,
-      newCommitmentRequired,
+      newCommitmentsRequired,
       isMapping,
       increments,
       decrements,
@@ -108,7 +108,7 @@ class BoilerplateGenerator {
       isPartitioned,
       isNullified,
       isAccessed,
-      newCommitmentRequired,
+      newCommitmentsRequired,
       isMapping,
       increments,
       decrements,
@@ -225,7 +225,7 @@ class BoilerplateGenerator {
       addBP('oldCommitmentPreimage');
       addBP('oldCommitmentExistence');
     }
-    if (this.newCommitmentRequired && !this.burnedOnly) {
+    if (this.newCommitmentsRequired && !this.burnedOnly) {
       addBP('newCommitment');
     }
   }

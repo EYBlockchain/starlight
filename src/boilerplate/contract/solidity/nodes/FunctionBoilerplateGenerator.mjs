@@ -66,9 +66,9 @@ class FunctionBoilerplateGenerator {
       const { indicators } = this.scope;
 
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState } = indicators;
-      const newCommitmentRequired = indicators.newCommitmentsRequired;
+      const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentRequired, msgSenderParam, containsAccessedOnlyState };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState };
     },
 
     parameters() {
