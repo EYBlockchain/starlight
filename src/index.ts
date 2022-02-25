@@ -5,7 +5,7 @@ import checks from './transformers/checks.js';
 import logger from './utils/logger.js';
 import NodePath from './traverse/NodePath.js';
 import ownership from './transformers/ownership.js';
-import toCircuit from './transformers/toCircuit.mjs';
+import toCircuit from './transformers/toCircuit.js';
  import toContract from './transformers/toContract.js';
 // import toOrchestration from './transformers/toOrchestration.mjs';
 
