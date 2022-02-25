@@ -1,7 +1,7 @@
 /* eslint-disable consistent-return, no-param-reassign */
 
-import ContractBP from '../boilerplate/contract/solidity/nodes/ContractBoilerplateGenerator.mjs';
-import FunctionBP from '../boilerplate/contract/solidity/nodes/FunctionBoilerplateGenerator.mjs';
+import ContractBP from '../boilerplate/contract/solidity/nodes/ContractBoilerplateGenerator.js';
+import FunctionBP from '../boilerplate/contract/solidity/nodes/FunctionBoilerplateGenerator.js';
 
 export function getVisitableKeys(nodeType: string): string[] {
   switch (nodeType) {
@@ -81,7 +81,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodes,
       };
     }
-    case 'PragmaDirective': {
+    case 'PragmaDirective': { 
       const { literals } = fields;
       return {
         nodeType,

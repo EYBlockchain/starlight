@@ -529,7 +529,7 @@ export class Scope {
           'oldCommitmentAccessRequired',
           'isNullified',
           'initialisationRequired',
-          'newCommitmentRequired',
+          'newCommitmentsRequired',
           'isIncremented',
           'isDecremented',
           'isWhole',

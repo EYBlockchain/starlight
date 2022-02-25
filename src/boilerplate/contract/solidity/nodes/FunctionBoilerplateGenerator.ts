@@ -2,10 +2,13 @@
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
+import Scope from '../../../../traverse/Scope.js';
+
 const bpCache = new WeakMap();
 
 class FunctionBoilerplateGenerator {
-  constructor(scope) {
+  scope: Scope;
+  constructor(scope: Scope) {
     if (bpCache.has(scope)) return bpCache.get(scope);
 
     this.scope = scope;
@@ -13,7 +16,7 @@ class FunctionBoilerplateGenerator {
     bpCache.set(scope, this);
   }
 
-  getBoilerplate = section => {
+  getBoilerplate = (section: string) => {
     const bp = [];
     const categories = this.categorySelector();
     categories.forEach(category => {
@@ -35,7 +38,7 @@ class FunctionBoilerplateGenerator {
     return ['customFunction'];
   };
 
-  generateNode = (bpCategory, bpSection, extraParams) => {
+  generateNode = (bpCategory: string, bpSection: string, extraParams?: any) => {
     return {
       nodeType: 'FunctionBoilerplate',
       bpSection,
@@ -66,9 +69,9 @@ class FunctionBoilerplateGenerator {
       const { indicators } = this.scope;
 
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState } = indicators;
-      const newCommitmentRequired = indicators.newCommitmentsRequired;
+      const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentRequired, msgSenderParam, containsAccessedOnlyState };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState };
     },
 
     parameters() {
@@ -82,7 +85,7 @@ class FunctionBoilerplateGenerator {
       const { path } = scope;
 
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter(p => !p.isSecret).map(p => p.name);
+      const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => p.name);
 
       const functionName = path.node.name;
 

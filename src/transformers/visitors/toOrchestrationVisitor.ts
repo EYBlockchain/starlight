@@ -237,7 +237,7 @@ export default {
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
         // 3 - MembershipWitness - nullifiersRequired - per state
         // 4 - CalculateNullifier - nullifiersRequired - per state
-        // 5 - CalculateCommitment - newCommitmentRequired - per state
+        // 5 - CalculateCommitment - newCommitmentsRequired - per state
         // 6 - GenerateProof - all - per function
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
@@ -479,7 +479,7 @@ export default {
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
         // 3 - MembershipWitness - nullifiersRequired - per state
         // 4 - CalculateNullifier - nullifiersRequired - per state
-        // 5 - CalculateCommitment - newCommitmentRequired - per state
+        // 5 - CalculateCommitment - newCommitmentsRequired - per state
         // 6 - GenerateProof - all - per function
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state

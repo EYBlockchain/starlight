@@ -76,9 +76,9 @@ function transformation1(oldAST: any) {
 }
 
 // A transformer function which will accept an ast.
-export default function checks(ast: any) {
+export default function checks(ast: object) {
   logger.verbose('Performing checks on the zol AST...');
-  const path = transformation1(ast);
+  const path: NodePath = transformation1(ast);
   logger.verbose('Checks complete.');
   return path;
 }

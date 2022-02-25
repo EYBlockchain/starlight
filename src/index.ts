@@ -1,11 +1,12 @@
 import removeDecorators from './parse/removeDecorators.js';
 import redecorate from './parse/redecorate.js';
 import compile from './solc.js';
-
 import checks from './transformers/checks.js';
+import logger from './utils/logger.js';
+import NodePath from './traverse/NodePath.js';
 import ownership from './transformers/ownership.js';
-// import toCircuit from './transformers/toCircuit.mjs';
-// import toContract from './transformers/toContract.mjs';
+import toCircuit from './transformers/toCircuit.js';
+import toContract from './transformers/toContract.js';
 import toOrchestration from './transformers/toOrchestration.js';
 
 const zappify = (options: any) => {
@@ -18,21 +19,21 @@ const zappify = (options: any) => {
 
   const { deDecoratedFile, toRedecorate } = removeDecorators(options);
 
-  const solAST = compile(deDecoratedFile, options);
+  const solAST: object = compile(deDecoratedFile, options);
 
-  const zolAST = redecorate(solAST, toRedecorate, options);
+  const zolAST: object = redecorate(solAST, toRedecorate, options);
 
   let path = checks(zolAST);
 
   path = ownership(path);
   //
-  // if (options.isTest && options.testType === 'prelim') return path;
+  //if (options.isTest && options.testType === 'prelim') return path;
   //
   toOrchestration(path, options);
   //
-  // toCircuit(zolAST, options);
+   toCircuit(zolAST, options);
   //
-  // toContract(zolAST, options);
+   toContract(zolAST, options);
   //
   // if (options.isTest) return path.scope.indicators;
   console.log(path.node.nodes[1]);

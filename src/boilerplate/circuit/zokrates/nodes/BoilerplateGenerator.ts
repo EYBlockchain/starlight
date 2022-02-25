@@ -3,8 +3,11 @@
 
 
 // collects increments and decrements into a string (for new commitment calculation) and array
-// (for collecting zokrates inputs)
-const collectIncrements = stateVarIndicator => {
+// (for collecting zokrates inputs
+import {StateVariableIndicator} from '../../../../traverse/Indicator.js';
+import MappingKey from '../../../../traverse/MappingKey.js';
+
+const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
   const incrementsArray = [];
   let incrementsString = '';
   // TODO sometimes decrements are added to .increments
@@ -49,9 +52,27 @@ const collectIncrements = stateVarIndicator => {
 const bpCache = new WeakMap();
 
 class BoilerplateGenerator {
-  bpSections = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
+  id: number;
+  name: string;
+  isWhole?: boolean;
+  isPartitioned?: boolean;
+  isNullified?: boolean;
+  isAccessed?: boolean;
+  newCommitmentsRequired?: boolean;
+  isMapping: boolean;
+  increments: any;
+  decrements: any;
+  burnedOnly: any;
+  mappingKeyName: string;
+  mappingName: string;
+  indicators: any;
+  newCommitmentValue: any;
 
-  constructor(indicators) {
+
+  bpSections: string[] = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
+
+  constructor(indicators: StateVariableIndicator) {
+
     // Through prior traversals, a BoilerplateGenerator class for this set of indicators might already be stored in memory:
     if (bpCache.has(indicators)) return bpCache.get(indicators);
 
@@ -66,19 +87,20 @@ class BoilerplateGenerator {
   }
 
   // Bump all important indicators (used by this class) to this 'top-level' of `this`.
-  assignIndicators({
-    id,
-    name,
-    isWhole,
-    isPartitioned,
-    isNullified,
-    isAccessed,
-    newCommitmentRequired,
-    isMapping,
-    increments,
-    decrements,
-    burnedOnly,
-  }) {
+  assignIndicators(indicators) {
+    const {
+      id,
+      name,
+      isWhole,
+      isPartitioned,
+      isNullified,
+      isAccessed,
+      newCommitmentsRequired,
+      isMapping,
+      increments,
+      decrements,
+      burnedOnly,
+    } = indicators;
     Object.assign(this, {
       id,
       name,
@@ -86,15 +108,14 @@ class BoilerplateGenerator {
       isPartitioned,
       isNullified,
       isAccessed,
-      newCommitmentRequired,
+      newCommitmentsRequired,
       isMapping,
       increments,
       decrements,
       burnedOnly,
     });
   }
-
-  initialise(indicators) {
+  initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
     if (indicators.isMapping) {
       for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
@@ -111,7 +132,7 @@ class BoilerplateGenerator {
     }
   }
 
-  refresh(mappingKeyName) {
+  refresh(mappingKeyName: string) {
     const mappingKeyIndicator = this.indicators.mappingKeys[mappingKeyName];
     this.assignIndicators(mappingKeyIndicator);
     this.mappingKeyName = mappingKeyName;
@@ -119,7 +140,7 @@ class BoilerplateGenerator {
     this.name = `${this.mappingName}_${mappingKeyName}`;
   }
 
-  generateBoilerplateStatement(bpType, extraParams) {
+  generateBoilerplateStatement(bpType: string, extraParams?: any) {
     if (this.isMapping) {
       // Depending on the mapping key being used in the current statement being considered by the compiler, there will be different indicators. We'll need to 'refresh' the indicators that this class is looking at, each time we encounter a new statement.
       const { mappingKeyName } = extraParams;
@@ -140,7 +161,7 @@ class BoilerplateGenerator {
     };
   }
 
-  _addBP = (bpType, extraParams) => {
+  _addBP = (bpType: string, extraParams?: any) => {
     if (this.isPartitioned) {
       this.newCommitmentValue = collectIncrements(this).incrementsString;
     }
@@ -204,7 +225,7 @@ class BoilerplateGenerator {
       addBP('oldCommitmentPreimage');
       addBP('oldCommitmentExistence');
     }
-    if (this.newCommitmentRequired && !this.burnedOnly) {
+    if (this.newCommitmentsRequired && !this.burnedOnly) {
       addBP('newCommitment');
     }
   }
@@ -217,13 +238,13 @@ class BoilerplateGenerator {
    * of all the 'parts' with indexes.
    */
   // TODO: tidy this up...
-  getIndex({ addendId, subtrahendId }) {
+  getIndex({ addendId, subtrahendId }): number | null {
     if (addendId && subtrahendId)
       throw new Error('Expected only one of addend xor subtrahend; got both.');
     const { increments, decrements } = this;
     const notFoundErr = new Error('Not found in array.');
 
-    let index;
+    let index: number;
 
     if (addendId) {
       index = increments.findIndex(node => addendId === node.id);
@@ -257,7 +278,7 @@ class BoilerplateGenerator {
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
-  incrementation = ({ addendId }) => {
+  incrementation = ( addendId: number) => {
     //const startIndex = this.getIndex({ addendId });
     return {
       // startIndex,
@@ -265,7 +286,7 @@ class BoilerplateGenerator {
     };
   };
 
-  decrementation = ({ subtrahendId }) => {
+  decrementation = ( subtrahendId: number) => {
     //const startIndex = this.getIndex({ subtrahendId });
     return {
       // startIndex,

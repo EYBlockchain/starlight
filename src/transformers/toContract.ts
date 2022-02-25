@@ -1,20 +1,22 @@
 /* eslint-disable no-param-reassign */
 
-import fs from 'fs';
-import pathjs from 'path';
-import NodePath from '../traverse/NodePath.mjs';
-import logger from '../utils/logger.mjs';
-import { traversePathsFast } from '../traverse/traverse.mjs';
-import explode from './visitors/explode.mjs';
-import visitor from './visitors/toCircuitVisitor.mjs';
-import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.mjs';
+import fs from 'fs';  
+import pathjs from 'path'; 
+import NodePath from '../traverse/NodePath.js';
+import logger from '../utils/logger.js';
+import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.js';
+import { pathCache } from '../traverse/cache.js';
+import explode from './visitors/explode.js';
+import visitor from './visitors/toContractVisitor.js';
+import codeGenerator from '../codeGenerators/contract/solidity/toContract.js';
 
 /**
  * Inspired by the Transformer
  * https://github.com/jamiebuilds/the-super-tiny-compiler
+ * 
  */
 
-function transformation1(oldAST) {
+function transformation1(oldAST: object): any {
   const newAST = {
     nodeType: 'Folder',
     files: [],
@@ -30,17 +32,18 @@ function transformation1(oldAST) {
   };
 
   const path = new NodePath({
+    parentPath: null,
     parent: dummyParent,
     key: 'ast', // since parent.ast = node
+    index: null,
     container: oldAST,
     node: oldAST,
-  }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
-
+  });
+  
   // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
-  traversePathsFast(path, p => delete p.node._newASTPointer);
+  traversePathsFast(path, (p: typeof path) => delete p.node._newASTPointer);
 
-  path.parent._newASTPointer = newAST;
-  path.node._newASTPointer = newAST.files;
+  path.parent._newASTPointer = newAST.files;
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
@@ -52,31 +55,28 @@ function transformation1(oldAST) {
 }
 
 // A transformer function which will accept an ast.
-export default function toCircuit(ast, options) {
-  // transpile to a circuit AST:
-  logger.verbose('Transforming the .zol AST to a contract AST...');
+export default function toContract(ast: object, options: any) {
+  // transpile to a contract AST:
+  logger.debug('Transforming the .zol AST to a solidity AST...');
   const newAST = transformation1(ast);
-  const newASTFilePath = pathjs.join(
-    options.circuitsDirPath,
-    `${options.inputFileName}_ast.json`,
-  );
-
+  // logger.debug('new solidity ast:', newAST);
+  const newASTFilePath = pathjs.join(options.contractsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
-  // generate the circuit files from the newly created circuit AST:
-  logger.verbose('Generating files from the .zok AST...');
-  const circuitFileData = codeGenerator(newAST);
+  // generate the contract files from the newly created contract AST:
+  logger.verbose('Generating files from the .sol AST...');
+  const contractFileData = codeGenerator(newAST);
 
-  // save the circuit files to the output dir:
-  logger.verbose(
-    `Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`,
-  );
-  for (const fileObj of circuitFileData) {
+  // logger.debug('contract file data:', contractFileData)
+
+  // save the contract files to the output dir:
+  logger.verbose(`Saving .sol files to the zApp output directory ${options.contractsDirPath}...`);
+  for (const fileObj of contractFileData) {
     const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
     logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, fileObj.file);
   }
-  logger.info('Circuit transpilation complete.');
+  logger.info('Contract transpilation complete.');
 }
