@@ -1,9 +1,9 @@
 /* eslint-disable import/no-cycle, no-nested-ternary */
 import fs from 'fs';
 import path from 'path';
-import BP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.mjs';
+import CircuitBP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.js';
 
-const bp = new BP();
+const Circuitbp = new CircuitBP();
 
 const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
 
@@ -14,12 +14,12 @@ const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TOD
  * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
-const collectImportFiles = (file, contextDirPath = boilerplateCircuitsDir) => {
+const collectImportFiles = (file: string, contextDirPath: string = boilerplateCircuitsDir) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(line => line.startsWith('from'));
   let localFiles = [];
   // parse for imports of local (non-zokrates-stdlib) files:
-  const localFilePaths = ImportStatementList.reduce((acc, line) => {
+  const localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
     let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
     importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
     // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
@@ -56,10 +56,10 @@ const collectImportFiles = (file, contextDirPath = boilerplateCircuitsDir) => {
   return uniqueLocalFiles;
 };
 
-function codeGenerator(node) {
+function codeGenerator(node: any) {
   switch (node.nodeType) {
     case 'Folder':
-      return BP.uniqueify(node.files.flatMap(codeGenerator));
+      return CircuitBP.uniqueify(node.files.flatMap(codeGenerator));
 
     case 'File': {
       const filepath = path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`);
@@ -73,7 +73,7 @@ function codeGenerator(node) {
     }
 
     case 'ImportStatementList':
-      return `${BP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
+      return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
       const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
@@ -87,7 +87,7 @@ function codeGenerator(node) {
     }
 
     case 'ParameterList': {
-      const paramList = BP.uniqueify(node.parameters.flatMap(codeGenerator));
+      const paramList = CircuitBP.uniqueify(node.parameters.flatMap(codeGenerator));
 
       // we also need to identify and remove duplicate params prefixed with conflicting 'public'/'private' keywords (prioritising 'public')
       const slicedParamList = paramList.map(p =>
@@ -132,9 +132,9 @@ function codeGenerator(node) {
       return node.name;
 
     case 'Block': {
-      const preStatements = BP.uniqueify(node.preStatements.flatMap(codeGenerator));
-      const statements = BP.uniqueify(node.statements.flatMap(codeGenerator));
-      const postStatements = BP.uniqueify(node.postStatements.flatMap(codeGenerator));
+      const preStatements = CircuitBP.uniqueify(node.preStatements.flatMap(codeGenerator));
+      const statements = CircuitBP.uniqueify(node.statements.flatMap(codeGenerator));
+      const postStatements = CircuitBP.uniqueify(node.postStatements.flatMap(codeGenerator));
       return [...preStatements, ...statements, ...postStatements].join('\n\n');
     }
 
@@ -171,10 +171,10 @@ function codeGenerator(node) {
         assert(${node.args.flatMap(codeGenerator)})`;
 
     case 'Boilerplate':
-      return bp.generateBoilerplate(node);
+      return Circuitbp.generateBoilerplate(node);
 
     case 'BoilerplateStatement': {
-      return bp.generateBoilerplate(node);
+      return Circuitbp.generateBoilerplate(node);
     }
 
     // And if we haven't recognized the node, we'll throw an error.

@@ -4,7 +4,7 @@ import compile from './solc.js';
 
 import checks from './transformers/checks.js';
 import ownership from './transformers/ownership.js';
-// import toCircuit from './transformers/toCircuit.mjs';
+import toCircuit from './transformers/toCircuit.js';
 // import toContract from './transformers/toContract.mjs';
 // import toOrchestration from './transformers/toOrchestration.mjs';
 
@@ -26,11 +26,11 @@ const zappify = (options: any) => {
 
   path = ownership(path);
   //
-  // if (options.isTest && options.testType === 'prelim') return path;
+  //if (options.isTest && options.testType === 'prelim') return path;
   //
   // toOrchestration(path, options);
   //
-  // toCircuit(zolAST, options);
+   toCircuit(zolAST, options);
   //
   // toContract(zolAST, options);
   //
