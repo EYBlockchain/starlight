@@ -1,10 +1,11 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
-// import logger from '../../utils/logger.mjs';
-import { buildNode } from '../../types/zokrates-types.mjs';
-import { TODOError } from '../../error/errors.mjs';
-import NP from '../../traverse/NodePath.mjs';
+import logger from '../../utils/logger.js';
+import { buildNode } from '../../types/zokrates-types.js';
+import { TODOError } from '../../error/errors.js';
+import NodePath from '../../traverse/NodePath.js';
+import { StateVariableIndicator } from '../../traverse/Indicator.js';
 
 /**
  * @desc:
@@ -16,7 +17,7 @@ import NP from '../../traverse/NodePath.mjs';
 
 const visitor = {
   ContractDefinition: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       node._newASTPointer = parent._newASTPointer;
     },
@@ -24,7 +25,7 @@ const visitor = {
 
   FunctionDefinition: {
     // parent._newASTPointer location is Folder.files[].
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (node.kind === 'constructor') {
         // We currently treat all constructors as publicly executed functions.
@@ -68,7 +69,7 @@ const visitor = {
       }
     },
 
-    exit(path, state) {
+    exit(path: NodePath, state: any) {
       const { node, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
@@ -109,7 +110,7 @@ const visitor = {
   },
 
   ParameterList: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
@@ -118,7 +119,7 @@ const visitor = {
   },
 
   Block: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
@@ -127,7 +128,7 @@ const visitor = {
   },
 
   VariableDeclarationStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (node.stateVariable) {
         throw new Error(
@@ -158,7 +159,7 @@ const visitor = {
   },
 
   BinaryOperation: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { operator } = node;
 
@@ -169,7 +170,7 @@ const visitor = {
   },
 
   Assignment: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { operator } = node;
       const newNode = buildNode('Assignment', { operator });
@@ -177,10 +178,10 @@ const visitor = {
       parent._newASTPointer.expression = newNode;
     },
 
-    exit(path) {
+    exit(path: NodePath) {
       // Convert 'a += b' into 'a = a + b' for all operators, because zokrates doesn't support the shortened syntax.
       // We do this on exit, so that the child nodes of this assignment get transformed into the correct zokrates nodeTypes (otherwise they might get missed).
-      const expandAssignment = node => {
+      const expandAssignment = (node: any) => {
         const { operator, leftHandSide, rightHandSide } = node;
         const expandableOps = ['+=', '-=', '*=', '/=', '%=', '|=', '&=', '^='];
         if (!expandableOps.includes(operator)) return node;
@@ -207,13 +208,13 @@ const visitor = {
   },
 
   ExpressionStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const { expression } = node;
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       const { isIncremented, isDecremented } = expression;
-      let newNode;
+      let newNode: any;
 
       // TODO: tidy this up...
       if (isIncremented || isDecremented) {
@@ -224,7 +225,7 @@ const visitor = {
 
             if (!lhsIndicator.isPartitioned) break;
 
-            const rhsPath = NP.getPath(rhs);
+            const rhsPath = NodePath.getPath(rhs);
             // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
             const tempRHSPath = cloneDeep(rhsPath);
             const tempRHSParent = tempRHSPath.parent;
@@ -277,7 +278,7 @@ const visitor = {
 
       // But, let's check to see if this ExpressionStatement is an Assignment to a state variable. If it's the _first_ such assignment, we'll need to mutate this ExpressionStatement node into a VariableDeclarationStatement.
 
-      let isVarDec = false;
+      let isVarDec: boolean = false;
       if (
         node.expression.nodeType === 'Assignment' &&
         node.expression.operator === '='
@@ -285,7 +286,7 @@ const visitor = {
         const assignmentNode = node.expression;
         const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
         const referencedIndicator = scope.getReferencedIndicator(lhs);
-        if (
+        if (referencedIndicator instanceof StateVariableIndicator &&
           (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
             lhs.id === referencedIndicator.referencingPaths[0].parent.id) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
           !(
@@ -304,7 +305,7 @@ const visitor = {
   },
 
   VariableDeclaration: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (node.stateVariable) {
         // Then the node represents assignment of a state variable.
@@ -319,7 +320,7 @@ const visitor = {
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
         );
 
-      let declarationType;
+      let declarationType: string;
       // TODO: `memery` declarations and `returnParameter` declarations
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
@@ -352,7 +353,7 @@ const visitor = {
   },
 
   ElementaryTypeNameExpression: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
@@ -367,7 +368,7 @@ const visitor = {
   },
 
   ElementaryTypeName: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const supportedTypes = ['uint', 'uint256', 'address', 'bool'];
       if (!supportedTypes.includes(node.name))
@@ -386,7 +387,7 @@ const visitor = {
   },
 
   Identifier: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { name } = node;
 
@@ -398,7 +399,7 @@ const visitor = {
   },
 
   Literal: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { value } = node;
 
@@ -415,7 +416,7 @@ const visitor = {
   },
 
   MemberAccess: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { parent } = path;
 
       if (!path.isMsgSender())
@@ -432,7 +433,7 @@ const visitor = {
   },
 
   IndexAccess: {
-    enter(path) {
+    enter(path: NodePath) {
       const { node, parent } = path;
 
       const newNode = buildNode('IndexAccess');
@@ -442,7 +443,7 @@ const visitor = {
   },
 
   FunctionCall: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { parent, node } = path;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.

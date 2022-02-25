@@ -1,9 +1,9 @@
 /* eslint-disable consistent-return */
-import BP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerator.mjs';
-import { StateVariableIndicator } from '../traverse/Indicator.mjs';
+import CircuitBP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerator.js';
+import { StateVariableIndicator } from '../traverse/Indicator.js';
 
 // TODO: I don't think this is ever used; only the Solidity version ever gets visited. Can probably delete this function...
-export function getVisitableKeys(nodeType) {
+export function getVisitableKeys(nodeType: string): string[] {
   switch (nodeType) {
     case 'Folder':
       return ['files'];
@@ -51,7 +51,7 @@ const generateBoilerplate = ({ indicators, bpSection }) => {
   // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
   for (const indicatorObj of Object.values(indicators)) {
     if (!(indicatorObj instanceof StateVariableIndicator)) continue; // eslint-disable-line no-continue
-    const bp = new BP(indicatorObj);
+    const bp = new CircuitBP(indicatorObj);
     bpArray.push(...bp[bpSection]);
   }
   return bpArray;
@@ -59,7 +59,7 @@ const generateBoilerplate = ({ indicators, bpSection }) => {
 
 const generateBoilerplateStatement = fields => {
   const { bpType, indicators } = fields;
-  const bp = new BP(indicators);
+  const bp = new CircuitBP(indicators);
   return bp.generateBoilerplateStatement(bpType, fields);
 };
 
@@ -67,7 +67,7 @@ const generateBoilerplateStatement = fields => {
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
-export function buildNode(nodeType, fields = {}) {
+export function buildNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'File': {
       const { fileName, nodes = [] } = fields;
