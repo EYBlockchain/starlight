@@ -3,28 +3,28 @@
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 
-import codeGenerator from '../../../../codeGenerators/circuit/zokrates/toCircuit.mjs';
+import codeGenerator from '../../../../codeGenerators/circuit/zokrates/toCircuit.js';
 
 class BoilerplateGenerator {
-  generateBoilerplate(node) {
+  generateBoilerplate(node: any) {
     const { bpSection, bpType, ...otherParams } = node;
     return this?.[bpType]?.[bpSection]?.(otherParams) ?? [];
   }
 
-  static uniqueify(arr) {
+  static uniqueify(arr: any[]) {
     return Array.from(new Set(arr));
   }
 
   PoKoSK = {
-    importStatements() {
+    importStatements(): string[] {
       return [`from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256`];
     },
 
-    parameters({ name: x }) {
+    parameters({ name: x }): string[] {
       return [`private u32[8] ${x}_oldCommitment_owner_secretKey`];
     },
 
-    postStatements({ name: x }) {
+    postStatements({ name: x }): string[] {
       // default nullification lines (for partitioned & whole states)
       return [
         `
@@ -37,7 +37,7 @@ class BoilerplateGenerator {
   };
 
   nullification = {
-    importStatements() {
+    importStatements(): string[] {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
@@ -45,14 +45,14 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x }) {
+    parameters({ name: x }): string[] {
       return [
         `private u32[8] ${x}_oldCommitment_owner_secretKey`,
         `public field ${x}_oldCommitment_nullifier`,
       ];
     },
 
-    preStatements({ name: x, id, isMapping }) {
+    preStatements({ name: x, id, isMapping }): string[] {
       if (isMapping) return [];
       return [
         `
@@ -61,7 +61,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x }) {
+    postStatements({ name: x }): string[] {
       // default nullification lines (for partitioned & whole states)
       const lines = [
         `
@@ -94,14 +94,14 @@ class BoilerplateGenerator {
   };
 
   oldCommitmentPreimage = {
-    importStatements() {
+    importStatements(): string[] {
       return [
         `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
       ];
     },
 
-    parameters({ name: x }) {
+    parameters({ name: x }): string[] {
       // prettier-ignore
       return [
         `private field ${x}_oldCommitment_value`,
@@ -109,7 +109,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    preStatements({ name: x }) {
+    preStatements({ name: x }): string[] {
       // For a state variable, we'll have passed in `${x}_oldCommitment_value` as a parameter. But our AST nodes will be using `${x}`. This line resolves the two.
       return [
         `
@@ -117,7 +117,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x }) {
+    postStatements({ name: x }): string[] {
       return [
         `
         // ${x}_oldCommitment_commitment: preimage check
@@ -133,7 +133,7 @@ class BoilerplateGenerator {
   };
 
   oldCommitmentExistence = {
-    importStatements() {
+    importStatements(): string[] {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/pack/bool/pack256.zok" import main as bool_256_to_field`,
@@ -142,7 +142,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, isWhole, isAccessed, isNullified }) {
+    parameters({ name: x, isWhole, isAccessed, isNullified }): string[] {
       const lines = [
         `public field commitmentRoot`,
         `private field ${x}_oldCommitment_membershipWitness_index`,
@@ -154,7 +154,7 @@ class BoilerplateGenerator {
       return lines;
     },
 
-    postStatements({ name: x, isWhole, isAccessed, isNullified }) {
+    postStatements({ name: x, isWhole, isAccessed, isNullified }): string[] {
       const lines = [
         `
         // ${x}_oldCommitment_commitment: existence check
@@ -189,7 +189,7 @@ class BoilerplateGenerator {
   };
 
   newCommitment = {
-    importStatements() {
+    importStatements(): string[] {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
@@ -199,7 +199,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x }) {
+    parameters({ name: x }): string[] {
       return [
         `private u32[8] ${x}_newCommitment_owner_publicKey`,
         `private u32[8] ${x}_newCommitment_salt`,
@@ -207,7 +207,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    preStatements({ name: x, id, isMapping }) {
+    preStatements({ name: x, id, isMapping }): string[] {
       if (isMapping) return [];
       return [
         `
@@ -216,7 +216,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, isWhole, isNullified, newCommitmentValue }) {
+    postStatements({ name: x, isWhole, isNullified, newCommitmentValue }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       const y = isWhole ? x : newCommitmentValue;
       const lines = [];
@@ -258,20 +258,20 @@ class BoilerplateGenerator {
   };
 
   mapping = {
-    importStatements() {
+    importStatements(): string[] {
       return [
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
         `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
       ];
     },
 
-    parameters({ mappingKeyName: k }) {
+    parameters({ mappingKeyName: k }): string[] {
       return [
         `private field ${k}`, // must be a field, in case we need to do arithmetic on it.
       ];
     },
 
-    preStatements({ id: mappingId, mappingName: m }) {
+    preStatements({ id: mappingId, mappingName: m }): string[] {
       return [
         `
         // We need to hard-code the mappingId's of mappings into the circuit:
@@ -279,7 +279,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, mappingName: m, mappingKeyName: k }) {
+    postStatements({ name: x, mappingName: m, mappingKeyName: k }): string[] {
       // const x = `${m}_${k}`;
       return [
         `
@@ -292,11 +292,11 @@ class BoilerplateGenerator {
   };
 
   incrementation = {
-    importStatements() {
+    importStatements(): string[] {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
 
-    statements({ name: x, startIndex: i, addends }) {
+    statements({ name: x, startIndex: i, addends }): string[] {
       // let y = codeGenerator(addends[0]);
       //
       // for (const addend of addends) {
@@ -317,11 +317,11 @@ class BoilerplateGenerator {
 
   /** Partitioned states need boilerplate for a decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
   decrementation = {
-    importStatements() {
+    importStatements(): string[] {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
 
-    statements({ name: x, startIndex, subtrahend }) {
+    statements({ name: x, startIndex, subtrahend }): string[] {
       // const y = codeGenerator(subtrahend);
       // let i = startIndex;
       // const x0 = `${x}_${i++}`;

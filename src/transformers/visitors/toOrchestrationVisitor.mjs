@@ -239,7 +239,7 @@ export default {
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
         // 3 - MembershipWitness - nullifiersRequired - per state
         // 4 - CalculateNullifier - nullifiersRequired - per state
-        // 5 - CalculateCommitment - newCommitmentRequired - per state
+        // 5 - CalculateCommitment - newCommitmentsRequired - per state
         // 6 - GenerateProof - all - per function
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
@@ -350,7 +350,7 @@ export default {
               indicator: stateVarIndicator,
             });
           }
-          if (stateVarIndicator.newCommitmentRequired) {
+          if (stateVarIndicator.newCommitmentsRequired) {
             newNodes.calculateCommitmentNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateCommitment', {
@@ -370,7 +370,7 @@ export default {
                 !stateVarIndicator.isNullified,
               burnedOnly:
                 stateVarIndicator.isBurned &&
-                !stateVarIndicator.newCommitmentRequired,
+                !stateVarIndicator.newCommitmentsRequired,
               increment: isIncremented ? incrementsArray : undefined,
               indicator: stateVarIndicator,
             });
@@ -387,7 +387,7 @@ export default {
               indicator: stateVarIndicator,
               burnedOnly:
                 stateVarIndicator.isBurned &&
-                !stateVarIndicator.newCommitmentRequired,
+                !stateVarIndicator.newCommitmentsRequired,
             });
           }
         }
@@ -480,7 +480,7 @@ export default {
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
         // 3 - MembershipWitness - nullifiersRequired - per state
         // 4 - CalculateNullifier - nullifiersRequired - per state
-        // 5 - CalculateCommitment - newCommitmentRequired - per state
+        // 5 - CalculateCommitment - newCommitmentsRequired - per state
         // 6 - GenerateProof - all - per function
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
