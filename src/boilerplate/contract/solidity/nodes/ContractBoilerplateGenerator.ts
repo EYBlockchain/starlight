@@ -1,8 +1,11 @@
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
+import Scope from '../../../../traverse/Scope.js';
+
 const bpCache = new WeakMap();
 
 class ContractBoilerplateGenerator {
-  constructor(scope) {
+  scope : Scope;
+  constructor(scope: Scope) {
     if (bpCache.has(scope)) return bpCache.get(scope);
 
     this.scope = scope;
@@ -10,9 +13,9 @@ class ContractBoilerplateGenerator {
     bpCache.set(scope, this);
   }
 
-  getBoilerplate = section => {
+  getBoilerplate = (section: string) => {
     const bp = [];
-    const categories = this.categorySelector();
+    const categories: string[] = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {
         bp.push(this.generateNode(category, section));
@@ -25,7 +28,7 @@ class ContractBoilerplateGenerator {
     return ['contract'];
   };
 
-  generateNode = (bpCategory, bpSection, extraParams) => {
+  generateNode = (bpCategory: string, bpSection: string, extraParams?: any) => {
     return {
       nodeType: 'ContractBoilerplate',
       bpSection,
@@ -40,7 +43,7 @@ class ContractBoilerplateGenerator {
     sectionSelector() {
       const { scope } = this;
       const containsCustomConstructorFunction = scope.someBinding(
-        b => b.kind === 'FunctionDefinition' && b.name === '', // this is the AST pattern for a constructor function
+        (b: any) => b.kind === 'FunctionDefinition' && b.name === '', // this is the AST pattern for a constructor function
       );
 
       return [
@@ -66,9 +69,10 @@ class ContractBoilerplateGenerator {
       } = scope;
 
       const fnDefBindings = scope.filterBindings(
-        b => b.kind === 'FunctionDefinition' && b.name !== '',
+        (b: any) => b.kind === 'FunctionDefinition' && b.name !== '',
       );
-      const functionNames = Object.values(fnDefBindings).map(b => b.name);
+      const functionNames = Object.values(fnDefBindings).map((b: any) => b.name);
+
       return {
         functionNames,
         nullifiersRequired,

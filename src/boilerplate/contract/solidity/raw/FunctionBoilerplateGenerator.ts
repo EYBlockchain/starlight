@@ -1,27 +1,27 @@
 /* eslint-disable import/no-cycle */
 
-import codeGenerator from '../../../../codeGenerators/contract/solidity/toContract.mjs';
+import codeGenerator from '../../../../codeGenerators/contract/solidity/toContract.js';
 
 class FunctionBoilerplateGenerator {
-  generateBoilerplate(node) {
+  generateBoilerplate(node: any) {
     const { bpSection, bpCategory, ...otherParams } = node;
     return this?.[bpCategory]?.[bpSection]?.(otherParams) ?? [];
   }
 
-  static uniqueify(arr) {
+  static uniqueify(arr: any[]) {
     return Array.from(new Set(arr));
   }
 
   // 'constructor' is a reserved keyword in JS
   cnstrctr = {
-    parameters() {
+    parameters(): string[] {
       return [
         `address verifierAddress`, //
         `uint256[][] memory vk`,
       ];
     },
 
-    postStatements() {
+    postStatements(): string[] {
       return [
         `verifier = IVerifier(verifierAddress);
     		  for (uint i = 0; i < vk.length; i++) {
@@ -37,7 +37,7 @@ class FunctionBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
-    }) {
+    }): string[] {
       return [
         ...(newNullifiers ? [`uint256[] calldata newNullifiers`] : []),
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
@@ -55,7 +55,7 @@ class FunctionBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
-    }) {
+    }): string[] {
       // prettier-ignore
       return [
         `
@@ -64,7 +64,7 @@ class FunctionBoilerplateGenerator {
         ...(customInputs?.length ?
           [`
           inputs.customInputs = new uint[](${customInputs.length});
-        	${customInputs.map((name, i) => {
+        	${customInputs.map((name: string, i: number) => {
             if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
             return `inputs.customInputs[${i}] = ${name};`;
           }).join('\n')}`]
