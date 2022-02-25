@@ -1,5 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow */
-
+import NodePath from '../../../traverse/NodePath.js';
+import config from 'config';
 /**
  * @desc:
  * This visitor considers whether a require statement (and the variables it evaluates) should remain publicly visible in the smart contract, or whether the statement should be checked within a circuit, to preserve secrecy of variables.
@@ -7,7 +8,7 @@
 
 export default {
   FunctionCall: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node } = path;
 
       // here: we look for require statements and add new properties to the require node (a FunctionCall node).

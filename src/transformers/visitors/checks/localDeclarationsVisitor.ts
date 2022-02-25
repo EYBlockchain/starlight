@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
-import logger from '../../../utils/logger.mjs';
+import logger from '../../../utils/logger.js';
+import NodePath from '../../../traverse/NodePath.js';
 // import { TODOError } from '../../../error/errors.mjs';
 
 /**
@@ -18,7 +19,7 @@ let warningThrown = false;
 
 const visitor = {
   'VariableDeclarationStatement|VariableDeclaration': {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       const { node } = path;
 
       if (path.getAncestorContainedWithin('body') && !warningThrown) {

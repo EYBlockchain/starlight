@@ -93,7 +93,7 @@ export class Scope {
   scopeName: string;
   scopeType: string;
   path: NodePath;
-  bindings: any;
+  bindings: {[key: string]: Binding};
   referencedBindings: any; // keys are AST node `id`s
   modifiedBindings: any; // keys are AST node `id`s
   nullifiedBindings: any;
@@ -642,7 +642,8 @@ export class Scope {
     const keyBinding: Binding = this.getReferencedBinding(keyIdentifierNode);
     let keyName = keyIdentifierNode.name;
 
-    if (!(keyBinding instanceof VariableBinding)) return;
+
+    if (!(keyBinding instanceof VariableBinding) && !(keyBinding instanceof MappingKey)) return keyName;
 
     // If the value of the mapping key is edited between mapping accesses then the below copes with that.
     // NB: we can't use the modification count because this may refer to a mappingKey before its modified for the nth time

@@ -14,8 +14,8 @@ export class ContractDefinitionIndicator {
   oldCommitmentAccessRequired: boolean;
   nullifiersRequired: boolean;
   newCommitmentsRequired: boolean;
-  initialisationRequired: boolean = false;
-  containsAccessedOnlyState: boolean = false;
+  initialisationRequired?: boolean;
+  containsAccessedOnlyState?: boolean;
   constructor() {
     this.zkSnarkVerificationRequired = false;
     this.oldCommitmentAccessRequired = false;
@@ -68,9 +68,9 @@ export class ContractDefinitionIndicator {
 export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
 
   parentIndicator: ContractDefinitionIndicator;
-  interactsWithSecret: boolean = false;
-  interactsWithPublic: boolean = false;
-  onChainKeyRegistry: boolean = false;
+  interactsWithSecret?: boolean;
+  interactsWithPublic?: boolean;
+  onChainKeyRegistry?: boolean;
 
   constructor(scope: Scope) {
     super();
@@ -179,10 +179,10 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   scope: Scope;
   node: any;
 
-  isReferenced: boolean = false;
+  isReferenced?: boolean;
   referenceCount: number;
   referencingPaths: NodePath[];
-  isModified: boolean = false;
+  isModified?: boolean;
   modificationCount: number;
   modifyingPaths: NodePath[];
   interactsWith: NodePath[];
@@ -270,42 +270,42 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   node: any;
 
   isSecret: boolean;
-  isUnknown: boolean = false;
-  isKnown: boolean = false;
+  isUnknown?: boolean;
+  isKnown?: boolean;
 
   isMapping?: boolean;
-  mappingKeys?: any;
+  mappingKeys?: {[key: string]: MappingKey};
   mappingOwnershipType?: string;
 
-  isReferenced: boolean = false;
+  isReferenced?: boolean;
   referenceCount: number;
   referencingPaths: NodePath[];
-  isModified: boolean = false;
+  isModified?: boolean;
   modificationCount: number;
   modifyingPaths: NodePath[];
-  isNullified: boolean = false;
+  isNullified?: boolean;
   nullificationCount: number;
   nullifyingPaths: NodePath[];
-  isAccessed: boolean = false;
+  isAccessed?: boolean;
   accessedPaths?: NodePath[];
 
-  isIncremented: boolean = false;
+  isIncremented?: boolean;
   increments?: any[];
-  isDecremented: boolean = false;
+  isDecremented?: boolean;
   decrements?: any[];
-  isWhole: boolean = false;
-  isPartitioned: boolean = false;
+  isWhole?: boolean;
+  isPartitioned?: boolean;
 
   isWholeReason?: {}[];
   isPartitionedReason?: {}[];
 
-  isBurned: boolean = false;
+  isBurned?: boolean;
   burningPaths: NodePath[];
-  reinitialisable: boolean = false;
+  reinitialisable?: boolean;
   interactsWith: NodePath[];
   isParam: boolean;
 
-  isOwned: boolean = false;
+  isOwned?: boolean;
   owner?: any;
 
   initialValue?: any;
@@ -350,7 +350,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   // TODO / FIXME - THIS FUNCTION IS CURRENTLY JUST A COPY-PASTE FROM THE BINDING CLASS!
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
-  addMappingKey(referencingPath: NodePath) {
+  addMappingKey(referencingPath: NodePath): MappingKey {
     const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');

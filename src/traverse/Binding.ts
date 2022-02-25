@@ -115,7 +115,7 @@ export class Binding {
   }
 
   isNullifiable() {
-    const bindings: [string, VariableBinding][] = Object.entries(this.path.scope.bindings);
+    const bindings: [string, Binding][] = Object.entries(this.path.scope.bindings);
     for (const [, binding] of bindings) {
       binding.isNullifiable();
     }

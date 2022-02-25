@@ -5,6 +5,11 @@ import backtrace from '../../../error/backtrace.js';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
 import NodePath from '../../../traverse/NodePath.js';
 
+interface IncrementationRecord {
+  incremented: boolean;
+  decremented: boolean;
+}
+
 // when we have an a++ and needs its increment to equal the node rep. 1
 const literalOneNode = {
   isConstant: false,
@@ -334,7 +339,7 @@ export default {
 
       // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a = b + 2a)
       let discoveredLHS = 0;
-      let isIncremented: { incremented: boolean, decremented: boolean };
+      let isIncremented: IncrementationRecord = {incremented: null, decremented: null};
       if (assignmentOp === '+=' || assignmentOp === '-=')
         isIncremented.incremented = true;
       // Goes through each operand and checks whether it's the lhsNode and whether it's +/- anything

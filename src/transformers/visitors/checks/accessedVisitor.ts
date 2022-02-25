@@ -1,9 +1,11 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 import config from 'config';
-import logger from '../../../utils/logger.mjs';
-import backtrace from '../../../error/backtrace.mjs';
-import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
-
+import logger from '../../../utils/logger.js';
+import backtrace from '../../../error/backtrace.js';
+import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
+import NodePath from '../../../traverse/NodePath.js';
+import { StateVariableIndicator } from '../../../traverse/Indicator.js';
+import { VariableBinding } from '../../../traverse/Binding.js';
 /**
  * @desc:
  * Visitor checks whether a secret state is 'accessed'.
@@ -13,7 +15,7 @@ import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
 
 export default {
   ExpressionStatement: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       if (
         path.isIncremented &&
         path.scope.getReferencedBinding({
@@ -25,14 +27,14 @@ export default {
         state.incrementedDeclaration = path.incrementedDeclaration;
       }
     },
-    exit(path, state) {
+    exit(state: any) {
       state.inIncrementation = false;
       state.incrementedDeclaration = null;
     },
   },
 
   Identifier: {
-    enter(path, state) {
+    enter(path: NodePath, state: any) {
       // Here, if secret:
       // 1) Check if in a 'RHS' container
       // 2) Check if NOT incrementing or WHOLE
@@ -60,6 +62,8 @@ export default {
               referencedDeclaration: lhsNode.id,
             })
           : scope.bindings[lhsNode?.id];
+      // to avoid ts complaining about function bindings:
+      if (!(lhsBinding instanceof VariableBinding)) return;
       // Check: is this a nonsecret param being used to edit a secret state?
       if (!referencedBinding?.isSecret) {
         // non-secret...
@@ -120,7 +124,7 @@ export default {
               node,
             );
           }
-        } else if (rightAncestor.parent.nodeType === 'IndexAccess') {
+        } else if (rightAncestor instanceof NodePath && rightAncestor.parent.nodeType === 'IndexAccess') {
           // we still want to check params used as mapping keys here
           if (!referencedBinding.stateVariable) return;
           // TODO: consider errors for when we access a secret state to use it as a mappingKey
@@ -129,9 +133,10 @@ export default {
         // end of error checking
         // ------
         logger.debug(`Found an accessed secret state ${node.name}`);
-        if (config.log_level === 'debug') backtrace.getSourceCode(node.src);
+        if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
         scope.getReferencedBinding(node)?.updateAccessed(path);
-        scope.getReferencedIndicator(node)?.updateAccessed(path);
+        const indicator = scope.getReferencedIndicator(node);
+        if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
         // @Node new property
         node.accessedSecretState = true;
         return;
@@ -157,10 +162,11 @@ export default {
           `Found an accessed secret state ${node.name} (accessed in ${leftAncestor.parent.operator} operation)`,
         );
         scope.getReferencedBinding(node)?.updateAccessed(path);
-        scope.getReferencedIndicator(node)?.updateAccessed(path);
+        const indicator = scope.getReferencedIndicator(node);
+        if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
       }
     },
 
-    exit(path, state) {},
+    exit() {},
   },
 };
