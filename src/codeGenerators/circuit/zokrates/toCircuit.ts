@@ -14,10 +14,14 @@ const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TOD
  * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
+ interface localFiles{
+   filepath: string,
+   file: string
+ }
 const collectImportFiles = (file: string, contextDirPath: string = boilerplateCircuitsDir) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(line => line.startsWith('from'));
-  let localFiles = [];
+  let localFiles: localFiles[] = [];
   // parse for imports of local (non-zokrates-stdlib) files:
   const localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
     let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths

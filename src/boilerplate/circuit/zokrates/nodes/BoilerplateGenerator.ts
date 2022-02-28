@@ -189,7 +189,7 @@ class BoilerplateGenerator {
 
   addBP = {
     // M - HERE main changes
-    partitioned(bpType, extraParams = {}) {
+    partitioned(bpType: string, extraParams?: any) {
       const { increments, decrements, name } = this;
       const j = 0;
       if (
