@@ -1,9 +1,9 @@
 /* eslint-disable import/no-cycle, no-param-reassign */
 import fs from 'fs';
 import path from 'path';
-import buildBoilerplate from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.mjs';
-import codeGenerator from '../nodejs/toOrchestration.mjs';
-import logger from '../../../utils/logger.mjs';
+import buildBoilerplate from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
+import codeGenerator from '../nodejs/toOrchestration.js';
+import logger from '../../../utils/logger.js';
 
 const boilerplateNodeDir = './src/boilerplate/';
 
@@ -18,10 +18,10 @@ const boilerplateNodeDir = './src/boilerplate/';
  * @param {string} file - a stringified file
  * @param {string} contextDirPath - the import statements of the `file` will be
  * relative to this dir. This path itself is relative to process.cwd().
- * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
+ * @returns Object - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
-const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
+const collectImportFiles = (file: string, contextDirPath: string = boilerplateNodeDir) => {
   const lines = file.split('\n');
   const ImportStatementList = lines.filter(
     line =>
@@ -73,18 +73,20 @@ const collectImportFiles = (file, contextDirPath = boilerplateNodeDir) => {
 
 /**
  * Parses the boilerplate import statements, and grabs any common files.
- * @return {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
+ * @return - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
 const editableCommitmentCommonFilesBoilerplate = () => {
-  return collectImportFiles(buildBoilerplate('Imports').join(''));
+  const importBoilerplate = buildBoilerplate('Imports');
+  if (!(importBoilerplate instanceof Array)) return;
+  return collectImportFiles(importBoilerplate.join(''));
 };
 
 /**
- * @param {string} type - a solidity type
- * @returns {string} - a suitable function input of that type
+ * @param type - a solidity type
+ * @returns - a suitable function input of that type
  */
-const testInputsByType = solidityType => {
+const testInputsByType = (solidityType: string) => {
   switch (solidityType) {
     case 'uint':
     case 'uint256':
@@ -104,20 +106,20 @@ const testInputsByType = solidityType => {
 };
 
 /**
- * @param {Object} node - an IntegrationTestBoilerplate node
- * @returns {string} - a custom integration test file to write
+ * @param node - an IntegrationTestBoilerplate node
+ * @returns string - a custom integration test file to write
  */
 
-const prepareIntegrationTest = node => {
+const prepareIntegrationTest = (node: any) => {
   // import generic test skeleton
-  const genericTestFile = buildBoilerplate(node.nodeType);
+  const genericTestFile: any = buildBoilerplate(node.nodeType);
   // replace references to contract and functions with ours
   let outputTestFile = genericTestFile.prefix.replace(
     /CONTRACT_NAME/g,
     node.contractName,
   );
 
-  node.functions.forEach(fn => {
+  node.functions.forEach((fn: any) => {
     let fnboilerplate = genericTestFile.function
       .replace(/CONTRACT_NAME/g, node.contractName)
       .replace(/FUNCTION_NAME/g, fn.name);
@@ -125,7 +127,7 @@ const prepareIntegrationTest = node => {
     // the user may not have enough commitments to do so
     let removeSecondCall = false;
     let removeMerkleTreeTest = false;
-    const paramTypes = fn.parameters.parameters.map(obj => obj.typeName.name);
+    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName.name);
     if (fn.decrementsSecretState) {
       removeSecondCall = true;
     }
@@ -173,11 +175,11 @@ const prepareIntegrationTest = node => {
 };
 
 /**
- * @param {string} file - a generic migrations file skeleton to mutate
- * @param {Object} contextDirPath - a SetupCommonFilesBoilerplate node
+ * @param file - a generic migrations file skeleton to mutate
+ * @param contextDirPath - a SetupCommonFilesBoilerplate node
  */
 
-const prepareMigrationsFile = (file, node) => {
+const prepareMigrationsFile = (file: any, node: any) => {
   // insert filepath and replace with our contract and function names
   file.filepath = `./migrations/2_shield.js`;
   file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
@@ -186,14 +188,14 @@ const prepareMigrationsFile = (file, node) => {
     `'${node.functionNames.join(`', '`)}'`,
   );
   // collect any extra constructor parameters
-  const constructorParams = node.constructorParams?.map(obj => obj.name) || ``;
+  const constructorParams = node.constructorParams?.map((obj: any) => obj.name) || ``;
   // initialise variables
   let customImports = ``;
   let customDeployments = ``;
   let constructorParamsIncludesAddr = false;
   const constructorAddrParams = [];
   // we check weter we must pass in an address to the constructor
-  node.constructorParams?.forEach(arg => {
+  node.constructorParams?.forEach((arg: any) => {
     if (arg.typeName.name === 'address') {
       constructorParamsIncludesAddr = true;
       constructorAddrParams.push(arg.name);
@@ -201,7 +203,7 @@ const prepareMigrationsFile = (file, node) => {
   });
   // we collect any imported contracts which must be migrated
   if (node.contractImports && constructorParamsIncludesAddr) {
-    node.contractImports.forEach(importObj => {
+    node.contractImports.forEach((importObj: any) => {
       // read each imported contract
       const importedContract = fs.readFileSync(
         `./contracts/${importObj.absolutePath}`,
@@ -275,12 +277,12 @@ const prepareMigrationsFile = (file, node) => {
  * The filepath will be used when saving the file into the new zApp's dir.
  */
 
-export default function fileGenerator(node) {
+export default function fileGenerator(node: any): any {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
     case 'Folder': {
       const check = node.files
-        .filter(x => x.nodeType !== 'NonSecretFunction')
+        .filter((x: any) => x.nodeType !== 'NonSecretFunction')
         .flatMap(fileGenerator);
       return check;
     }
