@@ -32,7 +32,7 @@ import {
   traverseNodesFast,
   traversePathsFast,
 } from './traverse.mjs';
-import logger from '../utils/logger.mjs';
+import logger from '../boilerplate/common/logger.mjs';
 import { pathCache } from './cache.mjs';
 import { Scope } from './Scope.mjs';
 

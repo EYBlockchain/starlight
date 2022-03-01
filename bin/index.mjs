@@ -6,7 +6,7 @@ import commander from 'commander';
 
 import mkdirs from './mkdirs.mjs';
 import zappify from '../src/index.mjs';
-import logger from '../src/utils/logger.mjs';
+import logger from '../src/boilerplate/common/logger.mjs';
 import { FilingError } from '../src/error/errors.mjs';
 
 const { Command } = commander;

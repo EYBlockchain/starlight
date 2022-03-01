@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 
-import logger from '../../../utils/logger.mjs';
+import logger from '../../../boilerplate/common/logger.mjs';
 import { ZKPError, TODOError } from '../../../error/errors.mjs';
 
 /**

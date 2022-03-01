@@ -3,7 +3,7 @@
 import fs from 'fs';
 import pathjs from 'path';
 import NodePath from '../traverse/NodePath.mjs';
-import logger from '../utils/logger.mjs';
+import logger from '../boilerplate/common/logger.mjs';
 import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.mjs';
 import { pathCache } from '../traverse/cache.mjs';
 import explode from './visitors/explode.mjs';

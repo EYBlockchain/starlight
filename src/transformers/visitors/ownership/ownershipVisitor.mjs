@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 
 import cloneDeep from 'lodash.clonedeep';
-import logger from '../../../utils/logger.mjs';
+import logger from '../../../boilerplate/common/logger.mjs';
 import { TODOError } from '../../../error/errors.mjs';
 import {
   traverse,

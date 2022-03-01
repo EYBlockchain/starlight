@@ -5,7 +5,7 @@ import {
   traverseNodesFast,
   traverseNodesFastVisitor,
 } from '../traverse/traverse.mjs';
-import logger from '../utils/logger.mjs';
+import logger from '../boilerplate/common/logger.mjs';
 import { SyntaxTypeError, SyntaxError } from '../error/errors.mjs';
 import explode from '../transformers/visitors/explode.mjs';
 import redecorateVisitor from '../transformers/visitors/redecorateVisitor.mjs';

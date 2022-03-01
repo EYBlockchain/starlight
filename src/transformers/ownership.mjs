@@ -1,4 +1,4 @@
-import logger from '../utils/logger.mjs';
+import logger from '../boilerplate/common/logger.mjs';
 import explode from './visitors/explode.mjs';
 import ownershipVisitor from './visitors/ownership/ownershipVisitor.mjs';
 import errorChecksVisitor from './visitors/ownership/errorChecksVisitor.mjs';

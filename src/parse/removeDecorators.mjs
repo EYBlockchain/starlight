@@ -7,7 +7,7 @@ Reads an input file line by line and passes each line for further processing
 import fs from 'fs';
 import path from 'path';
 import backtrace from '../error/backtrace.mjs';
-import logger from '../utils/logger.mjs';
+import logger from '../boilerplate/common/logger.mjs';
 
 // regex: matches all cases of 'known' unless they are directly preceded by 'un'
 const decorators = ['secret', 'unknown', /\w*(?<!un)known/g, 'reinitialisable'];
