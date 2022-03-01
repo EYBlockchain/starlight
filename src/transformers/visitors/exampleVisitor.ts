@@ -6,11 +6,11 @@
  * @deprecated - some of the logic here is now out of date and won't work.
 */
 
-const getNodeLocation = () => {}; // dummy - the original getNodeLocation has been removed.
+const getNodeLocation = (): any => {}; // dummy - the original getNodeLocation has been removed.
 
 export default {
   PragmaDirective: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
       };
@@ -18,11 +18,11 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   ContractDefinition: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         nodes: [],
@@ -31,11 +31,11 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   FunctionDefinition: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         parameters: {},
@@ -57,25 +57,25 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   ParameterList: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         parameters: [],
       };
       node._newASTPointer = newNode.parameters;
-      const { containerName } = getNodeLocation(node, parent);
+      const { containerName } = getNodeLocation();
       parent._newASTPointer[containerName] = newNode;
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   Block: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         statements: [],
@@ -84,11 +84,11 @@ export default {
       parent._newASTPointer.body = newNode;
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   VariableDeclarationStatement: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         declarations: [],
@@ -98,26 +98,26 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   BinaryOperation: {
-    enter(node, parent) {
+    enter(node: any , parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         leftExpression: {},
         rightExpression: {},
       };
       node._newASTPointer = newNode;
-      const { containerName } = getNodeLocation(node, parent);
+      const { containerName } = getNodeLocation();
       parent._newASTPointer[containerName] = newNode;
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   Assignment: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         leftHandSide: {},
@@ -127,11 +127,11 @@ export default {
       parent._newASTPointer.expression = newNode;
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   ExpressionStatement: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         expression: {},
@@ -140,11 +140,11 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   VariableDeclaration: {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
         typeName: {},
@@ -153,25 +153,25 @@ export default {
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
       } else {
-        const { containerName } = getNodeLocation(node, parent);
+        const { containerName } = getNodeLocation();
         parent._newASTPointer[containerName].push(newNode);
       }
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 
   'Identifier|Literal|ElementaryTypeName': {
-    enter(node, parent) {
+    enter(node: any, parent: any) {
       const newNode = {
         nodeType: node.nodeType,
       };
 
       // node._newASTPointer = // no context needed, because this is a leaf, so we won't be recursing any further.
-      const { containerName } = getNodeLocation(node, parent);
+      const { containerName } = getNodeLocation();
       parent._newASTPointer[containerName] = newNode;
     },
 
-    exit(node, parent) {},
+    exit(node: any, parent: any) {},
   },
 };

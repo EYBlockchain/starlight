@@ -2,11 +2,11 @@
 
 import yargs from 'yargs';
 // import fs from 'fs';
-import logger from '../utils/logger.mjs';
-import { readJsonFile } from '../utils/filing.mjs';
-import traverse from '../traverse/traverse.mjs';
-import explode from './visitors/explode.mjs';
-import exampleVisitor from './visitors/exampleVisitor.mjs';
+import logger from '../utils/logger.js';
+import { readJsonFile } from '../utils/filing.js';
+import {traverse} from '../traverse/traverse.js';
+import explode from './visitors/explode.js';
+import exampleVisitor from './visitors/exampleVisitor.js';
 
 /**
  * Inspired by the Transformer
@@ -16,7 +16,7 @@ import exampleVisitor from './visitors/exampleVisitor.mjs';
 const { argv } = yargs.usage('Usage: $0 -i <input file>').demandOption(['i']);
 const ast = readJsonFile(argv.i);
 
-function transformation1(oldAST) {
+function transformation1(oldAST: any): any {
   // We'll create a `newAst` which like our previous AST will have a SourceUnit
   // node at the top.
   const newAST = {
@@ -32,7 +32,7 @@ function transformation1(oldAST) {
   // Just take note that the context is a reference *from* the old ast *to* the
   // new ast.
   oldAST._newASTPointer = newAST.nodes;
-  const dummyParent = {};
+  const dummyParent: any = {};
   dummyParent._newASTPointer = newAST;
 
   // We'll start by calling the traverser function with our ast and a visitor.
