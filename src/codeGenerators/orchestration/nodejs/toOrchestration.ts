@@ -1,6 +1,6 @@
 /* eslint-disable import/no-cycle, no-param-reassign, consistent-return */
-import { OrchestrationCodeBoilerPlate } from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.mjs';
-import fileGenerator from '../files/toOrchestration.mjs';
+import { OrchestrationCodeBoilerPlate } from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
+import fileGenerator from '../files/toOrchestration.js';
 
 /**
  * @desc:
@@ -11,9 +11,9 @@ import fileGenerator from '../files/toOrchestration.mjs';
 
 /**
  * @param {string} name - variable name
- * @returns {string} - code line which will extract an accessed value from the user db
+ * @returns string - code line which will extract an accessed value from the user db
  */
-const getAccessedValue = name => {
+const getAccessedValue = (name: string) => {
   return `\nlet { ${name} } = generalise(${name}_preimage);`;
 };
 
@@ -22,7 +22,7 @@ const getAccessedValue = name => {
  * @returns {Object} - { filepath: 'path/to/file.mjs', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
-function codeGenerator(node, options = {}) {
+export default function codeGenerator(node: any, options: any = {}): any {
   // We do a special kind of traversal which outputs files and their contents
   // Separate files and folders are handled by fileGenerator
   // This codeGenerator deals with complex function code
@@ -42,7 +42,7 @@ function codeGenerator(node, options = {}) {
     }
 
     case 'ParameterList':
-      return node.parameters.map(paramnode => paramnode.name);
+      return node.parameters.map((paramnode: any) => paramnode.name);
 
     case 'VariableDeclaration': {
       return node.name;
@@ -149,5 +149,3 @@ function codeGenerator(node, options = {}) {
       throw new TypeError(node.nodeType);
   }
 }
-
-export { codeGenerator as default };
