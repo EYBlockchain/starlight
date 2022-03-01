@@ -8,8 +8,7 @@ const testReadPath = './src/boilerplate/common/generic-test.mjs';
  * Builds boilerplate for orchestration files
  * Handles no logic - outputs blocks of boilerplate based on logic from ./toOrchestration
  */
-
-export default function buildBoilerplate(nodeType, fields = {}) {
+export default function buildBoilerplate(nodeType: string, fields: any = {}) {
   const {
     stateName,
     contractName,
