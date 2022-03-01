@@ -15,7 +15,7 @@ export class Binding {
   node: any;
   path: NodePath;
 
-  isReferenced: boolean = false;
+  isReferenced?: boolean;
   referenceCount: number = 0;
   referencingPaths: NodePath[] = [];
 
@@ -131,24 +131,24 @@ export class VariableBinding extends Binding {
   modifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which modify this variable
   // NOTE: modification _is_ nullification, unless it's a partitioned state being incremented (in which case there's no nullifier). So nullifyingPaths is a subset of modifyingPaths.
 
-  isNullified: boolean = false;
+  isNullified?: boolean;
   nullificationCount: number = 0;
   nullifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which nullify this binding
 
   increments: any[] = []; // array of nodes
   decrements: any[] = []; // array of nodes
 
-  isMapping: boolean = false;
+  isMapping?: boolean;
   mappingKeys: any = {}; // object of objects, indexed by node id.
 
-  isKnown: boolean = false;
-  isUnknown: boolean = false;
-  isIncremented: boolean = false;
-  isDecremented: boolean = false;
-  isWhole: boolean = false;
-  isAccessed: boolean = false;
-  isPartitioned: boolean = false;
-  isBurned: boolean = false;
+  isKnown?: boolean;
+  isUnknown?: boolean;
+  isIncremented?: boolean;
+  isDecremented?: boolean;
+  isWhole?: boolean;
+  isAccessed?: boolean;
+  isPartitioned?: boolean;
+  isBurned?: boolean;
   reinitialisable?: boolean;
 
   isWholeReason?: {}[];
@@ -159,7 +159,7 @@ export class VariableBinding extends Binding {
 
 
 
-  isOwned: boolean = false;
+  isOwned?: boolean;
   owner: any = null; // object of objects, indexed by node id.
 
   constructor(path: NodePath) {

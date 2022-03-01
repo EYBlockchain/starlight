@@ -4,9 +4,9 @@ import compile from './solc.js';
 
 import checks from './transformers/checks.js';
 import ownership from './transformers/ownership.js';
- import toCircuit from './transformers/toCircuit.js';
- import toContract from './transformers/toContract.js';
-// import toOrchestration from './transformers/toOrchestration.mjs';
+import toCircuit from './transformers/toCircuit.js';
+import toContract from './transformers/toContract.js';
+import toOrchestration from './transformers/toOrchestration.js';
 
 const zappify = (options: any) => {
   // Error.stackTraceLimit = 0; // prettier error output TODO see if we can remove this in place of error/errors.mjs handling the limit
@@ -29,7 +29,7 @@ const zappify = (options: any) => {
   //
   // if (options.isTest && options.testType === 'prelim') return path;
   //
-  // toOrchestration(path, options);
+  toOrchestration(path, options);
   //
   toCircuit(zolAST, options);
   //
