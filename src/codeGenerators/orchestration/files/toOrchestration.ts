@@ -1,75 +1,11 @@
 /* eslint-disable import/no-cycle, no-param-reassign */
 import fs from 'fs';
 import path from 'path';
+import { collectImportFiles } from '../../common.js'
 import buildBoilerplate from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
 import codeGenerator from '../nodejs/toOrchestration.js';
 import logger from '../../../utils/logger.js';
 
-const boilerplateNodeDir = './src/boilerplate/';
-
-/**
- * @desc:
- * Code generator for the output orchestration files
- * Handles all files except the complex function.mjs
- * E.g. test files, imports, migrations...
- */
-
-/**
- * @param {string} file - a stringified file
- * @param {string} contextDirPath - the import statements of the `file` will be
- * relative to this dir. This path itself is relative to process.cwd().
- * @returns Object - { filepath: 'path/to/file.zok', file: 'the code' };
- * The filepath will be used when saving the file into the new zApp's dir.
- */
-const collectImportFiles = (file: string, contextDirPath: string = boilerplateNodeDir) => {
-  const lines = file.split('\n');
-  const ImportStatementList = lines.filter(
-    line =>
-      (line.includes(`.mjs`) ||
-        line.includes(`.json`) ||
-        line.includes(`shield.js`)) &&
-      !line.includes('return') &&
-      line.includes('import'),
-  );
-  let localFiles = [];
-  // parse for imports of local files:
-  const localFilePaths = ImportStatementList.reduce((acc, line) => {
-    const importFilePath = line.match(/'(.*?)'/g)[0].replace(/'/g, ''); // get text between quotes; i.e. the import filepaths
-    acc.push(importFilePath);
-    return acc;
-  }, []);
-
-  // collect the import files and their paths:
-  for (const p of localFilePaths) {
-    const absPath = path.resolve(contextDirPath, p);
-    const relPath = path.relative('.', absPath);
-    const writePath = path.join(
-      'orchestration',
-      path.relative('./src/boilerplate', relPath),
-    );
-    const f = fs.readFileSync(relPath, 'utf8');
-    localFiles.push({
-      filepath: writePath, // the path to which we'll copy the file.
-      file: f,
-    });
-    // calls this function again to get any required imports
-    localFiles = localFiles.concat(
-      collectImportFiles(f, path.dirname(relPath)),
-    );
-  }
-
-  const uniqueLocalFiles = [];
-  const uniquePaths = [];
-  // remove duplicates
-  localFiles.forEach(obj => {
-    if (!uniquePaths.includes(obj.filepath)) {
-      uniqueLocalFiles.push(obj);
-      uniquePaths.push(obj.filepath);
-    }
-  });
-
-  return uniqueLocalFiles;
-};
 
 /**
  * Parses the boilerplate import statements, and grabs any common files.
@@ -79,7 +15,7 @@ const collectImportFiles = (file: string, contextDirPath: string = boilerplateNo
 const editableCommitmentCommonFilesBoilerplate = () => {
   const importBoilerplate = buildBoilerplate('Imports');
   if (!(importBoilerplate instanceof Array)) return;
-  return collectImportFiles(importBoilerplate.join(''));
+  return collectImportFiles(importBoilerplate.join(''), 'orchestration');
 };
 
 /**
@@ -313,6 +249,7 @@ export default function fileGenerator(node: any): any {
           `import './common/zkp-setup.mjs'`,
           `import './common/migrations/2_shield.js'`,
         ].join('\n'),
+        'orchestration',
       );
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>

@@ -9,8 +9,7 @@ import toContract from './transformers/toContract.js';
 import toOrchestration from './transformers/toOrchestration.js';
 
 const zappify = (options: any) => {
-  // Error.stackTraceLimit = 0; // prettier error output TODO see if we can remove this in place of error/errors.mjs handling the limit
-  // testing prettier errors
+
   process.on('uncaughtException', err => {
     console.log(err);
     process.exit(1);
@@ -26,16 +25,14 @@ const zappify = (options: any) => {
 
   path = ownership(path);
   console.log(path);
-  //
-  // if (options.isTest && options.testType === 'prelim') return path;
-  //
+
   toOrchestration(path, options);
-  //
+
   toCircuit(zolAST, options);
-  //
-   toContract(zolAST, options);
-  //
-  // if (options.isTest) return path.scope.indicators;
+
+  toContract(zolAST, options);
+
+
   console.log(path.node.nodes[1]);
   return zolAST;
 };

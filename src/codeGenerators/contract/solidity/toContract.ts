@@ -1,7 +1,7 @@
 /* eslint-disable import/no-cycle */
 
-import fs from 'fs';
 import path from 'path';
+import { collectImportFiles } from '../../common.js'
 import ContractBP from '../../../boilerplate/contract/solidity/raw/ContractBoilerplateGenerator.js';
 import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoilerplateGenerator.js';
 
@@ -10,78 +10,6 @@ const functionBP = new FunctionBP();
 
 export const boilerplateContractsDir = './contracts'; // relative to process.cwd() // TODO: move to a config?
 
-/**
- * @param {string} file - a stringified file
- * @param {string} contextDirPath - the import statements of the `file` will be
- * relative to this dir. This path itself is relative to process.cwd().
- * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
- * The filepath will be used when saving the file into the new zApp's dir.
- */
-
-interface localFile
-{
-  filepath: string,
-  file: string,
-}
-
-const collectImportFiles = (
-  file: string,
-  contextDirPath: string = boilerplateContractsDir,
-  fileName: string = '',
-) => {
-  const lines = file.split('\n');
-  const ImportStatementList = lines.filter(line => line.startsWith('import'));
-  let localFiles: localFile[] = [];
-  // parse for imports of local files:
-  const localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
-    let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
-    importFilePath += path.extname(importFilePath) === '.sol' ? '' : '.sol'; // ensure file extension.
-    if (importFilePath) acc.push(importFilePath);
-    return acc;
-  }, []);
-
-  // collect the import files and their paths:
-  for (const p of localFilePaths) {
-    if (p.includes('IVerifier')) {
-      localFilePaths.push('./Migrations.sol'); // TODO fix bodge
-    }
-    const absPath = path.resolve(contextDirPath, p);
-    const relPath = path.relative('.', absPath);
-    const f = fs.readFileSync(relPath, 'utf8');
-    const n = path.basename(absPath, path.extname(absPath));
-    // if import is an interface, we need to deploy contract e.g. IERC20 -> deploy ERC20
-    if (
-      n.startsWith(`I`) &&
-      f.replace(/{.*$/, '').includes('interface') &&
-      fileName !== n.substring(1) // otherwise we're trying to import this file's interface
-    ) {
-      // if we import an interface, we must find the original contract
-      // we assume that any interface begins with I (substring(1)) and the remaining chars are the original contract name
-      const newLocalPath = p.replace(n, n.substring(1));
-      const newPath = relPath.replace(n, n.substring(1));
-      const check = fs.existsSync(newPath);
-      if (check) {
-        localFilePaths.push(newLocalPath);
-      }
-    }
-
-    localFiles.push({
-      filepath: relPath, // the path to which we'll copy the file.
-      file: f,
-    });
-
-    localFiles = localFiles.concat(
-      collectImportFiles(f, path.dirname(relPath), n),
-    );
-  }
-
-  // remove duplicate files after recursion:
-  const uniqueLocalFiles = localFiles.filter((obj, i, self) => {
-    return self.indexOf(obj) === i;
-  });
-
-  return uniqueLocalFiles;
-};
 
 function codeGenerator(node: any) {
   // We'll break things down by the `type` of the `node`.
@@ -124,7 +52,7 @@ function codeGenerator(node: any) {
         },
       ];
 
-      const importFileData = collectImportFiles(file);
+      const importFileData = collectImportFiles(file, 'contract');
       return fileData.concat(importFileData);
     }
 
