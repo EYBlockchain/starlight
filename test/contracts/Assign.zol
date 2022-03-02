@@ -9,7 +9,7 @@ contract Assign {
   function add(secret uint256 value) public {
     known a += value;
   }
-
+  
   function remove(secret uint256 value) public {
     a -= value;
   }
