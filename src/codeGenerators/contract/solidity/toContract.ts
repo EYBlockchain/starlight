@@ -8,9 +8,6 @@ import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoile
 const contractBP = new ContractBP();
 const functionBP = new FunctionBP();
 
-export const boilerplateContractsDir = './contracts'; // relative to process.cwd() // TODO: move to a config?
-
-
 function codeGenerator(node: any) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
@@ -18,20 +15,6 @@ function codeGenerator(node: any) {
       const files: string = node.files.flatMap(codeGenerator);
       return files;
     }
-
-    // case 'File':
-    //   return [
-    //     {
-    //       filepath: path.join(boilerplateContractsDir, `${node.name}.sol`),
-    //       file: codeGenerator(node.sourceUnit),
-    //     },
-    //   ];
-
-    // case 'VerifierInterfaceFileBoilerplate':
-    //   return collectImportFiles();
-    //
-    // case 'VerifierInterfaceFileBoilerplate':
-    //   return verifierInterfaceFileBoilerplate();
 
     case 'SourceUnit': {
       const license = node.license
@@ -41,7 +24,7 @@ function codeGenerator(node: any) {
         .map(codeGenerator)
         .join('\n\n')}`;
       const filepath = path.join(
-        boilerplateContractsDir,
+        './contracts',
         `${node.name}Shield.sol`,
       );
 
