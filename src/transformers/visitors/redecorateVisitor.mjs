@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
-import logger from '../../boilerplate/common/logger.mjs';
+import logger from '../../utils/logger.mjs';
 import { traverse, traverseNodesFast } from '../../traverse/traverse.mjs';
 
 /**

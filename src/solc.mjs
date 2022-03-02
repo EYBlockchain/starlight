@@ -1,7 +1,7 @@
 import solc from 'solc';
 import fs from 'fs';
 import path from 'path';
-import logger from './boilerplate/common/logger.mjs';
+import logger from './utils/logger.mjs';
 import { FilingError } from './error/errors.mjs';
 // import config from 'config';
 // import { releases } from './solc-versions-list';

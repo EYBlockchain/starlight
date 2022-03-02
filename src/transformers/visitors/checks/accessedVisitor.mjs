@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars */
 import config from 'config';
-import logger from '../../../boilerplate/common/logger.mjs';
+import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.mjs';
 

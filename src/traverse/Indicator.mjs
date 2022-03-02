@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file, no-param-reassign */
 
 import NodePath from './NodePath.mjs';
-import logger from '../boilerplate/common/logger.mjs';
+import logger from '../utils/logger.mjs';
 import backtrace from '../error/backtrace.mjs';
 import { SyntaxUsageError } from '../error/errors.mjs';
 

@@ -3,7 +3,7 @@
 import fs from 'fs';
 import pathjs from 'path';
 import prettier from 'prettier';
-import logger from '../boilerplate/common/logger.mjs';
+import logger from '../utils/logger.mjs';
 import { traversePathsFast } from '../traverse/traverse.mjs';
 import explode from './visitors/explode.mjs';
 import visitor from './visitors/toOrchestrationVisitor.mjs';

@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-unused-vars */
 
-import logger from '../../../boilerplate/common/logger.mjs';
+import logger from '../../../utils/logger.mjs';
 import backtrace from '../../../error/backtrace.mjs';
 import { SyntaxUsageError } from '../../../error/errors.mjs';
 

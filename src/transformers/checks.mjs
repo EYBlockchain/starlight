@@ -2,7 +2,7 @@
 
 import NodePath from '../traverse/NodePath.mjs';
 import { traverseNodesFastVisitor } from '../traverse/traverse.mjs';
-import logger from '../boilerplate/common/logger.mjs';
+import logger from '../utils/logger.mjs';
 import explode from './visitors/explode.mjs';
 import unsupportedVisitor from './visitors/checks/unsupportedVisitor.mjs';
 import externalCallVisitor from './visitors/checks/externalCallVisitor.mjs';

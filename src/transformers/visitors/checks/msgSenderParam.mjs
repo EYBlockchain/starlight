@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
-import logger from '../../../boilerplate/common/logger.mjs';
+import logger from '../../../utils/logger.mjs';
 import NodePath from '../../../traverse/NodePath.mjs';
 // import { TODOError } from '../../../error/errors.mjs';
 

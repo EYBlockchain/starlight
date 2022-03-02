@@ -32,7 +32,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 
-import logger from '../boilerplate/common/logger.mjs';
+import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
 import { getVisitableKeys } from '../types/solidity-types.mjs';
 

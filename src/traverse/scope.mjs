@@ -27,7 +27,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import logger from '../boilerplate/common/logger.mjs';
+import logger from '../utils/logger.mjs';
 import NodePath from './NodePath.mjs';
 import Binding from './Binding.mjs';
 import {
