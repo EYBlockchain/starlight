@@ -13,7 +13,7 @@ import NodePath from '../../traverse/NodePath.js';
 
 export default {
   SourceUnit: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent } = path;
 
       // Figure out a sensible fileName:
@@ -41,14 +41,12 @@ export default {
       parent._newASTPointer.push(newNode);
       node._newASTPointer = parent._newASTPointer;
     },
-
-    exit(path: NodePath, state: any) {},
   },
 
   PragmaDirective: {
     // TODO: We should probably check that the `.zol` Pragma is 'supported'. The output Solidity's pragma will be limited to the latest-supported boilerplate code.
     // However, for now, we'll just inherit the Pragma of the original and hope.
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { literals } = node;
 
@@ -58,11 +56,10 @@ export default {
       );
       // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
-    exit(path: NodePath, state: any) {},
   },
 
   ImportDirective: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const { file } = node;
 
@@ -72,11 +69,10 @@ export default {
       );
       // node._newASTPointer = ?; - a pragmaDirective is a leaf, so no need to set where we'd next push to.
     },
-    exit(path: NodePath, state: any) {},
   },
 
   ContractDefinition: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent, scope } = path;
       const isShieldContract = scope.indicators.zkSnarkVerificationRequired;
 
@@ -143,7 +139,7 @@ export default {
       if (state.mainPrivateFunctionName) {
         parent._newASTPointer[0].mainPrivateFunctionName =
           state.mainPrivateFunctionName; // TODO fix bodge
-        parent._newASTPointer[0].nodes.forEach(node => {
+        parent._newASTPointer[0].nodes.forEach((node: any) => {
           if (node.nodeType === 'ContractDefinition')
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
@@ -152,7 +148,7 @@ export default {
   },
 
   FunctionDefinition: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
       const newNode = buildNode('FunctionDefinition', {
@@ -165,7 +161,7 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(path: NodePath, state: any) {
+    exit(path: NodePath) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, scope } = path;
 
@@ -198,8 +194,6 @@ export default {
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
     },
-
-    exit(path: NodePath) {},
   },
 
   Block: {
@@ -209,12 +203,10 @@ export default {
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
     },
-
-    exit(path: NodePath) {},
   },
 
   VariableDeclarationStatement: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent } = path;
       if (node.stateVariable) {
         throw new Error(
@@ -228,8 +220,6 @@ export default {
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
-
-    exit(path: NodePath) {},
   },
 
   BinaryOperation: {
@@ -245,8 +235,6 @@ export default {
         parent._newASTPointer[path.containerName] = newNode;
       }
     },
-
-    exit(path: NodePath) {},
   },
 
   Assignment: {
@@ -265,24 +253,20 @@ export default {
       node._newASTPointer = newNode;
       parent._newASTPointer.expression = newNode;
     },
-
-    exit(path: NodePath, state: any) {},
   },
 
   ExpressionStatement: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent } = path;
 
       const newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
-
-    exit(path: NodePath, parent: any) {},
   },
 
   VariableDeclaration: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, parent } = path;
 
       if (path.isFunctionReturnParameterDeclaration())
@@ -315,8 +299,6 @@ export default {
         parent._newASTPointer[path.containerName].push(newNode);
       }
     },
-
-    exit(path: NodePath) {},
   },
 
   ElementaryTypeName: {
@@ -333,8 +315,6 @@ export default {
         },
       );
     },
-
-    exit(path: NodePath) {},
   },
 
   // e.g. for the statement `address(this)`, `address()` is an ElementaryTypeNameExpression for the ElementaryTypeName `address`
@@ -346,8 +326,6 @@ export default {
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
-
-    exit(path: NodePath) {},
   },
 
   Identifier: {
@@ -364,8 +342,6 @@ export default {
         parent._newASTPointer[path.containerName] = newNode;
       }
     },
-
-    exit(path: NodePath) {},
   },
 
   Literal: {
@@ -388,8 +364,6 @@ export default {
         parent._newASTPointer[path.containerName] = newNode;
       }
     },
-
-    exit(path: NodePath) {},
   },
 
   MemberAccess: {
@@ -452,7 +426,7 @@ export default {
 
       if (path.isRequireStatement()) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
-        const findSecretSubnode = (p, state) => {
+        const findSecretSubnode = (p: any, state: any) => {
           const isSecret = p.getReferencedNode()?.isSecret;
 
           if (isSecret) {

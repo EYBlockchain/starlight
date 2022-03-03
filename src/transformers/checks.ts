@@ -25,7 +25,6 @@ function transformation1(oldAST: any) {
     skipSubNodes: false,
   };
 
-  // TODO move this back into path traversals
   // it's here to catch the internal calls error which scope can't handle right now
   traverseNodesFastVisitor(oldAST, explode(unsupportedVisitor), state);
   logger.verbose('No unsupported Solidity');
@@ -52,16 +51,14 @@ function transformation1(oldAST: any) {
 
   // We'll start by calling the traverser function with our ast and a visitor.
   // The newAST will be mutated through this traversal process.
-  // Hari
   path.traverse(explode(externalCallVisitor), state);
   logger.verbose('No unsupported external calls');
   path.traverse(explode(decoratorVisitor), state);
   logger.verbose('No conflicting known/unknown decorators');
   path.traverse(explode(interactsWithSecretVisitor), state);
   logger.verbose('Secret interacts marked');
-  path.traverse(explode(incrementedVisitor), state); // M
+  path.traverse(explode(incrementedVisitor), state);
   logger.verbose('Incrementations marked');
-  // Swati:
   path.traverse(explode(accessedVisitor), state);
   logger.verbose('Accessed values marked');
   path.traverse(explode(requireStatementVisitor), state);

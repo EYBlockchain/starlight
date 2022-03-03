@@ -1,8 +1,4 @@
 /* eslint-disable no-param-reassign, no-unused-vars */
-
-import logger from '../../../utils/logger.js';
-import backtrace from '../../../error/backtrace.js';
-import { SyntaxUsageError } from '../../../error/errors.js';
 import NodePath from '../../../traverse/NodePath.js';
 
 
@@ -39,17 +35,9 @@ const markSubtreeInteractsWithPublic = (thisPath: any, thisState: any) => {
 };
 
 export default {
-  FunctionDefinition: {
-    enter(path: NodePath, state: any) {},
-
-    exit(path: NodePath, state: any) {},
-  },
 
   FunctionCall: {
-    enter(path: NodePath, state: any) {},
-
-    exit(path: NodePath, state: any) {
-      const { node, scope } = path;
+    exit(path: NodePath) {
       const expressionPath =
         path.getAncestorOfType('ExpressionStatement') || path.parentPath;
       if (path.isExternalFunctionCall()) {
@@ -63,9 +51,7 @@ export default {
   },
 
   Identifier: {
-    enter(path: NodePath, state: any) {},
-
-    exit(path: NodePath, state: any) {
+    exit(path: NodePath) {
       const { node, scope } = path;
       if (!scope.getReferencedBinding(node)) return;
       const expressionPath =

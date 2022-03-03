@@ -1,11 +1,10 @@
 /* eslint-disable no-param-reassign */
 
-import fs from 'fs';  
-import pathjs from 'path'; 
+import fs from 'fs';
+import pathjs from 'path';
 import NodePath from '../traverse/NodePath.js';
 import logger from '../utils/logger.js';
-import { traverseNodesFast, traversePathsFast } from '../traverse/traverse.js';
-import { pathCache } from '../traverse/cache.js';
+import { traversePathsFast } from '../traverse/traverse.js';
 import explode from './visitors/explode.js';
 import visitor from './visitors/toContractVisitor.js';
 import codeGenerator from '../codeGenerators/contract/solidity/toContract.js';
@@ -13,7 +12,7 @@ import codeGenerator from '../codeGenerators/contract/solidity/toContract.js';
 /**
  * Inspired by the Transformer
  * https://github.com/jamiebuilds/the-super-tiny-compiler
- * 
+ *
  */
 
 function transformation1(oldAST: object): any {
@@ -39,7 +38,7 @@ function transformation1(oldAST: object): any {
     container: oldAST,
     node: oldAST,
   });
-  
+
   // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
   traversePathsFast(path, (p: typeof path) => delete p.node._newASTPointer);
 

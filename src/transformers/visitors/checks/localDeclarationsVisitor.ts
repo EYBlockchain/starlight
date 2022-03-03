@@ -2,7 +2,6 @@
 
 import logger from '../../../utils/logger.js';
 import NodePath from '../../../traverse/NodePath.js';
-// import { TODOError } from '../../../error/errors.mjs';
 
 /**
  * @desc:
@@ -19,9 +18,7 @@ let warningThrown = false;
 
 const visitor = {
   'VariableDeclarationStatement|VariableDeclaration': {
-    enter(path: NodePath, state: any) {
-      const { node } = path;
-
+    enter(path: NodePath) {
       if (path.getAncestorContainedWithin('body') && !warningThrown) {
         warningThrown = true;
         logger.warn(
