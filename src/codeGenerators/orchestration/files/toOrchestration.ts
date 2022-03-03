@@ -1,7 +1,7 @@
 /* eslint-disable import/no-cycle, no-param-reassign */
 import fs from 'fs';
 import path from 'path';
-import { collectImportFiles } from '../../common.js'
+import { collectImportFiles, localFile } from '../../common.js'
 import buildBoilerplate from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
 import codeGenerator from '../nodejs/toOrchestration.js';
 import logger from '../../../utils/logger.js';
@@ -115,7 +115,7 @@ const prepareIntegrationTest = (node: any) => {
  * @param contextDirPath - a SetupCommonFilesBoilerplate node
  */
 
-const prepareMigrationsFile = (file: any, node: any) => {
+const prepareMigrationsFile = (file: localFile, node: any) => {
   // insert filepath and replace with our contract and function names
   file.filepath = `./migrations/2_shield.js`;
   file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);

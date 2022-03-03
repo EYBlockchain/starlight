@@ -24,7 +24,6 @@ const zappify = (options: any) => {
   let path = checks(zolAST);
 
   path = ownership(path);
-  console.log(path);
 
   toOrchestration(path, options);
 
@@ -32,8 +31,6 @@ const zappify = (options: any) => {
 
   toContract(zolAST, options);
 
-
-  console.log(path.node.nodes[1]);
   return zolAST;
 };
 

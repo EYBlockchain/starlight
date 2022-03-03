@@ -8,13 +8,11 @@
  */
 
 import { TODOError, ZKPError } from '../../../error/errors.js';
-import NodePath from '../../../traverse/NodePath.js';
 
 
 export default {
   FunctionCall: {
-    enter(path: NodePath) {
-      const { node } = path;
+    enter(node: any) {
       if (
         node.kind === 'functionCall' &&
         node.expression.typeDescriptions.typeIdentifier.includes(`_internal_`)
@@ -27,15 +25,14 @@ export default {
   },
 
   StructuredDocumentation: {
-    enter(path: NodePath) {
-      const { node } = path;
+    enter(node: any) {
       throw new TODOError(`Solidity type ${node.nodeType}`, node);
     },
+
   },
 
   InlineAssembly: {
-    enter(path: NodePath) {
-      const { node } = path;
+    enter(node: any) {
       throw new TODOError(
         `Solidity type ${node.nodeType}. We plan to handle non-secret assembly in the future.`,
         node,
@@ -44,8 +41,7 @@ export default {
   },
 
   EnumDefinition: {
-    enter(path: NodePath) {
-      const { node } = path;
+    enter(node: any) {
       throw new TODOError(
         `Solidity type ${node.nodeType}. We plan to handle enums in the near future.`,
         node,
@@ -54,8 +50,7 @@ export default {
   },
 
   StructDefinition: {
-    enter(path: NodePath) {
-      const { node } = path;
+    enter(node: any) {
       throw new TODOError(
         `Solidity type ${node.nodeType}. We plan to handle structs in the near future.`,
         node,
@@ -64,8 +59,7 @@ export default {
   },
 
   WhileStatement: {
-    enter(path: NodePath) {
-      const { node } = path;
+    enter(node: any) {
       throw new ZKPError(
         'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
         node,
