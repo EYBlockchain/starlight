@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-interface localFile {
+export interface localFile {
   filepath: string,
   file: string,
 }
@@ -91,6 +91,9 @@ export const collectImportFiles = (
   }
   // collect the import files and their paths:
   for (const p of localFilePaths) {
+    if (p.includes('IVerifier')) {
+      localFilePaths.push('./Migrations.sol'); // TODO fix bodge
+    }
     const absPath = path.resolve(contextDirPath, p);
     const relPath = path.relative('.', absPath);
     const f = fs.readFileSync(relPath, 'utf8');
@@ -129,8 +132,6 @@ export const collectImportFiles = (
   const uniqueLocalFiles = localFiles.filter((obj, i, self) => {
     return self.indexOf(obj) === i;
   });
-
-  console.log(uniqueLocalFiles);
 
   return uniqueLocalFiles;
 };

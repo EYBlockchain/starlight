@@ -82,7 +82,7 @@ function codeGenerator(node: any) {
 
     case 'VariableDeclaration': {
       if (node.isSecret) return '';
-      let typeString: string = (node.typeDescriptions).toString();
+      let { typeString } = node.typeDescriptions;
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
       const constant = node.constant ? ' constant' : '';
       const visibility = node.visibility ? ` ${node.visibility}` : '';
