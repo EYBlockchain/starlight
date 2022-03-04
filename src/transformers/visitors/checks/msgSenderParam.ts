@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
-import logger from '../../../utils/logger.js';
 import NodePath from '../../../traverse/NodePath.js';
 // import { TODOError } from '../../../error/errors.mjs';
 
@@ -11,7 +10,7 @@ import NodePath from '../../../traverse/NodePath.js';
 
 const visitor = {
   Assignment: {
-    enter(path: NodePath, state: any) {
+    enter(path: NodePath) {
       const { node, scope } = path;
 
       const binding = scope.getReferencedBinding(node.leftHandSide); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
@@ -20,7 +19,7 @@ const visitor = {
         // We won't copy over secret code into the shield contract (obviously). But before we skip this node, we might need to copy over msg.sender if it's a value being assigned to something.
         const subState = { msgSenderFound: false };
         const rhsPath = NodePath.getPath(node.rightHandSide);
-        rhsPath.traversePathsFast((p, substate) => {
+        rhsPath.traversePathsFast((p: any, substate: any) => {
           if (p.isMsgSender()) substate.msgSenderFound = true;
         }, subState);
 

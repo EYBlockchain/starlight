@@ -1,64 +1,9 @@
 /* eslint-disable import/no-cycle, no-nested-ternary */
-import fs from 'fs';
 import path from 'path';
+import { collectImportFiles } from '../../common.js'
 import CircuitBP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.js';
 
 const Circuitbp = new CircuitBP();
-
-const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
-
-/**
- * @param {string} file - a stringified file
- * @param {string} contextDirPath - the import statements of the `file` will be
- * relative to this dir. This path itself is relative to process.cwd().
- * @returns {Object} - { filepath: 'path/to/file.zok', file: 'the code' };
- * The filepath will be used when saving the file into the new zApp's dir.
- */
- interface localFiles{
-   filepath: string,
-   file: string
- }
-const collectImportFiles = (file: string, contextDirPath: string = boilerplateCircuitsDir) => {
-  const lines = file.split('\n');
-  const ImportStatementList = lines.filter(line => line.startsWith('from'));
-  let localFiles: localFiles[] = [];
-  // parse for imports of local (non-zokrates-stdlib) files:
-  const localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
-    let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
-    importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
-    // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
-    if (
-      !(
-        importFilePath.startsWith('utils') ||
-        importFilePath.startsWith('ecc') ||
-        importFilePath.startsWith('hashes') ||
-        importFilePath.startsWith('signatures')
-      )
-    )
-      acc.push(importFilePath);
-    return acc;
-  }, []);
-
-  // collect the import files and their paths:
-  for (const p of localFilePaths) {
-    const absPath = path.resolve(contextDirPath, p);
-    const relPath = path.relative('.', absPath);
-    const f = fs.readFileSync(relPath, 'utf8');
-    localFiles.push({
-      filepath: relPath, // the path to which we'll copy the file.
-      file: f,
-    });
-
-    localFiles = localFiles.concat(collectImportFiles(f, path.dirname(relPath)));
-  }
-
-  // remove duplicate files after recursion:
-  const uniqueLocalFiles = localFiles.filter((obj, i, self) => {
-    return self.indexOf(obj) === i;
-  });
-
-  return uniqueLocalFiles;
-};
 
 function codeGenerator(node: any) {
   switch (node.nodeType) {
@@ -66,13 +11,13 @@ function codeGenerator(node: any) {
       return CircuitBP.uniqueify(node.files.flatMap(codeGenerator));
 
     case 'File': {
-      const filepath = path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`);
+      const filepath = path.join('./circuits', `${node.fileName}${node.fileExtension}`);
       const file = node.nodes.map(codeGenerator).join('\n\n');
       const thisFile = {
         filepath,
         file,
       };
-      const importedFiles = collectImportFiles(file);
+      const importedFiles = collectImportFiles(file, 'circuit');
       return [thisFile, ...importedFiles];
     }
 

@@ -7,9 +7,7 @@
  * support for yet.
  */
 
-import cloneDeep from 'lodash.clonedeep';
 import { TODOError, ZKPError } from '../../../error/errors.js';
-import NodePath from '../../../traverse/NodePath.js';
 
 
 export default {
@@ -31,50 +29,41 @@ export default {
       throw new TODOError(`Solidity type ${node.nodeType}`, node);
     },
 
-    exit(path, state) {},
   },
 
   InlineAssembly: {
-    enter(node: any, state: any) {
+    enter(node: any) {
       throw new TODOError(
         `Solidity type ${node.nodeType}. We plan to handle non-secret assembly in the future.`,
         node,
       );
     },
-
-    exit(path: NodePath, state: any) {},
   },
 
   EnumDefinition: {
-    enter(node: any, state: any) {
+    enter(node: any) {
       throw new TODOError(
         `Solidity type ${node.nodeType}. We plan to handle enums in the near future.`,
         node,
       );
     },
-
-    exit(path: NodePath, state: any) {},
   },
 
   StructDefinition: {
-    enter(node: any, state: any) {
+    enter(node: any) {
       throw new TODOError(
         `Solidity type ${node.nodeType}. We plan to handle structs in the near future.`,
         node,
       );
     },
-
-    exit(path: NodePath, state: any) {},
   },
 
   WhileStatement: {
-    enter(node: any, state: any) {
+    enter(node: any) {
       throw new ZKPError(
         'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
         node,
       );
     },
-
-    exit(path: NodePath, state: any) {},
   },
 };
