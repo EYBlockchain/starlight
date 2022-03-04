@@ -2,7 +2,8 @@
 import fs from 'fs';
 import path from 'path';
 import CircuitBP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.js';
-
+import NodePath from '../../../traverse/NodePath.js'
+import {traversePathsFast} from '../../../traverse/traverse.js'
 const Circuitbp = new CircuitBP();
 
 const boilerplateCircuitsDir = './circuits'; // relative to process.cwd() // TODO: move to a config?
@@ -66,7 +67,7 @@ function codeGenerator(node: any) {
       return CircuitBP.uniqueify(node.files.flatMap(codeGenerator));
 
     case 'File': {
-      const filepath = path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`);
+    const  filepath = path.join(boilerplateCircuitsDir, `${node.fileName}${node.fileExtension}`);
       const file = node.nodes.map(codeGenerator).join('\n\n');
       const thisFile = {
         filepath,

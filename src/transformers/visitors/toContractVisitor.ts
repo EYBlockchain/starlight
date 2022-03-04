@@ -25,6 +25,7 @@ export default {
           state.skipSubNodes = true;
         }
       };
+
       traverseNodesFast(node, getContractNamesVisitor, subState);
       if (!contractNames) throw new Error('No contracts in AST');
       if (contractNames.length > 1)
@@ -157,6 +158,7 @@ export default {
       const isConstructor = node.kind === 'constructor';
       const newNode = buildNode('FunctionDefinition', {
         name: node.name,
+        id: node.id,
         visibility: isConstructor ? '' : 'external',
         isConstructor,
       });

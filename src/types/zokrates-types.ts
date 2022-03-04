@@ -70,10 +70,11 @@ const generateBoilerplateStatement = fields => {
 export function buildNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'File': {
-      const { fileName, nodes = [] } = fields;
+      const { fileName, fileId, nodes = [] } = fields;
       return {
         nodeType,
         fileName,
+        fileId,
         fileExtension: '.zok',
         nodes,
       };

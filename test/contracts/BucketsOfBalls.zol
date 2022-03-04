@@ -13,5 +13,5 @@ contract BucketsOfBalls {
     function transfer(secret uint256 fromBucketId, secret uint256 toBucketId, secret uint256 numberOfBalls) public {
         buckets[fromBucketId] -= numberOfBalls;
         unknown buckets[toBucketId] += numberOfBalls;
-    }
+    }  
 }

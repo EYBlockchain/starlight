@@ -1,10 +1,13 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
-import logger from '../../utils/logger.js';
+
+//import logger from '../../utils/logger.js';
 import { buildNode } from '../../types/zokrates-types.js';
 import { TODOError } from '../../error/errors.js';
+import { traversePathsFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
+//import getAllPrevSiblingNodes from '../../traverse/NodePath.js';
 import { StateVariableIndicator } from '../../traverse/Indicator.js';
 
 /**
@@ -26,6 +29,7 @@ const visitor = {
   FunctionDefinition: {
     // parent._newASTPointer location is Folder.files[].
     enter(path: NodePath, state: any) {
+
       const { node, parent, scope } = path;
       if (node.kind === 'constructor') {
         // We currently treat all constructors as publicly executed functions.
@@ -53,9 +57,44 @@ const visitor = {
             indicators,
           }),
         );
+// before creating a function node we check for functions with same name
+  const prevsiblingsNames = path.getAllPrevSiblingNodes();
+  const nextsiblingsNames = path.getAllNextSiblingNodes();
+var index = 0
+let incIndex =0;
+var fnName = node.name;
+for (let i = 0; i < prevsiblingsNames.length; i++)
+   {
+        if (fnName === prevsiblingsNames[i].name)
+        index ++;
+        }
+if (index > 0) {
+  fnName = node.name+'_'+index;
+  do{
+ incIndex = 1;
+  for (let i = 0; i < prevsiblingsNames.length; i++)
+     {
+          if (fnName === prevsiblingsNames[i].name)
+          {
+            index ++;
+            incIndex--;
+        }
 
+          }
+  for (let i = 0; i < nextsiblingsNames.length; i++)
+     {
+          if (fnName === nextsiblingsNames[i].name)
+          {index ++; incIndex--;}
+      }
+  fnName = node.name+'_'+index;
+    }while(incIndex === 0)
+      fnName = node.name+'_'+index;
+}
+
+// After getting an appropriate Name , we build the node
         const newNode = buildNode('File', {
-          fileName: node.name,
+         fileName: fnName,
+          fileId: node.id,
           nodes: [newImportStatementListNode, newFunctionDefinitionNode],
         });
 
@@ -136,7 +175,7 @@ const visitor = {
         );
       }
 
-      let declarationType;
+      let declarationType: string;
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
