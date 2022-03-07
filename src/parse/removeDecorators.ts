@@ -10,8 +10,9 @@ import { ToRedecorate } from './redecorate.js'
 import backtrace from '../error/backtrace.js';
 import logger from '../utils/logger.js';
 
-// regex: matches all cases of 'known' unless they are directly preceded by 'un'
-const decorators = [/secret/g, /unknown/g, /\w*(?<!un)known/g, /reinitialisable/g];
+// regex: matches decorators when standalone words
+// eg: for {unknown knownknown known1 123lknown known secretvalue} finds only 1 match for decorator 'known'
+const decorators = [/(?<![\w])known(?![\w])/g, /(?<![\w])unknown(?![\w])/g, /(?<![\w])secret(?![\w])/g, /(?<![\w])reinitialisable(?![\w])/g];
 
 function tidy(_line: string): string {
   let line = _line;

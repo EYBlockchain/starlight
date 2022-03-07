@@ -4,7 +4,7 @@
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs
-import {StateVariableIndicator} from '../../../../traverse/Indicator.js';
+import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 
 const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
@@ -87,7 +87,7 @@ class BoilerplateGenerator {
   }
 
   // Bump all important indicators (used by this class) to this 'top-level' of `this`.
-  assignIndicators(indicators) {
+  assignIndicators(indicators: StateVariableIndicator | MappingKey) {
     const {
       id,
       name,
@@ -99,7 +99,7 @@ class BoilerplateGenerator {
       isMapping,
       increments,
       decrements,
-      burnedOnly,
+      // burnedOnly,
     } = indicators;
     Object.assign(this, {
       id,
@@ -112,7 +112,7 @@ class BoilerplateGenerator {
       isMapping,
       increments,
       decrements,
-      burnedOnly,
+      // burnedOnly,
     });
   }
   initialise(indicators: StateVariableIndicator){
@@ -180,7 +180,7 @@ class BoilerplateGenerator {
           ...(this.isMapping && { isMapping: this.isMapping }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
-          // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }),
+          // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }), // TODO
           ...this[bpType](extraParams),
         })
         .filter(Boolean);
@@ -188,9 +188,8 @@ class BoilerplateGenerator {
   };
 
   addBP = {
-    // M - HERE main changes
     partitioned(bpType: string, extraParams?: any) {
-      const { increments, decrements, name } = this;
+      const { name } = this;
       const j = 0;
       if (
         [
@@ -247,10 +246,10 @@ class BoilerplateGenerator {
     let index: number;
 
     if (addendId) {
-      index = increments.findIndex(node => addendId === node.id);
+      index = increments.findIndex((node: any) => addendId === node.id);
       if (index === -1) throw notFoundErr;
     } else if (subtrahendId) {
-      index = decrements.findIndex(node => subtrahendId === node.id);
+      index = decrements.findIndex((node: any) => subtrahendId === node.id);
       if (index === -1) throw notFoundErr;
       const indicesPerDecrementation = 4;
       const startIndex = increments?.length || 0;
@@ -278,7 +277,7 @@ class BoilerplateGenerator {
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
-  incrementation = ( addendId: number) => {
+  incrementation = () => {
     //const startIndex = this.getIndex({ addendId });
     return {
       // startIndex,
@@ -286,7 +285,7 @@ class BoilerplateGenerator {
     };
   };
 
-  decrementation = ( subtrahendId: number) => {
+  decrementation = () => {
     //const startIndex = this.getIndex({ subtrahendId });
     return {
       // startIndex,

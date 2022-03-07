@@ -1,8 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-continue */
 
 import cloneDeep from 'lodash.clonedeep';
-
-//import logger from '../../utils/logger.js';
 import { buildNode } from '../../types/zokrates-types.js';
 import { TODOError } from '../../error/errors.js';
 import { traversePathsFast } from '../../traverse/traverse.js';
@@ -323,7 +321,7 @@ if (index > 0) {
         node.expression.operator === '='
       ) {
         const assignmentNode = node.expression;
-        const { leftHandSide: lhs, rightHandSide: rhs } = assignmentNode;
+        const { leftHandSide: lhs } = assignmentNode;
         const referencedIndicator = scope.getReferencedIndicator(lhs);
         if (referencedIndicator instanceof StateVariableIndicator &&
           (lhs.id === referencedIndicator.referencingPaths[0].node.id ||

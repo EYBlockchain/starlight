@@ -3,8 +3,6 @@
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 
-import codeGenerator from '../../../../codeGenerators/circuit/zokrates/toCircuit.js';
-
 class BoilerplateGenerator {
   generateBoilerplate(node: any) {
     const { bpSection, bpType, ...otherParams } = node;
@@ -296,7 +294,7 @@ class BoilerplateGenerator {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
 
-    statements({ name: x, startIndex: i, addends }): string[] {
+    statements({ name: x}): string[] {
       // let y = codeGenerator(addends[0]);
       //
       // for (const addend of addends) {
@@ -306,7 +304,7 @@ class BoilerplateGenerator {
 
 
       return [
-        `// Testing skipping incrementation of ${x}`
+        `// Skipping incrementation of ${x}`
         // `
         // // The below represents the incrementation '${x} = ${x} + ${y}':
         //
@@ -321,7 +319,7 @@ class BoilerplateGenerator {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
 
-    statements({ name: x, startIndex, subtrahend }): string[] {
+    statements({ name: x }): string[] {
       // const y = codeGenerator(subtrahend);
       // let i = startIndex;
       // const x0 = `${x}_${i++}`;
@@ -329,7 +327,7 @@ class BoilerplateGenerator {
       // const x2 = `${x}_${i}`;
 
       return [
-        `// Testing moved decrementation of ${x}`
+        `// Moved decrementation of ${x}`
         // `
         // // The below represents the decrementation '${x} = ${x} - ${y}':
         //

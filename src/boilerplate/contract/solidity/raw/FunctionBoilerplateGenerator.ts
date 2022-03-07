@@ -1,7 +1,5 @@
 /* eslint-disable import/no-cycle */
 
-import codeGenerator from '../../../../codeGenerators/contract/solidity/toContract.js';
-
 class FunctionBoilerplateGenerator {
   generateBoilerplate(node: any) {
     const { bpSection, bpCategory, ...otherParams } = node;

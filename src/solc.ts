@@ -143,7 +143,7 @@ const errorHandling = (compiled: any) => {
 const compile = (solidityFile: string, options: any) => {
   const sources = buildSources(solidityFile, options);
   const params = createSolcInput(solidityFile);
-  const findImports = _import => {
+  const findImports = (_import: any) => {
     logger.debug('import:', _import);
     if (sources[_import.toString()]) {
       return {
