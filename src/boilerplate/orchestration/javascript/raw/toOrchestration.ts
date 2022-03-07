@@ -360,6 +360,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             mappingKey = `[${stateName}_newOwnerPublicKey.integer]`;
             break;
           case null:
+          case undefined:
             // not a mapping => no key
             mappingKey = ``;
             break;
