@@ -2,7 +2,8 @@
 import path from 'path';
 import { collectImportFiles } from '../../common.js'
 import CircuitBP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.js';
-
+import NodePath from '../../../traverse/NodePath.js'
+import {traversePathsFast} from '../../../traverse/traverse.js'
 const Circuitbp = new CircuitBP();
 
 function codeGenerator(node: any) {
