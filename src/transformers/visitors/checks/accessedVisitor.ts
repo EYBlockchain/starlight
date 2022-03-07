@@ -5,7 +5,6 @@ import backtrace from '../../../error/backtrace.js';
 import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
 import NodePath from '../../../traverse/NodePath.js';
 import { StateVariableIndicator } from '../../../traverse/Indicator.js';
-import { VariableBinding } from '../../../traverse/Binding.js';
 /**
  * @desc:
  * Visitor checks whether a secret state is 'accessed'.
@@ -53,7 +52,7 @@ export default {
       const rightAncestor = path.getRhsAncestor();
       const lhsNode = path.getCorrespondingLhsNode();
       // TODO getReferencedBinding should return the VariableDeclaration binding if the input is a VariableDeclaration
-      const lhsBinding =
+      const lhsBinding: any =
         lhsNode?.nodeType === 'Identifier' ||
         lhsNode?.nodeType === 'IndexAccess'
           ? scope.getReferencedBinding(lhsNode) ||
@@ -62,8 +61,6 @@ export default {
               referencedDeclaration: lhsNode.id,
             })
           : scope.bindings[lhsNode?.id];
-      // to avoid ts complaining about function bindings:
-      if (!(lhsBinding instanceof VariableBinding)) return;
       // Check: is this a nonsecret param being used to edit a secret state?
       if (!referencedBinding?.isSecret) {
         // non-secret...
