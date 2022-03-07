@@ -121,11 +121,9 @@ Clone the repo.
 
 `cd starlight`
 
-`npm i`
+`./bin/start` (You might need to run chmod +x ./bin/start for permission to execute the newly created shell scripts)
 
-`npm i -g ./`
-
-This will create a symlink to your node.js bin, allowing you to run the commands specified in the `"bin":` field of the `package.json`; namely the `zappify` command.
+This runs `tsc` and `npm i -g ./` which will create a symlink to your node.js bin, allowing you to run the commands specified in the `"bin":` field of the `package.json`; namely the `zappify` command.
 
 ## Run
 
