@@ -334,6 +334,7 @@ export default {
       const assignmentOp = parentExpressionStatement?.node.expression?.operator;
       // if we don't have a parent expression or that expression can't hold an incrementation, we exit
       if (!lhsNode) return;
+      if (!binOpToIncrements(path, state)?.operands) return;
 
       const { operands, precedingOperator } = binOpToIncrements(path, state);
 

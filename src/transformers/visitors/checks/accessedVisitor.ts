@@ -100,18 +100,20 @@ export default {
           // false is ok - we have something without a LHS, like a conditional
           if (!referencedBinding.stateVariable) {
             // we have a secret parameter on the RHS
-            if (!lhsBinding.isSecret)
+            if (!lhsBinding.isSecret && lhsBinding.stateVariable)
               // non-secret param assigning a secret state is ok, but we warn the user
               // however a secret param being used to assign a non-secret state is bad:
               throw new SyntaxUsageError(
                 `A secret parameter (${node.name}) should not be used to assign to a non-secret variable (${lhsNode.name}). The secret could be deduced by observing how the non-secret variable changes.`,
                 node,
               );
-            if (!lhsBinding.stateVariable)
+            if (!lhsBinding.stateVariable) {
               // we have secret param1 = param2 (e.g.) - this is weird
               logger.warn(
                 `Secret parameter ${node.name} is being used to assign a non-global state. Is this intended?`,
               );
+              backtrace.getSourceCode(node.src);
+            }
             return; // we stop, because we never have to access parameters
           }
           if (!lhsBinding.isSecret) {
