@@ -55,41 +55,13 @@ const visitor = {
             indicators,
           }),
         );
-// before creating a function node we check for functions with same name
-  const prevsiblingsNames = path.getAllPrevSiblingNodes();
-  const nextsiblingsNames = path.getAllNextSiblingNodes();
-var index = 0
-let incIndex =0;
-var fnName = node.name;
-for (let i = 0; i < prevsiblingsNames.length; i++)
-   {
-        if (fnName === prevsiblingsNames[i].name)
-        index ++;
-        }
-if (index > 0) {
-  fnName = node.name+'_'+index;
-  do{
- incIndex = 1;
-  for (let i = 0; i < prevsiblingsNames.length; i++)
-     {
-          if (fnName === prevsiblingsNames[i].name)
-          {
-            index ++;
-            incIndex--;
-        }
 
-          }
-  for (let i = 0; i < nextsiblingsNames.length; i++)
-     {
-          if (fnName === nextsiblingsNames[i].name)
-          {index ++; incIndex--;}
-      }
-  fnName = node.name+'_'+index;
-    }while(incIndex === 0)
-      fnName = node.name+'_'+index;
-}
+        // before creating a function node we check for functions with same name
+        const fnName = path.getUniqueFunctionName();
+        node.fileName = fnName;
 
-// After getting an appropriate Name , we build the node
+
+        // After getting an appropriate Name , we build the node
         const newNode = buildNode('File', {
          fileName: fnName,
           fileId: node.id,
