@@ -172,6 +172,8 @@ export default {
               fnName = node.name+'_'+index;
         }
 
+        node.fileName = fnName;
+
         // After getting an appropriate Name , we build the node
 
         const newNode = buildNode('File', {
@@ -188,7 +190,7 @@ export default {
           if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
             file.nodes[0].functions.push(
               buildNode('IntegrationTestFunction', {
-                name: node.name,
+                name: fnName,
                 parameters: [],
               }),
             );
@@ -234,10 +236,10 @@ export default {
         if (fnIndicator.newCommitmentsRequired)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
         newNodes.generateProofNode = buildNode('GenerateProof', {
-          circuitName: node.name,
+          circuitName: node.fileName,
         });
         newNodes.sendTransactionNode = buildNode('SendTransaction', {
-          functionName: node.name,
+          functionName: node.fileName,
           contractName,
         });
         newNodes.writePreimageNode = buildNode('WritePreimage', {
@@ -252,11 +254,11 @@ export default {
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           for (const fn of file.nodes[0].functions) {
-            if (fn.name === node.name) thisIntegrationTestFunction = fn;
+            if (fn.name === node.fileName) thisIntegrationTestFunction = fn;
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
-          file.functionNames.push(node.name);
+          file.functionNames.push(node.fileName);
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
