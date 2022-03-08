@@ -1005,6 +1005,43 @@ export default class NodePath {
     }
   }
 
+  getUniqueFunctionName() {
+    if (this.node.fileName) return this.node.fileName;
+    // before creating a function node we check for functions with same name
+    const prevSiblings = this.getAllPrevSiblingNodes();
+    const nextSiblings = this.getAllNextSiblingNodes();
+    let index = 0
+    let incIndex = 0;
+    let fnName = this.node.name;
+
+    prevSiblings.forEach((sibling: any) => {
+      if (fnName === sibling.name) index ++;
+    });
+
+    if (index === 0) return fnName;
+
+    fnName = this.node.name + '_' + index;
+
+    while (incIndex === 0) {
+      incIndex = 1;
+      prevSiblings.forEach((sibling: any) => {
+        if (fnName === sibling.name) {
+          index ++;
+          incIndex --;
+        }
+      });
+      nextSiblings.forEach((sibling: any) => {
+        if (fnName === sibling.name) {
+          index ++;
+          incIndex --;
+        }
+      });
+      fnName = this.node.name + '_' + index;
+    }
+    this.node.fileName = fnName;
+    return fnName;
+  }
+
   // SCOPE
 
   // checks whether this path's nodeType is one which signals the beginning of a new scope
