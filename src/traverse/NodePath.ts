@@ -33,6 +33,7 @@ import {
   traversePathsFast
 } from './traverse.js';
 import logger from '../utils/logger.js';
+import backtrace from '../error/backtrace.js';
 import { pathCache } from './cache.js';
 import { Scope } from './Scope.js';
 import { Binding } from './Binding.js';
@@ -1038,6 +1039,8 @@ export default class NodePath {
       });
       fnName = this.node.name + '_' + index;
     }
+    logger.info(`ALERT: Your overloaded function ${this.node.name} has been renamed to ${fnName} to prevent overwrites!`)
+    backtrace.getSourceCode(this.node.src);
     this.node.fileName = fnName;
     return fnName;
   }
