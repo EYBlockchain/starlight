@@ -1,15 +1,12 @@
 
 import assert from "assert";
-import chai from "chai"
 import fs from "fs";
 import path from 'path';
 import { checkASThashes, checkCodeGen, checktestASTExists } from '../built/tests.js'
 import mkdirs from '../bin/mkdirs.mjs';
 import zappify from '../built/index.js'; 
-import logger from '../built/utils/logger.js';
 var files = fs.readdirSync('./test/contracts/')
 let chosenFile = files[Math.floor(Math.random() * files.length)]
-logger.info('chosen file',chosenFile);
 const inputFilePath = './test/contracts/'+chosenFile;
 const modifyAST = 'n';
 const inputFileName = path.parse(inputFilePath).name;

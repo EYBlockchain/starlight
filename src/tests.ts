@@ -2,7 +2,6 @@ import sha256 from 'crypto-js/sha256.js';
 import logger from './utils/logger.js';
 import fs from "fs";
 import changesets from 'json-diff-ts';
-import path from 'path';
 import fse  from 'fs-extra';
 
 export function checkASThashes(options: any, ASTType: string) {
@@ -24,8 +23,12 @@ try {
     {
       const VariyingData= changesets.diff(PreGeneratedASTJsonObject, outputASTJsonObject);
       if(options.modifyAST == 'y')
+      {
       changesets.applyChangeset(PreGeneratedASTJsonObject, VariyingData);
+      fs.writeFileSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', JSON.stringify(PreGeneratedASTJsonObject, null, 4), 'utf8');
+      logger.info('AST file mddified');
       return 'false';    
+      }
     }
     else
       return 'false';
