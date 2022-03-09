@@ -630,6 +630,13 @@ export default {
           lhs = lhs.baseExpression;
         }
 
+        const name = indicator.isMapping
+          ? indicator.name
+              .replace('[', '_')
+              .replace(']', '')
+              .replace('.sender', '')
+          : indicator.name;
+
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
@@ -648,7 +655,7 @@ export default {
           const newNode = buildNode('VariableDeclarationStatement', {
             declarations: [
               buildNode('VariableDeclaration', {
-                name: lhs.name,
+                name,
                 isAccessed: accessed,
                 isSecret: true,
               }),
@@ -662,12 +669,6 @@ export default {
         }
         // if its an incrementation, we need to know it happens but not copy it over
         if (node.expression.isIncremented && indicator.isPartitioned) {
-          const name = indicator.isMapping
-            ? indicator.name
-                .replace('[', '_')
-                .replace(']', '')
-                .replace('.sender', '')
-            : indicator.name;
           const newNode = buildNode(node.nodeType, {
             nodeType: node.nodeType,
             interactsWithSecret,
