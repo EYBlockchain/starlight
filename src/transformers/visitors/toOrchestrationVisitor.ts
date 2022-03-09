@@ -182,6 +182,7 @@ export default {
 
     exit(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
         const newNodes: any = {};

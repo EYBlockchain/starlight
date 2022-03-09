@@ -117,7 +117,7 @@ function codeGenerator(node: any) {
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
     case 'MsgSender':
-      return 'msgSender';
+      return 'msg';
 
     case 'Assert':
       return `

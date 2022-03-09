@@ -108,7 +108,7 @@ const visitor = {
       if (state.msgSenderParam) {
         node._newASTPointer.parameters.parameters.unshift(
           buildNode('VariableDeclaration', {
-            name: 'msgSender',
+            name: 'msg',
             declarationType: 'parameter',
             type: 'field',
           }),
