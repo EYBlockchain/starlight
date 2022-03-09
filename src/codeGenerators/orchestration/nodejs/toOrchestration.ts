@@ -100,6 +100,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
         node.operator
       } ${codeGenerator(node.rightExpression)}`;
 
+    case 'TupleExpression':
+      return `(${node.components.map(codeGenerator).join(` `)})`;
+
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param

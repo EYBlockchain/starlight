@@ -169,6 +169,13 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         indexExpression,
       };
     }
+    case 'TupleExpression': {
+      const { components = [] } = fields;
+      return {
+        nodeType,
+        components,
+      }
+    }
     case 'MsgSender': {
       return {
         nodeType,

@@ -202,7 +202,7 @@ if (index > 0) {
 
       const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
-      parent._newASTPointer[path.containerName] = newNode;
+      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
   },
 
@@ -241,6 +241,15 @@ if (index > 0) {
       const newNode = expandAssignment(circuitNode);
       // node._newASTPointer = newNode; // no need to ascribe the node._newASTPointer, because we're exiting.
       parent._newASTPointer.expression = newNode;
+    },
+  },
+
+  TupleExpression: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode.components;
+      parent._newASTPointer[path.containerName] = newNode;
     },
   },
 

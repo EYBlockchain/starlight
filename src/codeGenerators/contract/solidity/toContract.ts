@@ -135,6 +135,12 @@ function codeGenerator(node: any) {
     case 'Literal':
       return node.kind === 'string' ? `"${node.value}"` : node.value;
 
+    case 'TupleExpression':
+      return `(${node.components.map(codeGenerator).join(` `)})`;
+
+    case 'UnaryOperation':
+      return `${codeGenerator(node.subExpression)} ${node.operator};`;
+
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);
       const args = node.arguments.map(codeGenerator);

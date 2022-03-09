@@ -131,6 +131,13 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         expression,
       };
     }
+    case 'TupleExpression': {
+      const { components = [] } = fields;
+      return {
+        nodeType,
+        components,
+      }
+    }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {

@@ -583,7 +583,7 @@ export default {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { operator: node.operator });
       node._newASTPointer = newNode;
-      parent._newASTPointer[path.containerName] = newNode;
+      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
 
   },
@@ -600,6 +600,15 @@ export default {
       }
     },
 
+  },
+
+  TupleExpression: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode.components;
+      parent._newASTPointer[path.containerName] = newNode;
+    },
   },
 
   ExpressionStatement: {

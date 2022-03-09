@@ -173,6 +173,8 @@ export default {
       const { parameters } = newFunctionDefinitionNode.parameters;
       const { postStatements } = newFunctionDefinitionNode.body;
 
+      if (!path.scope.containsSecret) return;
+
       parameters.push(
         ...buildNode('FunctionBoilerplate', {
           bpSection: 'parameters',
@@ -237,6 +239,29 @@ export default {
         parent._newASTPointer[path.containerName] = newNode;
       }
     },
+  },
+
+  TupleExpression: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode.components;
+      parent._newASTPointer[path.containerName] = newNode;
+    },
+  },
+
+  UnaryOperation: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const { operator, prefix, subExpression } = node;
+      const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    }
   },
 
   Assignment: {
