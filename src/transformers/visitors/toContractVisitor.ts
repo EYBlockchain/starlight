@@ -153,7 +153,7 @@ export default {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
       const newNode = buildNode('FunctionDefinition', {
-        name: node.name,
+        name: node.fileName || path.getUniqueFunctionName(),
         id: node.id,
         visibility: isConstructor ? '' : 'external',
         isConstructor,
