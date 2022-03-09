@@ -5,7 +5,6 @@ import changesets from 'json-diff-ts';
 import fse  from 'fs-extra';
 
 export function checkASThashes(options: any, ASTType: string) {
-
 try {
   let outputAST = fs.readFileSync('./zapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', 'utf8')
   let outputASTJsonObject = JSON.parse(outputAST);
@@ -26,19 +25,18 @@ try {
       {
       changesets.applyChangeset(PreGeneratedASTJsonObject, VariyingData);
       fs.writeFileSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', JSON.stringify(PreGeneratedASTJsonObject, null, 4), 'utf8');
-      logger.info('AST file mddified');
-      return 'false';    
+      logger.info('AST file modified');
       }
+      return 'false';    
     }
     else
-      return 'false';
+      return 'true';
   }
   else
     return 'true';
 } 
-else                             
-  fse.copySync(`./zapps/`+options.inputFileName, `./truezapps/`+options.inputFileName);
-  return 'true';
+else
+  return 'false';
 }
 catch (err) {
   console.error(err)
@@ -48,14 +46,15 @@ catch (err) {
 
 export function checktestASTExists(options: any, ASTType: string) {
   if (!fs.existsSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json'))
-  fse.copySync(`./zapps/`+options.inputFileName, `./truezapps/`+options.inputFileName);
+  {
+    fs.mkdirSync('./truezapps/'+options.inputFileName);
+    fse.copySync(`./zapps/`+options.inputFileName+'/circuits', `./truezapps/`+options.inputFileName+'/circuits');
+    fse.copySync(`./zapps/`+options.inputFileName+'/contracts', `./truezapps/`+options.inputFileName+'/contracts');
+    fse.copySync(`./zapps/`+options.inputFileName+'/orchestration', `./truezapps/`+options.inputFileName+'/orchestration');
+    return false;
+  }
+  else
   return true;
-}
-
-export function getHashOfASTString(options: any, ASTType: string) {
-  let outputAST = fs.readFileSync('./zapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', 'utf8')
-  let outputASTHash = sha256(outputAST);
-  return outputASTHash.toString;
 }
 
 export function checkCodeGen(options: any, codeType: string) {
