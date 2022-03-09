@@ -173,7 +173,8 @@ export default {
       const { parameters } = newFunctionDefinitionNode.parameters;
       const { postStatements } = newFunctionDefinitionNode.body;
 
-      if (!path.scope.containsSecret) return;
+      // if contract is entirely public, we don't want zkp related boilerplate
+      if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
 
       parameters.push(
         ...buildNode('FunctionBoilerplate', {
