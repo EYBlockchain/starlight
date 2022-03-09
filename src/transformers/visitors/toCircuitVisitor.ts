@@ -24,6 +24,20 @@ const visitor = {
     },
   },
 
+  ImportDirective: {
+    enter(path: NodePath, state: any) {
+      const { node } = path;
+      state.contractImports ??= [];
+      state.contractImports.push({
+        absolutePath: node.absolutePath,
+        file: node.file,
+      });
+      // we assume all import statements come before all functions
+    },
+
+  },
+
+
   FunctionDefinition: {
     // parent._newASTPointer location is Folder.files[].
     enter(path: NodePath, state: any) {
@@ -59,7 +73,7 @@ const visitor = {
   const prevsiblingsNames = path.getAllPrevSiblingNodes();
   const nextsiblingsNames = path.getAllNextSiblingNodes();
 var index = 0
-let incIndex =0;
+let incIndex = 1;
 var fnName = node.name;
 for (let i = 0; i < prevsiblingsNames.length; i++)
    {
@@ -85,7 +99,7 @@ if (index > 0) {
           {index ++; incIndex--;}
       }
   fnName = node.name+'_'+index;
-    }while(incIndex === 0)
+}while(incIndex === 0)
       fnName = node.name+'_'+index;
 }
 

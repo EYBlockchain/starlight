@@ -49,10 +49,16 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'Block': {
-      const { statements = [] } = fields;
+      const {
+        preStatements = [],
+        statements = [],
+        postStatements = [],
+      } = fields;
       return {
         nodeType,
+        preStatements,
         statements,
+        postStatements,
       };
     }
     case 'VariableDeclaration': {

@@ -73,8 +73,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'ElementaryTypeName':
       return;
 
-    case 'Block':
-      return node.statements.map(codeGenerator).join(`\t`);
+      case 'Block': {
+        const preStatements: string = (node.preStatements.flatMap(codeGenerator));
+        const statements:string = (node.statements.flatMap(codeGenerator));
+        const postStatements: string = (node.postStatements.flatMap(codeGenerator));
+        return [...preStatements, ...statements, ...postStatements].join('\n\n');
+      }
 
     case 'ExpressionStatement':
       if (!node.incrementsSecretState && node.interactsWithSecret)
