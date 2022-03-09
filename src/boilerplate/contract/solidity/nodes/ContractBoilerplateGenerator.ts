@@ -69,7 +69,7 @@ class ContractBoilerplateGenerator {
       } = scope;
 
       const fnDefBindings = scope.filterBindings(
-        (b: any) => b.kind === 'FunctionDefinition' && b.name !== '',
+        (b: any) => b.kind === 'FunctionDefinition' && b.name !== '' && b.path.containsSecret,
       );
       const functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
 
