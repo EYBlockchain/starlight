@@ -33,6 +33,7 @@ import {
   traversePathsFast
 } from './traverse.js';
 import logger from '../utils/logger.js';
+import backtrace from '../error/backtrace.js';
 import { pathCache } from './cache.js';
 import { Scope } from './Scope.js';
 import { Binding } from './Binding.js';
@@ -1003,6 +1004,45 @@ export default class NodePath {
       if (indicator && this.node.referencedDeclaration !== indicator.id)
         indicator.addPublicInteractingPath(this);
     }
+  }
+
+  getUniqueFunctionName() {
+    if (this.node.fileName) return this.node.fileName;
+    // before creating a function node we check for functions with same name
+    const prevSiblings = this.getAllPrevSiblingNodes();
+    const nextSiblings = this.getAllNextSiblingNodes();
+    let index = 0
+    let incIndex = 0;
+    let fnName = this.node.name;
+
+    prevSiblings.forEach((sibling: any) => {
+      if (fnName === sibling.name) index ++;
+    });
+
+    if (index === 0) return fnName;
+
+    fnName = this.node.name + '_' + index;
+
+    while (incIndex === 0) {
+      incIndex = 1;
+      prevSiblings.forEach((sibling: any) => {
+        if (fnName === sibling.name) {
+          index ++;
+          incIndex --;
+        }
+      });
+      nextSiblings.forEach((sibling: any) => {
+        if (fnName === sibling.name) {
+          index ++;
+          incIndex --;
+        }
+      });
+      fnName = this.node.name + '_' + index;
+    }
+    logger.info(`ALERT: Your overloaded function ${this.node.name} has been renamed to ${fnName} to prevent overwrites!`)
+    backtrace.getSourceCode(this.node.src);
+    this.node.fileName = fnName;
+    return fnName;
   }
 
   // SCOPE

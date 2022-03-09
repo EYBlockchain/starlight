@@ -88,7 +88,10 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
 
   updateIncrementation(path: NodePath, state: any) {
     this.parentIndicator.updateIncrementation(path, state);
-    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
+    if (
+      !path.isIncremented ||
+      state.incrementedIdentifier.isKnown || path.scope.getReferencedBinding(state.incrementedIdentifier).isKnown
+    ) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
       this.initialisationRequired = true;
@@ -455,7 +458,10 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   updateIncrementation(path: NodePath, state: any) {
     if (this.isSecret) this.parentIndicator.updateIncrementation(path, state);
-    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
+    if (
+      !path.isIncremented ||
+      state.incrementedIdentifier.isKnown || path.scope.getReferencedBinding(state.incrementedIdentifier).isKnown
+    ) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
       this.isWholeReason ??= [];
@@ -530,6 +536,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   addNullifyingPath(path: NodePath) {
     this.isNullified = true;
+    this.parentIndicator.nullifiersRequired = true;
     this.oldCommitmentAccessRequired = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
@@ -563,7 +570,6 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
-      console.log('err 3');
       throw new SyntaxUsageError(
         `Can't mark a whole state as 'unknown'`,
         this.node,
