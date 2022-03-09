@@ -454,7 +454,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   }
 
   updateIncrementation(path: NodePath, state: any) {
-    this.parentIndicator.updateIncrementation(path, state);
+    if (this.isSecret) this.parentIndicator.updateIncrementation(path, state);
     if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
