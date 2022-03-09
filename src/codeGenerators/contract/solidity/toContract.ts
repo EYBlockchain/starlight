@@ -162,6 +162,12 @@ function codeGenerator(node: any) {
       return `${expression}.${node.memberName}`;
     }
 
+    case 'IndexAccess': {
+      const baseExpression = codeGenerator(node.baseExpression);
+      const indexExpression = codeGenerator(node.indexExpression);
+      return `${baseExpression}[${indexExpression}]`;
+    }
+
     case 'ContractBoilerplate':
       return contractBP.generateBoilerplate(node).join('\n');
 
