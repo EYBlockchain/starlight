@@ -1,6 +1,7 @@
 node_modules
 *.DS_Store
 build/
+built/
 node_modules/
 proving-files/
 zapps/

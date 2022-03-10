@@ -6,6 +6,10 @@ contract MyContract {
 
     secret uint256 private a;
 
+    function assign(secret uint256 param1) public {
+        a = param1;
+    }
+
     function decr(secret uint256 param1) public {
         a -= param1;
     }

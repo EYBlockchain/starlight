@@ -5,7 +5,11 @@ pragma solidity ^0.8.0;
 contract MyContract {
 
     secret uint256 private a;
-    address private admin;
+    address public admin;
+
+    constructor() {
+      admin = msg.sender;
+    }
 
     function assign(secret uint256 param1) public {
         require(msg.sender == admin);

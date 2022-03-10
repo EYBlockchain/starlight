@@ -5,9 +5,9 @@ import path from 'path';
 import commander from 'commander';
 
 import mkdirs from './mkdirs.mjs';
-import zappify from '../src/index.mjs';
-import logger from '../src/utils/logger.mjs';
-import { FilingError } from '../src/error/errors.mjs';
+import zappify from '../built/index.js';
+import logger from '../built/utils/logger.js';
+import { FilingError } from '../built/error/errors.js';
 
 const { Command } = commander;
 const program = new Command();
@@ -39,6 +39,10 @@ program
   .option(
     '-z, --zapp-name <name>',
     'Specify a name for the output zapp. Defaults to the name of the --input file.',
+  )
+  .option(
+    '-m, --modify <modify>',
+    'Ovewrite the file from truezapps folder',
   );
 
 program.parse(process.argv);
@@ -47,6 +51,7 @@ const opts = program.opts();
 logger.level = opts.verbose ? 'verbose' : opts.logLevel || logger.level;
 
 const inputFilePath = opts.input;
+const modifyAST = opts.modify;
 const inputFileName = path.parse(inputFilePath).name;
 // commander converts 'zapp-name' to 'zappName'
 const zappName = opts.zappName || inputFileName;
@@ -65,6 +70,7 @@ const options = {
   circuitsDirPath,
   contractsDirPath,
   orchestrationDirPath,
+  modifyAST,
 };
 
 const validateOptions = ({
