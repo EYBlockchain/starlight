@@ -34,7 +34,11 @@ export class ContractDefinitionIndicator {
   }
 
   updateIncrementation(path: NodePath, state: any) {
-    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
+    // if an incrementation is marked as unknown anywhere, the binding will know
+    if (
+      !path.isIncremented ||
+      state.incrementedIdentifier.isKnown || !path.scope.getReferencedBinding(state.incrementedIdentifier).isUnknown
+    ) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
       this.initialisationRequired = true;
@@ -88,9 +92,10 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
 
   updateIncrementation(path: NodePath, state: any) {
     this.parentIndicator.updateIncrementation(path, state);
+    // if an incrementation is marked as unknown anywhere, the binding will know
     if (
       !path.isIncremented ||
-      state.incrementedIdentifier.isKnown || path.scope.getReferencedBinding(state.incrementedIdentifier).isKnown
+      state.incrementedIdentifier.isKnown || !path.scope.getReferencedBinding(state.incrementedIdentifier).isUnknown
     ) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
@@ -458,9 +463,10 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   updateIncrementation(path: NodePath, state: any) {
     if (this.isSecret) this.parentIndicator.updateIncrementation(path, state);
+    // if an incrementation is marked as unknown anywhere, the binding will know
     if (
       !path.isIncremented ||
-      state.incrementedIdentifier.isKnown || path.scope.getReferencedBinding(state.incrementedIdentifier).isKnown
+      state.incrementedIdentifier.isKnown || !path.scope.getReferencedBinding(state.incrementedIdentifier).isUnknown
     ) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
