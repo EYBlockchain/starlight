@@ -54,7 +54,7 @@ export default function toOrchestration(ast: any, options: any) {
   const newAST = transformation1(ast);
   const newASTFilePath = pathjs.join(
     options.orchestrationDirPath,
-    `${options.inputFileName}-ast.json`,
+    `${options.inputFileName}_ast.json`,
   );
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));
 
