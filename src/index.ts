@@ -17,7 +17,7 @@ const zappify = (options: any) => {
 
   const { deDecoratedFile, toRedecorate } = removeDecorators(options);
 
-  const solAST = compile(deDecoratedFile, options);
+  const solAST = compile(deDecoratedFile, toRedecorate, options);
 
   const zolAST = redecorate(solAST, toRedecorate, options);
 
