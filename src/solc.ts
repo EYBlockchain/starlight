@@ -124,16 +124,15 @@ const createSolcInput = (solidityFile: string): any => {
  * Shows when there were errors during compilation.
  * @param {Object} compiled - the output object from running solc
  */
-const errorHandling = (compiled: any, toRedecorate: any) => {
+const errorHandling = (compiled: any) => {
   if (!compiled) {
     throw new FilingError(`solc didn't create any output...`);
   } else if (compiled.errors) {
     // something went wrong.
     logger.error(`solc errors:`);
     compiled.errors.map((error: any) => logger.error(error.formattedMessage));
-    var errorDecorator =  toRedecorate.filter((decorator: any) => decorator.charStart === compiled.errors[0].sourceLocation.start);
     throw new FilingError(
-      `Solc Compilation Error: Make sure your .sol contract compiles without Zappify decorators. Function/ Struct/ Enum named as "${errorDecorator[0].decorator}" at index ${errorDecorator[0].charStart}`
+      `Solc Compilation Error: Make sure your .sol contract compiles without Zappify decorators.`
     );
   }
 };
@@ -141,7 +140,7 @@ const errorHandling = (compiled: any, toRedecorate: any) => {
 /**
   Compiles a solidity file and saves the output(s) (namely the AST) to file.
 */
-const compile = (solidityFile: string, toRedecorate: any, options: any) => {
+const compile = (solidityFile: string, options: any) => {
   const sources = buildSources(solidityFile, options);
   const params = createSolcInput(solidityFile);
   const findImports = (_import: any) => {
@@ -158,7 +157,7 @@ const compile = (solidityFile: string, toRedecorate: any, options: any) => {
     solc.compile(JSON.stringify(params), { import: findImports }),
   );
   logger.debug('compiled', compiled);
-  errorHandling(compiled , toRedecorate);
+  errorHandling(compiled);
 
   const { ast } = compiled.sources.input;
 
