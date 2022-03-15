@@ -132,7 +132,7 @@ const errorHandling = (compiled: any) => {
     logger.error(`solc errors:`);
     compiled.errors.map((error: any) => logger.error(error.formattedMessage));
     throw new FilingError(
-      'Solc Compilation Error: Make sure your .sol contract compiles without Zappify decorators.',
+      `Solc Compilation Error: Make sure your .sol contract compiles without Zappify decorators.`
     );
   }
 };
