@@ -100,7 +100,7 @@ function removeDecorators(options: any): {
   // feat: fo future use add a struct name also as keyword to identify object names that are not allowed.  
   const decoratedFileWords = deDecoratedFile.split(" ");
   for(var j=0; j< decoratedFileWords.length; j++) {
-    if(decoratedFileWords[j].includes('struct'))
+    if(decoratedFileWords[j] === 'struct')
     keywords.push(new RegExp(decoratedFileWords[j+1]));
   }
 
