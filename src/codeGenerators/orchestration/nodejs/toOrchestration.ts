@@ -1,5 +1,5 @@
 /* eslint-disable import/no-cycle, no-param-reassign, consistent-return */
-import { OrchestrationCodeBoilerPlate } from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
+import {OrchestrationCodeBoilerPlate}  from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
 import fileGenerator from '../files/toOrchestration.js';
 
 /**

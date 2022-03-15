@@ -182,6 +182,8 @@ export default {
             buildNode('FunctionDefinition', { name: node.name, contractName }),
           ],
         });
+
+
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
         for (const file of parent._newASTPointer) {
@@ -487,6 +489,8 @@ export default {
             accessedOnly: true,
           });
         }
+          const newFunctionDefinitionNode = node._newASTPointer;
+
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
           if (param.isPrivate || param.isSecret || param.interactsWithSecret)
@@ -500,13 +504,13 @@ export default {
 
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         if (newNodes.initialisePreimageNode)
-          node._newASTPointer.body.statements.splice(
+          newFunctionDefinitionNode.body.preStatements.splice(
             0,
             0,
             newNodes.initialisePreimageNode,
           );
 
-        node._newASTPointer.body.statements.splice(
+        newFunctionDefinitionNode.body.preStatements.splice(
           0,
           0,
           newNodes.InitialiseKeysNode,
@@ -521,28 +525,30 @@ export default {
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
-          node._newASTPointer.body.statements.push(newNodes.readPreimageNode);
+        newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
         if (newNodes.membershipWitnessNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.preStatements.push(
             newNodes.membershipWitnessNode,
           );
+          if(newNodes.VariableDeclarationStatement)
+          newFunctionDefinitionNode.body.preStatements.push(newNodes.VariableDeclarationStatement);
 
         if (newNodes.calculateNullifierNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.postStatements.push(
             newNodes.calculateNullifierNode,
           );
         if (newNodes.calculateCommitmentNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.postStatements.push(
             newNodes.calculateCommitmentNode,
           );
         if (newNodes.generateProofNode)
-          node._newASTPointer.body.statements.push(newNodes.generateProofNode);
+          newFunctionDefinitionNode.body.postStatements.push(newNodes.generateProofNode);
         if (newNodes.sendTransactionNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.postStatements.push(
             newNodes.sendTransactionNode,
           );
         if (newNodes.writePreimageNode)
-          node._newASTPointer.body.statements.push(newNodes.writePreimageNode);
+          newFunctionDefinitionNode.body.postStatements.push(newNodes.writePreimageNode);
       }
     },
   },

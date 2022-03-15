@@ -203,6 +203,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         args,
       };
     }
+    case 'SetupCommonFilesBoilerplate':
     case 'Boilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
       return generateBoilerplate(fields);

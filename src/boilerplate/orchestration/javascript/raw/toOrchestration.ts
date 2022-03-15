@@ -1,13 +1,13 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
-import buildBoilerplate from './boilerplate-generator.js';
+import OrchestrationBP from './boilerplate-generator.js';
 
 /**
  * @desc:
  * Generates boilerplate for orchestration files
  * Handles logic for ordering and naming inside a function.mjs file
  */
-
+const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
   const output = [];
@@ -86,16 +86,17 @@ export const generateProofBoilerplate = (node: any) => {
     switch (stateNode.isWhole) {
       case true:
         output.push(
-          buildBoilerplate('GenerateProof', {
+          Orchestrationbp.generateProof.parameters( {
             stateName,
             stateType: 'whole',
+            stateVarIds: stateVarIdLines,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
             parameters,
-            stateVarIds: stateVarIdLines,
-          }),
-        );
+
+          }));
+
         break;
       case false:
       default:
@@ -113,13 +114,17 @@ export const generateProofBoilerplate = (node: any) => {
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
             });
             output.push(
-              buildBoilerplate('GenerateProof', {
+              Orchestrationbp.generateProof.parameters({
                 stateName,
                 stateType: 'decrement',
-                parameters,
                 stateVarIds: stateVarIdLines,
-              }),
-            );
+                reinitialisedOnly: false,
+                burnedOnly: false,
+                accessedOnly: false,
+                parameters,
+
+              }));
+
             break;
           case false:
           default:
@@ -133,13 +138,17 @@ export const generateProofBoilerplate = (node: any) => {
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
             });
             output.push(
-              buildBoilerplate('GenerateProof', {
+              Orchestrationbp.generateProof.parameters( {
                 stateName,
                 stateType: 'increment',
-                parameters,
                 stateVarIds: stateVarIdLines,
-              }),
-            );
+                reinitialisedOnly: false,
+                burnedOnly: false,
+                accessedOnly: false,
+                parameters,
+
+              }));
+
             break;
         }
     }
@@ -193,13 +202,18 @@ export const preimageBoilerPlate = (node: any) => {
 
     if (stateNode.accessedOnly) {
       output.push(
-        buildBoilerplate('ReadPreimage', {
+        Orchestrationbp.readPreimage.postStatements({
+          stateName:privateStateName,
           stateType: 'whole',
-          stateName: privateStateName,
+          mappingName: null,
+          mappingKey: null,
+          increment: false,
+          newOwnerStatment: null,
+          reinitialisedOnly: false,
           accessedOnly: true,
           stateVarIds,
-        }),
-      );
+        }));
+
       continue;
     }
 
@@ -246,15 +260,18 @@ export const preimageBoilerPlate = (node: any) => {
     switch (stateNode.isWhole) {
       case true:
         output.push(
-          buildBoilerplate('ReadPreimage', {
+          Orchestrationbp.readPreimage.postStatements({
+            stateName:privateStateName,
             stateType: 'whole',
-            stateName: privateStateName,
-            reinitialisedOnly: stateNode.reinitialisedOnly,
+            mappingName: null,
+            mappingKey: null,
             increment: stateNode.increment,
             newOwnerStatment,
+            reinitialisedOnly: stateNode.reinitialisedOnly,
+            accessedOnly: false,
             stateVarIds,
-          }),
-        );
+          }));
+
         break;
       case false:
       default:
@@ -262,31 +279,37 @@ export const preimageBoilerPlate = (node: any) => {
           case true:
             // decrement
             output.push(
-              buildBoilerplate('ReadPreimage', {
-                stateType: 'decrement',
+              Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
-                increment: stateNode.increment,
+                stateType: 'decrement',
+                mappingName: stateNode.mappingName || privateStateName,
                 mappingKey: stateNode.mappingKey
                   ? `[${privateStateName}_stateVarId_key.integer]`
                   : ``,
-                mappingName: stateNode.mappingName || privateStateName,
+                increment: stateNode.increment,
                 newOwnerStatment,
+                reinitialisedOnly: false,
+                accessedOnly: false,
                 stateVarIds,
-              }),
-            );
+              }));
+
             break;
           case false:
           default:
             // increment
             output.push(
-              buildBoilerplate('ReadPreimage', {
-                stateType: 'increment',
+            Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
+                stateType: 'increment',
+                mappingName: null,
+                mappingKey: null,
                 increment: stateNode.increment,
                 newOwnerStatment,
+                reinitialisedOnly: false,
+                accessedOnly: false,
                 stateVarIds,
-              }),
-            );
+              }));
+
         }
     }
   }
@@ -308,7 +331,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   let stateNode: any;
   switch (node.nodeType) {
     case 'Imports':
-      return { statements: buildBoilerplate(node.nodeType) };
+      return { statements:  Orchestrationbp.generateProof.import() }
 
     case 'FunctionDefinition':
       // the main function
@@ -369,13 +392,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             mappingKey = `[${stateNode.mappingKey}.integer]`;
         }
         lines.push(
-          buildBoilerplate(node.nodeType, {
+          Orchestrationbp.initialisePreimage.preStatements( {
             stateName,
             accessedOnly: stateNode.accessedOnly,
             mappingKey,
-            mappingName: stateNode.mappingName || stateName,
-          }),
-        );
+            mappingName: stateNode.mappingName || stateName
+          }));
+
       }
       return {
         statements: lines,
@@ -385,10 +408,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       states[0] = node.onChainKeyRegistry ? `true` : `false`;
       return {
         statements: [
-          `${buildBoilerplate(node.nodeType, {
-            contractName: node.contractName,
-            onChainKeyRegistry: states[0],
-          })}`,
+          `${Orchestrationbp.initialiseKeys.postStatements(
+           node.contractName,
+           states[0],
+          ) }`,
         ],
       };
 
@@ -414,15 +437,16 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             switch (stateNode.nullifierRequired) {
               case true:
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                  Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'decrement',
+                    mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
-                    mappingName: stateNode.mappingName || stateName,
-                  }),
-                );
+                    burnedOnly: false,
+                  }));
+
                 break;
               case false:
               default:
@@ -436,31 +460,32 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 }
 
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                    Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
+                    mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
-                    mappingName: stateNode.mappingName || stateName,
-                  }),
-                );
+                    burnedOnly: false,
+
+                  }));
+
                 break;
             }
             break;
           case false:
           default:
             lines.push(
-              buildBoilerplate(node.nodeType, {
+                Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
-                burnedOnly: stateNode.burnedOnly,
+                mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
                   ? `[${stateName}_stateVarId_key.integer]`
                   : ``,
-                mappingName: stateNode.mappingName || stateName,
-              }),
-            );
+                burnedOnly: stateNode.burnedOnly,
+              }));
         }
       }
       return {
@@ -483,29 +508,29 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isPartitioned) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.membershipWitness.postStatements({
               stateName,
               contractName: node.contractName,
               stateType: 'partitioned',
-            }),
-          );
+            }));
+
         }
         if (stateNode.accessedOnly) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.membershipWitness.postStatements({
               stateName,
               contractName: node.contractName,
               stateType: 'accessedOnly',
-            }),
-          );
+            }));
+
         } else if (stateNode.isWhole) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.membershipWitness.postStatements({
               stateName,
               contractName: node.contractName,
               stateType: 'whole',
-            }),
-          );
+            }));
+
         }
       }
       return {
@@ -516,18 +541,17 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isPartitioned) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.calculateNullifier.postStatements({
               stateName,
               stateType: 'partitioned',
-            }),
-          );
+            }));
+
         } else {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.calculateNullifier.postStatements({
               stateName,
               stateType: 'whole',
-            }),
-          );
+            }));
         }
       }
       return {
@@ -540,11 +564,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           case undefined:
           case false:
             lines.push(
-              buildBoilerplate(node.nodeType, {
+              Orchestrationbp.calculateCommitment.postStatements( {
                 stateName,
                 stateType: 'whole',
-              }),
-            );
+              }));
+
             break;
           case true:
           default:
@@ -552,21 +576,21 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               case true:
                 // decrement
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                  Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'decrement',
-                  }),
-                );
+                  }));
+
                 break;
               case false:
               default:
                 // increment
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                  Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'increment',
-                  }),
-                );
+                  }));
+
             }
         }
       }
