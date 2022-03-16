@@ -127,6 +127,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
           return `parseInt(${node.name}.integer, 10)`;
         case 'address':
           return `${node.name}.integer`;
+        case 'generalNumber':
+          return `generalise(${node.name})`;
       }
 
     case 'Folder':
