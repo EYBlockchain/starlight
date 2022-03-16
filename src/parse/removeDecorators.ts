@@ -9,10 +9,19 @@ import path from 'path';
 import { ToRedecorate } from './redecorate.js'
 import backtrace from '../error/backtrace.js';
 import logger from '../utils/logger.js';
+import { boolean } from 'yargs';
 
 // regex: matches decorators when standalone words
 // eg: for {unknown knownknown known1 123lknown known secretvalue} finds only 1 match for decorator 'known'
+ //const decorators = [/(?<![\w])known(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])unknown(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])secret(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])reinitialisable(?![\w\@#\$%\^\&*\)\(+=._-])/g];
 const decorators = [/(?<![\w])known(?![\w])/g, /(?<![\w])unknown(?![\w])/g, /(?<![\w])secret(?![\w])/g, /(?<![\w])reinitialisable(?![\w])/g];
+
+// keywords - throws an error if function name/ variable name/ contracts etc is a decorator.
+// eg:  function secret (...) is not allowed , permits functions secret12(...) 
+
+let solKeywords = [/contract/,/function/,/struct/,/enum/,/bool/,/fixed/,/address/,/uint[0-9]{0,3}/,/int[0-9]{0,3}/];
+let zolKeywords = [/secret[\W]/,/known[\W]/,/unknown[\W]/,/reinitialisable[\W]/];
+let keywords = solKeywords.flatMap(sk => zolKeywords.map(zk => new RegExp(sk.source +' '+ zk.source)));
 
 function tidy(_line: string): string {
   let line = _line;
@@ -20,6 +29,8 @@ function tidy(_line: string): string {
   line = line.replace(/\s+/g, ' ');
   // remove spaces from the start of the line:
   line = line.replace(/^\s/, '');
+  // remove space before special characters .,?!()
+  //line = line.replace(/\s+(?=[.,?!()])/,'');
   return line;
 }
 
@@ -85,7 +96,22 @@ function removeDecorators(options: any): {
 
   // sort the array of decorators by their location (char index) in the contract
   matches.sort((matchA, matchB) => matchA.index - matchB.index);
+  
+  // feat: fo future use add a struct name also as keyword to identify object names that are not allowed.  
+  const decoratedFileWords = deDecoratedFile.split(" ");
+  for(var j=0; j< decoratedFileWords.length; j++) {
+    if(decoratedFileWords[j] === 'struct')
+    keywords.push(new RegExp(decoratedFileWords[j+1]));
+  }
 
+  // check if function/variables/contract/enums are named as decorators and exit by throwing appropriate error
+  for(const pattern of keywords) {
+    var matchKeyword = pattern.exec(decoratedFile);
+    if (matchKeyword) {
+        logger.error(`Cannot name Contract/function/Struct/enum/variables as decorators. Please rename ${matchKeyword.toString()} at index ${matchKeyword.index} to non decorator name`);
+        process.exit(1);
+    }
+  }
   for (const match of matches) {
     // skip removal and offsetting if we're in a comment
     if (inComment(decoratedFile, match.index)) continue;
@@ -111,7 +137,6 @@ function removeDecorators(options: any): {
     options.inputFilePath,
   )}`;
   fs.copyFileSync(options.inputFilePath, duplicateInputFilePath);
-
   return { deDecoratedFile, toRedecorate };
 }
 
