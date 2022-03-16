@@ -18,6 +18,7 @@ export default function buildBoilerplate(nodeType: string, fields: any = {}) {
     increment,
     mappingKey,
     mappingName,
+    initialised = false,
     reinitialisedOnly = false,
     burnedOnly = false,
     accessedOnly = false,
@@ -51,6 +52,7 @@ export default function buildBoilerplate(nodeType: string, fields: any = {}) {
         case true:
           return `
           \n // Initialise commitment preimage of whole accessed state:
+          ${stateVarIds.join('\n')}
           \nlet ${stateName}_commitmentExists = true;
           \nconst ${stateName}_preimage = JSON.parse(
               fs.readFileSync(db, 'utf-8', err => {
@@ -60,6 +62,7 @@ export default function buildBoilerplate(nodeType: string, fields: any = {}) {
         default:
           return `
             \n // Initialise commitment preimage of whole state:
+            ${stateVarIds.join('\n')}
             \nlet ${stateName}_commitmentExists = true;
             let ${stateName}_witnessRequired = true;
             \nlet ${stateName}_preimage = {
@@ -126,13 +129,13 @@ export default function buildBoilerplate(nodeType: string, fields: any = {}) {
             case true:
               return `
                 ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
-                ${stateVarIds.join('\n')}
+                ${initialised ? `` : stateVarIds.join('\n')}
                 \n`;
             default:
               switch (accessedOnly) {
                 case true:
                   return `
-                    ${stateVarIds.join('\n')}
+                    ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
                     const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
@@ -140,7 +143,7 @@ export default function buildBoilerplate(nodeType: string, fields: any = {}) {
                 default:
                   return `
                     ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
-                    ${stateVarIds.join('\n')}
+                    ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
                     const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
@@ -337,7 +340,7 @@ export default function buildBoilerplate(nodeType: string, fields: any = {}) {
                 \npreimage.${mappingName}${mappingKey} = {};`;
             default:
               return `
-                \npreimage.${stateName}${mappingKey} = {
+                \npreimage.${mappingName}${mappingKey} = {
                 \t${stateName}: ${stateName}.integer,
                 \tsalt: ${stateName}_newSalt.integer,
                 \tpublicKey: ${stateName}_newOwnerPublicKey.integer,

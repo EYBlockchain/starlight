@@ -2,6 +2,46 @@
 
 import buildBoilerplate from './boilerplate-generator.js';
 
+
+const stateVariableIds = (node: any) => {
+  const {privateStateName, stateNode} = node;
+  const stateVarIds = [];
+  // state variable ids
+  // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
+  if (!stateNode.stateVarId[1]) {
+    stateVarIds.push(
+      `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
+    );
+  } else {
+    // if is a mapping...
+    stateVarIds.push(
+      `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
+    );
+    // ... and the mapping key is not msg.sender, but is a parameter
+    if (
+      privateStateName.includes(stateNode.stateVarId[1]) &&
+      stateNode.stateVarId[1] !== 'msg'
+    ) {
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
+      );
+    }
+    // ... and the mapping key is msg, and the caller of the fn has the msg key
+    if (
+      stateNode.stateVarId[1] === 'msg' &&
+      privateStateName.includes('msg')
+    ) {
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
+      );
+    }
+    stateVarIds.push(
+      `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+    );
+  }
+  return stateVarIds;
+}
+
 /**
  * @desc:
  * Generates boilerplate for orchestration files
@@ -81,7 +121,12 @@ export const generateProofBoilerplate = (node: any) => {
           !output.join().includes(`${para}.integer`),
       )
       .forEach((param: string) => {
-        parameters.push(`\t${param}.integer,`);
+        if (param == 'msgSender') {
+          parameters.unshift(`\t${param}.integer,`);
+        } else {
+          parameters.push(`\t${param}.integer,`);
+        }
+
       });
     // then we build boilerplate code per state
     switch (stateNode.isWhole) {
@@ -154,48 +199,15 @@ export const preimageBoilerPlate = (node: any) => {
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(node.privateStates)) {
-    const stateVarIds = [];
+    const stateVarIds = stateVariableIds({ privateStateName, stateNode });
     const initialiseParams = [];
     const preimageParams = [];
-
-    // state variable ids
-    // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
-    if (!stateNode.stateVarId[1]) {
-      stateVarIds.push(
-        `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
-      );
-    } else {
-      // if is a mapping...
-      stateVarIds.push(
-        `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
-      );
-      // ... and the mapping key is not msg.sender, but is a parameter
-      if (
-        privateStateName.includes(stateNode.stateVarId[1]) &&
-        stateNode.stateVarId[1] !== 'msg'
-      ) {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
-        );
-      }
-      // ... and the mapping key is msg, and the caller of the fn has the msg key
-      if (
-        stateNode.stateVarId[1] === 'msg' &&
-        privateStateName.includes('msg')
-      ) {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
-        );
-      }
-      stateVarIds.push(
-        `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
-      );
-    }
 
     if (stateNode.accessedOnly) {
       output.push(
         buildBoilerplate('ReadPreimage', {
           stateType: 'whole',
+          initialised: stateNode.initialised,
           stateName: privateStateName,
           accessedOnly: true,
           stateVarIds,
@@ -250,6 +262,7 @@ export const preimageBoilerPlate = (node: any) => {
           buildBoilerplate('ReadPreimage', {
             stateType: 'whole',
             stateName: privateStateName,
+            initialised: stateNode.initialised,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
@@ -358,7 +371,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         switch (stateNode.mappingKey) {
           case 'msg':
             // msg.sender => key is _newOwnerPublicKey
-            mappingKey = `[${stateName}_newOwnerPublicKey.integer]`;
+            mappingKey = `[${stateName}_stateVarId_key.integer]`;
             break;
           case null:
           case undefined:
@@ -373,6 +386,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           buildBoilerplate(node.nodeType, {
             stateName,
             accessedOnly: stateNode.accessedOnly,
+            stateVarIds: stateVariableIds({ privateStateName: stateName, stateNode}),
             mappingKey,
             mappingName: stateNode.mappingName || stateName,
           }),
@@ -410,6 +424,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
     case 'WritePreimage':
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         // TODO commitments with more than one value inside
+        console.log(`stateName vs mappingName: ${stateName} ${stateNode.mappingName}`);
         switch (stateNode.isPartitioned) {
           case true:
             switch (stateNode.nullifierRequired) {
@@ -451,6 +466,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             break;
           case false:
           default:
+            if (stateNode.mappingKey) {
+              lines.push(`
+              \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
+              \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
+            } else {
+              lines.push(`
+              \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
+            }
             lines.push(
               buildBoilerplate(node.nodeType, {
                 stateName,
