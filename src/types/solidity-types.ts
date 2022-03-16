@@ -288,6 +288,13 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         expression,
       };
     }
+    case 'TupleExpression': {
+      const { components = [] } = fields;
+      return {
+        nodeType,
+        components,
+      }
+    }
     case 'MsgSender': {
       return {
         nodeType,

@@ -21,8 +21,9 @@ const visitor = {
     enter(path: NodePath) {
       if (path.getAncestorContainedWithin('body') && !warningThrown) {
         warningThrown = true;
+        const name = path.node.name || path.node.declarations[0].name;
         logger.warn(
-          "Local state declarations aren't fully supported yet, because their possible interactions with private states complicate things considerably. If the local state you've declared interacts with a secret variable, transpilation might result in bugs at the moment. We're actively working on it.",
+          `Local state declarations aren't fully supported yet, because their possible interactions with private states complicate things considerably. If the local state ${name} you've declared interacts with a secret variable, transpilation might result in bugs at the moment. We're actively working on it.`,
         );
       }
     },

@@ -34,7 +34,11 @@ export class ContractDefinitionIndicator {
   }
 
   updateIncrementation(path: NodePath, state: any) {
-    if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
+    // if an incrementation is marked as unknown anywhere, the binding will know
+    if (
+      !path.isIncremented ||
+      state.incrementedIdentifier.isKnown
+    ) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
       this.initialisationRequired = true;
@@ -88,9 +92,10 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
 
   updateIncrementation(path: NodePath, state: any) {
     this.parentIndicator.updateIncrementation(path, state);
+    // if an incrementation is marked as unknown anywhere, the binding will know
     if (
       !path.isIncremented ||
-      state.incrementedIdentifier.isKnown || path.scope.getReferencedBinding(state.incrementedIdentifier).isKnown
+      state.incrementedIdentifier.isKnown
     ) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
@@ -413,6 +418,13 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
+    // add nullifyingPaths we didn't know were nullifying
+    if (this.binding.isWhole && this.isModified) {
+      this.modifyingPaths.forEach(modPath => {
+        // if not included, we add it
+        if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id)) this.addNullifyingPath(modPath);
+      })
+    }
     this.isWhole ??= this.binding.isWhole;
     this.isWholeReason = this.isWhole
       ? this.binding.isWholeReason
@@ -457,10 +469,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   }
 
   updateIncrementation(path: NodePath, state: any) {
-    this.parentIndicator.updateIncrementation(path, state);
+    if (this.isSecret) this.parentIndicator.updateIncrementation(path, state);
+    // if an incrementation is marked as unknown anywhere, the binding will know
     if (
       !path.isIncremented ||
-      state.incrementedIdentifier.isKnown || path.scope.getReferencedBinding(state.incrementedIdentifier).isKnown
+      state.incrementedIdentifier.isKnown
     ) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };
