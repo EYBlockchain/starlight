@@ -138,6 +138,15 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         components,
       }
     }
+    case 'UnaryOperation': {
+      const { operator, prefix, subExpression = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        prefix,
+        subExpression,
+      };
+    }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {

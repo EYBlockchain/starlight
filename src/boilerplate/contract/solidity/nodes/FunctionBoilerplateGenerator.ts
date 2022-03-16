@@ -16,12 +16,12 @@ class FunctionBoilerplateGenerator {
     bpCache.set(scope, this);
   }
 
-  getBoilerplate = (section: string) => {
+  getBoilerplate = (section: string, extraParams?: any) => {
     const bp = [];
     const categories = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {
-        bp.push(this.generateNode(category, section));
+        bp.push(this.generateNode(category, section, extraParams));
       }
     });
     return bp;
@@ -80,12 +80,12 @@ class FunctionBoilerplateGenerator {
     },
 
 // MIKE: you need to create a new msgSenderParam field of the Indicator class for the deposit function (by writing a new prelim traversal). Then using that indicator, you can pick up here.
-    postStatements() {
+    postStatements(customInputs: any[] = []) {
       const { scope } = this;
       const { path } = scope;
 
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => p.name);
+      const publicParams = customInputs.concat(params?.filter((p: any) => !p.isSecret).map((p: any) => p.name));
 
       const functionName = path.getUniqueFunctionName();
 

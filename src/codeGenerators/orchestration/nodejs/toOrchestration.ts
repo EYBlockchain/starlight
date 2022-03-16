@@ -18,6 +18,14 @@ const getAccessedValue = (name: string) => {
 };
 
 /**
+ * @param {string} name - variable name
+ * @returns string - code line which will extract an accessed value from the user db
+ */
+const getPublicValue = (name: string) => {
+  return `\nconst ${name} = generalise(await instance.methods.${name}().call());`;
+};
+
+/**
  * @param {Object} node - an orchestration AST node
  * @returns {Object} - { filepath: 'path/to/file.mjs', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
@@ -52,12 +60,14 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue.nodeType === 'Assignment') {
-        if (node.declarations[0].isAccessed) {
+        if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
           return `${getAccessedValue(
             node.declarations[0].name,
           )}\n${codeGenerator(node.initialValue)};`;
         }
         return `\nlet ${codeGenerator(node.initialValue)};`;
+      } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
+        return `${getPublicValue(node.declarations[0].name)}`
       }
 
       if (

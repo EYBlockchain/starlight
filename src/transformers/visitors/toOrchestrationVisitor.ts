@@ -3,6 +3,7 @@
 // import logger from '../../utils/logger.js';
 import NodePath from '../../traverse/NodePath.js';
 import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
+import { VariableBinding } from '../../traverse/Binding.js';
 import MappingKey from '../../traverse/MappingKey.js'
 import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
@@ -249,6 +250,14 @@ export default {
           newNodes.generateProofNode.parameters.push(`msgSender`);
           delete state.msgSenderParam; // reset
         }
+
+        if (state.publicInputs) {
+          state.publicInputs.forEach((input: any) => {
+            newNodes.generateProofNode.parameters.push(input.name);
+          })
+
+          delete state.publicInputs; // reset
+        }
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
 
@@ -327,6 +336,7 @@ export default {
             ] = buildPrivateStateNode('InitialisePreimage', {
               privateStateName: name,
               indicator: stateVarIndicator,
+              id,
             });
           }
 
@@ -336,6 +346,7 @@ export default {
               id,
               increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
+              initialised: stateVarIndicator.isWhole && functionIndicator.initialisationRequired,
               reinitialisedOnly:
                 stateVarIndicator.reinitialisable &&
                 !stateVarIndicator.isNullified,
@@ -578,6 +589,20 @@ export default {
     },
   },
 
+  UnaryOperation: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const { operator, prefix, subExpression } = node;
+      const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    }
+  },
+
   ExpressionStatement: {
     enter(path: NodePath, state: any) {
       // We sometimes do need to copy over statements if we need to work out the new commitment value
@@ -748,23 +773,37 @@ export default {
         name: node.name,
         subType: node.typeDescriptions.typeString,
       });
-      const indicator = scope.getReferencedIndicator(node);
       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+      const binding = path.getReferencedBinding(node);
 
       parent._newASTPointer[path.containerName] = newNode;
 
-      // we may need this identifier in the mjs file to edit a secret state
-      // we check this here
+      // below: we have a public state variable we need as a public input to the circuit
+      // local variable decs and parameters are dealt with elsewhere
+      // secret state vars are input via commitment values
       if (
-        state.interactsWithSecret && // we only need to import something if it interactsWithSecret
-        !path.isFunctionParameter() && // we already deal with params
-        indicator instanceof StateVariableIndicator && // we can't import local variables
-        ((indicator.isSecret && !indicator.isModified) || !indicator.isSecret) // we already deal with secret modified states
+        binding instanceof VariableBinding &&
+        node.interactsWithSecret &&
+        node.interactsWithPublic &&
+        binding.stateVariable && !binding.isSecret
       ) {
-        fnDefNode.node._newASTPointer.parameters.importedStateVariables ??= [];
-        node.isSecret = indicator.isSecret;
-        fnDefNode.node._newASTPointer.parameters.importedStateVariables.push(
-          node,
+        state.publicInputs ??= [];
+        state.publicInputs.push(node);
+        const newNode = buildNode('VariableDeclarationStatement', {
+          declarations: [
+            buildNode('VariableDeclaration', {
+              name: node.name,
+              isAccessed: true,
+              isSecret: false,
+              interactsWithSecret: true,
+            }),
+          ],
+          interactsWithSecret: true,
+        });
+
+        fnDefNode.node._newASTPointer.body.statements ??= [];
+        fnDefNode.node._newASTPointer.body.statements.unshift(
+          newNode,
         );
       }
     },

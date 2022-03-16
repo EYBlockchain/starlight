@@ -4,12 +4,33 @@
 import { buildNode } from '../../types/solidity-types.js';
 import { traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
+import { VariableBinding } from '../../traverse/Binding.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
 const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
     thisState.interactsWithSecret = true;
+};
+
+// here we find any public state variables which interact with secret states
+// and hence need to be included in the verification calculation
+const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
+  if (thisPath.nodeType !== 'Identifier') return;
+  const binding = thisPath.getReferencedBinding(thisPath.node);
+  const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+  // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
+  // below: we have a public state variable we need as a public input to the circuit
+  // local variable decs and parameters are dealt with elsewhere
+  // secret state vars are input via commitment values
+  if (
+    binding instanceof VariableBinding &&
+    indicator.interactsWithSecret &&
+    binding.stateVariable && !binding.isSecret
+  ) {
+    thisState.customInputs ??= [];
+    thisState.customInputs.push(indicator.name);
+  }
 };
 
 /**
@@ -170,7 +191,7 @@ export default {
       parent._newASTPointer.push(newNode);
     },
 
-    exit(path: NodePath) {
+    exit(path: NodePath, state: any) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, scope } = path;
 
@@ -194,8 +215,11 @@ export default {
         ...buildNode('FunctionBoilerplate', {
           bpSection: 'postStatements',
           scope,
+          customInputs: state.customInputs,
         }),
       );
+
+      delete state.customInputs;
     },
   },
 
@@ -218,15 +242,23 @@ export default {
   },
 
   VariableDeclarationStatement: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       if (node.stateVariable) {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
         );
       }
-
       // HACK: for now, we assume all local stack variables will be picked up in Solidity. A future enhancement will be to only include local stack variables which interact solely with non-secret states. Local stack variabels which _do_ interact with secret states will probably be brought into the circuit eventually.
+      // PARTIAL SOLN: below
+      // TODO interacts with secret AND public
+      const subState = { interactsWithSecret: false };
+      path.traversePathsFast(interactsWithSecretVisitor, subState);
+      if (subState.interactsWithSecret) {
+        state.skipSubNodes = true;
+        return;
+      }
+
 
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
@@ -274,12 +306,14 @@ export default {
 
   Assignment: {
     enter(path: NodePath, state: any) {
-      const { node, parent, scope } = path;
+      const { node, parent } = path;
 
-      const binding = scope.getReferencedBinding(node.leftHandSide); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
-
-      if (binding?.isSecret) {
+      if (path.containsSecret && !path.containsPublic) {
         // Don't copy over code which should be secret! It shouldn't appear in a public shield contract; only in the circuit! So skip subnodes.
+        state.skipSubNodes = true;
+        return;
+      } else if (path.containsSecret) {
+        path.traversePathsFast(findCustomInputsVisitor, state);
         state.skipSubNodes = true;
         return;
       }

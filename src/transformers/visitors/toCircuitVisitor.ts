@@ -6,6 +6,7 @@ import { TODOError } from '../../error/errors.js';
 import { traversePathsFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 //import getAllPrevSiblingNodes from '../../traverse/NodePath.js';
+import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../traverse/Indicator.js';
 
 /**
@@ -224,12 +225,31 @@ const visitor = {
     },
   },
 
+  UnaryOperation: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const { operator, prefix, subExpression } = node;
+      const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    }
+  },
+
   ExpressionStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const { expression } = node;
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
+      // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
+      if (!node.containsSecret) {
+        state.skipSubNodes = true;
+        return;
+      }
       const { isIncremented, isDecremented } = expression;
       let newNode: any;
 
@@ -407,6 +427,21 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const { name } = node;
+      const binding = path.getReferencedBinding(node);
+      // below: we have a public state variable we need as a public input to the circuit
+      // local variable decs and parameters are dealt with elsewhere
+      // secret state vars are input via commitment values
+      if (
+        binding instanceof VariableBinding &&
+        node.interactsWithSecret &&
+        node.interactsWithPublic &&
+        binding.stateVariable && !binding.isSecret
+      ) {
+        // TODO other types
+        const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
+        const fnDefNode = path.getAncestorOfType('FunctionDefinition').node;
+        fnDefNode._newASTPointer.parameters.parameters.push(parameterNode);
+      }
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('Identifier', {
