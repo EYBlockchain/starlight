@@ -797,9 +797,6 @@ export default {
         const newNode = buildNode('MsgSender');
         state.skipSubNodes = true;
         parent._newASTPointer[path.containerName] = newNode;
-        const newState: any = {};
-        path.parentPath.traversePathsFast(interactsWithSecretVisitor, newState);
-        if (newState.interactsWithSecret) state.msgSenderParam = true;
         return;
       }
       const newNode = buildNode(node.nodeType, { name: node.memberName });

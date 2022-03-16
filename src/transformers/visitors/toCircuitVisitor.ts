@@ -105,7 +105,7 @@ const visitor = {
         }),
       );
 
-      if (state.msgSenderParam) {
+      if (indicators.msgSenderParam) {
         node._newASTPointer.parameters.parameters.unshift(
           buildNode('VariableDeclaration', {
             name: 'msg',
@@ -113,7 +113,6 @@ const visitor = {
             type: 'field',
           }),
         ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
-        delete state.msgSenderParam; // reset
       }
     },
   },
@@ -446,7 +445,6 @@ const visitor = {
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = newNode;
       state.skipSubNodes = true;
-      state.msgSenderParam = true; // helps us lazily notify the FunctionDefinition node to include a msgSender parameter upon exit.
     },
   },
 
