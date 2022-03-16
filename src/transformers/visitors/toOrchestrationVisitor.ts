@@ -398,6 +398,17 @@ export default {
             });
           }
           if (stateVarIndicator.isModified) {
+            if (stateVarIndicator.isWhole) {
+              // if we have a modified whole state, we must generalise it before postStatements
+              node._newASTPointer.body.statements.push(
+                buildNode('Assignment', {
+                    leftHandSide: buildNode('Identifier', { name }),
+                    operator: '=',
+                    rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
+                  }
+                )
+              );
+            }
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -489,7 +500,7 @@ export default {
             accessedOnly: true,
           });
         }
-          const newFunctionDefinitionNode = node._newASTPointer;
+        const newFunctionDefinitionNode = node._newASTPointer;
 
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {

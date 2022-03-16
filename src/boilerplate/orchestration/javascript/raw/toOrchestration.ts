@@ -419,11 +419,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       lines[0] = preimageBoilerPlate(node);
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.accessedOnly) {
+          // if the state is only accessed, we need to initalise it here before statements
           params.push(
             `\nconst ${stateName} = generalise(${stateName}_preimage.${stateName});`,
           );
-        } else if (stateNode.isWhole)
-          params.push(`\n${stateName} = generalise(${stateName});`);
+        }
       }
       return {
         statements: [`${params.join('\n')}`, lines[0].join('\n')],
