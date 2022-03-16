@@ -43,6 +43,10 @@ import { Binding } from './Binding.js';
 A NodePath is required as a way of 'connecting' a node to its parent (and its parent, and so on...). We can't assign a `.parent` to a `node` (to create `node.parent`), because we'd end up with a cyclic reference; the parent already contains the node, so the node can't then contain the parent!
 The solution: wrap both the node and the parent in a class.
 */
+const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
+  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
+    thisState.interactsWithSecret = true;
+};
 export default class NodePath {
   /**
   @param {Object} node - the node of a tree
@@ -631,6 +635,38 @@ export default class NodePath {
     if (functionNode.nodeType !== 'MemberAccess') return false;
     return this.isExternalContractInstance(functionNode.expression);
   }
+
+
+
+  isInternalFunctionCall() {
+  if (this.nodeType !== 'FunctionCall') return false;
+  const path = NodePath.getPath(this);
+const nodeParentpath: NodePath = this.findAncestor((path: NodePath) => path);
+    const newStateParent: any = {};
+    let interactsWithSecret: boolean = true;
+    let parentinteractsWithSecret: boolean = false;
+    nodeParentpath.traversePathsFast(
+      interactsWithSecretVisitor,
+      newStateParent,
+    );
+    parentinteractsWithSecret ||= newStateParent.interactsWithSecret;
+const newState: any = {};
+
+   if (this.parent.nodeType === 'Function' && interactsWithSecret)
+    this.parent._newASTPointer.interactsWithSecret = parentinteractsWithSecret;
+   path.traversePathsFast(
+     interactsWithSecretVisitor,
+     newState,
+   );
+   interactsWithSecret ||= newState.interactsWithSecret;
+
+ if (this.nodeType === 'FunctionCall' && interactsWithSecret)
+   this.node._newASTPointer.interactsWithSecret = interactsWithSecret;
+
+if(this.parent._newASTPointer.interactsWithSecret === true && this.node._newASTPointer.interactsWithSecret === true)
+return true;
+return false;
+};
 
   isTypeConversion() {
     return (
