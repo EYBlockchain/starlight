@@ -26,10 +26,13 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (
     binding instanceof VariableBinding &&
     indicator.interactsWithSecret &&
-    binding.stateVariable && !binding.isSecret
+    binding.stateVariable && !binding.isSecret &&
+    // if the node is the indexExpression, we dont need its value in the circuit
+    !(thisPath.containerName === 'indexExpression')
   ) {
     thisState.customInputs ??= [];
-    thisState.customInputs.push(indicator.name);
+    if (!thisState.customInputs.some((input: string) => input === indicator.name))
+      thisState.customInputs.push(indicator.name);
   }
 };
 

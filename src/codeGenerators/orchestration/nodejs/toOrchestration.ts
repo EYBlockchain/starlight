@@ -18,11 +18,13 @@ const getAccessedValue = (name: string) => {
 };
 
 /**
- * @param {string} name - variable name
+ * @param {Object} node - variable node
  * @returns string - code line which will extract an accessed value from the user db
  */
-const getPublicValue = (name: string) => {
-  return `\nconst ${name} = generalise(await instance.methods.${name}().call());`;
+const getPublicValue = (node: any) => {
+  if (node.nodeType !== 'IndexAccess')
+    return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
+  return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
 };
 
 /**
@@ -67,7 +69,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         }
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
-        return `${getPublicValue(node.declarations[0].name)}`
+        return `${getPublicValue(node.declarations[0])}`
       }
 
       if (
@@ -116,6 +118,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param
+      if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
 
     case 'TypeConversion':
@@ -135,6 +138,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         case 'uint256':
           return `parseInt(${node.name}.integer, 10)`;
         case 'address':
+          if (options?.contractCall) return `${node.name}.hex(20)`
           return `${node.name}.integer`;
       }
 

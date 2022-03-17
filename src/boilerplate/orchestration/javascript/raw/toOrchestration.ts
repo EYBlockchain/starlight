@@ -424,7 +424,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
     case 'WritePreimage':
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         // TODO commitments with more than one value inside
-        console.log(`stateName vs mappingName: ${stateName} ${stateNode.mappingName}`);
         switch (stateNode.isPartitioned) {
           case true:
             switch (stateNode.nullifierRequired) {

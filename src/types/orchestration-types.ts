@@ -115,12 +115,20 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'IndexAccess': {
-      const { baseExpression = {}, indexExpression = {}, name } = fields;
+      const {
+        baseExpression = {},
+        indexExpression = {},
+        name,
+        isAccessed = false,
+        isSecret = false,
+      } = fields;
       return {
         nodeType,
         name,
         baseExpression,
         indexExpression,
+        isAccessed,
+        isSecret,
       };
     }
     case 'MemberAccess': {
