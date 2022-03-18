@@ -113,8 +113,11 @@ function codeGenerator(node: any) {
     case 'IndexAccess':
       return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression)}`;
 
+    case 'TupleExpression':
+      return `(${node.components.map(codeGenerator).join(` `)})`;
+
     case 'MsgSender':
-      return 'msgSender';
+      return 'msg';
 
     case 'Assert':
       return `

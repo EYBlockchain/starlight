@@ -5,6 +5,13 @@ import { buildNode } from '../../types/solidity-types.js';
 import { traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 
+// below stub will only work with a small subtree - passing a whole AST will always give true!
+// useful for subtrees like ExpressionStatements
+const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
+  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
+    thisState.interactsWithSecret = true;
+};
+
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.sol` AST (for a 'shield' contract)
@@ -173,6 +180,9 @@ export default {
       const { parameters } = newFunctionDefinitionNode.parameters;
       const { postStatements } = newFunctionDefinitionNode.body;
 
+      // if contract is entirely public, we don't want zkp related boilerplate
+      if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
+
       parameters.push(
         ...buildNode('FunctionBoilerplate', {
           bpSection: 'parameters',
@@ -237,6 +247,29 @@ export default {
         parent._newASTPointer[path.containerName] = newNode;
       }
     },
+  },
+
+  TupleExpression: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode.components;
+      parent._newASTPointer[path.containerName] = newNode;
+    },
+  },
+
+  UnaryOperation: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const { operator, prefix, subExpression } = node;
+      const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    }
   },
 
   Assignment: {
@@ -425,19 +458,11 @@ export default {
       let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
-
       if (path.isRequireStatement()) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
-        const findSecretSubnode = (p: any, state: any) => {
-          const isSecret = p.getReferencedNode()?.isSecret;
-
-          if (isSecret) {
-            state.secretFound = true;
-          }
-        };
-        const subState = { secretFound: false };
-        path.traversePathsFast(findSecretSubnode, subState);
-        if (subState.secretFound) {
+        const subState = { interactsWithSecret: false };
+        path.traversePathsFast(interactsWithSecretVisitor, subState);
+        if (subState.interactsWithSecret) {
           state.skipSubNodes = true;
           return;
         }

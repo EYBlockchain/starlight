@@ -184,6 +184,7 @@ export default {
 
     exit(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
         const newNodes: any = {};
@@ -566,7 +567,7 @@ export default {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { operator: node.operator });
       node._newASTPointer = newNode;
-      parent._newASTPointer[path.containerName] = newNode;
+      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
 
   },
@@ -583,6 +584,15 @@ export default {
       }
     },
 
+  },
+
+  TupleExpression: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode.components;
+      parent._newASTPointer[path.containerName] = newNode;
+    },
   },
 
   ExpressionStatement: {
@@ -604,6 +614,13 @@ export default {
           lhs = lhs.baseExpression;
         }
 
+        const name = indicator.isMapping
+          ? indicator.name
+              .replace('[', '_')
+              .replace(']', '')
+              .replace('.sender', '')
+          : indicator.name;
+
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
@@ -622,7 +639,7 @@ export default {
           const newNode = buildNode('VariableDeclarationStatement', {
             declarations: [
               buildNode('VariableDeclaration', {
-                name: lhs.name,
+                name,
                 isAccessed: accessed,
                 isSecret: true,
               }),
@@ -636,12 +653,6 @@ export default {
         }
         // if its an incrementation, we need to know it happens but not copy it over
         if (node.expression.isIncremented && indicator.isPartitioned) {
-          const name = indicator.isMapping
-            ? indicator.name
-                .replace('[', '_')
-                .replace(']', '')
-                .replace('.sender', '')
-            : indicator.name;
           const newNode = buildNode(node.nodeType, {
             nodeType: node.nodeType,
             interactsWithSecret,

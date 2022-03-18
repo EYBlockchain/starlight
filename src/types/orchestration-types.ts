@@ -5,52 +5,7 @@ import { buildBoilerplateNode } from '../boilerplate/orchestration/javascript/no
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
- export function getVisitableKeys(nodeType: string): string[] {
-   switch (nodeType) {
-     case 'Folder':
-       return ['files'];
-     case 'File':
-       return ['nodes'];
-     case 'ImportStatementList':
-       return ['imports'];
-     case 'SourceUnit':
-     case 'ContractDefinition':
-       return ['nodes'];
-     case 'FunctionDefinition':
-       return ['parameters', 'returnParameters', 'body'];
-     case 'ParameterList':
-       return ['parameters'];
-     case 'Block':
-       return ['statements'];
-     case 'VariableDeclarationStatement':
-       return ['declarations', 'initialValue'];
-     case 'ExpressionStatement':
-       return ['expression'];
-     case 'Assignment':
-       return ['leftHandSide', 'rightHandSide'];
-     case 'BinaryOperation':
-       return ['leftExpression', 'rightExpression'];
-     case 'VariableDeclaration':
-       return ['typeName'];
-     case 'PragmaDirective':
-     case 'ElementaryTypeName':
-     case 'Identifier':
-     case 'Literal':
-       return [];
-     case 'PartitionedIncrementationStatementBoilerplate':
-       return ['addend'];
-     case 'PartitionedDecrementationStatementBoilerplate':
-       return ['subtrahend'];
-     // And again, if we haven't recognized the nodeType then we'll throw an
-     // error.
-     default:
-       throw new TypeError(nodeType);
-   }
- }
-
-
-
-
+ 
 export default function buildNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'File': {
@@ -183,6 +138,13 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         name,
         expression,
       };
+    }
+    case 'TupleExpression': {
+      const { components = [] } = fields;
+      return {
+        nodeType,
+        components,
+      }
     }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
