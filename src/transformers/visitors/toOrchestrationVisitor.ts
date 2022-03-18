@@ -137,40 +137,8 @@ export default {
 
       if (scope.modifiesSecretState()) {
         const contractName = `${parent.name}Shield`;
-        const siblingsNames = path.getAllPrevSiblingNodes();
-        // before creating a function node we check for functions with same name
-          const prevsiblingsNames = path.getAllPrevSiblingNodes();
-          const nextsiblingsNames = path.getAllNextSiblingNodes();
-        var index = 0
-        let incIndex =0;
-        var fnName = node.name;
-        for (let i = 0; i < prevsiblingsNames.length; i++)
-           {
-                if (fnName === prevsiblingsNames[i].name)
-                index ++;
-                }
-        if (index > 0) {
-          fnName = node.name+'_'+index;
-          do{
-         incIndex = 1;
-          for (let i = 0; i < prevsiblingsNames.length; i++)
-             {
-                  if (fnName === prevsiblingsNames[i].name)
-                  {
-                    index ++;
-                    incIndex--;
-                }
-
-                  }
-          for (let i = 0; i < nextsiblingsNames.length; i++)
-             {
-                  if (fnName === nextsiblingsNames[i].name)
-                  {index ++; incIndex--;}
-              }
-          fnName = node.name+'_'+index;
-            }while(incIndex === 0)
-              fnName = node.name+'_'+index;
-        }
+        const fnName = path.getUniqueFunctionName();
+        node.fileName = fnName;
 
         // After getting an appropriate Name , we build the node
 
@@ -190,7 +158,7 @@ export default {
           if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
             file.nodes[0].functions.push(
               buildNode('IntegrationTestFunction', {
-                name: node.name,
+                name: fnName,
                 parameters: [],
               }),
             );
@@ -236,10 +204,10 @@ export default {
         if (fnIndicator.newCommitmentsRequired)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
         newNodes.generateProofNode = buildNode('GenerateProof', {
-          circuitName: node.name,
+          circuitName: node.fileName,
         });
         newNodes.sendTransactionNode = buildNode('SendTransaction', {
-          functionName: node.name,
+          functionName: node.fileName,
           contractName,
         });
         newNodes.writePreimageNode = buildNode('WritePreimage', {
@@ -254,11 +222,11 @@ export default {
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           for (const fn of file.nodes[0].functions) {
-            if (fn.name === node.name) thisIntegrationTestFunction = fn;
+            if (fn.name === node.fileName) thisIntegrationTestFunction = fn;
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
-          file.functionNames.push(node.name);
+          file.functionNames.push(node.fileName);
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
