@@ -83,11 +83,11 @@ export const sendTransactionBoilerplate = (node: any) => {
       case false:
       default:
         // whole
+        output[1].push(`${privateStateName}_root.integer`);
         if (stateNode.accessedOnly) {
           output[3].push(`${privateStateName}_nullifier.integer`);
         } else {
           if (!stateNode.reinitialisedOnly) {
-            output[1].push(`${privateStateName}_root.integer`);
             output[0].push(`${privateStateName}_nullifier.integer`);
           }
           if (!stateNode.burnedOnly)
@@ -102,6 +102,7 @@ export const sendTransactionBoilerplate = (node: any) => {
 
 export const generateProofBoilerplate = (node: any) => {
   const output = [];
+  let containsRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
   let stateNode: any;
@@ -132,18 +133,20 @@ export const generateProofBoilerplate = (node: any) => {
     switch (stateNode.isWhole) {
       case true:
         output.push(
-          Orchestrationbp.generateProof.parameters( {
+          Orchestrationbp.generateProof.parameters({
             stateName,
             stateType: 'whole',
             stateVarIds: stateVarIdLines,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            rootRequired: !containsRoot,
             parameters,
-
-          }));
-
+          })
+        );
+        if (!stateNode.reinitialisedOnly) containsRoot = true;
         break;
+
       case false:
       default:
         switch (stateNode.nullifierRequired) {
@@ -166,11 +169,12 @@ export const generateProofBoilerplate = (node: any) => {
                 stateVarIds: stateVarIdLines,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                rootRequired: !containsRoot,
                 accessedOnly: false,
                 parameters,
-
-              }));
-
+              })
+            );
+            containsRoot = true;
             break;
           case false:
           default:
@@ -190,11 +194,11 @@ export const generateProofBoilerplate = (node: any) => {
                 stateVarIds: stateVarIdLines,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                rootRequired: false,
                 accessedOnly: false,
                 parameters,
-
-              }));
-
+              })
+            );
             break;
         }
     }
@@ -647,7 +651,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[0] = arr of nullifiers
       // params[1] = root(s)
       // params[2] = arr of commitments
-      if (params[0][1][0]) params[0][1] = `${params[0][1]},`; // root - single input
+      if (params[0][1][0]) params[0][1] = `${params[0][1][0]},`; // root - single input
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array

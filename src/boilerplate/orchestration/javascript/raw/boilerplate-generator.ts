@@ -267,6 +267,7 @@ class BoilerplateGenerator {
       reinitialisedOnly,
       burnedOnly,
       accessedOnly,
+      rootRequired,
       parameters,
       }): string[] {
 
@@ -290,7 +291,7 @@ class BoilerplateGenerator {
               \t${stateName}_0_prevSalt.limbs(32, 8),
               \t${stateName}_1_prev.integer,
               \t${stateName}_1_prevSalt.limbs(32, 8),
-              \t${stateName}_root.integer,
+              ${rootRequired ? `\t${stateName}_root.integer,` : ``}
               \t${stateName}_0_index.integer,
               \t${stateName}_0_path.integer,
               \t${stateName}_1_index.integer,
@@ -316,7 +317,7 @@ class BoilerplateGenerator {
                       \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
                       \t${stateName}_commitmentExists ? 0 : 1,
-                      \t${stateName}_root.integer,
+                      ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer`];
                 default:
@@ -328,6 +329,7 @@ class BoilerplateGenerator {
                           \t${stateName}_nullifier.integer,
                           \t${stateName}_prev.integer,
                           \t${stateName}_prevSalt.limbs(32, 8),
+                          ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                           \t${stateName}_index.integer,
                           \t${stateName}_path.integer`];
                     default:
@@ -338,7 +340,7 @@ class BoilerplateGenerator {
                       \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
                       \t${stateName}_commitmentExists ? 0 : 1,
-                      \t${stateName}_root.integer,
+                      ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
                       \t${stateName}_newOwnerPublicKey.limbs(32, 8),
