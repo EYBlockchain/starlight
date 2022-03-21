@@ -4,6 +4,7 @@ import Scope from '../../../../traverse/Scope.js';
 const bpCache = new WeakMap();
 
 class ContractBoilerplateGenerator {
+  bpSections: string[] = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
   scope : Scope;
   constructor(scope: Scope) {
     if (bpCache.has(scope)) return bpCache.get(scope);

@@ -2,50 +2,6 @@
 import CircuitBP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerator.js';
 import { StateVariableIndicator } from '../traverse/Indicator.js';
 
-// TODO: I don't think this is ever used; only the Solidity version ever gets visited. Can probably delete this function...
-export function getVisitableKeys(nodeType: string): string[] {
-  switch (nodeType) {
-    case 'Folder':
-      return ['files'];
-    case 'File':
-      return ['nodes'];
-    case 'ImportStatementList':
-      return ['imports'];
-    case 'SourceUnit':
-    case 'ContractDefinition':
-      return ['nodes'];
-    case 'FunctionDefinition':
-      return ['parameters', 'returnParameters', 'body'];
-    case 'ParameterList':
-      return ['parameters'];
-    case 'Block':
-      return ['statements'];
-    case 'VariableDeclarationStatement':
-      return ['declarations', 'initialValue'];
-    case 'ExpressionStatement':
-      return ['expression'];
-    case 'Assignment':
-      return ['leftHandSide', 'rightHandSide'];
-    case 'BinaryOperation':
-      return ['leftExpression', 'rightExpression'];
-    case 'VariableDeclaration':
-      return ['typeName'];
-    case 'PragmaDirective':
-    case 'ElementaryTypeName':
-    case 'Identifier':
-    case 'Literal':
-      return [];
-    case 'PartitionedIncrementationStatementBoilerplate':
-      return ['addend'];
-    case 'PartitionedDecrementationStatementBoilerplate':
-      return ['subtrahend'];
-    // And again, if we haven't recognized the nodeType then we'll throw an
-    // error.
-    default:
-      throw new TypeError(nodeType);
-  }
-}
-
 const generateBoilerplate = ({ indicators, bpSection }) => {
   const bpArray = [];
   // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
@@ -219,6 +175,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         args,
       };
     }
+    case 'SetupCommonFilesBoilerplate':
     case 'Boilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
       return generateBoilerplate(fields);

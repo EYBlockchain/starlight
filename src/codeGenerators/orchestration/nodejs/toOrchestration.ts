@@ -1,5 +1,5 @@
 /* eslint-disable import/no-cycle, no-param-reassign, consistent-return */
-import { OrchestrationCodeBoilerPlate } from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
+import {OrchestrationCodeBoilerPlate}  from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
 import fileGenerator from '../files/toOrchestration.js';
 
 /**
@@ -85,8 +85,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'ElementaryTypeName':
       return;
 
-    case 'Block':
-      return node.statements.map(codeGenerator).join(`\t`);
+      case 'Block': {
+        const preStatements: string = (node.preStatements.flatMap(codeGenerator));
+        const statements:string = (node.statements.flatMap(codeGenerator));
+        const postStatements: string = (node.postStatements.flatMap(codeGenerator));
+        return [...preStatements, ...statements, ...postStatements].join('\n\n');
+      }
 
     case 'ExpressionStatement':
       if (!node.incrementsSecretState && node.interactsWithSecret)
@@ -140,6 +144,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         case 'address':
           if (options?.contractCall) return `${node.name}.hex(20)`
           return `${node.name}.integer`;
+        case 'generalNumber':
+          return `generalise(${node.name})`;
       }
 
     case 'Folder':

@@ -5,6 +5,7 @@ import { buildBoilerplateNode } from '../boilerplate/orchestration/javascript/no
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
+ 
 export default function buildNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'File': {
@@ -27,16 +28,17 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       // prettier-ignore
       const {
         name,
-        body = buildNode('Block'),
         parameters = buildNode('ParameterList'),
+        body = buildNode('Block'),
         contractName
       } = fields;
       return {
         nodeType,
         name,
         contractName,
-        body,
         parameters,
+        body,
+
         // Notice no return parameters. We always return the transaction rct.
       };
     }
@@ -49,10 +51,16 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'Block': {
-      const { statements = [] } = fields;
+      const {
+        preStatements = [],
+        statements = [],
+        postStatements = [],
+      } = fields;
       return {
         nodeType,
+        preStatements,
         statements,
+        postStatements,
       };
     }
     case 'VariableDeclaration': {

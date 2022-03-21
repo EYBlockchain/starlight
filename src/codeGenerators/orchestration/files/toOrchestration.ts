@@ -2,7 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { collectImportFiles, localFile } from '../../common.js'
-import buildBoilerplate from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
+import OrchestrationBP from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
 import codeGenerator from '../nodejs/toOrchestration.js';
 import logger from '../../../utils/logger.js';
 
@@ -12,8 +12,9 @@ import logger from '../../../utils/logger.js';
  * @return - { filepath: 'path/to/file.zok', file: 'the code' };
  * The filepath will be used when saving the file into the new zApp's dir.
  */
+ const Orchestrationbp = new OrchestrationBP();
 const editableCommitmentCommonFilesBoilerplate = () => {
-  const importBoilerplate = buildBoilerplate('Imports');
+  const importBoilerplate = Orchestrationbp.generateProof.import();
   if (!(importBoilerplate instanceof Array)) return;
   return collectImportFiles(importBoilerplate.join(''), 'orchestration');
 };
@@ -48,15 +49,15 @@ const testInputsByType = (solidityType: string) => {
 
 const prepareIntegrationTest = (node: any) => {
   // import generic test skeleton
-  const genericTestFile: any = buildBoilerplate(node.nodeType);
+  const genericTestFile: any = Orchestrationbp.integrationTestBoilerplate;
   // replace references to contract and functions with ours
-  let outputTestFile = genericTestFile.prefix.replace(
+  let outputTestFile = genericTestFile.preStatements().replace(
     /CONTRACT_NAME/g,
     node.contractName,
   );
 
   node.functions.forEach((fn: any) => {
-    let fnboilerplate = genericTestFile.function
+    let fnboilerplate = genericTestFile.postStatements()
       .replace(/CONTRACT_NAME/g, node.contractName)
       .replace(/FUNCTION_NAME/g, fn.name);
     // we remove the second call to the blockchain if we are decrementing
@@ -97,7 +98,7 @@ const prepareIntegrationTest = (node: any) => {
       fnboilerplate = fnboilerplate.replace(toRemove, `\n`);
     }
     // replace function imports at top of file
-    const fnimport = genericTestFile.fnimport.replace(
+    const fnimport = genericTestFile.import().replace(
       /FUNCTION_NAME/g,
       fn.name,
     );
@@ -106,7 +107,7 @@ const prepareIntegrationTest = (node: any) => {
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\n`;
-  outputTestFile = `${preprefix}\n${outputTestFile}\n${genericTestFile.suffix}\n`;
+  outputTestFile = `${preprefix}\n${outputTestFile}\n });\n`;
   return outputTestFile;
 };
 
@@ -213,15 +214,15 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
  * The filepath will be used when saving the file into the new zApp's dir.
  */
 
-export default function fileGenerator(node: any): any {
+export default function fileGenerator(node: any) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
-    case 'Folder': {
-      const check = node.files
+    case 'Folder':
+      return OrchestrationBP.uniqueify(node.files
         .filter((x: any) => x.nodeType !== 'NonSecretFunction')
-        .flatMap(fileGenerator);
-      return check;
-    }
+        .flatMap(fileGenerator));
+
+
 
     case 'File':
       return [
@@ -233,7 +234,8 @@ export default function fileGenerator(node: any): any {
           file: node.nodes.map(codeGenerator).join(''),
         },
       ];
-
+      // case 'ImportStatementList':
+      //   return `${OrchestrationBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
     case 'EditableCommitmentCommonFilesBoilerplate': {
       // collects imported files needed for editing commitments
       // direct imports at the top of each fn file
@@ -277,6 +279,6 @@ export default function fileGenerator(node: any): any {
       return test;
     }
     default:
-      throw new TypeError(node.type);
+      throw new TypeError(`I dont recognise this type: ${node.nodeType}`);
   }
 }

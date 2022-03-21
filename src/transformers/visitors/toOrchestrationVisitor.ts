@@ -117,11 +117,11 @@ const addPublicInput = (path: NodePath, state: any) => {
       interactsWithSecret: true,
     });
 
-    fnDefNode.node._newASTPointer.body.statements ??= [];
+    fnDefNode.node._newASTPointer.body.preStatements ??= [];
     // check we haven't already imported this node
-    if (fnDefNode.node._newASTPointer.body.statements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name)) return;
+    if (fnDefNode.node._newASTPointer.body.preStatements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name)) return;
 
-    fnDefNode.node._newASTPointer.body.statements.unshift(
+    fnDefNode.node._newASTPointer.body.preStatements.unshift(
       newNode,
     );
     // if the node is the indexExpression, we dont need its value in the circuit
@@ -222,6 +222,8 @@ const visitor = {
             buildNode('FunctionDefinition', { name: node.name, contractName }),
           ],
         });
+
+
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
         for (const file of parent._newASTPointer) {
@@ -447,6 +449,17 @@ const visitor = {
             });
           }
           if (stateVarIndicator.isModified) {
+            if (stateVarIndicator.isWhole) {
+              // if we have a modified whole state, we must generalise it before postStatements
+              node._newASTPointer.body.statements.push(
+                buildNode('Assignment', {
+                    leftHandSide: buildNode('Identifier', { name }),
+                    operator: '=',
+                    rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
+                  }
+                )
+              );
+            }
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -538,6 +551,8 @@ const visitor = {
             accessedOnly: true,
           });
         }
+        const newFunctionDefinitionNode = node._newASTPointer;
+
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
           if (param.isPrivate || param.isSecret || param.interactsWithSecret)
@@ -551,13 +566,13 @@ const visitor = {
 
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         if (newNodes.initialisePreimageNode)
-          node._newASTPointer.body.statements.splice(
+          newFunctionDefinitionNode.body.preStatements.splice(
             0,
             0,
             newNodes.initialisePreimageNode,
           );
 
-        node._newASTPointer.body.statements.splice(
+        newFunctionDefinitionNode.body.preStatements.splice(
           0,
           0,
           newNodes.InitialiseKeysNode,
@@ -572,28 +587,30 @@ const visitor = {
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
-          node._newASTPointer.body.statements.push(newNodes.readPreimageNode);
+        newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
         if (newNodes.membershipWitnessNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.preStatements.push(
             newNodes.membershipWitnessNode,
           );
+          if(newNodes.VariableDeclarationStatement)
+          newFunctionDefinitionNode.body.preStatements.push(newNodes.VariableDeclarationStatement);
 
         if (newNodes.calculateNullifierNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.postStatements.push(
             newNodes.calculateNullifierNode,
           );
         if (newNodes.calculateCommitmentNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.postStatements.push(
             newNodes.calculateCommitmentNode,
           );
         if (newNodes.generateProofNode)
-          node._newASTPointer.body.statements.push(newNodes.generateProofNode);
+          newFunctionDefinitionNode.body.postStatements.push(newNodes.generateProofNode);
         if (newNodes.sendTransactionNode)
-          node._newASTPointer.body.statements.push(
+          newFunctionDefinitionNode.body.postStatements.push(
             newNodes.sendTransactionNode,
           );
         if (newNodes.writePreimageNode)
-          node._newASTPointer.body.statements.push(newNodes.writePreimageNode);
+          newFunctionDefinitionNode.body.postStatements.push(newNodes.writePreimageNode);
       }
     },
   },
