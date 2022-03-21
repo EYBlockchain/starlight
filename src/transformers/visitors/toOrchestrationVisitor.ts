@@ -31,6 +31,7 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
     incrementsArray.push({
       name: inc.name,
       precedingOperator: inc.precedingOperator,
+      accessed: inc.accessedSecretState,
     });
 
     if (inc === stateVarIndicator.increments[0]) {
@@ -89,6 +90,7 @@ const addPublicInput = (path: NodePath, state: any) => {
     let innerNode: any;
     if (path.isMapping(node)) {
       name = getIndexAccessName(node);
+      node.name = name;
       const indexExpressionNode = path.isMsgSender(node.indexExpression) ?
       buildNode('MsgSender') :
       buildNode(node.indexExpression.nodeType, {
@@ -268,7 +270,7 @@ const visitor = {
         if (fnIndicator.initialisationRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
         newNodes.readPreimageNode = buildNode('ReadPreimage');
-        if (fnIndicator.nullifiersRequired) {
+        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,
           });
@@ -322,14 +324,6 @@ const visitor = {
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
           delete state.msgSenderParam; // reset
-        }
-
-        if (state.publicInputs) {
-          state.publicInputs.forEach((input: any) => {
-            newNodes.generateProofNode.parameters.push(input.name);
-          })
-
-          delete state.publicInputs; // reset
         }
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
@@ -509,6 +503,7 @@ const visitor = {
               .replace('.sender', '');
           }
           newNodes.initialisePreimageNode.privateStates[name] = {
+            stateVarId: id,
             privateStateName: name,
             accessedOnly: true,
           };
@@ -518,10 +513,10 @@ const visitor = {
             {
               id,
               indicator: stateVarIndicator,
+              initialised: stateVarIndicator.isWhole && functionIndicator.initialisationRequired,
               accessedOnly: true,
             },
           );
-
           newNodes.membershipWitnessNode.privateStates[
             name
           ] = buildPrivateStateNode('MembershipWitness', {
@@ -557,6 +552,13 @@ const visitor = {
         for (const param of node._newASTPointer.parameters.parameters) {
           if (param.isPrivate || param.isSecret || param.interactsWithSecret)
             newNodes.generateProofNode.parameters.push(param.name);
+        }
+        if (state.publicInputs) {
+          state.publicInputs.forEach((input: any) => {
+            newNodes.generateProofNode.parameters.push(input.name);
+          })
+
+          delete state.publicInputs; // reset
         }
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {

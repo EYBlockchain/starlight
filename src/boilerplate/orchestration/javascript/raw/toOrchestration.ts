@@ -157,7 +157,7 @@ export const generateProofBoilerplate = (node: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
                 !parameters.includes(`\t${inc.name}.integer,`) &&
-                !privateStateNames.includes(inc.name) &&
+                !privateStateNames.includes(inc.name) && !inc.accessed &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
@@ -182,7 +182,7 @@ export const generateProofBoilerplate = (node: any) => {
             stateNode.increment.forEach((inc: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
-                !parameters.includes(`\t${inc.name}.integer,`) &&
+                !parameters.includes(`\t${inc.name}.integer,`) && !inc.accessed &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
