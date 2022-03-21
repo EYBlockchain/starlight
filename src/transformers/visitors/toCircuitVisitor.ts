@@ -24,6 +24,20 @@ const visitor = {
     },
   },
 
+  ImportDirective: {
+    enter(path: NodePath, state: any) {
+      const { node } = path;
+      state.contractImports ??= [];
+      state.contractImports.push({
+        absolutePath: node.absolutePath,
+        file: node.file,
+      });
+      // we assume all import statements come before all functions
+    },
+
+  },
+
+
   FunctionDefinition: {
     // parent._newASTPointer location is Folder.files[].
     enter(path: NodePath, state: any) {

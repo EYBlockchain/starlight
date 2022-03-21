@@ -8,13 +8,13 @@ import { traversePathsFast } from '../traverse/traverse.js';
 import explode from './visitors/explode.js';
 import visitor from './visitors/toOrchestrationVisitor.js';
 import codeGenerator from '../codeGenerators/orchestration/nodejs/toOrchestration.js';
-import buildBoilerplate from '../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
+import OrchestrationBP from '../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
 
 /**
  * Inspired by the Transformer
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
-
+const Orchestrationbp = new OrchestrationBP();
 function transformation1(oldAST: any) {
   // We'll create a `newAst`
   const newAST = {
@@ -92,7 +92,7 @@ export default function toOrchestration(ast: any, options: any) {
     `Saving backend files to the zApp output directory ${options.outputDirPath}...`,
   );
   // TODO merge this process with above
-  const zappFilesBP = buildBoilerplate('ZappFilesBoilerplate');
+  const zappFilesBP = Orchestrationbp.zappFilesBoilerplate();
   if (!(zappFilesBP instanceof Array)) throw new Error('Boilerplate files not read correctly!');
   let fileObj: any;
   // we go through the below process in the codeGenerator for other files
