@@ -319,6 +319,8 @@ export class VariableBinding extends Binding {
     ownerNode.isParam = NodePath.getPath(ownerNode).isFunctionParameter();
     this.owner = ownerNode;
     this.isOwned = true;
+    const ownerBinding = this.path.getReferencedBinding(ownerNode);
+    ownerNode.isSecret ??= ownerBinding instanceof VariableBinding ? ownerBinding.isSecret : null;
     if (
       this.owner.typeDescriptions.typeIdentifier.includes('address') ||
       this.owner.name === 'msg'
