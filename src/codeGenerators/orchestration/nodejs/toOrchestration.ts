@@ -107,15 +107,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param
       return `msgSender.integer`;
-
+      
     case 'TypeConversion':
-      switch (node.type) {
-        case 'address':
-          return `generalise(${codeGenerator(node.arguments)}).hex(20)`;
-        default:
-          // TODO
-          return;
-      }
+      return `${codeGenerator(node.arguments)}`;
+
     case 'Literal':
       return node.value;
     case 'Identifier':
