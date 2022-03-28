@@ -1,5 +1,5 @@
 /* eslint-disable import/no-cycle, no-param-reassign, consistent-return */
-import { OrchestrationCodeBoilerPlate } from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
+import {OrchestrationCodeBoilerPlate}  from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
 import fileGenerator from '../files/toOrchestration.js';
 
 /**
@@ -15,6 +15,16 @@ import fileGenerator from '../files/toOrchestration.js';
  */
 const getAccessedValue = (name: string) => {
   return `\nlet { ${name} } = generalise(${name}_preimage);`;
+};
+
+/**
+ * @param {Object} node - variable node
+ * @returns string - code line which will extract an accessed value from the user db
+ */
+const getPublicValue = (node: any) => {
+  if (node.nodeType !== 'IndexAccess')
+    return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
+  return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
 };
 
 /**
@@ -52,12 +62,14 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue.nodeType === 'Assignment') {
-        if (node.declarations[0].isAccessed) {
+        if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
           return `${getAccessedValue(
             node.declarations[0].name,
           )}\n${codeGenerator(node.initialValue)};`;
         }
         return `\nlet ${codeGenerator(node.initialValue)};`;
+      } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
+        return `${getPublicValue(node.declarations[0])}`
       }
 
       if (
@@ -73,8 +85,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'ElementaryTypeName':
       return;
 
-    case 'Block':
-      return node.statements.map(codeGenerator).join(`\t`);
+      case 'Block': {
+        const preStatements: string = (node.preStatements.flatMap(codeGenerator));
+        const statements:string = (node.statements.flatMap(codeGenerator));
+        const postStatements: string = (node.postStatements.flatMap(codeGenerator));
+        return [...preStatements, ...statements, ...postStatements].join('\n\n');
+      }
 
     case 'ExpressionStatement':
       if (!node.incrementsSecretState && node.interactsWithSecret)
@@ -106,6 +122,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param
+      if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
       
     case 'TypeConversion':
@@ -120,7 +137,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
         case 'uint256':
           return `parseInt(${node.name}.integer, 10)`;
         case 'address':
+          if (options?.contractCall) return `${node.name}.hex(20)`
           return `${node.name}.integer`;
+        case 'generalNumber':
+          return `generalise(${node.name})`;
       }
 
     case 'Folder':

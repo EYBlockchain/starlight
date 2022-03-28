@@ -9,26 +9,29 @@ import NodePath from '../../../traverse/NodePath.js';
  */
 
 const visitor = {
-  Assignment: {
+
+  FunctionDefinition: {
+    enter(path: NodePath, state: any) {
+      if (!path.scope.modifiesSecretState()) state.skipSubNodes = true;
+    }
+  },
+
+  MemberAccess: {
     enter(path: NodePath) {
-      const { node, scope } = path;
+      if (!path.isMsgSender()) return;
+      const isMappingKey = path.containerName === 'indexExpression';
+      let expressionPath = path.getAncestorOfType('ExpressionStatement');
+      expressionPath ??= path.getAncestorOfType('Assignment');
 
-      const binding = scope.getReferencedBinding(node.leftHandSide); // HACK - only works for one very specific example. We should instead create an `interactsWithSecret` indicator and attach it to any node with a child (or grandchild etc) which isSecret. That way, we could just do node.interactsWithSecret() within this function (and others), which would be clean.
+      const fnDefPath = path.getFunctionDefinition();
+      const fnDefIndicators = fnDefPath.scope.indicators;
 
-      if (binding?.isSecret) {
-        // We won't copy over secret code into the shield contract (obviously). But before we skip this node, we might need to copy over msg.sender if it's a value being assigned to something.
-        const subState = { msgSenderFound: false };
-        const rhsPath = NodePath.getPath(node.rightHandSide);
-        rhsPath.traversePathsFast((p: any, substate: any) => {
-          if (p.isMsgSender()) substate.msgSenderFound = true;
-        }, subState);
 
-        if (subState.msgSenderFound) {
-          const fnDefPath = path.getFunctionDefinition();
-          const fnDefScope = fnDefPath.scope;
-          const fnDefIndicators = fnDefScope.indicators;
-          fnDefIndicators.msgSenderParam = true;
-        }
+      // either a) msg.sender is a value we need for a secret or
+      // b) it interacts with a public and private state as a mapping key, so we may be allowing cheating if we don't input it to the circuit
+      if ((!isMappingKey && expressionPath.containsSecret) ||
+        (expressionPath.containsPublic && expressionPath.containsSecret)) {
+        fnDefIndicators.msgSenderParam = true;
       }
     },
   },

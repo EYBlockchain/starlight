@@ -1,13 +1,53 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
-import buildBoilerplate from './boilerplate-generator.js';
+import OrchestrationBP from './boilerplate-generator.js';
+
+
+const stateVariableIds = (node: any) => {
+  const {privateStateName, stateNode} = node;
+  const stateVarIds = [];
+  // state variable ids
+  // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
+  if (!stateNode.stateVarId[1]) {
+    stateVarIds.push(
+      `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
+    );
+  } else {
+    // if is a mapping...
+    stateVarIds.push(
+      `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
+    );
+    // ... and the mapping key is not msg.sender, but is a parameter
+    if (
+      privateStateName.includes(stateNode.stateVarId[1]) &&
+      stateNode.stateVarId[1] !== 'msg'
+    ) {
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
+      );
+    }
+    // ... and the mapping key is msg, and the caller of the fn has the msg key
+    if (
+      stateNode.stateVarId[1] === 'msg' &&
+      privateStateName.includes('msg')
+    ) {
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
+      );
+    }
+    stateVarIds.push(
+      `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+    );
+  }
+  return stateVarIds;
+}
 
 /**
  * @desc:
  * Generates boilerplate for orchestration files
  * Handles logic for ordering and naming inside a function.mjs file
  */
-
+const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
   const output = [];
@@ -43,11 +83,11 @@ export const sendTransactionBoilerplate = (node: any) => {
       case false:
       default:
         // whole
+        output[1].push(`${privateStateName}_root.integer`);
         if (stateNode.accessedOnly) {
           output[3].push(`${privateStateName}_nullifier.integer`);
         } else {
           if (!stateNode.reinitialisedOnly) {
-            output[1].push(`${privateStateName}_root.integer`);
             output[0].push(`${privateStateName}_nullifier.integer`);
           }
           if (!stateNode.burnedOnly)
@@ -62,6 +102,7 @@ export const sendTransactionBoilerplate = (node: any) => {
 
 export const generateProofBoilerplate = (node: any) => {
   const output = [];
+  let containsRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
   let stateNode: any;
@@ -81,23 +122,31 @@ export const generateProofBoilerplate = (node: any) => {
           !output.join().includes(`${para}.integer`),
       )
       .forEach((param: string) => {
-        parameters.push(`\t${param}.integer,`);
+        if (param == 'msgSender') {
+          parameters.unshift(`\t${param}.integer,`);
+        } else {
+          parameters.push(`\t${param}.integer,`);
+        }
+
       });
     // then we build boilerplate code per state
     switch (stateNode.isWhole) {
       case true:
         output.push(
-          buildBoilerplate('GenerateProof', {
+          Orchestrationbp.generateProof.parameters({
             stateName,
             stateType: 'whole',
+            stateVarIds: stateVarIdLines,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            rootRequired: !containsRoot,
             parameters,
-            stateVarIds: stateVarIdLines,
-          }),
+          })
         );
+        if (!stateNode.reinitialisedOnly) containsRoot = true;
         break;
+
       case false:
       default:
         switch (stateNode.nullifierRequired) {
@@ -108,19 +157,24 @@ export const generateProofBoilerplate = (node: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
                 !parameters.includes(`\t${inc.name}.integer,`) &&
-                !privateStateNames.includes(inc.name) &&
+                !privateStateNames.includes(inc.name) && !inc.accessed &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
             });
             output.push(
-              buildBoilerplate('GenerateProof', {
+              Orchestrationbp.generateProof.parameters({
                 stateName,
                 stateType: 'decrement',
-                parameters,
                 stateVarIds: stateVarIdLines,
-              }),
+                reinitialisedOnly: false,
+                burnedOnly: false,
+                rootRequired: !containsRoot,
+                accessedOnly: false,
+                parameters,
+              })
             );
+            containsRoot = true;
             break;
           case false:
           default:
@@ -128,18 +182,22 @@ export const generateProofBoilerplate = (node: any) => {
             stateNode.increment.forEach((inc: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
-                !parameters.includes(`\t${inc.name}.integer,`) &&
+                !parameters.includes(`\t${inc.name}.integer,`) && !inc.accessed &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
             });
             output.push(
-              buildBoilerplate('GenerateProof', {
+              Orchestrationbp.generateProof.parameters( {
                 stateName,
                 stateType: 'increment',
-                parameters,
                 stateVarIds: stateVarIdLines,
-              }),
+                reinitialisedOnly: false,
+                burnedOnly: false,
+                rootRequired: false,
+                accessedOnly: false,
+                parameters,
+              })
             );
             break;
         }
@@ -154,53 +212,25 @@ export const preimageBoilerPlate = (node: any) => {
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(node.privateStates)) {
-    const stateVarIds = [];
+    const stateVarIds = stateVariableIds({ privateStateName, stateNode });
     const initialiseParams = [];
     const preimageParams = [];
 
-    // state variable ids
-    // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
-    if (!stateNode.stateVarId[1]) {
-      stateVarIds.push(
-        `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
-      );
-    } else {
-      // if is a mapping...
-      stateVarIds.push(
-        `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
-      );
-      // ... and the mapping key is not msg.sender, but is a parameter
-      if (
-        privateStateName.includes(stateNode.stateVarId[1]) &&
-        stateNode.stateVarId[1] !== 'msg'
-      ) {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
-        );
-      }
-      // ... and the mapping key is msg, and the caller of the fn has the msg key
-      if (
-        stateNode.stateVarId[1] === 'msg' &&
-        privateStateName.includes('msg')
-      ) {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
-        );
-      }
-      stateVarIds.push(
-        `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
-      );
-    }
-
     if (stateNode.accessedOnly) {
       output.push(
-        buildBoilerplate('ReadPreimage', {
+        Orchestrationbp.readPreimage.postStatements({
+          stateName:privateStateName,
           stateType: 'whole',
-          stateName: privateStateName,
+          mappingName: null,
+          mappingKey: null,
+          increment: false,
+          newOwnerStatment: null,
+          reinitialisedOnly: false,
+          initialised: stateNode.initialised,
           accessedOnly: true,
           stateVarIds,
-        }),
-      );
+        }));
+
       continue;
     }
 
@@ -247,15 +277,19 @@ export const preimageBoilerPlate = (node: any) => {
     switch (stateNode.isWhole) {
       case true:
         output.push(
-          buildBoilerplate('ReadPreimage', {
-            stateType: 'whole',
+          Orchestrationbp.readPreimage.postStatements({
             stateName: privateStateName,
+            stateType: 'whole',
+            mappingName: null,
+            mappingKey: null,
+            initialised: stateNode.initialised,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
+            accessedOnly: false,
             stateVarIds,
-          }),
-        );
+          }));
+
         break;
       case false:
       default:
@@ -263,31 +297,39 @@ export const preimageBoilerPlate = (node: any) => {
           case true:
             // decrement
             output.push(
-              buildBoilerplate('ReadPreimage', {
-                stateType: 'decrement',
+              Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
-                increment: stateNode.increment,
+                stateType: 'decrement',
+                mappingName: stateNode.mappingName || privateStateName,
                 mappingKey: stateNode.mappingKey
                   ? `[${privateStateName}_stateVarId_key.integer]`
                   : ``,
-                mappingName: stateNode.mappingName || privateStateName,
+                increment: stateNode.increment,
                 newOwnerStatment,
+                initialised: false,
+                reinitialisedOnly: false,
+                accessedOnly: false,
                 stateVarIds,
-              }),
-            );
+              }));
+
             break;
           case false:
           default:
             // increment
             output.push(
-              buildBoilerplate('ReadPreimage', {
-                stateType: 'increment',
+            Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
+                stateType: 'increment',
+                mappingName: null,
+                mappingKey: null,
                 increment: stateNode.increment,
                 newOwnerStatment,
+                initialised: false,
+                reinitialisedOnly: false,
+                accessedOnly: false,
                 stateVarIds,
-              }),
-            );
+              }));
+
         }
     }
   }
@@ -309,7 +351,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   let stateNode: any;
   switch (node.nodeType) {
     case 'Imports':
-      return { statements: buildBoilerplate(node.nodeType) };
+      return { statements:  Orchestrationbp.generateProof.import() }
 
     case 'FunctionDefinition':
       // the main function
@@ -358,7 +400,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         switch (stateNode.mappingKey) {
           case 'msg':
             // msg.sender => key is _newOwnerPublicKey
-            mappingKey = `[${stateName}_newOwnerPublicKey.integer]`;
+            mappingKey = `[${stateName}_stateVarId_key.integer]`;
             break;
           case null:
           case undefined:
@@ -370,13 +412,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             mappingKey = `[${stateNode.mappingKey}.integer]`;
         }
         lines.push(
-          buildBoilerplate(node.nodeType, {
+          Orchestrationbp.initialisePreimage.preStatements( {
             stateName,
             accessedOnly: stateNode.accessedOnly,
+            stateVarIds: stateVariableIds({ privateStateName: stateName, stateNode}),
             mappingKey,
-            mappingName: stateNode.mappingName || stateName,
-          }),
-        );
+            mappingName: stateNode.mappingName || stateName
+          }));
+
       }
       return {
         statements: lines,
@@ -386,10 +429,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       states[0] = node.onChainKeyRegistry ? `true` : `false`;
       return {
         statements: [
-          `${buildBoilerplate(node.nodeType, {
-            contractName: node.contractName,
-            onChainKeyRegistry: states[0],
-          })}`,
+          `${Orchestrationbp.initialiseKeys.postStatements(
+           node.contractName,
+           states[0],
+          ) }`,
         ],
       };
 
@@ -397,11 +440,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       lines[0] = preimageBoilerPlate(node);
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.accessedOnly) {
+          // if the state is only accessed, we need to initalise it here before statements
           params.push(
             `\nconst ${stateName} = generalise(${stateName}_preimage.${stateName});`,
           );
-        } else if (stateNode.isWhole)
-          params.push(`\n${stateName} = generalise(${stateName});`);
+        }
       }
       return {
         statements: [`${params.join('\n')}`, lines[0].join('\n')],
@@ -415,15 +458,16 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             switch (stateNode.nullifierRequired) {
               case true:
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                  Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'decrement',
+                    mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
-                    mappingName: stateNode.mappingName || stateName,
-                  }),
-                );
+                    burnedOnly: false,
+                  }));
+
                 break;
               case false:
               default:
@@ -437,31 +481,40 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 }
 
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                    Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
+                    mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
-                    mappingName: stateNode.mappingName || stateName,
-                  }),
-                );
+                    burnedOnly: false,
+
+                  }));
+
                 break;
             }
             break;
           case false:
           default:
+            if (stateNode.mappingKey) {
+              lines.push(`
+              \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
+              \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
+            } else {
+              lines.push(`
+              \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
+            }
             lines.push(
-              buildBoilerplate(node.nodeType, {
+                Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
-                burnedOnly: stateNode.burnedOnly,
+                mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
                   ? `[${stateName}_stateVarId_key.integer]`
                   : ``,
-                mappingName: stateNode.mappingName || stateName,
-              }),
-            );
+                burnedOnly: stateNode.burnedOnly,
+              }));
         }
       }
       return {
@@ -484,29 +537,29 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isPartitioned) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.membershipWitness.postStatements({
               stateName,
               contractName: node.contractName,
               stateType: 'partitioned',
-            }),
-          );
+            }));
+
         }
         if (stateNode.accessedOnly) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.membershipWitness.postStatements({
               stateName,
               contractName: node.contractName,
               stateType: 'accessedOnly',
-            }),
-          );
+            }));
+
         } else if (stateNode.isWhole) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.membershipWitness.postStatements({
               stateName,
               contractName: node.contractName,
               stateType: 'whole',
-            }),
-          );
+            }));
+
         }
       }
       return {
@@ -517,18 +570,17 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (stateNode.isPartitioned) {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.calculateNullifier.postStatements({
               stateName,
               stateType: 'partitioned',
-            }),
-          );
+            }));
+
         } else {
           lines.push(
-            buildBoilerplate(node.nodeType, {
+            Orchestrationbp.calculateNullifier.postStatements({
               stateName,
               stateType: 'whole',
-            }),
-          );
+            }));
         }
       }
       return {
@@ -541,11 +593,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           case undefined:
           case false:
             lines.push(
-              buildBoilerplate(node.nodeType, {
+              Orchestrationbp.calculateCommitment.postStatements( {
                 stateName,
                 stateType: 'whole',
-              }),
-            );
+              }));
+
             break;
           case true:
           default:
@@ -553,21 +605,21 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               case true:
                 // decrement
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                  Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'decrement',
-                  }),
-                );
+                  }));
+
                 break;
               case false:
               default:
                 // increment
                 lines.push(
-                  buildBoilerplate(node.nodeType, {
+                  Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'increment',
-                  }),
-                );
+                  }));
+
             }
         }
       }
@@ -599,7 +651,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[0] = arr of nullifiers
       // params[1] = root(s)
       // params[2] = arr of commitments
-      if (params[0][1][0]) params[0][1] = `${params[0][1]},`; // root - single input
+      if (params[0][1][0]) params[0][1] = `${params[0][1][0]},`; // root - single input
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array
