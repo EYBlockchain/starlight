@@ -67,7 +67,7 @@ export default {
         if (
           rightAncestor &&
           lhsBinding?.isSecret &&
-          !referencedBinding.stateVariable
+          referencedBinding.path.isFunctionParameterDeclaration()
         ) {
           // ...param which is used to assign a secret state
           logger.warn(

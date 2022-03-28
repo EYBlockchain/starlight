@@ -123,12 +123,20 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'IndexAccess': {
-      const { baseExpression = {}, indexExpression = {}, name } = fields;
+      const {
+        baseExpression = {},
+        indexExpression = {},
+        name,
+        isAccessed = false,
+        isSecret = false,
+      } = fields;
       return {
         nodeType,
         name,
         baseExpression,
         indexExpression,
+        isAccessed,
+        isSecret,
       };
     }
     case 'MemberAccess': {
@@ -145,6 +153,15 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         components,
       }
+    }
+    case 'UnaryOperation': {
+      const { operator, prefix, subExpression = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        prefix,
+        subExpression,
+      };
     }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;

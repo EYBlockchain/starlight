@@ -25,43 +25,46 @@ class BoilerplateGenerator {
     // if not a mapping, mappingName = stateName, mappingKey = ''
     // If a mapping, mappingKey = `[keyValue]`
 
-    preStatements( {stateName, accessedOnly, mappingName, mappingKey }): string[] {
+    preStatements( {stateName, accessedOnly, stateVarIds, mappingName, mappingKey }): string[] {
       // once per state
-// only whole states
-// if not a mapping, mappingName = stateName, mappingKey = ''
-// If a mapping, mappingKey = `[keyValue]`
-switch (accessedOnly) {
-case true:
-  return [`
-  \n // Initialise commitment preimage of whole accessed state:
-  \nlet ${stateName}_commitmentExists = true;
-  \nconst ${stateName}_preimage = JSON.parse(
-      fs.readFileSync(db, 'utf-8', err => {
-        console.log(err);
-      }),
-    ).${mappingName}${mappingKey};`];
-default:
-  return [`
-    \n // Initialise commitment preimage of whole state:
-    \nlet ${stateName}_commitmentExists = true;
-    let ${stateName}_witnessRequired = true;
-    \nlet ${stateName}_preimage = {
-    \t${stateName}: 0,
-    \tsalt: 0,
-    \tcommitment: 0,
+      // only whole states
+      // if not a mapping, mappingName = stateName, mappingKey = ''
+      // If a mapping, mappingKey = `[keyValue]`
+      switch (accessedOnly) {
+        case true:
+          return [`
+          \n // Initialise commitment preimage of whole accessed state:
+          ${stateVarIds.join('\n')}
+          \nlet ${stateName}_commitmentExists = true;
+          \nconst ${stateName}_preimage = JSON.parse(
+              fs.readFileSync(db, 'utf-8', err => {
+                console.log(err);
+              }),
+            ).${mappingName}${mappingKey};`];
+        default:
+          return [`
+              \n // Initialise commitment preimage of whole state:
+              ${stateVarIds.join('\n')}
+              \nlet ${stateName}_commitmentExists = true;
+              let ${stateName}_witnessRequired = true;
+              \nlet ${stateName}_preimage = {
+              \t${stateName}: 0,
+              \tsalt: 0,
+              \tcommitment: 0,
+              };
+              if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName}${mappingKey}) {
+                  ${stateName}_commitmentExists = false;
+                  ${stateName}_witnessRequired = false;
+                } else {
+                  ${stateName}_preimage = JSON.parse(
+                      fs.readFileSync(db, 'utf-8', err => {
+                console.log(err);
+              }),
+            ).${mappingName}${mappingKey};
+          }`];
+        }
+      },
     };
-    if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName}${mappingKey}) {
-        ${stateName}_commitmentExists = false;
-        ${stateName}_witnessRequired = false;
-      } else {
-        ${stateName}_preimage = JSON.parse(
-            fs.readFileSync(db, 'utf-8', err => {
-              console.log(err);
-            }),
-          ).${mappingName}${mappingKey};
-      }`];
-}},
-};
 
 
 
@@ -91,6 +94,7 @@ default:
       mappingName,
       mappingKey,
       increment,
+      initialised,
       newOwnerStatment,
       reinitialisedOnly,
       accessedOnly,
@@ -126,13 +130,13 @@ default:
             case true:
               return [`
                 ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
-                ${stateVarIds.join('\n')}
+                ${initialised ? `` : stateVarIds.join('\n')}
                 \n`];
             default:
               switch (accessedOnly) {
                 case true:
                   return [`
-                    ${stateVarIds.join('\n')}
+                    ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
                     const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
@@ -140,7 +144,7 @@ default:
                 default:
                   return [`
                     ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
-                    ${stateVarIds.join('\n')}
+                    ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
                     const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
@@ -263,6 +267,7 @@ default:
       reinitialisedOnly,
       burnedOnly,
       accessedOnly,
+      rootRequired,
       parameters,
       }): string[] {
 
@@ -286,7 +291,7 @@ default:
               \t${stateName}_0_prevSalt.limbs(32, 8),
               \t${stateName}_1_prev.integer,
               \t${stateName}_1_prevSalt.limbs(32, 8),
-              \t${stateName}_root.integer,
+              ${rootRequired ? `\t${stateName}_root.integer,` : ``}
               \t${stateName}_0_index.integer,
               \t${stateName}_0_path.integer,
               \t${stateName}_1_index.integer,
@@ -312,7 +317,7 @@ default:
                       \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
                       \t${stateName}_commitmentExists ? 0 : 1,
-                      \t${stateName}_root.integer,
+                      ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer`];
                 default:
@@ -324,6 +329,7 @@ default:
                           \t${stateName}_nullifier.integer,
                           \t${stateName}_prev.integer,
                           \t${stateName}_prevSalt.limbs(32, 8),
+                          ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                           \t${stateName}_index.integer,
                           \t${stateName}_path.integer`];
                     default:
@@ -334,7 +340,7 @@ default:
                       \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
                       \t${stateName}_commitmentExists ? 0 : 1,
-                      \t${stateName}_root.integer,
+                      ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
                       \t${stateName}_newOwnerPublicKey.limbs(32, 8),
@@ -386,7 +392,7 @@ sendTransaction = {
                 \npreimage.${mappingName}${mappingKey} = {};`];
             default:
               return [`
-                \npreimage.${stateName}${mappingKey} = {
+                \npreimage.${mappingName}${mappingKey} = {
                 \t${stateName}: ${stateName}.integer,
                 \tsalt: ${stateName}_newSalt.integer,
                 \tpublicKey: ${stateName}_newOwnerPublicKey.integer,

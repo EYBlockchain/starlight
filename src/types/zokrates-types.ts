@@ -6,7 +6,7 @@ const generateBoilerplate = ({ indicators, bpSection }) => {
   const bpArray = [];
   // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
   for (const indicatorObj of Object.values(indicators)) {
-    if (!(indicatorObj instanceof StateVariableIndicator)) continue; // eslint-disable-line no-continue
+    if (!(indicatorObj instanceof StateVariableIndicator) || !indicatorObj.isSecret) continue; // eslint-disable-line no-continue
     const bp = new CircuitBP(indicatorObj);
     bpArray.push(...bp[bpSection]);
   }
@@ -131,6 +131,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         components,
       }
+    }
+    case 'UnaryOperation': {
+      const { operator, prefix, subExpression = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        prefix,
+        subExpression,
+      };
     }
     case 'MsgSender': {
       return {
