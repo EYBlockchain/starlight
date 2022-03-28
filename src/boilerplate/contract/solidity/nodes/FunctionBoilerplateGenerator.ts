@@ -32,7 +32,9 @@ class FunctionBoilerplateGenerator {
     const { scope } = this;
     const isConstructorFunction =
       scope.path.node.nodeType === 'FunctionDefinition' && scope.path.node.kind === 'constructor';
-    if (isConstructorFunction) {
+    if (isConstructorFunction && scope.containsSecret) {
+      return ['cnstrctr', 'customFunction'];
+    } else if (isConstructorFunction) {
       return ['cnstrctr'];
     }
 
@@ -52,12 +54,12 @@ class FunctionBoilerplateGenerator {
   cnstrctr = {
     // all category objects will have a sectionSelector property (function)
     sectionSelector() {
-      return ['parameters', 'postStatements'];
+      return ['parameters', 'preStatements'];
     },
 
     parameters() {},
 
-    postStatements() {},
+    preStatements() {},
   };
 
   customFunction = {

@@ -19,7 +19,7 @@ class FunctionBoilerplateGenerator {
       ];
     },
 
-    postStatements(): string[] {
+    preStatements(): string[] {
       return [
         `verifier = IVerifier(verifierAddress);
     		  for (uint i = 0; i < vk.length; i++) {
@@ -27,6 +27,7 @@ class FunctionBoilerplateGenerator {
     		  }`,
       ];
     },
+
   };
 
   customFunction = {
@@ -41,7 +42,7 @@ class FunctionBoilerplateGenerator {
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
         ...(newCommitments ? [`uint256[] calldata newCommitments`] : []),
         ...(checkNullifiers ? [`uint256[] calldata checkNullifiers`] : []),
-        `uint256[] calldata proof`,
+        ...(newCommitments || newNullifiers ? [`uint256[] calldata proof`] : []),
       ];
     },
 

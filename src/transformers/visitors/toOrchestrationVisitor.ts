@@ -240,18 +240,19 @@ const visitor = {
         }
       } else {
         state.skipSubNodes = true;
-        if (node.kind === 'constructor') {
-          state.constructorParams ??= [];
-          for (const param of node.parameters.parameters) {
-            state.constructorParams.push(
-              buildNode('VariableDeclaration', {
-                name: param.name,
-                type: param.typeName.name,
-                isSecret: param.isSecret,
-                modifiesSecretState: false,
-              }),
-            );
-          }
+      }
+
+      if (node.kind === 'constructor') {
+        state.constructorParams ??= [];
+        for (const param of node.parameters.parameters) {
+          if (!param.isSecret) state.constructorParams.push(
+            buildNode('VariableDeclaration', {
+              name: param.name,
+              type: param.typeName.name,
+              isSecret: param.isSecret,
+              modifiesSecretState: false,
+            }),
+          );
         }
       }
     },
