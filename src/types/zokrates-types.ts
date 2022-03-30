@@ -74,21 +74,23 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, isSecret: isPrivate = false, declarationType } = fields;
+      const { name, type, isSecret: isPrivate = false, interactsWithSecret, declarationType } = fields;
       return {
         nodeType,
         name,
         isPrivate, // 'private' to match zokrates keyword
+        interactsWithSecret,
         declarationType,
         typeName: buildNode('ElementaryTypeName', { name: type }),
       };
     }
     case 'VariableDeclarationStatement': {
-      const { declarations = [], initialValue = {} } = fields;
+      const { declarations = [], initialValue = {}, interactsWithSecret } = fields;
       return {
         nodeType,
         declarations,
         initialValue,
+        interactsWithSecret,
       };
     }
     case 'BinaryOperation': {
@@ -166,6 +168,28 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         name,
       };
+    }
+    case 'InternalFunctionCall': {
+      const { name, internalFunctionInteractsWithSecret = false} = fields;
+      return{
+        nodeType,
+        name,
+        internalFunctionInteractsWithSecret,
+        arguments: []
+      };
+
+    }
+    case 'InternalFunctionBoilerplate':{
+      const { name, internalFunctionInteractsWithSecret = false} = fields;
+      console.log(internalFunctionInteractsWithSecret);
+      return{
+        nodeType: 'Boilerplate',
+        bpSection: 'importStatements',
+        bpType: 'internalFunctionCall',
+        name,
+        internalFunctionInteractsWithSecret,
+      };
+
     }
     case 'Assert': {
       // A very specific zokrates nodeType, which is similar to a Solidity 'require' statement. It asserts a truth.

@@ -4,7 +4,7 @@
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs
-import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
+import { StateVariableIndicator,FunctionDefinitionIndicator } from '../../../../traverse/Indicator.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 
 const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
@@ -48,6 +48,7 @@ const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
   return { incrementsArray, incrementsString };
 };
 
+
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 const bpCache = new WeakMap();
 
@@ -69,6 +70,7 @@ class BoilerplateGenerator {
   newCommitmentValue: any;
 
 
+
   bpSections: string[] = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
 
   constructor(indicators: StateVariableIndicator) {
@@ -86,8 +88,9 @@ class BoilerplateGenerator {
     bpCache.set({indicators}, this);
   }
 
+
   // Bump all important indicators (used by this class) to this 'top-level' of `this`.
-  assignIndicators(indicators: StateVariableIndicator | MappingKey) {
+  assignIndicators(indicators: StateVariableIndicator | MappingKey ) {
     const {
       id,
       name,
@@ -115,6 +118,7 @@ class BoilerplateGenerator {
       // burnedOnly,
     });
   }
+
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
     if (indicators.isMapping) {
@@ -162,6 +166,7 @@ class BoilerplateGenerator {
   }
 
   _addBP = (bpType: string, extraParams?: any) => {
+
     if (this.isPartitioned) {
       this.newCommitmentValue = collectIncrements(this).incrementsString;
     }
@@ -223,10 +228,12 @@ class BoilerplateGenerator {
       addBP('nullification');
       addBP('oldCommitmentPreimage');
       addBP('oldCommitmentExistence');
+
     }
     if (this.newCommitmentsRequired && !this.burnedOnly) {
       addBP('newCommitment');
     }
+
   }
 
   /**

@@ -338,6 +338,13 @@ class BoilerplateGenerator {
       ];
     },
   };
+  internalFunctionCall = {
+    importStatements( { name: x } ): string[] {
+        return [`from "./${x}.zok" import main as ${x} `];
+    },
+
+
+  };
 }
 
 export default BoilerplateGenerator;

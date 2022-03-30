@@ -2,16 +2,18 @@
 
 pragma solidity ^0.8.0;
 
-contract Bank {
+contract FakeBank {
 
-    secret mapping(uint256 => uint256) public buckets;
+    secret mapping(uint256 => uint256) public account;
 
-    function deposit(uint256 accountId, uint amountDeposit) public {
-        unknown buckets[accountId] += amountDeposit;
+    function deposit(secret uint256 accountId, secret uint amountDeposit) public {
+      unknown   account[accountId] += amountDeposit;
+
     }
 
-    function transfer(secret uint256 fromAccountId, secret uint256 toAccountId, secret uint256 amount) public {
-        buckets[fromAccountId] -= amount;
-        deposit(toAccountId, amount);
+    function transfer(secret uint256 fromAccountId,   secret uint256 toAccountId,  secret uint256 amount) public {
+        account[fromAccountId] -= amount;
+        deposit(toAccountId, amount) ;
     }
+
 }

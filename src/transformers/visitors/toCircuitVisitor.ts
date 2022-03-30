@@ -7,7 +7,7 @@ import { traversePathsFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 //import getAllPrevSiblingNodes from '../../traverse/NodePath.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-import { StateVariableIndicator } from '../../traverse/Indicator.js';
+import { StateVariableIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -46,6 +46,35 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  * repo's code generator. ZoKrates itself will not be able to interpret this
  * AST.
  */
+ const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
+   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
+     thisState.interactsWithSecret = true;
+ };
+
+ const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
+     const { node, scope } = thisPath;
+   const args = node.arguments;
+   let parametercheck = true ;
+   let isSecretArray : string[];
+   for (const arg of args) {
+     if (arg.nodeType !== 'Identifier') continue;
+   isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+ }
+if(node.expression.nodeType === 'Identifier') {
+  const functionReferncedNode = scope.getReferencedNode(node.expression);
+  const params = functionReferncedNode.parameters.parameters;
+  for (const [index, param] of params.entries()) {
+    if(isSecretArray[index] !== param.isSecret)
+    parametercheck = false;
+  }
+  const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
+  if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
+  thisState.internalFunctionInteractsWithSecret = true;
+   }
+}
+};
+
+let interactsWithSecret = false; // Added globaly as two objects are accesing it
 
 const visitor = {
   ContractDefinition: {
@@ -100,6 +129,7 @@ const visitor = {
             indicators,
           }),
         );
+
 
         // before creating a function node we check for functions with same name
         const fnName = path.getUniqueFunctionName();
@@ -420,10 +450,27 @@ const visitor = {
         return;
       }
 
-      // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
+
+      scope.bindings[node.id].referencingPaths.forEach(refPath => {
+        const newState: any = {};
+        refPath.parentPath.traversePathsFast(
+          interactsWithSecretVisitor,
+          newState,
+        );
+        interactsWithSecret ||= newState.interactsWithSecret;
+      });
+
+      if (
+        parent.nodeType === 'VariableDeclarationStatement' &&
+        interactsWithSecret
+      )
+        parent._newASTPointer.interactsWithSecret = interactsWithSecret;
+
+      //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
         isSecret: node.isSecret,
+        interactsWithSecret,
         declarationType,
       });
       node._newASTPointer = newNode;
@@ -480,10 +527,14 @@ const visitor = {
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('Identifier', {
+      const newNode = buildNode('Identifier', {
         name,
       });
-    },
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+       parent._newASTPointer[path.containerName].push(newNode);
+     } else {
+       parent._newASTPointer[path.containerName] = newNode; }
+    }  // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
   },
 
   Literal: {
@@ -535,6 +586,7 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { parent, node } = path;
 
+
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
 
       if (path.isRequireStatement() && !node.requireStatementPrivate) {
@@ -558,6 +610,51 @@ const visitor = {
         // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
         state.skipSubNodes = true;
       }
+      if(path.isInternalFunctionCall()) {
+        let internalFunctionInteractsWithSecret = false;
+        const newState: any = {};
+        internalFunctionCallVisitor(path, newState)
+        internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
+     if(internalFunctionInteractsWithSecret === true && interactsWithSecret === true)
+     {
+        const newNode = buildNode('InternalFunctionCall', {
+        name: node.expression.name,
+        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+       });
+
+        node._newASTPointer = newNode ;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+         parent._newASTPointer[path.containerName].push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName] = newNode;
+       }
+       const fnNode = buildNode('InternalFunctionBoilerplate', {
+                       name: node.expression.name,
+                       internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+                     });
+       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+       fnDefNode.parent._newASTPointer.forEach(file => {
+       if (file.fileName === fnDefNode.node.name) {
+         file.nodes.forEach(childNode => {
+           if (childNode.nodeType === 'ImportStatementList')
+           childNode.imports.push(fnNode);
+         })
+       }
+     })
+       // fnDefNode.node.parent.node._newASTPointer.imports.push(fnNode);
+
+
+// const newImportStatementListNode = path.getAncestorOfType('FunctionDefinition');
+//        newImportStatementListNode.node._newASTPointer.body.preStatements.push(
+//            buildNode('Boilerplate', {
+//            bpSection: 'importStatements',
+//            bpType: 'InternalFunctionCall',
+//            name: node.expression.name,
+//            internalFunctioninteractsWithSecret: internalFunctionInteractsWithSecret,
+//          }),
+//            );
+}
+}
 
       if (path.isZero()) {
         // The path represents 0. E.g. "address(0)", so we don't need to traverse further into it.

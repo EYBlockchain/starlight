@@ -50,17 +50,8 @@ export default {
             `We cannot support external function calls with secret arguments - they can't be hidden due to the nature of the blockchain`,
             node,
           );
-        if (node.kind === 'functionCall' && node.expression.typeDescriptions.typeIdentifier.includes(`_internal_`))
-          if(path.isInternalFunctionCall())
-          throw new ZKPError(
-            `both interacts with secret, we can do it.`,
-            node,
-          );
-          if(!path.isInternalFunctionCall())
-          throw new ZKPError(
-            `they don't interact with secret can't do it.`,
-            node,
-          );
+        
+
       }
     },
   },

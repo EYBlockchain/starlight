@@ -7,6 +7,7 @@ import {traversePathsFast} from '../../../traverse/traverse.js'
 const Circuitbp = new CircuitBP();
 
 function codeGenerator(node: any) {
+  console.log(node);
   switch (node.nodeType) {
     case 'Folder':
       return CircuitBP.uniqueify(node.files.flatMap(codeGenerator));
@@ -14,10 +15,13 @@ function codeGenerator(node: any) {
     case 'File': {
       const filepath = path.join('./circuits', `${node.fileName}${node.fileExtension}`);
       const file = node.nodes.map(codeGenerator).join('\n\n');
+      console.log(file);
+
       const thisFile = {
         filepath,
         file,
       };
+      console.log(thisFile);
       const importedFiles = collectImportFiles(file, 'circuit');
       return [thisFile, ...importedFiles];
     }
@@ -93,9 +97,12 @@ function codeGenerator(node: any) {
         return `
         field ${codeGenerator(node.expression)}`;
       }
-      return codeGenerator(node.expression) ?? '';
+      return codeGenerator(node.expression);
     }
-
+    case 'InternalFunctionCall': {
+      if(node.internalFunctionInteractsWithSecret)
+    return ` ${node.name}(${node.arguments.flatMap(codeGenerator)}) ` ;
+}
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
@@ -132,8 +139,8 @@ function codeGenerator(node: any) {
 
     // And if we haven't recognized the node, we'll throw an error.
     default:
-      if (!Object.keys(node).length) return ''; // we have empty nodes when subnodes are skipped
-      throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
+      if (!Object.keys(node).length) return '';// we have empty nodes when subnodes are skipped
+      throw new TypeError(node.nodeType); // comment out the error until we've written all of the many possible types
   }
 }
 

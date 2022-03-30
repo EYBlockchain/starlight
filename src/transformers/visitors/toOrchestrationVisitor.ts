@@ -15,6 +15,29 @@ const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
     thisState.interactsWithSecret = true;
 };
 
+const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
+    const { node, scope } = thisPath;
+  const args = node.arguments;
+  let parametercheck = true ;
+  let isSecretArray : string[];
+  for (const arg of args) {
+    if (arg.nodeType !== 'Identifier') continue;
+  isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+}
+if(node.expression.nodeType === 'Identifier') {
+ const functionReferncedNode = scope.getReferencedNode(node.expression);
+ const params = functionReferncedNode.parameters.parameters;
+ for (const [index, param] of params.entries()) {
+   if(isSecretArray[index] !== param.isSecret)
+   parametercheck = false;
+ }
+ const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
+ if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
+ thisState.internalFunctionInteractsWithSecret = true;
+  }
+}
+};
+
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
 const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
