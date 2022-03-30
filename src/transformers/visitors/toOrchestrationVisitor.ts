@@ -940,6 +940,9 @@ const visitor = {
   FunctionCall: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      if(path.isInternalFunctionCall()) {
+        console.log('ToDo')
+      }
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;
         return;
@@ -949,6 +952,8 @@ const visitor = {
       });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
+
+
     },
   },
 };

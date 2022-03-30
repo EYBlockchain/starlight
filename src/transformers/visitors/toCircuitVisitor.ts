@@ -53,7 +53,6 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  let newStateArray : string [];
  let internalFncName : string;
  let callingFncName : string;
- let newNode : string[];
  let newParameterList = [];
  let internalFncParameters = [];
  let circuitArguments = [];
