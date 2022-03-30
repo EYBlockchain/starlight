@@ -4,7 +4,7 @@
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs
-import { StateVariableIndicator,FunctionDefinitionIndicator } from '../../../../traverse/Indicator.js';
+import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 
 const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {

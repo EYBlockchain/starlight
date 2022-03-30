@@ -7,7 +7,6 @@ import {traversePathsFast} from '../../../traverse/traverse.js'
 const Circuitbp = new CircuitBP();
 
 function codeGenerator(node: any) {
-  console.log(node);
   switch (node.nodeType) {
     case 'Folder':
       return CircuitBP.uniqueify(node.files.flatMap(codeGenerator));
@@ -15,13 +14,10 @@ function codeGenerator(node: any) {
     case 'File': {
       const filepath = path.join('./circuits', `${node.fileName}${node.fileExtension}`);
       const file = node.nodes.map(codeGenerator).join('\n\n');
-      console.log(file);
-
       const thisFile = {
         filepath,
         file,
       };
-      console.log(thisFile);
       const importedFiles = collectImportFiles(file, 'circuit');
       return [thisFile, ...importedFiles];
     }
@@ -101,7 +97,7 @@ function codeGenerator(node: any) {
     }
     case 'InternalFunctionCall': {
       if(node.internalFunctionInteractsWithSecret)
-    return ` ${node.name}(${node.arguments.flatMap(codeGenerator)}) ` ;
+    return ` ${node.name}(${(node.CircuitArguments).join(',\n')}) ` ;
 }
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;

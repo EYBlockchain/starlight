@@ -39,6 +39,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 };
 
 
+
+
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.zok` AST
@@ -46,13 +48,61 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  * repo's code generator. ZoKrates itself will not be able to interpret this
  * AST.
  */
+ let interactsWithSecret = false; // Added globaly as two objects are accesing it
+ let oldStateArray : string[];
+ let newStateArray : string [];
+ let internalFncName : string;
+ let callingFncName : string;
+ let newNode : string[];
+ let newParameterList = [];
+ let internalFncParameters = [];
+ let circuitArguments = [];
+// to remove duplicates
+
+ // Collect the internal call ParameterList
+ // getInternalCallParameters(parameterList = []) {
+ //  let parameters : String [];
+ // newParameterList.forEach(node => {
+ //  switch(node.bpType) {
+ //     case 'PoKoSK' :
+ //       parameters.push(node.name+'_oldCommitment_owner_secretKey') ;
+ //
+ //     case 'nullification' :
+ //       parameters.push(node.name+'_oldCommitment_owner_secretKey') ;
+ //       parameters.push(node.name+'_oldCommitment_nullifier');
+ //
+ //     case 'oldCommitmentPreimage' :
+ //       parameters.push(node.name+'_oldCommitment_value') ;
+ //       parameters.push(node.name+'_oldCommitment_salt');
+ //
+ //     case 'oldCommitmentExistence' :
+ //       parameters.push('commitmentRoot') ;
+ //       parameters.push(node.name+'_oldCommitment_membershipWitness_index') ;
+ //       parameters.push(node.name+'_oldCommitment_membershipWitness_siblingPath');
+ //         if (node.isWhole && !(node.isAccessed && !node.isNullified))
+ //       parameters.push(node.name+'_oldCommitment_isDummy');
+ //
+ //     case 'newCommitment' :
+ //     parameters.push(node.name+'_newCommitment_owner_publicKey') ;
+ //     parameters.push(node.name+'_newCommitment_salt') ;
+ //     parameters.push(node.name+'_newCommitment_commitment');
+ //
+ //     case 'mapping' :
+ //     parameters.push(node.mappingKeyName);
+ //     }
+ // }
+ // return parameters;
+ // console.log(parameters);
+ // }
+
+ // to match the parameters and if they don't match, we throw an error
  const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
    if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
      thisState.interactsWithSecret = true;
  };
 
  const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
-     const { node, scope } = thisPath;
+  const { node, scope } = thisPath;
    const args = node.arguments;
    let parametercheck = true ;
    let isSecretArray : string[];
@@ -63,6 +113,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedNode(node.expression);
   const params = functionReferncedNode.parameters.parameters;
+ oldStateArray = params.map(param =>(param.name));
   for (const [index, param] of params.entries()) {
     if(isSecretArray[index] !== param.isSecret)
     parametercheck = false;
@@ -74,7 +125,6 @@ if(node.expression.nodeType === 'Identifier') {
 }
 };
 
-let interactsWithSecret = false; // Added globaly as two objects are accesing it
 
 const visitor = {
   ContractDefinition: {
@@ -82,6 +132,105 @@ const visitor = {
       const { node, parent } = path;
       node._newASTPointer = parent._newASTPointer;
     },
+  // We Add the InternalFunctionCall nodes at the exit node so that all others gets build we need to access
+    exit(path: NodePath) {
+      // Find the Internal Function Node,
+      const { node, parent } = path;
+
+      node._newASTPointer.forEach(file => {
+        if (file.fileName === internalFncName) {
+               file.nodes.forEach(childNode => {
+               if(childNode.nodeType === 'FunctionDefinition'){
+             newParameterList = cloneDeep(childNode.parameters.parameters);
+           newParameterList.forEach(node => {
+             if(node.nodeType === 'Boilerplate')
+             {
+               for(const [index, oldStateName] of  oldStateArray.entries()) {
+                 node.name = node.name.replace('_'+oldStateName+'_', '_'+newStateArray[index]+'_')
+              if(node.newCommitmentValue === oldStateName)
+              node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, newStateArray[index])
+              if(node.mappingKeyName === oldStateName)
+              node.mappingKeyName = node.mappingKeyName.replace(oldStateName, newStateArray[index])
+               }
+             }
+             if(node.nodeType === 'VariableDeclaration')
+             {
+               for(const [index, oldStateName] of  oldStateArray.entries()) {
+                 node.name = node.name.replace(oldStateName, newStateArray[index])
+               }
+             }
+           })
+       }
+               })
+
+
+// Collect the internal call ParameterList
+
+     newParameterList.forEach(node => {
+
+      switch(node.bpType) {
+         case 'PoKoSK' :{
+           internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`)
+         break;
+       };
+
+         case 'nullification' :
+          { internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
+           internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
+        break;
+         };
+
+         case 'oldCommitmentPreimage' :
+          { internalFncParameters.push(`${node.name}_oldCommitment_value`) ;
+           internalFncParameters.push(`${node.name}_oldCommitment_salt`);
+        break;
+         };
+
+         case 'oldCommitmentExistence' :
+           { internalFncParameters.push(`commitmentRoot`) ;
+           internalFncParameters.push(`${node.name}_oldCommitment_membershipWitness_index`) ;
+           internalFncParameters.push(`${node.name}_oldCommitment_membershipWitness_siblingPath`);
+             if (node.isWhole && !(node.isAccessed && !node.isNullified))
+           internalFncParameters.push(`${node.name}_oldCommitment_isDummy`);
+        break;
+        };
+
+         case 'newCommitment' : {
+         internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
+         internalFncParameters.push(`${node.name}_newCommitment_salt`) ;
+         internalFncParameters.push(`${node.name}_newCommitment_commitment`);
+         break;
+          };
+
+
+         case 'mapping' :
+         internalFncParameters.push(`${node.mappingKeyName}`);
+         break;
+       }
+     })
+     internalFncParameters =  newStateArray.concat(internalFncParameters);
+     // to remove duplicates from the parameters
+     internalFncParameters.forEach(param => {
+         if (!circuitArguments.includes(param)) {
+             circuitArguments.push(param);
+         }
+     });
+     console.log(circuitArguments);
+   }
+if(file.fileName === callingFncName)
+{
+  file.nodes.forEach(childNode => {
+  if(childNode.nodeType === 'FunctionDefinition'){
+    //childNode.parameters.parameters = childNode.parameters.parameters.concat(newParameterList);
+  childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...newParameterList])]
+  }
+})
+
+      }
+
+    })
+  }
+
   },
 
   ImportDirective: {
@@ -189,6 +338,26 @@ const visitor = {
           }),
         ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
       }
+//       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+//       console.log(fnDefNode.parent._newASTPointer);
+//       console.log(internalFncName);
+//       fnDefNode.parent._newASTPointer.forEach(file => {
+//       if (file.fileName === internalFncName) {
+//         file.nodes.forEach(childNode => {
+//         if(childNode.nodeType === 'FunctionDefinition'){
+//       node._newASTPointer = childNode.parameters.;
+//     node._newASTPointer.forEach(node => {
+//       if(node.nodeType === 'Boilerplate')
+//       {
+//         console.log(node.name);
+//       }
+//     })
+//
+// }
+//         })
+//       }
+//     })
+
     },
   },
 
@@ -611,15 +780,21 @@ const visitor = {
         state.skipSubNodes = true;
       }
       if(path.isInternalFunctionCall()) {
+        const args = node.arguments;
+        newStateArray =  args.map(arg => (arg.name));
         let internalFunctionInteractsWithSecret = false;
         const newState: any = {};
         internalFunctionCallVisitor(path, newState)
         internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
+        internalFncName = node.expression.name;
      if(internalFunctionInteractsWithSecret === true && interactsWithSecret === true)
      {
         const newNode = buildNode('InternalFunctionCall', {
         name: node.expression.name,
         internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+        oldStateName: oldStateArray,
+        newStateName: newStateArray,
+        CircuitArguments: circuitArguments,
        });
 
         node._newASTPointer = newNode ;
@@ -628,11 +803,15 @@ const visitor = {
        } else {
          parent._newASTPointer[path.containerName] = newNode;
        }
+
        const fnNode = buildNode('InternalFunctionBoilerplate', {
                        name: node.expression.name,
                        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+
                      });
+
        const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+       callingFncName = fnDefNode.node.name;
        fnDefNode.parent._newASTPointer.forEach(file => {
        if (file.fileName === fnDefNode.node.name) {
          file.nodes.forEach(childNode => {
@@ -641,18 +820,6 @@ const visitor = {
          })
        }
      })
-       // fnDefNode.node.parent.node._newASTPointer.imports.push(fnNode);
-
-
-// const newImportStatementListNode = path.getAncestorOfType('FunctionDefinition');
-//        newImportStatementListNode.node._newASTPointer.body.preStatements.push(
-//            buildNode('Boilerplate', {
-//            bpSection: 'importStatements',
-//            bpType: 'InternalFunctionCall',
-//            name: node.expression.name,
-//            internalFunctioninteractsWithSecret: internalFunctionInteractsWithSecret,
-//          }),
-//            );
 }
 }
 

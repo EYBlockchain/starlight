@@ -324,7 +324,6 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   reinitialisable?: boolean;
   interactsWith: NodePath[];
   isParam: boolean;
-  internalFunctionInteractsWithSecret: boolean;
   isOwned?: boolean;
   owner?: any;
 

@@ -52,7 +52,6 @@ export const collectImportFiles = (
       contextDirPath ??= './circuits';
       localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
       let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
-  console.log(importFilePath);
       importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
       // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
       if (

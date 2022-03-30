@@ -170,18 +170,19 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'InternalFunctionCall': {
-      const { name, internalFunctionInteractsWithSecret = false} = fields;
+      const { name, internalFunctionInteractsWithSecret = false, oldStateName = [], newStateName =[], CircuitArguments = []} = fields;
       return{
         nodeType,
         name,
         internalFunctionInteractsWithSecret,
-        arguments: []
+        oldStateName,
+        newStateName,
+        CircuitArguments
       };
 
     }
     case 'InternalFunctionBoilerplate':{
       const { name, internalFunctionInteractsWithSecret = false} = fields;
-      console.log(internalFunctionInteractsWithSecret);
       return{
         nodeType: 'Boilerplate',
         bpSection: 'importStatements',
