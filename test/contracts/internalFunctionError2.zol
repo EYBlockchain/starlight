@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Bank {
+
+    secret mapping(uint256 => uint256) public account;
+
+    function deposit(secret uint256 accountId, secret uint amountDeposit) public {
+      unknown   account[accountId] += amountDeposit;
+
+    }
+
+    function transfer(secret uint256 fromAccountId,   secret uint256 toAccountId,  secret uint256 amount) public {
+        account[fromAccountId] -= amount;
+        deposit(amount, toAccount) ; // parameters are in wrong order should result in error
+    }
+
+}

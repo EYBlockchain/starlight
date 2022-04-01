@@ -90,8 +90,9 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       this.zkSnarkVerificationRequired = true;
 
     }
+
     if(path.node.typeDescriptions.typeIdentifier.includes(`_internal_`))
-      {
+      {  
         const functionReferncedNode = path.scope.getReferencedNode(path.node);
         const params = functionReferncedNode.parameters.parameters ;
           if(params.some(node => node.isSecret))

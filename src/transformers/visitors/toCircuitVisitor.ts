@@ -13,7 +13,9 @@ import { StateVariableIndicator,FunctionDefinitionIndicator } from '../../traver
 // useful for subtrees like ExpressionStatements
 const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const { node } = thisPath;
+
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
+  if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
   // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
   thisState.skipSubNodes = true;
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
@@ -112,7 +114,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedNode(node.expression);
   const params = functionReferncedNode.parameters.parameters;
- oldStateArray = params.map(param =>(param.name));
+  oldStateArray = params.map(param => (param.name) );
   for (const [index, param] of params.entries()) {
     if(isSecretArray[index] !== param.isSecret)
     parametercheck = false;
@@ -542,6 +544,7 @@ if(file.fileName === callingFncName)
 
             tempRHSParent._newASTPointer = newNode;
             // we don't want to add public inputs twice:
+
             tempRHSPath.traverse(visitor, { skipPublicInputs: true });
             rhsPath.traversePathsFast(publicInputsVisitor, {});
             state.skipSubNodes = true;

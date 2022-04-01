@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
 // import logger from '../../utils/logger.js';
+import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
 import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { VariableBinding } from '../../traverse/Binding.js';
@@ -10,10 +11,15 @@ import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascrip
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
+
 const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
     thisState.interactsWithSecret = true;
 };
+// to merge the internal function BoilerplateStatement at correct index
+function merge(array1, array2, index=0) {
+return array1.slice(0, index).concat(array2, array1.slice(index));
+}
 
 const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
     const { node, scope } = thisPath;
@@ -27,6 +33,7 @@ const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
 if(node.expression.nodeType === 'Identifier') {
  const functionReferncedNode = scope.getReferencedNode(node.expression);
  const params = functionReferncedNode.parameters.parameters;
+ oldStateArray = params.map(param =>(param.name));
  for (const [index, param] of params.entries()) {
    if(isSecretArray[index] !== param.isSecret)
    parametercheck = false;
@@ -38,6 +45,12 @@ if(node.expression.nodeType === 'Identifier') {
 }
 };
 
+let internalFncName : string;
+let callingFncName : string;
+let oldStateArray : string[];
+let newStateArray : string [];
+  let newPreStatementList = [];
+  let newPostStatementList = [];
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
 const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
@@ -212,6 +225,93 @@ const visitor = {
           file.nodes[0].contractImports = state.contractImports;
         }
       }
+      node._newASTPointer.forEach(file => {
+
+        if (file.fileName === internalFncName){
+          file.nodes.forEach(childNode => {
+          if(childNode.nodeType === 'FunctionDefinition')
+          {
+         newPreStatementList = cloneDeep(childNode.body.preStatements);
+          newPreStatementList.forEach(node => {
+            if(node.nodeType === 'ReadPreimage'){
+          // console.log(Object.keys(node.privateStates));
+             let stateName: string;
+             let stateNode: any;
+             let newstateName: string;
+             for( [stateName, stateNode] of Object.entries(node.privateStates))
+             { for(const [index, oldStateName] of  oldStateArray.entries()) {
+               newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+               node.privateStates[ newstateName ] = node.privateStates[stateName];
+               stateNode.increment = stateNode.increment.replace(oldStateName+'.', newStateArray[index]+'.')
+               if(stateNode.mappingKey === oldStateName)
+               stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, newStateArray[index])
+               if(stateNode.stateVarId[1] === oldStateName)
+               stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
+             }
+              delete(node.privateStates[ stateName ]);
+           }
+     }
+        })
+  newPreStatementList.splice(0,1);
+  newPostStatementList = cloneDeep(childNode.body.postStatements);
+  newPostStatementList.forEach(node => {
+    if(node.nodeType === 'CalculateNullifier'){
+  // console.log(Object.keys(node.privateStates));
+     let stateName: string;
+     let stateNode: any;
+     let newstateName: string;
+     for( [stateName, stateNode] of Object.entries(node.privateStates))
+     { for(const [index, oldStateName] of  oldStateArray.entries()) {
+       newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+       node.privateStates[ newstateName ] = node.privateStates[stateName];
+     }
+      delete(node.privateStates[ stateName ]);
+   }
+
+}
+if(node.nodeType === 'CalculateCommitment'){
+// console.log(Object.keys(node.privateStates));
+ let stateName: string;
+ let stateNode: any;
+ let newstateName: string;
+ for( [stateName, stateNode] of Object.entries(node.privateStates))
+ { for(const [index, oldStateName] of  oldStateArray.entries()) {
+   newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+   node.privateStates[ newstateName ] = node.privateStates[stateName];
+   stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+   if(stateNode.stateVarId[1] === oldStateName)
+   stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
+ }
+  delete(node.privateStates[ stateName ]);
+}
+//console.log(node.privateStates)
+}
+
+})
+newPostStatementList.splice(-(newPostStatementList.length-1),3);
+//console.log(newPostStatementList);
+}
+
+      })
+    }
+    if(file.fileName === callingFncName)
+    {
+      //console.log(callingFncName);
+      file.nodes.forEach(childNode => {
+      if(childNode.nodeType === 'FunctionDefinition')
+      {
+
+        childNode.body.preStatements = [...new Set([...childNode.body.preStatements, ...newPreStatementList])]
+        const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));
+
+childNode.body.postStatements = merge(childNode.body.postStatements, newPostStatementList , index+1);
+console.log(childNode.body.postStatements);
+        // childNode.body.postStatements.splice(index, 1, newPostStatementList);
+
+    }
+  })
+}
+})
     },
   },
 
@@ -637,6 +737,7 @@ const visitor = {
         if (newNodes.writePreimageNode)
           newFunctionDefinitionNode.body.postStatements.push(newNodes.writePreimageNode);
       }
+
     },
   },
 
@@ -789,13 +890,13 @@ const visitor = {
           return;
         }
       }
-      if (node.expression.nodeType !== 'FunctionCall') {
+      // if (node.expression.nodeType !== 'FunctionCall') {
         const newNode = buildNode(node.nodeType, {
           interactsWithSecret,
         });
         node._newASTPointer = newNode;
         parent._newASTPointer.push(newNode);
-      }
+
     },
 
     exit(path: NodePath, state: any) {
@@ -887,7 +988,10 @@ const visitor = {
         subType: node.typeDescriptions.typeString,
       });
 
-      parent._newASTPointer[path.containerName] = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+       parent._newASTPointer[path.containerName].push(newNode);
+     } else {
+       parent._newASTPointer[path.containerName] = newNode; }
 
       // if this is a public state variable, this fn will add a public input
       addPublicInput(path, state);
@@ -941,7 +1045,30 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       if(path.isInternalFunctionCall()) {
-        console.log('ToDo')
+        const args = node.arguments;
+        newStateArray =  args.map(arg => (arg.name));
+        let internalFunctionInteractsWithSecret = false;
+        const newState: any = {};
+        internalFunctionCallVisitor(path, newState)
+        internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
+        internalFncName = node.expression.name;
+     if(internalFunctionInteractsWithSecret === true)
+     {
+        const newNode = buildNode('InternalFunctionCall', {
+        name: node.expression.name,
+        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+       });
+
+        node._newASTPointer = newNode ;
+        // parent._newASTPointer[path.containerName] = newNode;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+         parent._newASTPointer[path.containerName].push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName] = newNode;
+       }
+   }
+   const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+   callingFncName = fnDefNode.node.name;
       }
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;
