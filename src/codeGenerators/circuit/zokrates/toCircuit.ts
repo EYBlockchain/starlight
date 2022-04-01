@@ -116,6 +116,39 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+    case 'IfStatement': {
+        let leftOperatorStatement: string = ' ';
+        let rightOperatorStatement: string = ' ';
+        switch(node.trueBody.statements[0].expression.operator) {
+        case '+=':
+          leftOperatorStatement+= node.trueBody.statements[0].expression.leftHandSide.name+ ' + ';
+          break;
+        case '-=':
+          leftOperatorStatement+= node.trueBody.statements[0].expression.leftHandSide.name+ ' - ';
+          break;
+        }
+        if(typeof node.falseBody.statements != undefined) {
+        switch(node.falseBody.statements[0].expression.operator) {
+        case '+=':
+          rightOperatorStatement+= node.falseBody.statements[0].expression.leftHandSide.name+ ' + ';
+          break;
+        case '-=':
+          rightOperatorStatement+= node.falseBody.statements[0].expression.leftHandSide.name+ ' - ';
+          break;
+        }
+        if(node.trueBody.statements[0].expression.leftHandSide.name === node.falseBody.statements[0].expression.leftHandSide.name) {
+        return `\t\t\t${node.trueBody.statements[0].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then${leftOperatorStatement}${codeGenerator(node.trueBody.statements[0].expression.rightHandSide)} else${rightOperatorStatement}${codeGenerator(node.falseBody.statements[0].expression.rightHandSide)} fi`;
+        }
+        else {
+          return `\t\t\t\t${node.trueBody.statements[0].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then${leftOperatorStatement}${codeGenerator(node.trueBody.statements[0].expression.rightHandSide)} else ${node.trueBody.statements[0].expression.leftHandSide.name} fi
+        ${node.falseBody.statements[0].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${node.falseBody.statements[0].expression.leftHandSide.name} else${rightOperatorStatement}${codeGenerator(node.falseBody.statements[0].expression.rightHandSide)} fi`;
+        } 
+      }
+      else {
+        return `\t\t\t${node.trueBody.statements[0].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then${leftOperatorStatement}${codeGenerator(node.trueBody.statements[0].expression.rightHandSide)} else ${node.trueBody.statements[0].expression.leftHandSide.name} fi`;
+        }
+      }
+
     case 'MsgSender':
       return 'msg';
 

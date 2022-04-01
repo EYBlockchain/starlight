@@ -132,6 +132,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         components,
       }
     }
+    case 'IfStatement': {
+      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueBody,
+        falseBody,
+      }
+    }
     case 'MsgSender': {
       return {
         nodeType,

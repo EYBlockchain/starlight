@@ -217,6 +217,19 @@ export default {
     },
   },
 
+  IfStatement: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      if (path.scope.containsSecret) {
+      state.skipSubNodes=true;
+      return;
+      }
+      const newNode = buildNode(node.nodeType, {condition: node.condition , trueBody: node.trueBody, falseBody: node.falseBody});
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
   VariableDeclarationStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;

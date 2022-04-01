@@ -107,6 +107,35 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+
+    case 'IfStatement': {
+        let leftOperatorStatement: string = '';
+        let rightOperatorStatement: string = '';
+        switch(node.trueBody.statements[0].expression.operator) {
+        case '+=':
+          leftOperatorStatement = 'parseInt(' +node.trueBody.statements[0].expression.leftHandSide.name+'.integer, 10) +';
+          break;
+        case '-=':
+          leftOperatorStatement = 'parseInt(' +node.trueBody.statements[0].expression.leftHandSide.name+'.integer, 10) -';
+          break;
+        }
+        if(typeof node.falseBody.statements != undefined) {
+        switch(node.falseBody.statements[0].expression.operator) {
+        case '+=':
+          rightOperatorStatement = 'parseInt(' +node.falseBody.statements[0].expression.leftHandSide.name+'.integer, 10) +';
+          break;
+        case '-=':
+          rightOperatorStatement = 'parseInt(' +node.falseBody.statements[0].expression.leftHandSide.name+'.integer, 10) -';
+          break;
+        }
+        if(node.trueBody.statements[0].expression.leftHandSide.name === node.trueBody.statements[0].expression.leftHandSide.name)
+        return `\t\t\t\t 	let { ${node.trueBody.statements[0].expression.leftHandSide.name} } = generalise(${node.trueBody.statements[0].expression.leftHandSide.name}_preimage); let { ${node.falseBody.statements[0].expression.leftHandSide.name} } = generalise(${node.falseBody.statements[0].expression.leftHandSide.name}_preimage); ${node.trueBody.statements[0].expression.leftHandSide.name} = ${leftOperatorStatement} ${codeGenerator(node.trueBody.statements[0].expression.rightHandSide)}; ${node.falseBody.statements[0].expression.leftHandSide.name} = ${rightOperatorStatement} ${codeGenerator(node.falseBody.statements[0].expression.rightHandSide)};`;
+        else
+        return `\t\t\t\t 	let { ${node.trueBody.statements[0].expression.leftHandSide.name} } = generalise(${node.trueBody.statements[0].expression.leftHandSide.name}_preimage); ${node.trueBody.statements[0].expression.leftHandSide.name} = ${leftOperatorStatement} ${codeGenerator(node.trueBody.statements[0].expression.rightHandSide)}; ${node.falseBody.statements[0].expression.leftHandSide.name} = ${rightOperatorStatement} ${codeGenerator(node.falseBody.statements[0].expression.rightHandSide)};`;
+          }
+          return `\t\t\t\t 	let { ${node.trueBody.statements[0].expression.leftHandSide.name} } = generalise(${node.trueBody.statements[0].expression.leftHandSide.name}_preimage); ${node.trueBody.statements[0].expression.leftHandSide.name} = ${leftOperatorStatement} ${codeGenerator(node.trueBody.statements[0].expression.rightHandSide)};`;
+      }
+
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param
