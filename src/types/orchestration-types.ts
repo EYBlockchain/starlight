@@ -162,6 +162,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         trueBody,
         falseBody,
       }
+    }
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;
       return {
