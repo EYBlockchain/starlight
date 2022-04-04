@@ -2,6 +2,46 @@
 
 import OrchestrationBP from './boilerplate-generator.js';
 
+
+const stateVariableIds = (node: any) => {
+  const {privateStateName, stateNode} = node;
+  const stateVarIds = [];
+  // state variable ids
+  // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
+  if (!stateNode.stateVarId[1]) {
+    stateVarIds.push(
+      `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
+    );
+  } else {
+    // if is a mapping...
+    stateVarIds.push(
+      `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
+    );
+    // ... and the mapping key is not msg.sender, but is a parameter
+    if (
+      privateStateName.includes(stateNode.stateVarId[1]) &&
+      stateNode.stateVarId[1] !== 'msg'
+    ) {
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
+      );
+    }
+    // ... and the mapping key is msg, and the caller of the fn has the msg key
+    if (
+      stateNode.stateVarId[1] === 'msg' &&
+      privateStateName.includes('msg')
+    ) {
+      stateVarIds.push(
+        `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
+      );
+    }
+    stateVarIds.push(
+      `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+    );
+  }
+  return stateVarIds;
+}
+
 /**
  * @desc:
  * Generates boilerplate for orchestration files
@@ -43,11 +83,11 @@ export const sendTransactionBoilerplate = (node: any) => {
       case false:
       default:
         // whole
+        output[1].push(`${privateStateName}_root.integer`);
         if (stateNode.accessedOnly) {
           output[3].push(`${privateStateName}_nullifier.integer`);
         } else {
           if (!stateNode.reinitialisedOnly) {
-            output[1].push(`${privateStateName}_root.integer`);
             output[0].push(`${privateStateName}_nullifier.integer`);
           }
           if (!stateNode.burnedOnly)
@@ -62,6 +102,7 @@ export const sendTransactionBoilerplate = (node: any) => {
 
 export const generateProofBoilerplate = (node: any) => {
   const output = [];
+  let containsRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
   let stateNode: any;
@@ -81,24 +122,31 @@ export const generateProofBoilerplate = (node: any) => {
           !output.join().includes(`${para}.integer`),
       )
       .forEach((param: string) => {
-        parameters.push(`\t${param}.integer,`);
+        if (param == 'msgSender') {
+          parameters.unshift(`\t${param}.integer,`);
+        } else {
+          parameters.push(`\t${param}.integer,`);
+        }
+
       });
     // then we build boilerplate code per state
     switch (stateNode.isWhole) {
       case true:
         output.push(
-          Orchestrationbp.generateProof.parameters( {
+          Orchestrationbp.generateProof.parameters({
             stateName,
             stateType: 'whole',
             stateVarIds: stateVarIdLines,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            rootRequired: !containsRoot,
             parameters,
-
-          }));
-
+          })
+        );
+        if (!stateNode.reinitialisedOnly) containsRoot = true;
         break;
+
       case false:
       default:
         switch (stateNode.nullifierRequired) {
@@ -109,7 +157,7 @@ export const generateProofBoilerplate = (node: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
                 !parameters.includes(`\t${inc.name}.integer,`) &&
-                !privateStateNames.includes(inc.name) &&
+                !privateStateNames.includes(inc.name) && !inc.accessed &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
@@ -121,11 +169,12 @@ export const generateProofBoilerplate = (node: any) => {
                 stateVarIds: stateVarIdLines,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                rootRequired: !containsRoot,
                 accessedOnly: false,
                 parameters,
-
-              }));
-
+              })
+            );
+            containsRoot = true;
             break;
           case false:
           default:
@@ -133,7 +182,7 @@ export const generateProofBoilerplate = (node: any) => {
             stateNode.increment.forEach((inc: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
-                !parameters.includes(`\t${inc.name}.integer,`) &&
+                !parameters.includes(`\t${inc.name}.integer,`) && !inc.accessed &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
@@ -145,11 +194,11 @@ export const generateProofBoilerplate = (node: any) => {
                 stateVarIds: stateVarIdLines,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                rootRequired: false,
                 accessedOnly: false,
                 parameters,
-
-              }));
-
+              })
+            );
             break;
         }
     }
@@ -163,43 +212,9 @@ export const preimageBoilerPlate = (node: any) => {
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(node.privateStates)) {
-    const stateVarIds = [];
+    const stateVarIds = stateVariableIds({ privateStateName, stateNode });
     const initialiseParams = [];
     const preimageParams = [];
-
-    // state variable ids
-    // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
-    if (!stateNode.stateVarId[1]) {
-      stateVarIds.push(
-        `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
-      );
-    } else {
-      // if is a mapping...
-      stateVarIds.push(
-        `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
-      );
-      // ... and the mapping key is not msg.sender, but is a parameter
-      if (
-        privateStateName.includes(stateNode.stateVarId[1]) &&
-        stateNode.stateVarId[1] !== 'msg'
-      ) {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
-        );
-      }
-      // ... and the mapping key is msg, and the caller of the fn has the msg key
-      if (
-        stateNode.stateVarId[1] === 'msg' &&
-        privateStateName.includes('msg')
-      ) {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
-        );
-      }
-      stateVarIds.push(
-        `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
-      );
-    }
 
     if (stateNode.accessedOnly) {
       output.push(
@@ -211,6 +226,7 @@ export const preimageBoilerPlate = (node: any) => {
           increment: false,
           newOwnerStatment: null,
           reinitialisedOnly: false,
+          initialised: stateNode.initialised,
           accessedOnly: true,
           stateVarIds,
         }));
@@ -262,13 +278,14 @@ export const preimageBoilerPlate = (node: any) => {
       case true:
         output.push(
           Orchestrationbp.readPreimage.postStatements({
-            stateName:privateStateName,
+            stateName: privateStateName,
             stateType: 'whole',
             mappingName: null,
             mappingKey: null,
+            initialised: stateNode.initialised,
+            reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
-            reinitialisedOnly: stateNode.reinitialisedOnly,
             accessedOnly: false,
             stateVarIds,
           }));
@@ -289,6 +306,7 @@ export const preimageBoilerPlate = (node: any) => {
                   : ``,
                 increment: stateNode.increment,
                 newOwnerStatment,
+                initialised: false,
                 reinitialisedOnly: false,
                 accessedOnly: false,
                 stateVarIds,
@@ -306,6 +324,7 @@ export const preimageBoilerPlate = (node: any) => {
                 mappingKey: null,
                 increment: stateNode.increment,
                 newOwnerStatment,
+                initialised: false,
                 reinitialisedOnly: false,
                 accessedOnly: false,
                 stateVarIds,
@@ -381,7 +400,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         switch (stateNode.mappingKey) {
           case 'msg':
             // msg.sender => key is _newOwnerPublicKey
-            mappingKey = `[${stateName}_newOwnerPublicKey.integer]`;
+            mappingKey = `[${stateName}_stateVarId_key.integer]`;
             break;
           case null:
           case undefined:
@@ -396,6 +415,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           Orchestrationbp.initialisePreimage.preStatements( {
             stateName,
             accessedOnly: stateNode.accessedOnly,
+            stateVarIds: stateVariableIds({ privateStateName: stateName, stateNode}),
             mappingKey,
             mappingName: stateNode.mappingName || stateName
           }));
@@ -477,6 +497,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             break;
           case false:
           default:
+            if (stateNode.mappingKey) {
+              lines.push(`
+              \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
+              \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
+            } else {
+              lines.push(`
+              \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
+            }
             lines.push(
                 Orchestrationbp.writePreimage.postStatements({
                 stateName,
@@ -623,7 +651,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[0] = arr of nullifiers
       // params[1] = root(s)
       // params[2] = arr of commitments
-      if (params[0][1][0]) params[0][1] = `${params[0][1]},`; // root - single input
+      if (params[0][1][0]) params[0][1] = `${params[0][1][0]},`; // root - single input
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array

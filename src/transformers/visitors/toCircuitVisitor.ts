@@ -6,7 +6,38 @@ import { TODOError } from '../../error/errors.js';
 import { traversePathsFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 //import getAllPrevSiblingNodes from '../../traverse/NodePath.js';
+import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../traverse/Indicator.js';
+
+// below stub will only work with a small subtree - passing a whole AST will always give true!
+// useful for subtrees like ExpressionStatements
+const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
+  const { node } = thisPath;
+  if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
+  // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
+  thisState.skipSubNodes = true;
+  let { name } = thisPath.scope.getReferencedIndicator(node, true);
+  const binding = thisPath.getReferencedBinding(node);
+  // below: we have a public state variable we need as a public input to the circuit
+  // local variable decs and parameters are dealt with elsewhere
+  // secret state vars are input via commitment values
+  if (
+    binding instanceof VariableBinding &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    binding.stateVariable && !binding.isSecret &&
+    // if the node is the indexExpression, we dont need its value in the circuit
+    !(thisPath.containerName === 'indexExpression')
+  ) {
+    // TODO other types
+    if (thisPath.isMapping)
+      name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+    const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
+    const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition').node;
+    fnDefNode._newASTPointer.parameters.parameters.push(parameterNode);
+  }
+};
+
 
 /**
  * @desc:
@@ -119,7 +150,7 @@ const visitor = {
         }),
       );
 
-      if (state.msgSenderParam) {
+      if (indicators.msgSenderParam) {
         node._newASTPointer.parameters.parameters.unshift(
           buildNode('VariableDeclaration', {
             name: 'msg',
@@ -127,7 +158,6 @@ const visitor = {
             type: 'field',
           }),
         ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
-        delete state.msgSenderParam; // reset
       }
     },
   },
@@ -239,12 +269,31 @@ const visitor = {
     },
   },
 
+  UnaryOperation: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const { operator, prefix, subExpression } = node;
+      const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    }
+  },
+
   ExpressionStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const { expression } = node;
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
+      // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
+      if (!node.containsSecret) {
+        state.skipSubNodes = true;
+        return;
+      }
       const { isIncremented, isDecremented } = expression;
       let newNode: any;
 
@@ -294,7 +343,9 @@ const visitor = {
             // The child of this 'ExpressionStatement' node is an 'Assignment' node. But we've built a newNode to replace the 'Assignment' node of the original tree. The child of this newNode will be the RHS of the original 'Assignment' node. We discard the LHS, so we need to 'skip' the traversal of the 'Assignment' (using skipSubNodes = true), and instead traverse directly into the RHS node.
 
             tempRHSParent._newASTPointer = newNode;
-            tempRHSPath.traverse(visitor, {});
+            // we don't want to add public inputs twice:
+            tempRHSPath.traverse(visitor, { skipPublicInputs: true });
+            rhsPath.traversePathsFast(publicInputsVisitor, {});
             state.skipSubNodes = true;
             parent._newASTPointer.push(newNode);
             return;
@@ -419,9 +470,14 @@ const visitor = {
   },
 
   Identifier: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { name } = node;
+      // const binding = path.getReferencedBinding(node);
+      // below: we have a public state variable we need as a public input to the circuit
+      // local variable decs and parameters are dealt with elsewhere
+      // secret state vars are input via commitment values
+      if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode('Identifier', {
@@ -469,13 +525,14 @@ const visitor = {
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = newNode;
       state.skipSubNodes = true;
-      state.msgSenderParam = true; // helps us lazily notify the FunctionDefinition node to include a msgSender parameter upon exit.
     },
   },
 
   IndexAccess: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
+
+      if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
 
       const newNode = buildNode('IndexAccess');
       node._newASTPointer = newNode;
