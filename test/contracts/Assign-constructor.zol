@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 contract Assign {
 
-  secret uint256 private a;
+  secret uint256 private a = 1;
 
   constructor(secret uint256 initValue) {
     a = initValue;
