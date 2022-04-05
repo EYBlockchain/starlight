@@ -566,6 +566,7 @@ const visitor = {
 
           delete state.publicInputs; // reset
         }
+        if (state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
           if (!param.isSecret)
@@ -725,12 +726,15 @@ const visitor = {
               .replace('.sender', '')
           : indicator.name;
 
+        const requiresConstructorInit = state.constructorStatements.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
+
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
           indicator.modifyingPaths[0].node.id === lhs.id &&
           indicator.isSecret &&
-          indicator.isWhole
+          indicator.isWhole &&
+          !requiresConstructorInit
         ) {
           let accessed = false;
           indicator.accessedPaths?.forEach(obj => {
@@ -797,12 +801,38 @@ const visitor = {
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      if (node.stateVariable) {
+      if (node.stateVariable && !node.value) {
         // then the node represents assignment of a state variable - we've handled it.
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
         return;
       }
+      if (node.stateVariable && node.value && node.isSecret) {
+        const initNode = buildNode('VariableDeclarationStatement', {
+            declarations: [
+              buildNode('VariableDeclaration', {
+                name: node.name,
+                isSecret: true,
+              }),
+            ],
+            initialValue: buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', {
+                name: node.name
+              }),
+              operator: '=',
+              rightHandSide: buildNode(node.value.nodeType, {
+                name: node.value.name, value: node.value.value
+                })
+              }),
+            interactsWithSecret: true,
+          });
+        state.constructorStatements ??= [];
+        state.constructorStatements.push(initNode);
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+        return;
+      }
+
       // we now have a param or a local var dec
       // TODO just use interactsWithSecret when thats added
       let interactsWithSecret = false;
