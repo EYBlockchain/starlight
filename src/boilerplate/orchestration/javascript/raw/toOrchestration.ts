@@ -140,6 +140,7 @@ export const generateProofBoilerplate = (node: any) => {
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            initialisationRequired: stateNode.initialisationRequired,
             rootRequired: !containsRoot,
             parameters,
           })
@@ -169,6 +170,7 @@ export const generateProofBoilerplate = (node: any) => {
                 stateVarIds: stateVarIdLines,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                initialisationRequired: false,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
                 parameters,
@@ -194,6 +196,7 @@ export const generateProofBoilerplate = (node: any) => {
                 stateVarIds: stateVarIdLines,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                initialisationRequired: false,
                 rootRequired: false,
                 accessedOnly: false,
                 parameters,

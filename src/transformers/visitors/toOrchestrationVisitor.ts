@@ -268,7 +268,7 @@ const visitor = {
           contractName,
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
-        if (fnIndicator.initialisationRequired)
+        if (fnIndicator.oldCommitmentAccessRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
         newNodes.readPreimageNode = buildNode('ReadPreimage');
         if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
@@ -397,7 +397,7 @@ const visitor = {
 
           if (
             stateVarIndicator.isWhole &&
-            functionIndicator.initialisationRequired
+            functionIndicator.oldCommitmentAccessRequired
           ) {
             newNodes.initialisePreimageNode.privateStates[
               name
@@ -414,7 +414,7 @@ const visitor = {
               id,
               increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.initialisationRequired,
+              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
               reinitialisedOnly:
                 stateVarIndicator.reinitialisable &&
                 !stateVarIndicator.isNullified,
@@ -519,7 +519,7 @@ const visitor = {
             {
               id,
               indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.initialisationRequired,
+              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
               accessedOnly: true,
             },
           );
