@@ -56,7 +56,9 @@ const prepareIntegrationTest = (node: any) => {
     node.contractName,
   );
 
-  node.functions.forEach((fn: any) => {
+  const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+
+  relevantFunctions.forEach((fn: any) => {
     let fnboilerplate = genericTestFile.postStatements()
       .replace(/CONTRACT_NAME/g, node.contractName)
       .replace(/FUNCTION_NAME/g, fn.name);
@@ -126,10 +128,13 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   );
   // collect any extra constructor parameters
   const constructorParams = node.constructorParams?.map((obj: any) => obj.name) || ``;
+  const iwsConstructorParams = node.constructorParams?.filter((param: any) => param.interactsWithSecret === true);
   // initialise variables
   let customImports = ``;
   let customDeployments = ``;
   let constructorParamsIncludesAddr = false;
+  let customProofImport = ``;
+  let customProofInputs = ``;
   const constructorAddrParams = [];
   // we check weter we must pass in an address to the constructor
   node.constructorParams?.forEach((arg: any) => {
@@ -198,13 +203,48 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
       }
     });
   }
+  if (node.functionNames.includes('cnstrctr')) {
+    // we have a constructor which requires a proof
+    customProofImport += `const constructorInput = JSON.parse(
+      fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
+    );
+    \nconst { proofInput } = constructorInput;`;
+    iwsConstructorParams?.forEach((param: any) => {
+      customProofImport += `\nconst { ${param.name} } = constructorInput;`
+    });
+    customProofInputs += `, ...proofInput`
+  }
   // we need to add a comma if we have a single constructor param
   if (constructorParams?.length === 1) constructorParams[0] += `,`;
   // finally, import all above findings to the migrationsfile
   file.file = file.file.replace(/CUSTOM_CONTRACT_IMPORT/g, customImports);
   file.file = file.file.replace(/CUSTOM_CONTRACTS/g, customDeployments);
   file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParams);
+  file.file = file.file.replace(/CUSTOM_PROOF_IMPORT/g, customProofImport);
+  file.file = file.file.replace(/CUSTOM_PROOF/g, customProofInputs);
 };
+
+/**
+ * @param file - a generic migrations file skeleton to mutate
+ * @param node - a SetupCommonFilesBoilerplate node
+ */
+
+const prepareSetupScript = (file: localFile, node: any) => {
+  let constructorCall = ``;
+  if (!node.functionNames.includes('cnstrctr')) {
+    file.file = file.file.replace(/CONSTRUCTOR_CALL/g, ``);
+    return;
+  } else if (!node.constructorParams) {
+    constructorCall += `docker-compose -f docker-compose.zapp.yml run zapp node -e 'import("/app/orchestration/cnstrctr.mjs").then(file => file.default())'`
+    file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
+    return;
+  }
+  constructorCall += `read -p "Please enter your constructor parameters separated by commas:" inputs
+
+  docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
+
+  file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
+}
 
 /**
  * @param {string} file - a stringified file
@@ -253,6 +293,9 @@ export default function fileGenerator(node: any) {
         ].join('\n'),
         'orchestration',
       );
+
+      const startupScript = { filepath: 'bin/setup', file: fs.readFileSync('src/boilerplate/common/bin/setup', 'utf8')};
+      files.push(startupScript);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>
         obj.filepath.includes(`zkp-setup`),
@@ -271,6 +314,7 @@ export default function fileGenerator(node: any) {
       );
       // build the migrations file
       prepareMigrationsFile(migrationsfile, node);
+      prepareSetupScript(startupScript, node);
       return files;
     }
 

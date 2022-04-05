@@ -75,11 +75,6 @@ const visitor = {
     enter(path: NodePath, state: any) {
 
       const { node, parent, scope } = path;
-      if (node.kind === 'constructor') {
-        // We currently treat all constructors as publicly executed functions.
-        state.skipSubNodes = true;
-        return;
-      }
 
       // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.

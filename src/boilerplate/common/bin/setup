@@ -19,4 +19,6 @@ printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}
 
 docker-compose -f docker-compose.zapp.yml run zapp node /app/write-vk.mjs -i ''
 
+CONSTRUCTOR_CALL
+
 printf "\n${GREEN}*** Finished! ***${NC}\n"

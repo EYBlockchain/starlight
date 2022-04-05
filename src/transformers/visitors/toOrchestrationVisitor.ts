@@ -250,7 +250,7 @@ const visitor = {
               name: param.name,
               type: param.typeName.name,
               isSecret: param.isSecret,
-              modifiesSecretState: false,
+              interactsWithSecret: scope.getReferencedIndicator(param).interactsWithSecret,
             }),
           );
         }
@@ -485,6 +485,11 @@ const visitor = {
                 !stateVarIndicator.newCommitmentsRequired,
             });
           }
+        }
+
+        if (node.kind === 'constructor') {
+          newNodes.writePreimageNode.isConstructor = true;
+          newNodes.membershipWitnessNode.isConstructor = true;
         }
 
         for (const stateVarIndicator of accessedStateIndicators) {

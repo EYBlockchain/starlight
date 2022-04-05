@@ -36,13 +36,15 @@ class FunctionBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
+      isConstructor
     }): string[] {
+      const visibility = isConstructor ? 'memory' : 'calldata';
       return [
-        ...(newNullifiers ? [`uint256[] calldata newNullifiers`] : []),
+        ...(newNullifiers ? [`uint256[] ${visibility} newNullifiers`] : []),
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
-        ...(newCommitments ? [`uint256[] calldata newCommitments`] : []),
-        ...(checkNullifiers ? [`uint256[] calldata checkNullifiers`] : []),
-        ...(newCommitments || newNullifiers ? [`uint256[] calldata proof`] : []),
+        ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
+        ...(checkNullifiers ? [`uint256[] ${visibility} checkNullifiers`] : []),
+        ...(newCommitments || newNullifiers ? [`uint256[] ${visibility} proof`] : []),
       ];
     },
 

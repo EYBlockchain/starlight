@@ -361,7 +361,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'FunctionDefinition':
       // the main function
-      lines.push(
+      if (node.name !== 'cnstrctr') lines.push(
         `\n\n// Initialisation of variables:
         \nconst instance = await getContractInstance('${node.contractName}');`,
       );
@@ -386,10 +386,22 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
+
       node.returnParameters.forEach((param: any) =>
         rtnparams.push(`, ${param.integer}`),
       );
+
       if (params) params[params.length - 1] += `,`;
+
+      if (node.name === 'cnstrctr')
+        return {
+          signature: [
+            `\nexport default async function ${node.name}(${params} ${states}) {`,
+            `\nprocess.exit(0);
+          \n}`,
+          ],
+          statements: lines,
+        };
 
       return {
         signature: [
@@ -523,6 +535,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               }));
         }
       }
+      if (node.isConstructor) lines.push(`\nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`)
       return {
         statements: [
           `\n// Write new commitment preimage to db: \n
@@ -541,6 +554,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'MembershipWitness':
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        if (node.isConstructor) {
+          lines.push([`
+            const ${stateName}_index = generalise(0);
+            const ${stateName}_root = generalise(0);
+            const ${stateName}_path = generalise(new Array(32).fill(0)).all;\n
+            `]);
+            continue;
+        }
         if (stateNode.isPartitioned) {
           lines.push(
             Orchestrationbp.membershipWitness.postStatements({
@@ -661,6 +682,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array
+
+      if (node.functionName === 'cnstrctr') return {
+        statements: [
+          `\n\n// Save transaction for the constructor:
+          \nconst tx = { proofInput: [${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+        ]
+      }
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:

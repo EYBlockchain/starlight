@@ -70,11 +70,12 @@ class FunctionBoilerplateGenerator {
 
     getIndicators() {
       const { indicators } = this.scope;
+      const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
 
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState, isConstructor };
     },
 
     parameters() {

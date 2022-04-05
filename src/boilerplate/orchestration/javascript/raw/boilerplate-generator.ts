@@ -443,11 +443,6 @@ postStatements(): string {
 zappFilesBoilerplate = () => {
   return [
     {
-      readPath: 'src/boilerplate/common/bin/setup',
-      writePath: '/bin/setup',
-      generic: false,
-    },
-    {
       readPath: 'src/boilerplate/common/bin/startup',
       writePath: '/bin/startup',
       generic: true,

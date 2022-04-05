@@ -18,8 +18,7 @@ export default {
   FunctionDefinition: {
     exit(path: NodePath) {
       const { scope } = path;
-      if (path.node.containsSecret && path.node.kind === 'constructor')
-        throw new ZKPError(`We cannot handle secret states in the public contract constructor, consider moving your secret state interactions to other functions`, path.node);
+      if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
       for (const [, indicator] of Object.entries(scope.indicators)) {
         // we may have a function indicator property we'd like to skip
         if (!(indicator instanceof StateVariableIndicator)) continue;
