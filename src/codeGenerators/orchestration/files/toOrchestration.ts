@@ -234,7 +234,7 @@ const prepareSetupScript = (file: localFile, node: any) => {
   if (!node.functionNames.includes('cnstrctr')) {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, ``);
     return;
-  } else if (!node.constructorParams) {
+  } else if (!node.constructorParams[0]) {
     constructorCall += `docker-compose -f docker-compose.zapp.yml run zapp node -e 'import("/app/orchestration/cnstrctr.mjs").then(file => file.default())'`
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
     return;
