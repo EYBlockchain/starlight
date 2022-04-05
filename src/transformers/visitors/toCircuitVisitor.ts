@@ -53,48 +53,12 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  let interactsWithSecret = false; // Added globaly as two objects are accesing it
  let oldStateArray : string[];
  let newStateArray : string [];
- let internalFncName : string;
- let callingFncName : string;
+ let internalFncName = [];
+ let callingFncName = [];
  let newParameterList = [];
  let internalFncParameters = [];
  let circuitArguments = [];
-// to remove duplicates
-
- // Collect the internal call ParameterList
- // getInternalCallParameters(parameterList = []) {
- //  let parameters : String [];
- // newParameterList.forEach(node => {
- //  switch(node.bpType) {
- //     case 'PoKoSK' :
- //       parameters.push(node.name+'_oldCommitment_owner_secretKey') ;
- //
- //     case 'nullification' :
- //       parameters.push(node.name+'_oldCommitment_owner_secretKey') ;
- //       parameters.push(node.name+'_oldCommitment_nullifier');
- //
- //     case 'oldCommitmentPreimage' :
- //       parameters.push(node.name+'_oldCommitment_value') ;
- //       parameters.push(node.name+'_oldCommitment_salt');
- //
- //     case 'oldCommitmentExistence' :
- //       parameters.push('commitmentRoot') ;
- //       parameters.push(node.name+'_oldCommitment_membershipWitness_index') ;
- //       parameters.push(node.name+'_oldCommitment_membershipWitness_siblingPath');
- //         if (node.isWhole && !(node.isAccessed && !node.isNullified))
- //       parameters.push(node.name+'_oldCommitment_isDummy');
- //
- //     case 'newCommitment' :
- //     parameters.push(node.name+'_newCommitment_owner_publicKey') ;
- //     parameters.push(node.name+'_newCommitment_salt') ;
- //     parameters.push(node.name+'_newCommitment_commitment');
- //
- //     case 'mapping' :
- //     parameters.push(node.mappingKeyName);
- //     }
- // }
- // return parameters;
- // console.log(parameters);
- // }
+ let index = 0;
 
  // to match the parameters and if they don't match, we throw an error
  const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
@@ -113,6 +77,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  }
 if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedNode(node.expression);
+  console.log(functionReferncedNode);
   const params = functionReferncedNode.parameters.parameters;
   oldStateArray = params.map(param => (param.name) );
   for (const [index, param] of params.entries()) {
@@ -139,7 +104,9 @@ const visitor = {
       const { node, parent } = path;
 
       node._newASTPointer.forEach(file => {
-        if (file.fileName === internalFncName) {
+
+        internalFncName.forEach( name => {
+          if(file.fileName === name) {
                file.nodes.forEach(childNode => {
                if(childNode.nodeType === 'FunctionDefinition'){
              newParameterList = cloneDeep(childNode.parameters.parameters);
@@ -147,6 +114,9 @@ const visitor = {
              if(node.nodeType === 'Boilerplate')
              {
                for(const [index, oldStateName] of  oldStateArray.entries()) {
+                 if(node.name === oldStateName)
+                 node.name = node.name.replace(oldStateName, newStateArray[index])
+                 else
                  node.name = node.name.replace('_'+oldStateName+'_', '_'+newStateArray[index]+'_')
               if(node.newCommitmentValue === oldStateName)
               node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, newStateArray[index])
@@ -164,8 +134,8 @@ const visitor = {
        }
                })
 
-
 // Collect the internal call ParameterList
+
 
      newParameterList.forEach(node => {
 
@@ -188,11 +158,12 @@ const visitor = {
          };
 
          case 'oldCommitmentExistence' :
-           { internalFncParameters.push(`commitmentRoot`) ;
+           { if (node.isWhole && !(node.isAccessed && !node.isNullified))
+           internalFncParameters.push(`${node.name}_oldCommitment_isDummy`);
+           internalFncParameters.push(`commitmentRoot`) ;
            internalFncParameters.push(`${node.name}_oldCommitment_membershipWitness_index`) ;
            internalFncParameters.push(`${node.name}_oldCommitment_membershipWitness_siblingPath`);
-             if (node.isWhole && !(node.isAccessed && !node.isNullified))
-           internalFncParameters.push(`${node.name}_oldCommitment_isDummy`);
+
         break;
         };
 
@@ -216,9 +187,9 @@ const visitor = {
              circuitArguments.push(param);
          }
      });
-     console.log(circuitArguments);
-   }
-if(file.fileName === callingFncName)
+
+
+if(file.fileName === callingFncName[index])
 {
   file.nodes.forEach(childNode => {
   if(childNode.nodeType === 'FunctionDefinition'){
@@ -229,8 +200,14 @@ if(file.fileName === callingFncName)
 
       }
 
+
+
+    }
+  })
+
     })
-  }
+
+  },
 
   },
 
@@ -788,7 +765,7 @@ if(file.fileName === callingFncName)
         const newState: any = {};
         internalFunctionCallVisitor(path, newState)
         internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
-        internalFncName = node.expression.name;
+        internalFncName.push(node.expression.name);
      if(internalFunctionInteractsWithSecret === true && interactsWithSecret === true)
      {
         const newNode = buildNode('InternalFunctionCall', {
@@ -813,7 +790,7 @@ if(file.fileName === callingFncName)
                      });
 
        const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-       callingFncName = fnDefNode.node.name;
+       callingFncName.push(fnDefNode.node.name);
        fnDefNode.parent._newASTPointer.forEach(file => {
        if (file.fileName === fnDefNode.node.name) {
          file.nodes.forEach(childNode => {
@@ -823,6 +800,8 @@ if(file.fileName === callingFncName)
        }
      })
 }
+console.log(internalFncName);
+console.log(callingFncName);
 }
 
       if (path.isZero()) {

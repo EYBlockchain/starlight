@@ -227,7 +227,7 @@ const visitor = {
       }
       node._newASTPointer.forEach(file => {
 
-        if (file.fileName === internalFncName){
+        if (file.fileName === internalFncName && file.nodeType === 'File'){
           file.nodes.forEach(childNode => {
           if(childNode.nodeType === 'FunctionDefinition')
           {
@@ -238,17 +238,21 @@ const visitor = {
              let stateName: string;
              let stateNode: any;
              let newstateName: string;
+             console.log(oldStateArray);
+             console.log(newStateArray);
              for( [stateName, stateNode] of Object.entries(node.privateStates))
              { for(const [index, oldStateName] of  oldStateArray.entries()) {
+               if(stateName === '_'+oldStateName){
                newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
                node.privateStates[ newstateName ] = node.privateStates[stateName];
+               delete(node.privateStates[ stateName ]);
+             }
                stateNode.increment = stateNode.increment.replace(oldStateName+'.', newStateArray[index]+'.')
                if(stateNode.mappingKey === oldStateName)
                stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, newStateArray[index])
                if(stateNode.stateVarId[1] === oldStateName)
                stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
              }
-              delete(node.privateStates[ stateName ]);
            }
      }
         })
@@ -262,10 +266,12 @@ const visitor = {
      let newstateName: string;
      for( [stateName, stateNode] of Object.entries(node.privateStates))
      { for(const [index, oldStateName] of  oldStateArray.entries()) {
+       if(stateName === '_'+oldStateName){
        newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
        node.privateStates[ newstateName ] = node.privateStates[stateName];
+       delete(node.privateStates[ stateName ]);
      }
-      delete(node.privateStates[ stateName ]);
+     }
    }
 
 }
@@ -275,26 +281,33 @@ if(node.nodeType === 'CalculateCommitment'){
  let stateNode: any;
  let newstateName: string;
  for( [stateName, stateNode] of Object.entries(node.privateStates))
+ console.log(stateName);
  { for(const [index, oldStateName] of  oldStateArray.entries()) {
+   if(stateName === '_'+oldStateName){
    newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
    node.privateStates[ newstateName ] = node.privateStates[stateName];
+   delete(node.privateStates[ stateName ]);
+ }
+   if(stateNode.privateStateName === oldStateName )
+   stateNode.privateStateName = stateNode.privateStateName.replace(oldStateName,  newStateArray[index])
+   else
    stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
    if(stateNode.stateVarId[1] === oldStateName)
    stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
+
  }
-  delete(node.privateStates[ stateName ]);
+
 }
-//console.log(node.privateStates)
+
 }
 
 })
-newPostStatementList.splice(-(newPostStatementList.length-1),3);
-//console.log(newPostStatementList);
+newPostStatementList.splice(- 3);
 }
 
       })
     }
-    if(file.fileName === callingFncName)
+    if(file.fileName === callingFncName && file.nodeType === 'File')
     {
       //console.log(callingFncName);
       file.nodes.forEach(childNode => {
@@ -305,7 +318,7 @@ newPostStatementList.splice(-(newPostStatementList.length-1),3);
         const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));
 
 childNode.body.postStatements = merge(childNode.body.postStatements, newPostStatementList , index+1);
-console.log(childNode.body.postStatements);
+//console.log(childNode.body.postStatements);
         // childNode.body.postStatements.splice(index, 1, newPostStatementList);
 
     }

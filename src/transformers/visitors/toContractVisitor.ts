@@ -176,6 +176,10 @@ export default {
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
       }
+      // let parameters = [];
+      // let internalFncName = 'deposit';
+      // console.log(node._newASTPointer);
+
     },
   },
 
@@ -506,6 +510,9 @@ export default {
 
         // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least).
         // For now, we'll copy these into Solidity:
+
+
+
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
@@ -513,6 +520,7 @@ export default {
         } else {
           parent._newASTPointer[path.containerName] = newNode;
         }
+
         return;
       }
 

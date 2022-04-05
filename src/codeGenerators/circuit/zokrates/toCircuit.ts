@@ -26,13 +26,13 @@ function codeGenerator(node: any) {
       return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
-      const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
+      const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> bool:`;
       const body = codeGenerator(node.body);
       return `${functionSignature}
 
         ${body}
 
-        return
+        return true
         `;
     }
 
@@ -96,7 +96,7 @@ function codeGenerator(node: any) {
       return codeGenerator(node.expression);
     }
     case 'InternalFunctionCall': {
-      if(node.internalFunctionInteractsWithSecret)
+      if(node.internalFunctionInteractsWithSecret) // Add sameState
     return ` ${node.name}(${(node.CircuitArguments).join(',\n')}) ` ;
 }
     case 'Assignment':

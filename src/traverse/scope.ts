@@ -185,12 +185,11 @@ export class Scope {
         // `Identifier` nodes _refer_ to already-declared variables. We grab the binding for that referenced variable:
         const referencedBinding = this.getReferencedBinding(node);
 
-        if (!referencedBinding && this.getReferencedExportedSymbolName(node))
+
+        if (!referencedBinding && this.getReferencedExportedSymbolName(node) )
           break; // the node is referring to some external contract name
         if (!referencedBinding)
-          throw new Error(
-            `Couldn't find a referencedDeclaration node for the current Identifier node.  I.e. couldn't find a node with id ${node.referencedDeclaration}`,
-          );
+          break;
 
         const functionDefScope = this.getAncestorOfScopeType(
           'FunctionDefinition',
