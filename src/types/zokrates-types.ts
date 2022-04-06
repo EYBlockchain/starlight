@@ -172,7 +172,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       const { arguments: args } = fields; // we have to 'tip-toe' around the reserved JS keyword 'arguments'!
       return {
         nodeType,
-        args,
+        arguments: args,
       };
     }
     case 'SetupCommonFilesBoilerplate':

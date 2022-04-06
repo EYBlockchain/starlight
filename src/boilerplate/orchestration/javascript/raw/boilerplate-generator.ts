@@ -176,7 +176,7 @@ class BoilerplateGenerator {
             const emptyPath = new Array(32).fill(0);
             const ${stateName}_witness = ${stateName}_witnessRequired
             \t? await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer)
-            \t: { index: 0, path: emptyPath, root: 0 };
+            \t: { index: 0, path: emptyPath, root: await getRoot('${contractName}') || 0 };
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);
             const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`];
@@ -252,7 +252,7 @@ class BoilerplateGenerator {
         \n`,
         `\nimport { getContractInstance, registerKey, getInputCommitments } from './common/contract.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
-        `\nimport { getMembershipWitness } from './common/timber.mjs';
+        `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,

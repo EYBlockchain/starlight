@@ -121,7 +121,7 @@ function codeGenerator(node: any) {
 
     case 'Assert':
       return `
-        assert(${node.args.flatMap(codeGenerator)})`;
+        assert(${node.arguments.flatMap(codeGenerator)})`;
 
     case 'Boilerplate':
       return Circuitbp.generateBoilerplate(node);
