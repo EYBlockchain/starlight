@@ -629,6 +629,11 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      // ts complains if I don't include a number in this list
+      if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
+        node._newASTPointer = parent._newASTPointer[path.containerName];
+        return
+      }
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
@@ -729,10 +734,15 @@ const visitor = {
           let accessed = false;
           indicator.accessedPaths?.forEach(obj => {
             if (
-              obj.getAncestorOfType('ExpressionStatement').node.id === node.id
+              obj.getAncestorOfType('ExpressionStatement')?.node.id === node.id
             )
               accessed = true;
           });
+
+          // we still need to initialise accessed states if they were accessed _before_ this modification
+          const accessedBeforeModification = indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
+
+          if (accessedBeforeModification) accessed = true;
 
           const newNode = buildNode('VariableDeclarationStatement', {
             declarations: [
@@ -744,10 +754,18 @@ const visitor = {
             ],
             interactsWithSecret: true,
           });
-          node._newASTPointer = newNode;
-          parent._newASTPointer.push(newNode);
 
-          return;
+          if (accessedBeforeModification || path.isInSubScope()) {
+            // we need to initialise an accessed state
+            // or declare it outside of this subscope e.g. if statement
+            const fnDefNode = path.getAncestorOfType('FunctionDefinition').node;
+            delete newNode.initialValue;
+            fnDefNode._newASTPointer.body.statements.unshift(newNode);
+          } else {
+            node._newASTPointer = newNode;
+            parent._newASTPointer.push(newNode);
+            return;
+          }
         }
         // if its an incrementation, we need to know it happens but not copy it over
         if (node.expression.isIncremented && indicator.isPartitioned) {
@@ -917,7 +935,11 @@ const visitor = {
   IfStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, {condition: node.condition , trueBody: node.trueBody, falseBody: node.falseBody});
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        trueBody: [],
+        falseBody: []
+      });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
