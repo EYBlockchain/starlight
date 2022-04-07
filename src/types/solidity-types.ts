@@ -15,7 +15,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'ParameterList':
       return ['parameters'];
     case 'IfStatement':
-      return ['trueBody' , 'falseBody'];
+      return ['condition', 'trueBody' , 'falseBody'];
     case 'Block':
       return ['statements'];
     case 'VariableDeclarationStatement':
