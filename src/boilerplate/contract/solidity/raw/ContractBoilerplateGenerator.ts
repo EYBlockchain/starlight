@@ -112,9 +112,9 @@ class ContractBoilerplateGenerator {
 
         ...(checkNullifiers ? [`
           uint[] memory checkNullifiers = _inputs.checkNullifiers;`] : []),
-
-        ...(commitmentRoot ? [`
-          uint commitmentRoot = _inputs.commitmentRoot;`] : []),
+        // removed to prevent stack too deep err - converted commitmentRoot to _inputs.commitmentRoot below
+        // ...(commitmentRoot ? [`
+        //   uint commitmentRoot = _inputs.commitmentRoot;`] : []),
 
         ...(newCommitments ? [`
           uint[] memory newCommitments = _inputs.newCommitments;`] : []),
@@ -133,7 +133,7 @@ class ContractBoilerplateGenerator {
           }`] : []),
 
         ...(commitmentRoot ? [`
-          require(commitmentRoots[commitmentRoot] == commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
+          require(commitmentRoots[_inputs.commitmentRoot] == _inputs.commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
 
         `
           uint256[] memory inputs = new uint256[](${[
@@ -159,7 +159,7 @@ class ContractBoilerplateGenerator {
     		  }`] : []),
 
         ...(commitmentRoot ? [`
-          if (newNullifiers.length > 0) inputs[k++] = commitmentRoot;`] : []), // assumes nullifiers always get submitted with commitmentRoot (and vice versa)
+          if (newNullifiers.length > 0) inputs[k++] = _inputs.commitmentRoot;`] : []), // assumes nullifiers always get submitted with commitmentRoot (and vice versa)
 
         ...(newCommitments ? [`
           for (uint i = 0; i < newCommitments.length; i++) {

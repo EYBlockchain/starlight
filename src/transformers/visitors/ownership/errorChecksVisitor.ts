@@ -4,6 +4,7 @@
 import { VariableBinding } from '../../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../../traverse/Indicator.js';
 import NodePath from '../../../traverse/NodePath.js';
+import { ZKPError } from '../../../error/errors.js';
 
 
 /**
@@ -17,6 +18,8 @@ export default {
   FunctionDefinition: {
     exit(path: NodePath) {
       const { scope } = path;
+      if (path.node.containsSecret && path.node.kind === 'constructor')
+        throw new ZKPError(`We cannot handle secret states in the public contract constructor, consider moving your secret state interactions to other functions`, path.node);
       for (const [, indicator] of Object.entries(scope.indicators)) {
         // we may have a function indicator property we'd like to skip
         if (!(indicator instanceof StateVariableIndicator)) continue;

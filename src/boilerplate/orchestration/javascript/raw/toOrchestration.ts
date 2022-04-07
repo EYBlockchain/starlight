@@ -270,6 +270,12 @@ export const preimageBoilerPlate = (node: any) => {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(await instance.methods.${newOwner}().call()).call()) : ${privateStateName}_newOwnerPublicKey;`;
         } else if (stateNode.ownerIsParam) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
+        } else {
+          // is secret - we just use the users to avoid revealing the secret owner
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`
+
+          // BELOW reveals the secret owner as we check the public key in the contract
+          // `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(${newOwner}.hex(20)).call()) : ${privateStateName}_newOwnerPublicKey;`
         }
         break;
     }

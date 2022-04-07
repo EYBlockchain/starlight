@@ -14,6 +14,7 @@ import { StateVariableIndicator } from '../../traverse/Indicator.js';
 const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const { node } = thisPath;
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
+  if (thisPath.isRequireStatement(node)) return;
   // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
   thisState.skipSubNodes = true;
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
@@ -218,7 +219,7 @@ const visitor = {
 
       const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
-      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
+      path.inList ? parent._newASTPointer[path.containerName].push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
   },
 
@@ -480,9 +481,15 @@ const visitor = {
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('Identifier', {
-        name,
-      });
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(buildNode('Identifier', {
+          name,
+        }));
+      } else {
+        parent._newASTPointer[path.containerName] = buildNode('Identifier', {
+          name,
+        });
+      }
     },
   },
 
@@ -558,7 +565,11 @@ const visitor = {
         // return;
       }
       if (node.requireStatementPrivate) {
-        throw new TODOError('Secret assert statements', node);
+        const newNode = buildNode('Assert', { arguments: [] });
+
+        node._newASTPointer = newNode;
+        parent._newASTPointer[path.containerName] = newNode;
+        return;
       }
 
       if (path.isExternalFunctionCall() || path.isExportedSymbol()) {
