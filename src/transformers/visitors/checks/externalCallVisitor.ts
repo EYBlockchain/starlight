@@ -26,14 +26,14 @@ export default {
         const referencedBinding = scope.getReferencedBinding(arg);
         if (!referencedBinding?.isSecret) continue;
 
-        if (
-          node.kind === 'typeConversion' &&
-          node.arguments[0].nodeType !== 'Literal'
-        )
-          throw new TODOError(
-            `Type conversions of secret states. We plan to suppport conversions which can be replicated in a zero-knowledge circuit in the near future.`,
-            node,
-          );
+        // if (
+        //   node.kind === 'typeConversion' &&
+        //   node.arguments[0].nodeType !== 'Literal'
+        // )
+        //   throw new TODOError(
+        //     `Type conversions of secret states. We plan to suppport conversions which can be replicated in a zero-knowledge circuit in the near future.`,
+        //     node,
+        //   );
 
         if (path.isRequireStatement())
           throw new TODOError(

@@ -116,6 +116,9 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+    case 'TypeConversion':
+      return `${codeGenerator(node.arguments)}`;
+
     case 'MsgSender':
       return 'msg';
 
