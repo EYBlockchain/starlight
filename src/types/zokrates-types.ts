@@ -139,6 +139,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         type,
         arguments: args,
         expression,
+      }
+    }
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;
       return {
