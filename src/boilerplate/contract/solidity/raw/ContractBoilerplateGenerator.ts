@@ -30,7 +30,7 @@ class ContractBoilerplateGenerator {
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
       return [
 
-      //  ` event Sig(bytes4 realSig, bytes4 calcSig); `, need to add but just for internal function call
+        ` event Sig(bytes4 realSig, bytes4 calcSig); `,
 
         `
           enum FunctionNames { ${functionNames.join(', ')} }`,

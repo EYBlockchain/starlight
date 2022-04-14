@@ -42,15 +42,22 @@ if(node.expression.nodeType === 'Identifier') {
  if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
  thisState.internalFunctionInteractsWithSecret = true;
   }
+  if(!fnIndicator.internalFunctionInteractsWithSecret){
+      if(params.some(node => node.isSecret))
+      {
+      thisState.internalFunctionInteractsWithSecret = true; }
+  }
+
 }
 };
 
-let internalFncName : string;
-let callingFncName : string;
+let internalFncName = [];
+let callingFncName = [];
 let oldStateArray : string[];
 let newStateArray : string [];
-  let newPreStatementList = [];
-  let newPostStatementList = [];
+let newPreStatementList = [];
+let newPostStatementList = [];
+let circuitImport = [];
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
 const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
@@ -225,21 +232,27 @@ const visitor = {
           file.nodes[0].contractImports = state.contractImports;
         }
       }
-      node._newASTPointer.forEach(file => {
 
-        if (file.fileName === internalFncName && file.nodeType === 'File'){
+      let generateProofNode: any;
+      node._newASTPointer.forEach(file => {
+        internalFncName.forEach( name => {
+          if(file.fileName === name && file.nodeType === 'File') {
+            let index = internalFncName.indexOf(name);
+            //console.log(circuitImport[index]);
+            if(circuitImport[index]==='true') {
+              console.log(circuitImport[index])
           file.nodes.forEach(childNode => {
           if(childNode.nodeType === 'FunctionDefinition')
           {
+
          newPreStatementList = cloneDeep(childNode.body.preStatements);
+         //console.log(newPreStatementList);
           newPreStatementList.forEach(node => {
             if(node.nodeType === 'ReadPreimage'){
           // console.log(Object.keys(node.privateStates));
              let stateName: string;
              let stateNode: any;
              let newstateName: string;
-             console.log(oldStateArray);
-             console.log(newStateArray);
              for( [stateName, stateNode] of Object.entries(node.privateStates))
              { for(const [index, oldStateName] of  oldStateArray.entries()) {
                if(stateName === '_'+oldStateName){
@@ -281,7 +294,6 @@ if(node.nodeType === 'CalculateCommitment'){
  let stateNode: any;
  let newstateName: string;
  for( [stateName, stateNode] of Object.entries(node.privateStates))
- console.log(stateName);
  { for(const [index, oldStateName] of  oldStateArray.entries()) {
    if(stateName === '_'+oldStateName){
    newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
@@ -301,14 +313,45 @@ if(node.nodeType === 'CalculateCommitment'){
 
 }
 
+if(node.nodeType === 'GenerateProof'){
+generateProofNode = cloneDeep(node);
+  let stateName: string;
+  let newstateName: string;
+  for( stateName of Object.keys(generateProofNode.privateStates))
+  {
+    for(const [index, oldStateName] of  oldStateArray.entries()) {
+    if(stateName === '_'+oldStateName){
+    newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+    generateProofNode.privateStates[ newstateName ] = generateProofNode.privateStates[stateName];
+    delete(generateProofNode.privateStates[ stateName ]);
+
+  }
+
+
+  }
+
+  }
+  //let newParameters = cloneDeep(node.parameters);
+  for(const [index, param] of generateProofNode.parameters){
+    for(const [index, oldStateName] of  oldStateArray.entries()) {
+      if(param === '_'+oldStateName)
+       generateProofNode.parameters =  generateProofNode.parameters.replace('_'+oldStateName, '_'+ newStateArray[index])
+      if(param === oldStateName)
+       generateProofNode.parameters =  generateProofNode.parameters.replace('_'+oldStateName, '_'+ newStateArray[index])
+ }
+}
+}
+
 })
 newPostStatementList.splice(- 3);
 }
 
       })
-    }
-    if(file.fileName === callingFncName && file.nodeType === 'File')
-    {
+
+
+  node._newASTPointer.forEach(file => {
+  if(file.fileName === callingFncName[index])
+  {
       //console.log(callingFncName);
       file.nodes.forEach(childNode => {
       if(childNode.nodeType === 'FunctionDefinition')
@@ -318,12 +361,25 @@ newPostStatementList.splice(- 3);
         const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));
 
 childNode.body.postStatements = merge(childNode.body.postStatements, newPostStatementList , index+1);
-//console.log(childNode.body.postStatements);
-        // childNode.body.postStatements.splice(index, 1, newPostStatementList);
+childNode.body.postStatements.forEach(node => {
+  if(node.nodeType === 'GenerateProof')
+  {
+    node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
+  //  node.parameters = node.parameters.concat(generateProofNode.parameters);
+
+  node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+
+  }
+})
 
     }
   })
 }
+})
+
+}
+}
+})
 })
     },
   },
@@ -1056,17 +1112,62 @@ childNode.body.postStatements = merge(childNode.body.postStatements, newPostStat
 
   FunctionCall: {
     enter(path: NodePath, state: any) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       if(path.isInternalFunctionCall()) {
         const args = node.arguments;
+        let isCircuit = false;
         newStateArray =  args.map(arg => (arg.name));
         let internalFunctionInteractsWithSecret = false;
         const newState: any = {};
         internalFunctionCallVisitor(path, newState)
         internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
-        internalFncName = node.expression.name;
+        internalFncName.push(node.expression.name);
+
      if(internalFunctionInteractsWithSecret === true)
      {
+       const callingfnDefPath = path.getFunctionDefinition();
+       const callingfnDefIndicators = callingfnDefPath.scope.indicators;
+
+
+       const functionReferncedNode = scope.getReferencedPath(node.expression);
+       const internalfnDefIndicators = functionReferncedNode.scope.indicators;;
+
+
+ const startNodePath = path.getAncestorOfType('ContractDefinition')
+
+ startNodePath.node.nodes.forEach(node => {
+
+   if(node.nodeType === 'VariableDeclaration'){
+    if(callingfnDefIndicators[node.id]){
+      if(callingfnDefIndicators[node.id].isModified){
+        if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified)
+          {
+           circuitImport.push('false');
+           isCircuit = false;
+        }
+      }
+      if(!callingfnDefIndicators[node.id].isModified)
+      {
+        if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified)
+         {
+           circuitImport.push('true');
+           isCircuit = true;
+       }
+      }
+    }
+    if(!callingfnDefIndicators[node.id] ){
+    if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified)
+      {
+        circuitImport.push('true');
+        isCircuit = true;
+    }}
+
+  }
+
+ });
+
+
+
         const newNode = buildNode('InternalFunctionCall', {
         name: node.expression.name,
         internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
@@ -1081,7 +1182,7 @@ childNode.body.postStatements = merge(childNode.body.postStatements, newPostStat
        }
    }
    const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-   callingFncName = fnDefNode.node.name;
+   callingFncName.push(fnDefNode.node.name);
       }
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;

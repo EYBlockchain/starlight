@@ -55,7 +55,15 @@ class FunctionBoilerplateGenerator {
       containsAccessedOnlyState: checkNullifiers,
     }): string[] {
       // prettier-ignore
+      let parameter = [(newNullifiers ? [`uint256[]`]:[]),
+      (commitmentRoot ? [`uint256`]:[]),
+      (newCommitments ? [`uint256[]`]:[]),
+      (checkNullifiers ? [`uint256[]`]:[]),
+      `uint256[]`]
       return [
+         `
+          bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
+
         `
           Inputs memory inputs;`,
 
@@ -80,6 +88,11 @@ class FunctionBoilerplateGenerator {
         ...(newCommitments ? [`
           inputs.newCommitments = newCommitments;`] : []),
 
+        `
+          emit Sig(msg.sig, sig); \n`,
+
+        `
+          if (sig != msg.sig)`,
         `
           verify(proof, uint(FunctionNames.${functionName}), inputs);`,
       ];

@@ -68,11 +68,10 @@ class FunctionBoilerplateGenerator {
 
     getIndicators() {
       const { indicators } = this.scope;
-
-      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState } = indicators;
+      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState, internalFunctionInteractsWithSecret } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState, internalFunctionInteractsWithSecret };
     },
 
     parameters() {

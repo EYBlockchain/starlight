@@ -56,10 +56,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  let internalFncName = [];
  let callingFncName = [];
  let newParameterList = [];
- let internalFncParameters = [];
- let circuitArguments = [];
- let index = 0;
-
+ let circuitImport = [];
  // to match the parameters and if they don't match, we throw an error
  const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
    if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
@@ -77,7 +74,6 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  }
 if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedNode(node.expression);
-  console.log(functionReferncedNode);
   const params = functionReferncedNode.parameters.parameters;
   oldStateArray = params.map(param => (param.name) );
   for (const [index, param] of params.entries()) {
@@ -87,6 +83,11 @@ if(node.expression.nodeType === 'Identifier') {
   const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
   if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
   thisState.internalFunctionInteractsWithSecret = true;
+   }
+   if(!fnIndicator.internalFunctionInteractsWithSecret){
+       if(params.some(node => node.isSecret))
+       {
+       thisState.internalFunctionInteractsWithSecret = true; }
    }
 }
 };
@@ -103,20 +104,37 @@ const visitor = {
       // Find the Internal Function Node,
       const { node, parent } = path;
 
-      node._newASTPointer.forEach(file => {
 
+node._newASTPointer.forEach(file => {
+ let circuitArguments = [];
         internalFncName.forEach( name => {
           if(file.fileName === name) {
+            let index = internalFncName.indexOf(name);
+            if(circuitImport[index]==='true') {
                file.nodes.forEach(childNode => {
                if(childNode.nodeType === 'FunctionDefinition'){
              newParameterList = cloneDeep(childNode.parameters.parameters);
+             node._newASTPointer.forEach(file => {
+             if(file.fileName === callingFncName[index])
+             {
+               file.nodes.forEach(childNode => {
+               if(childNode.nodeType === 'FunctionDefinition'){
+                 //childNode.parameters.parameters = childNode.parameters.parameters.concat(newParameterList);
+               let callParameterList = cloneDeep(childNode.parameters.parameters);
+
+               }
+             })
+                   }
+             })
+
+
+
+
+
            newParameterList.forEach(node => {
              if(node.nodeType === 'Boilerplate')
              {
                for(const [index, oldStateName] of  oldStateArray.entries()) {
-                 if(node.name === oldStateName)
-                 node.name = node.name.replace(oldStateName, newStateArray[index])
-                 else
                  node.name = node.name.replace('_'+oldStateName+'_', '_'+newStateArray[index]+'_')
               if(node.newCommitmentValue === oldStateName)
               node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, newStateArray[index])
@@ -136,7 +154,7 @@ const visitor = {
 
 // Collect the internal call ParameterList
 
-
+let internalFncParameters = [];
      newParameterList.forEach(node => {
 
       switch(node.bpType) {
@@ -180,6 +198,7 @@ const visitor = {
          break;
        }
      })
+
      internalFncParameters =  newStateArray.concat(internalFncParameters);
      // to remove duplicates from the parameters
      internalFncParameters.forEach(param => {
@@ -189,20 +208,70 @@ const visitor = {
      });
 
 
+node._newASTPointer.forEach(file => {
 if(file.fileName === callingFncName[index])
 {
   file.nodes.forEach(childNode => {
   if(childNode.nodeType === 'FunctionDefinition'){
     //childNode.parameters.parameters = childNode.parameters.parameters.concat(newParameterList);
   childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...newParameterList])]
+  childNode.body.statements.forEach(node => {
+
+    if(node.expression.nodeType === 'InternalFunctionCall' && node.expression.name === name){
+      node.expression.CircuitArguments = node.expression.CircuitArguments.concat(circuitArguments);
+      circuitArguments = [];
+    }
+  })
+   }
+})
+index++;
+      }
+})
+    }
+    if(circuitImport[index]==='false')
+    {  let newExpressionList = [];
+//let expressionList = [];
+      file.nodes.forEach(childNode => {
+
+      if(childNode.nodeType === 'FunctionDefinition'){
+          childNode.body.statements.forEach(node => {
+            if(node.expression.nodeType === 'Assignment')
+            {
+            let  expressionList = cloneDeep(node);
+              //console.log(expressionList.expression.rightHandSide.rightExpression.name)
+               for(const [index, oldStateName] of  oldStateArray.entries()){
+              if(node.expression.rightHandSide.rightExpression.name === oldStateName){
+              expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, newStateArray[index])
+              }
+              if(node.expression.leftHandSide.name === oldStateName){
+              expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, newStateArray[index])
+              }
+            }
+            newExpressionList = newExpressionList.concat(expressionList);
+            }
+          })
+
+       ;
+       // if(expressionList.nodeType === 'ExpressionStatement'){
+       //   console.log(expressionList);
+       //   newExpressionList.push(expressionList);
+       //}
+      }
+    })
+    node._newASTPointer.forEach(file => {
+    if(file.fileName === callingFncName[index])
+    {
+      file.nodes.forEach(childNode => {
+      if(childNode.nodeType === 'FunctionDefinition'){
+        childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
+        //childNode.body.statements = childNode.body.statements.push(newExpressionList);
+//console.log(childNode.body.statements);
+      }
+    })
   }
 })
-
-      }
-
-
-
     }
+  }
   })
 
     })
@@ -732,7 +801,7 @@ if(file.fileName === callingFncName[index])
 
   FunctionCall: {
     enter(path: NodePath, state: any) {
-      const { parent, node } = path;
+      const { parent, node, scope } = path;
 
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
@@ -760,6 +829,7 @@ if(file.fileName === callingFncName[index])
       }
       if(path.isInternalFunctionCall()) {
         const args = node.arguments;
+        let isCircuit = false;
         newStateArray =  args.map(arg => (arg.name));
         let internalFunctionInteractsWithSecret = false;
         const newState: any = {};
@@ -768,12 +838,55 @@ if(file.fileName === callingFncName[index])
         internalFncName.push(node.expression.name);
      if(internalFunctionInteractsWithSecret === true && interactsWithSecret === true)
      {
+       const callingfnDefPath = path.getFunctionDefinition();
+       const callingfnDefIndicators = callingfnDefPath.scope.indicators;
+      // console.log(callingfnDefIndicators);
+
+       const functionReferncedNode = scope.getReferencedPath(node.expression);
+       const internalfnDefIndicators = functionReferncedNode.scope.indicators;;
+       //console.log(internalfnDefIndicators);
+
+ const startNodePath = path.getAncestorOfType('ContractDefinition')
+ startNodePath.node.nodes.forEach(node => {
+   if(node.nodeType === 'VariableDeclaration'){
+    if(callingfnDefIndicators[node.id]){
+      if(callingfnDefIndicators[node.id].isModified){
+        if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified)
+          {
+           circuitImport.push('false');
+           isCircuit = false;
+        }
+      }
+      if(!callingfnDefIndicators[node.id].isModified)
+      {
+        if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified)
+         {
+           circuitImport.push('true');
+           isCircuit = true;
+       }
+      }
+    }
+    if(!callingfnDefIndicators[node.id] ){
+    if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified)
+      {
+        circuitImport.push('true');
+        isCircuit = true;
+    }}
+
+  }
+
+ });
+
+
+//   if(startNodePath.node.nodes.nodeType === 'VariableDeclaration')
+//   {
+//     console.log(startNodePath);
+// }
+
         const newNode = buildNode('InternalFunctionCall', {
         name: node.expression.name,
         internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-        oldStateName: oldStateArray,
-        newStateName: newStateArray,
-        CircuitArguments: circuitArguments,
+        CircuitArguments: [],
        });
 
         node._newASTPointer = newNode ;
@@ -782,11 +895,10 @@ if(file.fileName === callingFncName[index])
        } else {
          parent._newASTPointer[path.containerName] = newNode;
        }
-
        const fnNode = buildNode('InternalFunctionBoilerplate', {
                        name: node.expression.name,
                        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-
+                       circuitImport: isCircuit,
                      });
 
        const fnDefNode = path.getAncestorOfType('FunctionDefinition');
@@ -800,8 +912,6 @@ if(file.fileName === callingFncName[index])
        }
      })
 }
-console.log(internalFncName);
-console.log(callingFncName);
 }
 
       if (path.isZero()) {

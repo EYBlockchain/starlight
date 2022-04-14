@@ -96,8 +96,10 @@ function codeGenerator(node: any) {
       return codeGenerator(node.expression);
     }
     case 'InternalFunctionCall': {
-      if(node.internalFunctionInteractsWithSecret) // Add sameState
-    return ` ${node.name}(${(node.CircuitArguments).join(',\n')}) ` ;
+    if(node.internalFunctionInteractsWithSecret &&  node.CircuitArguments.length) // Add sameState
+    return ` assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+    if(node.internalFunctionInteractsWithSecret &&  !(node.CircuitArguments.length))
+    return ` `;
 }
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;

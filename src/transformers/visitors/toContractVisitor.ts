@@ -5,7 +5,7 @@ import { buildNode } from '../../types/solidity-types.js';
 import { traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-
+import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
 const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
@@ -35,7 +35,9 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
       thisState.customInputs.push(indicator.name);
   }
 };
-
+let internalFncName = [];
+let callingFncName = [];
+let internalFuncInteractsWithSecret = false;
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.sol` AST (for a 'shield' contract)
@@ -107,7 +109,6 @@ export default {
     enter(path: NodePath) {
       const { node, parent, scope } = path;
       const isShieldContract = scope.indicators.zkSnarkVerificationRequired;
-
       const newNode = buildNode('ContractDefinition', {
         name: node.name,
         isShieldContract,
@@ -165,6 +166,7 @@ export default {
         ...buildNode('ContractBoilerplate', {
           bpSection: 'stateVariableDeclarations',
           scope,
+          internalFuncInteractsWithSecret,
         }),
       );
 
@@ -176,10 +178,7 @@ export default {
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
       }
-      // let parameters = [];
-      // let internalFncName = 'deposit';
-      // console.log(node._newASTPointer);
-
+      
     },
   },
 
@@ -495,7 +494,7 @@ export default {
 
   FunctionCall: {
     enter(path: NodePath, state: any) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
@@ -541,8 +540,40 @@ export default {
       if (path.isInternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
         // TODO: need a warning message to this effect ^^^
+let fnParameters = [];
+const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
+internalFuncInteractsWithSecret = fnIndicator.internalFunctionInteractsWithSecret;
+const functionReferncedNode = scope.getReferencedNode(node.expression);
+const params = functionReferncedNode.parameters.parameters;
+if(!fnIndicator.internalFunctionInteractsWithSecret){
+    if(params.some(node => node.isSecret))
+    {
+    internalFuncInteractsWithSecret = true; }
+}
 
-        newNode = buildNode('FunctionCall');
+if(internalFuncInteractsWithSecret){
+  internalFncName.push(node.expression.name);
+  const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+  callingFncName.push(fnDefNode.node.name);
+  const contractIndicator : ContractDefinitionIndicator = scope.indicators;
+if(contractIndicator.nullifiersRequired)
+fnParameters.push('newNullifiers') ;
+if(contractIndicator.oldCommitmentAccessRequired)
+fnParameters.push('commitmentRoot') ;
+if(contractIndicator.newCommitmentsRequired)
+fnParameters.push('newCommitments') ;
+if(contractIndicator.containsAccessedOnlyState)
+fnParameters.push('checkNullifiers') ;
+
+fnParameters.push('proof') ;
+
+}
+console.log(fnParameters)
+        newNode = buildNode('InternalFunctionCall', {
+        name: node.expression.name,
+        internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
+        parameters: fnParameters,
+       });
         node._newASTPointer = newNode;
 
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
@@ -551,6 +582,7 @@ export default {
           parent._newASTPointer[path.containerName] = newNode;
         }
         return;
+        console.log(newNode);
       }
 
       newNode = buildNode('FunctionCall');

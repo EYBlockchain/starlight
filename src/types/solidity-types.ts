@@ -38,6 +38,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['components'];
     case 'FunctionCall':
       return ['expression', 'arguments'];
+    case 'InternalFunctionCall' :
+      return ['name', 'internalFunctionInteractsWithSecret','parameters'];
     case 'ArrayTypeName':
       return ['baseType'];
     case 'ElementaryTypeNameExpression':
@@ -81,7 +83,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodes,
       };
     }
-    case 'PragmaDirective': { 
+    case 'PragmaDirective': {
       const { literals } = fields;
       return {
         nodeType,
@@ -270,6 +272,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         expression,
         arguments: args, // 'arguments' is a reserved word in JS
+      };
+    }
+    case 'InternalFunctionCall': {
+      const { name, internalFunctionInteractsWithSecret = false, parameters = [] } = fields;
+      return {
+        nodeType,
+        name,
+        internalFunctionInteractsWithSecret,
+        parameters
       };
     }
     case 'IndexAccess': {
