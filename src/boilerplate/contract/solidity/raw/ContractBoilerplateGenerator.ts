@@ -29,8 +29,6 @@ class ContractBoilerplateGenerator {
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
       return [
-
-
         `
           enum FunctionNames { ${functionNames.join(', ')} }`,
 

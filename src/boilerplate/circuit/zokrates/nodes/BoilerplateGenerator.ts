@@ -48,7 +48,6 @@ const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
   return { incrementsArray, incrementsString };
 };
 
-
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 const bpCache = new WeakMap();
 
@@ -68,9 +67,6 @@ class BoilerplateGenerator {
   mappingName: string;
   indicators: any;
   newCommitmentValue: any;
-
-
-
   bpSections: string[] = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
 
   constructor(indicators: StateVariableIndicator) {
@@ -87,8 +83,6 @@ class BoilerplateGenerator {
 
     bpCache.set({indicators}, this);
   }
-
-
   // Bump all important indicators (used by this class) to this 'top-level' of `this`.
   assignIndicators(indicators: StateVariableIndicator | MappingKey ) {
     const {
@@ -228,7 +222,6 @@ class BoilerplateGenerator {
       addBP('nullification');
       addBP('oldCommitmentPreimage');
       addBP('oldCommitmentExistence');
-
     }
     if (this.newCommitmentsRequired && !this.burnedOnly) {
       addBP('newCommitment');

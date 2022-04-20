@@ -40,17 +40,12 @@ export default {
             `Require statements involving secret states. We plan to suppport these (by replicating them with Zokrates assert statements) in the near future.`,
             node,
           );
-
-        // if (
-        //   node.kind === 'functionCall' &&
-        //   node.expression.typeDescriptions.typeIdentifier.includes(`_external_`)
-        // )
         if (path.isExternalFunctionCall())
           throw new ZKPError(
             `We cannot support external function calls with secret arguments - they can't be hidden due to the nature of the blockchain`,
             node,
           );
-        
+
 
       }
     },

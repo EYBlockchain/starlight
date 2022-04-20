@@ -11,19 +11,6 @@ import { TODOError, ZKPError } from '../../../error/errors.js';
 
 
 export default {
-  // FunctionCall: {
-  //   enter(node: any) {
-  //     if (
-  //       node.kind === 'functionCall' &&
-  //       node.expression.typeDescriptions.typeIdentifier.includes(`_internal_`)
-  //     )
-  //       throw new TODOError(
-  //         `swati is doing`,
-  //         node,
-  //       );
-  //   },
-  // },
-
   StructuredDocumentation: {
     enter(node: any) {
       throw new TODOError(`Solidity type ${node.nodeType}`, node);

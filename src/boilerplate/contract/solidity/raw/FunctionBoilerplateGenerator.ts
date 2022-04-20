@@ -88,8 +88,6 @@ class FunctionBoilerplateGenerator {
 
         ...(newCommitments ? [`
           inputs.newCommitments = newCommitments;`] : []),
-
-
         `
           if (sig == msg.sig)`,
         `
