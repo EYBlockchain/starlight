@@ -305,6 +305,14 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         trueBody,
         falseBody,
       }
+    case 'TypeConversion': {
+      const { type, expression = {}, args = {} } = fields;
+      return {
+        nodeType,
+        type,
+        arguments: args,
+        expression,
+      };
     }
     case 'MsgSender': {
       return {

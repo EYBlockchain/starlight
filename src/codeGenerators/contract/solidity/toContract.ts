@@ -138,6 +138,9 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+    case 'TypeConversion':
+      return `${codeGenerator(node.expression)}(${codeGenerator(node.arguments)})`;
+
     case 'UnaryOperation':
       return `${codeGenerator(node.subExpression)} ${node.operator};`;
 

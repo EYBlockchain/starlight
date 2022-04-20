@@ -130,6 +130,8 @@ function codeGenerator(node: any) {
     return `${node.trueBody[0].expression.leftHandSide.name} =  if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[0].expression.rightHandSide)} else ${node.trueBody[0].expression.leftHandSide.name}`
   }
       }
+    case 'TypeConversion':
+      return `${codeGenerator(node.arguments)}`;
 
     case 'MsgSender':
       return 'msg';

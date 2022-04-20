@@ -456,7 +456,7 @@ export default {
       const { node, parent } = path;
 
       let newNode: any;
-
+      
       if (path.isMsgSender()) {
         newNode = buildNode('MsgSender');
         // node._newASTPointer = // no pointer needed in this case, because this is effectively leaf, so we won't be recursing any further.
@@ -543,8 +543,21 @@ export default {
         }
         return;
       }
-
-      newNode = buildNode('FunctionCall');
+    
+      if (node.kind !== 'typeConversion') {
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
+        state.skipSubNodes = true;
+        return;
+      }
+      newNode = buildNode('TypeConversion', {
+        type: node.typeDescriptions.typeString,
+      });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer[path.containerName])) {
         parent._newASTPointer[path.containerName].push(newNode);

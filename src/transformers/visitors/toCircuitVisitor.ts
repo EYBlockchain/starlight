@@ -443,12 +443,12 @@ const visitor = {
   ElementaryTypeNameExpression: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-
+      
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode(
         'ElementaryTypeName',
         {
-          name: node.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
+          name: node.typeName.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
         },
       );
       state.skipSubNodes = true;
@@ -585,6 +585,15 @@ const visitor = {
 
         // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
         state.skipSubNodes = true;
+      }
+      if(path.isTypeConversion())
+      {
+        const newNode = buildNode('TypeConversion', {
+          type: node.typeDescriptions.typeString,
+        });
+        node._newASTPointer = newNode;
+        parent._newASTPointer[path.containerName] = newNode;
+        return;
       }
 
       if (path.isZero()) {
