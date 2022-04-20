@@ -632,7 +632,7 @@ const visitor = {
       // ts complains if I don't include a number in this list
       if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
         node._newASTPointer = parent._newASTPointer[path.containerName];
-        return
+        return;
       }
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode.statements;

@@ -175,6 +175,10 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
+        node._newASTPointer = parent._newASTPointer[path.containerName];
+        return;
+      }
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
@@ -496,7 +500,11 @@ const visitor = {
   IfStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, {condition: node.condition , trueBody: node.trueBody, falseBody: node.falseBody});
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        trueBody: [],
+        falseBody: []
+      });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
