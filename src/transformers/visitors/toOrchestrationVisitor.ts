@@ -55,7 +55,11 @@ let internalFncName = [];
 let callingFncName = [];
 let oldStateArray : string[];
 let newStateArray : string [];
+let newParametersList = [];
+let newdecrementedSecretStates = [];
 let newPreStatementList = [];
+let newStatementList = [];
+let newStatementnode : any;
 let newPostStatementList = [];
 let circuitImport = [];
 // collects increments and decrements into a string (for new commitment calculation) and array
@@ -233,84 +237,151 @@ const visitor = {
         }
       }
 
-      let generateProofNode: any;
-      node._newASTPointer.forEach(file => {
-        internalFncName.forEach( name => {
-          if(file.fileName === name && file.nodeType === 'File') {
-            let index = internalFncName.indexOf(name);
-            //console.log(circuitImport[index]);
-            if(circuitImport[index]==='true') {
-              console.log(circuitImport[index])
-          file.nodes.forEach(childNode => {
-          if(childNode.nodeType === 'FunctionDefinition')
-          {
+let generateProofNode: any;
+let writePreimageNode : any ;
+let sendTransactionNode : any;
+node._newASTPointer.forEach(file => {
+  internalFncName.forEach( name => {
+    if(file.fileName === name && file.nodeType === 'File') {
+      let index = internalFncName.indexOf(name);
+      if(circuitImport[index]==='true') {
+file.nodes.forEach(childNode => {
+if(childNode.nodeType === 'FunctionDefinition')
+{
+  newParametersList = cloneDeep(childNode.parameters.modifiedStateVariables);
 
-         newPreStatementList = cloneDeep(childNode.body.preStatements);
-         //console.log(newPreStatementList);
-          newPreStatementList.forEach(node => {
-            if(node.nodeType === 'ReadPreimage'){
-          // console.log(Object.keys(node.privateStates));
-             let stateName: string;
-             let stateNode: any;
-             let newstateName: string;
-             for( [stateName, stateNode] of Object.entries(node.privateStates))
-             { for(const [index, oldStateName] of  oldStateArray.entries()) {
-               if(stateName === '_'+oldStateName){
-               newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
-               node.privateStates[ newstateName ] = node.privateStates[stateName];
-               delete(node.privateStates[ stateName ]);
-             }
-               stateNode.increment = stateNode.increment.replace(oldStateName+'.', newStateArray[index]+'.')
-               if(stateNode.mappingKey === oldStateName)
-               stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, newStateArray[index])
-               if(stateNode.stateVarId[1] === oldStateName)
-               stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
-             }
-           }
-     }
-        })
-  newPreStatementList.splice(0,1);
-  newPostStatementList = cloneDeep(childNode.body.postStatements);
-  newPostStatementList.forEach(node => {
-    if(node.nodeType === 'CalculateNullifier'){
-  // console.log(Object.keys(node.privateStates));
+  newParametersList.forEach(node => {
+    for(const [index, oldStateName] of  oldStateArray.entries()) {
+      node.name = node.name.replace('_'+oldStateName, '_'+newStateArray[index])
+    }
+  })
+  if(childNode.decrementedSecretStates){
+  newdecrementedSecretStates = cloneDeep(childNode.decrementedSecretStates);
+  for(const [index, oldStateName] of  oldStateArray.entries()) {
+    node.name = node.name.replace('_'+oldStateName, '_'+newStateArray[index])
+  }
+}
+  newPreStatementList = cloneDeep(childNode.body.preStatements);
+
+  newPreStatementList.forEach(node => {
+    if(node.nodeType === 'InitialisePreimage'){
+      let stateName: string;
+      let stateNode: any;
+      let newstateName: string;
+      for( [stateName, stateNode] of Object.entries(node.privateStates))
+      { for(const [index, oldStateName] of  oldStateArray.entries()) {
+
+        newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+        if(newstateName != stateName ){
+        node.privateStates[ newstateName ] = node.privateStates[stateName];
+        delete(node.privateStates[ stateName ]);}
+
+        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+        if(stateNode.mappingKey === oldStateName)
+        stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, newStateArray[index])
+        if(stateNode.stateVarId[1] === oldStateName)
+        stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
+      }
+    }
+  }
+    if(node.nodeType === 'ReadPreimage'){
      let stateName: string;
      let stateNode: any;
      let newstateName: string;
      for( [stateName, stateNode] of Object.entries(node.privateStates))
      { for(const [index, oldStateName] of  oldStateArray.entries()) {
-       if(stateName === '_'+oldStateName){
+
        newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+       if(newstateName != stateName ){
        node.privateStates[ newstateName ] = node.privateStates[stateName];
-       delete(node.privateStates[ stateName ]);
+       delete(node.privateStates[ stateName ]);}
+
+       stateNode.increment = stateNode.increment.replace(oldStateName+'.', newStateArray[index]+'.')
+       if(stateNode.mappingKey === oldStateName)
+       stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, newStateArray[index])
+       if(stateNode.stateVarId[1] === oldStateName)
+       stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
      }
+   }
+  }
+     if(node.nodeType === 'MembershipWitness'){
+      let stateName: string;
+      let stateNode: any;
+      let newstateName: string;
+      for( [stateName, stateNode] of Object.entries(node.privateStates))
+      { for(const [index, oldStateName] of  oldStateArray.entries()) {
+
+        newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+        if(newstateName != stateName ){
+        node.privateStates[ newstateName ] = node.privateStates[stateName];
+        delete(node.privateStates[ stateName ]);}
+
+        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+      }
+    }
+  }
+})
+newPreStatementList.splice(0,1);
+
+newStatementList = cloneDeep(childNode.body.statements);
+newStatementList.forEach(node => {
+  if(node.nodeType === 'VariableDeclarationStatement')
+  { node.declarations.forEach(node => {
+    for(const [index, oldStateName] of  oldStateArray.entries()) {
+node.name = node.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
+}
+  });
+  for(const [index, oldStateName] of  oldStateArray.entries()) {
+  node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
+   node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  newStateArray[index]);
+
+    }
+}
+if(node.nodeType === 'Assignment'){
+  for(const [index, oldStateName] of  oldStateArray.entries()) {
+  node.leftHandSide.name = node.leftHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
+   node.rightHandSide.name = node.rightHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
+}
+}
+})
+
+
+  newPostStatementList = cloneDeep(childNode.body.postStatements);
+  newPostStatementList.forEach(node => {
+    if(node.nodeType === 'CalculateNullifier'){
+     let stateName: string;
+     let stateNode: any;
+     let newstateName: string;
+     for( [stateName, stateNode] of Object.entries(node.privateStates))
+     { for(const [index, oldStateName] of  oldStateArray.entries()) {
+       newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+       if(newstateName != stateName ){
+       node.privateStates[ newstateName ] = node.privateStates[stateName];
+       delete(node.privateStates[ stateName ]);}
      }
    }
 
 }
 if(node.nodeType === 'CalculateCommitment'){
-// console.log(Object.keys(node.privateStates));
  let stateName: string;
  let stateNode: any;
  let newstateName: string;
  for( [stateName, stateNode] of Object.entries(node.privateStates))
  { for(const [index, oldStateName] of  oldStateArray.entries()) {
-   if(stateName === '_'+oldStateName){
+
    newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+   if(newstateName != stateName ){
    node.privateStates[ newstateName ] = node.privateStates[stateName];
-   delete(node.privateStates[ stateName ]);
- }
+   delete(node.privateStates[ stateName ]);}
+
    if(stateNode.privateStateName === oldStateName )
    stateNode.privateStateName = stateNode.privateStateName.replace(oldStateName,  newStateArray[index])
    else
    stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
    if(stateNode.stateVarId[1] === oldStateName)
    stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
-
  }
-
 }
-
 }
 
 if(node.nodeType === 'GenerateProof'){
@@ -320,63 +391,125 @@ generateProofNode = cloneDeep(node);
   for( stateName of Object.keys(generateProofNode.privateStates))
   {
     for(const [index, oldStateName] of  oldStateArray.entries()) {
-    if(stateName === '_'+oldStateName){
     newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+     if(newstateName != stateName ){
     generateProofNode.privateStates[ newstateName ] = generateProofNode.privateStates[stateName];
     delete(generateProofNode.privateStates[ stateName ]);
-
-  }
-
-
-  }
-
-  }
-  //let newParameters = cloneDeep(node.parameters);
-  for(const [index, param] of generateProofNode.parameters){
-    for(const [index, oldStateName] of  oldStateArray.entries()) {
-      if(param === '_'+oldStateName)
-       generateProofNode.parameters =  generateProofNode.parameters.replace('_'+oldStateName, '_'+ newStateArray[index])
-      if(param === oldStateName)
-       generateProofNode.parameters =  generateProofNode.parameters.replace('_'+oldStateName, '_'+ newStateArray[index])
  }
+  }
+}
+generateProofNode.parameters = [];
+}
+if(node.nodeType === 'SendTransaction'){
+  sendTransactionNode = cloneDeep(node);
+  let stateName: string;
+  let stateNode: any;
+  let newstateName: string;
+  for( [stateName, stateNode] of Object.entries(sendTransactionNode.privateStates)){
+  for(const [index, oldStateName] of  oldStateArray.entries()) {
+    newstateName = stateName.replace('_'+oldStateName, '_'+newStateArray[index])
+     if(newstateName != stateName ){
+    sendTransactionNode.privateStates[ newstateName ] = sendTransactionNode.privateStates[stateName];
+    delete(sendTransactionNode.privateStates[ stateName ]);
+  }
 }
 }
-
+}
+if(node.nodeType === 'WritePreimage'){
+writePreimageNode = cloneDeep(node);
+let stateName: string;
+let stateNode: any;
+let newstateName: string;
+for( [stateName, stateNode] of Object.entries(writePreimageNode.privateStates)){
+for(const [index, oldStateName] of  oldStateArray.entries()) {
+  newstateName = stateName.replace('_'+oldStateName, '_'+newStateArray[index])
+   if(newstateName != stateName ){
+  writePreimageNode.privateStates[ newstateName ] = writePreimageNode.privateStates[stateName];
+  delete(writePreimageNode.privateStates[ stateName ]);
+}
+if(stateNode.mappingKey)
+ stateNode.mappingKey =  stateNode.mappingKey.replace(oldStateName, newStateArray[index])
+}
+}
+}
 })
 newPostStatementList.splice(- 3);
-}
-
-      })
-
-
+ }
+})
   node._newASTPointer.forEach(file => {
   if(file.fileName === callingFncName[index])
   {
-      //console.log(callingFncName);
-      file.nodes.forEach(childNode => {
-      if(childNode.nodeType === 'FunctionDefinition')
-      {
-
-        childNode.body.preStatements = [...new Set([...childNode.body.preStatements, ...newPreStatementList])]
-        const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));
-
-childNode.body.postStatements = merge(childNode.body.postStatements, newPostStatementList , index+1);
-childNode.body.postStatements.forEach(node => {
-  if(node.nodeType === 'GenerateProof')
+  file.nodes.forEach(childNode => {
+  if(childNode.nodeType === 'FunctionDefinition')
   {
-    node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
-  //  node.parameters = node.parameters.concat(generateProofNode.parameters);
+    childNode.parameters.modifiedStateVariables = [...new Set([...childNode.parameters.modifiedStateVariables, ...newParametersList])];
+    if(childNode.decrementedSecretStates)
+    childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
+    childNode.body.preStatements = [...new Set([...childNode.body.preStatements, ...newPreStatementList])]
+    childNode.body.statements = [...new Set([...childNode.body.statements, ...newStatementList])]
+    const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));
 
-  node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+    childNode.body.postStatements = merge(childNode.body.postStatements, newPostStatementList , index+1);
+    childNode.body.postStatements.forEach(node => {
+    if(node.nodeType === 'GenerateProof'){
+     node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
+     node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+    }
+    if(node.nodeType === 'SendTransaction')
+     node.privateStates = Object.assign(node.privateStates,sendTransactionNode.privateStates)
 
-  }
-})
-
+    if(node.nodeType === 'WritePreimage')
+     node.privateStates = Object.assign(node.privateStates,writePreimageNode.privateStates)
+    })
     }
   })
 }
 })
+}
 
+
+
+if(circuitImport[index] === 'false')
+{
+  file.nodes.forEach(childNode => {
+    if(childNode.nodeType === 'FunctionDefinition'){
+      newStatementList = cloneDeep(childNode.body.statements);
+      newStatementList.forEach(node => {
+        if(node.nodeType === 'VariableDeclarationStatement')
+        {
+        for(const [index, oldStateName] of  oldStateArray.entries()) {
+        node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
+         node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  newStateArray[index]);
+
+          }
+      }
+      })
+      }
+  })
+  node._newASTPointer.forEach(file => {
+  if(file.fileName === callingFncName[index])
+  {
+
+  file.nodes.forEach(childNode => {
+  if(childNode.nodeType === 'FunctionDefinition')
+  {
+  childNode.body.statements.forEach(node => {
+    if(node.nodeType === 'ExpressionStatement' && node.expression.name === internalFncName[index])
+{
+  newStatementList.forEach(list => {
+    if(list.nodeType === 'VariableDeclarationStatement'){
+    node.expression = Object.assign(node.expression,list.initialValue);
+    console.log(node.expression);
+    }
+  })
+}
+
+  });
+    }
+    })
+
+}
+})
 }
 }
 })
@@ -1138,6 +1271,17 @@ childNode.body.postStatements.forEach(node => {
  startNodePath.node.nodes.forEach(node => {
 
    if(node.nodeType === 'VariableDeclaration'){
+     if(node.typeName.nodeType === 'Mapping') {
+       for(const [index, oldStateName] of  oldStateArray.entries()) {
+         if(oldStateName === newStateArray[index])
+         {
+           circuitImport.push('false');
+           isCircuit = false;
+         }
+         circuitImport.push('true');
+         isCircuit = true;
+     }
+   }
     if(callingfnDefIndicators[node.id]){
       if(callingfnDefIndicators[node.id].isModified){
         if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified)
@@ -1165,8 +1309,6 @@ childNode.body.postStatements.forEach(node => {
   }
 
  });
-
-
 
         const newNode = buildNode('InternalFunctionCall', {
         name: node.expression.name,

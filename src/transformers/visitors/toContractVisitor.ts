@@ -178,7 +178,7 @@ export default {
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
       }
-      
+
     },
   },
 
@@ -189,7 +189,7 @@ export default {
       const newNode = buildNode('FunctionDefinition', {
         name: node.fileName || path.getUniqueFunctionName(),
         id: node.id,
-        visibility: isConstructor ? '' : 'external',
+        visibility: isConstructor ? '' : 'public',
         isConstructor,
       });
 
@@ -509,9 +509,6 @@ export default {
 
         // HACK: eventually we'll need to 'copy over' (into the circuit) require statements which have arguments which have interacted with secret states elsewhere in the function (at least).
         // For now, we'll copy these into Solidity:
-
-
-
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
@@ -568,30 +565,30 @@ fnParameters.push('checkNullifiers') ;
 fnParameters.push('proof') ;
 
 }
-console.log(fnParameters)
-        newNode = buildNode('InternalFunctionCall', {
-        name: node.expression.name,
-        internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
-        parameters: fnParameters,
-       });
-        node._newASTPointer = newNode;
 
-        if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
-        } else {
-          parent._newASTPointer[path.containerName] = newNode;
-        }
-        return;
-        console.log(newNode);
-      }
+  newNode = buildNode('InternalFunctionCall', {
+  name: node.expression.name,
+  internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
+  parameters: fnParameters,
+ });
+  node._newASTPointer = newNode;
 
-      newNode = buildNode('FunctionCall');
-      node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
-    },
-  },
+  if (Array.isArray(parent._newASTPointer[path.containerName])) {
+    parent._newASTPointer[path.containerName].push(newNode);
+  } else {
+    parent._newASTPointer[path.containerName] = newNode;
+  }
+  return;
+
+}
+
+newNode = buildNode('FunctionCall');
+node._newASTPointer = newNode;
+if (Array.isArray(parent._newASTPointer[path.containerName])) {
+  parent._newASTPointer[path.containerName].push(newNode);
+} else {
+  parent._newASTPointer[path.containerName] = newNode;
+}
+},
+},
 };

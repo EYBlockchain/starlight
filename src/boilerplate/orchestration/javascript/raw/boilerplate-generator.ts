@@ -48,7 +48,7 @@ class BoilerplateGenerator {
               \nlet ${stateName}_commitmentExists = true;
               let ${stateName}_witnessRequired = true;
               \nlet ${stateName}_preimage = {
-              \t${stateName}: 0,
+              \tvalue: 0,
               \tsalt: 0,
               \tcommitment: 0,
               };
@@ -138,7 +138,7 @@ class BoilerplateGenerator {
                   return [`
                     ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
-                    const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
+                    const ${stateName}_prev = generalise(${stateName}_preimage.value);
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
                     \n`];
                 default:
@@ -146,7 +146,7 @@ class BoilerplateGenerator {
                     ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
                     ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
-                    const ${stateName}_prev = generalise(${stateName}_preimage.${stateName});
+                    const ${stateName}_prev = generalise(${stateName}_preimage.value);
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
                     \n`];
               }
@@ -393,7 +393,7 @@ sendTransaction = {
             default:
               return [`
                 \npreimage.${mappingName}${mappingKey} = {
-                \t${stateName}: ${stateName}.integer,
+                \tvalue: ${stateName}.integer,
                 \tsalt: ${stateName}_newSalt.integer,
                 \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
                 \tcommitment: ${stateName}_newCommitment.integer,

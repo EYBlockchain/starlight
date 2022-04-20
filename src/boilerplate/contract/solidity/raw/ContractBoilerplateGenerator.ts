@@ -30,7 +30,6 @@ class ContractBoilerplateGenerator {
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
       return [
 
-        ` event Sig(bytes4 realSig, bytes4 calcSig); `,
 
         `
           enum FunctionNames { ${functionNames.join(', ')} }`,
@@ -145,7 +144,7 @@ class ContractBoilerplateGenerator {
           ...(newNullifiers ? ['newNullifiers.length'] : []),
           ...(checkNullifiers ? ['checkNullifiers.length'] : []),
           ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
-          ...(newCommitments ? ['newCommitments.length + (newNullifiers.length == 0 ? 1 : 0)'] : []),
+          ...(newCommitments ? ['newCommitments.length + 1'] : []),
         ].join(' + ')});`,
 
         `
@@ -176,7 +175,7 @@ class ContractBoilerplateGenerator {
           }`] : []),
 
         `
-          if (newNullifiers.length == 0) inputs[k++] = 1;
+          inputs[k++] = 1;
 
           bool result = verifier.verify(proof, inputs, vks[functionId]);`,
 

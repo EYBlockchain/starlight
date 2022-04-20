@@ -13,7 +13,7 @@ contract Bank {
 
     function transfer(secret uint256 fromAccountId,   secret uint256 toAccountId,  secret uint256 amount) public {
         account[fromAccountId] -= amount;
-        deposit(amount, toAccount) ; // parameters are in wrong order should result in error
+        deposit(amount, toAccount) ; 
     }
 
 }
