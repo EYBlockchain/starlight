@@ -304,7 +304,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         condition,
         trueBody,
         falseBody,
-      }
+      };
+    }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {

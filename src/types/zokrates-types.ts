@@ -130,7 +130,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       return {
         nodeType,
         components,
-      }
+      };
     }
     case 'IfStatement': {
       const { condition = {} , trueBody= {} , falseBody= {} } = fields;
@@ -139,6 +139,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         condition,
         trueBody,
         falseBody,
+      };
+    }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {
@@ -146,7 +148,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         type,
         arguments: args,
         expression,
-      }
+      };
     }
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;
@@ -155,7 +157,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         operator,
         prefix,
         subExpression,
-      }
+      };
     }
     case 'MsgSender': {
       return {
