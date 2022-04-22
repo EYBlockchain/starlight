@@ -565,7 +565,9 @@ fnParameters.push('checkNullifiers') ;
 fnParameters.push('proof') ;
 
 }
-
+else {
+  
+}
   newNode = buildNode('InternalFunctionCall', {
   name: node.expression.name,
   internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,

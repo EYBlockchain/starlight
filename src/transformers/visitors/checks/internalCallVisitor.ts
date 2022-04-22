@@ -22,7 +22,6 @@ export default {
         if (arg.nodeType !== 'Identifier') continue;
       isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
       }
-console.log(isSecretArray);
 if(path.isInternalFunctionCall())
 {
  if(node.expression.nodeType === 'Identifier') {
@@ -30,8 +29,10 @@ const functionReferncedNode = scope.getReferencedNode(node.expression);
 const params = functionReferncedNode.parameters.parameters;
 
 for (const [index, param] of params.entries()){
+if(param.isSecret){
 if(isSecretArray[index] !== param.isSecret)
   throw new Error('Make sure that passed parameters have same decorators');
+}
 }
 }
       }
