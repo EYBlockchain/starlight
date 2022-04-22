@@ -15,7 +15,7 @@ import OrchestrationBP from '../boilerplate/orchestration/javascript/raw/boilerp
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 const Orchestrationbp = new OrchestrationBP();
-function transformation1(oldAST: any) {
+function transformation1(oldAST: any, circuitAST: any) {
   // We'll create a `newAst`
   const newAST = {
     nodeType: 'Folder',
@@ -28,6 +28,7 @@ function transformation1(oldAST: any) {
     snarkVerificationRequired: true,
     newCommitmentsRequired: true,
     nullifiersRequired: true,
+    circuitAST
   };
 
   const path = oldAST;
@@ -51,7 +52,7 @@ function transformation1(oldAST: any) {
 export default function toOrchestration(ast: any, options: any) {
   // transpile to a node AST:
   logger.debug('Transforming the .zol AST to a .mjs AST...');
-  const newAST = transformation1(ast);
+  const newAST = transformation1(ast, options.circuitAST);
   const newASTFilePath = pathjs.join(
     options.orchestrationDirPath,
     `${options.inputFileName}_ast.json`,

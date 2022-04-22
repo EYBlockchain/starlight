@@ -93,6 +93,7 @@ class ContractBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
+      parameters,
     }): string[] {
       const verifyFunctionSignature = `
         function verify(
@@ -102,9 +103,28 @@ class ContractBoilerplateGenerator {
       	) private {
         `;
 
+      const verifyInputsMap = (input: string, counter: any) => {
+        switch (input) {
+          case 'nullifier':
+            return `
+            inputs[k++] = newNullifiers[${counter.newNullifiers++}];`;
+          case 'checkNullifier':
+            return `
+            inputs[k++] = checkNullifiers[${counter.checkNullifiers++}];`;
+          case 'newCommitment':
+            return `
+            inputs[k++] = newCommitments[${counter.newCommitments++}];`;
+          case 'oldCommitmentExistence':
+            return `
+            inputs[k++] = _inputs.commitmentRoot;`;
+          default:
+            return `
+            inputs[k++] = customInputs[${counter.customInputs++}];`;
+        }
+      }
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
-      const verifyStatements: string[] = [
+      const verifyPreStatements: string[] = [
         'uint[] memory customInputs = _inputs.customInputs;', // TODO: do we need an indicator for when there are / aren't custom inputs? At the moment they're always assumed:
 
         ...(newNullifiers ? [`
@@ -144,33 +164,27 @@ class ContractBoilerplateGenerator {
           ...(newCommitments ? ['newCommitments.length'] : []),
         ].join(' + ')});`,
 
-        `
-          uint k = 0;`,
+      ];
+      const verifyInputs: string[] = [];
+      const _parameters: string[][] = parameters;
 
-        `
-          for (uint i = 0; i < customInputs.length; i++) {
-    			  inputs[k++] = customInputs[i];
-    		  }`,
+      for (let [name, _inputs] of Object.entries(_parameters)) {
+        const counter = {
+          customInputs: 0,
+          newNullifiers: 0,
+          checkNullifiers: 0,
+          newCommitments: 0,
+        };
+        // this strange declaration prevents typescript errors
+        const inputs: string[] = _inputs;
+        verifyInputs.push(`
+          if (functionId === FunctionNames.${name}) {
+            k = 0;
+            ${inputs.map(i => verifyInputsMap(i, counter)).join('')}
+          }`)
+      }
 
-        ...(newNullifiers ?
-          [`
-          for (uint i = 0; i < newNullifiers.length; i++) {
-    			  inputs[k++] = newNullifiers[i];
-    		  }`] : []),
-
-        ...(commitmentRoot ? [`
-          if (newNullifiers.length > 0) inputs[k++] = _inputs.commitmentRoot;`] : []), // assumes nullifiers always get submitted with commitmentRoot (and vice versa)
-
-        ...(newCommitments ? [`
-          for (uint i = 0; i < newCommitments.length; i++) {
-      			inputs[k++] = newCommitments[i];
-      		}`] : []),
-
-        ...(checkNullifiers ? [`
-          for (uint i = 0; i < checkNullifiers.length; i++) {
-            inputs[k++] = checkNullifiers[i];
-          }`] : []),
-
+      const verification: string[] = [
         `
           bool result = verifier.verify(proof, inputs, vks[functionId]);`,
 
@@ -191,7 +205,9 @@ class ContractBoilerplateGenerator {
 
       const verify = [
         `${verifyFunctionSignature}
-          ${verifyStatements.join('\n')}
+          ${verifyPreStatements.join('\n')}
+          ${verifyInputs.join('\n')}
+          ${verification.join('\n')}
         }`,
       ];
 

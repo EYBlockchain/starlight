@@ -14,12 +14,12 @@ class ContractBoilerplateGenerator {
     bpCache.set(scope, this);
   }
 
-  getBoilerplate = (section: string) => {
+  getBoilerplate = (section: string, extraParams?: any) => {
     const bp = [];
     const categories: string[] = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {
-        bp.push(this.generateNode(category, section));
+        bp.push(this.generateNode(category, section, extraParams));
       }
     });
     return bp;
@@ -87,12 +87,46 @@ class ContractBoilerplateGenerator {
 
     registerZKPPublicKey() {},
 
-    verify() {
+    verify(circuitParams: Object) {
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = this.scope;
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState };
+
+      const parameters = {};
+      let parameterList: any[];
+      let functionName: string;
+
+      for ([functionName, parameterList] of Object.entries(circuitParams)) {
+        const newList = [];
+        parameterList.forEach(circuitParamNode => {
+          switch (circuitParamNode.bpType) {
+            case 'nullification':
+              if (circuitParamNode.isNullified) {
+                newList.push('nullifier');
+              } else {
+                // we use a nullification node for accessed, not nullified, states
+                newList.push('checkNullifier')
+              }
+              break;
+            case 'newCommitment':
+              newList.push(circuitParamNode.bpType);
+              break;
+            case 'oldCommitmentExistence':
+              if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
+              break;
+            case undefined: {
+              if (circuitParamNode.nodeType === 'VariableDeclaration' && !circuitParamNode.isPrivate) newList.push(circuitParamNode.name)
+            }
+            default:
+              break;
+          }
+        });
+        parameters[functionName] = newList;
+      }
+
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, parameters };
     },
+
   };
 }
 
