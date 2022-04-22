@@ -566,7 +566,7 @@ const visitor = {
 
           delete state.publicInputs; // reset
         }
-        if (state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
+        if (state.constructorStatements && state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
           if (!param.isSecret)
@@ -726,7 +726,7 @@ const visitor = {
               .replace('.sender', '')
           : indicator.name;
 
-        const requiresConstructorInit = state.constructorStatements.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
+        const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec

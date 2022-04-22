@@ -124,7 +124,7 @@ const visitor = {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
-      if (node.kind === 'constructor' && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
+      if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
       // We populate the boilerplate for the function
       newFunctionDefinitionNode.parameters.parameters.push(
