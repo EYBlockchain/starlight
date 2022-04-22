@@ -119,6 +119,12 @@ function codeGenerator(node: any) {
     case 'IfStatement': 
       let trueStatements: any = ``;
       let falseStatements: any= ``;
+      let initialStatements: any= ``;
+      console.log('expressios' , node.condition);
+      initialStatements+= `
+        // if statements start , copies over left expression variable to temporary variable
+        field ${node.condition.leftExpression.name}_temp = ${node.condition.leftExpression.name}`;
+      node.condition.leftExpression.name+= '_temp';
       for (let i =0; i<node.trueBody.length; i++) {
         trueStatements+= `
         ${node.trueBody[i].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${node.trueBody[i].expression.leftHandSide.name}`
@@ -127,7 +133,7 @@ function codeGenerator(node: any) {
         falseStatements+= `
         ${node.falseBody[j].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${node.falseBody[j].expression.leftHandSide.name} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)}`
       }
-      return trueStatements + falseStatements;
+      return initialStatements + trueStatements + falseStatements;
 
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
