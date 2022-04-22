@@ -116,20 +116,19 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
-    case 'IfStatement': {
-      if (node.falseBody.length) {
-      if(node.trueBody[0].expression.leftHandSide.name === node.falseBody[0].expression.leftHandSide.name) {
-      return `${node.trueBody[0].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[0].expression.rightHandSide)} else ${codeGenerator(node.falseBody[0].expression.rightHandSide)}`
-    }
-    else {
-      return ` ${node.trueBody[0].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[0].expression.rightHandSide)} else ${node.trueBody[0].expression.leftHandSide.name}
-      ${node.falseBody[0].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${node.falseBody[0].expression.leftHandSide.name} else ${codeGenerator(node.falseBody[0].expression.rightHandSide)}`
-    }
-  }
-  else {
-    return `${node.trueBody[0].expression.leftHandSide.name} =  if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[0].expression.rightHandSide)} else ${node.trueBody[0].expression.leftHandSide.name}`
-  }
+    case 'IfStatement': 
+      let trueStatements: any = ``;
+      let falseStatements: any= ``;
+      for (let i =0; i<node.trueBody.length; i++) {
+        trueStatements+= `
+        ${node.trueBody[i].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${node.trueBody[i].expression.leftHandSide.name}`
       }
+      for (let j =0; j<node.falseBody.length; j++) {
+        falseStatements+= `
+        ${node.falseBody[j].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${node.falseBody[j].expression.leftHandSide.name} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)}`
+      }
+      return trueStatements + falseStatements;
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 

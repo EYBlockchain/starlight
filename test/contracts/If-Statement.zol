@@ -12,6 +12,7 @@ uint public b;
 function add( uint y) public {
 if (x > 5) {
   known z += y;
+  known x = y + 3;
 }
 else {
   known x = y + 1;
