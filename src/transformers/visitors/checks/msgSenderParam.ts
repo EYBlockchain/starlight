@@ -22,6 +22,7 @@ const visitor = {
       const isMappingKey = path.containerName === 'indexExpression';
       let expressionPath = path.getAncestorOfType('ExpressionStatement');
       expressionPath ??= path.getAncestorOfType('Assignment');
+      expressionPath ??= path.getAncestorOfType('BinaryOperation');
 
       const fnDefPath = path.getFunctionDefinition();
       const fnDefIndicators = fnDefPath.scope.indicators;

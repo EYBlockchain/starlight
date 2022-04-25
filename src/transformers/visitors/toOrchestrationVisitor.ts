@@ -740,9 +740,9 @@ const visitor = {
           });
 
           // we still need to initialise accessed states if they were accessed _before_ this modification
-          const accessedBeforeModification = indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
+          const accessedBeforeModification = indicator.isAccessed && indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
 
-          if (accessedBeforeModification) accessed = true;
+          if (accessedBeforeModification || path.isInSubScope()) accessed = true;
 
           const newNode = buildNode('VariableDeclarationStatement', {
             declarations: [
@@ -821,7 +821,7 @@ const visitor = {
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
-        refPath.parentPath.traversePathsFast(
+        (refPath.getAncestorOfType('ExpressionStatement') || refPath.parentPath).traversePathsFast(
           interactsWithSecretVisitor,
           newState,
         );

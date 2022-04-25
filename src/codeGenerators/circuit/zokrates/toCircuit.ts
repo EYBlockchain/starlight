@@ -116,22 +116,22 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
-    case 'IfStatement': 
+    case 'IfStatement':
       let trueStatements: any = ``;
       let falseStatements: any= ``;
       let initialStatements: any= ``;
       console.log('expressios' , node.condition);
       initialStatements+= `
         // if statements start , copies over left expression variable to temporary variable
-        field ${node.condition.leftExpression.name}_temp = ${node.condition.leftExpression.name}`;
+        field ${codeGenerator(node.condition.leftExpression)}_temp = ${codeGenerator(node.condition.leftExpression)}`;
       node.condition.leftExpression.name+= '_temp';
       for (let i =0; i<node.trueBody.length; i++) {
         trueStatements+= `
-        ${node.trueBody[i].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${node.trueBody[i].expression.leftHandSide.name}`
+        ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${codeGenerator(node.trueBody[i].expression.leftHandSide)}`
       }
       for (let j =0; j<node.falseBody.length; j++) {
         falseStatements+= `
-        ${node.falseBody[j].expression.leftHandSide.name} = if ${codeGenerator(node.condition)} then ${node.falseBody[j].expression.leftHandSide.name} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)}`
+        ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.leftHandSide)} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)}`
       }
       return initialStatements + trueStatements + falseStatements;
 
