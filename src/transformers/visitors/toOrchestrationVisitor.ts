@@ -76,14 +76,15 @@ const addPublicInput = (path: NodePath, state: any) => {
   const binding = path.getReferencedBinding(node);
 
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
+  const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement').containsSecret;
 
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
     binding.stateVariable && !binding.isSecret
   ) {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
@@ -740,9 +741,9 @@ const visitor = {
           });
 
           // we still need to initialise accessed states if they were accessed _before_ this modification
-          const accessedBeforeModification = indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
+          const accessedBeforeModification = indicator.isAccessed && indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
 
-          if (accessedBeforeModification) accessed = true;
+          if (accessedBeforeModification || path.isInSubScope()) accessed = true;
 
           const newNode = buildNode('VariableDeclarationStatement', {
             declarations: [
@@ -821,7 +822,7 @@ const visitor = {
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
-        refPath.parentPath.traversePathsFast(
+        (refPath.getAncestorOfType('ExpressionStatement') || refPath.parentPath).traversePathsFast(
           interactsWithSecretVisitor,
           newState,
         );

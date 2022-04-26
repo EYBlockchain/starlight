@@ -19,13 +19,14 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.nodeType !== 'Identifier') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    indicator.interactsWithSecret &&
+    (indicator.interactsWithSecret || isCondition) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -248,10 +249,15 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       if (path.scope.containsSecret) {
-      state.skipSubNodes=true;
-      return;
+        path.traversePathsFast(findCustomInputsVisitor, state);
+        state.skipSubNodes=true;
+        return;
       }
-      const newNode = buildNode(node.nodeType, {condition: node.condition , trueBody: node.trueBody, falseBody: node.falseBody});
+      const newNode = buildNode(node.nodeType, {
+        condition: node.condition,
+        trueBody: node.trueBody,
+        falseBody: node.falseBody
+      });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
