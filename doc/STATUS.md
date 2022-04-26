@@ -21,8 +21,8 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
     - Any number of functions:
       - Standalone functions can be compiled, but note that functions cannot currently call each other.
       - External function calls are supported, as long as secret states aren't involved.
-      - Some 'special' function calls, like `require()` are supported for public states.
-      - Constructors are supported, but be aware that the output shield contract will contain a constructor combining the `.zol` constructor and some extra functionality.
+      - Some 'special' function calls, like `require()` are supported for public and secret states.
+      - Constructors are supported, but be aware that the output shield contract will contain a constructor combining the `.zol` constructor and some extra functionality. If the constructor edits a secret state, note that it will create a one-time use zero knowledge circuit to perform the edit.
       - Functions can have any number of secret or public parameters of the types below.
     - Any number of states, secret or public:
       - Secret states can have types `uint256`, `address`, and `mapping`.
@@ -33,9 +33,9 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
         - Don't worry if you're unsure where/what to mark - if you've missed something the compiler will let you know!
     - Operations:
       - Secret states can be calculated/be involved in calculations with `*`, `/`, `+`, `-`, `*=`, `+=`, `-=`.
-        - Note that incrementations of states with many minuends (e.g. secret partitioned `a`: `a = a + b + c - d;`) is not currently supported - this is a [known issue](https://github.com/EYBlockchain/starlight/issues/30).
-        - Whole states, which are replaced with each edit, don't have this issue.
         - Be aware of dividing integers - the output zApp will not know how to deal with decimals.
+    - If Statements:
+      - As long as you are *not* using a secret condition to edit a public state, if statements are supported.
     - Imports:
       - Any number of contracts can be imported into your .zol file, but as above, external calls with secret states aren't supported.
       - Interfaces are supported, just make sure your interface (e.g. `IERC20.sol`) is named `I` + the original contract name (e.g. `ERC20.sol`).
@@ -52,32 +52,20 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
 
 ### Simple Implementation (Simplementation?)
 
-- Type conversions of secret states:
-  - These require creating a method for converting state types in Solidity, nodejs, and Zokrates DSL. There exists a `.zol` -> nodejs method for the type conversion `address(x)` in the work towards [this](https://github.com/EYBlockchain/starlight/issues/30).
-  - This is a bit trickier for addresses, because the concept of addresses doesn't exist in our arithmetic circuits. We instead use [public keys](./WRITEUP.md#key-management).
-
 - Require statements on secret states:
-  - This means converting Solidity `require()` statements to Zokrates `assert()` statements. Unfortunately, it's not as simple as copy and replace, because the output DSL doesn't have as much functionality and treats most types differently to Solidity.
-
-- Internal function calls:
-  - Internal calls are simple in Solidity, but can be tricky in zero knowledge proof land. We have to go through the process of passing variables into an arithmetic circuit from inside another arithmetic circuit.
-  - However, ZoKrates allows circuit to circuit calls, so as long as the function call isn't a secret to public call, the internal Solidity call can be converted to a Zokrates one.
+  - While we have [completed work](https://github.com/EYBlockchain/starlight/pull/91) on this, complex conditions inside the require call may not be transpilable to circuit code, so be aware.
 
 - Enums and structs:
   - Public enums and structs would be easy to add - however, if these interact with secret states, we must have a robust system to convert them into something both nodejs and Zokrates understand.
   - Secret structs would require an extension of the current commitment scheme to involve more than one secret value hidden inside the commitment. This adds extra hashing (therefore constraints) and extra fields to check at each nullification.
 
-- If statements:
-  - Similarly to internal function calls, Zokrates supports these, but in a rather different format. Exporting if statements from Solidity to the DSL would need type conversions, line-by-line transpiling (since Zokrates if statements are one-liners), and logic checks. See [this issue](https://github.com/EYBlockchain/starlight/issues/33) for more details.
-
-- Secret owners:
-  - We do support fixed owners of a state e.g. the address `admin` owning some secret state `reports`. However, having a secret owner requires the user to open the commitment representing `admin`, prove it's the *current* commitment (not an old one which has been nullified), and prove that they own it.
-
   ### Complex Implementation
 
+
+- If statements:
+    - As long as the condition is secret and the computations on secret states, if statements are [supported](https://github.com/EYBlockchain/starlight/issues/33). However mixing a secret condition editing a public state is more complex.
 - Assembly:
   - Inline assembly is often used in Solidity to save gas and/or perform complex operations. Copying over entirely public assembly to the output contract wouldn't be too difficult, whereas compiling assembly to Zokrates and possibly nodejs would be.
 - Sharing secret data:
-- Accessing secret states:
 - Re-initialising whole secret states:
   - See the [writeup](./WRITEUP.md) sections on these for more details.
