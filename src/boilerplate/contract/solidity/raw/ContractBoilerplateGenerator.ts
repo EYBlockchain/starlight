@@ -178,8 +178,8 @@ class ContractBoilerplateGenerator {
         // this strange declaration prevents typescript errors
         const inputs: string[] = _inputs;
         verifyInputs.push(`
-          if (functionId === FunctionNames.${name}) {
-            k = 0;
+          if (functionId == uint(FunctionNames.${name})) {
+            uint k = 0;
             ${inputs.map(i => verifyInputsMap(i, counter)).join('')}
           }`)
       }
