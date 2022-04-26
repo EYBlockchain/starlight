@@ -4,7 +4,7 @@
 import { VariableBinding } from '../../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../../traverse/Indicator.js';
 import NodePath from '../../../traverse/NodePath.js';
-import { ZKPError } from '../../../error/errors.js';
+import { ZKPError, TODOError } from '../../../error/errors.js';
 
 
 /**
@@ -15,6 +15,19 @@ import { ZKPError } from '../../../error/errors.js';
  */
 
 export default {
+
+  IfStatement: {
+    exit(path: NodePath) {
+      const { trueBody, falseBody, condition } = path.node;
+      if ((trueBody.containsSecret && trueBody.containsPublic) || (falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic) ) {
+        throw new TODOError(`This if statement contains edited secret and public states - we currently can't edit both in the same statement. Consider separating into public and secret methods.`, path.node);
+      }
+      if (condition.containsSecret && (falseBody.containsPublic || trueBody.containsPublic)) {
+        throw new TODOError(`This if statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
+      }
+    }
+  },
+
   FunctionDefinition: {
     exit(path: NodePath) {
       const { scope } = path;
