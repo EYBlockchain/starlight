@@ -26,13 +26,30 @@ function codeGenerator(node: any) {
       return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
-      const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
+      let functionSignature : any
       const body = codeGenerator(node.body);
+      let returnStatement = `return`;
+      if(node.returnParameters.parameters) {
+      node.returnParameters.parameters.forEach( node => {
+        if(node.name && node.isPrivate === true)
+         returnStatement = `return ${node.name}_newCommitment_commitment `;
+
+        else if(node.name && node.isPrivate === false)
+         returnStatement = `return ${node.name} `;
+        else if(node.value)
+        returnStatement = `return ${node.value} `;
+        });
+    }
+    if(returnStatement === `return`){
+      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
+    } else {
+      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> (field):`;
+    }
       return `${functionSignature}
 
         ${body}
 
-        return
+        ${returnStatement}
         `;
     }
 
@@ -95,6 +112,8 @@ function codeGenerator(node: any) {
       }
       return codeGenerator(node.expression) ?? '';
     }
+    case 'Return':
+      return  ` ` ;
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;

@@ -69,10 +69,23 @@ function codeGenerator(node: any) {
         node.isConstructor ? 'constructor ' : 'function '
       }${node.name} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
+      let returnStatement = ` `;
+      if(node.returnParameters.parameters) {
+      node.returnParameters.parameters.forEach( node => {
+        if(node.name && node.isSecret === true)
+         returnStatement = `  `;
+        else if(node.name && node.isSecret === false)
+         returnStatement = `return ${node.name} `;
+        else if(node.value)
+        returnStatement = `return ${node.value} `;
+        });
+    }
       return `
         ${functionSignature}
 
           ${body}
+
+          ${returnStatement}
 
         }`;
     }
@@ -118,6 +131,11 @@ function codeGenerator(node: any) {
     }
     case 'ExpressionStatement':
       return codeGenerator(node.expression);
+
+    case 'Return':
+
+      return ` `;
+
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${

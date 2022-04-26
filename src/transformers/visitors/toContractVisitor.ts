@@ -16,9 +16,23 @@ const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
 const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
+
   if (thisPath.nodeType !== 'Identifier') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+
+
+if(thisPath.parent.nodeType === 'Return' ) {
+if( binding instanceof VariableBinding && binding.isSecret){
+   thisState.customInputs ??= [];
+    thisState.customInputs.push(indicator.name+'_newCommitment');
+}
+else if( binding instanceof VariableBinding && ! binding.isSecret){
+   thisState.customInputs ??= [];
+  // if (!thisState.customInputs.some((input: string) => input === indicator.name))
+    thisState.customInputs.push(indicator.name);
+}
+}
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
@@ -34,6 +48,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     if (!thisState.customInputs.some((input: string) => input === indicator.name))
       thisState.customInputs.push(indicator.name);
   }
+  console.log(thisState.customInputs)
 };
 
 /**
@@ -227,12 +242,49 @@ export default {
   },
 
   ParameterList: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
+    enter(path: NodePath, state: any) {
+      const { node, parent, scope } = path;
+      let returnName : string;
+       if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
-    },
+    } else if(path.key === 'returnParameters'){
+       parent.body.statements.forEach(node => {
+        if(node.nodeType === 'Return'){
+
+          // console.log(referencedId);
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding))
+            state.returnIsSecret =bindings.isSecret
+          }
+          }
+          returnName = node.expression.name;
+          if(!returnName)
+          returnName = node.expression.value;
+        }
+      });
+
+    node.parameters.forEach(node => {
+    if(node.nodeType === 'VariableDeclaration'){
+    node.name = returnName;
+  }
+    });
+
+    const newNode = buildNode('ParameterList');
+    node._newASTPointer = newNode.parameters;
+    parent._newASTPointer[path.containerName] = newNode;
+    }
+  },
+  exit(path: NodePath, state: any){
+    const { node, parent, scope } = path;
+    if(path.key === 'returnParameters'){
+      node._newASTPointer.forEach(node =>{
+        node.isSecret = state.returnIsSecret;
+      })
+    }
+  },
   },
 
   Block: {
@@ -243,6 +295,23 @@ export default {
       parent._newASTPointer.body = newNode;
     },
   },
+
+  Return: {
+     enter(path: NodePath, state: any) {
+       const { node, parent } = path;
+       path.traversePathsFast(findCustomInputsVisitor, state);
+       const newNode = buildNode(
+       node.nodeType,
+       { value: node.expression.value });
+       node._newASTPointer = newNode;
+       if (Array.isArray(parent._newASTPointer)) {
+         parent._newASTPointer.push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName].push(newNode);
+       }
+     },
+
+   },
 
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
@@ -443,7 +512,7 @@ export default {
       const { node, parent } = path;
 
       let newNode: any;
-      
+
       if (path.isMsgSender()) {
         newNode = buildNode('MsgSender');
         // node._newASTPointer = // no pointer needed in this case, because this is effectively leaf, so we won't be recursing any further.
@@ -530,7 +599,7 @@ export default {
         }
         return;
       }
-    
+
       if (node.kind !== 'typeConversion') {
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;

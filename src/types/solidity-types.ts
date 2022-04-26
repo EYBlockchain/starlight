@@ -14,6 +14,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['parameters', 'returnParameters', 'body'];
     case 'ParameterList':
       return ['parameters'];
+    case 'ReturnParameterList':
+      return ['parameters'];
     case 'Block':
       return ['statements'];
     case 'VariableDeclarationStatement':
@@ -81,7 +83,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodes,
       };
     }
-    case 'PragmaDirective': { 
+    case 'PragmaDirective': {
       const { literals } = fields;
       return {
         nodeType,
@@ -126,8 +128,9 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         isConstructor,
         body = buildNode('Block'),
         parameters = buildNode('ParameterList'),
-        // returnParameters = buildNode('ParameterList'), // TODO
+        returnParameters = buildNode('ParameterList'), // TODO
       } = fields;
+
       return {
         nodeType,
         name,
@@ -135,7 +138,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         isConstructor,
         body,
         parameters,
-        // returnParameters,
+        returnParameters,
       };
     }
     case 'ParameterList': {
@@ -145,6 +148,14 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         parameters,
       };
     }
+    case 'ReturnParameterList': {
+      const { parameters = [] } = fields;
+      return {
+        nodeType,
+        parameters,
+      };
+    }
+
     case 'Block': {
       const {
         preStatements = [],
@@ -196,6 +207,14 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         operator,
         leftHandSide,
         rightHandSide,
+      };
+    }
+    case 'Return': {
+      const { value, kind } = fields;
+      return {
+        nodeType,
+        value,
+        kind,
       };
     }
     case 'Mapping': {

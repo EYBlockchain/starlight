@@ -164,12 +164,48 @@ const visitor = {
   },
 
   ParameterList: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
+    enter(path: NodePath, state: any) {
+      const { node, parent, scope } = path;
+      let returnName : string;
+       if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
-    },
+    } else if(path.key === 'returnParameters'){
+       parent.body.statements.forEach(node => {
+        if(node.nodeType === 'Return'){
+
+          // console.log(referencedId);
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding))
+            state.returnIsSecret =bindings.isSecret
+          }
+          }
+          returnName = node.expression.name;
+          if(!returnName)
+          returnName = node.expression.value;
+        }
+      });
+
+    node.parameters.forEach(node => {
+    if(node.nodeType === 'VariableDeclaration'){
+    node.name = returnName;
+  }
+    });
+    const newNode = buildNode('ParameterList');
+    node._newASTPointer = newNode.parameters;
+    parent._newASTPointer[path.containerName] = newNode;
+    }
+  },
+  exit(path: NodePath, state: any){
+    const { node, parent, scope } = path;
+    if(path.key === 'returnParameters'){
+      node._newASTPointer.forEach(node =>{
+        node.isPrivate = state.returnIsSecret;
+      })
+    }
+  },
   },
 
   Block: {
@@ -180,6 +216,22 @@ const visitor = {
       parent._newASTPointer.body = newNode;
     },
   },
+
+  Return: {
+     enter(path: NodePath) {
+       const { node, parent } = path;
+       const newNode = buildNode(
+       node.nodeType,
+       { value: node.expression.value });
+       node._newASTPointer = newNode;
+       if (Array.isArray(parent._newASTPointer)) {
+         parent._newASTPointer.push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName].push(newNode);
+       }
+     },
+
+   },
 
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
@@ -439,7 +491,7 @@ const visitor = {
   ElementaryTypeNameExpression: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      
+
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = buildNode(
         'ElementaryTypeName',
@@ -499,6 +551,7 @@ const visitor = {
       const { value } = node;
 
       if (node.kind !== 'number')
+       if(parent.nodeType !== 'Return')
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
         );

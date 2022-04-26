@@ -64,6 +64,13 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         parameters,
       };
     }
+    case 'ReturnParameterList': {
+      const { parameters = [] } = fields;
+      return {
+        nodeType,
+        parameters,
+      };
+    }
     case 'Block': {
       const { preStatements = [], statements = [], postStatements = [] } = fields;
       return {
@@ -73,6 +80,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         postStatements,
       };
     }
+    case 'Return': {
+      const { value, kind } = fields;
+      return {
+        nodeType,
+        value,
+        kind,
+      };
+    }
+
     case 'VariableDeclaration': {
       const { name, type, isSecret: isPrivate = false, declarationType } = fields;
       return {

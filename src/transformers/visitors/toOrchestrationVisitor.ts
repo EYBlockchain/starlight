@@ -616,14 +616,47 @@ const visitor = {
       }
     },
   },
-
   ParameterList: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
+    enter(path: NodePath, state: any) {
+      const { node, parent, scope } = path;
+      let returnName : string;
+       if(path.key === 'parameters'){
+      const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
-    },
+    } else if(path.key === 'returnParameters'){
+       parent.body.statements.forEach(node => {
+        if(node.nodeType === 'Return'){
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding))
+            state.returnIsSecret =bindings.isSecret
+          }
+          }
+          returnName = node.expression.name;
+          if(!returnName)
+          returnName = node.expression.value;
+        }
+      });
+
+    node.parameters.forEach(node => {
+    if(node.nodeType === 'VariableDeclaration'){
+    node.name = returnName;
+  }
+    });
+    const newNode = buildNode('ParameterList');
+    node._newASTPointer = newNode.parameters;
+    parent._newASTPointer[path.containerName] = newNode;
+    }
+  },
+  exit(path: NodePath, state: any){
+    const { node, parent, scope } = path;
+    if(path.key === 'returnParameters'){
+      node._newASTPointer.forEach(node =>{
+        node.isSecret = state.returnIsSecret;
+      })
+    }
+  },
   },
 
   Block: {
@@ -832,7 +865,19 @@ const visitor = {
     },
 
   },
+  Return: {
+     enter(path: NodePath) {
+       const { node, parent } = path;
+       const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
+       node._newASTPointer = newNode;
+       if (Array.isArray(parent._newASTPointer)) {
+         parent._newASTPointer.push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName].push(newNode);
+       }
+     },
 
+   },
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;

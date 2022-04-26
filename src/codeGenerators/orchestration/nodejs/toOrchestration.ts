@@ -41,15 +41,29 @@ export default function codeGenerator(node: any, options: any = {}): any {
   switch (node.nodeType) {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
+      let extraParam = ' ';
+      console.log(node.returnParameters);
+      if(node.returnParameters.parameters) {
+      node.returnParameters.parameters.forEach( node => {
+        if( node.isSecret === true)
+        extraParam = '_newCommitment';
+       })
       node.returnParameters =
         node.returnParameters.parameters.map(codeGenerator) || [];
+        if(extraParam === '_newCommitment' ){
+        node.returnParameters.forEach( (param, index) => {
+          node.returnParameters[index] = param+extraParam;
+        })
+}
+    }
+
       const fn = OrchestrationCodeBoilerPlate(node);
       const statements = codeGenerator(node.body);
       fn.statements.push(statements);
       return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
         fn.signature[1]
       }`;
-    }
+  }
 
     case 'ParameterList':
       return node.parameters.map((paramnode: any) => paramnode.name);
@@ -124,7 +138,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       // below is when we need to extract the eth address to use as a param
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
-      
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 
