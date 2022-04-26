@@ -191,14 +191,15 @@ export default {
         isConstructor,
       });
 
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+
+      if (!path.containsSecret) return;
       const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
 
       state.circuitParams ??= {};
       state.circuitParams[path.getUniqueFunctionName()] = circuitParams;
-
-      node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
     },
 
     exit(path: NodePath, state: any) {

@@ -473,6 +473,9 @@ const visitor = {
               name
             ] = buildPrivateStateNode('SendTransaction', {
               indicator: stateVarIndicator,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentsRequired,
             });
             newNodes.writePreimageNode.privateStates[
               name
