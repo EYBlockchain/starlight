@@ -76,14 +76,15 @@ const addPublicInput = (path: NodePath, state: any) => {
   const binding = path.getReferencedBinding(node);
 
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
+  const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement').containsSecret;
 
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
     binding.stateVariable && !binding.isSecret
   ) {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
