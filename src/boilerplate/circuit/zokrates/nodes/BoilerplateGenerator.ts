@@ -5,6 +5,7 @@
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs
 import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
+import NodePath from '../../../../traverse/NodePath.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 
 const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
@@ -13,6 +14,7 @@ const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
   for (const inc of stateVarIndicator.increments) {
+    if (inc.nodeType === 'IndexAccess') inc.name ??= `${inc.baseExpression.name}_${NodePath.getPath(inc).scope.getMappingKeyName(inc)}`;
     if (!inc.name) inc.name = inc.value;
 
     if (incrementsArray.some(existingInc => inc.name === existingInc.name))
