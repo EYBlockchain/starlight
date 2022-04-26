@@ -191,8 +191,8 @@ export default {
         isConstructor,
       });
 
-      const file = state.circuitAST.files.find(n => n.fileId === node.id);
-      const circuitParams = file.nodes.find(n => n.nodeType === node.nodeType).parameters.parameters;
+      const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
+      const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
 
       state.circuitParams ??= {};
       state.circuitParams[path.getUniqueFunctionName()] = circuitParams;
