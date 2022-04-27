@@ -29,10 +29,16 @@ function codeGenerator(node: any) {
       let functionSignature : any
       const body = codeGenerator(node.body);
       let returnStatement = `return`;
+      let returnName : string;
       if(node.returnParameters.parameters) {
+        node.parameters.parameters.forEach(param => {
+          if(param.bpType === 'newCommitment')
+          returnName = param.name;
+        });
       node.returnParameters.parameters.forEach( node => {
+
         if(node.name && node.isPrivate === true)
-         returnStatement = `return ${node.name}_newCommitment_commitment `;
+         returnStatement = `return ${returnName}_newCommitment_commitment `;
 
         else if(node.name && node.isPrivate === false)
          returnStatement = `return ${node.name} `;

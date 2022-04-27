@@ -23,7 +23,11 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
 
 if(thisPath.parent.nodeType === 'Return' ) {
-if( binding instanceof VariableBinding && binding.isSecret){
+if( binding instanceof VariableBinding && binding.isSecret && indicator.isDecremented){
+   thisState.customInputs ??= [];
+    thisState.customInputs.push(indicator.name+'_2_newCommitment');
+}
+if( binding instanceof VariableBinding && binding.isSecret && !indicator.isDecremented){
    thisState.customInputs ??= [];
     thisState.customInputs.push(indicator.name+'_newCommitment');
 }
@@ -48,7 +52,6 @@ else if( binding instanceof VariableBinding && ! binding.isSecret){
     if (!thisState.customInputs.some((input: string) => input === indicator.name))
       thisState.customInputs.push(indicator.name);
   }
-  console.log(thisState.customInputs)
 };
 
 /**

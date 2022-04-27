@@ -42,8 +42,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
       let extraParam = ' ';
-      console.log(node.returnParameters);
+      const decStates = node.decrementedSecretStates;
       if(node.returnParameters.parameters) {
+
       node.returnParameters.parameters.forEach( node => {
         if( node.isSecret === true)
         extraParam = '_newCommitment';
@@ -52,6 +53,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
         node.returnParameters.parameters.map(codeGenerator) || [];
         if(extraParam === '_newCommitment' ){
         node.returnParameters.forEach( (param, index) => {
+          if(decStates){
+          if(node.returnParameters[index] === decStates[index]){
+            node.returnParameters[index] = decStates[index]+'_2_newCommitment';
+          }
+        } else
           node.returnParameters[index] = param+extraParam;
         })
 }
