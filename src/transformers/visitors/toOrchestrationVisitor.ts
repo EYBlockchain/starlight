@@ -76,14 +76,15 @@ const addPublicInput = (path: NodePath, state: any) => {
   const binding = path.getReferencedBinding(node);
 
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
+  const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement').containsSecret;
 
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
     binding.stateVariable && !binding.isSecret
   ) {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
@@ -636,6 +637,11 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      // ts complains if I don't include a number in this list
+      if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
+        node._newASTPointer = parent._newASTPointer[path.containerName];
+        return;
+      }
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
@@ -739,10 +745,15 @@ const visitor = {
           let accessed = false;
           indicator.accessedPaths?.forEach(obj => {
             if (
-              obj.getAncestorOfType('ExpressionStatement').node.id === node.id
+              obj.getAncestorOfType('ExpressionStatement')?.node.id === node.id
             )
               accessed = true;
           });
+
+          // we still need to initialise accessed states if they were accessed _before_ this modification
+          const accessedBeforeModification = indicator.isAccessed && indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
+
+          if (accessedBeforeModification || path.isInSubScope()) accessed = true;
 
           const newNode = buildNode('VariableDeclarationStatement', {
             declarations: [
@@ -754,10 +765,18 @@ const visitor = {
             ],
             interactsWithSecret: true,
           });
-          node._newASTPointer = newNode;
-          parent._newASTPointer.push(newNode);
 
-          return;
+          if (accessedBeforeModification || path.isInSubScope()) {
+            // we need to initialise an accessed state
+            // or declare it outside of this subscope e.g. if statement
+            const fnDefNode = path.getAncestorOfType('FunctionDefinition').node;
+            delete newNode.initialValue;
+            fnDefNode._newASTPointer.body.statements.unshift(newNode);
+          } else {
+            node._newASTPointer = newNode;
+            parent._newASTPointer.push(newNode);
+            return;
+          }
         }
         // if its an incrementation, we need to know it happens but not copy it over
         if (node.expression.isIncremented && indicator.isPartitioned) {
@@ -839,7 +858,7 @@ const visitor = {
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
-        refPath.parentPath.traversePathsFast(
+        (refPath.getAncestorOfType('ExpressionStatement') || refPath.parentPath).traversePathsFast(
           interactsWithSecretVisitor,
           newState,
         );
@@ -947,6 +966,19 @@ const visitor = {
       const newNode = buildNode(node.nodeType, { value: node.value });
 
       parent._newASTPointer[path.containerName] = newNode;
+    },
+  },
+
+  IfStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        trueBody: [],
+        falseBody: []
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
   },
 

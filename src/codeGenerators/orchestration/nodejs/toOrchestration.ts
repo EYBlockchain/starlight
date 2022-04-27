@@ -61,7 +61,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'VariableDeclarationStatement': {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
-      if (node.initialValue.nodeType === 'Assignment') {
+      if (node.initialValue?.nodeType === 'Assignment') {
         if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
           return `${getAccessedValue(
             node.declarations[0].name,
@@ -70,6 +70,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
         return `${getPublicValue(node.declarations[0])}`
+      } else if (node.declarations[0].isAccessed) {
+        return `${getAccessedValue(node.declarations[0].name)}`;
       }
 
       if (
@@ -119,20 +121,24 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+
+    case 'IfStatement': {
+        return `if (${codeGenerator(node.condition)}) {
+          ${node.trueBody.flatMap(codeGenerator).join('\n')}
+        } else {
+          ${node.falseBody.flatMap(codeGenerator).join('\n')}
+        }`
+      }
+
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
-
+      
     case 'TypeConversion':
-      switch (node.type) {
-        case 'address':
-          return `generalise(${codeGenerator(node.arguments)}).hex(20)`;
-        default:
-          // TODO
-          return;
-      }
+      return `${codeGenerator(node.arguments)}`;
+
     case 'Literal':
       return node.value;
     case 'Identifier':

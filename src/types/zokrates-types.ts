@@ -130,7 +130,25 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       return {
         nodeType,
         components,
-      }
+      };
+    }
+    case 'IfStatement': {
+      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueBody,
+        falseBody,
+      };
+    }
+    case 'TypeConversion': {
+      const { type, expression = {}, args = {} } = fields;
+      return {
+        nodeType,
+        type,
+        arguments: args,
+        expression,
+      };
     }
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;

@@ -138,6 +138,9 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+    case 'TypeConversion':
+      return `${codeGenerator(node.expression)}(${codeGenerator(node.arguments)})`;
+
     case 'UnaryOperation':
       return `${codeGenerator(node.subExpression)} ${node.operator};`;
 
@@ -147,6 +150,12 @@ function codeGenerator(node: any) {
       const semicolon = expression === 'require' ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
     }
+     
+    case 'IfStatement':
+      return `if (${codeGenerator(node.condition)})
+          ${codeGenerator(node.trueBody.statements[0].expression)}
+          else
+          ${codeGenerator(node.falseBody.statements[0].expression)}`;
 
     case 'ElementaryTypeNameExpression':
       return codeGenerator(node.typeName);

@@ -463,6 +463,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.accessedPaths ??= [];
     this.accessedPaths.push(path);
     if (this.isMapping) {
+      this.addMappingKey(path).isAccessed = true;
       this.addMappingKey(path).accessedPaths ??= [];
       this.addMappingKey(path).accessedPaths.push(path);
     }
