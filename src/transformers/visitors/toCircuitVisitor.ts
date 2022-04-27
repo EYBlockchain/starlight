@@ -76,11 +76,6 @@ const visitor = {
     enter(path: NodePath, state: any) {
 
       const { node, parent, scope } = path;
-      if (node.kind === 'constructor') {
-        // We currently treat all constructors as publicly executed functions.
-        state.skipSubNodes = true;
-        return;
-      }
 
       // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.
@@ -129,6 +124,8 @@ const visitor = {
       const { node, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
+
+      if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
       // We populate the boilerplate for the function
       newFunctionDefinitionNode.parameters.parameters.push(
@@ -396,7 +393,7 @@ const visitor = {
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      if (node.stateVariable) {
+      if (node.stateVariable && !node.value) {
         // Then the node represents assignment of a state variable.
         // State variables don't get declared within a circuit;
         // their old/new values are passed in as parameters.
@@ -404,6 +401,23 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
+      if (node.stateVariable && node.value && node.isSecret) {
+        const initNode = buildNode('Assignment', {
+          leftHandSide: buildNode('Identifier', {
+            name: node.name
+          }),
+          operator: '=',
+          rightHandSide: buildNode(node.value.nodeType, {
+            name: node.value.name, value: node.value.value
+            })
+          });
+        state.constructorStatements ??= [];
+        state.constructorStatements.push(initNode);
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+        return;
+      }
+
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,

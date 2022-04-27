@@ -41,7 +41,7 @@ export class ContractDefinitionIndicator {
     ) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
-      this.initialisationRequired = true;
+      if (!state.initialisedInConstructor) this.initialisationRequired = true;
       // a reinitialised state does not require a nullifier
       if (
         state.incrementedPath &&
@@ -99,7 +99,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
     ) {
       // a reinitialised state does require new commitments
       this.newCommitmentsRequired = true;
-      this.initialisationRequired = true;
+      if (!state.initialisedInConstructor) this.initialisationRequired = true;
       // a reinitialised state does not require a nullifier
       if (
         state.incrementedPath &&
@@ -451,7 +451,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.isAccessed = true;
     this.oldCommitmentAccessRequired = true;
     this.parentIndicator.oldCommitmentAccessRequired = true;
-    this.parentIndicator.initialisationRequired = true;
+    if (!this.binding.initialisedInConstructor) this.parentIndicator.initialisationRequired = true;
     this.parentIndicator.parentIndicator.oldCommitmentAccessRequired = true;
     if (!this.isModified) {
       this.parentIndicator.containsAccessedOnlyState = true;
@@ -471,6 +471,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   updateIncrementation(path: NodePath, state: any) {
     if (this.isSecret) this.parentIndicator.updateIncrementation(path, state);
+    state.initialisedInConstructor = this.binding.initialisedInConstructor;
     // if an incrementation is marked as unknown anywhere, the binding will know
     if (
       !path.isIncremented ||
@@ -539,8 +540,14 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
       this.modifyingPaths.push(path);
 
-      // TODO check usage of below when reinitialisable
-      this.initialisationRequired = true; // Used? Probably for whole states?
+      if (path.getAncestorOfType('FunctionDefinition').node.kind === 'constructor') {
+        this.binding.initialisedInConstructor = true;
+        this.initialisationRequired = true; // we need the dummy nullifier in the constructor
+        if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+      } else if(!this.binding.initialisedInConstructor) {
+        this.initialisationRequired = true;
+        if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+      }
 
       const { node } = path;
       if (node.isKnown) this.isKnown = true;
@@ -550,6 +557,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   addNullifyingPath(path: NodePath) {
     this.isNullified = true;
+    this.nullifiersRequired = true;
     this.parentIndicator.nullifiersRequired = true;
     this.oldCommitmentAccessRequired = true;
     ++this.nullificationCount;

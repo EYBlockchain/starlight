@@ -66,8 +66,8 @@ function codeGenerator(node: any) {
     case 'FunctionDefinition': {
       // prettier-ignore
       const functionSignature = `${
-        node.isConstructor ? 'constructor ' : 'function '
-      }${node.name} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
+        node.isConstructor ? 'constructor ' : `function ${node.name}`
+      }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
       return `
         ${functionSignature}

@@ -241,18 +241,19 @@ const visitor = {
         }
       } else {
         state.skipSubNodes = true;
-        if (node.kind === 'constructor') {
-          state.constructorParams ??= [];
-          for (const param of node.parameters.parameters) {
-            state.constructorParams.push(
-              buildNode('VariableDeclaration', {
-                name: param.name,
-                type: param.typeName.name,
-                isSecret: param.isSecret,
-                modifiesSecretState: false,
-              }),
-            );
-          }
+      }
+
+      if (node.kind === 'constructor') {
+        state.constructorParams ??= [];
+        for (const param of node.parameters.parameters) {
+          if (!param.isSecret) state.constructorParams.push(
+            buildNode('VariableDeclaration', {
+              name: param.name,
+              type: param.typeName.name,
+              isSecret: param.isSecret,
+              interactsWithSecret: scope.getReferencedIndicator(param).interactsWithSecret,
+            }),
+          );
         }
       }
     },
@@ -268,7 +269,7 @@ const visitor = {
           contractName,
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
-        if (fnIndicator.initialisationRequired)
+        if (fnIndicator.oldCommitmentAccessRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
         newNodes.readPreimageNode = buildNode('ReadPreimage');
         if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
@@ -397,7 +398,7 @@ const visitor = {
 
           if (
             stateVarIndicator.isWhole &&
-            functionIndicator.initialisationRequired
+            functionIndicator.oldCommitmentAccessRequired
           ) {
             newNodes.initialisePreimageNode.privateStates[
               name
@@ -414,7 +415,7 @@ const visitor = {
               id,
               increment: isIncremented ? incrementsString : undefined,
               indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.initialisationRequired,
+              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
               reinitialisedOnly:
                 stateVarIndicator.reinitialisable &&
                 !stateVarIndicator.isNullified,
@@ -487,6 +488,11 @@ const visitor = {
           }
         }
 
+        if (node.kind === 'constructor') {
+          newNodes.writePreimageNode.isConstructor = true;
+          newNodes.membershipWitnessNode.isConstructor = true;
+        }
+
         for (const stateVarIndicator of accessedStateIndicators) {
           // these ONLY require :
           // Init and ReadPreimage
@@ -514,7 +520,7 @@ const visitor = {
             {
               id,
               indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.initialisationRequired,
+              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
               accessedOnly: true,
             },
           );
@@ -561,6 +567,7 @@ const visitor = {
 
           delete state.publicInputs; // reset
         }
+        if (state.constructorStatements && state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
           if (!param.isSecret)
@@ -725,12 +732,15 @@ const visitor = {
               .replace('.sender', '')
           : indicator.name;
 
+        const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
+
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
           indicator.modifyingPaths[0].node.id === lhs.id &&
           indicator.isSecret &&
-          indicator.isWhole
+          indicator.isWhole &&
+          !requiresConstructorInit
         ) {
           let accessed = false;
           indicator.accessedPaths?.forEach(obj => {
@@ -810,12 +820,38 @@ const visitor = {
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      if (node.stateVariable) {
+      if (node.stateVariable && !node.value) {
         // then the node represents assignment of a state variable - we've handled it.
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
         return;
       }
+      if (node.stateVariable && node.value && node.isSecret) {
+        const initNode = buildNode('VariableDeclarationStatement', {
+            declarations: [
+              buildNode('VariableDeclaration', {
+                name: node.name,
+                isSecret: true,
+              }),
+            ],
+            initialValue: buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', {
+                name: node.name
+              }),
+              operator: '=',
+              rightHandSide: buildNode(node.value.nodeType, {
+                name: node.value.name, value: node.value.value
+                })
+              }),
+            interactsWithSecret: true,
+          });
+        state.constructorStatements ??= [];
+        state.constructorStatements.push(initNode);
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+        return;
+      }
+
       // we now have a param or a local var dec
       // TODO just use interactsWithSecret when thats added
       let interactsWithSecret = false;

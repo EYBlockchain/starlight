@@ -203,7 +203,7 @@ export default {
 
       // Let's populate the `parameters` and `body`:
       const { parameters } = newFunctionDefinitionNode.parameters;
-      const { postStatements } = newFunctionDefinitionNode.body;
+      const { postStatements, preStatements } = newFunctionDefinitionNode.body;
 
       // if contract is entirely public, we don't want zkp related boilerplate
       if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
@@ -215,13 +215,23 @@ export default {
         }),
       );
 
-      postStatements.push(
-        ...buildNode('FunctionBoilerplate', {
-          bpSection: 'postStatements',
-          scope,
-          customInputs: state.customInputs,
-        }),
-      );
+      if (node.kind === 'constructor')
+        preStatements.push(
+          ...buildNode('FunctionBoilerplate', {
+            bpSection: 'preStatements',
+            scope,
+            customInputs: state.customInputs,
+          }),
+        );
+
+      if (path.scope.containsSecret)
+        postStatements.push(
+          ...buildNode('FunctionBoilerplate', {
+            bpSection: 'postStatements',
+            scope,
+            customInputs: state.customInputs,
+          }),
+        );
 
       delete state.customInputs;
     },

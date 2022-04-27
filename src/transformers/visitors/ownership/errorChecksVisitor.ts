@@ -4,7 +4,7 @@
 import { VariableBinding } from '../../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../../traverse/Indicator.js';
 import NodePath from '../../../traverse/NodePath.js';
-import { ZKPError, TODOError } from '../../../error/errors.js';
+import { ZKPError, TODOError, SyntaxError } from '../../../error/errors.js';
 
 
 /**
@@ -15,6 +15,19 @@ import { ZKPError, TODOError } from '../../../error/errors.js';
  */
 
 export default {
+  VariableDeclaration: {
+    enter(path: NodePath) {
+      const { node, scope } = path;
+      if (node.value && scope.scopeType === 'ContractDefinition') {
+        
+        if (!path.getSiblingNodes().some((sib: any) => sib.kind === 'constructor'))
+          throw new SyntaxError(`Your variable ${node.name} is being initialised without any constructor - we can't create a commitment for this value without a circuit present. Consider moving this initial value to the constructor.`);
+
+        if (node.value.nodeType === 'Identifier') {
+          throw new SyntaxError(`Your variable ${node.name} is being initialised to ${node.value.name} outside of a function. Consider moving it to the constructor or another function.`);
+        }
+      }
+    },
 
   IfStatement: {
     exit(path: NodePath) {
@@ -31,8 +44,7 @@ export default {
   FunctionDefinition: {
     exit(path: NodePath) {
       const { scope } = path;
-      if (path.node.containsSecret && path.node.kind === 'constructor')
-        throw new ZKPError(`We cannot handle secret states in the public contract constructor, consider moving your secret state interactions to other functions`, path.node);
+      if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
       for (const [, indicator] of Object.entries(scope.indicators)) {
         // we may have a function indicator property we'd like to skip
         if (!(indicator instanceof StateVariableIndicator)) continue;

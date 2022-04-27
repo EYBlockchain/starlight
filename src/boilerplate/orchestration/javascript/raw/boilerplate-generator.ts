@@ -267,6 +267,7 @@ class BoilerplateGenerator {
       reinitialisedOnly,
       burnedOnly,
       accessedOnly,
+      initialisationRequired,
       rootRequired,
       parameters,
       }): string[] {
@@ -316,7 +317,7 @@ class BoilerplateGenerator {
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
-                      \t${stateName}_commitmentExists ? 0 : 1,
+                      ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer`];
@@ -339,7 +340,7 @@ class BoilerplateGenerator {
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_prev.integer,
                       \t${stateName}_prevSalt.limbs(32, 8),
-                      \t${stateName}_commitmentExists ? 0 : 1,
+                      ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
@@ -401,9 +402,10 @@ sendTransaction = {
           }
         default:
           throw new TypeError(stateType);
-      }// TODO: we might eventually import some underflow/overflow functions.
-},
+      } // TODO: we might eventually import some underflow/overflow functions.
+    },
 };
+
 integrationTestBoilerplate = {
   import(): string {
     return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
@@ -442,11 +444,6 @@ postStatements(): string {
 };
 zappFilesBoilerplate = () => {
   return [
-    {
-      readPath: 'src/boilerplate/common/bin/setup',
-      writePath: '/bin/setup',
-      generic: false,
-    },
     {
       readPath: 'src/boilerplate/common/bin/startup',
       writePath: '/bin/startup',
