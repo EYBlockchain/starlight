@@ -80,6 +80,17 @@ export default {
       }
 
       // Now we look for accessed states
+
+      // if this state is being referenced in a condition, it's accessed
+      if (path.queryAncestors((parentPath: NodePath) => parentPath.containerName === 'condition')) {
+        logger.debug(
+          `Found an accessed secret state ${node.name} (accessed in a conditional operation)`,
+        );
+        scope.getReferencedBinding(node)?.updateAccessed(path);
+        const indicator = scope.getReferencedIndicator(node);
+        if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
+        return;
+      }
       // if this state is on the rhs AND isn't incremented OR is in an incrementation, but its not being incremented:
       if (
         rightAncestor &&

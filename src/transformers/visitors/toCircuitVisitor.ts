@@ -19,13 +19,14 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   thisState.skipSubNodes = true;
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -175,6 +176,10 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
+        node._newASTPointer = parent._newASTPointer[path.containerName];
+        return;
+      }
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
@@ -490,6 +495,19 @@ const visitor = {
           name,
         });
       }
+    },
+  },
+
+  IfStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        trueBody: [],
+        falseBody: []
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
   },
 

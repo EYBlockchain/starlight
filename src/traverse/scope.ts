@@ -280,6 +280,7 @@ export class Scope {
       case 'UnaryOperation':
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
+      case 'IfStatement':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an
