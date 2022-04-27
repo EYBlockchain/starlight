@@ -42,12 +42,14 @@ function codeGenerator(node: any) {
 
         else if(node.name && node.isPrivate === false)
          returnStatement = `return ${node.name} `;
-        else if(node.value)
-        returnStatement = `return ${node.value} `;
+        else
+        returnStatement = `return ${node.name} `;
         });
     }
     if(returnStatement === `return`){
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
+    }else if(returnStatement.includes('true') || returnStatement.includes('false')) {
+      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> (bool):`;
     } else {
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> (field):`;
     }
