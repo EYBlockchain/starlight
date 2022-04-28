@@ -94,10 +94,11 @@ class ContractBoilerplateGenerator {
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
       parameters,
+      constructorContainsSecret
     }): string[] {
       const verifyFunctionSignature = `
         function verify(
-      		uint256[] calldata proof,
+      		uint256[] ${constructorContainsSecret ? `memory` : `calldata`} proof,
       		uint256 functionId,
       		Inputs memory _inputs
       	) private {

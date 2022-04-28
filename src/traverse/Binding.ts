@@ -29,6 +29,7 @@ export class Binding {
       case 'FunctionDefinition':
       case 'VariableDeclaration':
         return true;
+      case 'IfStatement':  
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':
@@ -150,6 +151,7 @@ export class VariableBinding extends Binding {
   isPartitioned?: boolean;
   isBurned?: boolean;
   reinitialisable?: boolean;
+  initialisedInConstructor?: boolean;
 
   isWholeReason?: {}[];
   isPartitionedReason?: {}[];

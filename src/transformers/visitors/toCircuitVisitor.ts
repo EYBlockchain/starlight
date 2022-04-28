@@ -19,13 +19,14 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   thisState.skipSubNodes = true;
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -75,11 +76,6 @@ const visitor = {
     enter(path: NodePath, state: any) {
 
       const { node, parent, scope } = path;
-      if (node.kind === 'constructor') {
-        // We currently treat all constructors as publicly executed functions.
-        state.skipSubNodes = true;
-        return;
-      }
 
       // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.
@@ -129,6 +125,8 @@ const visitor = {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
+      if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
+
       // We populate the boilerplate for the function
       newFunctionDefinitionNode.parameters.parameters.push(
         ...buildNode('Boilerplate', {
@@ -175,6 +173,10 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
+        node._newASTPointer = parent._newASTPointer[path.containerName];
+        return;
+      }
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
@@ -391,7 +393,7 @@ const visitor = {
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      if (node.stateVariable) {
+      if (node.stateVariable && !node.value) {
         // Then the node represents assignment of a state variable.
         // State variables don't get declared within a circuit;
         // their old/new values are passed in as parameters.
@@ -399,6 +401,23 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
+      if (node.stateVariable && node.value && node.isSecret) {
+        const initNode = buildNode('Assignment', {
+          leftHandSide: buildNode('Identifier', {
+            name: node.name
+          }),
+          operator: '=',
+          rightHandSide: buildNode(node.value.nodeType, {
+            name: node.value.name, value: node.value.value
+            })
+          });
+        state.constructorStatements ??= [];
+        state.constructorStatements.push(initNode);
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+        return;
+      }
+
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
@@ -490,6 +509,19 @@ const visitor = {
           name,
         });
       }
+    },
+  },
+
+  IfStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        trueBody: [],
+        falseBody: []
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
   },
 

@@ -19,13 +19,14 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.nodeType !== 'Identifier') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    indicator.interactsWithSecret &&
+    (indicator.interactsWithSecret || isCondition) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -210,7 +211,7 @@ export default {
 
       // Let's populate the `parameters` and `body`:
       const { parameters } = newFunctionDefinitionNode.parameters;
-      const { postStatements } = newFunctionDefinitionNode.body;
+      const { postStatements, preStatements } = newFunctionDefinitionNode.body;
 
       // if contract is entirely public, we don't want zkp related boilerplate
       if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
@@ -222,13 +223,23 @@ export default {
         }),
       );
 
-      postStatements.push(
-        ...buildNode('FunctionBoilerplate', {
-          bpSection: 'postStatements',
-          scope,
-          customInputs: state.customInputs,
-        }),
-      );
+      if (node.kind === 'constructor')
+        preStatements.push(
+          ...buildNode('FunctionBoilerplate', {
+            bpSection: 'preStatements',
+            scope,
+            customInputs: state.customInputs,
+          }),
+        );
+
+      if (path.scope.containsSecret)
+        postStatements.push(
+          ...buildNode('FunctionBoilerplate', {
+            bpSection: 'postStatements',
+            scope,
+            customInputs: state.customInputs,
+          }),
+        );
 
       delete state.customInputs;
     },
@@ -249,6 +260,24 @@ export default {
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
+    },
+  },
+
+  IfStatement: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      if (path.scope.containsSecret) {
+        path.traversePathsFast(findCustomInputsVisitor, state);
+        state.skipSubNodes=true;
+        return;
+      }
+      const newNode = buildNode(node.nodeType, {
+        condition: node.condition,
+        trueBody: node.trueBody,
+        falseBody: node.falseBody
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
   },
 

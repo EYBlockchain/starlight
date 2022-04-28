@@ -70,7 +70,7 @@ class ContractBoilerplateGenerator {
       } = scope;
 
       const fnDefBindings = scope.filterBindings(
-        (b: any) => b.kind === 'FunctionDefinition' && b.name !== '' && b.path.containsSecret,
+        (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
       const functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
 
@@ -91,6 +91,7 @@ class ContractBoilerplateGenerator {
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = this.scope;
+
 
       const parameters = {};
       let parameterList: any[];
@@ -123,8 +124,8 @@ class ContractBoilerplateGenerator {
         });
         parameters[functionName] = newList;
       }
-
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, parameters };
+      const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, constructorContainsSecret, parameters };
     },
 
   };
