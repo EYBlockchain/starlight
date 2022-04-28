@@ -19,7 +19,6 @@ export default {
     enter(path: NodePath) {
       const { node, scope } = path;
       if (node.value && scope.scopeType === 'ContractDefinition') {
-        
         if (!path.getSiblingNodes().some((sib: any) => sib.kind === 'constructor'))
           throw new SyntaxError(`Your variable ${node.name} is being initialised without any constructor - we can't create a commitment for this value without a circuit present. Consider moving this initial value to the constructor.`);
 
@@ -27,7 +26,8 @@ export default {
           throw new SyntaxError(`Your variable ${node.name} is being initialised to ${node.value.name} outside of a function. Consider moving it to the constructor or another function.`);
         }
       }
-    },
+    }
+  },
 
   IfStatement: {
     exit(path: NodePath) {
