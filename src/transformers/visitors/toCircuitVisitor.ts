@@ -16,7 +16,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
   if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
-    if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
+  if (thisPath.isRequireStatement(node)) return;
   // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
   thisState.skipSubNodes = true;
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
