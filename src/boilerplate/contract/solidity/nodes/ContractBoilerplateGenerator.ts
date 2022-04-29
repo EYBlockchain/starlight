@@ -66,7 +66,7 @@ class ContractBoilerplateGenerator {
     stateVariableDeclarations() {
       const { scope } = this;
       const {
-        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState},
+        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = scope;
 
       const fnDefBindings = scope.filterBindings(
@@ -79,7 +79,7 @@ class ContractBoilerplateGenerator {
         nullifiersRequired,
         oldCommitmentAccessRequired,
         newCommitmentsRequired,
-        containsAccessedOnlyState,      
+        containsAccessedOnlyState
       };
     },
 
