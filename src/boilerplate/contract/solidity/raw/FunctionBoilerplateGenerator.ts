@@ -42,9 +42,15 @@ class FunctionBoilerplateGenerator {
       return [
         ...(newNullifiers ? [`uint256[] ${visibility} newNullifiers`] : []),
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
+<<<<<<< HEAD
         ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
         ...(checkNullifiers ? [`uint256[] ${visibility} checkNullifiers`] : []),
         ...(newCommitments || newNullifiers ? [`uint256[] ${visibility} proof`] : []),
+=======
+        ...(newCommitments ? [`uint256[] calldata newCommitments`] : []),
+        ...(checkNullifiers ? [`uint256[] calldata checkNullifiers`] : []),
+        ...(newCommitments || newNullifiers ? [`uint256[] calldata proof`] : []),
+>>>>>>> 72089e7 (feat: allow secret states in constructor for contract transpilation)
       ];
     },
 
