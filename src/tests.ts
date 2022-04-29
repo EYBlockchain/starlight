@@ -6,7 +6,7 @@ import fse  from 'fs-extra';
 
 export function checkASThashes(options: any, ASTType: string) {
 try {
-  let outputAST = fs.readFileSync('./zapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', 'utf8')
+  let outputAST = fs.readFileSync(options.outputDirPath+'/'+ASTType+'/'+options.inputFileName+'_ast.json', 'utf8')
   let outputASTJsonObject = JSON.parse(outputAST);
   let outputASTHash = sha256(outputAST);
   if (fs.existsSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json'))
@@ -59,7 +59,7 @@ export function checktestASTExists(options: any, ASTType: string) {
 }
 
 export function checkCodeGen(options: any, codeType: string) {
-let outputAST = fs.readFileSync(options.outputDirPath+options.inputFileName+'/'+codeType+'/'+options.inputFileName+'_ast.json', 'utf8')
+let outputAST = fs.readFileSync(options.outputDirPath+'/'+codeType+'/'+options.inputFileName+'_ast.json', 'utf8')
 let outputASTJsonObject = JSON.parse(outputAST);
 let codeGenFunctionsCount = 0;
 let filesinAST = JSON.parse(JSON.stringify(outputASTJsonObject.files));

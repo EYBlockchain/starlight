@@ -17,16 +17,17 @@ describe("AST testing", function () {
     it("zappifies each contract", function () {
       this.timeout(100000);
       files.forEach((file) => {
-        const inputFilePath = './test/contracts/'+file;
-        const modifyAST = 'n';
-        const inputFileName = path.parse(inputFilePath).name;
+        options.inputFilePath = './test/contracts/'+file;
+        options.modifyAST = 'n';
+        options.inputFileName = path.parse(inputFilePath).name;
         // commander converts 'zapp-name' to 'zappName'
-        const zappName = inputFileName;
-        const outputDirPath = `./temp-zapps/${zappName}`;
-        const parseDirPath = `${outputDirPath}/parse`;
-        const circuitsDirPath = `${outputDirPath}/circuits`;
-        const contractsDirPath = `${outputDirPath}/contracts`;
-        const orchestrationDirPath = `${outputDirPath}/orchestration`;
+        options.zappName = inputFileName;
+        options.outputDirPath = `./temp-zapps/${zappName}`;
+        options.parseDirPath = `${outputDirPath}/parse`;
+        options.circuitsDirPath = `${outputDirPath}/circuits`;
+        options.contractsDirPath = `${outputDirPath}/contracts`;
+        options.orchestrationDirPath = `${outputDirPath}/orchestration`;
+        mkdirs(options);
         zappify({
             zappName,
             inputFileName,
@@ -127,7 +128,7 @@ describe("AST testing", function () {
 describe("Code Gen testing", function () {
   describe("#testing circuits", function () {
     it("Make sure circuits are generated for all zolidity functions", function () {
-      var zappDirectory = fs.readdirSync('./zapps/'+options.inputFileName+'/circuits/');
+      var zappDirectory = fs.readdirSync(options.outputDirPath+'/circuits/');
       let countZokFiles = 0;
       for(var i in zappDirectory) {
         if(path.extname(zappDirectory[i]) === ".zok")
@@ -140,7 +141,7 @@ describe("Code Gen testing", function () {
 
   describe("#testing orchestration", function () {
     it("Make sure orchestartion files are generated for all zolidity functions", function () {
-      var zappDirectory = fs.readdirSync('./zapps/'+options.inputFileName+'/orchestration/');
+      var zappDirectory = fs.readdirSync(options.outputDirPath+'/orchestration/');
       let countorchestrationFiles = 0;
       for(var i in zappDirectory) {
         if(path.extname(zappDirectory[i]) === ".mjs")
