@@ -51,16 +51,7 @@ if(node.expression.nodeType === 'Identifier') {
 }
 };
 
-//let internalFncName = [];
-//let callingFncName = [];
 let oldStateArray : string[];
-//let newStateArray : string [];
-//let newParametersList = [];
-//let newdecrementedSecretStates = [];
-//let newPreStatementList = [];
-//let newStatementList = [];
-//let newStatementnode : any;
-//let newPostStatementList = [];
 let circuitImport = [];
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)

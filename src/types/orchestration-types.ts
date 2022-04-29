@@ -172,7 +172,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       }
     }
-<<<<<<< HEAD
+
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;
       return {
@@ -182,8 +182,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         subExpression,
       };
     }
-=======
->>>>>>> 8454198 (feat: If statement single line)
+
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {
