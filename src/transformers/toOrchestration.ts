@@ -72,10 +72,10 @@ export default function toOrchestration(ast: any, options: any) {
     logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     if (fileObj.filepath.includes('preimage.json')) continue;
-    const prettyFile = prettier.format(fileObj.file, {
+    const prettyFile = fileObj.filepath.includes('.') ? prettier.format(fileObj.file, {
       useTabs: true,
       parser: 'babel',
-    });
+    }) : fileObj.file;
     fs.writeFileSync(filepath, prettyFile);
   }
 

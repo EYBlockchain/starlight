@@ -14,6 +14,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['parameters', 'returnParameters', 'body'];
     case 'ParameterList':
       return ['parameters'];
+    case 'IfStatement':
+      return ['condition', 'trueBody' , 'falseBody'];
     case 'Block':
       return ['statements'];
     case 'VariableDeclarationStatement':
@@ -305,6 +307,24 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         components,
       }
+    }
+    case 'IfStatement': {
+      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueBody,
+        falseBody,
+      };
+    }
+    case 'TypeConversion': {
+      const { type, expression = {}, args = {} } = fields;
+      return {
+        nodeType,
+        type,
+        arguments: args,
+        expression,
+      };
     }
     case 'MsgSender': {
       return {

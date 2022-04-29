@@ -29,6 +29,7 @@ export class Binding {
       case 'FunctionDefinition':
       case 'VariableDeclaration':
         return true;
+      case 'IfStatement':  
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':
@@ -150,6 +151,7 @@ export class VariableBinding extends Binding {
   isPartitioned?: boolean;
   isBurned?: boolean;
   reinitialisable?: boolean;
+  initialisedInConstructor?: boolean;
 
   isWholeReason?: {}[];
   isPartitionedReason?: {}[];
@@ -319,6 +321,8 @@ export class VariableBinding extends Binding {
     ownerNode.isParam = NodePath.getPath(ownerNode).isFunctionParameter();
     this.owner = ownerNode;
     this.isOwned = true;
+    const ownerBinding = this.path.getReferencedBinding(ownerNode);
+    ownerNode.isSecret ??= ownerBinding instanceof VariableBinding ? ownerBinding.isSecret : null;
     if (
       this.owner.typeDescriptions.typeIdentifier.includes('address') ||
       this.owner.name === 'msg'

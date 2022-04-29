@@ -58,6 +58,7 @@ class BoilerplateGenerator {
   isPartitioned?: boolean;
   isNullified?: boolean;
   isAccessed?: boolean;
+  initialisationRequired?: boolean;
   newCommitmentsRequired?: boolean;
   isMapping: boolean;
   increments: any;
@@ -99,6 +100,7 @@ class BoilerplateGenerator {
       isMapping,
       increments,
       decrements,
+      initialisationRequired,
       // burnedOnly,
     } = indicators;
     Object.assign(this, {
@@ -112,6 +114,7 @@ class BoilerplateGenerator {
       isMapping,
       increments,
       decrements,
+      initialisationRequired,
       // burnedOnly,
     });
   }
@@ -179,6 +182,7 @@ class BoilerplateGenerator {
           ...(this.isNullified && { isNullified: this.isNullified }),
           ...(this.isMapping && { isMapping: this.isMapping }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
+          ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
           // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }), // TODO
           ...this[bpType](extraParams),

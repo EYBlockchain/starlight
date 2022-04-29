@@ -76,7 +76,7 @@ class BoilerplateGenerator {
         )`,
       ];
 
-      if (this.isWhole && !(this.isAccessed && !this.isNullified)) {
+      if (this.initialisationRequired && this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [
           `
@@ -140,19 +140,19 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, isWhole, isAccessed, isNullified }): string[] {
+    parameters({ name: x, initialisationRequired, isWhole }): string[] {
       const lines = [
         `public field commitmentRoot`,
         `private field ${x}_oldCommitment_membershipWitness_index`,
         `private field[32] ${x}_oldCommitment_membershipWitness_siblingPath`,
       ];
-      if (isWhole && !(isAccessed && !isNullified)) {
+      if (isWhole && initialisationRequired) {
         lines.unshift(`private bool ${x}_oldCommitment_isDummy`);
       }
       return lines;
     },
 
-    postStatements({ name: x, isWhole, isAccessed, isNullified }): string[] {
+    postStatements({ name: x, isWhole, isAccessed, isNullified, initialisationRequired }): string[] {
       const lines = [
         `
         // ${x}_oldCommitment_commitment: existence check
@@ -172,7 +172,7 @@ class BoilerplateGenerator {
         )`,
       ];
 
-      if (isWhole && !(isAccessed && !isNullified)) {
+      if (isWhole && initialisationRequired) {
         // initialisation of whole states requires a dummy oldCommitment to be ignored.
         lines.splice(
           -1,

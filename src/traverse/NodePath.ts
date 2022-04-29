@@ -836,6 +836,16 @@ export default class NodePath {
     }
   }
 
+  /**
+   * Checks whether a node is inside a 'subscope' i.e. a block inside a block
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isInSubScope(): any {
+    const currentScopeBlock = this.queryAncestors(path => path.nodeType === 'Block' ? path : false);
+    return currentScopeBlock.parentPath.queryAncestors(path => path.nodeType === 'Block' ? path : false)
+  }
+
   isModification() {
     switch (this.nodeType) {
       case 'Identifier':
@@ -846,7 +856,7 @@ export default class NodePath {
         // prettier-ignore
         return (
             this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
-            this.getLhsAncestor(true)
+            this.getLhsAncestor(true) && !this.queryAncestors(path => path.containerName === 'condition')
           );
       default:
         return false;

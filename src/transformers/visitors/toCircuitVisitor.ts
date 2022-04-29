@@ -16,17 +16,19 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
   if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
+    if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
   // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
   thisState.skipSubNodes = true;
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -273,11 +275,6 @@ node._newASTPointer.forEach(file => {
     enter(path: NodePath, state: any) {
 
       const { node, parent, scope } = path;
-      if (node.kind === 'constructor') {
-        // We currently treat all constructors as publicly executed functions.
-        state.skipSubNodes = true;
-        return;
-      }
 
       // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.
@@ -328,6 +325,8 @@ node._newASTPointer.forEach(file => {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
+      if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
+
       // We populate the boilerplate for the function
       newFunctionDefinitionNode.parameters.parameters.push(
         ...buildNode('Boilerplate', {
@@ -374,6 +373,10 @@ node._newASTPointer.forEach(file => {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
+        node._newASTPointer = parent._newASTPointer[path.containerName];
+        return;
+      }
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
@@ -418,7 +421,7 @@ node._newASTPointer.forEach(file => {
 
       const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
-      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
+      path.inList ? parent._newASTPointer[path.containerName].push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
   },
 
@@ -591,7 +594,7 @@ node._newASTPointer.forEach(file => {
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      if (node.stateVariable) {
+      if (node.stateVariable && !node.value) {
         // Then the node represents assignment of a state variable.
         // State variables don't get declared within a circuit;
         // their old/new values are passed in as parameters.
@@ -599,6 +602,23 @@ node._newASTPointer.forEach(file => {
         state.skipSubNodes = true;
         return;
       }
+      if (node.stateVariable && node.value && node.isSecret) {
+        const initNode = buildNode('Assignment', {
+          leftHandSide: buildNode('Identifier', {
+            name: node.name
+          }),
+          operator: '=',
+          rightHandSide: buildNode(node.value.nodeType, {
+            name: node.value.name, value: node.value.value
+            })
+          });
+        state.constructorStatements ??= [];
+        state.constructorStatements.push(initNode);
+        node._newASTPointer = parent._newASTPointer;
+        state.skipSubNodes = true;
+        return;
+      }
+
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
@@ -661,7 +681,7 @@ node._newASTPointer.forEach(file => {
       parent._newASTPointer[path.containerName] = buildNode(
         'ElementaryTypeName',
         {
-          name: node.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
+          name: node.typeName.name === 'bool' ? 'bool' : 'field', // convert uint & address types to 'field', for now.
         },
       );
       state.skipSubNodes = true;
@@ -698,14 +718,29 @@ node._newASTPointer.forEach(file => {
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      const newNode = buildNode('Identifier', {
-        name,
-      });
       if (Array.isArray(parent._newASTPointer[path.containerName])) {
-       parent._newASTPointer[path.containerName].push(newNode);
-     } else {
-       parent._newASTPointer[path.containerName] = newNode; }
-    }  // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+        parent._newASTPointer[path.containerName].push(buildNode('Identifier', {
+          name,
+        }));
+      } else {
+        parent._newASTPointer[path.containerName] = buildNode('Identifier', {
+          name,
+        });
+      }
+    },
+  },
+
+  IfStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        trueBody: [],
+        falseBody: []
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
   },
 
   Literal: {
@@ -772,7 +807,11 @@ node._newASTPointer.forEach(file => {
         // return;
       }
       if (node.requireStatementPrivate) {
-        throw new TODOError('Secret assert statements', node);
+        const newNode = buildNode('Assert', { arguments: [] });
+
+        node._newASTPointer = newNode;
+        parent._newASTPointer[path.containerName] = newNode;
+        return;
       }
 
       if (path.isExternalFunctionCall() || path.isExportedSymbol()) {
@@ -867,6 +906,15 @@ node._newASTPointer.forEach(file => {
    }
  })
 }
+}
+if(path.isTypeConversion())
+{
+  const newNode = buildNode('TypeConversion', {
+    type: node.typeDescriptions.typeString,
+  });
+  node._newASTPointer = newNode;
+  parent._newASTPointer[path.containerName] = newNode;
+  return;
 }
 
   if (path.isZero()) {

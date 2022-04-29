@@ -66,8 +66,8 @@ function codeGenerator(node: any) {
     case 'FunctionDefinition': {
       // prettier-ignore
       const functionSignature = `${
-        node.isConstructor ? 'constructor ' : 'function '
-      }${node.name} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
+        node.isConstructor ? 'constructor ' : `function ${node.name}`
+      }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
       return `
         ${functionSignature}
@@ -139,6 +139,9 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+    case 'TypeConversion':
+      return `${codeGenerator(node.expression)}(${codeGenerator(node.arguments)})`;
+
     case 'UnaryOperation':
       return `${codeGenerator(node.subExpression)} ${node.operator};`;
 
@@ -156,6 +159,12 @@ function codeGenerator(node: any) {
          return `\t \t \t \t${node.name} (${node.arguments.name});`
       }
     }
+     
+    case 'IfStatement':
+      return `if (${codeGenerator(node.condition)})
+          ${codeGenerator(node.trueBody.statements[0].expression)}
+          else
+          ${codeGenerator(node.falseBody.statements[0].expression)}`;
 
     case 'ElementaryTypeNameExpression':
       return codeGenerator(node.typeName);

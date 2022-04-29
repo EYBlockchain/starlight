@@ -133,6 +133,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isPartitioned: indicator.isPartitioned,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
+        initialisationRequired: indicator.initialisationRequired,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
           : null,

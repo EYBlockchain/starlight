@@ -32,7 +32,9 @@ class FunctionBoilerplateGenerator {
     const { scope } = this;
     const isConstructorFunction =
       scope.path.node.nodeType === 'FunctionDefinition' && scope.path.node.kind === 'constructor';
-    if (isConstructorFunction) {
+    if (isConstructorFunction && scope.containsSecret) {
+      return ['cnstrctr', 'customFunction'];
+    } else if (isConstructorFunction) {
       return ['cnstrctr'];
     }
 
@@ -52,12 +54,12 @@ class FunctionBoilerplateGenerator {
   cnstrctr = {
     // all category objects will have a sectionSelector property (function)
     sectionSelector() {
-      return ['parameters', 'postStatements'];
+      return ['parameters', 'preStatements'];
     },
 
     parameters() {},
 
-    postStatements() {},
+    preStatements() {},
   };
 
   customFunction = {
@@ -68,10 +70,19 @@ class FunctionBoilerplateGenerator {
 
     getIndicators() {
       const { indicators } = this.scope;
+<<<<<<< HEAD
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState, internalFunctionInteractsWithSecret } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState, internalFunctionInteractsWithSecret };
+=======
+      const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
+
+      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState } = indicators;
+      const newCommitmentsRequired = indicators.newCommitmentsRequired;
+
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState, isConstructor };
+>>>>>>> origin
     },
 
     parameters() {
@@ -85,7 +96,7 @@ class FunctionBoilerplateGenerator {
       const { path } = scope;
 
       const params = path.getFunctionParameters();
-      const publicParams = customInputs.concat(params?.filter((p: any) => !p.isSecret).map((p: any) => p.name));
+      const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => p.name).concat(customInputs);
 
       const functionName = path.getUniqueFunctionName();
 
