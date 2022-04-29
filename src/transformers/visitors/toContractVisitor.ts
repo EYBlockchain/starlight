@@ -36,6 +36,11 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
       thisState.customInputs.push(indicator.name);
   }
 };
+<<<<<<< HEAD
+=======
+//let internalFncName = [];
+//let callingFncName = [];
+>>>>>>> e49b96a (fix: changed Requested)
 let internalFuncInteractsWithSecret = false;
 /**
  * @desc:

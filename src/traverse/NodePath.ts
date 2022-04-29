@@ -640,7 +640,6 @@ export default class NodePath {
   return true;
   }
 
-
   isTypeConversion() {
     return (
       this.nodeType === 'FunctionCall' && this.node.kind === 'typeConversion'

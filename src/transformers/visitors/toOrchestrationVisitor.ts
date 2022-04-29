@@ -51,16 +51,16 @@ if(node.expression.nodeType === 'Identifier') {
 }
 };
 
-let internalFncName = [];
-let callingFncName = [];
+//let internalFncName = [];
+//let callingFncName = [];
 let oldStateArray : string[];
-let newStateArray : string [];
-let newParametersList = [];
-let newdecrementedSecretStates = [];
-let newPreStatementList = [];
-let newStatementList = [];
-let newStatementnode : any;
-let newPostStatementList = [];
+//let newStateArray : string [];
+//let newParametersList = [];
+//let newdecrementedSecretStates = [];
+//let newPreStatementList = [];
+//let newStatementList = [];
+//let newStatementnode : any;
+//let newPostStatementList = [];
 let circuitImport = [];
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
@@ -242,29 +242,29 @@ let generateProofNode: any;
 let writePreimageNode : any ;
 let sendTransactionNode : any;
 node._newASTPointer.forEach(file => {
-  internalFncName.forEach( name => {
+  state.internalFncName.forEach( name => {
     if(file.fileName === name && file.nodeType === 'File') {
-      let index = internalFncName.indexOf(name);
+      let index = state.internalFncName.indexOf(name);
       if(circuitImport[index]==='true') {
 file.nodes.forEach(childNode => {
 if(childNode.nodeType === 'FunctionDefinition')
 {
-  newParametersList = cloneDeep(childNode.parameters.modifiedStateVariables);
+  state.newParametersList = cloneDeep(childNode.parameters.modifiedStateVariables);
 
-  newParametersList.forEach(node => {
+  state.newParametersList.forEach(node => {
     for(const [index, oldStateName] of  oldStateArray.entries()) {
-      node.name = node.name.replace('_'+oldStateName, '_'+newStateArray[index])
+      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[index])
     }
   })
   if(childNode.decrementedSecretStates){
-  newdecrementedSecretStates = cloneDeep(childNode.decrementedSecretStates);
+  state.newdecrementedSecretStates = cloneDeep(childNode.decrementedSecretStates);
   for(const [index, oldStateName] of  oldStateArray.entries()) {
-    node.name = node.name.replace('_'+oldStateName, '_'+newStateArray[index])
+    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[index])
   }
 }
-  newPreStatementList = cloneDeep(childNode.body.preStatements);
+  state.newPreStatementList = cloneDeep(childNode.body.preStatements);
 
-  newPreStatementList.forEach(node => {
+  state.newPreStatementList.forEach(node => {
     if(node.nodeType === 'InitialisePreimage'){
       let stateName: string;
       let stateNode: any;
@@ -272,16 +272,16 @@ if(childNode.nodeType === 'FunctionDefinition')
       for( [stateName, stateNode] of Object.entries(node.privateStates))
       { for(const [index, oldStateName] of  oldStateArray.entries()) {
 
-        newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+        newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
         if(newstateName != stateName ){
         node.privateStates[ newstateName ] = node.privateStates[stateName];
         delete(node.privateStates[ stateName ]);}
 
-        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
         if(stateNode.mappingKey === oldStateName)
-        stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, newStateArray[index])
+        stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
         if(stateNode.stateVarId[1] === oldStateName)
-        stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
+        stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
       }
     }
   }
@@ -292,16 +292,16 @@ if(childNode.nodeType === 'FunctionDefinition')
      for( [stateName, stateNode] of Object.entries(node.privateStates))
      { for(const [index, oldStateName] of  oldStateArray.entries()) {
 
-       newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+       newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
        if(newstateName != stateName ){
        node.privateStates[ newstateName ] = node.privateStates[stateName];
        delete(node.privateStates[ stateName ]);}
 
-       stateNode.increment = stateNode.increment.replace(oldStateName+'.', newStateArray[index]+'.')
+       stateNode.increment = stateNode.increment.replace(oldStateName+'.', state.newStateArray[index]+'.')
        if(stateNode.mappingKey === oldStateName)
-       stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, newStateArray[index])
+       stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
        if(stateNode.stateVarId[1] === oldStateName)
-       stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
+       stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
      }
    }
   }
@@ -312,50 +312,50 @@ if(childNode.nodeType === 'FunctionDefinition')
       for( [stateName, stateNode] of Object.entries(node.privateStates))
       { for(const [index, oldStateName] of  oldStateArray.entries()) {
 
-        newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+        newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
         if(newstateName != stateName ){
         node.privateStates[ newstateName ] = node.privateStates[stateName];
         delete(node.privateStates[ stateName ]);}
 
-        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
       }
     }
   }
 })
-newPreStatementList.splice(0,1);
+state.newPreStatementList.splice(0,1);
 
-newStatementList = cloneDeep(childNode.body.statements);
-newStatementList.forEach(node => {
+state.newStatementList = cloneDeep(childNode.body.statements);
+state.newStatementList.forEach(node => {
   if(node.nodeType === 'VariableDeclarationStatement')
   { node.declarations.forEach(node => {
     for(const [index, oldStateName] of  oldStateArray.entries()) {
-node.name = node.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
+node.name = node.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
 }
   });
   for(const [index, oldStateName] of  oldStateArray.entries()) {
-  node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
-   node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  newStateArray[index]);
+  node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
+   node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[index]);
 
     }
 }
 if(node.nodeType === 'Assignment'){
   for(const [index, oldStateName] of  oldStateArray.entries()) {
-  node.leftHandSide.name = node.leftHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
-   node.rightHandSide.name = node.rightHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
+  node.leftHandSide.name = node.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
+   node.rightHandSide.name = node.rightHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
 }
 }
 })
 
 
-  newPostStatementList = cloneDeep(childNode.body.postStatements);
-  newPostStatementList.forEach(node => {
+  state.newPostStatementList = cloneDeep(childNode.body.postStatements);
+  state.newPostStatementList.forEach(node => {
     if(node.nodeType === 'CalculateNullifier'){
      let stateName: string;
      let stateNode: any;
      let newstateName: string;
      for( [stateName, stateNode] of Object.entries(node.privateStates))
      { for(const [index, oldStateName] of  oldStateArray.entries()) {
-       newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+       newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
        if(newstateName != stateName ){
        node.privateStates[ newstateName ] = node.privateStates[stateName];
        delete(node.privateStates[ stateName ]);}
@@ -370,17 +370,17 @@ if(node.nodeType === 'CalculateCommitment'){
  for( [stateName, stateNode] of Object.entries(node.privateStates))
  { for(const [index, oldStateName] of  oldStateArray.entries()) {
 
-   newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+   newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
    if(newstateName != stateName ){
    node.privateStates[ newstateName ] = node.privateStates[stateName];
    delete(node.privateStates[ stateName ]);}
 
    if(stateNode.privateStateName === oldStateName )
-   stateNode.privateStateName = stateNode.privateStateName.replace(oldStateName,  newStateArray[index])
+   stateNode.privateStateName = stateNode.privateStateName.replace(oldStateName,  state.newStateArray[index])
    else
-   stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+   stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
    if(stateNode.stateVarId[1] === oldStateName)
-   stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, newStateArray[index])
+   stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
  }
 }
 }
@@ -392,7 +392,7 @@ generateProofNode = cloneDeep(node);
   for( stateName of Object.keys(generateProofNode.privateStates))
   {
     for(const [index, oldStateName] of  oldStateArray.entries()) {
-    newstateName = stateName.replace('_'+oldStateName, '_'+ newStateArray[index])
+    newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
      if(newstateName != stateName ){
     generateProofNode.privateStates[ newstateName ] = generateProofNode.privateStates[stateName];
     delete(generateProofNode.privateStates[ stateName ]);
@@ -408,7 +408,7 @@ if(node.nodeType === 'SendTransaction'){
   let newstateName: string;
   for( [stateName, stateNode] of Object.entries(sendTransactionNode.privateStates)){
   for(const [index, oldStateName] of  oldStateArray.entries()) {
-    newstateName = stateName.replace('_'+oldStateName, '_'+newStateArray[index])
+    newstateName = stateName.replace('_'+oldStateName, '_'+state.newStateArray[index])
      if(newstateName != stateName ){
     sendTransactionNode.privateStates[ newstateName ] = sendTransactionNode.privateStates[stateName];
     delete(sendTransactionNode.privateStates[ stateName ]);
@@ -423,34 +423,34 @@ let stateNode: any;
 let newstateName: string;
 for( [stateName, stateNode] of Object.entries(writePreimageNode.privateStates)){
 for(const [index, oldStateName] of  oldStateArray.entries()) {
-  newstateName = stateName.replace('_'+oldStateName, '_'+newStateArray[index])
+  newstateName = stateName.replace('_'+oldStateName, '_'+state.newStateArray[index])
    if(newstateName != stateName ){
   writePreimageNode.privateStates[ newstateName ] = writePreimageNode.privateStates[stateName];
   delete(writePreimageNode.privateStates[ stateName ]);
 }
 if(stateNode.mappingKey)
- stateNode.mappingKey =  stateNode.mappingKey.replace(oldStateName, newStateArray[index])
+ stateNode.mappingKey =  stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
 }
 }
 }
 })
-newPostStatementList.splice(- 3);
+state.newPostStatementList.splice(- 3);
  }
 })
   node._newASTPointer.forEach(file => {
-  if(file.fileName === callingFncName[index])
+  if(file.fileName === state.callingFncName[index])
   {
   file.nodes.forEach(childNode => {
   if(childNode.nodeType === 'FunctionDefinition')
   {
-    childNode.parameters.modifiedStateVariables = [...new Set([...childNode.parameters.modifiedStateVariables, ...newParametersList])];
+    childNode.parameters.modifiedStateVariables = [...new Set([...childNode.parameters.modifiedStateVariables, ...state.newParametersList])];
     if(childNode.decrementedSecretStates)
-    childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
-    childNode.body.preStatements = [...new Set([...childNode.body.preStatements, ...newPreStatementList])]
-    childNode.body.statements = [...new Set([...childNode.body.statements, ...newStatementList])]
+    childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...state.newdecrementedSecretStates])];
+    childNode.body.preStatements = [...new Set([...childNode.body.preStatements, ...state.newPreStatementList])]
+    childNode.body.statements = [...new Set([...childNode.body.statements, ...state.newStatementList])]
     const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));
 
-    childNode.body.postStatements = merge(childNode.body.postStatements, newPostStatementList , index+1);
+    childNode.body.postStatements = merge(childNode.body.postStatements, state.newPostStatementList , index+1);
     childNode.body.postStatements.forEach(node => {
     if(node.nodeType === 'GenerateProof'){
      node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
@@ -474,13 +474,13 @@ if(circuitImport[index] === 'false')
 {
   file.nodes.forEach(childNode => {
     if(childNode.nodeType === 'FunctionDefinition'){
-      newStatementList = cloneDeep(childNode.body.statements);
-      newStatementList.forEach(node => {
+      state.newStatementList = cloneDeep(childNode.body.statements);
+      state.newStatementList.forEach(node => {
         if(node.nodeType === 'VariableDeclarationStatement')
         {
         for(const [index, oldStateName] of  oldStateArray.entries()) {
-        node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ newStateArray[index]);
-         node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  newStateArray[index]);
+        node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
+         node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[index]);
 
           }
       }
@@ -488,16 +488,16 @@ if(circuitImport[index] === 'false')
       }
   })
   node._newASTPointer.forEach(file => {
-  if(file.fileName === callingFncName[index])
+  if(file.fileName === state.callingFncName[index])
   {
 
   file.nodes.forEach(childNode => {
   if(childNode.nodeType === 'FunctionDefinition')
   {
   childNode.body.statements.forEach(node => {
-    if(node.nodeType === 'ExpressionStatement' && node.expression.name === internalFncName[index])
+    if(node.nodeType === 'ExpressionStatement' && node.expression.name === state.internalFncName[index])
 {
-  newStatementList.forEach(list => {
+  state.newStatementList.forEach(list => {
     if(list.nodeType === 'VariableDeclarationStatement'){
     node.expression = Object.assign(node.expression,list.initialValue);
     console.log(node.expression);
@@ -1317,12 +1317,13 @@ if(circuitImport[index] === 'false')
       if(path.isInternalFunctionCall()) {
         const args = node.arguments;
         let isCircuit = false;
-        newStateArray =  args.map(arg => (arg.name));
+        state.newStateArray =  args.map(arg => (arg.name));
         let internalFunctionInteractsWithSecret = false;
         const newState: any = {};
         internalFunctionCallVisitor(path, newState)
         internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
-        internalFncName.push(node.expression.name);
+        state.internalFncName ??= [];
+        state.internalFncName.push(node.expression.name);
 
      if(internalFunctionInteractsWithSecret === true)
      {
@@ -1341,7 +1342,7 @@ if(circuitImport[index] === 'false')
    if(node.nodeType === 'VariableDeclaration'){
      if(node.typeName.nodeType === 'Mapping') {
        for(const [index, oldStateName] of  oldStateArray.entries()) {
-         if(oldStateName === newStateArray[index])
+         if(oldStateName === state.newStateArray[index])
          {
            circuitImport.push('false');
            isCircuit = false;
@@ -1392,7 +1393,8 @@ if(circuitImport[index] === 'false')
        }
    }
    const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-   callingFncName.push(fnDefNode.node.name);
+   state.callingFncName ??= [];
+   state.callingFncName.push(fnDefNode.node.name);
       }
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;

@@ -41,7 +41,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'FunctionCall':
       return ['expression', 'arguments'];
     case 'InternalFunctionCall' :
-      return ['name', 'internalFunctionInteractsWithSecret','parameters'];
+      return ['name','parameters'];
     case 'ArrayTypeName':
       return ['baseType'];
     case 'ElementaryTypeNameExpression':
