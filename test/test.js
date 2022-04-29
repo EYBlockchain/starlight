@@ -48,7 +48,7 @@ describe("AST testing", function () {
   const inputFileName = path.parse(inputFilePath).name;
   // commander converts 'zapp-name' to 'zappName'
   const zappName = inputFileName;
-  const outputDirPath = `./zapps/${zappName}`;
+  const outputDirPath = `./temp-zapps/${zappName}`;
   const parseDirPath = `${outputDirPath}/parse`;
   const circuitsDirPath = `${outputDirPath}/circuits`;
   const contractsDirPath = `${outputDirPath}/contracts`;
