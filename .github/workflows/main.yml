@@ -28,5 +28,5 @@ jobs:
       # Runs a single command using the runners shell
       - name: compile and test
         run: |
-        npm ci && ./bin/start
-        npm test
+          npm ci && ./bin/start
+          npm test
