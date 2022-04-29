@@ -232,6 +232,7 @@ const visitor = {
 let generateProofNode: any;
 let writePreimageNode : any ;
 let sendTransactionNode : any;
+let newdecrementedSecretStates = [];
 node._newASTPointer.forEach(file => {
   state.internalFncName.forEach( name => {
     if(file.fileName === name && file.nodeType === 'File') {
@@ -248,7 +249,7 @@ if(childNode.nodeType === 'FunctionDefinition')
     }
   })
   if(childNode.decrementedSecretStates){
-  state.newdecrementedSecretStates = cloneDeep(childNode.decrementedSecretStates);
+  newdecrementedSecretStates = cloneDeep(childNode.decrementedSecretStates);
   for(const [index, oldStateName] of  oldStateArray.entries()) {
     node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[index])
   }
@@ -436,7 +437,7 @@ state.newPostStatementList.splice(- 3);
   {
     childNode.parameters.modifiedStateVariables = [...new Set([...childNode.parameters.modifiedStateVariables, ...state.newParametersList])];
     if(childNode.decrementedSecretStates)
-    childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...state.newdecrementedSecretStates])];
+    childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
     childNode.body.preStatements = [...new Set([...childNode.body.preStatements, ...state.newPreStatementList])]
     childNode.body.statements = [...new Set([...childNode.body.statements, ...state.newStatementList])]
     const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));

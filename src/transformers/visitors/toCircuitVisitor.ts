@@ -194,7 +194,8 @@ let internalFncParameters = [];
      internalFncParameters =  state.newStateArray.concat(internalFncParameters);
      // to remove duplicates from the parameters
      internalFncParameters.forEach(param => {
-         if (!state.circuitArguments.includes(param)) {
+         if (!state.circuitArguments?.includes(param)) {
+             state.circuitArguments ??= [];
              state.circuitArguments.push(param);
          }
      });
