@@ -19,13 +19,14 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.nodeType !== 'Identifier') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    indicator.interactsWithSecret &&
+    (indicator.interactsWithSecret || isCondition) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -35,8 +36,6 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
       thisState.customInputs.push(indicator.name);
   }
 };
-let internalFncName = [];
-let callingFncName = [];
 let internalFuncInteractsWithSecret = false;
 /**
  * @desc:
@@ -205,7 +204,7 @@ export default {
 
       // Let's populate the `parameters` and `body`:
       const { parameters } = newFunctionDefinitionNode.parameters;
-      const { postStatements } = newFunctionDefinitionNode.body;
+      const { postStatements, preStatements } = newFunctionDefinitionNode.body;
 
       // if contract is entirely public, we don't want zkp related boilerplate
       if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
@@ -217,13 +216,23 @@ export default {
         }),
       );
 
-      postStatements.push(
-        ...buildNode('FunctionBoilerplate', {
-          bpSection: 'postStatements',
-          scope,
-          customInputs: state.customInputs,
-        }),
-      );
+      if (node.kind === 'constructor')
+        preStatements.push(
+          ...buildNode('FunctionBoilerplate', {
+            bpSection: 'preStatements',
+            scope,
+            customInputs: state.customInputs,
+          }),
+        );
+
+      if (path.scope.containsSecret)
+        postStatements.push(
+          ...buildNode('FunctionBoilerplate', {
+            bpSection: 'postStatements',
+            scope,
+            customInputs: state.customInputs,
+          }),
+        );
 
       delete state.customInputs;
     },
@@ -244,6 +253,24 @@ export default {
       const newNode = buildNode('Block');
       node._newASTPointer = newNode.statements;
       parent._newASTPointer.body = newNode;
+    },
+  },
+
+  IfStatement: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      if (path.scope.containsSecret) {
+        path.traversePathsFast(findCustomInputsVisitor, state);
+        state.skipSubNodes=true;
+        return;
+      }
+      const newNode = buildNode(node.nodeType, {
+        condition: node.condition,
+        trueBody: node.trueBody,
+        falseBody: node.falseBody
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
   },
 
@@ -537,7 +564,6 @@ export default {
       if (path.isInternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
         // TODO: need a warning message to this effect ^^^
-let fnParameters = [];
 const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
 internalFuncInteractsWithSecret = fnIndicator.internalFunctionInteractsWithSecret;
 const functionReferncedNode = scope.getReferencedNode(node.expression);
@@ -549,25 +575,18 @@ if(!fnIndicator.internalFunctionInteractsWithSecret){
 }
 
 if(internalFuncInteractsWithSecret){
-  internalFncName.push(node.expression.name);
+  state.internalFncName ??= [];
+  state.internalFncName.push(node.expression.name);
   const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-  callingFncName.push(fnDefNode.node.name);
+  state.callingFncName ??= [];
+  state.callingFncName.push(fnDefNode.node.name);
   const contractIndicator : ContractDefinitionIndicator = scope.indicators;
-if(contractIndicator.nullifiersRequired)
-fnParameters.push('newNullifiers') ;
-if(contractIndicator.oldCommitmentAccessRequired)
-fnParameters.push('commitmentRoot') ;
-if(contractIndicator.newCommitmentsRequired)
-fnParameters.push('newCommitments') ;
-if(contractIndicator.containsAccessedOnlyState)
-fnParameters.push('checkNullifiers') ;
-
-fnParameters.push('proof') ;
-
-}
-else {
-  
-}
+  let fnParameters = [...(contractIndicator.nullifiersRequired? [`newNullifiers`] : []),
+        ...(contractIndicator.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
+        ...(contractIndicator.newCommitmentsRequired ? [`newCommitments`] : []),
+        ...(contractIndicator.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+        `proof`,
+      ]
   newNode = buildNode('InternalFunctionCall', {
   name: node.expression.name,
   internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
@@ -591,6 +610,26 @@ if (Array.isArray(parent._newASTPointer[path.containerName])) {
 } else {
   parent._newASTPointer[path.containerName] = newNode;
 }
+}
+if (node.kind !== 'typeConversion') {
+  newNode = buildNode('FunctionCall');
+  node._newASTPointer = newNode;
+  if (Array.isArray(parent._newASTPointer[path.containerName])) {
+    parent._newASTPointer[path.containerName].push(newNode);
+  } else {
+    parent._newASTPointer[path.containerName] = newNode;
+  }
+  state.skipSubNodes = true;
+  return;
+}
+newNode = buildNode('TypeConversion', {
+  type: node.typeDescriptions.typeString,
+});
+node._newASTPointer = newNode;
+if (Array.isArray(parent._newASTPointer[path.containerName])) {
+  parent._newASTPointer[path.containerName].push(newNode); }  else {
+  parent._newASTPointer[path.containerName] = newNode;
+  }
+ },
 },
-},
-};
+}

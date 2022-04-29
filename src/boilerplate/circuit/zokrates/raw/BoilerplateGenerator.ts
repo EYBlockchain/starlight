@@ -340,7 +340,6 @@ class BoilerplateGenerator {
   };
   internalFunctionCall = {
     importStatements( { name: x , circuitImport} ): string[] {
-      console.log(circuitImport)
       if(circuitImport){
         return [`from "./${x}.zok" import main as ${x} `];
        }

@@ -151,11 +151,10 @@ function codeGenerator(node: any) {
     }
     case 'InternalFunctionCall' :{
       if(node.parameter){
-      return `\t \t \t \t ${node.name} (${node.parameters});`
-    }
-    else{
-      return `\t \t \t \t${node.name} (${node.arguments.name});`
-    }
+         return `\t \t \t \t ${node.name} (${node.parameters});`
+      } else {
+         return `\t \t \t \t${node.name} (${node.arguments.name});`
+      }
     }
 
     case 'ElementaryTypeNameExpression':
