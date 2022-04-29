@@ -27,8 +27,8 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: compile with ts
-        run: ./bin/start
-        
+        run: npm ci && ./bin/start
+
   test:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
