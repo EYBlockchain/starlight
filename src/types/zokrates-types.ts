@@ -179,6 +179,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         expression,
       };
     }
+    case 'UnaryOperation': {
+      const { operator, prefix, subExpression = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        prefix,
+        subExpression,
+      };
+    }
     case 'MsgSender': {
       return {
         nodeType,
