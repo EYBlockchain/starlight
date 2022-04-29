@@ -9,7 +9,7 @@ try {
   let outputAST = fs.readFileSync('./zapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', 'utf8')
   let outputASTJsonObject = JSON.parse(outputAST);
   let outputASTHash = sha256(outputAST);
-  if (fs.existsSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json')) 
+  if (fs.existsSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json'))
   {
   let PreGeneratedAST = fs.readFileSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', 'utf8')
   let PreGeneratedASTJsonObject = JSON.parse(PreGeneratedAST);
@@ -27,31 +27,32 @@ try {
       fs.writeFileSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json', JSON.stringify(PreGeneratedASTJsonObject, null, 4), 'utf8');
       logger.info('AST file modified');
       }
-      return 'false';    
+      return 'false';
     }
     else
       return 'true';
   }
   else
     return 'true';
-} 
+}
 else
   return 'false';
 }
 catch (err) {
   console.error(err)
-} 
+}
 }
 
 
 export function checktestASTExists(options: any, ASTType: string) {
   if (!fs.existsSync('./truezapps/'+options.inputFileName+'/'+ASTType+'/'+options.inputFileName+'_ast.json'))
   {
+    if (!fs.existsSync('./truezapps/')) fs.mkdirSync('./truezapps/');
     fs.mkdirSync('./truezapps/'+options.inputFileName);
     fse.copySync(`./zapps/`+options.inputFileName+'/circuits', `./truezapps/`+options.inputFileName+'/circuits');
     fse.copySync(`./zapps/`+options.inputFileName+'/contracts', `./truezapps/`+options.inputFileName+'/contracts');
     fse.copySync(`./zapps/`+options.inputFileName+'/orchestration', `./truezapps/`+options.inputFileName+'/orchestration');
-    return false;
+    return checktestASTExists(options, ASTType);
   }
   else
   return true;
