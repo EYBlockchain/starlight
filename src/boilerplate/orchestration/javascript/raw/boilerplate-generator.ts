@@ -176,7 +176,7 @@ class BoilerplateGenerator {
             const ${stateName}_emptyPath = new Array(32).fill(0);
             const ${stateName}_witness = ${stateName}_witnessRequired
             \t? await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer)
-            \t: { index: 0, path:  ${stateName}_emptyPath, root: await getRoot('${contractName}') || 0 };
+            \t: { index: 0, path: emptyPath, root: await getRoot('${contractName}') || 0 };
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);
             const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`];
