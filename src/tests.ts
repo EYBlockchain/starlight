@@ -49,9 +49,9 @@ export function checktestASTExists(options: any, ASTType: string) {
   {
     if (!fs.existsSync('./truezapps/')) fs.mkdirSync('./truezapps/');
     fs.mkdirSync('./truezapps/'+options.inputFileName);
-    fse.copySync(`./zapps/`+options.inputFileName+'/circuits', `./truezapps/`+options.inputFileName+'/circuits');
-    fse.copySync(`./zapps/`+options.inputFileName+'/contracts', `./truezapps/`+options.inputFileName+'/contracts');
-    fse.copySync(`./zapps/`+options.inputFileName+'/orchestration', `./truezapps/`+options.inputFileName+'/orchestration');
+    fse.copySync(options.circuitsDirPath, `./truezapps/`+options.inputFileName+'/circuits');
+    fse.copySync(options.contractsDirPath, `./truezapps/`+options.inputFileName+'/contracts');
+    fse.copySync(options.orchestrationDirPath, `./truezapps/`+options.inputFileName+'/orchestration');
     return checktestASTExists(options, ASTType);
   }
   else
@@ -59,7 +59,7 @@ export function checktestASTExists(options: any, ASTType: string) {
 }
 
 export function checkCodeGen(options: any, codeType: string) {
-let outputAST = fs.readFileSync('./zapps/'+options.inputFileName+'/'+codeType+'/'+options.inputFileName+'_ast.json', 'utf8')
+let outputAST = fs.readFileSync(options.outputDirPath+options.inputFileName+'/'+codeType+'/'+options.inputFileName+'_ast.json', 'utf8')
 let outputASTJsonObject = JSON.parse(outputAST);
 let codeGenFunctionsCount = 0;
 let filesinAST = JSON.parse(JSON.stringify(outputASTJsonObject.files));
