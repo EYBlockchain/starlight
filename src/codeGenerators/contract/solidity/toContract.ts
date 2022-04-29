@@ -159,7 +159,7 @@ function codeGenerator(node: any) {
          return `\t \t \t \t${node.name} (${node.arguments.name});`
       }
     }
-     
+
     case 'IfStatement':
       return `if (${codeGenerator(node.condition)})
           ${codeGenerator(node.trueBody.statements[0].expression)}

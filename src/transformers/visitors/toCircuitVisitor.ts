@@ -739,6 +739,15 @@ node._newASTPointer.forEach(file => {
     },
   },
 
+  IfStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {condition: node.condition , trueBody: node.trueBody, falseBody: node.falseBody});
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
   Literal: {
     enter(path: NodePath) {
       const { node, parent } = path;

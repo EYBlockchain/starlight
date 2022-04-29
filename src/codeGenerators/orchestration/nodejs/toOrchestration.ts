@@ -138,7 +138,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       // below is when we need to extract the eth address to use as a param
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
-      
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 
