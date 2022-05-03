@@ -57,3 +57,7 @@ jobs:
         
       - name: run zapp npm test
         run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/startup && npm test
+        
+      - name: disp logs on failure
+        if: failure()
+        run: docker logs assign-public-admin_zokrates_1
