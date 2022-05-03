@@ -44,16 +44,16 @@ jobs:
         run: |
           npm ci && ./bin/start
           zappify -i test/contracts/Assign-public-admin.zol -o temp-zapps
-          cd temp-zapps/Assign-public-admin
           
       - name: set up zapp
         run: |
+          cd temp-zapps/Assign-public-admin
           npm i
           docker-compose -f docker-compose.zapp.yml build
           docker-compose -f docker-compose.zapp.yml up -d zokrates
       
       - name: generate zapp keys
-        run: chmod +x ./bin/setup && ./bin/setup
+        run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/setup && ./bin/setup
         
       - name: run zapp npm test
-        run: chmod +x ./bin/startup && npm test
+        run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/startup && npm test
