@@ -43,7 +43,7 @@ jobs:
       - name: test zapp
         run: |
           npm ci && ./bin/start
-          zappify -i test/contracts/Assign-public-admin.zol
+          zappify -i test/contracts/Assign-public-admin.zol -o temp-zapps
           cd temp-zapps/Assign-public-admin
           npm i
           ./bin/setup
