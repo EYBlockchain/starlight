@@ -103,6 +103,7 @@ const visitor = {
     },
   // We Add the InternalFunctionCall nodes at the exit node so that all others gets build we need to access
     exit(path: NodePath, state: any) {
+
       // Find the Internal Function Node,
       const { node, parent } = path;
       node._newASTPointer.forEach(file => {

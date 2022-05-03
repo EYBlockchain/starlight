@@ -676,6 +676,7 @@ export class Scope {
     for (const stateVarId of Object.keys(indicators)) {
       const indicator = indicators[stateVarId];
       if (indicator?.isModified && indicator.binding?.isSecret) return true;
+      if(indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionInteractsWithSecret) return true;
     }
     return false;
   }

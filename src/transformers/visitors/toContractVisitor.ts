@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 // import logger from '../../utils/logger.mjs';
+import cloneDeep from 'lodash.clonedeep';
 import { buildNode } from '../../types/solidity-types.js';
 import { traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
@@ -178,7 +179,39 @@ export default {
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
       }
+      node._newASTPointer.forEach(node => {
+        if(node.nodeType === 'FunctionDefinition'){
+          state.internalFncName?.forEach( name => {
+            if(node.name === name) {
+             state.postStatements ??= [];
+             state.postStatements = cloneDeep(node.body.postStatements);
+            }
+            if(node.name === state.callingFncName[state.internalFncName.indexOf(name)]){
+             node.body.postStatements.forEach( childNode => {
+               state.postStatements.forEach(node => {
+                 if(!childNode.nullifiersRequired && node.nullifiersRequired)
+                   childNode.nullifiersRequired = node.nullifiersRequired;
+                 if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
+                   childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
+                 if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
+                   childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                })
+              })
+              node.parameters.parameters.forEach( childNode => {
+                state.postStatements.forEach(node => {
+                  if(!childNode.nullifiersRequired && node.nullifiersRequired)
+                   childNode.nullifiersRequired = node.nullifiersRequired;
+                  if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
+                   childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
+                  if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
+                  childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                })
+              })
+            }
+          });
 
+        }
+      })
     },
   },
 
@@ -573,23 +606,24 @@ export default {
          if(params.some(node => node.isSecret))
           internalFuncInteractsWithSecret = true;
         }
+
         if(internalFuncInteractsWithSecret){
           state.internalFncName ??= [];
           state.internalFncName.push(node.expression.name);
           const fnDefNode = path.getAncestorOfType('FunctionDefinition');
           state.callingFncName ??= [];
           state.callingFncName.push(fnDefNode.node.name);
-          const contractIndicator : ContractDefinitionIndicator = scope.indicators;
-          let fnParameters = [...(contractIndicator.nullifiersRequired? [`newNullifiers`] : []),
-                ...(contractIndicator.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
-                ...(contractIndicator.newCommitmentsRequired ? [`newCommitments`] : []),
-                ...(contractIndicator.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+          const contractIndicator : FunctionDefinitionIndicator = scope.indicators;
+          state.fnParameters = [...(contractIndicator.parentIndicator.nullifiersRequired? [`newNullifiers`] : []),
+                ...(contractIndicator.parentIndicator.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
+                ...(contractIndicator.parentIndicator.newCommitmentsRequired ? [`newCommitments`] : []),
+                ...(contractIndicator.parentIndicator.containsAccessedOnlyState ? [`checkNullifiers`] : []),
                 `proof`,
           ]
           newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,
           internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
-          parameters: fnParameters,
+          parameters: state.fnParameters,
          });
          node._newASTPointer = newNode;
          if (Array.isArray(parent._newASTPointer[path.containerName])) {

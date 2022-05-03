@@ -89,6 +89,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       this.interactsWithSecret = true;
       this.zkSnarkVerificationRequired = true;
 
+
     }
 
     if(path.node.typeDescriptions.typeIdentifier.includes(`_internal_`))
@@ -97,7 +98,8 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
         const params = functionReferncedNode.parameters.parameters ;
           if(params.some(node => node.isSecret))
           {
-            this.internalFunctionInteractsWithSecret = true; }
+            this.internalFunctionInteractsWithSecret = true;
+        }
     }
 
   }
@@ -154,6 +156,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
     }
     this.newCommitmentsRequired = !burnedOnly;
   }
+
 
   // no constructor yet...
   //
