@@ -565,72 +565,67 @@ export default {
       if (path.isInternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
         // TODO: need a warning message to this effect ^^^
-const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
-internalFuncInteractsWithSecret = fnIndicator.internalFunctionInteractsWithSecret;
-const functionReferncedNode = scope.getReferencedNode(node.expression);
-const params = functionReferncedNode.parameters.parameters;
-if(!fnIndicator.internalFunctionInteractsWithSecret){
-    if(params.some(node => node.isSecret))
-    {
-    internalFuncInteractsWithSecret = true; }
-}
-
-if(internalFuncInteractsWithSecret){
-  state.internalFncName ??= [];
-  state.internalFncName.push(node.expression.name);
-  const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-  state.callingFncName ??= [];
-  state.callingFncName.push(fnDefNode.node.name);
-  const contractIndicator : ContractDefinitionIndicator = scope.indicators;
-  let fnParameters = [...(contractIndicator.nullifiersRequired? [`newNullifiers`] : []),
-        ...(contractIndicator.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
-        ...(contractIndicator.newCommitmentsRequired ? [`newCommitments`] : []),
-        ...(contractIndicator.containsAccessedOnlyState ? [`checkNullifiers`] : []),
-        `proof`,
-      ]
-  newNode = buildNode('InternalFunctionCall', {
-  name: node.expression.name,
-  internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
-  parameters: fnParameters,
- });
-  node._newASTPointer = newNode;
-
-  if (Array.isArray(parent._newASTPointer[path.containerName])) {
-    parent._newASTPointer[path.containerName].push(newNode);
-  } else {
-    parent._newASTPointer[path.containerName] = newNode;
-  }
-  return;
-
-}
-
-newNode = buildNode('FunctionCall');
-node._newASTPointer = newNode;
-if (Array.isArray(parent._newASTPointer[path.containerName])) {
-  parent._newASTPointer[path.containerName].push(newNode);
-} else {
-  parent._newASTPointer[path.containerName] = newNode;
-}
-}
-if (node.kind !== 'typeConversion') {
-  newNode = buildNode('FunctionCall');
-  node._newASTPointer = newNode;
-  if (Array.isArray(parent._newASTPointer[path.containerName])) {
-    parent._newASTPointer[path.containerName].push(newNode);
-  } else {
-    parent._newASTPointer[path.containerName] = newNode;
-  }
-  state.skipSubNodes = true;
-  return;
-}
-newNode = buildNode('TypeConversion', {
-  type: node.typeDescriptions.typeString,
-});
-node._newASTPointer = newNode;
-if (Array.isArray(parent._newASTPointer[path.containerName])) {
-  parent._newASTPointer[path.containerName].push(newNode); }  else {
-  parent._newASTPointer[path.containerName] = newNode;
-  }
- },
-},
+       const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
+       internalFuncInteractsWithSecret = fnIndicator.internalFunctionInteractsWithSecret;
+       const functionReferncedNode = scope.getReferencedNode(node.expression);
+       const params = functionReferncedNode.parameters.parameters;
+       if(!fnIndicator.internalFunctionInteractsWithSecret){
+         if(params.some(node => node.isSecret))
+          internalFuncInteractsWithSecret = true;
+        }
+        if(internalFuncInteractsWithSecret){
+          state.internalFncName ??= [];
+          state.internalFncName.push(node.expression.name);
+          const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+          state.callingFncName ??= [];
+          state.callingFncName.push(fnDefNode.node.name);
+          const contractIndicator : ContractDefinitionIndicator = scope.indicators;
+          let fnParameters = [...(contractIndicator.nullifiersRequired? [`newNullifiers`] : []),
+                ...(contractIndicator.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
+                ...(contractIndicator.newCommitmentsRequired ? [`newCommitments`] : []),
+                ...(contractIndicator.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+                `proof`,
+          ]
+          newNode = buildNode('InternalFunctionCall', {
+          name: node.expression.name,
+          internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
+          parameters: fnParameters,
+         });
+         node._newASTPointer = newNode;
+         if (Array.isArray(parent._newASTPointer[path.containerName])) {
+           parent._newASTPointer[path.containerName].push(newNode);
+          } else {
+           parent._newASTPointer[path.containerName] = newNode;
+          }
+         return;
+        }
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
+      }
+      if (node.kind !== 'typeConversion') {
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
+        state.skipSubNodes = true;
+        return;
+      }
+      newNode = buildNode('TypeConversion', {
+        type: node.typeDescriptions.typeString,
+      });
+     node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode); }  else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+    },
+  },
 }
