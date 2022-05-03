@@ -46,5 +46,5 @@ jobs:
           zappify -i test/contracts/Assign-public-admin.zol -o temp-zapps
           cd temp-zapps/Assign-public-admin
           npm i
-          ./bin/setup
-          npm test
+          chmod +x ./bin/setup && ./bin/setup
+          chmod +x ./bin/startup && npm test
