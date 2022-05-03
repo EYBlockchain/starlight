@@ -47,5 +47,7 @@ jobs:
           cd temp-zapps/Assign-public-admin
           npm i
           docker-compose -f docker-compose.zapp.yml build
+          docker-compose -f docker-compose.zapp.yml up -d zokrates
+          sleep 15
           chmod +x ./bin/setup && ./bin/setup
           chmod +x ./bin/startup && npm test
