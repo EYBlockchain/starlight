@@ -45,6 +45,13 @@ jobs:
           npm ci && ./bin/start
           zappify -i test/contracts/Assign-public-admin.zol -o temp-zapps
           
+      - name: replace zokrates image for actions test
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "ghcr.io/eyblockchain/zokrates-worker-m1"
+          replace: "ghcr.io/eyblockchain/nightfall3-worker"
+          include: "**docker-compose.zapp.yml"
+          
       - name: set up zapp
         run: |
           cd temp-zapps/Assign-public-admin
