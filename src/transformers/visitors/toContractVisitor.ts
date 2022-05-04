@@ -188,7 +188,7 @@ export default {
             }
             if(node.name === state.callingFncName[state.internalFncName.indexOf(name)]){
              node.body.postStatements.forEach( childNode => {
-               state.postStatements.forEach(node => {
+               state.postStatements?.forEach(node => {
                  if(!childNode.nullifiersRequired && node.nullifiersRequired)
                    childNode.nullifiersRequired = node.nullifiersRequired;
                  if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
@@ -198,7 +198,7 @@ export default {
                 })
               })
               node.parameters.parameters.forEach( childNode => {
-                state.postStatements.forEach(node => {
+                state.postStatements?.forEach(node => {
                   if(!childNode.nullifiersRequired && node.nullifiersRequired)
                    childNode.nullifiersRequired = node.nullifiersRequired;
                   if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
