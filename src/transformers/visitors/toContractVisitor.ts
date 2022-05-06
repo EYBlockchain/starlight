@@ -392,6 +392,7 @@ export default {
         declarationType,
         typeString: node.typeDescriptions?.typeString,
         visibility: node.visibility,
+        storageLocation: node.storageLocation,
       });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
@@ -400,6 +401,20 @@ export default {
         parent._newASTPointer[path.containerName].push(newNode);
       }
     },
+  },
+
+  StructDefinition: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, { name: node.name });
+      node._newASTPointer = newNode;
+
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName].push(newNode);
+      }
+    }
   },
 
   ElementaryTypeName: {

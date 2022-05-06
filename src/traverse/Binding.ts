@@ -51,6 +51,7 @@ export class Binding {
       case 'UnaryOperation':
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
+      case 'StructDefinition':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);

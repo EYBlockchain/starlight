@@ -49,14 +49,14 @@ export default {
     },
   },
 
-  StructDefinition: {
-    enter(node: any) {
-      throw new TODOError(
-        `Solidity type ${node.nodeType}. We plan to handle structs in the near future.`,
-        node,
-      );
-    },
-  },
+  // StructDefinition: {
+  //   enter(node: any) {
+  //     throw new TODOError(
+  //       `Solidity type ${node.nodeType}. We plan to handle structs in the near future.`,
+  //       node,
+  //     );
+  //   },
+  // },
 
   WhileStatement: {
     enter(node: any) {
