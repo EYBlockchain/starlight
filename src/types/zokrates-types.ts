@@ -215,14 +215,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'InternalFunctionCall': {
-      const { name, internalFunctionInteractsWithSecret = false, oldStateName = [], newStateName =[], CircuitArguments = []} = fields;
+      const { name, internalFunctionInteractsWithSecret = false, oldStateName = [], newStateName =[], CircuitArguments = [],circuitImport = false} = fields;
       return{
         nodeType,
         name,
         internalFunctionInteractsWithSecret,
         oldStateName,
         newStateName,
-        CircuitArguments
+        CircuitArguments,
+        circuitImport,
       };
 
     }

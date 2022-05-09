@@ -431,11 +431,15 @@ const visitor = {
                        node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
                        node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
                       }
+
                       if(node.nodeType === 'SendTransaction')
                        node.privateStates = Object.assign(node.privateStates,sendTransactionNode.privateStates)
+
                       if(node.nodeType === 'WritePreimage')
                        node.privateStates = Object.assign(node.privateStates,writePreimageNode.privateStates)
+
                     })
+
                   }
                 })
               }
@@ -545,7 +549,7 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
-      const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
+      const initialiseOrchestrationBoilerplateNodes = (fnIndicator) => {
         const newNodes: any = {};
         const contractName = `${parent.name}Shield`;
         newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
@@ -563,7 +567,7 @@ const visitor = {
         }
         if (fnIndicator.newCommitmentsRequired)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
-        newNodes.generateProofNode = buildNode('GenerateProof', {
+          newNodes.generateProofNode = buildNode('GenerateProof', {
           circuitName: node.fileName,
         });
         newNodes.sendTransactionNode = buildNode('SendTransaction', {
@@ -575,6 +579,7 @@ const visitor = {
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
         return newNodes;
+
       };
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
@@ -593,9 +598,9 @@ const visitor = {
       thisIntegrationTestFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
       if (
-        (functionIndicator.newCommitmentsRequired ||
+        ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
-        scope.modifiesSecretState()
+        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret
       ) {
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
@@ -905,7 +910,6 @@ const visitor = {
         if (newNodes.writePreimageNode)
           newFunctionDefinitionNode.body.postStatements.push(newNodes.writePreimageNode);
       }
-
     },
   },
 
