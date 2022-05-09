@@ -48,7 +48,7 @@ class BoilerplateGenerator {
               \nlet ${stateName}_commitmentExists = true;
               let ${stateName}_witnessRequired = true;
               \nlet ${stateName}_preimage = {
-              \t${stateName}: 0,
+              \tvalue: 0,
               \tsalt: 0,
               \tcommitment: 0,
               };
