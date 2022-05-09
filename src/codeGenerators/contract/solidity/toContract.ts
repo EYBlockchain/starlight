@@ -150,10 +150,10 @@ function codeGenerator(node: any) {
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);
       const args = node.arguments.map(codeGenerator);
-      const semicolon = expression === 'require' ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
+      const semicolon = expression === 'require' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
     }
-     
+
     case 'IfStatement':
       return `if (${codeGenerator(node.condition)})
           ${codeGenerator(node.trueBody.statements[0].expression)}

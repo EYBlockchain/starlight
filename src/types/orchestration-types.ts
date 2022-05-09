@@ -140,10 +140,11 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'MemberAccess': {
-      const { name, expression = {} } = fields;
+      const { name, memberName, expression = {} } = fields;
       return {
         nodeType,
         name,
+        memberName,
         expression,
       };
     }

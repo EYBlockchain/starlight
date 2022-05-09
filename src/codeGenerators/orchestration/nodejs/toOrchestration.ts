@@ -154,6 +154,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
           return `generalise(${node.name})`;
       }
 
+    case 'MemberAccess':
+      if (options?.lhs) return `${node.name}.${node.memberName}`;
+      return codeGenerator({ nodeType: 'Identifier', name: `${node.name}.${node.memberName}`, subType: node.subType });
+
+
     case 'Folder':
     case 'File':
     case 'EditableCommitmentCommonFilesBoilerplate':

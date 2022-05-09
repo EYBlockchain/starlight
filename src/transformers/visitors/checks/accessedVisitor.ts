@@ -53,8 +53,7 @@ export default {
       const lhsNode = path.getCorrespondingLhsNode();
       // TODO getReferencedBinding should return the VariableDeclaration binding if the input is a VariableDeclaration
       const lhsBinding: any =
-        lhsNode?.nodeType === 'Identifier' ||
-        lhsNode?.nodeType === 'IndexAccess'
+        ['Identifier', 'IndexAccess', 'MemberAccess'].includes(lhsNode?.nodeType )
           ? scope.getReferencedBinding(lhsNode) ||
             scope.getReferencedBinding({
               nodeType: 'Identifier',

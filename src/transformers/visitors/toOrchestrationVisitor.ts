@@ -136,8 +136,9 @@ const addPublicInput = (path: NodePath, state: any) => {
 }
 
 const getIndexAccessName = (node: any) => {
-  if (node.nodeType !== 'IndexAccess') return null;
-  return `${node.baseExpression.name}_${NodePath.getPath(node).scope.getMappingKeyName(node)}`;
+  if (node.nodeType == 'MemberAccess') return `${node.expression.name}_${node.memberName}`;
+  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${NodePath.getPath(node).scope.getMappingKeyName(node)}`;
+  return null;
 }
 /**
  * @desc:
@@ -721,16 +722,18 @@ const visitor = {
         let { leftHandSide: lhs } = node.expression;
         const indicator = scope.getReferencedIndicator(lhs, true);
 
-        if (indicator.isMapping) {
-          lhs = lhs.baseExpression;
-        }
-
         const name = indicator.isMapping
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
               .replace('.sender', '')
           : indicator.name;
+
+        if (indicator.isMapping) {
+          lhs = lhs.baseExpression;
+        } else if (lhs.nodeType === 'MemberAccess') {
+          lhs = lhs.expression;
+        }
 
         const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
 
@@ -959,7 +962,8 @@ const visitor = {
         parent._newASTPointer[path.containerName] = newNode;
         return;
       }
-      const newNode = buildNode(node.nodeType, { name: node.memberName });
+      // const name = getIndexAccessName(node);
+      const newNode = buildNode('MemberAccess', { name: node.expression.name, memberName: node.memberName });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },

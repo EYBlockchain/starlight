@@ -181,7 +181,7 @@ export class VariableBinding extends Binding {
     this.isSecret = node.isSecret ?? false;
 
 
-    if (path.isMappingDeclaration()) {
+    if (path.isMappingDeclaration() || path.isArrayDeclaration()) {
       this.isMapping = true;
       this.mappingKeys = {};
     }

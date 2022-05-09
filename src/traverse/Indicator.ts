@@ -282,6 +282,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   isKnown?: boolean;
 
   isMapping?: boolean;
+  isStruct?: boolean;
   mappingKeys?: {[key: string]: MappingKey};
   mappingOwnershipType?: string;
 
@@ -350,8 +351,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
     this.interactsWith = [];
 
-    if (path.isMappingIdentifier()) {
+    if (path.isMappingIdentifier() || path.isArray()) {
       this.isMapping = true;
+      this.mappingKeys = {};
+    }
+    if (path.isStruct()) {
+      this.isStruct = true;
       this.mappingKeys = {};
     }
   }

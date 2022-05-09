@@ -388,7 +388,7 @@ export class Scope {
       path.getReferencedDeclarationId(referencingNode),
     );
 
-    if (!path.isMapping(referencingNode)) return indicator;
+    if (!path.isMapping(referencingNode) && !path.isArray(referencingNode)) return indicator;
 
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
     const indexAccessNode =

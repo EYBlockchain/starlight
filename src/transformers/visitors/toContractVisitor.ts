@@ -417,12 +417,26 @@ export default {
     }
   },
 
+  ArrayTypeName: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('ElementaryTypeNameExpression');
+
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+
+    }
+  },
+
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
 
-      // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode(
+      const newNode = buildNode(
         'ElementaryTypeName',
         {
           typeDescriptions: {
@@ -430,6 +444,12 @@ export default {
           },
         },
       );
+      // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
     },
   },
 
@@ -539,7 +559,7 @@ export default {
       let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
-      if (path.isRequireStatement()) {
+      if (path.isRequireStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
         const subState = { interactsWithSecret: false };
         path.traversePathsFast(interactsWithSecretVisitor, subState);

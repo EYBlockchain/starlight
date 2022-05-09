@@ -774,6 +774,11 @@ export default class NodePath {
     return this.isMappingDeclaration(varDecNode || node);
   }
 
+  /**
+   * Checks whether a node is a mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
   isMapping(node: any = this.node): boolean {
     return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
   }
@@ -825,6 +830,40 @@ export default class NodePath {
       default:
         return false;
     }
+  }
+
+  /**
+   * Checks whether a node is of a struct type.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isStruct(node: any = this.node): boolean {
+    return this.getAncestorOfType('IndexAccess') && (node.typeDescriptions?.typeString.includes('struct') || node.expression?.typeDescriptions.typeString.includes('struct'));
+  }
+
+ /**
+  * Checks whether a node is of an array type.
+  * @param {node} node (optional - defaults to this.node)
+  * @returns {Boolean}
+  */
+  isArray(node: any = this.node): boolean {
+    if (this.getReferencedNode(node) && this.isArrayDeclaration(this.getReferencedNode(node))) return true;
+    const memberAccNode = this.getAncestorOfType('MemberAccess');
+    return memberAccNode && memberAccNode.node.baseExpression.typeDescriptions.typeIdentifier.includes('array');
+  }
+
+  /**
+   * Checks whether a node is a VariableDeclaration of a Mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isArrayDeclaration(node: any = this.node): boolean {
+    if (
+      node.nodeType === 'VariableDeclaration' &&
+      node.typeName.nodeType === 'ArrayTypeName'
+    )
+      return true;
+    return false;
   }
 
   /**

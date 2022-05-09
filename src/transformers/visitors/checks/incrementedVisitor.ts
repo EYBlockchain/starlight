@@ -304,7 +304,7 @@ export default {
           true,
           false,
           subExpression.baseExpression || subExpression,
-          literalOneNode,
+          [ literalOneNode ],
         );
         return;
       }
@@ -317,7 +317,7 @@ export default {
           true,
           true,
           subExpression.baseExpression || subExpression,
-          literalOneNode,
+          [ literalOneNode ],
         );
       }
     },
