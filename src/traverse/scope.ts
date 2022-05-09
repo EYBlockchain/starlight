@@ -281,6 +281,7 @@ export class Scope {
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
       case 'IfStatement':
+      case 'ForStatement':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an

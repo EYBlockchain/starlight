@@ -74,17 +74,19 @@ const addPublicInput = (path: NodePath, state: any) => {
   const { node } = path;
   let { name } = path.scope.getReferencedIndicator(node, true);
   const binding = path.getReferencedBinding(node);
-
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
-  const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement').containsSecret;
+  const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement')?.containsSecret;
+  const isForCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('ForStatement')?.containsSecret;
+  const isInitializationExpression = !!path.getAncestorContainedWithin('initializationExpression') && path.getAncestorOfType('ForStatement')?.containsSecret;
+  const isLoopExpression = !!path.getAncestorContainedWithin('loopExpression') && path.getAncestorOfType('ForStatement')?.containsSecret;
 
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret
   ) {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
@@ -733,11 +735,10 @@ const visitor = {
           : indicator.name;
 
         const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
-
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
-          indicator.modifyingPaths[0].node.id === lhs.id &&
+          indicator.modifyingPaths[0]?.node.id === lhs.id &&
           indicator.isSecret &&
           indicator.isWhole &&
           !requiresConstructorInit
@@ -800,7 +801,11 @@ const visitor = {
           interactsWithSecret,
         });
         node._newASTPointer = newNode;
-        parent._newASTPointer.push(newNode);
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
       }
     },
 
@@ -977,6 +982,20 @@ const visitor = {
         trueBody: [],
         falseBody: []
       });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
+  ForStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        initializationExpression: {},
+        loopExpression: {},
+        body: [],
+            });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },

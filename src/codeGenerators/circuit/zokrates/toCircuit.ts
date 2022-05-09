@@ -134,6 +134,11 @@ function codeGenerator(node: any) {
       }
       return initialStatements + trueStatements + falseStatements;
 
+      case 'ForStatement':
+        return `for field ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.initializationExpression.expression.incrementedDeclaration} do
+        ${codeGenerator(node.body)}
+        endfor`;
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 

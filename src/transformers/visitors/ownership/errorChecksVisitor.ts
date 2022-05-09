@@ -27,7 +27,8 @@ export default {
           throw new SyntaxError(`Your variable ${node.name} is being initialised to ${node.value.name} outside of a function. Consider moving it to the constructor or another function.`);
         }
       }
-    },
+    }
+  },
 
   IfStatement: {
     exit(path: NodePath) {
@@ -37,6 +38,15 @@ export default {
       }
       if (condition.containsSecret && (falseBody.containsPublic || trueBody.containsPublic)) {
         throw new TODOError(`This if statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
+      }
+    }
+  },
+
+  ForStatement: {
+    exit(path: NodePath) {
+      const { initializationExpression, loopExpression, condition, body } = path.node;
+      if ((condition.containsSecret || initializationExpression.containsSecret || loopExpression.containsSecret) && body.containsPublic) {
+        throw new TODOError(`This For statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
       }
     }
   },
