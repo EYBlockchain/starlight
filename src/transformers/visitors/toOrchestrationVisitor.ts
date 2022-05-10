@@ -718,8 +718,9 @@ const visitor = {
       // we mark this to grab anything we need from the db / contract
       state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
-      if (node.expression.nodeType === 'Assignment') {
+      if (node.expression.nodeType === 'Assignment' || node.expression.nodeType === 'UnaryOperation') {
         let { leftHandSide: lhs } = node.expression;
+        if (!lhs) lhs = node.expression.subExpression;
         const indicator = scope.getReferencedIndicator(lhs, true);
 
         const name = indicator.isMapping

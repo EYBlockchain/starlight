@@ -23,7 +23,7 @@ const getAccessedValue = (name: string) => {
  */
 const getPublicValue = (node: any) => {
   if (node.nodeType !== 'IndexAccess')
-    return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
+    return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
   return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
 };
 
@@ -135,12 +135,17 @@ export default function codeGenerator(node: any, options: any = {}): any {
       // below is when we need to extract the eth address to use as a param
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
-      
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 
+    case 'UnaryOperation':
+      // ++ or -- on a parseInt() does not work
+      return `${codeGenerator(node.subExpression, { lhs: true })} = generalise(${node.subExpression.name}.integer${node.operator});`
+
     case 'Literal':
       return node.value;
+
     case 'Identifier':
       if (options?.lhs) return node.name;
       switch (node.subType) {
