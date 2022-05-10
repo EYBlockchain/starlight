@@ -619,7 +619,7 @@ const visitor = {
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      let returnName : string;
+      let returnName : string[] = [];
        if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
@@ -633,15 +633,26 @@ const visitor = {
             state.returnIsSecret =bindings.isSecret
           }
           }
-          returnName = node.expression.name;
+          if(node.expression.nodeType === 'TupleExpression'){
+           node.expression.components.forEach(component => {
+             if(component.name){
+              returnName?.push(component.name);
+            }
+             else
+             returnName?.push(component.value);
+           });
+         } else{
+          returnName?.push(node.expression.name);
           if(!returnName)
-          returnName = node.expression.value;
+          returnName?.push(node.expression.value);
         }
+        }
+
       });
 
-    node.parameters.forEach(node => {
+    node.parameters.forEach((node, index) => {
     if(node.nodeType === 'VariableDeclaration'){
-    node.name = returnName;
+    node.name = returnName[index];
   }
     });
     const newNode = buildNode('ParameterList');
@@ -704,11 +715,17 @@ const visitor = {
   },
 
   TupleExpression: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
-      node._newASTPointer = newNode.components;
-      parent._newASTPointer[path.containerName] = newNode;
+    if(parent.nodeType === 'Return') {
+      state.skipSubNodes = true;
+      return ;
+    } else {
+    const newNode = buildNode(node.nodeType);
+    node._newASTPointer = newNode.components;
+    parent._newASTPointer[path.containerName] = newNode;
+  }
+
     },
   },
 

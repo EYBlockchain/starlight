@@ -387,22 +387,21 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
-
-      node.returnParameters.forEach( (param:any) => {
+      node.returnParameters.forEach( (param, index) => {
 
        if(param === 'true')
-        rtnparams.push(` , ${param}`);
-       else if(param.includes('Commitment'))
-        rtnparams.push(` , 'commitment' :${param}.integer`);
+        rtnparams?.push(`  , ${param}`);
+       else if(param?.includes('Commitment'))
+        rtnparams?.push( `, ' commitment : ${param[index]}.integer ' `);
        else
-        rtnparams.push(` , ${param} :${param}.integer`);
+        rtnparams.push(` ,  ${param} :${param}.integer`);
      });
       if (params) params[params.length - 1] += `,`;
-
+     //console.log(rtnparams);
       return {
         signature: [
           `\nexport default async function ${node.name}(${params} ${states}) {`,
-          `\nreturn { tx  ${rtnparams.join('')}};
+          `\nreturn { tx ${rtnparams.join('')}};
         \n}`,
         ],
         statements: lines,

@@ -137,6 +137,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       } ${codeGenerator(node.rightExpression)}`;
 
     case 'TupleExpression':
+      if(node.components.length !== 0)
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
     case 'MsgSender':

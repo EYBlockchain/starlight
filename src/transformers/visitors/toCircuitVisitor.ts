@@ -166,7 +166,7 @@ const visitor = {
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      let returnName : string;
+      let returnName : string[] =[];
        if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
@@ -175,22 +175,38 @@ const visitor = {
        parent.body.statements.forEach(node => {
         if(node.nodeType === 'Return'){
 
-          // console.log(referencedId);
           for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
-            if(id == node.expression.referencedDeclaration) {
+            if( id == node.expression.referencedDeclaration) {
               if ((bindings instanceof VariableBinding))
             state.returnIsSecret =bindings.isSecret
+          } else {
+            node.expression.components.forEach(comp =>  {
+              if(comp.referencedDeclaration == id) {
+                if ((bindings instanceof VariableBinding))
+              state.returnIsSecret = (bindings.isSecret)
+            }
+            })
           }
           }
+          if(node.expression.nodeType === 'TupleExpression'){
+           node.expression.components.forEach(component => {
+             if(component.name){
+              returnName?.push(component.name);
+            }
+             else
+             returnName?.push(component.value);
+           });
+         } else{
           returnName = node.expression.name;
           if(!returnName)
           returnName = node.expression.value;
         }
+        }
       });
 
-    node.parameters.forEach(node => {
+    node.parameters.forEach((node, index) => {
     if(node.nodeType === 'VariableDeclaration'){
-    node.name = returnName;
+    node.name = returnName[index];
   }
     });
     const newNode = buildNode('ParameterList');
@@ -201,8 +217,10 @@ const visitor = {
   exit(path: NodePath, state: any){
     const { node, parent, scope } = path;
     if(path.key === 'returnParameters'){
-      node._newASTPointer.forEach(node =>{
+      node._newASTPointer.forEach((node) =>{
         node.isPrivate = state.returnIsSecret;
+        if(node.typeName.name === 'bool')
+        node.isPrivate = false;
       })
     }
   },
@@ -547,11 +565,10 @@ const visitor = {
 
   Literal: {
     enter(path: NodePath) {
-      const { node, parent } = path;
+      const { node, parent , parentPath } = path;
       const { value } = node;
-
       if (node.kind !== 'number')
-       if(parent.nodeType !== 'Return')
+       if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
         );

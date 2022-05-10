@@ -26,38 +26,46 @@ function codeGenerator(node: any) {
       return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
-      let functionSignature : any
+      let functionSignature : any;
+      let returnType : any[] = [];
       const body = codeGenerator(node.body);
-      let returnStatement = `return`;
-      let returnName : string;
+      let returnStatement : string[] = [];
+      let returnName : string[] = [];
       if(node.returnParameters.parameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')
-          returnName = param.name;
+          returnName.push(param.name);
         });
-      node.returnParameters.parameters.forEach( node => {
+      node.returnParameters.parameters.forEach( (node,index) => {
 
         if(node.name && node.isPrivate === true)
-         returnStatement = `return ${returnName}_newCommitment_commitment `;
+         returnStatement.push( `${returnName[index]}_newCommitment_commitment`);
 
         else if(node.name && node.isPrivate === false)
-         returnStatement = `return ${node.name} `;
+         returnStatement.push(`${node.name}`);
         else
-        returnStatement = `return ${node.name} `;
+        returnStatement.push(`${node.name}`);
         });
     }
-    if(returnStatement === `return`){
-      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
-    }else if(returnStatement.includes('true') || returnStatement.includes('false')) {
-      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> (bool):`;
-    } else {
-      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> (field):`;
+    if(returnStatement.length > 0){
+      returnStatement[0] = '('+returnStatement[0]
+      returnStatement[returnStatement.length-1] = returnStatement[returnStatement.length-1]+')'
     }
-      return `${functionSignature}
+
+    functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `
+    returnStatement.forEach( para => {
+       if(para.includes('true') || para.includes('false')) {
+         returnType.push('bool') ;
+        } else {
+           returnType.push('field') ;
+        }
+    })
+
+      return `${functionSignature}(${returnType})
 
         ${body}
 
-        ${returnStatement}
+         return ${returnStatement}
         `;
     }
 
