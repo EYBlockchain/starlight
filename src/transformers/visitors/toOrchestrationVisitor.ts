@@ -626,13 +626,7 @@ const visitor = {
       parent._newASTPointer[path.containerName] = newNode;
     } else if(path.key === 'returnParameters'){
        parent.body.statements.forEach(node => {
-        if(node.nodeType === 'Return'){
-          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
-            if(id == node.expression.referencedDeclaration) {
-              if ((bindings instanceof VariableBinding))
-            state.returnIsSecret =bindings.isSecret
-          }
-          }
+        if(node.nodeType === 'Return') {
           if(node.expression.nodeType === 'TupleExpression'){
            node.expression.components.forEach(component => {
              if(component.name){
@@ -663,9 +657,31 @@ const visitor = {
   exit(path: NodePath, state: any){
     const { node, parent, scope } = path;
     if(path.key === 'returnParameters'){
-      node._newASTPointer.forEach(node =>{
-        node.isSecret = state.returnIsSecret;
+      node._newASTPointer.forEach(item =>{
+      parent.body.statements.forEach( node => {
+        if(node.nodeType === 'Return'){
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(node.expression.nodeType === 'TupleExpression'){
+            node.expression.components.forEach(component => {
+              if(id == component.referencedDeclaration) {
+                if ((bindings instanceof VariableBinding)) {
+                  if(component.name === item.name)
+                  item.isSecret = bindings.isSecret
+                }
+              }
+            })
+          } else {
+            if( id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding)){
+               if(node.name === item.name)
+               item.isSecret = bindings.isSecret
+              }
+            }
+           }
+          }
+        }
       })
+    })
     }
   },
   },

@@ -254,19 +254,6 @@ export default {
     } else if(path.key === 'returnParameters'){
        parent.body.statements.forEach(node => {
         if(node.nodeType === 'Return'){
-          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
-            if( id == node.expression.referencedDeclaration) {
-              if ((bindings instanceof VariableBinding))
-            state.returnIsSecret =bindings.isSecret
-            } else {
-              node.expression.components.forEach(comp =>  {
-                 if(comp.referencedDeclaration == id) {
-                   if ((bindings instanceof VariableBinding))
-                    state.returnIsSecret = (bindings.isSecret)
-                  }
-              })
-            }
-          }
           if(node.expression.nodeType === 'TupleExpression'){
            node.expression.components.forEach(component => {
              if(component.name){
