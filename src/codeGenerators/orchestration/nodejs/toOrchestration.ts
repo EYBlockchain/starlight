@@ -41,27 +41,28 @@ export default function codeGenerator(node: any, options: any = {}): any {
   switch (node.nodeType) {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
-      let extraParam = ' ';
+      let returnIsSecret: string[] = [];
       const decStates = node.decrementedSecretStates;
       if(node.returnParameters.parameters) {
-
       node.returnParameters.parameters.forEach( node => {
-        if( node.isSecret === true)
-        extraParam = '_newCommitment';
+         returnIsSecret.push(node.isSecret);
        })
+     }
       node.returnParameters =
         node.returnParameters.parameters.map(codeGenerator) || [];
-        if(extraParam === '_newCommitment' ){
+        //console.log(node.returnParameters)
         node.returnParameters.forEach( (param, index) => {
-          if(decStates){
-          if(node.returnParameters[index] === decStates[index]){
-            node.returnParameters[index] = decStates[index]+'_2_newCommitment';
+          if(decStates) {
+           if(decStates?.includes(param)){
+            param = param+'_2_newCommitment';
+            console.log(param);
           }
-        } else
-          node.returnParameters[index] = param+extraParam;
+          } else if(returnIsSecret[index] === 'true')
+            param = param+'_newCommitment';
         })
-}
-    }
+console.log(node.returnParameters)
+
+
 
       const fn = OrchestrationCodeBoilerPlate(node);
       const statements = codeGenerator(node.body);
