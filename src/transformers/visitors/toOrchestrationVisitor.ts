@@ -46,7 +46,7 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
   }
   for (const dec of stateVarIndicator.decrements) {
     if (!dec.name) dec.name = dec.value;
-    if (incrementsArray.some(existingInc => dec.name === existingInc.name))
+    if (incrementsArray.some(existingInc => dec.name === existingInc.name && dec.precedingOperator === existingInc.precedingOperator))
       continue;
     incrementsArray.push({
       name: dec.name,
@@ -57,12 +57,18 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
       incrementsString += dec.value
         ? `parseInt(${dec.name}, 10)`
         : `parseInt(${dec.name}.integer, 10)`;
-    } else {
-      // if we have decrements, this str represents the value we must take away
+    } else if (!stateVarIndicator.modifyingPaths.some(p =>
+      !p.getAncestorOfType('Assignment')?.node.decrementsSecretState &&
+      p.getAncestorOfType('Assignment')?.node.id < dec.id)) {
+      // if we have decrements only, this str represents the value we must take away
       // => it's a positive value with +'s
       incrementsString += dec.value
         ? ` + parseInt(${dec.name}, 10)`
         : ` + parseInt(${dec.name}.integer, 10)`;
+    } else {
+      incrementsString += dec.value
+        ? ` ${dec.precedingOperator} parseInt(${dec.name}, 10)`
+        : ` ${dec.precedingOperator} parseInt(${dec.name}.integer, 10)`;
     }
   }
   return { incrementsArray, incrementsString };
