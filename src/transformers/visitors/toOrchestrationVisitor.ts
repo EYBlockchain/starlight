@@ -26,7 +26,7 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 
     if (inc.nodeType === 'IndexAccess') inc.name = getIndexAccessName(inc);
     if (!inc.name) inc.name = inc.value;
-    if (incrementsArray.some(existingInc => inc.name === existingInc.name))
+    if (incrementsArray.some(existingInc => inc.name === existingInc.name && inc.precedingOperator === existingInc.precedingOperator))
       continue;
     incrementsArray.push({
       name: inc.name,
