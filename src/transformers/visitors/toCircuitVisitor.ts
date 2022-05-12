@@ -183,13 +183,13 @@ const visitor = {
              returnName?.push(component.value);
            });
          } else{
-          returnName = node.expression.name;
-          if(!returnName)
-          returnName = node.expression.value;
+          if(node.expression.name)
+           returnName?.push(node.expression.name);
+          else
+          returnName?.push(node.expression.value);
         }
         }
       });
-
     node.parameters.forEach((node, index) => {
     if(node.nodeType === 'VariableDeclaration'){
     node.name = returnName[index];

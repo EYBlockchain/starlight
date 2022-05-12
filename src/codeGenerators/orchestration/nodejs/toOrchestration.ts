@@ -50,19 +50,14 @@ export default function codeGenerator(node: any, options: any = {}): any {
      }
       node.returnParameters =
         node.returnParameters.parameters.map(codeGenerator) || [];
-        //console.log(node.returnParameters)
         node.returnParameters.forEach( (param, index) => {
           if(decStates) {
            if(decStates?.includes(param)){
-            param = param+'_2_newCommitment';
-            console.log(param);
+            node.returnParameters[index] = node.returnParameters[index]+'_2_newCommitment';
           }
-          } else if(returnIsSecret[index] === 'true')
-            param = param+'_newCommitment';
+        } else if(returnIsSecret[index])
+            node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
         })
-console.log(node.returnParameters)
-
-
 
       const fn = OrchestrationCodeBoilerPlate(node);
       const statements = codeGenerator(node.body);

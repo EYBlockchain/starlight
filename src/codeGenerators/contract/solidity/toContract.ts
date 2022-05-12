@@ -69,25 +69,27 @@ function codeGenerator(node: any) {
         node.isConstructor ? 'constructor ' : 'function '
       }${node.name} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
-      let returnStatement = ` `;
+      let returnStatement: string[] = [];
       if(node.returnParameters.parameters) {
       node.returnParameters.parameters.forEach( node => {
-        if(node.name && node.isSecret === true)
-         returnStatement = `  `;
-        else if(node.name && node.isSecret === false)
-         returnStatement = `return ${node.name} `;
+        if(node.name && node.isSecret === false)
+         returnStatement.push(node.name) ;
         else if(node.value)
-        returnStatement = `return ${node.value} `;
+        returnStatement.push(node.value) ;
         });
     }
-      return `
-        ${functionSignature}
+    if(returnStatement.length > 0){
+      returnStatement[0] = 'return ('+returnStatement[0];
+      returnStatement[returnStatement.length-1] = returnStatement[returnStatement.length-1]+')'
+    }
+    return `
+      ${functionSignature}
 
-          ${body}
+        ${body}
 
-          ${returnStatement}
+        ${returnStatement}
 
-        }`;
+      }`;
     }
 
     case 'ParameterList':

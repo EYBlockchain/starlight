@@ -6,9 +6,9 @@ contract Assign {
 
   secret uint256 private a;
 
-  function add( uint256 value) public  returns (uint256) {
+  function add( uint256 value) public  returns (bool) {
     a += value;
-    return a;
+    return true;
   }
 
   function remove(secret uint256 value) public {

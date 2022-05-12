@@ -263,9 +263,10 @@ export default {
              returnName?.push(component.value);
            });
          } else{
-          returnName = node.expression.name;
-          if(!returnName)
-          returnName = node.expression.value;
+           if(node.expression.name)
+            returnName?.push(node.expression.name);
+           else
+           returnName?.push(node.expression.value);
         }
         }
       });
@@ -284,9 +285,31 @@ export default {
   exit(path: NodePath, state: any){
     const { node, parent, scope } = path;
     if(path.key === 'returnParameters'){
-      node._newASTPointer.forEach(node =>{
-        node.isSecret = state.returnIsSecret;
+      node._newASTPointer.forEach(item =>{
+      parent.body.statements.forEach( node => {
+        if(node.nodeType === 'Return'){
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(node.expression.nodeType === 'TupleExpression'){
+            node.expression.components.forEach(component => {
+              if(id == component.referencedDeclaration) {
+                if ((bindings instanceof VariableBinding)) {
+                  if(component.name === item.name)
+                  item.isSecret = bindings.isSecret
+                }
+              }
+            })
+          } else {
+            if( id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding)){
+               if(node.name === item.name)
+               item.isSecret = bindings.isSecret
+              }
+            }
+           }
+          }
+        }
       })
+    })
     }
   },
   },

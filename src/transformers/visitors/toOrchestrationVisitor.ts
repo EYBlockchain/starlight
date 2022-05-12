@@ -636,9 +636,10 @@ const visitor = {
              returnName?.push(component.value);
            });
          } else{
-          returnName?.push(node.expression.name);
-          if(!returnName)
-          returnName?.push(node.expression.value);
+           if(node.expression.name)
+            returnName?.push(node.expression.name);
+           else
+           returnName?.push(node.expression.value);
         }
         }
 

@@ -36,15 +36,20 @@ function codeGenerator(node: any) {
           if(param.bpType === 'newCommitment')
           returnName.push(param.name);
         });
-      node.returnParameters.parameters.forEach( (node,index) => {
+      node.returnParameters.parameters.forEach( (node) => {
+        if(node.typeName.name === 'bool')
+          returnStatement.push(`${node.name}`);
+        else {
 
-        if(node.name && node.isPrivate === true)
+        if( node.isPrivate === true){
+         returnName.forEach( (name, index) => {
+          if(name.includes(node.name))
          returnStatement.push( `${returnName[index]}_newCommitment_commitment`);
-
-        else if(node.name && node.isPrivate === false)
-         returnStatement.push(`${node.name}`);
+         })
+        }
         else
-        returnStatement.push(`${node.name}`);
+         returnStatement.push(`${node.name}`);
+        }
         });
     }
     if(returnStatement.length > 0){
