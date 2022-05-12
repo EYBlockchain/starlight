@@ -52,11 +52,6 @@ function codeGenerator(node: any) {
         }
         });
     }
-    if(returnStatement.length > 0){
-      returnStatement[0] = '('+returnStatement[0]
-      returnStatement[returnStatement.length-1] = returnStatement[returnStatement.length-1]+')'
-    }
-
     functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `
     returnStatement.forEach( para => {
        if(para.includes('true') || para.includes('false')) {
