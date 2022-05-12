@@ -77,7 +77,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'VariableDeclarationStatement': {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
-      if (node.initialValue.nodeType === 'Assignment') {
+      if (node.initialValue?.nodeType === 'Assignment') {
         if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
           return `${getAccessedValue(
             node.declarations[0].name,
@@ -86,6 +86,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
         return `${getPublicValue(node.declarations[0])}`
+      } else if (node.declarations[0].isAccessed) {
+        return `${getAccessedValue(node.declarations[0].name)}`;
       }
 
       if (
@@ -135,6 +137,15 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'TupleExpression':
       if(node.components.length !== 0)
       return `(${node.components.map(codeGenerator).join(` `)})`;
+
+
+    case 'IfStatement': {
+        return `if (${codeGenerator(node.condition)}) {
+          ${node.trueBody.flatMap(codeGenerator).join('\n')}
+        } else {
+          ${node.falseBody.flatMap(codeGenerator).join('\n')}
+        }`
+      }
 
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here

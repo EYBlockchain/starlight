@@ -156,6 +156,24 @@ function codeGenerator(node: any) {
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
+    case 'IfStatement':
+      let trueStatements: any = ``;
+      let falseStatements: any= ``;
+      let initialStatements: any= ``;
+      initialStatements+= `
+        // if statements start , copies over left expression variable to temporary variable
+        field ${codeGenerator(node.condition.leftExpression)}_temp = ${codeGenerator(node.condition.leftExpression)}`;
+      node.condition.leftExpression.name+= '_temp';
+      for (let i =0; i<node.trueBody.length; i++) {
+        trueStatements+= `
+        ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${codeGenerator(node.trueBody[i].expression.leftHandSide)} fi`
+      }
+      for (let j =0; j<node.falseBody.length; j++) {
+        falseStatements+= `
+        ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.leftHandSide)} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)} fi`
+      }
+      return initialStatements + trueStatements + falseStatements;
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 

@@ -60,6 +60,7 @@ export default class MappingKey {
   isPartitionedReason?: {}[];
 
   reinitialisable?: boolean;
+  initialisationRequired?: boolean;
   isOwned?: boolean;
   mappingOwnershipType?: string;
   onChainKeyRegistry?: boolean;

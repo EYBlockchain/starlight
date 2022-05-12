@@ -3,6 +3,7 @@ const fs = require('fs');
 const Pairing = artifacts.require("Pairing");
 const Verifier = artifacts.require("Verifier");
 CUSTOM_CONTRACT_IMPORT
+CUSTOM_PROOF_IMPORT
 const CONTRACT_NAME = artifacts.require("CONTRACT_NAME");
 const functionNames = [FUNCTION_NAMES];
 const vkInput = [];
@@ -20,6 +21,6 @@ module.exports = deployer => {
     await deployer.link(Pairing, Verifier);
     await deployer.deploy(Verifier);
     CUSTOM_CONTRACTS
-    await deployer.deploy(CONTRACT_NAME, CUSTOM_INPUTS Verifier.address, vkInput);
+    await deployer.deploy(CONTRACT_NAME, CUSTOM_INPUTS Verifier.address, vkInput CUSTOM_PROOF);
   });
 };
