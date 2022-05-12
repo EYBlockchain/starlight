@@ -137,7 +137,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'TupleExpression':
       if(node.components.length !== 0)
       return `(${node.components.map(codeGenerator).join(` `)})`;
-
+      return ` `;
 
     case 'IfStatement': {
         return `if (${codeGenerator(node.condition)}) {
