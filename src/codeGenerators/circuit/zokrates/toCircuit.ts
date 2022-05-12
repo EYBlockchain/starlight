@@ -31,7 +31,7 @@ function codeGenerator(node: any) {
       const body = codeGenerator(node.body);
       let returnStatement : string[] = [];
       let returnName : string[] = [];
-      if(node.returnParameters.parameters) {
+      if(node.returnParameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')
           returnName.push(param.name);
