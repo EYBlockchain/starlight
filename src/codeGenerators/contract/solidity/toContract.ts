@@ -70,7 +70,7 @@ function codeGenerator(node: any) {
       }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
       let returnStatement: string[] = [];
-      if(node.returnParameters.parameters) {
+      if(node.returnParameters) {
       node.returnParameters.parameters.forEach( node => {
         if(node.name && node.isSecret === false)
          returnStatement.push(node.name) ;
@@ -170,7 +170,7 @@ function codeGenerator(node: any) {
       const semicolon = expression === 'require' ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
     }
-     
+
     case 'IfStatement':
       return `if (${codeGenerator(node.condition)})
           ${codeGenerator(node.trueBody.statements[0].expression)}
