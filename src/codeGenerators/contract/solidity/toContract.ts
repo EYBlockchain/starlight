@@ -70,7 +70,7 @@ function codeGenerator(node: any) {
       }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
       let returnStatement: string[] = [];
-      if(node.returnParameters.parameters) {
+      if(node.returnParameters) {
       node.returnParameters.parameters.forEach( node => {
         if(node.name && node.isSecret === false)
          returnStatement.push(node.name) ;
