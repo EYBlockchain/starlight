@@ -19,7 +19,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.nodeType !== 'Identifier') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
-  if(thisPath.parent.nodeType === 'Return' || thisPath.parentPath.parent.nodeType === 'Return') {
+  if(thisPath.getAncestorOfType('Return')) {
   thisPath.container.forEach(item => {
     if(item.kind === 'bool'){
       thisState.customInputs ??= [];
