@@ -16,19 +16,18 @@ const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
 const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
-
   if (thisPath.nodeType !== 'Identifier') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
   if(thisPath.parent.nodeType === 'Return' || thisPath.parentPath.parent.nodeType === 'Return') {
-  if( binding instanceof VariableBinding && binding.isSecret && indicator.isDecremented){
+  if( binding instanceof VariableBinding && binding.isSecret){
      thisState.customInputs ??= [];
-      thisState.customInputs.push(indicator.name+'_2_newCommitment');
+      thisState.customInputs.push('newCommitment['+(thisState.variableName.indexOf(indicator.name)+1)+']');
   }
-  if( binding instanceof VariableBinding && binding.isSecret && !indicator.isDecremented){
-     thisState.customInputs ??= [];
-      thisState.customInputs.push(indicator.name+'_newCommitment');
-  }
+  // if( binding instanceof VariableBinding && binding.isSecret && !indicator.isDecremented){
+  //    thisState.customInputs ??= [];
+  //     thisState.customInputs.push(indicator.name+'_newCommitment');
+  // }
   else if( binding instanceof VariableBinding && ! binding.isSecret){
      thisState.customInputs ??= [];
     // if (!thisState.customInputs.some((input: string) => input === indicator.name))
@@ -461,7 +460,7 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state : any) {
       const { node, parent } = path;
 
       if (path.isFunctionReturnParameterDeclaration())
@@ -473,6 +472,8 @@ export default {
       // TODO: `memery` declarations and `returnParameter` declarations
       if (node.stateVariable) {
         declarationType = 'state'; // not really needed, since we already have 'stateVariable'
+        state.variableName ??= [];
+        state.variableName.push(node.name);
       } else if (path.isLocalStackVariableDeclaration()) {
         declarationType = 'localStack';
       } else if (path.isFunctionParameterDeclaration()) {

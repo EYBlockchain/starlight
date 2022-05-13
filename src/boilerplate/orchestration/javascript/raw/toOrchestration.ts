@@ -392,7 +392,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       }
 
       node.returnParameters.forEach( (param, index) => {
-
        if(param === 'true')
         rtnparams?.push(`   ${param}`);
        else if(param?.includes('Commitment'))
