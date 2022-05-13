@@ -69,26 +69,12 @@ function codeGenerator(node: any) {
         node.isConstructor ? 'constructor ' : `function ${node.name}`
       }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
-      let returnStatement: string[] = [];
-      if(node.returnParameters) {
-      node.returnParameters.parameters.forEach( node => {
-        if(node.name && node.isSecret === false)
-         returnStatement.push(node.name) ;
-        else if(!node.isSecret)
-        returnStatement.push(node.name) ;
-        });
-    }
-    if(returnStatement.length > 0){
-      returnStatement[0] = 'return ('+returnStatement[0];
-      returnStatement[returnStatement.length-1] = returnStatement[returnStatement.length-1]+');'
-    }
+
+
     return `
       ${functionSignature}
 
         ${body}
-
-        ${returnStatement}
-
       }`;
     }
 

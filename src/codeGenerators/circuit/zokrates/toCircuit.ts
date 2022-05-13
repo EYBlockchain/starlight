@@ -47,11 +47,10 @@ function codeGenerator(node: any) {
          returnStatement.push( `${returnName[index]}_newCommitment_commitment`);
          })
         }
-        else
-         returnStatement.push(`${node.name}`);
         }
         });
     }
+
     functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `
     returnStatement.forEach( para => {
        if(para.includes('true') || para.includes('false')) {

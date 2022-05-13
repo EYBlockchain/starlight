@@ -392,10 +392,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       }
 
       node.returnParameters.forEach( (param, index) => {
+
        if(param === 'true')
-        rtnparams?.push(`   ${param}`);
+        rtnparams?.push(` ${param}:  ${param}`);
        else if(param?.includes('Commitment'))
-        rtnparams?.push( `  commitment : ${param}.integer  `);
+        rtnparams?.push( ` commitment : ${param}.integer  `);
        else
         rtnparams.push(`   ${param} :${param}.integer`);
      });
