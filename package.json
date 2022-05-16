@@ -5,7 +5,7 @@
   "main": "bin/index.mjs",
   "scripts": {
     "write-vk": "node /app/write-vk.mjs -i assign",
-    "test": "mocha", 
+    "test": "mocha",
     "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs",
     "test-prelim-lite": "mocha --require @babel/register ./test/prelim-traversals/index.mjs",
     "format": "prettier --write \"**/*.{json,css,scss,md}\"",
