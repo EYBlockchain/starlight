@@ -733,17 +733,6 @@ const visitor = {
             });
           }
           if (stateVarIndicator.isModified) {
-            if (stateVarIndicator.isWhole) {
-              // if we have a modified whole state, we must generalise it before postStatements
-              node._newASTPointer.body.statements.push(
-                buildNode('Assignment', {
-                    leftHandSide: buildNode('Identifier', { name }),
-                    operator: '=',
-                    rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
-                  }
-                )
-              );
-            }
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -1002,18 +991,20 @@ const visitor = {
       const newState: any = {};
       path.traversePathsFast(interactsWithSecretVisitor, newState);
       const { interactsWithSecret } = newState;
+      let indicator;
+      let name;
       // we mark this to grab anything we need from the db / contract
       state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
       if (node.expression.nodeType === 'Assignment') {
         let { leftHandSide: lhs } = node.expression;
-        const indicator = scope.getReferencedIndicator(lhs, true);
+        indicator = scope.getReferencedIndicator(lhs, true);
 
         if (indicator.isMapping) {
           lhs = lhs.baseExpression;
         }
 
-        const name = indicator.isMapping
+        name = indicator.isMapping
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
@@ -1095,12 +1086,28 @@ const visitor = {
     exit(path: NodePath, state: any) {
       const { node, scope } = path;
       const { leftHandSide: lhs } = node.expression;
+      const indicator = scope.getReferencedIndicator(lhs, true);
       // reset
       delete state.interactsWithSecret;
-      if (path.node._newASTPointer?.incrementsSecretState) {
-        const indicator = scope.getReferencedIndicator(lhs, true);
+      if (node._newASTPointer?.incrementsSecretState) {
         const increments = collectIncrements(indicator).incrementsString;
         path.node._newASTPointer.increments = increments;
+      } else if (indicator?.isWhole && node._newASTPointer) {
+        const name = indicator.isMapping
+          ? indicator.name
+              .replace('[', '_')
+              .replace(']', '')
+              .replace('.sender', '')
+          : indicator.name;
+        // we add a general number statement after each whole state edit
+        path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
+          buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', { name }),
+              operator: '=',
+              rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
+            }
+          )
+        );
       }
     },
   },
