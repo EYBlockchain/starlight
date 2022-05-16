@@ -16,12 +16,13 @@ const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
 const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
-  if (thisPath.nodeType !== 'Identifier') return;
+  if (thisPath.nodeType !== 'Identifier' && thisPath.nodeType !== 'Return') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+
   if(thisPath.getAncestorOfType('Return')) {
   thisPath.container.forEach(item => {
-    if(item.kind === 'bool'){
+    if(item.kind === 'bool'|| item.expression.kind === 'bool'){
       thisState.customInputs ??= [];
       thisState.customInputs.push(1);
     }
@@ -32,11 +33,11 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
       thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
   }
 
-  else if( binding instanceof VariableBinding && ! binding.isSecret){
-     thisState.customInputs ??= [];
-    // if (!thisState.customInputs.some((input: string) => input === indicator.name))
-      thisState.customInputs.push(indicator.name);
-  }
+  // else if( binding instanceof VariableBinding && ! binding.isSecret){
+  //    thisState.customInputs ??= [];
+  //   // if (!thisState.customInputs.some((input: string) => input === indicator.name))
+  //     thisState.customInputs.push(indicator.name);
+  // }
   }
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
