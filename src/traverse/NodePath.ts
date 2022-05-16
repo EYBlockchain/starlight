@@ -436,7 +436,7 @@ export default class NodePath {
       'trueExpression', // a conditional requires value accessing
       'falseExpression',
       'indexExpression', // as arg
-      'subExpression',
+      // 'subExpression', // removing subExpression as can be considered lhs
       'rightExpression',
       'arguments', // a value used as an arg needs to be accessed
     ];
@@ -886,7 +886,7 @@ export default class NodePath {
         // prettier-ignore
         return (
             this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
-            this.getLhsAncestor(true) && !this.queryAncestors(path => path.containerName === 'condition')
+            this.getLhsAncestor(true) && !this.getRhsAncestor(true) && !this.queryAncestors(path => path.containerName === 'condition')
           );
       default:
         return false;

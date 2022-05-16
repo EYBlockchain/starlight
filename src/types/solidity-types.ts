@@ -344,6 +344,13 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         typeName,
       };
     }
+    case 'ArrayTypeName': {
+      const { baseType = {} } = fields;
+      return {
+        nodeType,
+        baseType,
+      };
+    }
     case 'StructDefinition': {
       const { name, members = []} = fields;
       return {

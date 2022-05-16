@@ -628,7 +628,39 @@ export class Scope {
   }
 
   /**
-   * Gets a mapping's indicator object for a particular key.
+   * Gets a mapping key name for an identifier (not nec. an index access node).
+   * @param {Object} - the possible mapping key's identifier.
+   * @returns {String} - the name under which the mapping[key]'s indicator is stored
+   */
+  getIdentifierMappingKeyName(identifierNode: any, forceNotModification = false): any {
+    const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
+    const modPaths = this.getReferencedIndicator(identifierNode)?.modifyingPaths;
+    const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
+
+    if (refPaths[thisIndex].key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess')?.node);
+
+    let { name } = identifierNode;
+
+    for (let i = thisIndex; i < refPaths?.length; i++) {
+      if (refPaths[i].key === 'indexExpression') {
+        if (refPaths[thisIndex].isModification() && !forceNotModification) {
+          name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess')?.node);
+          break;
+        } else {
+          for (let j = i - 1; j >= 0; j--) {
+            if (refPaths[j].key === 'indexExpression') {
+                name = this.getMappingKeyName(refPaths[j].getAncestorOfType('IndexAccess')?.node);
+                break;
+              }
+          }
+        }
+      }
+    }
+    return name;
+  }
+
+  /**
+   * Gets a mapping's indicator name for a particular key.
    * @param {Object} - the mapping's index access node.
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */

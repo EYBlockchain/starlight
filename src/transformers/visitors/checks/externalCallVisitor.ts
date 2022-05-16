@@ -50,6 +50,11 @@ export default {
             `We cannot support external function calls with secret arguments - they can't be hidden due to the nature of the blockchain`,
             node,
           );
+        if (node.kind === 'functionCall' && node.expression.memberName === 'push')
+          throw new ZKPError(
+            `We cannot support secret arrays being pushed to. There is no way to prove which is the last filled index, since different people may own the values at different indices. Consider using a mapping with a specific index.`,
+            node,
+          );
         if (node.kind === 'functionCall')
           throw new TODOError(
             `Internal function calls involving secret states. We plan to suppport these (by having Zokraes circuits call other circuits) in the near future.`,

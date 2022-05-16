@@ -15,11 +15,11 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const { node } = thisPath;
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
   if (thisPath.isRequireStatement(node)) return;
-  // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
-  thisState.skipSubNodes = true;
+
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
+
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
@@ -28,15 +28,19 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
     binding.stateVariable && !binding.isSecret &&
-    // if the node is the indexExpression, we dont need its value in the circuit
-    !(thisPath.containerName === 'indexExpression')
+    // if the node is the indexExpression, we dont need its value in the circuit unless its a public state variable
+    !(thisPath.containerName === 'indexExpression' && !binding.stateVariable)
   ) {
     // TODO other types
-    if (thisPath.isMapping)
+    if (thisPath.isMapping || thisPath.isArray)
       name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+    if (thisPath.containerName === 'indexExpression')
+      name = binding.getMappingKeyName(thisPath)
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition').node;
     fnDefNode._newASTPointer.parameters.parameters.push(parameterNode);
+    // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
+    thisState.skipSubNodes = true;
   }
 };
 
@@ -498,12 +502,13 @@ const visitor = {
   Identifier: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      const { name } = node;
+      let { name } = node;
       // const binding = path.getReferencedBinding(node);
       // below: we have a public state variable we need as a public input to the circuit
       // local variable decs and parameters are dealt with elsewhere
       // secret state vars are input via commitment values
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
+      name = path.scope.getIdentifierMappingKeyName(node);
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       if (Array.isArray(parent._newASTPointer[path.containerName])) {
