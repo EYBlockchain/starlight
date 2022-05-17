@@ -207,7 +207,7 @@ const visitor = {
                 }
               })
             }
-           if(!circuitImport[index]){
+           else if(circuitImport[index] === 'false'){
              let newExpressionList = [];
              file.nodes.forEach(childNode => {
                if(childNode.nodeType === 'FunctionDefinition'){

@@ -90,7 +90,7 @@ function codeGenerator(node: any) {
 
     case 'ExpressionStatement': {
       if(!node.expression.circuitImport){
-      return codeGenerator(node.expression);  
+      return codeGenerator(node.expression);
       }
       if (node.isVarDec) {
         return `
@@ -99,11 +99,13 @@ function codeGenerator(node: any) {
       return codeGenerator(node.expression);
     }
     case 'InternalFunctionCall': {
-    if(node.internalFunctionInteractsWithSecret &&  node.CircuitArguments.length) // Add sameState
-    return ` assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
-    if(node.internalFunctionInteractsWithSecret &&  !(node.CircuitArguments.length))
-    return ` `;
-}
+     if(node.internalFunctionInteractsWithSecret) {
+      if(node.CircuitArguments.length)
+       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+      else
+       return ``;
+      }
+    }
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
