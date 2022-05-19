@@ -5,9 +5,10 @@ import { buildNode } from '../../types/zokrates-types.js';
 import { TODOError } from '../../error/errors.js';
 import { traversePathsFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
-//import getAllPrevSiblingNodes from '../../traverse/NodePath.js';
+import explode from './explode.js';
+import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-import { StateVariableIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
+import { StateVariableIndicator, FunctionDefinitionIndicator} from '../../traverse/Indicator.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -42,6 +43,45 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
 };
 
+let interactsWithSecret = false; // Added globaly as two objects are accesing it
+let oldStateArray : string[];
+let circuitImport = [];
+// to match the parameters and if they don't match, we throw an error
+const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
+  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
+    thisState.interactsWithSecret = true;
+};
+
+const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
+ const { node, scope } = thisPath;
+  const args = node.arguments;
+  let parametercheck = true ;
+  let isSecretArray : string[];
+  for (const arg of args) {
+    if (arg.nodeType !== 'Identifier') continue;
+  isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+}
+if(node.expression.nodeType === 'Identifier') {
+ const functionReferncedNode = scope.getReferencedNode(node.expression);
+ const params = functionReferncedNode.parameters.parameters;
+ oldStateArray = params.map(param => (param.name) );
+ for (const [index, param] of params.entries()) {
+   if(isSecretArray[index] !== param.isSecret)
+   parametercheck = false;
+ }
+ const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
+ if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
+ thisState.internalFunctionInteractsWithSecret = true;
+  }
+  if(!fnIndicator.internalFunctionInteractsWithSecret){
+      if(params.some(node => node.isSecret))
+      {
+      thisState.internalFunctionInteractsWithSecret = true; }
+  }
+}
+};
+
+
 
 
 
@@ -52,47 +92,6 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
  * repo's code generator. ZoKrates itself will not be able to interpret this
  * AST.
  */
- let interactsWithSecret = false; // Added globaly as two objects are accesing it
- let oldStateArray : string[];
- //let newStateArray : string [];
- //let internalFncName = [];
-// let callingFncName = [];
- //let newParameterList = [];
- let circuitImport = [];
- // to match the parameters and if they don't match, we throw an error
- const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
-   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
-     thisState.interactsWithSecret = true;
- };
-
- const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
-  const { node, scope } = thisPath;
-   const args = node.arguments;
-   let parametercheck = true ;
-   let isSecretArray : string[];
-   for (const arg of args) {
-     if (arg.nodeType !== 'Identifier') continue;
-   isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
- }
-if(node.expression.nodeType === 'Identifier') {
-  const functionReferncedNode = scope.getReferencedNode(node.expression);
-  const params = functionReferncedNode.parameters.parameters;
-  oldStateArray = params.map(param => (param.name) );
-  for (const [index, param] of params.entries()) {
-    if(isSecretArray[index] !== param.isSecret)
-    parametercheck = false;
-  }
-  const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
-  if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
-  thisState.internalFunctionInteractsWithSecret = true;
-   }
-   if(!fnIndicator.internalFunctionInteractsWithSecret){
-       if(params.some(node => node.isSecret))
-       {
-       thisState.internalFunctionInteractsWithSecret = true; }
-   }
-}
-};
 
 
 const visitor = {
@@ -104,141 +103,9 @@ const visitor = {
   // We Add the InternalFunctionCall nodes at the exit node so that all others gets build we need to access
     exit(path: NodePath, state: any) {
 
-      // Find the Internal Function Node,
-      const { node, parent } = path;
-      node._newASTPointer.forEach(file => {
-       state.internalFncName?.forEach( name => {
-         if(file.fileName === name) {
-           let index = state.internalFncName.indexOf(name);
-           if(circuitImport[index]==='true') {
-             file.nodes.forEach(childNode => {
-               if(childNode.nodeType === 'FunctionDefinition'){
-                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
-                 node._newASTPointer.forEach(file => {
-                   if(file.fileName === state.callingFncName[index]){
-                     file.nodes.forEach(childNode => {
-                       if(childNode.nodeType === 'FunctionDefinition'){
-                         let callParameterList = cloneDeep(childNode.parameters.parameters);
-                        }
-                      })
-                    }
-                  })
-                  state.newParameterList.forEach(node => {
-                   if(node.nodeType === 'Boilerplate') {
-                     for(const [index, oldStateName] of  oldStateArray.entries()) {
-                       node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[index])
-                       if(node.newCommitmentValue === oldStateName)
-                        node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[index])
-                       if(node.mappingKeyName === oldStateName)
-                        node.mappingKeyName = node.mappingKeyName.replace(oldStateName, state.newStateArray[index])
-                      }
-                    }
-                    if(node.nodeType === 'VariableDeclaration'){
-                      for(const [index, oldStateName] of oldStateArray.entries()) {
-                        node.name = node.name.replace(oldStateName, state.newStateArray[index])
-                      }
-                    }
-                  })
-                }
-              })
 
-// Collect the internal call ParameterList
-             let internalFncParameters = [];
-             state.newParameterList.forEach(node => {
-               switch(node.bpType) {
-                  case 'PoKoSK' :{
-                    internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`)
-                    break;
-                  };
-                  case 'nullification' : {
-                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
-                   internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
-                   break;
-                  };
-                  case 'oldCommitmentPreimage' : {
-                   internalFncParameters.push(`${node.name}_oldCommitment_value`) ;
-                   internalFncParameters.push(`${node.name}_oldCommitment_salt`);
-                   break;
-                  };
-                 case 'oldCommitmentExistence' :{
-                   if (node.isWhole && !(node.isAccessed && !node.isNullified))
-                   internalFncParameters.push(`${node.name}_oldCommitment_isDummy`);
-                   internalFncParameters.push(`commitmentRoot`) ;
-                   internalFncParameters.push(`${node.name}_oldCommitment_membershipWitness_index`) ;
-                   internalFncParameters.push(`${node.name}_oldCommitment_membershipWitness_siblingPath`);
-                   break;
-                  };
-                 case 'newCommitment' : {
-                   internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
-                   internalFncParameters.push(`${node.name}_newCommitment_salt`) ;
-                   internalFncParameters.push(`${node.name}_newCommitment_commitment`);
-                   break;
-                  };
-                 case 'mapping' :
-                   internalFncParameters.push(`${node.mappingKeyName}`);
-                  break;
-                }
-              })
-             internalFncParameters =  state.newStateArray.concat(internalFncParameters);
-             // to remove duplicates from the parameters
-             internalFncParameters.forEach(param => {
-               if (!state.circuitArguments?.includes(param)) {
-                 state.circuitArguments ??= [];
-                 state.circuitArguments.push(param);
-                }
-              });
-
-             node._newASTPointer.forEach(file => {
-               if(file.fileName === state.callingFncName[index]){
-                 file.nodes.forEach(childNode => {
-                   if(childNode.nodeType === 'FunctionDefinition'){
-                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
-                     childNode.body.statements.forEach(node => {
-                       if(node.nodeType === 'ExpressionStatement') {
-                         if(node.expression.nodeType === 'InternalFunctionCall' && node.expression.name === name){
-                           node.expression.CircuitArguments = node.expression.CircuitArguments.concat(state.circuitArguments);
-                           state.circuitArguments = [];
-                          }
-                        }
-                      })
-                    }
-                  })
-                 index++;
-                }
-              })
-            }
-           else if(circuitImport[index] === 'false'){
-             let newExpressionList = [];
-             file.nodes.forEach(childNode => {
-               if(childNode.nodeType === 'FunctionDefinition'){
-                 childNode.body.statements.forEach(node => {
-                   if(node.nodeType === 'ExpressionStatement') {
-                     if(node.expression.nodeType === 'Assignment') {
-                       let  expressionList = cloneDeep(node);
-                       for(const [index, oldStateName] of  oldStateArray.entries()) {
-                         if(node.expression.rightHandSide.rightExpression.name === oldStateName)
-                          expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[index])
-                         if(node.expression.leftHandSide.name === oldStateName)
-                          expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, state.newStateArray[index])
-                        }
-                       newExpressionList = newExpressionList.concat(expressionList);
-                      }
-                    }
-                  });
-                }
-              })
-              node._newASTPointer.forEach(file => {
-               if(file.fileName === state.callingFncName[index]) {
-                 file.nodes.forEach(childNode => {
-                   if(childNode.nodeType === 'FunctionDefinition')
-                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
-                  })
-                }
-              })
-            }
-          }
-        })
-      })
+      // Internal Call Visitor
+      path.traverse(explode(internalCallVisitor), state);
     },
   },
 
