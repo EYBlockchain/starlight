@@ -149,7 +149,8 @@ export default {
         ...buildNode('ContractBoilerplate', {
           bpSection: 'verify',
           scope,
-        }),
+          circuitParams: state.circuitParams,
+        })
       );
       contractNodes.unshift(
         ...buildNode('ContractBoilerplate', {
@@ -216,7 +217,7 @@ export default {
   },
 
   FunctionDefinition: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
       const newNode = buildNode('FunctionDefinition', {
@@ -228,6 +229,13 @@ export default {
 
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+
+      if (!path.containsSecret) return;
+      const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
+      const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
+
+      state.circuitParams ??= {};
+      state.circuitParams[path.getUniqueFunctionName()] = circuitParams;
     },
 
     exit(path: NodePath, state: any) {

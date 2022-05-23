@@ -75,8 +75,10 @@ class FunctionBoilerplateGenerator {
           [`
           inputs.customInputs = new uint[](${customInputs.length});
         	${customInputs.map((name: string, i: number) => {
-            if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
-            return `inputs.customInputs[${i}] = ${name};`;
+            if (customInputs[i] === 'msgSender') return `
+          inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
+            return `
+          inputs.customInputs[${i}] = ${name};`;
           }).join('\n')}`]
           : []),
 

@@ -29,7 +29,7 @@ export default class MappingKey {
   nullificationCount: number = 0;
   nullifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which nullify this binding
   isBurned?: boolean;
-  burningPaths: NodePath[];
+  burningPaths: NodePath[] = [];
 
   container: any;
   referencedKeyId: number;
