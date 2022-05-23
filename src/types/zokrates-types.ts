@@ -74,21 +74,23 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, isSecret: isPrivate = false, declarationType } = fields;
+      const { name, type, isSecret: isPrivate = false, interactsWithSecret, declarationType } = fields;
       return {
         nodeType,
         name,
         isPrivate, // 'private' to match zokrates keyword
+        interactsWithSecret,
         declarationType,
         typeName: buildNode('ElementaryTypeName', { name: type }),
       };
     }
     case 'VariableDeclarationStatement': {
-      const { declarations = [], initialValue = {} } = fields;
+      const { declarations = [], initialValue = {}, interactsWithSecret } = fields;
       return {
         nodeType,
         declarations,
         initialValue,
+        interactsWithSecret,
       };
     }
     case 'BinaryOperation': {
@@ -159,6 +161,33 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         subExpression,
       };
     }
+    case 'IfStatement': {
+      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueBody,
+        falseBody,
+      }
+    }
+    case 'TypeConversion': {
+      const { type, expression = {}, args = {} } = fields;
+      return {
+        nodeType,
+        type,
+        arguments: args,
+        expression,
+      };
+    }
+    case 'UnaryOperation': {
+      const { operator, prefix, subExpression = {} } = fields;
+      return {
+        nodeType,
+        operator,
+        prefix,
+        subExpression,
+      };
+    }
     case 'MsgSender': {
       return {
         nodeType,
@@ -184,6 +213,31 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         name,
       };
+    }
+    case 'InternalFunctionCall': {
+      const { name, internalFunctionInteractsWithSecret = false, oldStateName = [], newStateName =[], CircuitArguments = [],circuitImport = false} = fields;
+      return{
+        nodeType,
+        name,
+        internalFunctionInteractsWithSecret,
+        oldStateName,
+        newStateName,
+        CircuitArguments,
+        circuitImport,
+      };
+
+    }
+    case 'InternalFunctionBoilerplate':{
+      const { name, internalFunctionInteractsWithSecret = false,circuitImport = false} = fields;
+      return{
+        nodeType: 'Boilerplate',
+        bpSection: 'importStatements',
+        bpType: 'internalFunctionCall',
+        name,
+        internalFunctionInteractsWithSecret,
+        circuitImport,
+      };
+
     }
     case 'Assert': {
       // A very specific zokrates nodeType, which is similar to a Solidity 'require' statement. It asserts a truth.

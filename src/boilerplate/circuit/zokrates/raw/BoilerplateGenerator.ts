@@ -338,6 +338,14 @@ class BoilerplateGenerator {
       ];
     },
   };
+  internalFunctionCall = {
+    importStatements( { name: x , circuitImport} ): string[] {
+      if(circuitImport){
+        return [`from "./${x}.zok" import main as ${x} `];
+       }
+       return [];
+    },
+  };
 }
 
 export default BoilerplateGenerator;
