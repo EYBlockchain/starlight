@@ -183,13 +183,12 @@ class ContractBoilerplateGenerator {
           if (functionId == uint(FunctionNames.${name})) {
             uint k = 0;
             ${inputs.map(i => verifyInputsMap(i, counter)).join('')}
+            inputs[k++] = 1;
           }`)
       }
 
       const verification: string[] = [
         `
-          inputs[k++] = 1;
-
           bool result = verifier.verify(proof, inputs, vks[functionId]);`,
 
       	`
