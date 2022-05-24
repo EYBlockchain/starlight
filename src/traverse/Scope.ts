@@ -634,24 +634,24 @@ export class Scope {
    */
   getIdentifierMappingKeyName(identifierNode: any, forceNotModification = false): any {
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
-    const modPaths = this.getReferencedIndicator(identifierNode)?.modifyingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
 
     if (refPaths[thisIndex].key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess')?.node);
 
     let { name } = identifierNode;
 
+    // we find the next indexExpression after this identifier
     for (let i = thisIndex; i < refPaths?.length; i++) {
-      if (refPaths[i].key === 'indexExpression') {
-        if (refPaths[thisIndex].isModification() && !forceNotModification) {
-          name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess')?.node);
-          break;
-        } else {
-          for (let j = i - 1; j >= 0; j--) {
-            if (refPaths[j].key === 'indexExpression') {
-                name = this.getMappingKeyName(refPaths[j].getAncestorOfType('IndexAccess')?.node);
-                break;
-              }
+      if (refPaths[i].key !== 'indexExpression') continue;
+      if (refPaths[thisIndex].isModification() && !forceNotModification) {
+        name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess')?.node);
+        break;
+        // if this identifier is not a modification, we need the previous indexExpression
+      } else {
+        for (let j = i - 1; j >= 0; j--) {
+          if (refPaths[j].key === 'indexExpression') {
+            name = this.getMappingKeyName(refPaths[j].getAncestorOfType('IndexAccess')?.node);
+            return name;
           }
         }
       }

@@ -789,20 +789,17 @@ const visitor = {
           lhs = lhs.expression;
         }
 
+        // check whether this statement should be init separately in the constructor
         const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
 
-        const firstInstanceOfNewName = indicator.modifyingPaths.find(p => scope.getIdentifierMappingKeyName(p.node) !== p.node.name)?.node;
-        console.log('firstInstanceOfNewName');
-        console.log(firstInstanceOfNewName);
-        console.log('this node');
-        console.log(lhs);
+        // collect all index names
+        const names = indicator.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
 
-        // TEST THIS DOESNT MESS UP
-        const firstEdit = ( firstInstanceOfNewName === lhs && indicator.interactsWithSecret) || (indicator.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole);
+        // check whether this is the first instance of a new index name
+        const firstInstanceOfNewName = names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
 
-        console.log(`firstEdit: ${firstEdit}`);
-        console.log(indicator.isWhole);
-        console.log(!requiresConstructorInit);
+        // check whether this should be a VariableDeclaration
+        const firstEdit = ( firstInstanceOfNewName && indicator.interactsWithSecret) || (indicator.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole);
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
