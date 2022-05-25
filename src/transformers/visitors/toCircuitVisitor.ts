@@ -128,14 +128,18 @@ const visitor = {
     enter(path: NodePath, state: any) {
 
       const { node, parent, scope } = path;
+      let modifierStatements = [];
       if(node.modifiers.length>0) {
         let modifiersLIst =  path.getAllPrevSiblingNodes().filter((x: any) => x.nodeType == 'ModifierDefinition');
-        for(var i =0; i<modifiersLIst.length; i++) {
-        if(node.modifiers[0].modifierName.name == modifiersLIst[i].name)
-        node.modifiers.statements = modifiersLIst[i].body.statements[0].expression.arguments;
+        for(var j=0; j< node.modifiers.length; j++) {
+          for(var i =0; i<modifiersLIst.length; i++) {
+            if(node.modifiers[j].modifierName.name == modifiersLIst[i].name)  {
+            modifierStatements.push(modifiersLIst[i].body.statements[0].expression.arguments[0]);
+            }
+          }
         }
       }
-      // Check the function for modifications to any stateVariables.
+            // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.
       // TODO: will we also need a new circuit file even if we're merely 'referring to' a secret state (because then a nullifier might be needed?)
       if (scope.modifiesSecretState()) {
@@ -146,7 +150,7 @@ const visitor = {
         newFunctionDefinitionNode = buildNode('FunctionDefinition', {
           name: 'main',
           body: node.body,
-          modifiers: node.modifiers.statements[0],
+          modifiers: modifierStatements,
         });
       }
       else {

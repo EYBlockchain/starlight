@@ -13,7 +13,11 @@ contract Owner {
    require(msg.sender == admin);
     _;
     }
-  function alpha() private onlyOwner{
+   modifier onlyUser() {
+   require(msg.sender == adminstartor);
+    _;
+    }
+  function alpha() private onlyOwner onlyUser {
     a+=1;
     }
 }

@@ -29,14 +29,16 @@ function codeGenerator(node: any) {
       return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
-      let modifierBody: any = '';
-      if(node.modifiers.operator) {
-      modifierBody = ` assert(${codeGenerator(node.modifiers)})`;
+      let modifierBody: any = [];
+        for( var i=0; i< node.modifiers.length ; i++) {
+          if(node.modifiers[i].operator) {
+      modifierBody[i] = `assert(${codeGenerator(node.modifiers[i])}) \n\t\t\t\t\t\t\t`;
+        }
       }
       const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> bool:`;
       const body = codeGenerator(node.body);
       return `${functionSignature}
-        ${modifierBody}
+              ${modifierBody.toString().replace(',' , '')}
         ${body}
 
         return true
