@@ -77,6 +77,23 @@ function codeGenerator(node: any) {
         }`;
     }
 
+    case 'ModifierDefinition': {
+      console.log('git' , node.body.statements);
+      // prettier-ignore
+      const modifierSignature = `${`modifier ${node.name}`
+      }(${codeGenerator(node.parameters)}) {`;
+      const body = codeGenerator(node.body);
+      return `
+        ${modifierSignature}
+
+          ${body}
+
+        }`;
+    }
+
+    case 'PlaceholderStatement':
+      return '\t\t\t\t _;';
+
     case 'ParameterList':
       return node.parameters.flatMap(codeGenerator).filter(Boolean).join(', ');
 
@@ -111,9 +128,9 @@ function codeGenerator(node: any) {
     }
 
     case 'Block': {
-      const preStatements: string = node.preStatements.flatMap(codeGenerator);
-      const statements: string = node.statements.flatMap(codeGenerator);
-      const postStatements: string = node.postStatements.flatMap(codeGenerator);
+      const preStatements = node.preStatements?node.preStatements.flatMap(codeGenerator): '';
+      const statements = node.statements?node.statements.flatMap(codeGenerator): '';
+      const postStatements = node.postStatements?node.postStatements.flatMap(codeGenerator): '';
       return [...preStatements, ...statements, ...postStatements].join('\n');
     }
     case 'ExpressionStatement':

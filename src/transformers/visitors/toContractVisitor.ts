@@ -184,6 +184,11 @@ export default {
     enter(path: NodePath) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
+      if(node.modifiers.length>0) {
+        let modifiersLIst =  path.getAllPrevSiblingNodes().filter((x: any) => x.nodeType == 'ModifierDefinition');
+       modifiersLIst[0].body.statements[0].containsSecret = true;
+       node.body.statements.unshift(modifiersLIst[0].body.statements[0]);
+        }
       const newNode = buildNode('FunctionDefinition', {
         name: node.fileName || path.getUniqueFunctionName(),
         id: node.id,
@@ -235,6 +240,54 @@ export default {
 
       delete state.customInputs;
     },
+  },
+
+  ModifierDefinition: {
+    enter(path: NodePath) {
+      let newNode: any;
+      const { node, parent } = path;
+        let functionList = path.getAllNextSiblingNodes().filter((x: any) => x.nodeType == 'FunctionDefinition');
+        if(node.name == functionList[0].modifiers[0].modifierName.name && !functionList[0].containsSecret) {
+      newNode = buildNode('ModifierDefinition', {
+        name: node.name,
+        id: node.id,
+        body: node.body,
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+      }
+    },
+    
+    // exit(path: NodePath, state: any) {
+    //   // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
+    //   const { node, scope } = path;
+
+    //   const newFunctionDefinitionNode = node._newASTPointer;
+
+    //   // Let's populate the `parameters` and `body`:
+    //   const { parameters } = newFunctionDefinitionNode.parameters;
+    //   const { postStatements, preStatements } = newFunctionDefinitionNode.body;
+
+
+    //   parameters.push(
+    //     ...buildNode('FunctionBoilerplate', {
+    //       bpSection: 'parameters',
+    //       scope,
+    //     }),
+    //   );
+
+    //   if (path.scope.containsSecret)
+    //     postStatements.push(
+    //       ...buildNode('FunctionBoilerplate', {
+    //         bpSection: 'postStatements',
+    //         scope,
+    //         customInputs: state.customInputs,
+    //       }),
+    //     );
+
+    //   delete state.customInputs;
+    // },
+    
   },
 
   ParameterList: {

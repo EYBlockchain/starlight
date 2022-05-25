@@ -259,7 +259,7 @@ export default function fileGenerator(node: any) {
   switch (node.nodeType) {
     case 'Folder':
       return OrchestrationBP.uniqueify(node.files
-        .filter((x: any) => x.nodeType !== 'NonSecretFunction')
+        .filter((x: any) => x.nodeType !== 'NonSecretFunction' && x.nodeType !== 'ModifierDefinition')
         .flatMap(fileGenerator));
 
 

@@ -47,13 +47,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       const {
         name,
         body = buildNode('Block'),
-        parameters = buildNode('ParameterList')
+        parameters = buildNode('ParameterList'),
+        modifiers = buildNode('BinaryOperation'),
       } = fields;
       return {
         nodeType,
         name,
         body,
         parameters,
+        modifiers,
         // Notice no return parameters. Although zokrates _can_ return parameters, we've chosen to transpile in such a way that all parameters are _input_ parameters to the circuit.
       };
     }

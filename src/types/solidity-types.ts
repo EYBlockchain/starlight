@@ -50,6 +50,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'Literal':
     case 'UserDefinedTypeName':
     case 'ImportDirective':
+    case 'ModifierDefinition':
       return [];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
@@ -135,6 +136,22 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         visibility,
         isConstructor,
+        body,
+        parameters,
+        // returnParameters,
+      };
+    }
+
+    case 'ModifierDefinition': {
+      const {
+        name,
+        body = buildNode('Block'),
+        parameters = buildNode('ParameterList'),
+        // returnParameters = buildNode('ParameterList'), // TODO
+      } = fields;
+      return {
+        nodeType,
+        name,
         body,
         parameters,
         // returnParameters,

@@ -261,6 +261,7 @@ export class Scope {
       case 'FunctionCall':
       case 'ContractDefinition':
       case 'FunctionDefinition':
+      case 'ModifierDefinition':
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':

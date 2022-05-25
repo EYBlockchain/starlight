@@ -76,17 +76,33 @@ const visitor = {
     enter(path: NodePath, state: any) {
 
       const { node, parent, scope } = path;
-
+      if(node.modifiers.length>0) {
+        let modifiersLIst =  path.getAllPrevSiblingNodes().filter((x: any) => x.nodeType == 'ModifierDefinition');
+        for(var i =0; i<modifiersLIst.length; i++) {
+        if(node.modifiers[0].modifierName.name == modifiersLIst[i].name)
+        node.modifiers.statements = modifiersLIst[i].body.statements[0].expression.arguments;
+        }
+      }
       // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.
       // TODO: will we also need a new circuit file even if we're merely 'referring to' a secret state (because then a nullifier might be needed?)
       if (scope.modifiesSecretState()) {
         // Let's create a new circuit File to represent this function.
         // We'll add a new 'File' node to our newAST:
-
-        const newFunctionDefinitionNode = buildNode('FunctionDefinition', {
+        let newFunctionDefinitionNode: any;
+        if(node.modifiers.length>0) {
+        newFunctionDefinitionNode = buildNode('FunctionDefinition', {
           name: 'main',
+          body: node.body,
+          modifiers: node.modifiers.statements[0],
         });
+      }
+      else {
+      newFunctionDefinitionNode = buildNode('FunctionDefinition', {
+          name: 'main',
+          body: node.body,
+        });
+      }
         const newImportStatementListNode = buildNode('ImportStatementList');
 
         const { indicators } = scope;
@@ -97,11 +113,9 @@ const visitor = {
             indicators,
           }),
         );
-
         // before creating a function node we check for functions with same name
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
-
 
         // After getting an appropriate Name , we build the node
         const newNode = buildNode('File', {

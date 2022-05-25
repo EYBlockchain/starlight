@@ -8,8 +8,11 @@ const Circuitbp = new CircuitBP();
 
 function codeGenerator(node: any) {
   switch (node.nodeType) {
-    case 'Folder':
-      return CircuitBP.uniqueify(node.files.flatMap(codeGenerator));
+    case 'Folder': {
+      return CircuitBP.uniqueify(node.files
+        .filter((x: any) => x.nodeType !== 'NonSecretFunction' && x.nodeType !== 'ModifierDefinition')
+        .flatMap(codeGenerator));
+  }
 
     case 'File': {
       const filepath = path.join('./circuits', `${node.fileName}${node.fileExtension}`);
@@ -26,10 +29,11 @@ function codeGenerator(node: any) {
       return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
+      const modifierBody = ` assert(${codeGenerator(node.modifiers)})`;
       const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
       const body = codeGenerator(node.body);
       return `${functionSignature}
-
+        ${modifierBody}
         ${body}
 
         return
@@ -100,6 +104,8 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
     case 'BinaryOperation':
+      if(node.leftExpression.nodeType == 'MemberAccess')
+        node.leftExpression = node.leftExpression.expression;
       return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
         node.rightExpression,
       )}`;
