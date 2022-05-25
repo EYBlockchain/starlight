@@ -17,28 +17,19 @@ describe("AST testing", function () {
     it("zappifies each contract", function () {
       this.timeout(100000);
       files.forEach((file) => {
+        logger.info('zappifying', file);
         options.inputFilePath = './test/contracts/'+file;
         options.modifyAST = 'n';
-        options.inputFileName = path.parse(inputFilePath).name;
+        options.inputFileName = path.parse(options.inputFilePath).name;
         // commander converts 'zapp-name' to 'zappName'
-        options.zappName = inputFileName;
-        options.outputDirPath = `./temp-zapps/${zappName}`;
-        options.parseDirPath = `${outputDirPath}/parse`;
-        options.circuitsDirPath = `${outputDirPath}/circuits`;
-        options.contractsDirPath = `${outputDirPath}/contracts`;
-        options.orchestrationDirPath = `${outputDirPath}/orchestration`;
+        options.zappName = options.inputFileName;
+        options.outputDirPath = `./temp-zapps/${options.zappName}`;
+        options.parseDirPath = `${options.outputDirPath}/parse`;
+        options.circuitsDirPath = `${options.outputDirPath}/circuits`;
+        options.contractsDirPath = `${options.outputDirPath}/contracts`;
+        options.orchestrationDirPath = `${options.outputDirPath}/orchestration`;
         mkdirs(options);
-        zappify({
-            zappName,
-            inputFileName,
-            inputFilePath,
-            outputDirPath,
-            parseDirPath,
-            circuitsDirPath,
-            contractsDirPath,
-            orchestrationDirPath,
-            modifyAST,
-          });
+        zappify(options);
       });
     });
   });
