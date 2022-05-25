@@ -58,7 +58,16 @@ class FunctionBoilerplateGenerator {
       containsAccessedOnlyState: checkNullifiers,
     }): string[] {
       // prettier-ignore
+      let parameter = [...(newNullifiers ? [`uint256[]`] : []),
+      ...(commitmentRoot ? [`uint256`] : []),
+      ...(newCommitments ? [`uint256[]`] : []),
+      ...(checkNullifiers ? [`uint256[]`] : []),
+      `uint256[]`,
+    ]
       return [
+         `
+          bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
+
         `
           Inputs memory inputs;`,
 
@@ -66,8 +75,10 @@ class FunctionBoilerplateGenerator {
           [`
           inputs.customInputs = new uint[](${customInputs.length});
         	${customInputs.map((name: string, i: number) => {
-            if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
-            return `inputs.customInputs[${i}] = ${name};`;
+            if (customInputs[i] === 'msgSender') return `
+          inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
+            return `
+          inputs.customInputs[${i}] = ${name};`;
           }).join('\n')}`]
           : []),
 
@@ -82,7 +93,8 @@ class FunctionBoilerplateGenerator {
 
         ...(newCommitments ? [`
           inputs.newCommitments = newCommitments;`] : []),
-
+        `
+          if (sig == msg.sig)`,
         `
           verify(proof, uint(FunctionNames.${functionName}), inputs);`,
       ];

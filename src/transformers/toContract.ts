@@ -15,7 +15,7 @@ import codeGenerator from '../codeGenerators/contract/solidity/toContract.js';
  *
  */
 
-function transformation1(oldAST: object): any {
+function transformation1(oldAST: any, circuitAST: any): any {
   const newAST = {
     nodeType: 'Folder',
     files: [],
@@ -24,6 +24,7 @@ function transformation1(oldAST: object): any {
   const state = {
     stopTraversal: false,
     skipSubNodes: false,
+    circuitAST
   };
 
   const dummyParent = {
@@ -57,7 +58,7 @@ function transformation1(oldAST: object): any {
 export default function toContract(ast: object, options: any) {
   // transpile to a contract AST:
   logger.debug('Transforming the .zol AST to a solidity AST...');
-  const newAST = transformation1(ast);
+  const newAST = transformation1(ast, options.circuitAST);
   // logger.debug('new solidity ast:', newAST);
   const newASTFilePath = pathjs.join(options.contractsDirPath, `${options.inputFileName}_ast.json`);
   fs.writeFileSync(newASTFilePath, JSON.stringify(newAST, null, 4));

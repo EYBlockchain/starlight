@@ -96,6 +96,8 @@ export const collectImportFiles = (
     }
     const absPath = path.resolve(contextDirPath, p);
     const relPath = path.relative('.', absPath);
+    const exists = fs.existsSync(relPath);
+    if (!exists) continue;
     const f = fs.readFileSync(relPath, 'utf8');
     const n = path.basename(absPath, path.extname(absPath));
     const writePath = context === 'orchestration' ? path.join(

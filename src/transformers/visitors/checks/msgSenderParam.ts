@@ -30,8 +30,8 @@ const visitor = {
 
       // either a) msg.sender is a value we need for a secret or
       // b) it interacts with a public and private state as a mapping key, so we may be allowing cheating if we don't input it to the circuit
-      if ((!isMappingKey && expressionPath.containsSecret) ||
-        (expressionPath.containsPublic && expressionPath.containsSecret)) {
+      if ((!isMappingKey && expressionPath?.containsSecret) ||
+        (expressionPath?.containsPublic && expressionPath.containsSecret)) {
         fnDefIndicators.msgSenderParam = true;
       }
     },
