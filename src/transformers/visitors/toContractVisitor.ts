@@ -220,11 +220,6 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
-      if(node.modifiers.length>0) {
-        let modifiersLIst =  path.getAllPrevSiblingNodes().filter((x: any) => x.nodeType == 'ModifierDefinition');
-       modifiersLIst[0].body.statements[0].containsSecret = true;
-       node.body.statements.unshift(modifiersLIst[0].body.statements[0]);
-        }
       const newNode = buildNode('FunctionDefinition', {
         name: node.fileName || path.getUniqueFunctionName(),
         id: node.id,
