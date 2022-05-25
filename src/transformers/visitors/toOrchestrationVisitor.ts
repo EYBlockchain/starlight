@@ -794,7 +794,7 @@ const visitor = {
           return;
         }
       }
-       if (node.expression.nodeType !== 'FunctionCall') {
+      // if (node.expression.nodeType !== 'FunctionCall') {
         const newNode = buildNode(node.nodeType, {
           interactsWithSecret,
         });
@@ -804,7 +804,6 @@ const visitor = {
         } else {
           parent._newASTPointer[path.containerName] = newNode;
         }
-      }
     },
 
     exit(path: NodePath, state: any) {
