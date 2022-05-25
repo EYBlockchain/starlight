@@ -25,9 +25,9 @@ const zappify = (options: any) => {
 
   path = ownership(path);
 
-  toOrchestration(path, options);
+  options.circuitAST = toCircuit(zolAST, options);
 
-  toCircuit(zolAST, options);
+  toOrchestration(path, options);
 
   toContract(zolAST, options);
 

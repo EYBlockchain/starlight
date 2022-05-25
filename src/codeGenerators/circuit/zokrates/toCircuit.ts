@@ -30,13 +30,13 @@ function codeGenerator(node: any) {
 
     case 'FunctionDefinition': {
       const modifierBody = ` assert(${codeGenerator(node.modifiers)})`;
-      const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> ():`;
+      const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> bool:`;
       const body = codeGenerator(node.body);
       return `${functionSignature}
         ${modifierBody}
         ${body}
 
-        return
+        return true
         `;
     }
 
@@ -93,13 +93,23 @@ function codeGenerator(node: any) {
     }
 
     case 'ExpressionStatement': {
+      if(!node.expression.circuitImport){
+      return codeGenerator(node.expression);
+      }
       if (node.isVarDec) {
         return `
         field ${codeGenerator(node.expression)}`;
       }
-      return codeGenerator(node.expression) ?? '';
+      return codeGenerator(node.expression);
     }
-
+    case 'InternalFunctionCall': {
+     if(node.internalFunctionInteractsWithSecret) {
+      if(node.CircuitArguments.length)
+       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+      else
+       return ``;
+      }
+    }
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
@@ -159,8 +169,8 @@ function codeGenerator(node: any) {
 
     // And if we haven't recognized the node, we'll throw an error.
     default:
-      if (!Object.keys(node).length) return ''; // we have empty nodes when subnodes are skipped
-      throw new TypeError(node.type); // comment out the error until we've written all of the many possible types
+      if (!Object.keys(node).length) return '';// we have empty nodes when subnodes are skipped
+      throw new TypeError(node.nodeType); // comment out the error until we've written all of the many possible types
   }
 }
 

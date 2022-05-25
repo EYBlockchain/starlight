@@ -6,6 +6,7 @@ import logger from '../utils/logger.js';
 import explode from './visitors/explode.js';
 import unsupportedVisitor from './visitors/checks/unsupportedVisitor.js';
 import externalCallVisitor from './visitors/checks/externalCallVisitor.js';
+import internalCallVisitor from './visitors/checks/internalCallVisitor.js';
 import decoratorVisitor from './visitors/checks/decoratorVisitor.js';
 import incrementedVisitor from './visitors/checks/incrementedVisitor.js';
 import accessedVisitor from './visitors/checks/accessedVisitor.js';
@@ -53,6 +54,8 @@ function transformation1(oldAST: any) {
   // The newAST will be mutated through this traversal process.
   path.traverse(explode(externalCallVisitor), state);
   logger.verbose('No unsupported external calls');
+  path.traverse(explode(internalCallVisitor), state);
+  logger.verbose('Pass the Correct internal calls Parameters');
   path.traverse(explode(decoratorVisitor), state);
   logger.verbose('No conflicting known/unknown decorators');
   path.traverse(explode(interactsWithSecretVisitor), state);
