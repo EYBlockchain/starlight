@@ -633,6 +633,14 @@ export default class NodePath {
     return this.isExternalContractInstance(functionNode.expression);
   }
 
+  isInternalFunctionCall(): boolean {
+  if (this.nodeType !== 'FunctionCall') return false;
+  const { expression: functionNode } = this.node;
+  if (functionNode.nodeType === 'MemberAccess'&& functionNode.kind=== 'typeConversion') return false;
+  if(this.node.kind === 'functionCall' && functionNode.typeDescriptions.typeIdentifier.includes(`_internal_`))
+  return true;
+  }
+
   isTypeConversion() {
     return (
       this.nodeType === 'FunctionCall' && this.node.kind === 'typeConversion'

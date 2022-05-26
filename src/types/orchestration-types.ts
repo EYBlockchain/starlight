@@ -130,6 +130,15 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         privateStateName,
       };
     }
+    case 'InternalFunctionCall': {
+      const { name, internalFunctionInteractsWithSecret = false} = fields;
+      return{
+        nodeType,
+        name,
+        internalFunctionInteractsWithSecret,
+      };
+
+    }
     case 'IndexAccess': {
       const {
         baseExpression = {},
@@ -171,6 +180,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       }
     }
+
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;
       return {
@@ -180,6 +190,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         subExpression,
       };
     }
+
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {

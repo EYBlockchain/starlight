@@ -14,7 +14,7 @@ import fileGenerator from '../files/toOrchestration.js';
  * @returns string - code line which will extract an accessed value from the user db
  */
 const getAccessedValue = (name: string) => {
-  return `\nlet { ${name} } = generalise(${name}_preimage);`;
+  return `\nlet ${name} = generalise(${name}_preimage.value);`;
 };
 
 /**
@@ -116,6 +116,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       return `\n// increment would go here but has been filtered out`;
+
+    case 'InternalFunctionCall':
+     return " ";
 
     case 'Assignment':
       if (['+=', '-=', '*='].includes(node.operator)) {

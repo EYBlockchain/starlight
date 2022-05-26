@@ -1,11 +1,12 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
 // import logger from '../../utils/logger.mjs';
+import cloneDeep from 'lodash.clonedeep';
 import { buildNode } from '../../types/solidity-types.js';
 import { traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-
+import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
 const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
@@ -57,6 +58,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
 };
 
+let internalFuncInteractsWithSecret = false;
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.sol` AST (for a 'shield' contract)
@@ -128,7 +130,6 @@ export default {
     enter(path: NodePath) {
       const { node, parent, scope } = path;
       const isShieldContract = scope.indicators.zkSnarkVerificationRequired;
-
       const newNode = buildNode('ContractDefinition', {
         name: node.name,
         isShieldContract,
@@ -168,7 +169,8 @@ export default {
         ...buildNode('ContractBoilerplate', {
           bpSection: 'verify',
           scope,
-        }),
+          circuitParams: state.circuitParams,
+        })
       );
       contractNodes.unshift(
         ...buildNode('ContractBoilerplate', {
@@ -186,6 +188,7 @@ export default {
         ...buildNode('ContractBoilerplate', {
           bpSection: 'stateVariableDeclarations',
           scope,
+          internalFuncInteractsWithSecret,
         }),
       );
 
@@ -197,22 +200,62 @@ export default {
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
       }
+      node._newASTPointer.forEach(node => {
+        if(node.nodeType === 'FunctionDefinition'){
+          state.internalFncName?.forEach( name => {
+            if(node.name === name) {
+             state.postStatements ??= [];
+             state.postStatements = cloneDeep(node.body.postStatements);
+            }
+            if(node.name === state.callingFncName[state.internalFncName.indexOf(name)]){
+             node.body.postStatements.forEach( childNode => {
+               state.postStatements?.forEach(node => {
+                 if(!childNode.nullifiersRequired && node.nullifiersRequired)
+                   childNode.nullifiersRequired = node.nullifiersRequired;
+                 if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
+                   childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
+                 if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
+                   childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                })
+              })
+              node.parameters.parameters.forEach( childNode => {
+                state.postStatements?.forEach(node => {
+                  if(!childNode.nullifiersRequired && node.nullifiersRequired)
+                   childNode.nullifiersRequired = node.nullifiersRequired;
+                  if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
+                   childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
+                  if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
+                  childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                })
+              })
+            }
+          });
+
+        }
+      })
     },
   },
 
   FunctionDefinition: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
       const newNode = buildNode('FunctionDefinition', {
         name: node.fileName || path.getUniqueFunctionName(),
         id: node.id,
-        visibility: isConstructor ? '' : 'external',
+        visibility: isConstructor ? '' : 'public',
         isConstructor,
       });
 
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+
+      if (!path.containsSecret) return;
+      const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
+      const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
+
+      state.circuitParams ??= {};
+      state.circuitParams[path.getUniqueFunctionName()] = circuitParams;
     },
 
     exit(path: NodePath, state: any) {
@@ -620,7 +663,7 @@ export default {
 
   FunctionCall: {
     enter(path: NodePath, state: any) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
@@ -642,6 +685,7 @@ export default {
         } else {
           parent._newASTPointer[path.containerName] = newNode;
         }
+
         return;
       }
 
@@ -659,7 +703,52 @@ export default {
         }
         return;
       }
+      if (path.isInternalFunctionCall()) {
+        // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
+        // TODO: need a warning message to this effect ^^^
+       const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
+       internalFuncInteractsWithSecret = fnIndicator.internalFunctionInteractsWithSecret;
+       const functionReferncedNode = scope.getReferencedNode(node.expression);
+       const params = functionReferncedNode.parameters.parameters;
+       if(!fnIndicator.internalFunctionInteractsWithSecret){
+         if(params.some(node => node.isSecret))
+          internalFuncInteractsWithSecret = true;
+        }
 
+        if(internalFuncInteractsWithSecret){
+          state.internalFncName ??= [];
+          state.internalFncName.push(node.expression.name);
+          const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+          state.callingFncName ??= [];
+          state.callingFncName.push(fnDefNode.node.name);
+          const contractIndicator : FunctionDefinitionIndicator = scope.indicators;
+          state.fnParameters = [...(contractIndicator.parentIndicator.nullifiersRequired? [`newNullifiers`] : []),
+                ...(contractIndicator.parentIndicator.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
+                ...(contractIndicator.parentIndicator.newCommitmentsRequired ? [`newCommitments`] : []),
+                ...(contractIndicator.parentIndicator.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+                `proof`,
+          ]
+          newNode = buildNode('InternalFunctionCall', {
+          name: node.expression.name,
+          internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
+          parameters: state.fnParameters,
+         });
+         node._newASTPointer = newNode;
+         if (Array.isArray(parent._newASTPointer[path.containerName])) {
+           parent._newASTPointer[path.containerName].push(newNode);
+          } else {
+           parent._newASTPointer[path.containerName] = newNode;
+          }
+         return;
+        }
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
+      }
       if (node.kind !== 'typeConversion') {
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
@@ -674,12 +763,11 @@ export default {
       newNode = buildNode('TypeConversion', {
         type: node.typeDescriptions.typeString,
       });
-      node._newASTPointer = newNode;
+     node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
+        parent._newASTPointer[path.containerName].push(newNode); }  else {
         parent._newASTPointer[path.containerName] = newNode;
       }
     },
   },
-};
+}
