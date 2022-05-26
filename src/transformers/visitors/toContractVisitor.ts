@@ -20,26 +20,25 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.nodeType !== 'Identifier' && thisPath.nodeType !== 'Return') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+  console.log(thisPath.nodeType );
+  if(thisPath.nodeType === 'Return') {
 
-  if(thisPath.getAncestorOfType('Return')) {
-  thisPath.container.forEach(item => {
-    if(item.kind === 'bool'|| item.expression.kind === 'bool'){
+   thisPath.container.forEach(item => {
+    if(item.kind === 'bool'){
       thisState.customInputs ??= [];
       thisState.customInputs.push(1);
     }
+
+
   });
+
   if( binding instanceof VariableBinding && binding.isSecret){
-     thisState.customInputs ??= [];
-
-      thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
+   thisState.customInputs ??= [];
+    thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
   }
 
-  // else if( binding instanceof VariableBinding && ! binding.isSecret){
-  //    thisState.customInputs ??= [];
-  //   // if (!thisState.customInputs.some((input: string) => input === indicator.name))
-  //     thisState.customInputs.push(indicator.name);
-  // }
   }
+
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
@@ -56,6 +55,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     if (!thisState.customInputs.some((input: string) => input === indicator.name))
       thisState.customInputs.push(indicator.name);
   }
+  console.log(thisState.customInputs);
 };
 
 let internalFuncInteractsWithSecret = false;
