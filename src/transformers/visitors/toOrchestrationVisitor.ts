@@ -793,12 +793,13 @@ const visitor = {
           return;
         }
       }
-      // if (node.expression.nodeType !== 'FunctionCall') {
+      if (node.expression.expression?.name !== 'require') {
         const newNode = buildNode(node.nodeType, {
           interactsWithSecret,
         });
         node._newASTPointer = newNode;
         parent._newASTPointer.push(newNode);
+      }
 
     },
 
