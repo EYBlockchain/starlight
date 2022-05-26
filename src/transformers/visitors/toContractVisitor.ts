@@ -20,23 +20,21 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.nodeType !== 'Identifier' && thisPath.nodeType !== 'Return') return;
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
-  console.log(thisPath.nodeType );
   if(thisPath.nodeType === 'Return') {
-
    thisPath.container.forEach(item => {
-    if(item.kind === 'bool'){
+     //console.log(item.expression.kind)
+    if(item.kind === 'bool'|| item.expression.kind === 'bool'){
       thisState.customInputs ??= [];
       thisState.customInputs.push(1);
     }
-
-
   });
-
+}
+  if(thisPath.getAncestorOfType('Return')){
   if( binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
     thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
   }
-
+//console.log(thisState.customInputs);
   }
 
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
@@ -55,7 +53,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     if (!thisState.customInputs.some((input: string) => input === indicator.name))
       thisState.customInputs.push(indicator.name);
   }
-  console.log(thisState.customInputs);
+
 };
 
 let internalFuncInteractsWithSecret = false;
