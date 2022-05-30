@@ -3,6 +3,7 @@
 
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 import Scope from '../../../../traverse/Scope.js';
+import NodePath from '../../../../traverse/NodePath.js';
 
 const bpCache = new WeakMap();
 
@@ -88,15 +89,26 @@ class FunctionBoilerplateGenerator {
       const { scope } = this;
       const { path } = scope;
 
+      const customInputsMap = (node: any) => {
+        if (path.isStruct(node)) {
+          const structDef = path.getStructDeclaration(node);
+          const names = structDef.members.map((mem: any) => {
+            return { name: `${node.name}.${mem.name}`, type: mem.typeName.name };
+          });
+          return names
+        }
+        return { name: node.name, type: node.typeName.name };
+      }
+
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => p.name).concat(customInputs);
+      const publicParams = params?.filter((p: any) => !p.isSecret).flatMap((p: any) => customInputsMap(p)).concat(customInputs);
 
       const functionName = path.getUniqueFunctionName();
 
       const indicators = this.customFunction.getIndicators.bind(this)();
 
       // special check for msgSender param. If found, prepend a msgSender uint256 param to the contact's function.
-      if (indicators.msgSenderParam) publicParams.unshift('msgSender');
+      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' });
 
       return {
         ...(publicParams?.length && { customInputs: publicParams }),
