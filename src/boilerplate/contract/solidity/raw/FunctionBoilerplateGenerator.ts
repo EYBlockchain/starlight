@@ -52,18 +52,19 @@ class FunctionBoilerplateGenerator {
     postStatements({
       functionName,
       customInputs, // array of custom input names
+      publicParamstype,
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
     }): string[] {
       // prettier-ignore
-      let parameter = [...(newNullifiers ? [`uint256[]`] : []),
+      let parameter = publicParamstype.concat([...(newNullifiers ? [`uint256[]`] : []),
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),
       `uint256[]`,
-    ]
+    ])
       return [
          `
           bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
@@ -72,10 +73,13 @@ class FunctionBoilerplateGenerator {
           Inputs memory inputs;`,
 
         ...(customInputs?.length ?
-          [`
-          inputs.customInputs = new uint[](${customInputs.length});\n
-        	${customInputs.map((name: string, i: number) => {
+          [ ...(customInputs.includes(1) ? [ customInputs.splice(customInputs.indexOf(1), 1)] : [] ),
+
+        `
+          inputs.customInputs = new uint[](${customInputs.length});
+          ${customInputs.map((name: string, i: number) => {
             if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
+            if (customInputs[i] === 1) return ;
             return `inputs.customInputs[${i}] = ${name};`;
           }).join('\n \n \t\t\t\t\t')}`]
           : []),

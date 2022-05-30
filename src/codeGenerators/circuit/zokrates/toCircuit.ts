@@ -59,6 +59,10 @@ function codeGenerator(node: any) {
            returnType.push('field') ;
         }
     })
+if(returnStatement.length === 0){
+  returnStatement.push('true');
+  returnType.push('bool') ;
+}
 
       return `${functionSignature}(${returnType}):
 

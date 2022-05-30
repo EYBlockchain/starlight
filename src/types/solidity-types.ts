@@ -15,7 +15,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'ParameterList':
       return ['parameters'];
     case 'ReturnParameterList':
-      return ['parameters'];  
+      return ['parameters'];
     case 'IfStatement':
       return ['condition', 'trueBody' , 'falseBody'];
     case 'Block':
@@ -374,7 +374,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
     }
     case 'ContractBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      const { scope, bpSection, circuitParams } = fields;
+      const { scope, bpSection, circuitParams, returnpara } = fields;
       const bp = new ContractBP(scope);
       return bp.getBoilerplate(bpSection, circuitParams);
     }

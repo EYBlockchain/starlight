@@ -22,11 +22,22 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
   if(thisPath.nodeType === 'Return') {
    thisPath.container.forEach(item => {
-     //console.log(item.expression.kind)
-    if(item.kind === 'bool'|| item.expression.kind === 'bool'){
-      thisState.customInputs ??= [];
-      thisState.customInputs.push(1);
+     if(item.nodeType === 'Return'){
+      if(item.expression.components) {
+        item.expression.components.forEach(element => {
+          if(element.kind === 'bool'){
+          thisState.customInputs ??= [];
+          thisState.customInputs.push(1);
     }
+  });
+}
+    else {
+      if(item.expression.kind === 'bool'){
+        thisState.customInputs ??= [];
+        thisState.customInputs.push(1);
+      }
+    }
+  }
   });
 }
   if(thisPath.getAncestorOfType('Return')){
@@ -34,8 +45,8 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
    thisState.customInputs ??= [];
     thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
   }
-//console.log(thisState.customInputs);
   }
+
 
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -50,10 +61,10 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     !(thisPath.containerName === 'indexExpression')
   ) {
     thisState.customInputs ??= [];
-    if (!thisState.customInputs.some((input: string) => input === indicator.name))
+    if (!thisState.customInputs.some((input: string) => input === indicator.name)){
       thisState.customInputs.push(indicator.name);
+}
   }
-
 };
 
 let internalFuncInteractsWithSecret = false;
@@ -141,7 +152,23 @@ export default {
       const { node, parent, scope } = path;
       const sourceUnitNodes = parent._newASTPointer[0].nodes;
       const contractNodes = node._newASTPointer;
+      let parameterList : {};
+      let functionName: string;
+      let returnParameterList = {};
+      let returnfunctionName: string;
+      for ([functionName, parameterList] of Object.entries(state.circuitParams)) {
+        if(state.returnpara){
+         for ([returnfunctionName, returnParameterList] of Object.entries(state.returnpara)){
+           if(functionName === returnfunctionName ){
+             parameterList = {... parameterList, ... returnParameterList};
+             state.circuitParams[ functionName ] = parameterList;
+            }
+          }
+        }
+      }
 
+      //state.circuitParams = {... state.circuitParams, ... state.returnpara};
+      //console.log(state.circuitParams);
       // base contracts (`contract MyContract is BaseContract`)
       const contractIndex = sourceUnitNodes.findIndex(
         (n: any) => n.name === node.name,
@@ -238,8 +265,9 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
+      state.functionName = path.getUniqueFunctionName()
       const newNode = buildNode('FunctionDefinition', {
-        name: node.fileName || path.getUniqueFunctionName(),
+        name: node.fileName || state.functionName,
         id: node.id,
         visibility: isConstructor ? '' : 'public',
         isConstructor,
@@ -253,7 +281,8 @@ export default {
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
 
       state.circuitParams ??= {};
-      state.circuitParams[path.getUniqueFunctionName()] = circuitParams;
+      state.circuitParams[path.getUniqueFunctionName()] ??= {};
+      state.circuitParams[path.getUniqueFunctionName()].parameters = circuitParams;
     },
 
     exit(path: NodePath, state: any) {
@@ -381,6 +410,10 @@ export default {
      enter(path: NodePath, state: any) {
        const { node, parent } = path;
        path.traversePathsFast(findCustomInputsVisitor, state);
+       state.returnpara ??= {};
+       state.returnpara[state.functionName] ??= {};
+       state.returnpara[state.functionName].returnParameters = state.customInputs;
+
        const newNode = buildNode(
        node.nodeType,
        { value: node.expression.value });
@@ -391,7 +424,6 @@ export default {
          parent._newASTPointer[path.containerName].push(newNode);
        }
      },
-
    },
 
   IfStatement: {
