@@ -65,6 +65,7 @@ class FunctionBoilerplateGenerator {
       ...(checkNullifiers ? [`uint256[]`] : []),
       `uint256[]`,
     ])
+    if(customInputs?.includes(1) )  customInputs.splice(customInputs.indexOf(1),1);
       return [
          `
           bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
@@ -73,7 +74,7 @@ class FunctionBoilerplateGenerator {
           Inputs memory inputs;`,
 
         ...(customInputs?.length ?
-          [ ...(customInputs.includes(1) ? [ customInputs.splice(customInputs.indexOf(1), 1)] : [] ),
+          [
 
         `
           inputs.customInputs = new uint[](${customInputs.length});
