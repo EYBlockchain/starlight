@@ -794,16 +794,17 @@ const visitor = {
           return;
         }
       }
-      // if (node.expression.nodeType !== 'FunctionCall') {
+      if (node.expression.expression?.name !== 'require') {
         const newNode = buildNode(node.nodeType, {
           interactsWithSecret,
         });
         node._newASTPointer = newNode;
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
+        parent._newASTPointer.push(newNode);
         } else {
           parent._newASTPointer[path.containerName] = newNode;
         }
+      }
     },
 
     exit(path: NodePath, state: any) {
