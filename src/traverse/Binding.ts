@@ -29,7 +29,7 @@ export class Binding {
       case 'FunctionDefinition':
       case 'VariableDeclaration':
         return true;
-      case 'IfStatement':  
+      case 'IfStatement':
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':
@@ -143,6 +143,9 @@ export class VariableBinding extends Binding {
   isMapping?: boolean;
   mappingKeys: any = {}; // object of objects, indexed by node id.
 
+  isStruct?: boolean;
+  structProperties: any = {};
+
   isKnown?: boolean;
   isUnknown?: boolean;
   isIncremented?: boolean;
@@ -184,6 +187,11 @@ export class VariableBinding extends Binding {
     if (path.isMappingDeclaration() || path.isArrayDeclaration()) {
       this.isMapping = true;
       this.mappingKeys = {};
+    }
+
+    if (path.isStruct()) {
+      this.isStruct = true;
+      this.structProperties = {};
     }
   }
 
