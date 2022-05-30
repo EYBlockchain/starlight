@@ -388,7 +388,17 @@ export class Scope {
       path.getReferencedDeclarationId(referencingNode),
     );
 
-    if (!path.isMapping(referencingNode) && !path.isArray(referencingNode)) return indicator;
+    if (!path.isMapping(referencingNode) && !path.isArray(referencingNode) && !path.isStruct(referencingNode)) return indicator;
+
+    if (path.isStruct(referencingNode)) {
+      const memberAccessNode = referencingNode.nodeType === 'MemberAccess'
+        ? referencingNode
+        : NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')
+            .node;
+      return mappingKeyIndicatorOnly
+        ? indicator.structProperties[memberAccessNode.memberName]
+        : indicator;
+    }
 
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
     const indexAccessNode =
@@ -633,6 +643,7 @@ export class Scope {
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
   getIdentifierMappingKeyName(identifierNode: any, forceNotModification = false): any {
+    if (this.path.isMsg(identifierNode)) return identifierNode.name;
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
 

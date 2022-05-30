@@ -283,6 +283,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   isMapping?: boolean;
   isStruct?: boolean;
+  structProperties?: {[key: string]: MappingKey};
   mappingKeys?: {[key: string]: MappingKey};
   mappingOwnershipType?: string;
 
@@ -357,7 +358,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     }
     if (path.isStruct()) {
       this.isStruct = true;
-      this.mappingKeys = {};
+      this.structProperties = {};
     }
   }
 
@@ -385,11 +386,23 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     return this.mappingKeys[keyName];
   }
 
+  addStructProperty(referencingPath: NodePath): MappingKey {
+    const keyNode = referencingPath.getStructPropertyNode();
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : NodePath.getPath(keyNode);
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+    if (!this.structProperties[keyNode.memberName])
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+
+    return this.structProperties[keyNode.memberName];
+  }
+
   // A StateVariableIndicator will be updated if (some time after its creation) we encounter an AST node which refers to this state variable.
   // E.g. if we encounter an Identifier node.
   update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
+    } else if (this.isStruct) {
+      this.addStructProperty(path).updateProperties(path);
     } else {
       this.updateProperties(path);
     }
@@ -449,6 +462,13 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         mappingKey.updateFromBinding();
       }
     }
+
+    if (this.isStruct) {
+      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+      for (const [, mappingKey] of structProperties) {
+        mappingKey.updateFromBinding();
+      }
+    }
   }
 
   updateAccessed(path: NodePath) {
@@ -471,6 +491,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       this.addMappingKey(path).isAccessed = true;
       this.addMappingKey(path).accessedPaths ??= [];
       this.addMappingKey(path).accessedPaths.push(path);
+    }
+
+    if (this.isStruct) {
+      this.addStructProperty(path).isAccessed = true;
+      this.addStructProperty(path).accessedPaths ??= [];
+      this.addStructProperty(path).accessedPaths.push(path);
     }
   }
 
@@ -530,6 +556,13 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         state,
       );
     }
+
+    if (this.isStruct) {
+      this.addStructProperty(state.incrementedPath).updateIncrementation(
+        path,
+        state,
+      );
+    }
   }
 
   addReferencingPath(path: NodePath) {
@@ -549,9 +582,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         this.binding.initialisedInConstructor = true;
         this.initialisationRequired = true; // we need the dummy nullifier in the constructor
         if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+        if (this.isStruct) this.addStructProperty(path).initialisationRequired = true;
       } else if(!this.binding.initialisedInConstructor) {
         this.initialisationRequired = true;
         if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+        if (this.isStruct) this.addStructProperty(path).initialisationRequired = true;
       }
 
       const { node } = path;
@@ -569,12 +604,14 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.nullifyingPaths.push(path);
     this.binding.addNullifyingPath(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+    if (this.isStruct) this.addStructProperty(path).addNullifyingPath(path);
   }
 
   addBurningPath(path: NodePath) {
     this.isBurned = true;
     this.burningPaths.push(path);
     if (this.isMapping) this.addMappingKey(path).addBurningPath(path);
+    if (this.isStruct) this.addStructProperty(path).addBurningPath(path);
   }
 
   prelimTraversalErrorChecks() {
@@ -582,6 +619,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (this.isMapping) {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
+        mappingKey.prelimTraversalErrorChecks();
+      }
+    }
+    if (this.isStruct) {
+      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+      for (const [, mappingKey] of structProperties) {
         mappingKey.prelimTraversalErrorChecks();
       }
     }
@@ -624,6 +667,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
           mappingKey.newCommitmentsRequired = true;
         }
       }
+      if (this.isStruct) {
+        const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+        for (const [, mappingKey] of structProperties) {
+          mappingKey.newCommitmentsRequired = true;
+        }
+      }
       return;
     }
     if (!this.isSecret || !this.isBurned) return;
@@ -639,6 +688,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         this.parentIndicator.newCommitmentsRequired = true;
         if (this.isMapping)
           this.addMappingKey(path).newCommitmentsRequired = true;
+        if (this.isStruct)
+          this.addStructProperty(path).newCommitmentsRequired = true;
         burnedOnly = false;
       }
     });

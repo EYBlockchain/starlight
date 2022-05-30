@@ -44,8 +44,9 @@ export default class MappingKey {
   interactsWithSecret: boolean;
   newCommitmentsRequired: boolean;
 
-  isMapping: boolean = true;
-  mappingKeys: any = {}; // object of objects, indexed by node id.
+  isMapping: boolean;
+  mappingKeys?: any;
+  isStruct: boolean;
 
   isKnown?:boolean;
   isUnknown?:boolean;
@@ -75,7 +76,7 @@ export default class MappingKey {
     this.referencedKeyId = keyPath.node.referencedDeclaration;
     this.referencedKeyName = keyPath.isMsg()
       ? 'msg'
-      : keyPath.getReferencedNode().name;
+      : keyPath.isStruct ? keyPath.node.memberName : keyPath.getReferencedNode().name;
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
       : keyPath.getReferencedNode().nodeType;
@@ -84,9 +85,16 @@ export default class MappingKey {
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
 
-    this.name = this.isMsgSender
-      ? `${container.name}[msg.sender]`
-      : `${container.name}[${keyPath.node.name}]`;
+    this.isMapping = container.isMapping;
+    this.isStruct = keyPath.isStruct();
+
+    if (this.isMapping) {
+      this.name = this.isMsgSender
+        ? `${container.name}[msg.sender]`
+        : `${container.name}[${keyPath.node.name}]`;
+    } else if (this.isStruct) {
+      this.name = `${container.name}.${keyPath.node.memberName}`;
+    }
 
     this.isReferenced = false;
     this.referenceCount = 0;

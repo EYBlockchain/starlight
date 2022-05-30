@@ -799,6 +799,17 @@ export default class NodePath {
   }
 
   /**
+   * A struct property will contain a MemberAccess node pointing to a previously-declared variable.
+   * @param {Object} - the struct's identifier node.
+   * @returns {Node} - a MemberAccess node
+   */
+  getStructPropertyNode(node: any = this.node): any {
+    if (node.nodeType !== 'MemberAccess')
+      return this.getAncestorOfType('MemberAccess').getStructPropertyNode();
+    return node;
+  }
+
+  /**
    * Checks whether a node is a Solidity `require` statement.
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
@@ -838,7 +849,28 @@ export default class NodePath {
    * @returns {Boolean}
    */
   isStruct(node: any = this.node): boolean {
-    return this.getAncestorOfType('IndexAccess') && (node.typeDescriptions?.typeString.includes('struct') || node.expression?.typeDescriptions.typeString.includes('struct'));
+    if (this.isStructDeclaration(node)) return true;
+    const parent = node.nodeType === 'MemberAccess' ? node : this.getAncestorOfType('MemberAccess')?.node;
+    return !!parent && (parent.expression.typeDescriptions?.typeString.includes('struct') || parent.expression?.typeDescriptions?.typeString.includes('struct'));
+  }
+
+  /**
+   * Checks whether a node is a VariableDeclaration of a struct.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isStructDeclaration(node: any = this.node): boolean {
+    // with a space ('struct ') to avoid custom type NAMES that include struct without being a struct
+    return !!this.getAncestorOfType('StructDefinition') || (node.nodeType === 'VariableDeclaration' && ( node.typeDescriptions?.typeString?.includes('struct ') || node.typeName?.typeDescriptions?.typeString?.includes('struct ')));
+  }
+
+  getStructDeclaration(node: any = this.node): any {
+    if (!this.isStruct(node)) return null;
+    const fnDef = this.getAncestorOfType('FunctionDefinition');
+    const parent = (node.nodeType === 'MemberAccess' || node.nodeType === 'VariableDeclaration') ? node : this.getAncestorOfType('MemberAccess')?.node;
+    const typeId = parent.typeName.pathNode.referencedDeclaration;
+    const structNode = fnDef.getAllPrevSiblingNodes().find(n => n.id === typeId);
+    return structNode;
   }
 
  /**
@@ -849,7 +881,7 @@ export default class NodePath {
   isArray(node: any = this.node): boolean {
     if (this.getReferencedNode(node) && this.isArrayDeclaration(this.getReferencedNode(node))) return true;
     const memberAccNode = this.getAncestorOfType('MemberAccess');
-    return memberAccNode && memberAccNode.node.baseExpression.typeDescriptions.typeIdentifier.includes('array');
+    return memberAccNode && memberAccNode.node.baseExpression?.typeDescriptions?.typeIdentifier.includes('array');
   }
 
   /**
