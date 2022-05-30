@@ -36,6 +36,12 @@ function codeGenerator(node: any) {
         `;
     }
 
+    case 'StructDefinition': {
+      return `struct ${node.name} {
+        ${node.members.map((mem: any) => mem.type + ' ' + mem.name).join(`\n`)}
+      }`;
+    }
+
     case 'ParameterList': {
       const paramList = CircuitBP.uniqueify(node.parameters.flatMap(codeGenerator));
 
@@ -112,6 +118,10 @@ function codeGenerator(node: any) {
 
     case 'IndexAccess':
       return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression)}`;
+
+    case 'MemberAccess':
+      if (node.isStruct) return `${codeGenerator(node.expression)}.${node.memberName}`;
+      return `${codeGenerator(node.expression)}_${node.memberName}`;
 
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;

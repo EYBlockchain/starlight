@@ -16,7 +16,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
   if (thisPath.isRequireStatement(node)) return;
 
-  let { name } = thisPath.scope.getReferencedIndicator(node, true);
+  let { name } = thisPath.isMsg(node) ? node.name : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
 
@@ -32,7 +32,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     !(thisPath.containerName === 'indexExpression' && !binding.stateVariable)
   ) {
     // TODO other types
-    if (thisPath.isMapping || thisPath.isArray)
+    if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', '');
     if (thisPath.containerName === 'indexExpression')
       name = binding.getMappingKeyName(thisPath)
@@ -456,6 +456,23 @@ const visitor = {
         isSecret: node.isSecret,
         declarationType,
       });
+
+      if (path.isStruct(node)) {
+        const structDef = path.getStructDeclaration(node);
+        const structNode = buildNode('StructDefinition', {
+          name: structDef.name,
+          members: structDef.members.map((mem: any) => {
+            return { name: mem.name,
+              type: mem.typeName.name === 'bool' ? 'bool' : 'field',
+            }
+          }),
+        });
+        const thisFnPath = path.getAncestorOfType('FunctionDefinition');
+        const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
+        // add struct def after imports, before fndef
+        thisFile.nodes.splice(1, 0, structNode);
+        newNode.typeName.name = structDef.name;
+      }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
@@ -555,17 +572,22 @@ const visitor = {
 
   MemberAccess: {
     enter(path: NodePath, state: any) {
-      const { parent } = path;
+      const { parent, node } = path;
 
-      if (!path.isMsgSender())
-        throw new Error(`Struct property access isn't yet supported.`);
+      let newNode: any;
 
-      // What follows assumes this node represents msg.sender:
-      const newNode = buildNode('MsgSender');
+      if (path.isMsgSender()) {
+        newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+      } else {
+        newNode = buildNode('MemberAccess', { memberName: node.memberName, isStruct: path.isStruct(node)});
+        node._newASTPointer = newNode;
+      }
+
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parent._newASTPointer[path.containerName] = newNode;
-      state.skipSubNodes = true;
+
     },
   },
 
