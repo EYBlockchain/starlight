@@ -584,8 +584,14 @@ const visitor = {
 
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
-          if (param.isPrivate || param.isSecret || param.interactsWithSecret)
-            newNodes.generateProofNode.parameters.push(param.name);
+          if (param.isPrivate || param.isSecret || param.interactsWithSecret) {
+            if (param.typeName.isStruct) {
+              param.typeName.properties.forEach((prop: any) => {
+                newNodes.generateProofNode.parameters.push(`${param.name}.${prop.name}`);
+              });
+            } else newNodes.generateProofNode.parameters.push(param.name);
+          }
+
         }
         if (state.publicInputs) {
           state.publicInputs.forEach((input: any) => {
@@ -597,8 +603,15 @@ const visitor = {
         if (state.constructorStatements && state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
-          if (!param.isSecret)
-            newNodes.sendTransactionNode.publicInputs.push(param.name);
+          if (!param.isSecret) {
+            if (path.isStructDeclaration(param)) {
+              const newParam = {
+                name: param.name,
+                properties: param._newASTPointer.typeName.properties.map(p => p.name)
+              };
+              newNodes.sendTransactionNode.publicInputs.push(newParam);
+            } else newNodes.sendTransactionNode.publicInputs.push(param.name);
+          }
         }
 
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
@@ -968,6 +981,26 @@ const visitor = {
       const newNode = buildNode(node.nodeType, { name: node.name });
 
       parent._newASTPointer[path.containerName] = newNode;
+    },
+
+  },
+
+  UserDefinedTypeName: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      const newNode = buildNode('ElementaryTypeName', {
+        name: node.pathNode.name,
+      });
+      const varDecParent = path.getAncestorOfType('VariableDeclaration');
+      if (varDecParent?.isStructDeclaration()) {
+        const props = varDecParent.getStructDeclaration().members;
+        newNode.properties = props.map(p => {
+          return { name: p.name, type: p.typeName.name }
+        });
+        newNode.isStruct = true;
+      }
+      parent._newASTPointer[path.containerName] = newNode;
+      state.skipSubNodes = true; // the subnodes are ElementaryTypeNames
     },
 
   },

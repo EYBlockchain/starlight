@@ -672,8 +672,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'SendTransaction':
       if (node.publicInputs[0]) {
-        node.publicInputs.forEach((input: string) => {
-          lines.push(`${input}.integer`);
+        node.publicInputs.forEach((input: any) => {
+          if (input.properties) {
+            lines.push(`[${input.properties.map(p => `${input.name}.${p}.integer`).join(',')}]`)
+          } else
+            lines.push(`${input}.integer`);
         });
         lines[lines.length - 1] += `, `;
       }
