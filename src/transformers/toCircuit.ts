@@ -81,4 +81,6 @@ export default function toCircuit(ast: any, options: any) {
     fs.writeFileSync(filepath, fileObj.file);
   }
   logger.info('Circuit transpilation complete.');
+
+  return newAST;
  }

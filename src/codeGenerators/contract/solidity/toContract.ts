@@ -119,8 +119,9 @@ function codeGenerator(node: any) {
       const postStatements: string = node.postStatements.flatMap(codeGenerator);
       return [...preStatements, ...statements, ...postStatements].join('\n');
     }
-    case 'ExpressionStatement':
+    case 'ExpressionStatement':{
       return codeGenerator(node.expression);
+    }
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${
@@ -152,6 +153,14 @@ function codeGenerator(node: any) {
       const args = node.arguments.map(codeGenerator);
       const semicolon = expression === 'require' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
+
+    }
+    case 'InternalFunctionCall' :{
+      if(node.parameters){
+         return `\t \t \t \t ${node.name} (${node.parameters});`
+      } else {
+         return `\t \t \t \t${node.name} (${node.arguments.name});`
+      }
     }
 
     case 'IfStatement':

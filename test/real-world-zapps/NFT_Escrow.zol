@@ -22,12 +22,12 @@ contract NFT_Escrow {
     }
 
     function transfer(secret address recipient, secret uint256 tokenId) public {
-        require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+        require(tokenOwners[tokenId] == msg.sender);
         tokenOwners[tokenId] = recipient;
     }
 
     function withdraw(uint256 tokenId) public {
-        require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+        require(tokenOwners[tokenId] == msg.sender);
         bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
         require(success, "ERC721 transfer failed");
         tokenOwners[tokenId] = address(0);

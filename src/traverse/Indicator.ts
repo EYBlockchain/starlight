@@ -74,6 +74,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
   parentIndicator: ContractDefinitionIndicator;
   interactsWithSecret?: boolean;
   interactsWithPublic?: boolean;
+  internalFunctionInteractsWithSecret?: boolean;
   onChainKeyRegistry?: boolean;
 
   constructor(scope: Scope) {
@@ -87,7 +88,22 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.interactsWithSecret = true;
       this.zkSnarkVerificationRequired = true;
+
+
     }
+
+//console.log(path.node.typeDescriptions);
+    if(path.node.typeDescriptions.typeIdentifier.includes(`_internal_`))
+      {
+        const functionReferncedNode = path.scope.getReferencedNode(path.node);
+        const params = functionReferncedNode.parameters.parameters ;
+          if(params.some(node => node.isSecret))
+          {
+            this.internalFunctionInteractsWithSecret = true;
+        }
+      //console.log(this.internalFunctionInteractsWithSecret);
+    }
+
   }
 
   updateIncrementation(path: NodePath, state: any) {
@@ -142,6 +158,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
     }
     this.newCommitmentsRequired = !burnedOnly;
   }
+
 
   // no constructor yet...
   //
@@ -264,6 +281,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   }
 }
 
+
 /**
  * Within a Function's scope, for each state variable that gets mentioned, we
  * create a 'StateVariableIndicator'.
@@ -314,7 +332,6 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   reinitialisable?: boolean;
   interactsWith: NodePath[];
   isParam: boolean;
-
   isOwned?: boolean;
   owner?: any;
 
@@ -408,15 +425,17 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     }
   }
 
+
   updateProperties(path: NodePath) {
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
     this.isKnown ??= path.node.isKnown;
     this.reinitialisable ??= path.node.reinitialisable;
-    if (path.isModification()) {
+    if (path.isModification())
+    {
       this.addModifyingPath(path);
-    }
   }
+}
 
   addSecretInteractingPath(path: NodePath) {
     this.interactsWithSecret = true;

@@ -101,6 +101,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `\n// non-secret line would go here but has been filtered out`;
       return `\n// increment would go here but has been filtered out`;
 
+    case 'InternalFunctionCall':
+     return " ";
+
     case 'Assignment':
       if (['+=', '-=', '*='].includes(node.operator)) {
         return `${codeGenerator(node.leftHandSide, {

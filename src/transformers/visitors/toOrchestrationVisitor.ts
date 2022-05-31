@@ -8,9 +8,11 @@ import { VariableBinding } from '../../traverse/Binding.js';
 import MappingKey from '../../traverse/MappingKey.js'
 import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
-
+import explode from './explode.js';
+import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
+
 const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
     thisState.interactsWithSecret = true;
@@ -215,9 +217,10 @@ const visitor = {
           file.nodes[0].contractImports = state.contractImports;
         }
       }
-    },
+    // Internal Call Visitor
+    path.traverse(explode(internalCallVisitor), state);
   },
-
+},
   ImportDirective: {
     enter(path: NodePath, state: any) {
       const { node } = path;
@@ -234,7 +237,6 @@ const visitor = {
   FunctionDefinition: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-
       if (scope.modifiesSecretState()) {
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
@@ -287,7 +289,7 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
-      const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
+      const initialiseOrchestrationBoilerplateNodes = (fnIndicator) => {
         const newNodes: any = {};
         const contractName = `${parent.name}Shield`;
         newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
@@ -305,7 +307,7 @@ const visitor = {
         }
         if (fnIndicator.newCommitmentsRequired)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
-        newNodes.generateProofNode = buildNode('GenerateProof', {
+          newNodes.generateProofNode = buildNode('GenerateProof', {
           circuitName: node.fileName,
         });
         newNodes.sendTransactionNode = buildNode('SendTransaction', {
@@ -317,6 +319,7 @@ const visitor = {
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
         return newNodes;
+
       };
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
@@ -335,9 +338,9 @@ const visitor = {
       thisIntegrationTestFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
       if (
-        (functionIndicator.newCommitmentsRequired ||
+        ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
-        scope.modifiesSecretState()
+        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret
       ) {
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
@@ -471,17 +474,6 @@ const visitor = {
             });
           }
           if (stateVarIndicator.isModified) {
-            if (stateVarIndicator.isWhole) {
-              // if we have a modified whole state, we must generalise it before postStatements
-              node._newASTPointer.body.statements.push(
-                buildNode('Assignment', {
-                    leftHandSide: buildNode('Identifier', { name }),
-                    operator: '=',
-                    rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
-                  }
-                )
-              );
-            }
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -501,6 +493,9 @@ const visitor = {
               name
             ] = buildPrivateStateNode('SendTransaction', {
               indicator: stateVarIndicator,
+              burnedOnly:
+                stateVarIndicator.isBurned &&
+                !stateVarIndicator.newCommitmentsRequired,
             });
             newNodes.writePreimageNode.privateStates[
               name
@@ -781,6 +776,8 @@ const visitor = {
       const newState: any = {};
       path.traversePathsFast(interactsWithSecretVisitor, newState);
       const { interactsWithSecret } = newState;
+      let indicator;
+      let name;
       // we mark this to grab anything we need from the db / contract
       state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
@@ -875,7 +872,7 @@ const visitor = {
           return;
         }
       }
-      if (node.expression.nodeType !== 'FunctionCall') {
+      if (node.expression.expression?.name !== 'require') {
         const newNode = buildNode(node.nodeType, {
           interactsWithSecret,
           oldASTId: node.id,
@@ -883,17 +880,34 @@ const visitor = {
         node._newASTPointer = newNode;
         parent._newASTPointer.push(newNode);
       }
+
     },
 
     exit(path: NodePath, state: any) {
       const { node, scope } = path;
       const { leftHandSide: lhs } = node.expression;
+      const indicator = scope.getReferencedIndicator(lhs, true);
       // reset
       delete state.interactsWithSecret;
-      if (path.node._newASTPointer?.incrementsSecretState) {
-        const indicator = scope.getReferencedIndicator(lhs, true);
+      if (node._newASTPointer?.incrementsSecretState) {
         const increments = collectIncrements(indicator).incrementsString;
         path.node._newASTPointer.increments = increments;
+      } else if (indicator?.isWhole && node._newASTPointer) {
+        const name = indicator.isMapping
+          ? indicator.name
+              .replace('[', '_')
+              .replace(']', '')
+              .replace('.sender', '')
+          : indicator.name;
+        // we add a general number statement after each whole state edit
+        path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
+          buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', { name }),
+              operator: '=',
+              rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
+            }
+          )
+        );
       }
     },
   },
@@ -1028,7 +1042,10 @@ const visitor = {
         subType: node.typeDescriptions.typeString,
       });
 
-      parent._newASTPointer[path.containerName] = newNode;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+       parent._newASTPointer[path.containerName].push(newNode);
+     } else {
+       parent._newASTPointer[path.containerName] = newNode; }
 
       // if this is a public state variable, this fn will add a public input
       addPublicInput(path, state);
@@ -1091,10 +1108,9 @@ const visitor = {
       parent._newASTPointer.push(newNode);
     },
   },
-
   FunctionCall: {
     enter(path: NodePath, state: any) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;
         return;
@@ -1104,6 +1120,8 @@ const visitor = {
       });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
+
+
     },
   },
 };

@@ -40,6 +40,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['components'];
     case 'FunctionCall':
       return ['expression', 'arguments'];
+    case 'InternalFunctionCall' :
+      return ['name','parameters'];
     case 'ArrayTypeName':
       return ['baseType'];
     case 'ElementaryTypeNameExpression':
@@ -85,7 +87,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodes,
       };
     }
-    case 'PragmaDirective': { 
+    case 'PragmaDirective': {
       const { literals } = fields;
       return {
         nodeType,
@@ -276,6 +278,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         arguments: args, // 'arguments' is a reserved word in JS
       };
     }
+    case 'InternalFunctionCall': {
+      const { name, internalFunctionInteractsWithSecret = false, parameters = [] } = fields;
+      return {
+        nodeType,
+        name,
+        internalFunctionInteractsWithSecret,
+        parameters
+      };
+    }
     case 'IndexAccess': {
       const { baseExpression = {}, indexExpression = {} } = fields;
       return {
@@ -361,9 +372,9 @@ export function buildNode(nodeType: string, fields: any = {}): any {
     }
     case 'ContractBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      const { scope, bpSection } = fields;
+      const { scope, bpSection, circuitParams } = fields;
       const bp = new ContractBP(scope);
-      return bp.getBoilerplate(bpSection);
+      return bp.getBoilerplate(bpSection, circuitParams);
     }
     case 'FunctionBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
