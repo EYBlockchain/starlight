@@ -168,14 +168,14 @@ class ContractBoilerplateGenerator {
         ...(commitmentRoot ? [`
           require(commitmentRoots[_inputs.commitmentRoot] == _inputs.commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
 
-        `
-          uint256[] memory inputs = new uint256[](${[
-          'customInputs.length',
-          ...(newNullifiers ? ['newNullifiers.length'] : []),
-          ...(checkNullifiers ? ['checkNullifiers.length'] : []),
-          ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
-          ...(newCommitments ? ['newCommitments.length + 1'] : []),
-        ].join(' + ')});`,
+          `
+            uint256[] memory inputs = new uint256[](${[
+            'customInputs.length',
+            ...(newNullifiers ? ['newNullifiers.length'] : []),
+            ...(checkNullifiers ? ['checkNullifiers.length'] : []),
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(newCommitments ? ['newCommitments.length'] : []),
+          ].join(' + ')});`,
 
       ];
       const verifyInputs: string[] = [];
@@ -191,6 +191,7 @@ class ContractBoilerplateGenerator {
         _inputs.map(i => verifyInputsMap(type, i, counter));
 
       }
+
       if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
 
         verifyInputs.push(`

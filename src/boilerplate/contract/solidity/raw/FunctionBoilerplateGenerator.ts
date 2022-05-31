@@ -65,7 +65,11 @@ class FunctionBoilerplateGenerator {
       ...(checkNullifiers ? [`uint256[]`] : []),
       `uint256[]`,
     ])
-    if(customInputs?.includes(1) )  customInputs.splice(customInputs.indexOf(1),1);
+
+    if(!customInputs) {
+       customInputs ??= [];
+       customInputs.push(1);
+     }
       return [
          `
           bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
@@ -73,17 +77,12 @@ class FunctionBoilerplateGenerator {
         `
           Inputs memory inputs;`,
 
-        ...(customInputs?.length ?
-          [
-
         `
-          inputs.customInputs = new uint[](${customInputs.length});
-          ${customInputs.map((name: string, i: number) => {
+          inputs.customInputs = new uint[](${customInputs?.length});
+          ${customInputs?.map((name: string, i: number) => {
             if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
-            if (customInputs[i] === 1) return ;
             return `inputs.customInputs[${i}] = ${name};`;
-          }).join('\n \n \t\t\t\t\t')}`]
-          : []),
+          }).join('\n \n \t\t\t\t\t')}`,
 
         ...(newNullifiers ? [`
           inputs.newNullifiers = newNullifiers;`] : []),
