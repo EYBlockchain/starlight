@@ -116,7 +116,16 @@ class ContractBoilerplateGenerator {
               if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
               break;
             case undefined: {
-              if (circuitParamNode.nodeType === 'VariableDeclaration' && !circuitParamNode.isPrivate && !newList.some(str => str === circuitParamNode.name)) newList.push(circuitParamNode.name)
+              if (
+                circuitParamNode.nodeType === 'VariableDeclaration' &&
+                !circuitParamNode.isPrivate &&
+                !newList.some(str => str === circuitParamNode.name)
+              ){
+                if (circuitParamNode.typeName?.members) {
+                  newList.push(...circuitParamNode.typeName.members.map(m => `${circuitParamNode.name}.${m.name}`));
+                  break;
+                } else newList.push(circuitParamNode.name);
+              }
             }
             default:
               break;

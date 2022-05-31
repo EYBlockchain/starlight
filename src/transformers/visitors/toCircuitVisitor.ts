@@ -543,6 +543,7 @@ const visitor = {
         // add struct def after imports, before fndef
         thisFile.nodes.splice(1, 0, structNode);
         newNode.typeName.name = structDef.name;
+        newNode.typeName.members = structNode.members;
       }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {

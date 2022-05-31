@@ -95,7 +95,7 @@ class FunctionBoilerplateGenerator {
           const names = structDef.members.map((mem: any) => {
             return { name: `${node.name}.${mem.name}`, type: mem.typeName.name };
           });
-          return names
+          return { structName: structDef.name, properties: names };
         }
         return { name: node.name, type: node.typeName.name };
       }

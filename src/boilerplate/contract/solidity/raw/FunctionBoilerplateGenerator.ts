@@ -58,12 +58,19 @@ class FunctionBoilerplateGenerator {
       containsAccessedOnlyState: checkNullifiers,
     }): string[] {
       // prettier-ignore
-      let parameter = [...(newNullifiers ? [`uint256[]`] : []),
+      let parameter = [
+      ...(customInputs?.map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type)),
+      ...(newNullifiers ? [`uint256[]`] : []),
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),
       `uint256[]`,
-    ]
+      ]
+
+      customInputs.forEach((input, i) => {
+        if (input.structName) customInputs[i] = input.properties;
+      });
+
       return [
          `
           bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
@@ -73,8 +80,8 @@ class FunctionBoilerplateGenerator {
 
         ...(customInputs?.length ?
           [`
-          inputs.customInputs = new uint[](${customInputs.length});
-        	${customInputs.map((input: any, i: number) => {
+          inputs.customInputs = new uint[](${customInputs.flat(Infinity).length});
+        	${customInputs.flat(Infinity).map((input: any, i: number) => {
             if (input.type === 'address') return `inputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
             if (input.type === 'bool') return `inputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
             return `inputs.customInputs[${i}] = ${input.name};`;

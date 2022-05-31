@@ -900,7 +900,7 @@ const visitor = {
               .replace('.sender', '')
           : indicator.name;
         // we add a general number statement after each whole state edit
-        path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
+        if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
           buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name }),
               operator: '=',
