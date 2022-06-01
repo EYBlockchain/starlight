@@ -347,23 +347,23 @@ export default {
       for (const [index, operand] of operands.entries()) {
         // below: we have an identifier
         if (operand.referencedDeclaration || operand.baseExpression) {
+          let nameMatch = false;
+          switch (operand.nodeType) {
+            case 'IndexAccess':
+              nameMatch = operand.baseExpression.name === lhsNode.baseExpression?.name && operand.indexExpression.name === lhsNode.indexExpression?.name;
+              break;
+            case 'MemberAccess':
+              nameMatch = operand.expression.name === lhsNode.expression?.name && operand.memberName === lhsNode.memberName;
+              break;
+            case 'Identifier':
+            default:
+              nameMatch = operand.name === lhsNode.name;
+              break;
+          }
           // a = a + something
           if (
-            operand.nodeType !== 'IndexAccess' &&
-            operand.name === lhsNode.name &&
+            nameMatch &&
             precedingOperator[index + 1]?.includes('+') && // we have ... + a + ...
-            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
-          ) {
-            discoveredLHS += 1;
-            isIncremented = { incremented: true, decremented: false };
-          }
-
-          // a = a + something (both mapping)
-          if (
-            operand.nodeType === 'IndexAccess' &&
-            operand.baseExpression.name === lhsNode.baseExpression?.name &&
-            operand.indexExpression.name === lhsNode.indexExpression?.name  &&
-            precedingOperator[index + 1]?.includes('+') &&
             precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
@@ -372,21 +372,8 @@ export default {
 
           // a = a - something
           if (
-            operand.nodeType !== 'IndexAccess' &&
-            operand.name === lhsNode.name &&
+            nameMatch &&
             precedingOperator[index + 1]?.includes('-') && // we have ... + a - ...
-            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
-          ) {
-            discoveredLHS += 1;
-            isIncremented = { incremented: true, decremented: true };
-          }
-
-          // a = a - something (mapping)
-          if (
-            operand.nodeType === 'IndexAccess' &&
-            operand.baseExpression.name === lhsNode.baseExpression?.name &&
-            operand.indexExpression.name === lhsNode.indexExpression?.name &&
-            precedingOperator[index + 1]?.includes('-') &&
             precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
             discoveredLHS += 1;
@@ -395,11 +382,7 @@ export default {
 
           // a = something - a
           if (
-            (operand.name === lhsNode.name ||
-              (operand.nodeType === 'IndexAccess' &&
-                operand.baseExpression.name === lhsNode.baseExpression?.name &&
-                operand.indexExpression.name ===
-                  lhsNode.indexExpression?.name)) &&
+            nameMatch &&
             precedingOperator[index]?.includes('-') // we have a = b - a
           ) {
             discoveredLHS -= 1;
@@ -407,6 +390,7 @@ export default {
           // if none, go to the next operand
           if (operand.indexExpression?.expression?.name === 'msg')
             operand.indexExpression.name ??= `msg.sender`;
+          if (operand.memberName && !operand.name) operand.name = `${operand.expression.name}.${operand.memberName}`;
           operand.name ??= `${operand.baseExpression.name}[${operand.indexExpression.name}]`;
         }
         // if we have 1*a on the RHS and its incremented, mark the parent path
