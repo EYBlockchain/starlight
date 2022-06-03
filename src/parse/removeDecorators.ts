@@ -57,6 +57,45 @@ function inComment(file: string, char: number): boolean {
 }
 
 /**
+ * Takes an input '.zol' file and rearranges the modifiers.
+ * returns deDecoratedFile // a '.sol' file, where the modifiiers
+ *     body is copied over to function body .
+ */
+
+function arrangeModifiers(options: any) {
+  const fileString = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
+  let substrings = fileString.map(decLine => tidy(decLine));
+  let modifierRemovedSubString = substrings;
+  let modifierContent = '';
+  for(var i=0; i<substrings.length; i++) {
+    if(substrings[i].startsWith('function'))  {
+    const substringsRemoved = substrings[i].replace("public", "").replace("private","");
+    let modifierslist = substringsRemoved.slice(
+      substringsRemoved.indexOf(')') + 1,
+      substringsRemoved.lastIndexOf('{'),
+    ).trim();
+const modifierslistArray = modifierslist.split(" ");
+  for(var m=0; m<modifierslistArray.length; m++) {
+    modifierslist = 'modifier '+ modifierslistArray[m];
+    modifierContent = '';
+      for (var j=0; j<i; j++) {
+        if(substrings[j].startsWith(modifierslist))  {
+          for(var k=j+1; k<i; k++) {
+            if (substrings[k] === "_;") 
+            break;
+            modifierContent += substrings[k];
+            }
+          }
+        }   
+       modifierRemovedSubString.splice(i+1, 0, modifierContent);
+      } 
+    }
+  }
+  const substringsMod = modifierRemovedSubString.join(",,").toString().replace(/,,/g, '\n');
+  return substringsMod;
+}
+
+/**
  * Takes an input '.zol' file and removes the privacy keywords.
  * @return {Object} = {
  *     deDecoratedFile // a '.sol' file, stripped of any keywords, so
@@ -69,15 +108,7 @@ function removeDecorators(options: any): {
     deDecoratedFile: string;
     toRedecorate: ToRedecorate[];
 } {
-  logger.verbose(`Parsing decorated file ${options.inputFilePath}... `);
-  const decLines = fs
-    .readFileSync(options.inputFilePath, 'utf-8')
-    .split(/\r?\n/);
-  // tidy each line before any changes - so no char numbers are skewed
-  const tidyDecLines = decLines.map(decLine => tidy(decLine));
-  // combine lines in new file
-  const decoratedFile = tidyDecLines.join('\r\n');
-  // now we remove decorators and remember how many characters are offset
+ const decoratedFile = arrangeModifiers(options);
 
   // init file
   let deDecoratedFile = decoratedFile;
