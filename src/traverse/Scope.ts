@@ -643,10 +643,10 @@ export class Scope {
    */
   getIdentifierMappingKeyName(identifierNode: any, forceNotModification = false): any {
     if (this.path.isMsg(identifierNode)) return identifierNode.name;
+    if (identifierNode.nodeType === 'MemberAccess') return identifierNode.memberName;
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
-
-    if (refPaths[thisIndex].key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess')?.node);
+    if (refPaths && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess')?.node);
 
     let { name } = identifierNode;
 

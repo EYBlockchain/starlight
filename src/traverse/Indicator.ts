@@ -213,6 +213,9 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   interactsWith: NodePath[];
   isParam: boolean;
 
+  isStruct?: boolean;
+  structProperties?: any;
+
   initialValue?: any;
 
   /** @param {NodePath} path the path of the localVariable for which we're creating an indicator
@@ -240,6 +243,21 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     }
 
     this.isParam = path.isInType('ParameterList');
+
+    if (path.isStruct()) {
+      this.isStruct = true;
+      this.structProperties = {};
+    }
+  }
+
+  addStructProperty(referencingPath: NodePath): MappingKey {
+    const keyNode = referencingPath.getStructPropertyNode();
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : NodePath.getPath(keyNode);
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+    if (!this.structProperties[keyNode.memberName])
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+
+    return this.structProperties[keyNode.memberName];
   }
 
   update(path: NodePath) {
@@ -247,6 +265,13 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
+    if (this.isStruct) {
+      this.addStructProperty(path).updateProperties(path);
+    }
+  }
+
+  updateProperties(path: NodePath) {
+    return;
   }
 
   addReferencingPath(path: NodePath) {
@@ -432,10 +457,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.isKnown ??= path.node.isKnown;
     this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification())
-    {
       this.addModifyingPath(path);
   }
-}
 
   addSecretInteractingPath(path: NodePath) {
     this.interactsWithSecret = true;
@@ -460,7 +483,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       this.modifyingPaths.forEach(modPath => {
         // if not included, we add it
         if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id)) this.addNullifyingPath(modPath);
-      })
+      });
     }
     this.isWhole ??= this.binding.isWhole;
     this.isWholeReason = this.isWhole
@@ -618,6 +641,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.isNullified = true;
     this.nullifiersRequired = true;
     this.parentIndicator.nullifiersRequired = true;
+    this.parentIndicator.parentIndicator.nullifiersRequired = true;
     this.oldCommitmentAccessRequired = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
