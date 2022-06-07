@@ -92,7 +92,6 @@ class FunctionBoilerplateGenerator {
       const publicParamstype = params?.filter((p: any) => !p.isSecret).map((p: any) => p.typeDescriptions.typeString);
       const functionName = path.getUniqueFunctionName();
       if(path.node.returnParameters.parameters.length === 0){
-
       publicParams?.push(1);
       };
 
