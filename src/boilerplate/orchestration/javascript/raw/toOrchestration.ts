@@ -397,7 +397,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
        if(param === 'true')
         rtnparams?.push(` ${param}:  ${param}`);
        else if(param?.includes('Commitment'))
-        rtnparams?.push( ` commitment : ${param}.integer  `);
+        rtnparams?.push( ` ${param} : ${param}.integer  `);
        else
         rtnparams.push(`   ${param} :${param}.integer`);
      });
