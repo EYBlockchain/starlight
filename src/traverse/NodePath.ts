@@ -876,9 +876,14 @@ export default class NodePath {
     if (!this.isStruct(node)) return null;
     const fnDef = this.getAncestorOfType('FunctionDefinition');
     const parent = (node.nodeType === 'MemberAccess' || node.nodeType === 'VariableDeclaration') ? node : this.getAncestorOfType('MemberAccess')?.node;
-    const typeId = parent.typeName.pathNode.referencedDeclaration;
-    const structNode = fnDef.getAllPrevSiblingNodes().find(n => n.id === typeId);
-    return structNode;
+    if (parent.typeName) {
+      const typeId = parent.typeName.pathNode.referencedDeclaration;
+      const structNode = fnDef.getAllPrevSiblingNodes().find(n => n.id === typeId);
+      return structNode;
+    } else {
+      const structNode = this.getReferencedNode(parent);
+      return this.getStructDeclaration(structNode);
+    }
   }
 
  /**

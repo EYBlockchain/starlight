@@ -326,7 +326,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   isMapping?: boolean;
   isStruct?: boolean;
-  structProperties?: {[key: string]: MappingKey};
+  structProperties?: {[key: string]: any};
   mappingKeys?: {[key: string]: MappingKey};
   mappingOwnershipType?: string;
 
@@ -401,6 +401,9 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (path.isStruct()) {
       this.isStruct = true;
       this.structProperties = {};
+      path.getStructDeclaration()?.members.forEach((member: any) => {
+        this.structProperties[member.name] = {};
+      });
     }
   }
 
@@ -432,7 +435,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
-    if (!this.structProperties[keyNode.memberName])
+    if (!(this.structProperties[keyNode.memberName] instanceof MappingKey))
       this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
 
     return this.structProperties[keyNode.memberName];
@@ -479,7 +482,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
     // add nullifyingPaths we didn't know were nullifying
-    if (this.binding.isWhole && this.isModified) {
+    if (this.binding.isWhole && this.isModified && this.isSecret) {
       this.modifyingPaths.forEach(modPath => {
         // if not included, we add it
         if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id)) this.addNullifyingPath(modPath);
@@ -508,7 +511,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (this.isStruct) {
       const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
       for (const [, mappingKey] of structProperties) {
-        mappingKey.updateFromBinding();
+        // we may have empty struct properties if they are never edited
+        if (mappingKey instanceof MappingKey) mappingKey.updateFromBinding();
       }
     }
   }
@@ -544,6 +548,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   updateIncrementation(path: NodePath, state: any) {
     if (this.isSecret) this.parentIndicator.updateIncrementation(path, state);
+    // ensure non secret states don't get marked as nullifications/imports
+    if (!state.incrementedIdentifier.interactsWithSecret && !this.interactsWithSecret && !this.isSecret) return;
     state.initialisedInConstructor = this.binding.initialisedInConstructor;
     // if an incrementation is marked as unknown anywhere, the binding will know
     if (
@@ -668,7 +674,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (this.isStruct) {
       const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
       for (const [, mappingKey] of structProperties) {
-        mappingKey.prelimTraversalErrorChecks();
+        // we may have empty struct properties if they are never edited
+        if (mappingKey instanceof MappingKey) mappingKey.prelimTraversalErrorChecks();
       }
     }
     // warning: state is clearly whole, don't need known decorator

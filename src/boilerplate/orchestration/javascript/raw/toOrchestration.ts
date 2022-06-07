@@ -488,6 +488,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
                     burnedOnly: false,
+                    structProperties: stateNode.structProperties,
                   }));
 
                 break;
@@ -511,7 +512,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
                     burnedOnly: false,
-
+                    structProperties: stateNode.structProperties,
                   }));
 
                 break;
@@ -536,6 +537,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   ? `[${stateName}_stateVarId_key.integer]`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
+                structProperties: stateNode.structProperties,
               }));
         }
       }
@@ -627,6 +629,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               Orchestrationbp.calculateCommitment.postStatements( {
                 stateName,
                 stateType: 'whole',
+                structProperties: stateNode.structProperties,
               }));
 
             break;
@@ -639,6 +642,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'decrement',
+                    structProperties: stateNode.structProperties,
                   }));
 
                 break;
@@ -649,6 +653,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'increment',
+                    structProperties: stateNode.structProperties,
                   }));
 
             }

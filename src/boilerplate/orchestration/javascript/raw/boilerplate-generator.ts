@@ -215,7 +215,7 @@ class BoilerplateGenerator {
 
   calculateCommitment = {
 
-    postStatements({ stateName, stateType }): string[] {
+    postStatements({ stateName, stateType, structProperties }): string[] {
       // once per state
       switch (stateType) {
         case 'increment':
@@ -231,9 +231,10 @@ class BoilerplateGenerator {
             \nlet ${stateName}_2_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${stateName}_change.hex(32), publicKey.hex(32), ${stateName}_2_newSalt.hex(32)));
             \n${stateName}_2_newCommitment = generalise(${stateName}_2_newCommitment.hex(32, 31)); // truncate`];
         case 'whole':
+          const value = structProperties ? structProperties.map(p => `${stateName}.${p}.hex(32)`) :` ${stateName}.hex(32)`;
           return [`
             \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
-            \nlet ${stateName}_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${stateName}.hex(32), ${stateName}_newOwnerPublicKey.hex(32), ${stateName}_newSalt.hex(32)));
+            \nlet ${stateName}_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${value}, ${stateName}_newOwnerPublicKey.hex(32), ${stateName}_newSalt.hex(32)));
             \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32, 31)); // truncate`];
         default:
           throw new TypeError(stateType);
@@ -362,26 +363,32 @@ sendTransaction = {
 };
   /** Partitioned states need boilerplate for a decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
   writePreimage = {
-    postStatements({stateName,
+    postStatements({
+      stateName,
       stateType,
       mappingName,
       mappingKey,
-      burnedOnly}): string[] {
+      burnedOnly,
+      structProperties,
+    }): string[] {
+      let value;
       switch (stateType) {
         case 'increment':
+          value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}_newCommitmentValue.integer`)} }` : `${stateName}_newCommitmentValue.integer`;
           return [`
             \npreimage.${mappingName}${mappingKey}[${stateName}_newCommitment.hex(32)] = {
-            \tvalue: ${stateName}_newCommitmentValue.integer,
+            \tvalue: ${value},
             \tsalt: ${stateName}_newSalt.integer,
             \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
             \tcommitment: ${stateName}_newCommitment.integer,
           };`];
         case 'decrement':
+          value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}_change.integer`)} }` : `${stateName}_change.integer`;
           return [`
             \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_0_oldCommitment).hex(32)].isNullified = true;
             \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_1_oldCommitment).hex(32)].isNullified = true;
             \npreimage.${mappingName}${mappingKey}[${stateName}_2_newCommitment.hex(32)] = {
-            \tvalue: ${stateName}_change.integer,
+            \tvalue: ${value},
             \tsalt: ${stateName}_2_newSalt.integer,
             \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
             \tcommitment: ${stateName}_2_newCommitment.integer,
@@ -392,9 +399,10 @@ sendTransaction = {
               return [`
                 \npreimage.${mappingName}${mappingKey} = {};`];
             default:
+              value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}.integer`)} }` : `${stateName}.integer`;
               return [`
                 \npreimage.${mappingName}${mappingKey} = {
-                \tvalue: ${stateName}.integer,
+                \tvalue: ${value},
                 \tsalt: ${stateName}_newSalt.integer,
                 \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
                 \tcommitment: ${stateName}_newCommitment.integer,

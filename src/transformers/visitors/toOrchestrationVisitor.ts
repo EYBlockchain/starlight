@@ -809,7 +809,10 @@ const visitor = {
         const firstInstanceOfNewName = names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
 
         // check whether this should be a VariableDeclaration
-        const firstEdit = ( firstInstanceOfNewName && indicator.interactsWithSecret) || (indicator.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole);
+        const firstEdit =
+          (firstInstanceOfNewName && indicator.interactsWithSecret) ||
+          (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole) ||
+          (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole);
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
@@ -834,13 +837,15 @@ const visitor = {
             oldASTId: node.id,
             declarations: [
               buildNode('VariableDeclaration', {
-                name,
+                name: indicator.isStruct ? lhs.name : name,
                 isAccessed: accessed,
                 isSecret: true,
               }),
             ],
             interactsWithSecret: true,
           });
+
+          if (indicator.isStruct) newNode.declarations[0].isStruct = true;
 
           if (accessedBeforeModification || path.isInSubScope()) {
             // we need to initialise an accessed state

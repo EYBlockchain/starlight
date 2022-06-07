@@ -54,6 +54,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         mappingKey: indicator.referencedKeyName || null,
         mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -100,6 +101,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
