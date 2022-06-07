@@ -18,6 +18,7 @@ const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
 // and hence need to be included in the verification calculation
 const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.nodeType !== 'Identifier' && thisPath.nodeType !== 'Return') return;
+
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
   if(thisPath.nodeType === 'Return') {
@@ -45,6 +46,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
    thisState.customInputs ??= [];
     thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
   }
+
   }
 
 
@@ -167,9 +169,6 @@ export default {
         }
       }
 
-      //state.circuitParams = {... state.circuitParams, ... state.returnpara};
-      //console.log(state.circuitParams);
-      // base contracts (`contract MyContract is BaseContract`)
       const contractIndex = sourceUnitNodes.findIndex(
         (n: any) => n.name === node.name,
       );
@@ -323,7 +322,7 @@ export default {
           }),
         );
 
-      delete state.customInputs;
+      delete state?.customInputs;
     },
   },
 

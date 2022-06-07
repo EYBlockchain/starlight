@@ -66,10 +66,6 @@ class FunctionBoilerplateGenerator {
       `uint256[]`,
     ])
 
-    if(!customInputs) {
-       customInputs ??= [];
-       customInputs.push(1);
-     }
       return [
          `
           bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,

@@ -88,10 +88,13 @@ class FunctionBoilerplateGenerator {
       const { scope } = this;
       const { path } = scope;
       const params = path.getFunctionParameters();
-
       const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => p.name).concat(customInputs);
       const publicParamstype = params?.filter((p: any) => !p.isSecret).map((p: any) => p.typeDescriptions.typeString);
       const functionName = path.getUniqueFunctionName();
+      if(path.node.returnParameters.parameters.length === 0){
+
+      publicParams?.push(1);
+      };
 
       const indicators = this.customFunction.getIndicators.bind(this)();
 
