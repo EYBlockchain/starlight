@@ -69,12 +69,13 @@ function codeGenerator(node: any) {
         node.isConstructor ? 'constructor ' : `function ${node.name}`
       }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
-      return `
-        ${functionSignature}
 
-          ${body}
 
-        }`;
+    return `
+      ${functionSignature}
+
+        ${body}
+      }`;
     }
 
     case 'ParameterList':
@@ -119,6 +120,11 @@ function codeGenerator(node: any) {
     case 'ExpressionStatement':{
       return codeGenerator(node.expression);
     }
+
+    case 'Return':
+
+      return ` `;
+
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${

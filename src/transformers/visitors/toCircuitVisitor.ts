@@ -215,12 +215,72 @@ const visitor = {
   },
 
   ParameterList: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
+    enter(path: NodePath, state: any) {
+      const { node, parent, scope } = path;
+      let returnName : string[] =[];
+       if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
-    },
+    } else if(path.key === 'returnParameters'){
+       parent.body.statements.forEach(node => {
+        if(node.nodeType === 'Return'){
+          if(node.expression.nodeType === 'TupleExpression'){
+           node.expression.components.forEach(component => {
+             if(component.name){
+              returnName?.push(component.name);
+            }
+             else
+             returnName?.push(component.value);
+           });
+         } else{
+          if(node.expression.name)
+           returnName?.push(node.expression.name);
+          else
+          returnName?.push(node.expression.value);
+        }
+        }
+      });
+    node.parameters.forEach((node, index) => {
+    if(node.nodeType === 'VariableDeclaration'){
+    node.name = returnName[index];
+  }
+    });
+    const newNode = buildNode('ParameterList');
+    node._newASTPointer = newNode.parameters;
+    parent._newASTPointer[path.containerName] = newNode;
+    }
+  },
+  exit(path: NodePath, state: any){
+    const { node, parent, scope } = path;
+    if(path.key === 'returnParameters'){
+      node._newASTPointer.forEach(item =>{
+      parent.body.statements.forEach( node => {
+        if(node.nodeType === 'Return'){
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(node.expression.nodeType === 'TupleExpression'){
+            node.expression.components.forEach(component => {
+              if(id == component.referencedDeclaration) {
+                if ((bindings instanceof VariableBinding)) {
+                  if(component.name === item.name)
+                  item.isPrivate = bindings.isSecret
+                }
+              }
+            })
+          } else {
+            if( id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding)){
+               if(node.name === item.name)
+               item.isPrivate = bindings.isSecret
+              }
+            }
+           }
+          }
+        }
+      })
+    })
+    }
+  },
   },
 
   Block: {
@@ -235,6 +295,22 @@ const visitor = {
       parent._newASTPointer.body = newNode;
     },
   },
+
+  Return: {
+     enter(path: NodePath) {
+       const { node, parent } = path;
+       const newNode = buildNode(
+       node.nodeType,
+       { value: node.expression.value });
+       node._newASTPointer = newNode;
+       if (Array.isArray(parent._newASTPointer)) {
+         parent._newASTPointer.push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName].push(newNode);
+       }
+     },
+
+   },
 
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
@@ -598,10 +674,10 @@ const visitor = {
 
   Literal: {
     enter(path: NodePath) {
-      const { node, parent } = path;
+      const { node, parent , parentPath } = path;
       const { value } = node;
-
       if (node.kind !== 'number')
+       if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
         );

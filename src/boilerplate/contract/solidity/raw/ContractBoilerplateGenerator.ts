@@ -94,7 +94,7 @@ class ContractBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
-      parameters,
+      circuitParams,
       constructorContainsSecret
     }): string[] {
       const verifyFunctionSignature = `
@@ -104,25 +104,36 @@ class ContractBoilerplateGenerator {
       		Inputs memory _inputs
       	) private {
         `;
-
-      const verifyInputsMap = (input: string, counter: any) => {
+      let verifyInput: string[] = [];
+      const verifyInputsMap = (type: string,input: string, counter: any) => {
+        if(type  === 'parameters'){
         switch (input) {
           case 'nullifier':
-            return `
-            inputs[k++] = newNullifiers[${counter.newNullifiers++}];`;
+            verifyInput.push( `
+            inputs[k++] = newNullifiers[${counter.newNullifiers++}];`);
+            break;
           case 'checkNullifier':
-            return `
-            inputs[k++] = checkNullifiers[${counter.checkNullifiers++}];`;
+            verifyInput.push(`
+            inputs[k++] = checkNullifiers[${counter.checkNullifiers++}];`);
+            break;
           case 'newCommitment':
-            return `
-            inputs[k++] = newCommitments[${counter.newCommitments++}];`;
+            verifyInput.push(`
+            inputs[k++] = newCommitments[${counter.newCommitments++}];`);
+            break;
           case 'oldCommitmentExistence':
-            return `
-            inputs[k++] = _inputs.commitmentRoot;`;
+            verifyInput.push( `
+            inputs[k++] = _inputs.commitmentRoot;`);
+            break;
           default:
-            return `
-            inputs[k++] = customInputs[${counter.customInputs++}];`;
+            verifyInput.push( `
+            inputs[k++] = customInputs[${counter.customInputs++}];`);
+            break;
         }
+      }
+      else if(type  === 'returnParameters'){
+          verifyInput.push( `
+          inputs[k++] = ${input};`);
+      }
       }
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
@@ -157,34 +168,38 @@ class ContractBoilerplateGenerator {
         ...(commitmentRoot ? [`
           require(commitmentRoots[_inputs.commitmentRoot] == _inputs.commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
 
-        `
-          uint256[] memory inputs = new uint256[](${[
-          'customInputs.length',
-          ...(newNullifiers ? ['newNullifiers.length'] : []),
-          ...(checkNullifiers ? ['checkNullifiers.length'] : []),
-          ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
-          ...(newCommitments ? ['newCommitments.length + 1'] : []),
-        ].join(' + ')});`,
+          `
+            uint256[] memory inputs = new uint256[](${[
+            'customInputs.length',
+            ...(newNullifiers ? ['newNullifiers.length'] : []),
+            ...(checkNullifiers ? ['checkNullifiers.length'] : []),
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(newCommitments ? ['newCommitments.length'] : []),
+          ].join(' + ')});`,
 
       ];
       const verifyInputs: string[] = [];
-      const _parameters: string[][] = parameters;
-
-      for (let [name, _inputs] of Object.entries(_parameters)) {
+      for (let [name, _params] of Object.entries(circuitParams)) {
+        for (let [type, _inputs] of Object.entries(_params)) {
         const counter = {
           customInputs: 0,
           newNullifiers: 0,
           checkNullifiers: 0,
           newCommitments: 0,
         };
-        // this strange declaration prevents typescript errors
-        const inputs: string[] = _inputs;
+
+        _inputs.map(i => verifyInputsMap(type, i, counter));
+
+      }
+
+      if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
+
         verifyInputs.push(`
           if (functionId == uint(FunctionNames.${name})) {
             uint k = 0;
-            ${inputs.map(i => verifyInputsMap(i, counter)).join('')}
-            inputs[k++] = 1;
+            ${verifyInput.join('')}
           }`)
+          verifyInput =[];
       }
 
       const verification: string[] = [
