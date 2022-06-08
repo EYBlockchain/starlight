@@ -17,13 +17,42 @@ const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
 const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
-  if (thisPath.nodeType !== 'Identifier') return;
+  if (thisPath.nodeType !== 'Identifier' && thisPath.nodeType !== 'Return') return;
+
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  if(thisPath.nodeType === 'Return') {
+   thisPath.container.forEach(item => {
+     if(item.nodeType === 'Return'){
+      if(item.expression.components) {
+        item.expression.components.forEach(element => {
+          if(element.kind === 'bool'){
+          thisState.customInputs ??= [];
+          thisState.customInputs.push(1);
+    }
+  });
+}
+    else {
+      if(item.expression.kind === 'bool'){
+        thisState.customInputs ??= [];
+        thisState.customInputs.push(1);
+      }
+    }
+  }
+  });
+}
+  if(thisPath.getAncestorOfType('Return')){
+  if( binding instanceof VariableBinding && binding.isSecret){
+   thisState.customInputs ??= [];
+    thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
+  }
+
+  }
+
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
@@ -36,8 +65,9 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     !(thisPath.containerName === 'indexExpression')
   ) {
     thisState.customInputs ??= [];
-    if (!thisState.customInputs.some((input: string) => input === indicator.name))
+    if (!thisState.customInputs.some((input: string) => input === indicator.name)){
       thisState.customInputs.push(indicator.name);
+}
   }
 };
 
@@ -126,8 +156,21 @@ export default {
       const { node, parent, scope } = path;
       const sourceUnitNodes = parent._newASTPointer[0].nodes;
       const contractNodes = node._newASTPointer;
+      let parameterList : {};
+      let functionName: string;
+      let returnParameterList = {};
+      let returnfunctionName: string;
+      for ([functionName, parameterList] of Object.entries(state.circuitParams)) {
+        if(state.returnpara){
+         for ([returnfunctionName, returnParameterList] of Object.entries(state.returnpara)){
+           if(functionName === returnfunctionName ){
+             parameterList = {... parameterList, ... returnParameterList};
+             state.circuitParams[ functionName ] = parameterList;
+            }
+          }
+        }
+      }
 
-      // base contracts (`contract MyContract is BaseContract`)
       const contractIndex = sourceUnitNodes.findIndex(
         (n: any) => n.name === node.name,
       );
@@ -223,8 +266,9 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
+      state.functionName = path.getUniqueFunctionName()
       const newNode = buildNode('FunctionDefinition', {
-        name: node.fileName || path.getUniqueFunctionName(),
+        name: node.fileName || state.functionName,
         id: node.id,
         visibility: isConstructor ? '' : 'public',
         isConstructor,
@@ -238,7 +282,8 @@ export default {
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
 
       state.circuitParams ??= {};
-      state.circuitParams[path.getUniqueFunctionName()] = circuitParams;
+      state.circuitParams[path.getUniqueFunctionName()] ??= {};
+      state.circuitParams[path.getUniqueFunctionName()].parameters = circuitParams;
     },
 
     exit(path: NodePath, state: any) {
@@ -279,17 +324,79 @@ export default {
           }),
         );
 
-      delete state.customInputs;
+      delete state?.customInputs;
     },
   },
 
   ParameterList: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
+    enter(path: NodePath, state: any) {
+      const { node, parent, scope } = path;
+      let returnName : string[] =[];
+       if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
-    },
+    } else if(path.key === 'returnParameters'){
+       parent.body.statements.forEach(node => {
+        if(node.nodeType === 'Return'){
+          if(node.expression.nodeType === 'TupleExpression'){
+           node.expression.components.forEach(component => {
+             if(component.name){
+              returnName?.push(component.name);
+            }
+             else
+             returnName?.push(component.value);
+           });
+         } else{
+           if(node.expression.name)
+            returnName?.push(node.expression.name);
+           else
+           returnName?.push(node.expression.value);
+        }
+        }
+      });
+
+    node.parameters.forEach((node, index) => {
+    if(node.nodeType === 'VariableDeclaration'){
+    node.name = returnName[index];
+  }
+    });
+
+    const newNode = buildNode('ParameterList');
+    node._newASTPointer = newNode.parameters;
+    parent._newASTPointer[path.containerName] = newNode;
+    }
+  },
+  exit(path: NodePath, state: any){
+    const { node, parent, scope } = path;
+    if(path.key === 'returnParameters'){
+      node._newASTPointer.forEach(item =>{
+      parent.body.statements.forEach( node => {
+        if(node.nodeType === 'Return'){
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(node.expression.nodeType === 'TupleExpression'){
+            node.expression.components.forEach(component => {
+              if(id == component.referencedDeclaration) {
+                if ((bindings instanceof VariableBinding)) {
+                  if(component.name === item.name)
+                  item.isSecret = bindings.isSecret
+                }
+              }
+            })
+          } else {
+            if( id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding)){
+               if(node.name === item.name)
+               item.isSecret = bindings.isSecret
+              }
+            }
+           }
+          }
+        }
+      })
+    })
+    }
+  },
   },
 
   Block: {
@@ -300,6 +407,25 @@ export default {
       parent._newASTPointer.body = newNode;
     },
   },
+  Return: {
+     enter(path: NodePath, state: any) {
+       const { node, parent } = path;
+       path.traversePathsFast(findCustomInputsVisitor, state);
+       state.returnpara ??= {};
+       state.returnpara[state.functionName] ??= {};
+       state.returnpara[state.functionName].returnParameters = state.customInputs;
+
+       const newNode = buildNode(
+       node.nodeType,
+       { value: node.expression.value });
+       node._newASTPointer = newNode;
+       if (Array.isArray(parent._newASTPointer)) {
+         parent._newASTPointer.push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName].push(newNode);
+       }
+     },
+   },
 
   IfStatement: {
     enter(path: NodePath, state: any) {
@@ -432,7 +558,7 @@ export default {
   },
 
   VariableDeclaration: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state : any) {
       const { node, parent } = path;
 
       if (path.isFunctionReturnParameterDeclaration())
@@ -444,6 +570,8 @@ export default {
       // TODO: `memery` declarations and `returnParameter` declarations
       if (node.stateVariable) {
         declarationType = 'state'; // not really needed, since we already have 'stateVariable'
+        state.variableName ??= [];
+        state.variableName.push(node.name);
       } else if (path.isLocalStackVariableDeclaration()) {
         declarationType = 'localStack';
       } else if (path.isFunctionParameterDeclaration()) {

@@ -87,19 +87,23 @@ class ContractBoilerplateGenerator {
 
     registerZKPPublicKey() {},
 
-    verify(circuitParams: Object) {
+    verify(circuitParams: Object ) {
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = this.scope;
-
-
-      const parameters = {};
+      const returnpara = {};
       let parameterList: any[];
+      let paramtype: string;
+      let params : any[];
       let functionName: string;
-
       for ([functionName, parameterList] of Object.entries(circuitParams)) {
+        for ([paramtype, params] of Object.entries(parameterList)){
+        if(paramtype  === 'returnParameters'){
+          returnpara[ paramtype ] = params;
+          delete parameterList[ paramtype ];
+        }
         const newList = [];
-        parameterList.forEach(circuitParamNode => {
+        params.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
               if (circuitParamNode.isNullified) {
@@ -116,16 +120,25 @@ class ContractBoilerplateGenerator {
               if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
               break;
             case undefined: {
-              if (circuitParamNode.nodeType === 'VariableDeclaration' && !circuitParamNode.isPrivate && !newList.some(str => str === circuitParamNode.name)) newList.push(circuitParamNode.name)
+              if (circuitParamNode.nodeType === 'VariableDeclaration' && !circuitParamNode.isPrivate && !newList.some(str => str === circuitParamNode.name))
+              newList.push(circuitParamNode.name);
             }
+            break;
+
             default:
               break;
           }
         });
-        parameters[functionName] = newList;
+          parameterList[ paramtype ] = newList;
+          parameterList = {...parameterList, ...returnpara};
+
       }
+
+     circuitParams[ functionName ] = parameterList;
+
+    }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, constructorContainsSecret, parameters };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, constructorContainsSecret, circuitParams};
     },
 
   };
