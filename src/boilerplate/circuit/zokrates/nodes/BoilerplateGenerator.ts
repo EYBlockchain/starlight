@@ -63,6 +63,9 @@ class BoilerplateGenerator {
   initialisationRequired?: boolean;
   newCommitmentsRequired?: boolean;
   isMapping: boolean;
+  isStruct: boolean;
+  structProperties?: string[];
+  typeName?: string;
   increments: any;
   decrements: any;
   burnedOnly: any;
@@ -100,6 +103,7 @@ class BoilerplateGenerator {
       isAccessed,
       newCommitmentsRequired,
       isMapping,
+      isStruct,
       increments,
       decrements,
       initialisationRequired,
@@ -114,6 +118,7 @@ class BoilerplateGenerator {
       isAccessed,
       newCommitmentsRequired,
       isMapping,
+      isStruct,
       increments,
       decrements,
       initialisationRequired,
@@ -132,6 +137,10 @@ class BoilerplateGenerator {
         this.generateBoilerplate();
       }
     } else {
+      if (indicators instanceof StateVariableIndicator && indicators.structProperties) {
+        this.structProperties = Object.keys(indicators.structProperties);
+        this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+      }
       this.assignIndicators(indicators);
       this.generateBoilerplate();
     }
@@ -183,6 +192,8 @@ class BoilerplateGenerator {
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
           ...(this.isNullified && { isNullified: this.isNullified }),
           ...(this.isMapping && { isMapping: this.isMapping }),
+          ...(this.isStruct && { structProperties: this.structProperties}),
+          ...(this.isStruct && { typeName: this.typeName}),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),

@@ -265,14 +265,15 @@ class BoilerplateGenerator {
       stateName,
       stateType,
       stateVarIds,
+      structProperties,
       reinitialisedOnly,
       burnedOnly,
       accessedOnly,
       initialisationRequired,
       rootRequired,
       parameters,
-      }): string[] {
-
+    }): string[] {
+      let prev;
       // once per state
       switch (stateType) {
 
@@ -310,13 +311,14 @@ class BoilerplateGenerator {
                   \t${stateName}_newSalt.limbs(32, 8),
                   \t${stateName}_newCommitment.integer`];
             default:
+              prev = structProperties ? structProperties.map(p => `\t${stateName}_prev.${p}.integer`) : `\t${stateName}_prev.integer`;
               switch (burnedOnly) {
                 case true:
                   return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.limbs(32, 8),
                       \t${stateName}_nullifier.integer,
-                      \t${stateName}_prev.integer,
+                      ${prev},
                       \t${stateName}_prevSalt.limbs(32, 8),
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
@@ -329,7 +331,7 @@ class BoilerplateGenerator {
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.limbs(32, 8),
                           \t${stateName}_nullifier.integer,
-                          \t${stateName}_prev.integer,
+                          ${prev},
                           \t${stateName}_prevSalt.limbs(32, 8),
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                           \t${stateName}_index.integer,
@@ -339,7 +341,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
                       \t${stateName}_nullifier.integer,
-                      \t${stateName}_prev.integer,
+                      ${prev},
                       \t${stateName}_prevSalt.limbs(32, 8),
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}

@@ -130,6 +130,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         nullifierRequired: indicator.isNullified,
         increment,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         isMapping: indicator.isMapping,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,

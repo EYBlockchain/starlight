@@ -99,10 +99,10 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x }): string[] {
+    parameters({ name: x, typeName }): string[] {
       // prettier-ignore
       return [
-        `private field ${x}_oldCommitment_value`,
+        `private ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
         `private u32[8] ${x}_oldCommitment_salt`,
       ];
     },
@@ -115,7 +115,20 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x }): string[] {
+    postStatements({ name: x, structProperties }): string[] {
+      if (structProperties)
+        return [
+          `
+          // ${x}_oldCommitment_commitment: preimage check
+          // TODO - SHA length and prop types
+
+          u32[8] ${x}_oldCommitment_commitment = sha256of1024([\\
+            ...${x}_stateVarId,\\
+            ${structProperties.map(p => `\t ...field_to_u32_8(${x}_oldCommitment_value.${p}),\\`).join('\n')}
+            ...${x}_oldCommitment_owner_publicKey,\\
+            ...${x}_oldCommitment_salt\\
+          ])`,
+        ];
       return [
         `
         // ${x}_oldCommitment_commitment: preimage check
@@ -214,7 +227,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, isWhole, isNullified, newCommitmentValue }): string[] {
+    postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       const y = isWhole ? x : newCommitmentValue;
       const lines = [];
@@ -232,6 +245,26 @@ class BoilerplateGenerator {
       } else {
         lines.push(`u32[8] ${x}_newCommitment_value = field_to_u32_8(${y})`);
       }
+
+      if (structProperties)
+        return [
+          `
+          // prepare secret state '${x}' for commitment
+
+          // ${x}_newCommitment_commitment - preimage check
+          // TODO - SHA length and prop types
+
+          u32[8] ${x}_newCommitment_commitment_check = sha256of1024([\\
+            ...${x}_stateVarId,\\
+            ${structProperties.map(p => `\t ...field_to_u32_8(${x}.${p}),\\`).join('\n')}
+            ...${x}_newCommitment_owner_publicKey,\\
+            ...${x}_newCommitment_salt\\
+          ])
+
+          assert(\\
+            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
+          )`,
+        ];
 
       return [
         `

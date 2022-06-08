@@ -92,16 +92,11 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
 
     }
 
-//console.log(path.node.typeDescriptions);
-    if(path.node.typeDescriptions.typeIdentifier.includes(`_internal_`))
-      {
+    if (path.node.typeDescriptions.typeIdentifier.includes(`_internal_`)) {
         const functionReferncedNode = path.scope.getReferencedNode(path.node);
-        const params = functionReferncedNode.parameters.parameters ;
-          if(params.some(node => node.isSecret))
-          {
+        const params = functionReferncedNode.parameters.parameters;
+        if (params.some(node => node.isSecret))
             this.internalFunctionInteractsWithSecret = true;
-        }
-      //console.log(this.internalFunctionInteractsWithSecret);
     }
 
   }
