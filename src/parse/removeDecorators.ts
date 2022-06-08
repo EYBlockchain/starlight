@@ -63,30 +63,66 @@ function inComment(file: string, char: number): boolean {
  */
 
 function arrangeModifiers(options: any) {
+  let splCharsRegExp = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+  let parameterRegExp = /\(|\)|\[|\]/g;
   const fileString = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
   let substrings = fileString.map(decLine => tidy(decLine));
   let modifierRemovedSubString = substrings;
   let modifierContent = '';
+  let ParameterList = [];
+  let modifierParameterList= [];
   for(var i=0; i<substrings.length; i++) {
     if(substrings[i].startsWith('function'))  {
-    const substringsRemoved = substrings[i].replace("public", "").replace("private","");
-    let modifierslist = substringsRemoved.slice(
+      const substringsRemoved = substrings[i].replace("public", "").replace("private","");
+      let modifierslist = substringsRemoved.slice(
       substringsRemoved.indexOf(')') + 1,
       substringsRemoved.lastIndexOf('{'),
-    ).trim();
-const modifierslistArray = modifierslist.split(" ");
-  for(var m=0; m<modifierslistArray.length; m++) {
-    modifierslist = 'modifier '+ modifierslistArray[m];
-    modifierContent = '';
-      for (var j=0; j<i; j++) {
-        if(substrings[j].startsWith(modifierslist))  {
-          for(var k=j+1; k<i; k++) {
+      ).trim();
+      modifierslist = modifierslist.replace(/\s+(?=[.,?!()])/,'');
+      modifierslist = modifierslist.replace(/\s*,\s*/g, ",");
+      const modifierslistArray = modifierslist.split(" ");
+      for(var m=0; m<modifierslistArray.length; m++) {
+        modifierslist = 'modifier '+ modifierslistArray[m];
+        let hasParameters = parameterRegExp.test(modifierslistArray[m]);
+        if(hasParameters) {
+          modifierParameterList = modifierslistArray[m].slice(
+          modifierslistArray[m].indexOf('(') + 1,
+          modifierslistArray[m].lastIndexOf(')'),
+          ).trim().split(",");
+         }
+        modifierslist = modifierslist.replace(/ *\([^)(]*/g, "");
+        if(modifierslist.endsWith(')'))
+          modifierslist =modifierslist.slice(0, -1);
+        modifierContent = '';
+        for (var j=0; j<i; j++) {
+          if(substrings[j].startsWith(modifierslist))  {
+            ParameterList = substrings[j].slice(
+            substrings[j].indexOf('(') + 1,
+            substrings[j].lastIndexOf(')'),
+            ).trim().split(",");
+            for(var n =0; n < ParameterList.length ;  n++) {
+            ParameterList[n] = ParameterList[n].substring(ParameterList[n].replace(/^\s/, '').indexOf(' ') + 1);
+            ParameterList[n] = ParameterList[n].replace(/\s/g,'')
+            }
+            for(var k=j+1; k<i; k++) {
+              if(hasParameters) {
+                for(var n =0; n < ParameterList.length ;  n++) {
+                  const indexes = [...substrings[k].matchAll(new RegExp(ParameterList[n], 'gi'))].map(a => a.index);
+                  if(indexes.length>0) {
+                    for (var p =0;p<indexes.length;p++) {
+                      if(splCharsRegExp.test(substrings[k].charAt(indexes[p]-1)) && splCharsRegExp.test(substrings[k].charAt(indexes[p]+(ParameterList[n].length)))) {
+                        substrings[k] = substrings[k].replace(ParameterList[n],modifierParameterList[n]);
+                      }
+                    }
+                  }
+                }
+              }
             if (substrings[k] === "_;") 
             break;
             modifierContent += substrings[k];
             }
           }
-        }   
+        } 
        modifierRemovedSubString.splice(i+1, 0, modifierContent);
       } 
     }
