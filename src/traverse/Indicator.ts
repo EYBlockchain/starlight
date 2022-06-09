@@ -247,7 +247,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
 
   addStructProperty(referencingPath: NodePath): MappingKey {
     const keyNode = referencingPath.getStructPropertyNode();
-    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : NodePath.getPath(keyNode);
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);;
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!this.structProperties[keyNode.memberName])
       this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
@@ -428,7 +428,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   addStructProperty(referencingPath: NodePath): MappingKey {
     const keyNode = referencingPath.getStructPropertyNode();
-    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : NodePath.getPath(keyNode);
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);;
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!(this.structProperties[keyNode.memberName] instanceof MappingKey))
       this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
@@ -673,16 +673,16 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         if (mappingKey instanceof MappingKey) mappingKey.prelimTraversalErrorChecks();
       }
     }
-    // warning: state is clearly whole, don't need known decorator
-    // added not accessed because this flags incrementations marked as known, they need to be marked as known
-    if (this.isKnown && this.isWhole && !this.isIncremented) {
-      logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to:`,
-      );
-      this.isWholeReason.forEach(reason => {
-        console.log(reason[0]);
-      });
-    }
+    // // warning: state is clearly whole, don't need known decorator
+    // // added not accessed because this flags incrementations marked as known, they need to be marked as known
+    // if (this.isKnown && this.isWhole && !this.isIncremented) {
+    //   logger.warn(
+    //     `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to:`,
+    //   );
+    //   this.isWholeReason.forEach(reason => {
+    //     console.log(reason[0]);
+    //   });
+    // }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
       throw new SyntaxUsageError(
