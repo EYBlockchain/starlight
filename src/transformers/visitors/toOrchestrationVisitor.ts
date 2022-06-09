@@ -10,13 +10,7 @@ import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
 import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-// below stub will only work with a small subtree - passing a whole AST will always give true!
-// useful for subtrees like ExpressionStatements
-
-const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
-  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
-    thisState.interactsWithSecret = true;
-};
+import { interactsWithSecretVisitor } from './common.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
