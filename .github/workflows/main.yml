@@ -6,7 +6,7 @@ name: test-on-pr
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [ master, miranda/actionstestfix ]
   pull_request:
     branches: [ master ]
 
@@ -28,7 +28,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: compile and test
         run: |
-          npm ci && ./bin/start
+          ./bin/start && npm ci
           npm test
 
   test-zapp:
@@ -44,27 +44,27 @@ jobs:
         run: |
           npm ci && ./bin/start
           zappify -i test/contracts/Assign-public-admin.zol -o temp-zapps
-          
+
       - name: replace zokrates image for actions test
         uses: jacobtomlinson/gha-find-replace@v2
         with:
           find: "ghcr.io/eyblockchain/zokrates-worker-m1"
           replace: "ghcr.io/eyblockchain/nightfall3-worker"
           include: "**docker-compose.zapp.yml"
-          
+
       - name: set up zapp
         run: |
           cd temp-zapps/Assign-public-admin
           npm i
           docker-compose -f docker-compose.zapp.yml build
           docker-compose -f docker-compose.zapp.yml up -d zokrates
-      
+
       - name: generate zapp keys
         run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/setup && ./bin/setup
-        
+
       - name: run zapp npm test
         run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/startup && npm test
-        
+
       - name: disp logs on failure
         if: failure()
         run: docker logs assign-public-admin_zokrates_1
