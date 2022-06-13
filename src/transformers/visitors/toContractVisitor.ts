@@ -453,12 +453,7 @@ export default {
         state.skipSubNodes=true;
         return;
       }
-      const newNode = buildNode(node.nodeType, {
-        condition: node.condition,
-        initializationExpression: node.initializationExpression,
-        loopExpression: node.loopExpression,
-        body: node.body,
-      });
+      const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },

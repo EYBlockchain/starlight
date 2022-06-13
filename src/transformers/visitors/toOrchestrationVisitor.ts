@@ -1086,12 +1086,7 @@ const visitor = {
   ForStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, {
-        condition: {},
-        initializationExpression: {},
-        loopExpression: {},
-        body: [],
-            });
+      const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },

@@ -425,7 +425,8 @@ const visitor = {
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
-      if (!node.containsSecret) {
+      const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+      if (!node.containsSecret && !childOfSecret) {
         state.skipSubNodes = true;
         return;
       }
@@ -519,7 +520,11 @@ const visitor = {
 
       newNode = buildNode('ExpressionStatement', { isVarDec });
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
     },
   },
 
@@ -678,12 +683,7 @@ const visitor = {
   ForStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, {
-        condition: node.condition,
-        initializationExpression: node.initializationExpression,
-        loopExpression: node.loopExpression,
-        body: node.body,
-      });
+      const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
