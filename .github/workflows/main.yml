@@ -28,7 +28,8 @@ jobs:
       # Runs a single command using the runners shell
       - name: compile and test
         run: |
-          ./bin/start && npm ci
+          npm ci
+          tsc
           npm test
 
   test-zapp:
