@@ -4,55 +4,30 @@ import fs from 'fs';
 import pathjs from 'path';
 import prettier from 'prettier';
 import logger from '../utils/logger.js';
-import { traversePathsFast } from '../traverse/traverse.js';
-import explode from './visitors/explode.js';
 import visitor from './visitors/toOrchestrationVisitor.js';
 import codeGenerator from '../codeGenerators/orchestration/nodejs/toOrchestration.js';
 import OrchestrationBP from '../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
+import { transformation1 } from './visitors/common.js';
 
 /**
  * Inspired by the Transformer
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 const Orchestrationbp = new OrchestrationBP();
-function transformation1(oldAST: any, circuitAST: any) {
-  // We'll create a `newAst`
-  const newAST = {
-    nodeType: 'Folder',
-    files: [],
-  };
 
+// A transformer function which will accept an ast.
+export default function toOrchestration(ast: any, options: any) {
+  // transpile to a node AST:
   const state = {
     stopTraversal: false,
     skipSubNodes: false,
     snarkVerificationRequired: true,
     newCommitmentsRequired: true,
     nullifiersRequired: true,
-    circuitAST
+    circuitAST:options.circuitAST
   };
-
-  const path = oldAST;
-
-  // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
-  traversePathsFast(path, (p: any) => delete p.node._newASTPointer);
-
-  path.parent._newASTPointer = newAST;
-  path.node._newASTPointer = newAST.files;
-
-  // We'll start by calling the traverser function with our ast and a visitor.
-  // The newAST will be mutated through this traversal process.
-  path.traverse(explode(visitor), state);
-
-  // At the end of our transformer function we'll return the new ast that we
-  // just created.
-  return newAST;
-}
-
-// A transformer function which will accept an ast.
-export default function toOrchestration(ast: any, options: any) {
-  // transpile to a node AST:
   logger.debug('Transforming the .zol AST to a .mjs AST...');
-  const newAST = transformation1(ast, options.circuitAST);
+  const newAST = transformation1('orchestration' , ast, state , visitor);
   const newASTFilePath = pathjs.join(
     options.orchestrationDirPath,
     `${options.inputFileName}_ast.json`,

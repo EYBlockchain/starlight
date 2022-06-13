@@ -1,14 +1,7 @@
-import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
-import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
-import { VariableBinding } from '../../traverse/Binding.js';
-import MappingKey from '../../traverse/MappingKey.js'
-import buildNode from '../../types/orchestration-types.js';
-import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
+import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import explode from './explode.js';
-import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-// below stub will only work with a small subtree - passing a whole AST will always give true!
-// useful for subtrees like ExpressionStatements
+import { traversePathsFast } from '../../traverse/traverse.js';
 
 export const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
@@ -46,4 +39,45 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
  }
  return oldStateArray;
  };
+
+ export function transformation1(type:string , oldAST: any , state: any , visitor: any) {
+  const newAST = {
+    nodeType: 'Folder',
+    files: [],
+  };
+
+  let path = oldAST;
+
+  if(type !== 'orchestration')
+  { 
+    const dummyParent = {
+      ast: oldAST,
+    };
+   path = new NodePath({
+    parentPath: null,
+    parent: dummyParent,
+    key: 'ast', // since parent.ast = node
+    container: oldAST,
+    index: null,
+    node: oldAST,
+  }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
+  }
+  // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
+  traversePathsFast(path, (p: typeof path) => delete p.node._newASTPointer);
+
+  if(type !== 'contract') {
+  path.parent._newASTPointer = newAST;
+  path.node._newASTPointer = newAST.files;
+  }
+  else
+  path.parent._newASTPointer = newAST.files;
+
+  // We'll start by calling the traverser function with our ast and a visitor.
+  // The newAST will be mutated through this traversal process.
+  path.traverse(explode(visitor), state);
+
+  // At the end of our transformer function we'll return the new ast that we
+  // just created.
+  return newAST;
+}
 
