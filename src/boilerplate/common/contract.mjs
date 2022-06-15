@@ -4,6 +4,7 @@ import GN from 'general-number';
 import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
+import { generatejoinProof } from './joinzokrates.mjs';
 
 const web3 = Web3.connection();
 const { generalise } = GN;
@@ -135,12 +136,109 @@ export function getInputCommitments(publicKey, value, commitments) {
     (preimageA, preimageB) =>
       parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
   );
+  var commitmentsSum = 0;
+	for (var i = 0; i < possibleCommitments.length; i++) {
+	  for (var j = 0 ;  j < possibleCommitments.length; j++){
+		 if(possibleCommitments[i][j].value)
+		 commitmentsSum = commitmentsSum + parseInt(possibleCommitments[i][j].value, 10);
+	  }
+	}
   if (
     parseInt(possibleCommitments[0][1].value, 10) +
       parseInt(possibleCommitments[1][1].value, 10) >=
     parseInt(value, 10)
   ) {
-    return [possibleCommitments[0][0], possibleCommitments[1][0]];
+    return {true,[possibleCommitments[0][0], possibleCommitments[1][0]]};
   }
+  else if(commitmentsSum >= parseInt(value, 10))
+	 return  [false, possibleCommitments[0][0], possibleCommitments[1][0]];
   return null;
+}
+  export async function joinCommitments(secretKey, commitments, witnesses){
+  const oldCommitment_0 = commitments[0];
+
+	const oldCommitment_1 = Commitments[1];
+
+	const oldCommitment_0_prevSalt = generalise(commitments[oldCommitment_0].salt);
+	const oldCommitment_1_prevSalt = generalise(commitments[oldCommitment_1].salt);
+	const oldCommitment_0_prev = generalise(commitments[oldCommitment_0].value);
+	const oldCommitment_1_prev = generalise(commitments[oldCommitment_1].value);
+
+	// Extract set membership witness:
+
+	const oldCommitment_0_witness = witnesses[0];
+	const oldCommitment_1_witness = witnesses[1];
+
+
+	const oldCommitment_0_index = generalise(oldCommitment_0_witness.index);
+	const oldCommitment_1_index = generalise(oldCommitment_1_witness.index);
+	const oldCommitment_root = generalise(oldCommitment_0_witness.root);
+	const oldCommitment_0_path = generalise(oldCommitment_0_witness.path).all;
+	const oldCommitment_1_path = generalise(oldCommitment_1_witness.path).all;
+
+	// increment would go here but has been filtered out
+
+	// Calculate nullifier(s):
+const oldCommitment_stateVarId = generalise(3).hex(32);
+
+	let oldCommitment_0_nullifier = generalise(
+		utils.shaHash(oldCommitment_stateVarId, secretKey.hex(32), oldCommitment_0_prevSalt.hex(32))
+	);
+	let oldCommitment_1_nullifier = generalise(
+		utils.shaHash(oldCommitment_stateVarId, secretKey.hex(32), oldCommitment_1_prevSalt.hex(32))
+	);
+	oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32, 31)); // truncate
+	oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32, 31)); // truncate
+
+	// Calculate commitment(s):
+
+	const newCommitment_newSalt = generalise(utils.randomHex(32));
+
+	let newCommitment_value =
+		parseInt(oldCommitment_0_prev.integer, 10) +
+		parseInt(oldCommitment_1_prev.integer, 10);
+
+	newCommitment_value = generalise(newCommitment_value);
+
+	let newCommitment = generalise(
+		utils.shaHash(
+			oldCommitment_stateVarId,
+			newCommitment_value.hex(32),
+			publicKey.hex(32),
+			newCommitment_value_newSalt.hex(32)
+		)
+	);
+
+	newCommitment = generalise(newCommitment.hex(32, 31)); // truncate
+
+	// Call Zokrates to generate the proof:
+
+	const allInputs = [
+		secretKey.limbs(32, 8),
+		secretKey.limbs(32, 8),
+		oldCommitment_0_nullifier.integer,
+		oldCommitment_1_nullifier.integer,
+		oldCommitment_0_prev.integer,
+		oldCommitment_0_prevSalt.limbs(32, 8),
+		oldCommitment_1_prev.integer,
+		oldCommitment_1_prevSalt.limbs(32, 8),
+		oldCommitment_root.integer,
+		oldCommitment_0_index.integer,
+		oldCommitment_0_path.integer,
+		oldCommitment_1_index.integer,
+		oldCommitment_1_path.integer,
+		oldCommitment_newOwnerPublicKey.limbs(32, 8),
+		newCommitment_newSalt.limbs(32, 8),
+		newCommitment.integer,
+	].flat(Infinity);
+
+	const res = await generatejoinProof("joinCircuit", allInputs);
+	const proof = generalise(Object.values(res.proof).flat(Infinity))
+		.map((coeff) => coeff.integer)
+		.flat(Infinity);
+
+
+  console.log('now the commitments are :')
+  console.log(commitments)
+  return newCommitment;
 }

@@ -274,7 +274,9 @@ const visitor = {
         });
         if (fnIndicator.oldCommitmentAccessRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
-        newNodes.readPreimageNode = buildNode('ReadPreimage');
+        newNodes.readPreimageNode = buildNode('ReadPreimage', {
+          contractName,
+        });
         if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,

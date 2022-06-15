@@ -90,6 +90,7 @@ class BoilerplateGenerator {
 
 
     postStatements({ stateName,
+      contractName,
       stateType,
       mappingName,
       mappingKey,
@@ -116,15 +117,29 @@ class BoilerplateGenerator {
                 console.log(err);
               }),
             ).${mappingName}${mappingKey};
-            \nconst ${stateName}_newCommitmentValue = generalise(${increment});
+            \n const ${stateName}_newCommitmentValue = generalise(${increment});
+            // First check if required commitments exist or not
+            \n const commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+            if( commitmentFlag === false) {
+              do {
+                console.log('Existing Commitments are not appropriate and we need to call Join Circuit');
+                const ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
+                const ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
+                ${stateName}_preimage = joinCommitments(secretKey, [${stateName}_0_oldCommitment,${stateName}_0_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1]);
+                commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+              } while( commitmentFlag === false )
+            }
             \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
-            \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
+            \nconst ${stateName}_0_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
+
+            // else
+            // console.log('Using following commitments : ${stateName}_0_oldCommitment, ${stateName}_0_oldCommitment');
 
             const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
             const ${stateName}_1_prevSalt = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].salt);
             const ${stateName}_0_prev = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].value);
             const ${stateName}_1_prev = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].value);
-            \n`];
+            \n`  ];
         case 'whole':
           switch (reinitialisedOnly) {
             case true:
@@ -250,7 +265,7 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, registerKey, getInputCommitments } from './common/contract.mjs';`,
+        `\nimport { getContractInstance, registerKey, getInputCommitments, joinCommitments } from './common/contract.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';
         \n`,
