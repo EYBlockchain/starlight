@@ -4,7 +4,7 @@ import GN from 'general-number';
 import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
-import { generatejoinProof } from './joinzokrates.mjs';
+import { generateProof } from './zokrates.mjs';
 
 const web3 = Web3.connection();
 const { generalise } = GN;
@@ -139,7 +139,7 @@ export function getInputCommitments(publicKey, value, commitments) {
   var commitmentsSum = 0;
 	for (var i = 0; i < possibleCommitments.length; i++) {
 	  for (var j = 0 ;  j < possibleCommitments.length; j++){
-		 if(possibleCommitments[i][j].value)
+		 if(possibleCommitments[i][j] && possibleCommitments[i][j].value)
 		 commitmentsSum = commitmentsSum + parseInt(possibleCommitments[i][j].value, 10);
 	  }
 	}
@@ -148,16 +148,16 @@ export function getInputCommitments(publicKey, value, commitments) {
       parseInt(possibleCommitments[1][1].value, 10) >=
     parseInt(value, 10)
   ) {
-    return {true,[possibleCommitments[0][0], possibleCommitments[1][0]]};
+    return [true, possibleCommitments[0][0], possibleCommitments[1][0]];
   }
   else if(commitmentsSum >= parseInt(value, 10))
 	 return  [false, possibleCommitments[0][0], possibleCommitments[1][0]];
   return null;
 }
-  export async function joinCommitments(secretKey, commitments, witnesses){
-  const oldCommitment_0 = commitments[0];
+  export default async function joinCommitments(secretKey, publicKey, commitments, commitmentsID, witnesses){
+  const oldCommitment_0 = commitmentsID[0];
 
-	const oldCommitment_1 = Commitments[1];
+	const oldCommitment_1 = commitmentsID[1];
 
 	const oldCommitment_0_prevSalt = generalise(commitments[oldCommitment_0].salt);
 	const oldCommitment_1_prevSalt = generalise(commitments[oldCommitment_1].salt);
@@ -205,7 +205,7 @@ const oldCommitment_stateVarId = generalise(3).hex(32);
 			oldCommitment_stateVarId,
 			newCommitment_value.hex(32),
 			publicKey.hex(32),
-			newCommitment_value_newSalt.hex(32)
+			newCommitment_newSalt.hex(32)
 		)
 	);
 
@@ -227,18 +227,52 @@ const oldCommitment_stateVarId = generalise(3).hex(32);
 		oldCommitment_0_path.integer,
 		oldCommitment_1_index.integer,
 		oldCommitment_1_path.integer,
-		oldCommitment_newOwnerPublicKey.limbs(32, 8),
+		publicKey.limbs(32, 8),
 		newCommitment_newSalt.limbs(32, 8),
 		newCommitment.integer,
 	].flat(Infinity);
 
-	const res = await generatejoinProof("joinCircuit", allInputs);
+	const res = await generateProof("joinCircuit", allInputs);
 	const proof = generalise(Object.values(res.proof).flat(Infinity))
 		.map((coeff) => coeff.integer)
 		.flat(Infinity);
 
+    // Send transaction to the blockchain:
 
-  console.log('now the commitments are :')
-  console.log(commitments)
-  return newCommitment;
+  	const tx = await instance.methods
+  		.joinCircuit(
+  			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer,],
+  			oldCommitment_root.integer,
+  			[newCommitment.integer],
+  			proof
+  		)
+  		.send({
+  			from: config.web3.options.defaultAccount,
+  			gas: config.web3.options.defaultGas,
+  		});
+
+  	// Write new commitment preimage to db:
+
+  	let preimage = {};
+  	if (fs.existsSync(db)) {
+  		preimage = JSON.parse(
+  			fs.readFileSync(db, "utf-8", (err) => {
+  				console.log(err);
+  			})
+  		);
+  	}
+
+  	preimage.commitments[generalise(oldCommitment_0).hex(32)].isNullified = true;
+
+  	preimage.commitments[generalise(oldCommitment_1).hex(32)].isNullified = true;
+
+  	preimage.commitments[newCommitment.hex(32)] = {
+  		value: newCommitment_value.integer,
+  		salt: newCommitment_newSalt.integer,
+  		publicKey: publicKey.integer,
+  		commitment: newCommitment.integer,
+  	};
+  	fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+
+  return preimage;
 }

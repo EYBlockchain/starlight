@@ -18,6 +18,7 @@ export const setup = async functionName => {
   } else {
     await generateKeys(`${functionName}.zok`);
   }
+await generateKeys(`joinCircuit.zok`);  
 };
 
 setup(argv.i);

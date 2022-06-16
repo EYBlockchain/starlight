@@ -218,7 +218,6 @@ export const preimageBoilerPlate = (node: any) => {
     const stateVarIds = stateVariableIds({ privateStateName, stateNode });
     const initialiseParams = [];
     const preimageParams = [];
-console.log(node);
     if (stateNode.accessedOnly) {
       output.push(
         Orchestrationbp.readPreimage.postStatements({
