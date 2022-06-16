@@ -576,6 +576,7 @@ export default class NodePath {
   }
 
   isFunctionReturnParameter(node: any = this.node): boolean {
+
     const referencedBinding = this.getScope().getReferencedBinding(node);
     return (
       referencedBinding?.path.isFunctionReturnParameterDeclaration() ?? false

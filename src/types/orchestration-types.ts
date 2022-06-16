@@ -63,6 +63,14 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         postStatements,
       };
     }
+    case 'Return': {
+      const { value, kind } = fields;
+      return {
+        nodeType,
+        value,
+        kind,
+      };
+    }
     case 'VariableDeclaration': {
       const { name, type, interactsWithSecret, isSecret, isAccessed } = fields;
       return {

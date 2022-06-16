@@ -26,13 +26,49 @@ function codeGenerator(node: any) {
       return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
 
     case 'FunctionDefinition': {
-      const functionSignature = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> bool:`;
+      let functionSignature : any;
+      let returnType : any[] = [];
       const body = codeGenerator(node.body);
-      return `${functionSignature}
+      let returnStatement : string[] = [];
+      let returnName : string[] = [];
+      if(node.returnParameters) {
+        node.parameters.parameters.forEach(param => {
+          if(param.bpType === 'newCommitment')
+          returnName.push(param.name);
+        });
+      node.returnParameters.parameters.forEach( (node) => {
+        if(node.typeName.name === 'bool')
+          returnStatement.push(`${node.name}`);
+        else {
+
+        if( node.isPrivate === true){
+         returnName.forEach( (name, index) => {
+          if(name.includes(node.name))
+         returnStatement.push( `${returnName[index]}_newCommitment_commitment`);
+         })
+        }
+        }
+        });
+    }
+
+    functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `
+    returnStatement.forEach( para => {
+       if(para.includes('true') || para.includes('false')) {
+         returnType.push('bool') ;
+        } else {
+           returnType.push('field') ;
+        }
+    })
+if(returnStatement.length === 0){
+  returnStatement.push('true');
+  returnType.push('bool') ;
+}
+
+      return `${functionSignature}(${returnType}):
 
         ${body}
 
-        return true
+         return ${returnStatement}
         `;
     }
 
@@ -112,6 +148,9 @@ function codeGenerator(node: any) {
        return ``;
       }
     }
+    case 'Return':
+      return  ` ` ;
+
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
