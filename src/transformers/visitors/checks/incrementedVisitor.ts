@@ -236,6 +236,11 @@ export default {
       const { operator, leftHandSide, rightHandSide } = node;
       const lhsSecret = !!scope.getReferencedBinding(leftHandSide).isSecret;
 
+      if (['bool', 'address'].includes(leftHandSide.typeDescriptions.typeString)) {
+        markParentIncrementation(path, state, false, false, leftHandSide);
+        scope.getReferencedBinding(leftHandSide).isWhole = true;
+        return;
+      }
       // a += something, -= something
       if (
         lhsSecret &&
@@ -335,6 +340,11 @@ export default {
       // if we don't have a parent expression or that expression can't hold an incrementation, we exit
       if (!lhsNode) return;
       if (!binOpToIncrements(path, state)?.operands) return;
+      if (['bool', 'address'].includes(lhsNode.typeDescriptions?.typeString)) {
+        markParentIncrementation(path, state, false, false, lhsNode);
+        path.scope.getReferencedBinding(lhsNode).isWhole = true;
+        return;
+      }
 
       const { operands, precedingOperator } = binOpToIncrements(path, state);
 
@@ -444,4 +454,19 @@ export default {
       }
     },
   },
+
+  VariableDeclaration: {
+    enter(path: NodePath) {
+      const { node, scope } = path;
+      if (!path.isStruct() || path.getAncestorOfType('StructDefinition')) return;
+      const declaration = path.getStructDeclaration();
+      declaration.members.forEach((member: any) => {
+        if (['bool', 'address'].includes(member.typeDescriptions.typeString)) {
+          // TODO remove this when adding mixed whole/partitioned structs
+          scope.getReferencedBinding(node).isWhole = true;
+          return;
+        }
+      });
+    }
+  }
 };

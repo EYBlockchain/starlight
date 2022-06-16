@@ -154,6 +154,7 @@ export const generateProofBoilerplate = (node: any) => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
+            if (stateNode.structProperties) stateNode.increment = Object.values(stateNode.increment).flat(Infinity);
             stateNode.increment.forEach((inc: any) => {
               // +inc.name tries to convert into a number -  we don't want to add constants here
               if (
@@ -183,6 +184,7 @@ export const generateProofBoilerplate = (node: any) => {
           case false:
           default:
             // increment
+            if (stateNode.structProperties) stateNode.increment = Object.values(stateNode.increment).flat(Infinity);
             stateNode.increment.forEach((inc: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
@@ -233,6 +235,7 @@ export const preimageBoilerPlate = (node: any) => {
           newOwnerStatment: null,
           reinitialisedOnly: false,
           initialised: stateNode.initialised,
+          structProperties: stateNode.structProperties,
           accessedOnly: true,
           stateVarIds,
         }));
@@ -296,6 +299,7 @@ export const preimageBoilerPlate = (node: any) => {
             mappingName: null,
             mappingKey: null,
             initialised: stateNode.initialised,
+            structProperties: stateNode.structProperties,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
@@ -318,6 +322,7 @@ export const preimageBoilerPlate = (node: any) => {
                   ? `[${privateStateName}_stateVarId_key.integer]`
                   : ``,
                 increment: stateNode.increment,
+                structProperties: stateNode.structProperties,
                 newOwnerStatment,
                 initialised: false,
                 reinitialisedOnly: false,
@@ -330,19 +335,20 @@ export const preimageBoilerPlate = (node: any) => {
           default:
             // increment
             output.push(
-            Orchestrationbp.readPreimage.postStatements({
-                stateName: privateStateName,
-                stateType: 'increment',
-                mappingName: null,
-                mappingKey: null,
-                increment: stateNode.increment,
-                newOwnerStatment,
-                initialised: false,
-                reinitialisedOnly: false,
-                accessedOnly: false,
-                stateVarIds,
-              }));
-
+              Orchestrationbp.readPreimage.postStatements({
+                  stateName: privateStateName,
+                  stateType: 'increment',
+                  mappingName: null,
+                  mappingKey: null,
+                  increment: stateNode.increment,
+                  newOwnerStatment,
+                  initialised: false,
+                  structProperties: stateNode.structProperties,
+                  reinitialisedOnly: false,
+                  accessedOnly: false,
+                  stateVarIds,
+                })
+            );
         }
     }
   }
@@ -442,7 +448,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             accessedOnly: stateNode.accessedOnly,
             stateVarIds: stateVariableIds({ privateStateName: stateName, stateNode}),
             mappingKey,
-            mappingName: stateNode.mappingName || stateName
+            mappingName: stateNode.mappingName || stateName,
+            structProperties: stateNode.structProperties
           }));
 
       }

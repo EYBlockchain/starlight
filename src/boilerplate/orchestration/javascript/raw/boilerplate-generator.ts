@@ -25,7 +25,7 @@ class BoilerplateGenerator {
     // if not a mapping, mappingName = stateName, mappingKey = ''
     // If a mapping, mappingKey = `[keyValue]`
 
-    preStatements( {stateName, accessedOnly, stateVarIds, mappingName, mappingKey }): string[] {
+    preStatements( {stateName, accessedOnly, stateVarIds, mappingName, mappingKey, structProperties }): string[] {
       // once per state
       // only whole states
       // if not a mapping, mappingName = stateName, mappingKey = ''
@@ -48,7 +48,7 @@ class BoilerplateGenerator {
               \nlet ${stateName}_commitmentExists = true;
               let ${stateName}_witnessRequired = true;
               \nlet ${stateName}_preimage = {
-              \tvalue: 0,
+              \tvalue: ${structProperties ? `{` + structProperties.map(p => `${p}: 0`) + `}` : `0`},
               \tsalt: 0,
               \tcommitment: 0,
               };
@@ -95,6 +95,7 @@ class BoilerplateGenerator {
       mappingKey,
       increment,
       initialised,
+      structProperties,
       newOwnerStatment,
       reinitialisedOnly,
       accessedOnly,
@@ -102,12 +103,39 @@ class BoilerplateGenerator {
       }): string[] {
       switch (stateType) {
         case 'increment':
+          if (structProperties)
+            return [`
+              ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
+              ${stateVarIds.join('\n')}
+              \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
+              \n
+            `];
           return [`
             ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
             \nconst ${stateName}_newCommitmentValue = generalise(${increment});
             \n`];
         case 'decrement':
+          if (structProperties)
+            return [`
+              ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
+              ${stateVarIds.join('\n')}
+              \nconst ${stateName}_preimage = JSON.parse(
+                fs.readFileSync(db, 'utf-8', err => {
+                  console.log(err);
+                }),
+              ).${mappingName}${mappingKey};
+              \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
+
+              \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage, ${structProperties ? `true` : `false`})[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
+              \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage, ${structProperties ? `true` : `false`})[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
+
+              const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
+              const ${stateName}_1_prevSalt = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].salt);
+              const ${stateName}_0_prev = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].value);
+              const ${stateName}_1_prev = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].value);
+              \n
+            `];
           return [`
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
@@ -221,14 +249,19 @@ class BoilerplateGenerator {
         case 'increment':
           return [`
           \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
-          \nlet ${stateName}_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${stateName}_newCommitmentValue.hex(32), ${stateName}_newOwnerPublicKey.hex(32), ${stateName}_newSalt.hex(32)));
+          \nlet ${stateName}_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${structProperties ? `...` : ``}${stateName}_newCommitmentValue.hex(32), ${stateName}_newOwnerPublicKey.hex(32), ${stateName}_newSalt.hex(32)));
           \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32, 31)); // truncate`];
         case 'decrement':
+          const change = structProperties ? `[
+            ${structProperties.map((p, i) => `parseInt(${stateName}_0_prev.${p}.integer, 10) + parseInt(${stateName}_1_prev.${p}.integer, 10) - parseInt(${stateName}_newCommitmentValue.integer[${i}], 10)`)}
+            ];
+            \n${stateName}_change = generalise(${stateName}_change).all;` :
+            `parseInt(${stateName}_0_prev.integer, 10) + parseInt(${stateName}_1_prev.integer, 10) - parseInt(${stateName}_newCommitmentValue.integer, 10);
+            \n${stateName}_change = generalise(${stateName}_change);`;
           return [`
             \nconst ${stateName}_2_newSalt = generalise(utils.randomHex(32));
-            \nlet ${stateName}_change = parseInt(${stateName}_0_prev.integer, 10) + parseInt(${stateName}_1_prev.integer, 10) - parseInt(${stateName}_newCommitmentValue.integer, 10);
-            \n${stateName}_change = generalise(${stateName}_change);
-            \nlet ${stateName}_2_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${stateName}_change.hex(32), publicKey.hex(32), ${stateName}_2_newSalt.hex(32)));
+            \nlet ${stateName}_change = ${change}
+            \nlet ${stateName}_2_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${structProperties ? `...` : ``}${stateName}_change.hex(32), publicKey.hex(32), ${stateName}_2_newSalt.hex(32)));
             \n${stateName}_2_newCommitment = generalise(${stateName}_2_newCommitment.hex(32, 31)); // truncate`];
         case 'whole':
           const value = structProperties ? structProperties.map(p => `${stateName}.${p}.hex(32)`) :` ${stateName}.hex(32)`;
@@ -284,15 +317,16 @@ class BoilerplateGenerator {
               \t${stateName}_newSalt.limbs(32, 8),
               \t${stateName}_newCommitment.integer`];
         case 'decrement':
+          prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
               \tsecretKey.limbs(32, 8),
               \tsecretKey.limbs(32, 8),
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_1_nullifier.integer,
-              \t${stateName}_0_prev.integer,
+              ${prev(0)},
               \t${stateName}_0_prevSalt.limbs(32, 8),
-              \t${stateName}_1_prev.integer,
+              ${prev(1)},
               \t${stateName}_1_prevSalt.limbs(32, 8),
               ${rootRequired ? `\t${stateName}_root.integer,` : ``}
               \t${stateName}_0_index.integer,
@@ -376,7 +410,7 @@ sendTransaction = {
       let value;
       switch (stateType) {
         case 'increment':
-          value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}_newCommitmentValue.integer`)} }` : `${stateName}_newCommitmentValue.integer`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue.integer`;
           return [`
             \npreimage.${mappingName}${mappingKey}[${stateName}_newCommitment.hex(32)] = {
             \tvalue: ${value},
@@ -385,7 +419,7 @@ sendTransaction = {
             \tcommitment: ${stateName}_newCommitment.integer,
           };`];
         case 'decrement':
-          value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}_change.integer`)} }` : `${stateName}_change.integer`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change.integer`;
           return [`
             \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_0_oldCommitment).hex(32)].isNullified = true;
             \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_1_oldCommitment).hex(32)].isNullified = true;

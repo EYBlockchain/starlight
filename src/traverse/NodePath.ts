@@ -874,7 +874,9 @@ export default class NodePath {
 
   getStructDeclaration(node: any = this.node): any {
     if (!this.isStruct(node)) return null;
-    const fnDef = this.getAncestorOfType('FunctionDefinition');
+    if (this.getAncestorOfType('StructDefinition')) return this.getAncestorOfType('StructDefinition');
+    // if this is at the contract level, the StructDefinition will be a sibling
+    const fnDef = this.getAncestorOfType('FunctionDefinition') || this;
     const parent = (node.nodeType === 'MemberAccess' || node.nodeType === 'VariableDeclaration') ? node : this.getAncestorOfType('MemberAccess')?.node;
     if (parent.typeName) {
       const typeId = parent.typeName.pathNode.referencedDeclaration;
@@ -951,6 +953,7 @@ export default class NodePath {
       case 'VariableDeclarationStatement':
         id = this.getReferencedDeclarationId(referencingNode.declarations[0]);
         break;
+      case 'StructDefinition':
       case 'VariableDeclaration':
         id = referencingNode.id;
         break;

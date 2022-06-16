@@ -259,7 +259,7 @@ export class VariableBinding extends Binding {
 
   addStructProperty(referencingPath: NodePath): MappingKey {
     const keyNode = referencingPath.getStructPropertyNode();
-    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!this.structProperties[keyNode.memberName])
       this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);

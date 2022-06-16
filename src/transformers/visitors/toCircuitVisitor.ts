@@ -630,7 +630,7 @@ const visitor = {
       const { node, parent } = path;
       const { value } = node;
 
-      if (node.kind !== 'number')
+      if (node.kind !== 'number' && node.kind !== 'bool')
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
         );

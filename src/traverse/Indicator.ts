@@ -247,7 +247,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
 
   addStructProperty(referencingPath: NodePath): MappingKey {
     const keyNode = referencingPath.getStructPropertyNode();
-    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);;
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!this.structProperties[keyNode.memberName])
       this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
@@ -428,7 +428,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   addStructProperty(referencingPath: NodePath): MappingKey {
     const keyNode = referencingPath.getStructPropertyNode();
-    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);;
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!(this.structProperties[keyNode.memberName] instanceof MappingKey))
       this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
@@ -566,7 +566,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
-        state.incrementedIdentifier.baseExpression?.isUnknown)
+        state.incrementedIdentifier.baseExpression?.isUnknown ||
+        state.incrementedIdentifier.expression?.isUnknown)
     ) {
       this.isPartitioned = true;
       const reason = {
@@ -667,10 +668,17 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       }
     }
     if (this.isStruct) {
-      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
-      for (const [, mappingKey] of structProperties) {
+      const structProperties = Object.entries(this.structProperties);
+      for (const [name, mappingKey] of structProperties) {
         // we may have empty struct properties if they are never edited
-        if (mappingKey instanceof MappingKey) mappingKey.prelimTraversalErrorChecks();
+        if (mappingKey instanceof MappingKey) {
+          mappingKey.prelimTraversalErrorChecks();
+        } else {
+          mappingKey.node= this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
+          logger.warn(
+             `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
+           );
+        }
       }
     }
     // // warning: state is clearly whole, don't need known decorator

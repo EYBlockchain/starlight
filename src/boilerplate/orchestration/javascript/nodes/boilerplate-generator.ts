@@ -14,6 +14,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         stateVarId: id,
         mappingKey: indicator.referencedKeyName || null,
         mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
       };
     }
     case 'ReadPreimage': {

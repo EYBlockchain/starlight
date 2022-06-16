@@ -51,6 +51,15 @@ export default {
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();
+        if (indicator.isStruct) {
+          let found = { whole: false, partitioned: false };
+          for (const [, structProperty] of Object.entries(indicator.structProperties)) {
+            found.whole = structProperty.isWhole;
+            found.partitioned = structProperty.isPartitioned;
+          }
+          if (found.whole && found.partitioned)
+            throw new TODOError(`Found a struct which has both whole and partitioned states, this currently is not supported as these state types require different commitment structures. For now, one commitment per struct is supported.`, indicator.node);
+        }
       }
       // finally, we update commitments req for the whole function
       scope.indicators.updateNewCommitmentsRequired();

@@ -25,9 +25,22 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
   let incrementsString = '';
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
+  if (stateVarIndicator.isStruct && stateVarIndicator instanceof StateVariableIndicator) {
+    let structIncs = { incrementsArray: {}, incrementsString: {}};
+    for (const [key, value] of Object.entries(stateVarIndicator.structProperties)) {
+      if (value instanceof MappingKey) {
+        structIncs.incrementsArray[key] = collectIncrements(value).incrementsArray;
+        structIncs.incrementsString[key] = collectIncrements(value).incrementsString;
+      } else {
+        structIncs.incrementsArray[key] = [];
+        structIncs.incrementsString[key] = '0';
+      }
+    }
+    return structIncs;
+  }
   for (const inc of stateVarIndicator.increments) {
 
-    if (inc.nodeType === 'IndexAccess') inc.name = getIndexAccessName(inc);
+    if (inc.nodeType === 'IndexAccess' || inc.nodeType === 'MemberAccess') inc.name = getIndexAccessName(inc);
     if (!inc.name) inc.name = inc.value;
     if (incrementsArray.some(existingInc => inc.name === existingInc.name))
       continue;
@@ -48,6 +61,7 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
     }
   }
   for (const dec of stateVarIndicator.decrements) {
+    if (dec.nodeType === 'IndexAccess' || dec.nodeType === 'MemberAccess') dec.name = getIndexAccessName(dec);
     if (!dec.name) dec.name = dec.value;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
       continue;
@@ -162,7 +176,7 @@ const addPublicInput = (path: NodePath, state: any) => {
 }
 
 const getIndexAccessName = (node: any) => {
-  if (node.nodeType == 'MemberAccess') return `${node.expression.name}_${node.memberName}`;
+  if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
   if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${NodePath.getPath(node).scope.getMappingKeyName(node)}`;
   return null;
 }

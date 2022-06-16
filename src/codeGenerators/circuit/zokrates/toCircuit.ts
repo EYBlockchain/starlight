@@ -161,6 +161,10 @@ function codeGenerator(node: any) {
       return 'msg';
 
     case 'Assert':
+      // only happens if we have a single bool identifier which is a struct property
+      // these get converted to fields so we need to assert == 1 rather than true
+      if (node.arguments[0].isStruct && node.arguments[0].nodeType === "MemberAccess") return `
+        assert(${node.arguments.flatMap(codeGenerator)} == 1)`;
       return `
         assert(${node.arguments.flatMap(codeGenerator)})`;
 
