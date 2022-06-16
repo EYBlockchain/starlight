@@ -28,7 +28,7 @@ services:
       - zapp_network
 
   zokrates:
-    image: ghcr.io/eyblockchain/zokrates-worker-m1
+    image: ghcr.io/eyblockchain/zokrates-worker-m1:v1.1
     # platform: linux/arm64/v8
     volumes:
       - ./circuits/:/app/circuits:delegated

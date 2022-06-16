@@ -214,15 +214,6 @@ export default class MappingKey {
   }
 
   prelimTraversalErrorChecks() {
-    // warning: state is clearly whole, don't need known decorator
-    if (this.isKnown && this.isWhole) {
-      logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to: ${this.isWholeReason}`,
-      );
-      this.isWholeReason?.forEach(reason => {
-        console.log(reason[0]);
-      });
-    }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
       console.log('err 2');

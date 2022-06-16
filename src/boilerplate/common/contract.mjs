@@ -127,10 +127,29 @@ export async function registerKey(
   return publicKey;
 }
 
-export function getInputCommitments(publicKey, value, commitments) {
+export function getInputCommitments(publicKey, value, commitments, isStruct = false) {
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );
+  if (isStruct) {
+    let possibleCommitmentsProp = [];
+    value.forEach((propValue, i) => {
+      possibleCommitments.sort(
+        (preimageA, preimageB) =>
+          parseInt(Object.values(preimageB[1].value)[i], 10) - parseInt(Object.values(preimageA[1].value)[i], 10),
+      );
+      if (
+        parseInt(Object.values(possibleCommitments[0][1].value)[i], 10) +
+        parseInt(Object.values(possibleCommitments[1][1].value)[i], 10) >=
+        parseInt(propValue, 10)
+      ) {
+        possibleCommitmentsProp.push([possibleCommitments[0][0], possibleCommitments[1][0]])
+      }
+    });
+    const possibleCommitmentsSet = [...new Set(possibleCommitmentsProp.flat(Infinity).filter((item, index) => possibleCommitmentsProp.flat(Infinity).indexOf(item) !== index))]
+    if (possibleCommitmentsSet.length >= 2) return possibleCommitmentsSet;
+    return null
+  }
   possibleCommitments.sort(
     (preimageA, preimageB) =>
       parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
