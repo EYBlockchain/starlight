@@ -281,6 +281,7 @@ export class Scope {
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
       case 'IfStatement':
+      case 'ModifierDefinition':
       case 'ForStatement':
         break;
 
