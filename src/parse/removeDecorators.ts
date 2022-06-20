@@ -57,6 +57,81 @@ function inComment(file: string, char: number): boolean {
 }
 
 /**
+ * Takes an input '.zol' file and rearranges the modifiers.
+ * returns deDecoratedFile // a '.sol' file, where the modifiiers
+ *     body is copied over to function body .
+ */
+
+function arrangeModifiers(options: any) {
+  let splCharsRegExp = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+  let parameterRegExp = /\(|\)|\[|\]/g;
+  const fileString = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
+  let substrings = fileString.map(decLine => tidy(decLine));
+  let modifierRemovedSubString = substrings;
+  let modifierContent = '';
+  let ParameterList = [];
+  let modifierParameterList= [];
+  for(var i=0; i<substrings.length; i++) {
+    if(substrings[i].startsWith('function'))  {
+      const substringsRemoved = substrings[i].replace("public", "").replace("private","");
+      let modifierslist = substringsRemoved.slice(
+      substringsRemoved.indexOf(')') + 1,
+      substringsRemoved.lastIndexOf('{'),
+      ).trim();
+      modifierslist = modifierslist.replace(/\s+(?=[.,?!()])/,'');
+      modifierslist = modifierslist.replace(/\s*,\s*/g, ",");
+      const modifierslistArray = modifierslist.split(" ");
+      for(var m=0; m<modifierslistArray.length; m++) {
+        modifierslist = 'modifier '+ modifierslistArray[m];
+        let hasParameters = parameterRegExp.test(modifierslistArray[m]);
+        if(hasParameters) {
+          modifierParameterList = modifierslistArray[m].slice(
+          modifierslistArray[m].indexOf('(') + 1,
+          modifierslistArray[m].lastIndexOf(')'),
+          ).trim().split(",");
+         }
+        modifierslist = modifierslist.replace(/ *\([^)(]*/g, "");
+        if(modifierslist.endsWith(')'))
+          modifierslist =modifierslist.slice(0, -1);
+        modifierContent = '';
+        for (var j=0; j<i; j++) {
+          if(substrings[j].startsWith(modifierslist))  {
+            ParameterList = substrings[j].slice(
+            substrings[j].indexOf('(') + 1,
+            substrings[j].lastIndexOf(')'),
+            ).trim().split(",");
+            for(var n =0; n < ParameterList.length ;  n++) {
+            ParameterList[n] = ParameterList[n].substring(ParameterList[n].replace(/^\s/, '').indexOf(' ') + 1);
+            ParameterList[n] = ParameterList[n].replace(/\s/g,'')
+            }
+            for(var k=j+1; k<i; k++) {
+              if(hasParameters) {
+                for(var n =0; n < ParameterList.length ;  n++) {
+                  const indexes = [...substrings[k].matchAll(new RegExp(ParameterList[n], 'gi'))].map(a => a.index);
+                  if(indexes.length>0) {
+                    for (var p =0;p<indexes.length;p++) {
+                      if(splCharsRegExp.test(substrings[k].charAt(indexes[p]-1)) && splCharsRegExp.test(substrings[k].charAt(indexes[p]+(ParameterList[n].length)))) {
+                        substrings[k] = substrings[k].replace(ParameterList[n],modifierParameterList[n]);
+                      }
+                    }
+                  }
+                }
+              }
+            if (substrings[k] === "_;") 
+            break;
+            modifierContent += substrings[k];
+            }
+          }
+        } 
+       modifierRemovedSubString.splice(i+1, 0, modifierContent);
+      } 
+    }
+  }
+  const substringsMod = modifierRemovedSubString.join(",,").toString().replace(/,,/g, '\n');
+  return substringsMod;
+}
+
+/**
  * Takes an input '.zol' file and removes the privacy keywords.
  * @return {Object} = {
  *     deDecoratedFile // a '.sol' file, stripped of any keywords, so
@@ -69,15 +144,7 @@ function removeDecorators(options: any): {
     deDecoratedFile: string;
     toRedecorate: ToRedecorate[];
 } {
-  logger.verbose(`Parsing decorated file ${options.inputFilePath}... `);
-  const decLines = fs
-    .readFileSync(options.inputFilePath, 'utf-8')
-    .split(/\r?\n/);
-  // tidy each line before any changes - so no char numbers are skewed
-  const tidyDecLines = decLines.map(decLine => tidy(decLine));
-  // combine lines in new file
-  const decoratedFile = tidyDecLines.join('\r\n');
-  // now we remove decorators and remember how many characters are offset
+ const decoratedFile = arrangeModifiers(options);
 
   // init file
   let deDecoratedFile = decoratedFile;

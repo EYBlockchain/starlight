@@ -282,6 +282,7 @@ export class Scope {
       case 'VariableDeclarationStatement':
       case 'IfStatement':
       case 'StructDefinition':
+      case 'ModifierDefinition':
       case 'ForStatement':
         break;
 
