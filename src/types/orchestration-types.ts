@@ -63,6 +63,14 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         postStatements,
       };
     }
+    case 'Return': {
+      const { value, kind } = fields;
+      return {
+        nodeType,
+        value,
+        kind,
+      };
+    }
     case 'VariableDeclaration': {
       const { name, type, interactsWithSecret, isSecret, isAccessed } = fields;
       return {
@@ -172,7 +180,16 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       }
     }
-
+    case 'ForStatement': {
+      const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        initializationExpression,
+        loopExpression,
+        body,
+      }
+    }
     case 'UnaryOperation': {
       const { operator, prefix, subExpression = {} } = fields;
       return {

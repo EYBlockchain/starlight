@@ -14,8 +14,12 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['parameters', 'returnParameters', 'body'];
     case 'ParameterList':
       return ['parameters'];
+    case 'ReturnParameterList':
+      return ['parameters'];
     case 'IfStatement':
       return ['condition', 'trueBody' , 'falseBody'];
+    case 'ForStatement':
+        return ['condition', 'initializationExpression', 'loopExpression' , 'body'];
     case 'Block':
       return ['statements'];
     case 'VariableDeclarationStatement':
@@ -131,8 +135,9 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         isConstructor,
         body = buildNode('Block'),
         parameters = buildNode('ParameterList'),
-        // returnParameters = buildNode('ParameterList'), // TODO
+        returnParameters = buildNode('ParameterList'), // TODO
       } = fields;
+
       return {
         nodeType,
         name,
@@ -140,7 +145,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         isConstructor,
         body,
         parameters,
-        // returnParameters,
+        returnParameters,
       };
     }
     case 'ParameterList': {
@@ -150,6 +155,14 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         parameters,
       };
     }
+    case 'ReturnParameterList': {
+      const { parameters = [] } = fields;
+      return {
+        nodeType,
+        parameters,
+      };
+    }
+
     case 'Block': {
       const {
         preStatements = [],
@@ -201,6 +214,14 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         operator,
         leftHandSide,
         rightHandSide,
+      };
+    }
+    case 'Return': {
+      const { value, kind } = fields;
+      return {
+        nodeType,
+        value,
+        kind,
       };
     }
     case 'Mapping': {
@@ -318,6 +339,16 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       };
     }
+    case 'ForStatement': {
+      const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        initializationExpression,
+        loopExpression,
+        body,
+      }
+    }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {
@@ -356,7 +387,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
     }
     case 'ContractBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      const { scope, bpSection, circuitParams } = fields;
+      const { scope, bpSection, circuitParams, returnpara } = fields;
       const bp = new ContractBP(scope);
       return bp.getBoilerplate(bpSection, circuitParams);
     }

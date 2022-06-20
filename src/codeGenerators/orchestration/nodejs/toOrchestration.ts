@@ -41,15 +41,31 @@ export default function codeGenerator(node: any, options: any = {}): any {
   switch (node.nodeType) {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
+      let returnIsSecret: string[] = [];
+      const decStates = node.decrementedSecretStates;
+      if(node.returnParameters.parameters) {
+      node.returnParameters.parameters.forEach( node => {
+         returnIsSecret.push(node.isSecret);
+       })
+     }
       node.returnParameters =
         node.returnParameters.parameters.map(codeGenerator) || [];
+        node.returnParameters.forEach( (param, index) => {
+          if(decStates) {
+           if(decStates?.includes(param)){
+            node.returnParameters[index] = node.returnParameters[index]+'_2_newCommitment';
+          }
+        } else if(returnIsSecret[index])
+            node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
+        })
+
       const fn = OrchestrationCodeBoilerPlate(node);
       const statements = codeGenerator(node.body);
       fn.statements.push(statements);
       return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
         fn.signature[1]
       }`;
-    }
+  }
 
     case 'ParameterList':
       return node.parameters.map((paramnode: any) => paramnode.name);
@@ -122,8 +138,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
       } ${codeGenerator(node.rightExpression)}`;
 
     case 'TupleExpression':
+      if(node.components.length !== 0)
       return `(${node.components.map(codeGenerator).join(` `)})`;
-
+      return ` `;
 
     case 'IfStatement': {
         return `if (${codeGenerator(node.condition)}) {
@@ -133,12 +150,30 @@ export default function codeGenerator(node: any, options: any = {}): any {
         }`
       }
 
+      case 'ForStatement': {
+        if(node.body.statements.statements.interactsWithSecret) {
+          node.initializationExpression.interactsWithSecret = true;
+          node.loopExpression.interactsWithSecret = true;
+        }
+          let initializationExpression = `${codeGenerator(node.initializationExpression)}`;
+          initializationExpression=initializationExpression.trim();
+          let condition = `${codeGenerator(node.condition)};`
+          let loopExpression = `${codeGenerator(node.loopExpression)}`;
+          loopExpression=loopExpression.trim().slice(0,-1);
+          return `for(${initializationExpression} ${condition} ${loopExpression}) {
+          ${codeGenerator(node.body)}
+        }`
+      }  
+
+    case 'UnaryOperation':
+      return `${codeGenerator(node.subExpression)} ${node.operator}`;
+
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
-      
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 

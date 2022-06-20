@@ -77,17 +77,19 @@ const addPublicInput = (path: NodePath, state: any) => {
   const { node } = path;
   let { name } = path.scope.getReferencedIndicator(node, true);
   const binding = path.getReferencedBinding(node);
-
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
-  const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement').containsSecret;
+  const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement')?.containsSecret;
+  const isForCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('ForStatement')?.containsSecret;
+  const isInitializationExpression = !!path.getAncestorContainedWithin('initializationExpression') && path.getAncestorOfType('ForStatement')?.containsSecret;
+  const isLoopExpression = !!path.getAncestorContainedWithin('loopExpression') && path.getAncestorOfType('ForStatement')?.containsSecret;
 
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret
   ) {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
@@ -620,14 +622,75 @@ const visitor = {
       }
     },
   },
-
   ParameterList: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
+    enter(path: NodePath, state: any) {
+      const { node, parent, scope } = path;
+      let returnName : string[] = [];
+       if(path.key === 'parameters'){
+      const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
-    },
+    } else if(path.key === 'returnParameters'){
+       parent.body.statements.forEach(node => {
+        if(node.nodeType === 'Return') {
+          if(node.expression.nodeType === 'TupleExpression'){
+           node.expression.components.forEach(component => {
+             if(component.name){
+              returnName?.push(component.name);
+            }
+             else
+             returnName?.push(component.value);
+           });
+         } else{
+           if(node.expression.name)
+            returnName?.push(node.expression.name);
+           else
+           returnName?.push(node.expression.value);
+        }
+        }
+
+      });
+
+    node.parameters.forEach((node, index) => {
+    if(node.nodeType === 'VariableDeclaration'){
+    node.name = returnName[index];
+  }
+    });
+    const newNode = buildNode('ParameterList');
+    node._newASTPointer = newNode.parameters;
+    parent._newASTPointer[path.containerName] = newNode;
+    }
+  },
+  exit(path: NodePath, state: any){
+    const { node, parent, scope } = path;
+    if(path.key === 'returnParameters'){
+      node._newASTPointer.forEach(item =>{
+      parent.body.statements.forEach( node => {
+        if(node.nodeType === 'Return'){
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(node.expression.nodeType === 'TupleExpression'){
+            node.expression.components.forEach(component => {
+              if(id == component.referencedDeclaration) {
+                if ((bindings instanceof VariableBinding)) {
+                  if(component.name === item.name)
+                  item.isSecret = bindings.isSecret
+                }
+              }
+            })
+          } else {
+            if( id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding)){
+               if(node.name === item.name)
+               item.isSecret = bindings.isSecret
+              }
+            }
+           }
+          }
+        }
+      })
+    })
+    }
+  },
   },
 
   Block: {
@@ -680,11 +743,17 @@ const visitor = {
   },
 
   TupleExpression: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
-      node._newASTPointer = newNode.components;
-      parent._newASTPointer[path.containerName] = newNode;
+    if(parent.nodeType === 'Return') {
+      state.skipSubNodes = true;
+      return ;
+    } else {
+    const newNode = buildNode(node.nodeType);
+    node._newASTPointer = newNode.components;
+    parent._newASTPointer[path.containerName] = newNode;
+  }
+
     },
   },
 
@@ -731,11 +800,10 @@ const visitor = {
           : indicator.name;
 
         const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
-
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
-          indicator.modifyingPaths[0].node.id === lhs.id &&
+          indicator.modifyingPaths[0]?.node.id === lhs.id &&
           indicator.isSecret &&
           indicator.isWhole &&
           !requiresConstructorInit
@@ -798,9 +866,12 @@ const visitor = {
           interactsWithSecret,
         });
         node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer[path.containerName])) {
         parent._newASTPointer.push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName] = newNode;
+        }
       }
-
     },
 
     exit(path: NodePath, state: any) {
@@ -902,7 +973,19 @@ const visitor = {
     },
 
   },
+  Return: {
+     enter(path: NodePath) {
+       const { node, parent } = path;
+       const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
+       node._newASTPointer = newNode;
+       if (Array.isArray(parent._newASTPointer)) {
+         parent._newASTPointer.push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName].push(newNode);
+       }
+     },
 
+   },
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
@@ -999,6 +1082,16 @@ const visitor = {
       parent._newASTPointer.push(newNode);
     },
   },
+
+  ForStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
   FunctionCall: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;

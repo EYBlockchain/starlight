@@ -22,14 +22,17 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   thisState.skipSubNodes = true;
   let { name } = thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
-  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
+  const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -215,12 +218,72 @@ const visitor = {
   },
 
   ParameterList: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
+    enter(path: NodePath, state: any) {
+      const { node, parent, scope } = path;
+      let returnName : string[] =[];
+       if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
-    },
+    } else if(path.key === 'returnParameters'){
+       parent.body.statements.forEach(node => {
+        if(node.nodeType === 'Return'){
+          if(node.expression.nodeType === 'TupleExpression'){
+           node.expression.components.forEach(component => {
+             if(component.name){
+              returnName?.push(component.name);
+            }
+             else
+             returnName?.push(component.value);
+           });
+         } else{
+          if(node.expression.name)
+           returnName?.push(node.expression.name);
+          else
+          returnName?.push(node.expression.value);
+        }
+        }
+      });
+    node.parameters.forEach((node, index) => {
+    if(node.nodeType === 'VariableDeclaration'){
+    node.name = returnName[index];
+  }
+    });
+    const newNode = buildNode('ParameterList');
+    node._newASTPointer = newNode.parameters;
+    parent._newASTPointer[path.containerName] = newNode;
+    }
+  },
+  exit(path: NodePath, state: any){
+    const { node, parent, scope } = path;
+    if(path.key === 'returnParameters'){
+      node._newASTPointer.forEach(item =>{
+      parent.body.statements.forEach( node => {
+        if(node.nodeType === 'Return'){
+          for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
+            if(node.expression.nodeType === 'TupleExpression'){
+            node.expression.components.forEach(component => {
+              if(id == component.referencedDeclaration) {
+                if ((bindings instanceof VariableBinding)) {
+                  if(component.name === item.name)
+                  item.isPrivate = bindings.isSecret
+                }
+              }
+            })
+          } else {
+            if( id == node.expression.referencedDeclaration) {
+              if ((bindings instanceof VariableBinding)){
+               if(node.name === item.name)
+               item.isPrivate = bindings.isSecret
+              }
+            }
+           }
+          }
+        }
+      })
+    })
+    }
+  },
   },
 
   Block: {
@@ -235,6 +298,22 @@ const visitor = {
       parent._newASTPointer.body = newNode;
     },
   },
+
+  Return: {
+     enter(path: NodePath) {
+       const { node, parent } = path;
+       const newNode = buildNode(
+       node.nodeType,
+       { value: node.expression.value });
+       node._newASTPointer = newNode;
+       if (Array.isArray(parent._newASTPointer)) {
+         parent._newASTPointer.push(newNode);
+       } else {
+         parent._newASTPointer[path.containerName].push(newNode);
+       }
+     },
+
+   },
 
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
@@ -346,7 +425,8 @@ const visitor = {
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
-      if (!node.containsSecret) {
+      const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+      if (!node.containsSecret && !childOfSecret) {
         state.skipSubNodes = true;
         return;
       }
@@ -440,7 +520,11 @@ const visitor = {
 
       newNode = buildNode('ExpressionStatement', { isVarDec });
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
     },
   },
 
@@ -596,12 +680,21 @@ const visitor = {
     },
   },
 
-  Literal: {
+  ForStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+  
+  Literal: {
+    enter(path: NodePath) {
+      const { node, parent , parentPath } = path;
       const { value } = node;
-
       if (node.kind !== 'number')
+       if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
         );
