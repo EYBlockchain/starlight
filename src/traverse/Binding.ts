@@ -29,7 +29,8 @@ export class Binding {
       case 'FunctionDefinition':
       case 'VariableDeclaration':
         return true;
-      case 'IfStatement':
+      case 'IfStatement':  
+      case 'ForStatement':
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':

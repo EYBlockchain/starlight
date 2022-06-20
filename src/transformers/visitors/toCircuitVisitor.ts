@@ -21,15 +21,22 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   let { name } = thisPath.isMsg(node) ? node.name : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
+<<<<<<< miranda/structs
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
 
+=======
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
+  const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+>>>>>>> master
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition) &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit unless its a public state variable
     !(thisPath.containerName === 'indexExpression' && !binding.stateVariable)
@@ -426,7 +433,8 @@ const visitor = {
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
-      if (!node.containsSecret) {
+      const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+      if (!node.containsSecret && !childOfSecret) {
         state.skipSubNodes = true;
         return;
       }
@@ -520,7 +528,11 @@ const visitor = {
 
       newNode = buildNode('ExpressionStatement', { isVarDec });
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
     },
   },
 
@@ -701,6 +713,15 @@ const visitor = {
     },
   },
 
+  ForStatement: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+  
   Literal: {
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;

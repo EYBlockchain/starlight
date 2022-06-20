@@ -175,6 +175,11 @@ function codeGenerator(node: any) {
           else
           ${codeGenerator(node.falseBody.statements[0].expression)}`;
 
+    case 'ForStatement':
+            return `for (${codeGenerator(node.initializationExpression)}; ${codeGenerator(node.condition)}; ${codeGenerator(node.loopExpression)}) {
+              ${codeGenerator(node.body)}
+                  }`
+
     case 'ElementaryTypeNameExpression':
       return codeGenerator(node.typeName);
 

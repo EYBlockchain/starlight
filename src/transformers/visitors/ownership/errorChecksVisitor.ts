@@ -41,6 +41,15 @@ export default {
     }
   },
 
+  ForStatement: {
+    exit(path: NodePath) {
+      const { initializationExpression, loopExpression, condition, body } = path.node;
+      if ((condition.containsSecret || initializationExpression.containsSecret || loopExpression.containsSecret) && body.containsPublic) {
+        throw new TODOError(`This For statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
+      }
+    }
+  },
+
   FunctionDefinition: {
     exit(path: NodePath) {
       const { scope } = path;
