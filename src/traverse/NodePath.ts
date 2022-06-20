@@ -932,15 +932,9 @@ export default class NodePath {
         //   - a unary operator
         // prettier-ignore
         return (
-<<<<<<< miranda/structs
-            this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
-            this.getLhsAncestor(true) && !this.getRhsAncestor(true) && !this.queryAncestors(path => path.containerName === 'condition')
-          );
-=======
           this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
           this.getLhsAncestor(true) && !(this.queryAncestors(path => path.containerName === 'condition') ||  this.queryAncestors(path => path.containerName === 'initializationExpression') ||  this.queryAncestors(path => path.containerName === 'loopExpression'))
         );
->>>>>>> master
       default:
         return false;
     }

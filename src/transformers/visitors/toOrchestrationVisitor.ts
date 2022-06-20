@@ -884,7 +884,6 @@ const visitor = {
 
         // check whether this statement should be init separately in the constructor
         const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
-<<<<<<< miranda/structs
 
         // collect all index names
         const names = indicator.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
@@ -902,14 +901,6 @@ const visitor = {
         // if its secret and this is the first assigment, we add a vardec
         if (
           firstEdit &&
-=======
-        // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
-        // if its secret and this is the first assigment, we add a vardec
-        if (
-          indicator.modifyingPaths[0]?.node.id === lhs.id &&
-          indicator.isSecret &&
-          indicator.isWhole &&
->>>>>>> master
           !requiresConstructorInit
         ) {
           let accessed = false;

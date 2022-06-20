@@ -21,15 +21,10 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   let { name } = thisPath.isMsg(node) ? node.name : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
-<<<<<<< miranda/structs
-  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
-
-=======
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
->>>>>>> master
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
