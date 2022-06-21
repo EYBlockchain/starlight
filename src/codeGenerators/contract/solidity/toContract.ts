@@ -65,9 +65,23 @@ function codeGenerator(node: any) {
 
     case 'FunctionDefinition': {
       // prettier-ignore
-      const functionSignature = `${
-        node.isConstructor ? 'constructor ' : `function ${node.name}`
-      }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
+      let functionType: string;
+      switch (node.kind)
+      {
+        case 'fallback':
+        case 'receive':
+          functionType = node.kind;
+          node.visibility = 'external payable';
+          break;
+        case 'constructor':
+          functionType = 'constructor ';
+          break;
+        case 'function':
+          functionType = `function ${node.name}`;
+          break;
+
+      }
+      const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
       const body = codeGenerator(node.body);
 
 

@@ -133,6 +133,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         visibility,
         isConstructor,
+        kind,
         body = buildNode('Block'),
         parameters = buildNode('ParameterList'),
         returnParameters = buildNode('ParameterList'), // TODO
@@ -143,6 +144,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         visibility,
         isConstructor,
+        kind,
         body,
         parameters,
         returnParameters,

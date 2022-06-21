@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a;
+   mapping(address => uint) balance; 
+  function add(secret uint256 value) public {
+    unknown a += value;
+  }
+
+  function remove(secret uint256 value) public {
+     a -= value;
+  }
+
+      fallback() external payable {  balance[msg.sender] += msg.value; }
+    receive() external payable {  balance[msg.sender] += msg.value; }
+}
