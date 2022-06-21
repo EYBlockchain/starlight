@@ -107,8 +107,12 @@ function codeGenerator(node: any) {
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
       const initialValue = codeGenerator(node.initialValue);
+      if(!!initialValue)
       return `
           ${declarations} = ${initialValue};`;
+      else
+      return `
+      ${declarations};`;
     }
 
     case 'Block': {

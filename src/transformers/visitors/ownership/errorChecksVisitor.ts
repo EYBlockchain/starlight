@@ -32,11 +32,21 @@ export default {
   IfStatement: {
     exit(path: NodePath) {
       const { trueBody, falseBody, condition } = path.node;
-      if ((trueBody.containsSecret && trueBody.containsPublic) || (falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic) ) {
+      if ((trueBody.containsSecret && trueBody.containsPublic) || !!falseBody && ((falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic))) {
         throw new TODOError(`This if statement contains edited secret and public states - we currently can't edit both in the same statement. Consider separating into public and secret methods.`, path.node);
       }
-      if (condition.containsSecret && (falseBody.containsPublic || trueBody.containsPublic)) {
+      if (condition.containsSecret && ( (!!falseBody && falseBody.containsPublic) || trueBody.containsPublic)) {
         throw new TODOError(`This if statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
+      }
+      for (var i=0; i<trueBody.statements.length; i++) {
+        if((trueBody.statements[i].nodeType !== 'ExpressionStatement' || trueBody.statements[i].expression.nodeType !== 'Assignment') && trueBody.containsSecret)
+        throw new TODOError(`This if statement expression contains a non assignment operation , which currently isn't supported`, path.node);
+      }
+      if(falseBody) {
+      for(var i=0; i< falseBody.statements.length; i++) {
+        if(( falseBody.statements[i].nodeType !== 'ExpressionStatement'  || falseBody.statements[i].expression.nodeType !== 'Assignment') && falseBody.containsSecret)
+        throw new TODOError(`This if statement contains a non assignment operation , which currently isn't supported`, path.node);
+        }
       }
     }
   },

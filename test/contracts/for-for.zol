@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Test {
+
+secret uint private z;
+
+function add(uint j) public {
+  uint i;
+  uint k;
+for(i =0 ; i<5 ; i++) {
+    for(k=0; k<2; k++) {
+      z += j;
+      }
+    }
+  }
+}
