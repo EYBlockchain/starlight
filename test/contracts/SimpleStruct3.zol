@@ -15,13 +15,12 @@ contract Receipt {
 
   function add(secret Rct memory myrct) public {
     unknown total[msg.sender] += myrct.amount + myrct.tax;
-    known cmt.amount += myrct.amount;
-    known cmt.tax += myrct.tax;
+    cmt = myrct;
   }
 
   function remove(secret Rct memory invalidrct) public {
     total[msg.sender] -= invalidrct.amount + invalidrct.tax;
-    cmt.amount -= invalidrct.amount;
-    cmt.tax -= invalidrct.tax;
+    cmt.amount = 0;
+    cmt.tax = 0;
   }
 }
