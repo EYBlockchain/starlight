@@ -966,7 +966,7 @@ const visitor = {
           oldASTId: node.id,
         });
         node._newASTPointer = newNode;
-        if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        if (Array.isArray(parent._newASTPointer[path.containerName]) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer))) {
         parent._newASTPointer.push(newNode);
         } else {
           parent._newASTPointer[path.containerName] = newNode;

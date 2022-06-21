@@ -1,4 +1,5 @@
 import NodePath from './NodePath.js';
+import { Binding } from './Binding.js';
 import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError } from '../error/errors.js';
 
@@ -241,17 +242,18 @@ export default class MappingKey {
 
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
-    this.isWhole ??= this.container.binding.isWhole;
+    const container = this.container instanceof Binding ? this.container : this.container.binding;
+    this.isWhole ??= container.isWhole;
     this.isWholeReason = this.isWhole
-      ? this.container.binding.isWholeReason
+      ? container.isWholeReason
       : this.isWholeReason;
-    this.isPartitioned ??= this.container.binding.isPartitioned;
+    this.isPartitioned ??= container.isPartitioned;
     this.isPartitionedReason = this.isPartitioned
-      ? this.container.binding.isPartitionedReason
+      ? container.isPartitionedReason
       : this.isPartitionedReason;
-    this.isOwned ??= this.container.binding.isOwned;
-    this.owner ??= this.container.binding.owner;
+    this.isOwned ??= container.isOwned;
+    this.owner ??= container.owner;
     this.mappingOwnershipType = this.owner?.mappingOwnershipType;
-    this.onChainKeyRegistry ??= this.container.binding.onChainKeyRegistry;
+    this.onChainKeyRegistry ??= container.onChainKeyRegistry;
   }
 }

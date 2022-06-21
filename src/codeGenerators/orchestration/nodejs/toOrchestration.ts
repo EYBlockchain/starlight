@@ -83,6 +83,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
             node.declarations[0].name,
           )}\n${codeGenerator(node.initialValue)};`;
         }
+        if (node.declarations[0].isStruct) return `\n let ${codeGenerator(node.declarations[0])} = {}; \n${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
         return `${getPublicValue(node.declarations[0])}`
