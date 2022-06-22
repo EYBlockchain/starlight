@@ -277,7 +277,8 @@ export default {
         name: node.fileName || state.functionName,
         id: node.id,
         kind: node.kind,
-        visibility: node.kind ==='function' ? 'public' : '',
+        stateMutability: node.stateMutability === 'payable'? node.stateMutability : '',
+        visibility: node.kind ==='function' ? 'public' : node.kind === 'constructor'? '': 'external',
         isConstructor,
       });
 

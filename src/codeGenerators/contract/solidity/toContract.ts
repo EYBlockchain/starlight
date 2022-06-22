@@ -71,7 +71,6 @@ function codeGenerator(node: any) {
         case 'fallback':
         case 'receive':
           functionType = node.kind;
-          node.visibility = 'external payable';
           break;
         case 'constructor':
           functionType = 'constructor ';
@@ -81,7 +80,7 @@ function codeGenerator(node: any) {
           break;
 
       }
-      const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} {`;
+      const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} {`;
       const body = codeGenerator(node.body);
 
 
