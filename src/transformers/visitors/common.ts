@@ -81,3 +81,11 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
   return newAST;
 }
 
+export function parentnewASTPointer(parent:any , path:any , newNode:any, type:any){
+  if (Array.isArray(type)) {
+    type.push(newNode);
+  } else {
+    parent._newASTPointer[path.containerName] = newNode;
+  }
+}
+

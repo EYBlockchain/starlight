@@ -10,7 +10,7 @@ import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
 import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-import { interactsWithSecretVisitor } from './common.js';
+import { interactsWithSecretVisitor, parentnewASTPointer } from './common.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
@@ -755,11 +755,7 @@ const visitor = {
       const { operator, prefix, subExpression } = node;
       const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+    parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     }
   },
 
@@ -1007,11 +1003,7 @@ const visitor = {
         subType: node.typeDescriptions.typeString,
       });
 
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-       parent._newASTPointer[path.containerName].push(newNode);
-     } else {
-       parent._newASTPointer[path.containerName] = newNode; }
-
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
       // if this is a public state variable, this fn will add a public input
       addPublicInput(path, state);
     },

@@ -9,7 +9,7 @@ import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator, FunctionDefinitionIndicator} from '../../traverse/Indicator.js';
-import { interactsWithSecretVisitor, internalFunctionCallVisitor } from './common.js';
+import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -266,11 +266,11 @@ const visitor = {
        { value: node.expression.value });
        node._newASTPointer = newNode;
        if (Array.isArray(parent._newASTPointer)) {
-         parent._newASTPointer.push(newNode);
-       } else {
-         parent._newASTPointer[path.containerName].push(newNode);
-       }
-     },
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName].push(newNode);
+      }
+    },
 
    },
 
@@ -369,11 +369,7 @@ const visitor = {
       const { operator, prefix, subExpression } = node;
       const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     }
   },
 
@@ -607,17 +603,11 @@ const visitor = {
       // local variable decs and parameters are dealt with elsewhere
       // secret state vars are input via commitment values
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
-
+      const newNode = buildNode(
+        node.nodeType,
+        { name, });
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(buildNode('Identifier', {
-          name,
-        }));
-      } else {
-        parent._newASTPointer[path.containerName] = buildNode('Identifier', {
-          name,
-        });
-      }
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -768,13 +758,7 @@ const visitor = {
         circuitImport: isCircuit,
          });
          node._newASTPointer = newNode ;
-         if (Array.isArray(parent._newASTPointer[path.containerName])) {
-           parent._newASTPointer[path.containerName].push(newNode);
-          } else {
-            parent._newASTPointer[path.containerName] = newNode;
-          }
-
-
+         parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
           const fnDefNode = path.getAncestorOfType('FunctionDefinition');
           state.callingFncName ??= [];
           state.callingFncName.push(fnDefNode.node.name);
