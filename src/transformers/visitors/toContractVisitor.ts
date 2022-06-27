@@ -21,6 +21,10 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   const binding = thisPath.getReferencedBinding(thisPath.node);
   const indicator = thisPath.scope.getReferencedIndicator(thisPath.node, true);
+  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
+  const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   if(thisPath.nodeType === 'Return') {
    thisPath.container.forEach(item => {
      if(item.nodeType === 'Return'){
@@ -49,8 +53,6 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   }
 
-
-  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement').containsSecret;
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
