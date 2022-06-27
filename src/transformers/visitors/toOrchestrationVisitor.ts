@@ -189,6 +189,8 @@ const visitor = {
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           file.constructorParams = state.constructorParams;
           file.contractImports = state.contractImports;
+          if(state.isjoinCommitmentsFunction?.includes('true'))
+            file.functionNames.push('joinCommitments');
         }
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           file.nodes[0].constructorParams = state.constructorParams;
@@ -303,6 +305,13 @@ const visitor = {
       };
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
+      for(const [ id , indicators ] of Object.entries(functionIndicator)){
+       if((indicators instanceof StateVariableIndicator) && indicators.isPartitioned){
+         state.isjoinCommitmentsFunction ??= [];
+         state.isjoinCommitmentsFunction?.push('true');
+       }
+
+     }
       let thisIntegrationTestFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
@@ -312,8 +321,6 @@ const visitor = {
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           file.functionNames.push(node.fileName);
-          if(functionIndicator.nullifiersRequired)
-           file.functionNames.push('joinCommitments');
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
