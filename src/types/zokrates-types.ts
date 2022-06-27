@@ -159,6 +159,16 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       };
     }
+    case 'ForStatement': {
+      const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        initializationExpression,
+        loopExpression,
+        body,
+      }
+    }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {

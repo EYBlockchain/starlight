@@ -361,6 +361,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const rtnparams = [];
   let stateName: string;
   let stateNode: any;
+
   switch (node.nodeType) {
     case 'Imports':
       return { statements:  Orchestrationbp.generateProof.import() }
@@ -393,10 +394,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         });
       }
 
-      node.returnParameters.forEach((param: any) =>
-        rtnparams.push(`, ${param.integer}`),
-      );
+      node.returnParameters.forEach( (param, index) => {
 
+       if(param === 'true')
+        rtnparams?.push(` ${param}:  ${param}`);
+       else if(param?.includes('Commitment'))
+        rtnparams?.push( ` ${param} : ${param}.integer  `);
+       else
+        rtnparams.push(`   ${param} :${param}.integer`);
+     });
       if (params) params[params.length - 1] += `,`;
 
       if (node.name === 'cnstrctr')
@@ -412,7 +418,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         signature: [
           `\nexport default async function ${node.name}(${params} ${states}) {`,
-          `\nreturn { tx ${rtnparams.join('')}};
+          `\nreturn  { tx , ${rtnparams} };
         \n}`,
         ],
         statements: lines,

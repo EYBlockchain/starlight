@@ -150,6 +150,24 @@ export default function codeGenerator(node: any, options: any = {}): any {
         }`
       }
 
+      case 'ForStatement': {
+        if(node.body.statements.statements.interactsWithSecret) {
+          node.initializationExpression.interactsWithSecret = true;
+          node.loopExpression.interactsWithSecret = true;
+        }
+          let initializationExpression = `${codeGenerator(node.initializationExpression)}`;
+          initializationExpression=initializationExpression.trim();
+          let condition = `${codeGenerator(node.condition)};`
+          let loopExpression = `${codeGenerator(node.loopExpression)}`;
+          loopExpression=loopExpression.trim().slice(0,-1);
+          return `for(${initializationExpression} ${condition} ${loopExpression}) {
+          ${codeGenerator(node.body)}
+        }`
+      }  
+
+    case 'UnaryOperation':
+      return `${codeGenerator(node.subExpression)} ${node.operator}`;
+
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param

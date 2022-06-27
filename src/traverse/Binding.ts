@@ -30,6 +30,7 @@ export class Binding {
       case 'VariableDeclaration':
         return true;
       case 'IfStatement':  
+      case 'ForStatement':  
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':
@@ -51,6 +52,7 @@ export class Binding {
       case 'UnaryOperation':
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
+      case 'ModifierDefinition':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);

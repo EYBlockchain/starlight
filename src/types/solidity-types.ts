@@ -18,6 +18,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['parameters'];
     case 'IfStatement':
       return ['condition', 'trueBody' , 'falseBody'];
+    case 'ForStatement':
+        return ['condition', 'initializationExpression', 'loopExpression' , 'body'];
     case 'Block':
       return ['statements'];
     case 'VariableDeclarationStatement':
@@ -54,6 +56,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'Literal':
     case 'UserDefinedTypeName':
     case 'ImportDirective':
+    case 'ModifierDefinition':
       return [];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
@@ -335,6 +338,16 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         trueBody,
         falseBody,
       };
+    }
+    case 'ForStatement': {
+      const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        initializationExpression,
+        loopExpression,
+        body,
+      }
     }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;

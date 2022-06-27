@@ -57,7 +57,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (indicator.interactsWithSecret || isCondition) &&
+    (indicator.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression')
@@ -438,6 +438,20 @@ export default {
         trueBody: node.trueBody,
         falseBody: node.falseBody
       });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
+  ForStatement: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      if (path.scope.containsSecret) {
+        path.traversePathsFast(findCustomInputsVisitor, state);
+        state.skipSubNodes=true;
+        return;
+      }
+      const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },

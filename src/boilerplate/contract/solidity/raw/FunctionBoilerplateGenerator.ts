@@ -66,7 +66,6 @@ class FunctionBoilerplateGenerator {
       `uint256[]`,
     ])
 
-
       return [
          `
           bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
@@ -100,7 +99,7 @@ class FunctionBoilerplateGenerator {
     },
   };
 
-  
+
 }
 
 export default FunctionBoilerplateGenerator;
