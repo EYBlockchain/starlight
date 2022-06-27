@@ -1,5 +1,6 @@
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 import Scope from '../../../../traverse/Scope.js';
+import { VariableBinding } from '../../../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 
 const bpCache = new WeakMap();
@@ -67,6 +68,11 @@ class ContractBoilerplateGenerator {
 
     stateVariableDeclarations() {
       const { scope } = this;
+      let isjoinCommitmentsFunction : string[]=[];
+      for(const [ id , bindings ] of Object.entries(scope.bindings)){
+       if((bindings instanceof VariableBinding) && bindings.isUnknown )
+          isjoinCommitmentsFunction?.push('true');
+      }
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = scope;
@@ -75,7 +81,7 @@ class ContractBoilerplateGenerator {
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
       const functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
-      if(nullifiersRequired) functionNames.push('joinCommitments');
+      if(isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments');
       return {
         functionNames,
         nullifiersRequired,
@@ -93,14 +99,11 @@ class ContractBoilerplateGenerator {
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = this.scope;
-
       let isjoinCommitmentsFunction : string[]=[];
-
-      if (nullifiersRequired){
-        isjoinCommitmentsFunction.push('true');
-
+      for(const [ id , bindings ] of Object.entries(this.scope.bindings)){
+       if((bindings instanceof VariableBinding) && bindings.isUnknown )
+          isjoinCommitmentsFunction?.push('true');
       }
-
       const returnpara = {};
       let parameterList: any[];
       let paramtype: string;

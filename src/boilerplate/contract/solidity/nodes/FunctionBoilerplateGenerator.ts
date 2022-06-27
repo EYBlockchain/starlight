@@ -38,7 +38,7 @@ class FunctionBoilerplateGenerator {
     } else if (isConstructorFunction) {
       return ['cnstrctr'];
     }
-    
+
     return ['customFunction'];
   };
 
