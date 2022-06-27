@@ -7,12 +7,7 @@ import { traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
-// below stub will only work with a small subtree - passing a whole AST will always give true!
-// useful for subtrees like ExpressionStatements
-const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
-  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
-    thisState.interactsWithSecret = true;
-};
+import { interactsWithSecretVisitor, parentnewASTPointer } from './common.js';
 
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
@@ -70,6 +65,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
 }
   }
 };
+
 
 let internalFuncInteractsWithSecret = false;
 /**
@@ -491,11 +487,7 @@ export default {
 
       const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -514,11 +506,7 @@ export default {
       const { operator, prefix, subExpression } = node;
       const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     }
   },
 
@@ -625,11 +613,7 @@ export default {
       const newNode = buildNode('Identifier', { name });
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -646,12 +630,7 @@ export default {
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
 
       const newNode = buildNode('Literal', { value, kind });
-
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -669,12 +648,7 @@ export default {
         newNode = buildNode('MemberAccess', { memberName: node.memberName });
         node._newASTPointer = newNode;
       }
-
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -684,11 +658,7 @@ export default {
 
       const newNode = buildNode('IndexAccess');
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -698,11 +668,7 @@ export default {
 
       const newNode = buildNode('Mapping');
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -725,12 +691,7 @@ export default {
         // For now, we'll copy these into Solidity:
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
-        if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
-        } else {
-          parent._newASTPointer[path.containerName] = newNode;
-        }
-
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;
       }
 
@@ -740,12 +701,7 @@ export default {
 
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
-
-        if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
-        } else {
-          parent._newASTPointer[path.containerName] = newNode;
-        }
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;
       }
       if (path.isInternalFunctionCall()) {
@@ -779,29 +735,17 @@ export default {
           parameters: state.fnParameters,
          });
          node._newASTPointer = newNode;
-         if (Array.isArray(parent._newASTPointer[path.containerName])) {
-           parent._newASTPointer[path.containerName].push(newNode);
-          } else {
-           parent._newASTPointer[path.containerName] = newNode;
-          }
+         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
          return;
         }
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
-        if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
-        } else {
-          parent._newASTPointer[path.containerName] = newNode;
-        }
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
       }
       if (node.kind !== 'typeConversion') {
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
-        if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
-        } else {
-          parent._newASTPointer[path.containerName] = newNode;
-        }
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         state.skipSubNodes = true;
         return;
       }
@@ -809,10 +753,7 @@ export default {
         type: node.typeDescriptions.typeString,
       });
      node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode); }  else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+     parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 }
