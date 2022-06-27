@@ -310,6 +310,8 @@ const visitor = {
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           file.functionNames.push(node.fileName);
+          if(functionIndicator.nullifiersRequired)
+           file.functionNames.push('joinCommitments');
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;

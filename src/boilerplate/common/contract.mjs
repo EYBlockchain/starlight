@@ -6,6 +6,7 @@ import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 import { generateProof } from './zokrates.mjs';
 
+
 const web3 = Web3.connection();
 const { generalise } = GN;
 const db = '/app/orchestration/common/db/preimage.json';
@@ -154,7 +155,7 @@ export function getInputCommitments(publicKey, value, commitments) {
 	 return  [false, possibleCommitments[0][0], possibleCommitments[1][0]];
   return null;
 }
-  export default async function joinCommitments(secretKey, publicKey, commitments, commitmentsID, witnesses){
+  export default async function joinCommitments(contractName, statename, secretKey, publicKey, commitments, commitmentsID, witnesses, instance){
   const oldCommitment_0 = commitmentsID[0];
 
 	const oldCommitment_1 = commitmentsID[1];
@@ -232,7 +233,7 @@ const oldCommitment_stateVarId = generalise(3).hex(32);
 		newCommitment.integer,
 	].flat(Infinity);
 
-	const res = await generateProof("joinCircuit", allInputs);
+	const res = await generateProof("joinCommitments", allInputs);
 	const proof = generalise(Object.values(res.proof).flat(Infinity))
 		.map((coeff) => coeff.integer)
 		.flat(Infinity);
@@ -240,7 +241,7 @@ const oldCommitment_stateVarId = generalise(3).hex(32);
     // Send transaction to the blockchain:
 
   	const tx = await instance.methods
-  		.joinCircuit(
+  		.joinCommitments(
   			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer,],
   			oldCommitment_root.integer,
   			[newCommitment.integer],
@@ -250,29 +251,29 @@ const oldCommitment_stateVarId = generalise(3).hex(32);
   			from: config.web3.options.defaultAccount,
   			gas: config.web3.options.defaultGas,
   		});
+      let preimage = {};
+      if (fs.existsSync(db)) {
+        preimage = JSON.parse(
+          fs.readFileSync(db, "utf-8", (err) => {
+            console.log(err);
+          })
+        );
+      }
 
-  	// Write new commitment preimage to db:
+      Object.keys(preimage).forEach((key) => {
+    		if(key === statename){
+    			preimage[key][oldCommitment_0].isNullified = true;
+          preimage[key][oldCommitment_1].isNullified = true;
+    			preimage[key][newCommitment.hex(32)] = {
+    				value: newCommitment_value.integer,
+    				salt: newCommitment_newSalt.integer,
+    				publicKey: publicKey.integer,
+    				commitment: newCommitment.integer,
+    			};
+    			fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+    			console.log(preimage);
+    		}
+    	})
 
-  	let preimage = {};
-  	if (fs.existsSync(db)) {
-  		preimage = JSON.parse(
-  			fs.readFileSync(db, "utf-8", (err) => {
-  				console.log(err);
-  			})
-  		);
-  	}
-
-  	preimage.commitments[generalise(oldCommitment_0).hex(32)].isNullified = true;
-
-  	preimage.commitments[generalise(oldCommitment_1).hex(32)].isNullified = true;
-
-  	preimage.commitments[newCommitment.hex(32)] = {
-  		value: newCommitment_value.integer,
-  		salt: newCommitment_newSalt.integer,
-  		publicKey: publicKey.integer,
-  		commitment: newCommitment.integer,
-  	};
-  	fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
-
-  return preimage;
+  return { tx };
 }

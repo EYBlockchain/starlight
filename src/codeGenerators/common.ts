@@ -54,6 +54,7 @@ export const collectImportFiles = (
       let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
       importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
       // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
+
       if (
           !(
             importFilePath.startsWith('utils') ||

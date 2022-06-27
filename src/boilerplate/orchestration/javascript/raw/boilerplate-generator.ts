@@ -119,21 +119,29 @@ class BoilerplateGenerator {
             ).${mappingName}${mappingKey};
             \n const ${stateName}_newCommitmentValue = generalise(${increment});
             // First check if required commitments exist or not
-            \n const commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
-            \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
-            \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
-            if( commitmentFlag === false) {
+            \n let commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+            \nlet ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
+            \nlet ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
+            \n let ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
+            \n let ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
+            while( commitmentFlag === false) {
                 console.log('Existing Commitments are not appropriate and we need to call Join Circuit');
-                const ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
-                const ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
-                ${stateName}_preimage = joinCommitments(secretKey,  ${stateName}_preimage, [${stateName}_0_oldCommitment,${stateName}_0_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1]);
+
+                const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, ${stateName}_preimage, [${stateName}_0_oldCommitment,${stateName}_1_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1], instance);
+
+                console.log(tx);
+
+                ${stateName}_preimage = JSON.parse(
+                  fs.readFileSync(db, 'utf-8', err => {
+                    console.log(err);
+                  }),
+                ).${mappingName}${mappingKey};
+
                 commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+                \n ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
+                \n ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
+
             }
-
-
-            // else
-            // console.log('Using following commitments : ${stateName}_0_oldCommitment, ${stateName}_0_oldCommitment');
-
             const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
             const ${stateName}_1_prevSalt = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].salt);
             const ${stateName}_0_prev = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].value);
@@ -178,8 +186,8 @@ class BoilerplateGenerator {
       switch (stateType) {
         case 'partitioned':
           return [`
-            const ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
-            const ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
+             ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
+             ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
             const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
             const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
             const ${stateName}_root = generalise(${stateName}_witness_0.root);
@@ -265,7 +273,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, registerKey, getInputCommitments } from './common/contract.mjs';`,
-        `\nimport { joinCommitments } from './common/contract.mjs';`,
+        `\nimport  joinCommitments  from './common/contract.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';
         \n`,
