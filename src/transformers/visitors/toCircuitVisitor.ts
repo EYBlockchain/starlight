@@ -697,6 +697,23 @@ const visitor = {
     },
   },
 
+  Literal: {
+   enter(path: NodePath) {
+     const { node, parent , parentPath } = path;
+     const { value } = node;
+     if (node.kind !== 'number')
+      if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
+       throw new Error(
+         `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
+       );
+
+     // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+     parent._newASTPointer[path.containerName] = buildNode('Literal', {
+       value,
+     });
+   },
+ },
+
   MemberAccess: {
     enter(path: NodePath, state: any) {
       const { parent } = path;
