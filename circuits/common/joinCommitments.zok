@@ -12,6 +12,7 @@ from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import 
 def main(\
 	private u32[8] oldCommitment_0_owner_secretKey,\
 	private u32[8] oldCommitment_1_owner_secretKey,\
+	private u32[8] stateVarId,\
 	public field oldCommitment_0_nullifier,\
 	public field oldCommitment_1_nullifier,\
 	private field oldCommitment_0_value,\
@@ -30,11 +31,11 @@ def main(\
 
 
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] oldCommitment_0_stateVarId = field_to_u32_8(3)
+        u32[8] oldCommitment_0_stateVarId = field_to_u32_8(stateVarId)
 
 
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] oldCommitment_1_stateVarId = field_to_u32_8(3)
+        u32[8] oldCommitment_1_stateVarId = field_to_u32_8(stateVarId)
 
 
         field oldCommitment_0 = oldCommitment_0_value
@@ -44,7 +45,7 @@ def main(\
 
 
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] newCommitment_stateVarId = field_to_u32_8(3)
+        u32[8] newCommitment_stateVarId = field_to_u32_8(stateVarId)
 
 
 

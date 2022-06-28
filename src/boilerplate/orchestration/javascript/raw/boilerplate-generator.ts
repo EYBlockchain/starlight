@@ -122,12 +122,15 @@ class BoilerplateGenerator {
             \n let commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
             \nlet ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
             \nlet ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
-            \n let ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
-            \n let ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
-            while( commitmentFlag === false) {
-                console.log('Existing Commitments are not appropriate and we need to call Join Circuit');
+            \n let ${stateName}_witness_0 ;
+            \n let ${stateName}_witness_1 ;
 
-                const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, ${stateName}_preimage, [${stateName}_0_oldCommitment,${stateName}_1_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1], instance);
+                        while( commitmentFlag === false) {
+                console.log('Existing Commitments are not appropriate and we need to call Join Circuit');
+                \n  ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
+                \n  ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
+
+                const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, ${stateName}_stateVarId, ${stateName}_preimage, [${stateName}_0_oldCommitment,${stateName}_1_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1], instance);
 
                 console.log(tx);
 

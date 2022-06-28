@@ -155,7 +155,7 @@ export function getInputCommitments(publicKey, value, commitments) {
 	 return  [false, possibleCommitments[0][0], possibleCommitments[1][0]];
   return null;
 }
-  export default async function joinCommitments(contractName, statename, secretKey, publicKey, commitments, commitmentsID, witnesses, instance){
+  export default async function joinCommitments(contractName, statename, secretKey, publicKey, stateVarId, commitments, commitmentsID, witnesses, instance){
   const oldCommitment_0 = commitmentsID[0];
 
 	const oldCommitment_1 = commitmentsID[1];
@@ -180,7 +180,7 @@ export function getInputCommitments(publicKey, value, commitments) {
 	// increment would go here but has been filtered out
 
 	// Calculate nullifier(s):
-const oldCommitment_stateVarId = generalise(3).hex(32);
+const oldCommitment_stateVarId = stateVarId;
 
 	let oldCommitment_0_nullifier = generalise(
 		utils.shaHash(oldCommitment_stateVarId, secretKey.hex(32), oldCommitment_0_prevSalt.hex(32))
@@ -211,12 +211,14 @@ const oldCommitment_stateVarId = generalise(3).hex(32);
 	);
 
 	newCommitment = generalise(newCommitment.hex(32, 31)); // truncate
+  const stateVarID = parseInt(oldCommitment_stateVarId,16); // stateVarId to pass in circuits
 
 	// Call Zokrates to generate the proof:
 
 	const allInputs = [
 		secretKey.limbs(32, 8),
 		secretKey.limbs(32, 8),
+    stateVarID,
 		oldCommitment_0_nullifier.integer,
 		oldCommitment_1_nullifier.integer,
 		oldCommitment_0_prev.integer,
@@ -271,7 +273,7 @@ const oldCommitment_stateVarId = generalise(3).hex(32);
     				commitment: newCommitment.integer,
     			};
     			fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
-    			console.log(preimage);
+
     		}
     	})
 
