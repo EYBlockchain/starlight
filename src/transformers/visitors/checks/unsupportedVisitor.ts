@@ -36,14 +36,19 @@ export default {
     },
   },
 
-  // StructDefinition: {
-  //   enter(node: any) {
-  //     throw new TODOError(
-  //       `Solidity type ${node.nodeType}. We plan to handle structs in the near future.`,
-  //       node,
-  //     );
-  //   },
-  // },
+  StructDefinition: {
+    enter(node: any) {
+      node.members.forEach((member: any) => {
+        if (member.typeDescriptions?.typeString.includes('mapping')) {
+          throw new TODOError(
+            `Structs involving properties as mappings create a very complex commitment structure. We may work on this in future if there is high demand for this feature.`,
+            member,
+          );
+        }
+      });
+
+    },
+  },
 
   WhileStatement: {
     enter(node: any) {
