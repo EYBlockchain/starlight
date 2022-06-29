@@ -392,6 +392,23 @@ export class Scope {
 
     if (!path.isMapping(referencingNode) && !path.isArray(referencingNode) && !path.isStruct(referencingNode)) return indicator;
 
+    if (path.isStruct(referencingNode) && path.isMapping(referencingNode)) {
+      const memberAccessNode = referencingNode.nodeType === 'MemberAccess'
+        ? referencingNode
+        : NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')
+            .node;
+
+      const indexAccessNode =
+        memberAccessNode.expression.nodeType === 'IndexAccess'
+          ? memberAccessNode.expression
+          : NodePath.getPath(memberAccessNode).getAncestorOfType('IndexAccess')
+              .node;
+
+      return mappingKeyIndicatorOnly
+        ? indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)]
+        : indicator;
+    }
+
     if (path.isStruct(referencingNode)) {
       const memberAccessNode = referencingNode.nodeType === 'MemberAccess'
         ? referencingNode

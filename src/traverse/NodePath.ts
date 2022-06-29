@@ -789,6 +789,7 @@ export default class NodePath {
    * @returns {Boolean}
    */
   isMapping(node: any = this.node): boolean {
+    if (node.nodeType === 'MemberAccess') return this.isMapping(node.expression);
     return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
   }
 
@@ -798,6 +799,7 @@ export default class NodePath {
    * @returns {Node} - an Identifier node
    */
   getMappingKeyIdentifier(node: any = this.node): any {
+    if (node.expression?.nodeType === 'IndexAccess') return this.getMappingKeyIdentifier(node.expression);
     if (node.nodeType !== 'IndexAccess')
       return this.getAncestorOfType('IndexAccess').getMappingKeyIdentifier();
     const { indexExpression } = node;
@@ -880,11 +882,17 @@ export default class NodePath {
     const fnDef = this.getAncestorOfType('FunctionDefinition') || this;
     const parent = (node.nodeType === 'MemberAccess' || node.nodeType === 'VariableDeclaration') ? node : this.getAncestorOfType('MemberAccess')?.node;
     if (parent.typeName) {
-      const typeId = parent.typeName.pathNode.referencedDeclaration;
-      const structNode = fnDef.getAllPrevSiblingNodes().find(n => n.id === typeId);
+      const typeId = parent.typeName.pathNode ? parent.typeName.pathNode.referencedDeclaration : parent.typeName.valueType.referencedDeclaration;
+      const structNode = fnDef.getAllPrevSiblingNodes().concat(fnDef.getAllNextSiblingNodes()).find(n => `${n.id}` === `${typeId}`);
+      return structNode;
+    } else if (parent.expression?.typeDescriptions?.typeString.includes('struct ')) {
+      // matches number between $ and _ in typeIdentifier (this is where id is stored)
+      // e.g. 8 in "t_struct$_MyStruct_$8_storage_ptr"
+      const structID = parent.expression?.typeDescriptions?.typeIdentifier.match(/(?<=\$)(\d+)(?=\_)/)[0];
+      const structNode = fnDef.getAllPrevSiblingNodes().concat(fnDef.getAllNextSiblingNodes()).find(n => `${n.id}` === `${structID}`);
       return structNode;
     } else {
-      const structNode = this.getReferencedNode(parent);
+      const structNode = this.getReferencedNode(parent) || this.scope.getReferencedBinding(parent).node;
       return this.getStructDeclaration(structNode);
     }
   }
@@ -933,6 +941,7 @@ export default class NodePath {
         // prettier-ignore
         return (
           this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
+          !this.getAncestorContainedWithin('initialValue') &&
           this.getLhsAncestor(true) && !(this.queryAncestors(path => path.containerName === 'condition') ||  this.queryAncestors(path => path.containerName === 'initializationExpression') ||  this.queryAncestors(path => path.containerName === 'loopExpression'))
         );
       default:
@@ -964,7 +973,7 @@ export default class NodePath {
         id = referencingNode.baseExpression.referencedDeclaration;
         break;
       case 'MemberAccess':
-        id = referencingNode.expression.referencedDeclaration;
+        id = referencingNode.expression.referencedDeclaration || this.getReferencedDeclarationId(referencingNode.expression);
         break;
       default:
         // No other nodeTypes have been encountered which include a referencedDeclaration

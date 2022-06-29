@@ -29,7 +29,7 @@ export class Binding {
       case 'FunctionDefinition':
       case 'VariableDeclaration':
         return true;
-      case 'IfStatement':  
+      case 'IfStatement':
       case 'ForStatement':
       case 'ArrayTypeName':
       case 'Assignment':
@@ -204,6 +204,7 @@ export class VariableBinding extends Binding {
    */
   getMappingKeyName(path: NodePath): string {
     const { node } = path;
+    if (node.nodeType === 'MemberAccess' && node.expression.nodeType === 'IndexAccess') return this.getMappingKeyName(NodePath.getPath(node.expression));
     if (node.nodeType !== 'IndexAccess')
       return this.getMappingKeyName(path.getAncestorOfType('IndexAccess'));
     const keyIdentifierNode = path.getMappingKeyIdentifier();
@@ -260,6 +261,10 @@ export class VariableBinding extends Binding {
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
+    // we DONT want to add a struct property if we have a mapping of a struct
+    // the mappingKey deals with that
+    if (this.isMapping && this.addMappingKey(referencingPath).structProperties) return this.addMappingKey(referencingPath).addStructProperty(referencingPath);
+    
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');

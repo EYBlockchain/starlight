@@ -53,6 +53,29 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 let interactsWithSecret = false; // Added globaly as two objects are accesing it
 let oldStateArray : string[];
 let circuitImport = [];
+
+const addStructDef = path => {
+  if (path.isStruct()) {
+    const structDef = path.getStructDeclaration();
+    const structNode = buildNode('StructDefinition', {
+      name: structDef.name,
+      members: structDef.members.map((mem: any) => {
+        return { name: mem.name,
+          type: mem.typeName.name === 'bool' ? 'bool' : 'field',
+        }
+      }),
+    });
+    const thisFnPath = path.getAncestorOfType('FunctionDefinition');
+    const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
+    // add struct def after imports, before fndef
+    if (!thisFile.nodes.some(n => n.nodeType === 'StructDefinition' && n.name === structNode.name)) thisFile.nodes.splice(1, 0, structNode);
+    return { structDef, structNode };
+  }
+}
+
+
+
+
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.zok` AST
@@ -570,19 +593,7 @@ const visitor = {
       });
 
       if (path.isStruct(node)) {
-        const structDef = path.getStructDeclaration(node);
-        const structNode = buildNode('StructDefinition', {
-          name: structDef.name,
-          members: structDef.members.map((mem: any) => {
-            return { name: mem.name,
-              type: mem.typeName.name === 'bool' ? 'bool' : 'field',
-            }
-          }),
-        });
-        const thisFnPath = path.getAncestorOfType('FunctionDefinition');
-        const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
-        // add struct def after imports, before fndef
-        thisFile.nodes.splice(1, 0, structNode);
+        const { structDef, structNode } = addStructDef(path);
         newNode.typeName.name = structDef.name;
         newNode.typeName.members = structNode.members;
       }
@@ -643,6 +654,9 @@ const visitor = {
       const newNode = buildNode(
         node.nodeType,
         { name, });
+
+      if (path.isStruct()) addStructDef(path);
+
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },

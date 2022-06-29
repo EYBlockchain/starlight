@@ -1,5 +1,6 @@
 import NodePath from './NodePath.js';
 import { Binding } from './Binding.js';
+import { StateVariableIndicator } from './Indicator.js';
 import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError } from '../error/errors.js';
 
@@ -49,6 +50,10 @@ export default class MappingKey {
   mappingKeys?: any;
   isStruct: boolean;
 
+  isParent?: boolean;
+  isChild?: boolean;
+  structProperties?: {[key: string]: any};
+
   isKnown?:boolean;
   isUnknown?:boolean;
   isIncremented?:boolean;
@@ -80,7 +85,7 @@ export default class MappingKey {
       : keyPath.isStruct ? keyPath.node.memberName : keyPath.getReferencedNode().name;
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
-      : keyPath.getReferencedNode().nodeType;
+      : keyPath.getReferencedNode()?.nodeType;
     this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
     this.keyPath = keyPath;
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
@@ -89,7 +94,12 @@ export default class MappingKey {
     this.isMapping = container.isMapping;
     this.isStruct = keyPath.isStruct();
 
-    if (this.isMapping) {
+    if (this.isStruct && this.container.isParent) {
+      // must be a mapping of a struct
+      // we do not currently allow struct of mapping types
+      this.name = `${container.name}.${keyPath.node.memberName}`;
+
+    } else if (this.isMapping) {
       this.name = this.isMsgSender
         ? `${container.name}[msg.sender]`
         : `${container.name}[${keyPath.node.name}]`;
@@ -110,14 +120,29 @@ export default class MappingKey {
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
   }
 
+  addStructProperty(referencingPath: NodePath): MappingKey {
+    this.isParent = true;
+    this.isStruct = true;
+    this.structProperties ??= {};
+    const memberAccPath = referencingPath.findAncestor(p => p.node.nodeType === 'MemberAccess' && !p.isMsgSender());
+    if (!(this.structProperties[memberAccPath.node.memberName] instanceof MappingKey))
+      this.structProperties[memberAccPath.node.memberName] = new MappingKey(this, memberAccPath);
+    this.structProperties[memberAccPath.node.memberName].isChild = true;
+    return this.structProperties[memberAccPath.node.memberName];
+  }
+
   updateProperties(path: NodePath) {
+    if (this.isMapping && this.node.typeDescriptions.typeString.includes('struct ') && !this.isChild) {
+      // in mapping[key].property, the node for .property is actually a parent value, so we need to make sure this isnt already a child of a mappingKey
+      this.addStructProperty(path).updateProperties(path);
+    }
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
     this.isKnown ??= path.node.isKnown;
     this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) this.addModifyingPath(path);
 
-    this.container.updateProperties(path);
+    if (!(this.container instanceof MappingKey)) this.container.updateProperties(path);
   }
 
   updateOwnership(ownerNode: any) {

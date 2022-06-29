@@ -427,6 +427,9 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
+    // we DONT want to add a struct property if we have a mapping of a struct
+    // the mappingKey deals with that
+    if (this.isMapping && this.addMappingKey(referencingPath).structProperties) return this.addMappingKey(referencingPath).addStructProperty(referencingPath);
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');

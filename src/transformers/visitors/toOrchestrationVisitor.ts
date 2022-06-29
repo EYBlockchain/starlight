@@ -871,10 +871,11 @@ const visitor = {
               .replace('.sender', '')
           : indicator.name;
 
-        if (indicator.isMapping) {
+        if (indicator.isMapping && lhs.baseExpression) {
           lhs = lhs.baseExpression;
         } else if (lhs.nodeType === 'MemberAccess') {
           lhs = lhs.expression;
+          if (lhs.baseExpression) lhs = lhs.baseExpression;
         }
 
         // check whether this statement should be init separately in the constructor
@@ -889,8 +890,8 @@ const visitor = {
         // check whether this should be a VariableDeclaration
         const firstEdit =
           (firstInstanceOfNewName && indicator.interactsWithSecret) ||
-          (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole) ||
-          (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole);
+          (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) ||
+          (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole);
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
@@ -915,14 +916,13 @@ const visitor = {
             oldASTId: node.id,
             declarations: [
               buildNode('VariableDeclaration', {
-                name: indicator.isStruct ? lhs.name : name,
+                name: indicator.isStruct && !indicator.isMapping ? lhs.name : name,
                 isAccessed: accessed,
                 isSecret: true,
               }),
             ],
             interactsWithSecret: true,
           });
-
           if (indicator.isStruct) newNode.declarations[0].isStruct = true;
 
           if (accessedBeforeModification || path.isInSubScope()) {
@@ -961,8 +961,10 @@ const visitor = {
           oldASTId: node.id,
         });
         node._newASTPointer = newNode;
-        if (Array.isArray(parent._newASTPointer[path.containerName]) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer))) {
-        parent._newASTPointer.push(newNode);
+        if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
+          parent._newASTPointer.push(newNode);
+        } else if (Array.isArray(parent._newASTPointer[path.containerName])) {
+          parent._newASTPointer[path.containerName].push(newNode);
         } else {
           parent._newASTPointer[path.containerName] = newNode;
         }
@@ -986,7 +988,7 @@ const visitor = {
               .replace('.sender', '')
           : indicator.name;
         // we add a general number statement after each whole state edit
-        if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
+        if (node._newASTPointer.interactsWithSecret)  path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
           buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name }),
               operator: '=',
@@ -1173,8 +1175,8 @@ const visitor = {
         parent._newASTPointer[path.containerName] = newNode;
         return;
       }
-      // const name = getIndexAccessName(node);
-      const newNode = buildNode('MemberAccess', { name: node.expression.name, memberName: node.memberName });
+      const name = node.expression.name || getIndexAccessName(node.expression);
+      const newNode = buildNode('MemberAccess', { name, memberName: node.memberName });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },

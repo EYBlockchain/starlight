@@ -152,6 +152,10 @@ class BoilerplateGenerator {
         this.mappingKeyName = mappingKeyName;
         this.mappingName = this.indicators.name;
         this.name = `${this.mappingName}_${mappingKeyName}`;
+        if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
+          this.structProperties = Object.keys(mappingKeyIndicator.structProperties);
+          this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+        }
         this.generateBoilerplate();
       }
     } else {
