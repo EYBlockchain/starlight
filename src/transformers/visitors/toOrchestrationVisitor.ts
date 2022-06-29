@@ -10,7 +10,7 @@ import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
 import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-import { interactsWithSecretVisitor, parentnewASTPointer } from './common.js';
+import { interactsWithSecretVisitor, parentnewASTPointer, internalFunctionCallVisitor } from './common.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
@@ -295,6 +295,7 @@ const visitor = {
       };
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
+
       let thisIntegrationTestFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
@@ -312,8 +313,7 @@ const visitor = {
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
-        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret
-      ) {
+        scope.modifiesSecretState()) ) {
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
         );

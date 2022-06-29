@@ -1,6 +1,5 @@
 import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
-import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import buildNode from '../../types/orchestration-types.js';
 import { internalFunctionCallVisitor } from './common.js';
 
@@ -50,7 +49,7 @@ const internalCallVisitor = {
                           node.privateStates[ newstateName ] = node.privateStates[stateName];
                           delete(node.privateStates[ stateName ]);
                          }
-                        
+
                          switch (node.nodeType)
                         {
                          case 'InitialisePreimage': {
@@ -264,12 +263,15 @@ FunctionCall: {
       let isCircuit = false;
       state.newStateArray =  args.map(arg => (arg.name));
       let internalFunctionInteractsWithSecret = false;
+      let isInternalFunctionCallValid  = false;
       const newState: any = {};
       oldStateArray = internalFunctionCallVisitor(path, newState)
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
+      isInternalFunctionCallValid  ||= newState.isInternalFunctionCallValid;
+      console.log(internalFunctionInteractsWithSecret);
       state.internalFncName ??= [];
       state.internalFncName.push(node.expression.name);
-     if(internalFunctionInteractsWithSecret === true) {
+     if(isInternalFunctionCallValid  === true) {
        const callingfnDefPath = path.getFunctionDefinition();
        const callingfnDefIndicators = callingfnDefPath.scope.indicators;
        const functionReferncedNode = scope.getReferencedPath(node.expression);
@@ -306,10 +308,12 @@ FunctionCall: {
             }
           }
         });
+
         const newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,
           internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
         });
+
         node._newASTPointer = newNode ;
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
           parent._newASTPointer[path.containerName].push(newNode);
@@ -317,10 +321,15 @@ FunctionCall: {
         parent._newASTPointer[path.containerName] = newNode;
         }
       }
+
      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
      state.callingFncName ??= [];
      state.callingFncName.push(fnDefNode.node.name);
+
+
     }
+
+
 
   },
 },

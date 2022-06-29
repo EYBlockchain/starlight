@@ -8,7 +8,7 @@ import NodePath from '../../traverse/NodePath.js';
 import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-import { StateVariableIndicator, FunctionDefinitionIndicator} from '../../traverse/Indicator.js';
+import { StateVariableIndicator} from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
@@ -640,7 +640,7 @@ const visitor = {
       parent._newASTPointer.push(newNode);
     },
   },
-  
+
   Literal: {
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;
