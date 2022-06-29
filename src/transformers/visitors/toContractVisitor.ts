@@ -738,7 +738,6 @@ export default {
        } else if(!state.internalFunctionInteractsWithSecret){
          state.internalFncName ??= [];
          state.internalFncName.push(node.expression.name);
-         console.log(node);
          const fnDefNode = path.getAncestorOfType('FunctionDefinition');
          state.callingFncName ??= [];
          state.callingFncName.push(fnDefNode.node.name);

@@ -1,7 +1,4 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
-
-// import logger from '../../utils/logger.js';
-import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
 import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { VariableBinding } from '../../traverse/Binding.js';
@@ -10,7 +7,7 @@ import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
 import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-import { interactsWithSecretVisitor, parentnewASTPointer, internalFunctionCallVisitor } from './common.js';
+import { interactsWithSecretVisitor, parentnewASTPointer } from './common.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
@@ -261,7 +258,7 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
-      const initialiseOrchestrationBoilerplateNodes = (fnIndicator) => {
+      const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
         const newNodes: any = {};
         const contractName = `${parent.name}Shield`;
         newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
@@ -277,7 +274,7 @@ const visitor = {
           });
           newNodes.calculateNullifierNode = buildNode('CalculateNullifier');
         }
-        if (fnIndicator.newCommitmentsRequired)
+        if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
           newNodes.generateProofNode = buildNode('GenerateProof', {
           circuitName: node.fileName,
@@ -313,7 +310,7 @@ const visitor = {
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
-        scope.modifiesSecretState()) ) {
+        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret ) {
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
         );

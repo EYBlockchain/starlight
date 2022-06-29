@@ -18,9 +18,8 @@ const internalCallVisitor = {
       let sendTransactionNode : any;
       let newdecrementedSecretStates = [];
       node._newASTPointer.forEach(file => {
-       state.internalFncName?.forEach( name => {
+       state.internalFncName?.forEach( (name, index) => {
          if(file.fileName === name && file.nodeType === 'File') {
-           let index = state.internalFncName.indexOf(name);
            if(state.circuitImport[index]==='true') {
              file.nodes.forEach(childNode => {
                if(childNode.nodeType === 'FunctionDefinition'){
@@ -202,16 +201,14 @@ const internalCallVisitor = {
                      if(node.nodeType === 'GenerateProof'){
                        node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
                        node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
-                      }
+                     }
 
-                      if(node.nodeType === 'SendTransaction')
+                    if(node.nodeType === 'SendTransaction')
                        node.privateStates = Object.assign(node.privateStates,sendTransactionNode.privateStates)
 
-                      if(node.nodeType === 'WritePreimage')
+                    if(node.nodeType === 'WritePreimage')
                        node.privateStates = Object.assign(node.privateStates,writePreimageNode.privateStates)
-
                     })
-
                   }
                 })
               }
@@ -268,7 +265,6 @@ FunctionCall: {
       oldStateArray = internalFunctionCallVisitor(path, newState)
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
       isInternalFunctionCallValid  ||= newState.isInternalFunctionCallValid;
-      console.log(internalFunctionInteractsWithSecret);
       state.internalFncName ??= [];
       state.internalFncName.push(node.expression.name);
      if(isInternalFunctionCallValid  === true) {
