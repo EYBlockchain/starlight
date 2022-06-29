@@ -9,6 +9,7 @@ import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator, FunctionDefinitionIndicator} from '../../traverse/Indicator.js';
+import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -52,45 +53,6 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 let interactsWithSecret = false; // Added globaly as two objects are accesing it
 let oldStateArray : string[];
 let circuitImport = [];
-// to match the parameters and if they don't match, we throw an error
-const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
-  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
-    thisState.interactsWithSecret = true;
-};
-
-const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
- const { node, scope } = thisPath;
-  const args = node.arguments;
-  let parametercheck = true ;
-  let isSecretArray : string[];
-  for (const arg of args) {
-    if (arg.nodeType !== 'Identifier') continue;
-  isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
-}
-if(node.expression.nodeType === 'Identifier') {
- const functionReferncedNode = scope.getReferencedNode(node.expression);
- const params = functionReferncedNode.parameters.parameters;
- oldStateArray = params.map(param => (param.name) );
- for (const [index, param] of params.entries()) {
-   if(isSecretArray[index] !== param.isSecret)
-   parametercheck = false;
- }
- const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
- if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
- thisState.internalFunctionInteractsWithSecret = true;
-  }
-  if(!fnIndicator.internalFunctionInteractsWithSecret){
-      if(params.some(node => node.isSecret))
-      {
-      thisState.internalFunctionInteractsWithSecret = true; }
-  }
-}
-};
-
-
-
-
-
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.zok` AST
@@ -310,11 +272,11 @@ const visitor = {
        { value: node.expression.value });
        node._newASTPointer = newNode;
        if (Array.isArray(parent._newASTPointer)) {
-         parent._newASTPointer.push(newNode);
-       } else {
-         parent._newASTPointer[path.containerName].push(newNode);
-       }
-     },
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName].push(newNode);
+      }
+    },
 
    },
 
@@ -413,11 +375,7 @@ const visitor = {
       const { operator, prefix, subExpression } = node;
       const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     }
   },
 
@@ -682,16 +640,11 @@ const visitor = {
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
       name = path.scope.getIdentifierMappingKeyName(node);
 
+      const newNode = buildNode(
+        node.nodeType,
+        { name, });
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(buildNode('Identifier', {
-          name,
-        }));
-      } else {
-        parent._newASTPointer[path.containerName] = buildNode('Identifier', {
-          name,
-        });
-      }
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -810,7 +763,7 @@ const visitor = {
         state.newStateArray =  args.map(arg => (arg.name));
         let internalFunctionInteractsWithSecret = false;
         const newState: any = {};
-        internalFunctionCallVisitor(path, newState)
+        oldStateArray = internalFunctionCallVisitor(path, newState)
         internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
         state.internalFncName ??= [];
         state.internalFncName.push(node.expression.name);
@@ -833,18 +786,20 @@ const visitor = {
                  isCircuit = false;
                 }
               }
-             else if(callingfnDefIndicators[node.id] && callingfnDefIndicators[node.id].isModified && internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified ){
-               circuitImport.push('false');
-               isCircuit = false;
-              }
-              if(callingfnDefIndicators[node.id] && !callingfnDefIndicators[node.id].isModified && internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-               circuitImport.push('true');
-               isCircuit = true;
-              }
-             if(!callingfnDefIndicators[node.id] && internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-                circuitImport.push('true');
+              else if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
+                if(callingfnDefIndicators[node.id]) {
+                  if(callingfnDefIndicators[node.id].isModified)
+                    isCircuit = false;
+                   else
+                    isCircuit = true;
+                }
+              else
                 isCircuit = true;
-              }
+            if(isCircuit)
+              circuitImport.push('true');
+            else
+              circuitImport.push('false');
+            }
             }
           });
           const newNode = buildNode('InternalFunctionCall', {
@@ -859,13 +814,7 @@ const visitor = {
         circuitImport: isCircuit,
          });
          node._newASTPointer = newNode ;
-         if (Array.isArray(parent._newASTPointer[path.containerName])) {
-           parent._newASTPointer[path.containerName].push(newNode);
-          } else {
-            parent._newASTPointer[path.containerName] = newNode;
-          }
-
-
+         parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
           const fnDefNode = path.getAncestorOfType('FunctionDefinition');
           state.callingFncName ??= [];
           state.callingFncName.push(fnDefNode.node.name);
