@@ -109,7 +109,7 @@ export const generateProofBoilerplate = (node: any) => {
   for ([stateName, stateNode] of Object.entries(node.privateStates)) {
     const parameters = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
-    const msgSenderParamAndMappingKey = stateNode.isMapping && node.parameters.includes('msgSender') && stateNode.stateVarId[1] === 'msg';
+    const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
     const stateVarIdLines =
       stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
