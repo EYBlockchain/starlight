@@ -1195,11 +1195,7 @@ const visitor = {
   IfStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, {
-        condition: {},
-        trueBody: [],
-        falseBody: []
-      });
+      const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -1212,6 +1208,15 @@ const visitor = {
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
+
+    exit(path: NodePath) {
+      const { node } = path;
+      const newNode = node._newASTPointer;
+      if (newNode.body.statements.some(n => n.interactsWithSecret)) {
+        newNode.initializationExpression.interactsWithSecret = true;
+        newNode.loopExpression.interactsWithSecret = true;
+      }
+    }
   },
 
   FunctionCall: {

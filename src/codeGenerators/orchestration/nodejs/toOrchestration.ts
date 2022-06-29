@@ -145,26 +145,22 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
     case 'IfStatement': {
         return `if (${codeGenerator(node.condition)}) {
-          ${node.trueBody.flatMap(codeGenerator).join('\n')}
+          ${node.trueBody.statements.flatMap(codeGenerator).join('\n')}
         } else {
-          ${node.falseBody.flatMap(codeGenerator).join('\n')}
+          ${node.falseBody.statements.flatMap(codeGenerator).join('\n')}
         }`
       }
 
       case 'ForStatement': {
-        if(node.body.statements.statements.interactsWithSecret) {
-          node.initializationExpression.interactsWithSecret = true;
-          node.loopExpression.interactsWithSecret = true;
-        }
-          let initializationExpression = `${codeGenerator(node.initializationExpression)}`;
-          initializationExpression=initializationExpression.trim();
-          let condition = `${codeGenerator(node.condition)};`
-          let loopExpression = `${codeGenerator(node.loopExpression)}`;
-          loopExpression=loopExpression.trim().slice(0,-1);
-          return `for(${initializationExpression} ${condition} ${loopExpression}) {
-          ${codeGenerator(node.body)}
+        let initializationExpression = `${codeGenerator(node.initializationExpression)}`;
+        initializationExpression=initializationExpression.trim();
+        let condition = `${codeGenerator(node.condition)};`
+        let loopExpression = `${codeGenerator(node.loopExpression)}`;
+        loopExpression=loopExpression.trim().slice(0,-1);
+        return `for(${initializationExpression} ${condition} ${loopExpression}) {
+        ${codeGenerator(node.body)}
         }`
-      }  
+      }
 
     case 'UnaryOperation':
       return `${codeGenerator(node.subExpression)} ${node.operator}`;

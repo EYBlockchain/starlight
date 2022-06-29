@@ -177,7 +177,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       }
     }
     case 'IfStatement': {
-      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
+      const { condition = {} , trueBody= {statements: []} , falseBody= {statements: []} } = fields;
       return {
         nodeType,
         condition,
