@@ -67,7 +67,7 @@ class FunctionBoilerplateGenerator {
       `uint256[]`,
     ])
 
-    let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ; \n \n \t \t \t if (sig == msg.sig)`])])
+    let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])])
 
     return [
       `
@@ -92,7 +92,7 @@ class FunctionBoilerplateGenerator {
         inputs.newCommitments = newCommitments;`] : []),
       `
         ${msgSigCheck.join('\n')}
-        
+
         verify(proof, uint(FunctionNames.${functionName}), inputs);`,
     ];
 
