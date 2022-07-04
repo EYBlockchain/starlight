@@ -180,7 +180,8 @@ export function getInputCommitments(publicKey, value, commitments) {
 	// increment would go here but has been filtered out
 
 	// Calculate nullifier(s):
-const oldCommitment_stateVarId = stateVarId;
+
+   const oldCommitment_stateVarId = stateVarId[0];
 
 	let oldCommitment_0_nullifier = generalise(
 		utils.shaHash(oldCommitment_stateVarId, secretKey.hex(32), oldCommitment_0_prevSalt.hex(32))
@@ -211,14 +212,12 @@ const oldCommitment_stateVarId = stateVarId;
 	);
 
 	newCommitment = generalise(newCommitment.hex(32, 31)); // truncate
-  const stateVarID = parseInt(oldCommitment_stateVarId,16); // stateVarId to pass in circuits
-
-	// Call Zokrates to generate the proof:
-
-	const allInputs = [
+  const stateVarID ;
+  const fromId ;
+  const circuitName ;
+  let allInputs = [
 		secretKey.limbs(32, 8),
 		secretKey.limbs(32, 8),
-    stateVarID,
 		oldCommitment_0_nullifier.integer,
 		oldCommitment_1_nullifier.integer,
 		oldCommitment_0_prev.integer,
@@ -233,9 +232,31 @@ const oldCommitment_stateVarId = stateVarId;
 		publicKey.limbs(32, 8),
 		newCommitment_newSalt.limbs(32, 8),
 		newCommitment.integer,
-	].flat(Infinity);
+	];
+  if(!stateVarID[1]){
+     stateVarID = parseInt(oldCommitment_stateVarId,16);
+     allInputs.push(stateVarID);
+     allInputs = allInputs.flat(Infinity);
+     circuitName = 'joinCommitments';
+  }
 
-	const res = await generateProof("joinCommitments", allInputs);
+  else {
+     stateVarId =  parseInt(oldCommitment_stateVarId,16);
+     console.log(stateVarId);
+     fromId = stateVarId[1];
+     allInputs.push(stateVarID);
+     allInputs.push(fromId);
+     allInputs = allInputs.flat(Infinity);
+     circuitName = 'joinMappingCommitments';
+
+  }
+
+	// Call Zokrates to generate the proof:
+
+  console.log(allInputs);
+
+
+	const res = await generateProof(`'${circuitName}'`, allInputs);
 	const proof = generalise(Object.values(res.proof).flat(Infinity))
 		.map((coeff) => coeff.integer)
 		.flat(Infinity);

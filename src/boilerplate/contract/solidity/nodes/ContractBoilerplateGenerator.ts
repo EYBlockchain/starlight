@@ -56,6 +56,7 @@ class ContractBoilerplateGenerator {
         'registerZKPPublicKey', // TODO: this is only needed if conversion between zkp PK's and Eth PK's is required.
         'verify',
         'joinCommitmentsFunction',
+        'joinCommitmentsCircuitName',
       ];
     },
 
@@ -69,9 +70,15 @@ class ContractBoilerplateGenerator {
     stateVariableDeclarations() {
       const { scope } = this;
       let isjoinCommitmentsFunction : string[]=[];
+      let joinCommitmentsCircuitName : string[]=[];;
       for(const [ id , bindings ] of Object.entries(scope.bindings)){
-       if((bindings instanceof VariableBinding) && bindings.isUnknown )
-          isjoinCommitmentsFunction?.push('true');
+       if((bindings instanceof VariableBinding) && bindings.isUnknown ){
+           isjoinCommitmentsFunction?.push('true');
+           if(bindings.isMapping)
+            joinCommitmentsCircuitName?.push('joinMappingCommitments');
+          joinCommitmentsCircuitName?.push('joinCommitments');
+       }
+
       }
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
@@ -81,7 +88,7 @@ class ContractBoilerplateGenerator {
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
       const functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
-      if(isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments');
+      if(isjoinCommitmentsFunction.includes('true')) [...new Set([...functionNames, ...joinCommitmentsCircuitName])]
       return {
         functionNames,
         nullifiersRequired,
