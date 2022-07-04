@@ -67,8 +67,8 @@ class FunctionBoilerplateGenerator {
       `uint256[]`,
     ])
 
-    switch(isConstructor) {
-    case true :
+    let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ; \n \n \t \t \t if (sig == msg.sig)`])])
+
     return [
       `
         Inputs memory inputs;`,
@@ -91,41 +91,11 @@ class FunctionBoilerplateGenerator {
       ...(newCommitments ? [`
         inputs.newCommitments = newCommitments;`] : []),
       `
+        ${msgSigCheck.join('\n')}
+        
         verify(proof, uint(FunctionNames.${functionName}), inputs);`,
     ];
 
-  default :
-  return [
-     `
-      bytes4 sig = bytes4(keccak256("${functionName}(${parameter})"));`,
-
-    `
-      Inputs memory inputs;`,
-
-    `
-      inputs.customInputs = new uint[](${customInputs?.length});
-      ${customInputs?.map((name: string, i: number) => {
-        if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
-        return `inputs.customInputs[${i}] = ${name};`;
-      }).join('\n \n \t\t\t\t\t')}`,
-
-    ...(newNullifiers ? [`
-      inputs.newNullifiers = newNullifiers;`] : []),
-
-    ...(checkNullifiers ? [`
-      inputs.checkNullifiers = checkNullifiers;`] : []),
-
-    ...(commitmentRoot ? [`
-      inputs.commitmentRoot = commitmentRoot;`] : []),
-
-    ...(newCommitments ? [`
-      inputs.newCommitments = newCommitments;`] : []),
-    `
-      if (sig == msg.sig)`,
-    `
-      verify(proof, uint(FunctionNames.${functionName}), inputs);`,
-  ];
-  }
     },
   };
 }
