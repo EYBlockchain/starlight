@@ -221,7 +221,7 @@ export default {
 
       node._newASTPointer.forEach(node => {
         if(node.nodeType === 'FunctionDefinition' && (node.kind ! =='fallback' || node.kind ! == 'receive')){
-          state.internalFncName?.forEach( name => {
+          state.internalFncName?.forEach( (name, index) => {
             if(node.name === name) {
              state.postStatements ??= [];
              state.postStatements = cloneDeep(node.body.postStatements);
