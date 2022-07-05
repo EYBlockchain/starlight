@@ -82,7 +82,7 @@ export default class MappingKey {
     this.referencedKeyId = keyPath.node.referencedDeclaration;
     this.referencedKeyName = keyPath.isMsg()
       ? 'msg'
-      : keyPath.isStruct ? keyPath.node.memberName : keyPath.getReferencedNode().name;
+      : keyPath.isStruct ? keyPath.node.memberName : keyPath.scope.getMappingKeyName(keyPath) || keyPath.node.name;
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
       : keyPath.getReferencedNode()?.nodeType;

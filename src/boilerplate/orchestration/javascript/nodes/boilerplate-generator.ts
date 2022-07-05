@@ -12,8 +12,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         privateStateName,
         stateVarId: id,
-        mappingKey: indicator.referencedKeyName || null,
-        mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
       };
     }
@@ -32,8 +32,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
-        mappingKey: indicator.referencedKeyName || null,
-        mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
         reinitialisedOnly,
         accessedOnly,
@@ -57,8 +57,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
-        mappingKey: indicator.referencedKeyName || null,
-        mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
         burnedOnly,
         isOwned: indicator.isOwned,
