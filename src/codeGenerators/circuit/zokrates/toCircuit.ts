@@ -131,9 +131,6 @@ if(returnStatement.length === 0){
     }
 
     case 'ExpressionStatement': {
-      if(!node.expression.circuitImport){
-      return codeGenerator(node.expression);
-      }
       if (node.isVarDec) {
         return `
         field ${codeGenerator(node.expression)}`;

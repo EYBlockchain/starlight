@@ -107,8 +107,8 @@ class FunctionBoilerplateGenerator {
 
       const indicators = this.customFunction.getIndicators.bind(this)();
 
-      // special check for msgSender param. If found, prepend a msgSender uint256 param to the contact's function.
-      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' });
+      // special check for msgSender param. If found, prepend a msgSender address param to the contact's function.
+      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address', dummy: true });
 
       if(path.node.returnParameters.parameters.length === 0) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });

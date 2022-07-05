@@ -83,7 +83,8 @@ export const sendTransactionBoilerplate = (node: any) => {
       case false:
       default:
         // whole
-        output[1].push(`${privateStateName}_root.integer`);
+        if (!stateNode.reinitialisedOnly)
+          output[1].push(`${privateStateName}_root.integer`);
         if (stateNode.accessedOnly) {
           output[3].push(`${privateStateName}_nullifier.integer`);
         } else {

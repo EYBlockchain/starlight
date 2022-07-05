@@ -483,7 +483,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (this.binding.isWhole && this.isModified && this.isSecret) {
       this.modifyingPaths.forEach(modPath => {
         // if not included, we add it
-        if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id)) this.addNullifyingPath(modPath);
+        if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id) && !modPath.node.reinitialisable) this.addNullifyingPath(modPath);
       });
     }
     this.isWhole ??= this.binding.isWhole;

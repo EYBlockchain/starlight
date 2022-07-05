@@ -503,6 +503,9 @@ const visitor = {
               name
             ] = buildPrivateStateNode('SendTransaction', {
               indicator: stateVarIndicator,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
               burnedOnly:
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
