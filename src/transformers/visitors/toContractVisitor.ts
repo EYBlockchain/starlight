@@ -220,8 +220,8 @@ export default {
       }
 
       node._newASTPointer.forEach(node => {
-        if(node.nodeType === 'FunctionDefinition'){
-          state.internalFncName?.forEach((name, index) => {
+        if(node.nodeType === 'FunctionDefinition' && (node.kind ! =='fallback' || node.kind ! == 'receive')){
+          state.internalFncName?.forEach( name => {
             if(node.name === name) {
              state.postStatements ??= [];
              state.postStatements = cloneDeep(node.body.postStatements);
@@ -259,11 +259,19 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
-      state.functionName = path.getUniqueFunctionName()
+      if(node.kind === 'fallback' || node.kind === 'receive')
+      {
+        node.fileName = node.kind;
+        state.functionName = node.kind;
+      }
+      else
+      state.functionName = path.getUniqueFunctionName();
       const newNode = buildNode('FunctionDefinition', {
         name: node.fileName || state.functionName,
         id: node.id,
-        visibility: isConstructor ? '' : 'public',
+        kind: node.kind,
+        stateMutability: node.stateMutability === 'payable'? node.stateMutability : '',
+        visibility: node.kind ==='function' ? 'public' : node.kind === 'constructor'? '': 'external',
         isConstructor,
       });
 
