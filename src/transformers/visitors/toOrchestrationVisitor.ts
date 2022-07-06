@@ -620,6 +620,8 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       let returnName : string[] = [];
+      if(!!path.getAncestorOfType('EventDefinition')) return;
+      if(!!path.getAncestorOfType('EmitStatement')) return;
        if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
@@ -896,6 +898,8 @@ const visitor = {
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
+      if(!!path.getAncestorOfType('EmitStatement')) return;
       if (node.stateVariable && !node.value) {
         // then the node represents assignment of a state variable - we've handled it.
         node._newASTPointer = parent._newASTPointer;
@@ -979,6 +983,8 @@ const visitor = {
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
+      if(!!path.getAncestorOfType('EmitStatement')) return;
       const newNode = buildNode(node.nodeType, { name: node.name });
 
       parent._newASTPointer[path.containerName] = newNode;

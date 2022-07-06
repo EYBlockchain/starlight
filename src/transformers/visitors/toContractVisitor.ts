@@ -540,6 +540,28 @@ export default {
     },
   },
 
+  EventDefinition: {
+    enter(path: NodePath , state:any) {
+        const { node, parent } = path;
+        state.functionName = path.getUniqueFunctionName()
+        const newNode = buildNode('EventDefinition', {
+          name: node.fileName || state.functionName,
+          id: node.id,
+        });   
+        node._newASTPointer = newNode;
+        parent._newASTPointer.push(newNode);
+    },
+},
+
+EmitStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('EmitStatement');
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+  },
+},
+
   VariableDeclaration: {
     enter(path: NodePath, state : any) {
       const { node, parent } = path;
@@ -557,7 +579,7 @@ export default {
         state.variableName.push(node.name);
       } else if (path.isLocalStackVariableDeclaration()) {
         declarationType = 'localStack';
-      } else if (path.isFunctionParameterDeclaration()) {
+      } else if (path.isFunctionParameterDeclaration() || path.isEventParameterDeclaration()) {
         declarationType = 'parameter';
       }
 
@@ -694,11 +716,18 @@ export default {
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;
       }
+      // Like External function calls ,it's easiest (from the pov of writing this transpiler) if Event calls appear at the very start or very end of a function. 
+      // TODO: need a warning message to this effect ^^^
+      if (parent.nodeType === 'EmitStatement') {
+      newNode = buildNode('FunctionCall');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      return;
+    }
 
       if (path.isExternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
         // TODO: need a warning message to this effect ^^^
-
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
