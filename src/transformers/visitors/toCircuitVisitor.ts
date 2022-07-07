@@ -178,6 +178,18 @@ const visitor = {
       }
     },
   },
+  
+  EventDefinition: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
+  EmitStatement: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
 
   ParameterList: {
     enter(path: NodePath, state: any) {
