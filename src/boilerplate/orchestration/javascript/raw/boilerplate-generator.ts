@@ -132,8 +132,7 @@ class BoilerplateGenerator {
             \n let ${stateName}_witness_0 ;
             \n let ${stateName}_witness_1 ;
 
-                        while( commitmentFlag === false) {
-                console.log('Existing Commitments are not appropriate and we need to call Join Circuit');
+                      while( commitmentFlag === false) {
                 \n  ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
                 \n  ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
 

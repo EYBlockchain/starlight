@@ -156,6 +156,8 @@ export function getInputCommitments(publicKey, value, commitments) {
   return null;
 }
   export default async function joinCommitments(contractName, statename, secretKey, publicKey, stateVarId, commitments, commitmentsID, witnesses, instance){
+
+  logger.warn('Existing Commitments are not appropriate and we need to call Join Commitment Circuit. It will generate proof to join commitments, this will require an on-chain verification');  
   const oldCommitment_0 = commitmentsID[0];
 
 	const oldCommitment_1 = commitmentsID[1];
@@ -193,7 +195,7 @@ export function getInputCommitments(publicKey, value, commitments) {
          )
        ).hex(32);
      }
-   
+
 
 
 	let oldCommitment_0_nullifier = generalise(
