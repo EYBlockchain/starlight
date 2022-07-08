@@ -2,62 +2,20 @@
 
 import fs from 'fs';
 import pathjs from 'path';
-import NodePath from '../traverse/NodePath.js';
 import logger from '../utils/logger.js';
-import { traversePathsFast } from '../traverse/traverse.js';
-import explode from './visitors/explode.js';
 import visitor from './visitors/toCircuitVisitor.js';
 import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.js';
-
-/**
- * Inspired by the Transformer
- * https://github.com/jamiebuilds/the-super-tiny-compiler
- */
-
-function transformation1(oldAST: any) {
-  const newAST = {
-    nodeType: 'Folder',
-    files: [],
-  };
-
-  const state = {
-    stopTraversal: false,
-    skipSubNodes: false,
-  };
-
-  const dummyParent = {
-    ast: oldAST,
-  };
-
-  const path = new NodePath({
-    parentPath: null,
-    parent: dummyParent,
-    key: 'ast', // since parent.ast = node
-    container: oldAST,
-    index: null,
-    node: oldAST,
-  }); // This won't actually get initialised with the info we're providing if the `node` already exists in the NodePath cache. That's ok, as long as all transformers use the same dummyParent layout.
-
-  // Delete (reset) the `._newASTPointer` subobject of each node (which collectively represent the new AST). It's important to do this if we want to start transforming to a new AST.
-  traversePathsFast(path, (p: typeof path) => delete p.node._newASTPointer);
-
-  path.parent._newASTPointer = newAST;
-  path.node._newASTPointer = newAST.files;
-
-  // We'll start by calling the traverser function with our ast and a visitor.
-  // The newAST will be mutated through this traversal process.
-  path.traverse(explode(visitor), state);
-
-  // At the end of our transformer function we'll return the new ast that we
-  // just created.
-  return newAST;
-}
+import { transformation1 } from './visitors/common.js';
 
 // A transformer function which will accept an ast.
 export default function toCircuit(ast: any, options: any) {
   // transpile to a circuit AST:
+    const state = {
+    stopTraversal: false,
+    skipSubNodes: false,
+  };
   logger.verbose('Transforming the .zol AST to a contract AST...');
-  const newAST = transformation1(ast);
+  const newAST = transformation1('circuit' ,ast , state , visitor);
   const newASTFilePath = pathjs.join(
     options.circuitsDirPath,
     `${options.inputFileName}_ast.json`,

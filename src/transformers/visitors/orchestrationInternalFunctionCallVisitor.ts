@@ -2,40 +2,11 @@ import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import buildNode from '../../types/orchestration-types.js';
+import { internalFunctionCallVisitor } from './common.js';
 
 function merge(array1, array2, index=0) {
 return array1.slice(0, index).concat(array2, array1.slice(index));
 }
-
-const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
-    const { node, scope } = thisPath;
-  const args = node.arguments;
-  let parametercheck = true ;
-  let isSecretArray : string[];
-  for (const arg of args) {
-    if (arg.nodeType !== 'Identifier') continue;
-  isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
-}
-if(node.expression.nodeType === 'Identifier') {
- const functionReferncedNode = scope.getReferencedNode(node.expression);
- const params = functionReferncedNode.parameters.parameters;
- oldStateArray = params.map(param =>(param.name));
- for (const [index, param] of params.entries()) {
-   if(isSecretArray[index] !== param.isSecret)
-   parametercheck = false;
- }
- const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
- if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
- thisState.internalFunctionInteractsWithSecret = true;
-  }
-  if(!fnIndicator.internalFunctionInteractsWithSecret){
-      if(params.some(node => node.isSecret))
-      {
-      thisState.internalFunctionInteractsWithSecret = true; }
-  }
-
-}
-};
 
 let oldStateArray : string[];
 
@@ -68,56 +39,43 @@ const internalCallVisitor = {
                 }
                 state.newPreStatementList = cloneDeep(childNode.body.preStatements);
                 state.newPreStatementList.forEach(node => {
-                 if(node.nodeType === 'InitialisePreimage'){
-                     let stateName: string;
-                     let stateNode: any;
-                     let newstateName: string;
-                     for( [stateName, stateNode] of Object.entries(node.privateStates)){
-                       for(const [index, oldStateName] of  oldStateArray.entries()) {
-                         newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
-                         if(newstateName != stateName ){
-                           node.privateStates[ newstateName ] = node.privateStates[stateName];
-                           delete(node.privateStates[ stateName ]);
-                          }
-                         stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
-                         if(stateNode.mappingKey === oldStateName)
-                           stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
-                         if(stateNode.stateVarId[1] === oldStateName)
-                           stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
-                        }
-                      }
-                    }
-                  if(node.nodeType === 'ReadPreimage'){
-                     let stateName: string;
-                     let stateNode: any;
-                     let newstateName: string;
-                     for( [stateName, stateNode] of Object.entries(node.privateStates)){
-                       for(const [index, oldStateName] of  oldStateArray.entries()) {
-                         newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
-                          if(newstateName != stateName ){
-                            node.privateStates[ newstateName ] = node.privateStates[stateName];
-                            delete(node.privateStates[ stateName ]);
-                          }
-                          stateNode.increment = stateNode.increment.replace(oldStateName+'.', state.newStateArray[index]+'.')
+                    if(['InitialisePreimage','ReadPreimage','MembershipWitness'].includes(node.nodeType)) {
+                    let stateName: string;
+                    let stateNode: any;
+                    let newstateName: string;
+                    for( [stateName, stateNode] of Object.entries(node.privateStates)){
+                      for(const [index, oldStateName] of  oldStateArray.entries()) {
+                        newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
+                        if(newstateName != stateName ){
+                          node.privateStates[ newstateName ] = node.privateStates[stateName];
+                          delete(node.privateStates[ stateName ]);
+                         }
+                        
+                         switch (node.nodeType)
+                        {
+                         case 'InitialisePreimage': {
+                          stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
                           if(stateNode.mappingKey === oldStateName)
-                           stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
+                            stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
                           if(stateNode.stateVarId[1] === oldStateName)
-                           stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
+                            stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
+                          break;
+                          }
+                          case 'ReadPreimage': {
+                            stateNode.increment = stateNode.increment.replace(oldStateName+'.', state.newStateArray[index]+'.')
+                            if(stateNode.mappingKey === oldStateName)
+                             stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
+                            if(stateNode.stateVarId[1] === oldStateName)
+                             stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
+                            break;
+                            }
+                            case 'MembershipWitness': {
+                              stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
+                              break;
+                              }
+                              default :
+                              break;
                         }
-                      }
-                    }
-                 if(node.nodeType === 'MembershipWitness'){
-                   let stateName: string;
-                   let stateNode: any;
-                   let newstateName: string;
-                   for( [stateName, stateNode] of Object.entries(node.privateStates)){
-                     for(const [index, oldStateName] of  oldStateArray.entries()) {
-                       newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
-                       if(newstateName != stateName ){
-                         node.privateStates[ newstateName ] = node.privateStates[stateName];
-                         delete(node.privateStates[ stateName ]);
-                        }
-                       stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
                       }
                     }
                   }
@@ -307,7 +265,7 @@ FunctionCall: {
       state.newStateArray =  args.map(arg => (arg.name));
       let internalFunctionInteractsWithSecret = false;
       const newState: any = {};
-      internalFunctionCallVisitor(path, newState)
+      oldStateArray = internalFunctionCallVisitor(path, newState)
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
       state.internalFncName ??= [];
       state.internalFncName.push(node.expression.name);
@@ -331,28 +289,20 @@ FunctionCall: {
                 isCircuit = true;
               }
             }
-           if(callingfnDefIndicators[node.id]){
-             if(callingfnDefIndicators[node.id].isModified){
-               if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified) {
-                 state.circuitImport ??= [];
-                 state.circuitImport.push('false');
+           if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
+             if(callingfnDefIndicators[node.id]) {
+             if(callingfnDefIndicators[node.id].isModified)
                  isCircuit = false;
-                }
-              }
-             if(!callingfnDefIndicators[node.id].isModified) {
-               if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-                 state.circuitImport ??= [];
-                 state.circuitImport.push('true');
+             else
                  isCircuit = true;
-                }
-              }
             }
-            if(!callingfnDefIndicators[node.id] ){
-              if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified) {
-                state.circuitImport ??= [];
-                state.circuitImport.push('true');
+            else
                 isCircuit = true;
-              }
+              state.circuitImport ??= [];
+              if(isCircuit)
+              state.circuitImport.push('true');
+              else
+              state.circuitImport.push('false');
             }
           }
         });
