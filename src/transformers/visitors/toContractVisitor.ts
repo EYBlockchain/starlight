@@ -220,7 +220,8 @@ export default {
       }
 
       node._newASTPointer.forEach(node => {
-        if(node.nodeType === 'FunctionDefinition' && (node.kind ! =='fallback' || node.kind ! == 'receive')){
+
+        if(node.nodeType === 'FunctionDefinition' && node.kind === 'function'){
           state.internalFncName?.forEach( (name, index) => {
             if(node.name === name) {
              state.postStatements ??= [];
@@ -249,7 +250,6 @@ export default {
               })
             }
           });
-
         }
       })
     },

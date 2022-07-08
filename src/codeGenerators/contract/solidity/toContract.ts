@@ -172,8 +172,10 @@ function codeGenerator(node: any) {
 
     }
     case 'InternalFunctionCall' :{
-      if(node.parameters){
+      if(node.parameters ){
+        if(node.internalFunctionInteractsWithSecret)
          return `\t \t \t \t ${node.name} (${node.parameters});`
+        return  `\t \t \t \t ${node.name} (${node.parameters.map(codeGenerator)});`
       } else {
          return `\t \t \t \t${node.name} (${node.arguments.name});`
       }
