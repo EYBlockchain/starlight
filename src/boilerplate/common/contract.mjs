@@ -181,7 +181,20 @@ export function getInputCommitments(publicKey, value, commitments) {
 
 	// Calculate nullifier(s):
 
-   const oldCommitment_stateVarId = stateVarId[0];
+   let oldCommitment_stateVarId = stateVarId[0];
+   if(stateVarId.length > 1){
+       oldCommitment_stateVarId =  generalise(
+         utils.mimcHash(
+           [
+             generalise(stateVarId[0]).bigInt,
+             generalise(stateVarId[1]).bigInt,
+           ],
+           "ALT_BN_254"
+         )
+       ).hex(32);
+     }
+   
+
 
 	let oldCommitment_0_nullifier = generalise(
 		utils.shaHash(oldCommitment_stateVarId, secretKey.hex(32), oldCommitment_0_prevSalt.hex(32))
@@ -212,68 +225,60 @@ export function getInputCommitments(publicKey, value, commitments) {
 	);
 
 	newCommitment = generalise(newCommitment.hex(32, 31)); // truncate
-  const stateVarID ;
-  const fromId ;
-  const circuitName ;
-  let allInputs = [
-		secretKey.limbs(32, 8),
-		secretKey.limbs(32, 8),
-		oldCommitment_0_nullifier.integer,
-		oldCommitment_1_nullifier.integer,
-		oldCommitment_0_prev.integer,
-		oldCommitment_0_prevSalt.limbs(32, 8),
-		oldCommitment_1_prev.integer,
-		oldCommitment_1_prevSalt.limbs(32, 8),
-		oldCommitment_root.integer,
-		oldCommitment_0_index.integer,
-		oldCommitment_0_path.integer,
-		oldCommitment_1_index.integer,
-		oldCommitment_1_path.integer,
-		publicKey.limbs(32, 8),
-		newCommitment_newSalt.limbs(32, 8),
-		newCommitment.integer,
-	];
-  if(!stateVarID[1]){
-     stateVarID = parseInt(oldCommitment_stateVarId,16);
-     allInputs.push(stateVarID);
-     allInputs = allInputs.flat(Infinity);
-     circuitName = 'joinCommitments';
+
+  let stateVarID = parseInt(oldCommitment_stateVarId,16);
+  let  fromID = 0;
+  let isMapping=0;
+  if(stateVarId.length > 1 ){
+    stateVarID  = stateVarId[0];
+    fromID = stateVarId[1].integer;;
+     isMapping = 1;
   }
 
-  else {
-     stateVarId =  parseInt(oldCommitment_stateVarId,16);
-     console.log(stateVarId);
-     fromId = stateVarId[1];
-     allInputs.push(stateVarID);
-     allInputs.push(fromId);
-     allInputs = allInputs.flat(Infinity);
-     circuitName = 'joinMappingCommitments';
 
-  }
+// Call Zokrates to generate the proof:
+const allInputs = [
+fromID,
+stateVarID,
+isMapping,
+secretKey.limbs(32, 8),
+secretKey.limbs(32, 8),
+oldCommitment_0_nullifier.integer,
+oldCommitment_1_nullifier.integer,
+oldCommitment_0_prev.integer,
+oldCommitment_0_prevSalt.limbs(32, 8),
+oldCommitment_1_prev.integer,
+oldCommitment_1_prevSalt.limbs(32, 8),
+oldCommitment_root.integer,
+oldCommitment_0_index.integer,
+oldCommitment_0_path.integer,
+oldCommitment_1_index.integer,
+oldCommitment_1_path.integer,
+publicKey.limbs(32, 8),
+newCommitment_newSalt.limbs(32, 8),
+newCommitment.integer,
+].flat(Infinity);
 
-	// Call Zokrates to generate the proof:
 
-  console.log(allInputs);
+const res = await generateProof( "joinCommitments", allInputs);
+const proof = generalise(Object.values(res.proof).flat(Infinity))
+.map((coeff) => coeff.integer)
+.flat(Infinity);
 
+// Send transaction to the blockchain:
 
-	const res = await generateProof(`'${circuitName}'`, allInputs);
-	const proof = generalise(Object.values(res.proof).flat(Infinity))
-		.map((coeff) => coeff.integer)
-		.flat(Infinity);
+const tx = await instance.methods
+.joinCommitments(
+  [oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer,],
+  oldCommitment_root.integer,
+  [newCommitment.integer],
+  proof
+)
+.send({
+  from: config.web3.options.defaultAccount,
+  gas: config.web3.options.defaultGas,
+});
 
-    // Send transaction to the blockchain:
-
-  	const tx = await instance.methods
-  		.joinCommitments(
-  			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer,],
-  			oldCommitment_root.integer,
-  			[newCommitment.integer],
-  			proof
-  		)
-  		.send({
-  			from: config.web3.options.defaultAccount,
-  			gas: config.web3.options.defaultGas,
-  		});
       let preimage = {};
       if (fs.existsSync(db)) {
         preimage = JSON.parse(
@@ -284,19 +289,34 @@ export function getInputCommitments(publicKey, value, commitments) {
       }
 
       Object.keys(preimage).forEach((key) => {
-    		if(key === statename){
+    		if (key === statename) {
+
     			preimage[key][oldCommitment_0].isNullified = true;
-          preimage[key][oldCommitment_1].isNullified = true;
+    			preimage[key][oldCommitment_1].isNullified = true;
     			preimage[key][newCommitment.hex(32)] = {
     				value: newCommitment_value.integer,
     				salt: newCommitment_newSalt.integer,
     				publicKey: publicKey.integer,
     				commitment: newCommitment.integer,
-    			};
-    			fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
-
+    			}
     		}
-    	})
+
+    			else	if (key === statename.split('[')[0]){
+    					Object.keys(preimage[key]).forEach((id) => {
+    						if(parseInt(id,10) === parseInt(fromID,10)){
+    							preimage[key][id][oldCommitment_0].isNullified = true;
+    							preimage[key][id][oldCommitment_1].isNullified = true;
+    							preimage[key][id][newCommitment.hex(32)] = {
+    								value: newCommitment_value.integer,
+    								salt: newCommitment_newSalt.integer,
+    								publicKey: publicKey.integer,
+    								commitment: newCommitment.integer,
+    						}
+    					}
+    					})
+    				}
+    			fs.writeFileSync(db, JSON.stringify(preimage, null, 4));
+       });
 
   return { tx };
 }

@@ -97,7 +97,6 @@ class ContractBoilerplateGenerator {
       circuitParams,
       constructorContainsSecret,
       isjoinCommitmentsFunction,
-      joinCommitmentsCircuitName,
     }): string[] {
       const verifyFunctionSignature = `
         function verify(
@@ -228,9 +227,9 @@ class ContractBoilerplateGenerator {
 
        joinCommitmentsInputs.push(
         `
-           function ${joinCommitmentsCircuitName}(uint256[] calldata newNullifiers, uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
+           function joinCommitments(uint256[] calldata newNullifiers, uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
 
-            bytes4 sig = bytes4(keccak256("${joinCommitmentsCircuitName}(uint256[],uint256,uint256[],uint256[])"));
+            bytes4 sig = bytes4(keccak256("joinCommitments(uint256[],uint256,uint256[],uint256[])"));
 
             Inputs memory inputs;
 
@@ -245,11 +244,11 @@ class ContractBoilerplateGenerator {
 
             if (sig == msg.sig)
 
-            verify(proof, uint(FunctionNames.${joinCommitmentsCircuitName}), inputs);
+            verify(proof, uint(FunctionNames.joinCommitments), inputs);
         }`)
        verifyInputs.push(`
 
-         if (functionId == uint(FunctionNames.${joinCommitmentsCircuitName})) {
+         if (functionId == uint(FunctionNames.joinCommitments)) {
            uint k = 0;
 
            inputs[k++] = newNullifiers[0];

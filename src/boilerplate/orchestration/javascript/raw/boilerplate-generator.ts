@@ -102,8 +102,8 @@ class BoilerplateGenerator {
       stateVarIds
     }): string[] {
         const stateVarId = [];
-      if(stateVarIds.includes('stateVarId_key')){
-        stateVarId.push(`${stateName}_stateVarId`);
+      if(stateVarIds.length > 1){
+        stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
         stateVarId.push(`${stateName}_stateVarId_key`);
       } else
        stateVarId.push(`${stateName}_stateVarId`);
@@ -137,7 +137,7 @@ class BoilerplateGenerator {
                 \n  ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
                 \n  ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, ${stateVarId.join(' ')}, ${stateName}_preimage, [${stateName}_0_oldCommitment,${stateName}_1_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1], instance);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_preimage, [${stateName}_0_oldCommitment,${stateName}_1_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1], instance);
 
                 ${stateName}_preimage = JSON.parse(
                   fs.readFileSync(db, 'utf-8', err => {

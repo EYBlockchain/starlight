@@ -190,7 +190,7 @@ const visitor = {
           file.constructorParams = state.constructorParams;
           file.contractImports = state.contractImports;
           if(state.isjoinCommitmentsFunction?.includes('true'))
-            file.functionNames = [...new Set([...file.functionNames, ...state.joinCommitmentsCircuitName])];
+            file.functionNames.push('joinCommitments');
         }
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           file.nodes[0].constructorParams = state.constructorParams;
@@ -307,18 +307,8 @@ const visitor = {
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
       for(const [ id , indicators ] of Object.entries(functionIndicator)){
        if((indicators instanceof StateVariableIndicator) && indicators.isPartitioned){
-         if(indicators.isMapping){
-           state.isjoinCommitmentsFunction ??= [];
-           state.isjoinCommitmentsFunction?.push('true');
-           state.joinCommitmentsCircuitName ??= [];
-           state.joinCommitmentsCircuitName?.push('joinMappingCommitments');
-         }
-         else{
-           state.isjoinCommitmentsFunction ??= [];
-           state.isjoinCommitmentsFunction?.push('true');
-           state.joinCommitmentsCircuitName ??= [];
-           state.joinCommitmentsCircuitName?.push('joinCommitments');
-         }
+         state.isjoinCommitmentsFunction ??= [];
+         state.isjoinCommitmentsFunction?.push('true');
        }
 
      }

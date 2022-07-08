@@ -76,16 +76,9 @@ export default function toCircuit(ast: any, options: any) {
   for (const fileObj of circuitFileData) {
     let filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     if(fileObj.file.includes('0_oldCommitment_nullifier') && fileObj.file.includes('1_oldCommitment_nullifier')){
-      if(fileObj.file.includes('stateVarId_field')){
-        const newfile = fs.readFileSync('circuits/common/joinMappingCommitments.zok', 'utf8');
-        const newfilepath = pathjs.join(options.outputDirPath, 'circuits/joinMappingCommitments.zok');
-        fs.writeFileSync(newfilepath, newfile);
-      } if(!fileObj.file.includes('stateVarId_field') && fileObj.file.includes('stateVarId')){
         const newfile = fs.readFileSync('circuits/common/joinCommitments.zok', 'utf8');
         const newfilepath = pathjs.join(options.outputDirPath, 'circuits/joinCommitments.zok');
         fs.writeFileSync(newfilepath, newfile);
-      }
-
     }
     const dir = pathjs.dirname(filepath);
     logger.debug(`About to save to ${filepath}...`);

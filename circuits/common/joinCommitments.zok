@@ -1,18 +1,19 @@
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
 from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
 from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768
 from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
-from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
 
-
-
 def main(\
+	private field fromId,\
+	private field stateVarId,\
+	private bool isMapping,\
 	private u32[8] oldCommitment_0_owner_secretKey,\
 	private u32[8] oldCommitment_1_owner_secretKey,\
-	private u32[8] stateVarId,\
 	public field oldCommitment_0_nullifier,\
 	public field oldCommitment_1_nullifier,\
 	private field oldCommitment_0_value,\
@@ -30,12 +31,7 @@ def main(\
 ) -> bool:
 
 
-        // We need to hard-code each stateVarId into the circuit:
-        u32[8] oldCommitment_0_stateVarId = field_to_u32_8(stateVarId)
-
-
-        // We need to hard-code each stateVarId into the circuit:
-        u32[8] oldCommitment_1_stateVarId = field_to_u32_8(stateVarId)
+        // We need to hard-code the mappingId's of mappings into the circuit:
 
 
         field oldCommitment_0 = oldCommitment_0_value
@@ -44,10 +40,24 @@ def main(\
         field oldCommitment_1 = oldCommitment_1_value
 
 
-        // We need to hard-code each stateVarId into the circuit:
-        u32[8] newCommitment_stateVarId = field_to_u32_8(stateVarId)
+// check if state is mapping or not
+
+        field oldCommitment_0_stateVarId_field =  if isMapping == true then mimc2([stateVarId, fromId]) else stateVarId fi
 
 
+        u32[8] oldCommitment_0_stateVarId = field_to_u32_8(oldCommitment_0_stateVarId_field)
+
+
+        field oldCommitment_1_stateVarId_field = if isMapping == true then mimc2([stateVarId, fromId]) else stateVarId fi
+
+
+        u32[8] oldCommitment_1_stateVarId = field_to_u32_8(oldCommitment_1_stateVarId_field)
+
+
+        field newCommitment_stateVarId_field = if isMapping == true then mimc2([stateVarId, fromId]) else stateVarId fi
+
+
+        u32[8] newCommitment_stateVarId = field_to_u32_8(newCommitment_stateVarId_field)
 
 
         // oldCommitment_0 - PoKoSK:

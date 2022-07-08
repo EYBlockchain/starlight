@@ -70,15 +70,9 @@ class ContractBoilerplateGenerator {
     stateVariableDeclarations() {
       const { scope } = this;
       let isjoinCommitmentsFunction : string[]=[];
-      let joinCommitmentsCircuitName : string[]=[];;
       for(const [ id , bindings ] of Object.entries(scope.bindings)){
-       if((bindings instanceof VariableBinding) && bindings.isUnknown ){
-           isjoinCommitmentsFunction?.push('true');
-           if(bindings.isMapping)
-            joinCommitmentsCircuitName?.push('joinMappingCommitments');
-          joinCommitmentsCircuitName?.push('joinCommitments');
-       }
-
+       if((bindings instanceof VariableBinding) && bindings.isUnknown )
+          isjoinCommitmentsFunction?.push('true');
       }
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
@@ -87,8 +81,8 @@ class ContractBoilerplateGenerator {
       const fnDefBindings = scope.filterBindings(
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
-      const functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
-      if(isjoinCommitmentsFunction.includes('true')) [...new Set([...functionNames, ...joinCommitmentsCircuitName])]
+      let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
+      if(isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments')
       return {
         functionNames,
         nullifiersRequired,
@@ -109,7 +103,7 @@ class ContractBoilerplateGenerator {
       let isjoinCommitmentsFunction : string[]=[];
       for(const [ id , bindings ] of Object.entries(this.scope.bindings)){
        if((bindings instanceof VariableBinding) && bindings.isUnknown )
-          isjoinCommitmentsFunction?.push('true');
+           isjoinCommitmentsFunction?.push('true');
       }
       const returnpara = {};
       let parameterList: any[];
