@@ -49,8 +49,8 @@ jobs:
       - name: replace zokrates image for actions test
         uses: jacobtomlinson/gha-find-replace@v2
         with:
-          find: "ghcr.io/eyblockchain/zokrates-worker-m1"
-          replace: "ghcr.io/eyblockchain/nightfall3-worker"
+          find: "ghcr.io/eyblockchain/zokrates-worker-m1:v1.1"
+          replace: "ghcr.io/eyblockchain/zokrates-worker-m1:v0.1"
           include: "**docker-compose.zapp.yml"
 
       - name: set up zapp
