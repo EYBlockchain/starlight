@@ -279,8 +279,7 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, registerKey, getInputCommitments } from './common/contract.mjs';`,
-        `\nimport  joinCommitments  from './common/contract.mjs';`,
+        `\nimport { getContractInstance, registerKey, getInputCommitments, joinCommitments } from './common/contract.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';
         \n`,

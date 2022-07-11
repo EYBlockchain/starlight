@@ -242,8 +242,6 @@ class ContractBoilerplateGenerator {
 
             inputs.newCommitments = newCommitments;
 
-            if (sig == msg.sig)
-
             verify(proof, uint(FunctionNames.joinCommitments), inputs);
         }`)
        verifyInputs.push(`
