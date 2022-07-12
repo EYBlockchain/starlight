@@ -743,7 +743,7 @@ const visitor = {
                    break;
                   }
                   state.circuitImport ??= []
-                  state.circuitImport.push('true');
+                  state.circuitImport.push('false');
                  isCircuit = false;
                 }
               }
@@ -762,7 +762,7 @@ const visitor = {
           }
             else{
             state.circuitImport ??= []
-            state.circuitImport.push('true');
+            state.circuitImport.push('false');
           }
             }
             }

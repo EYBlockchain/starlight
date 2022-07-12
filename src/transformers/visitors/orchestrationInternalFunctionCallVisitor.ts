@@ -232,7 +232,9 @@ const internalCallVisitor = {
              if(file.fileName === state.callingFncName[index]) {
                file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
+
                    childNode.body.statements.forEach(node => {
+                     console.log((node.nodeType === 'ExpressionStatement' && node.expression.name === state.internalFncName[index]))
                      if(node.nodeType === 'ExpressionStatement' && node.expression.name === state.internalFncName[index]) {
                        state.newStatementList.forEach(list => {
                          if(list.nodeType === 'VariableDeclarationStatement')
@@ -242,11 +244,17 @@ const internalCallVisitor = {
                         })
                       }
                     });
+                    console.log(state.newStatementList);
                   }
+
                 })
+
               }
+
             })
+
           }
+
         }
       })
     })

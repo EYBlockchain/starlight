@@ -1,6 +1,7 @@
 import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
-
+import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
+import buildNode from '../../types/orchestration-types.js'
 
 
 
@@ -13,12 +14,11 @@ const internalCallVisitor = {
    exit(path: NodePath, state: any) {
 
      // Find the Internal Function Node,
-
      const { node, parent } = path;
-
      node._newASTPointer.forEach(file => {
-      state.internalFncName?.forEach( (name, index) => {
+      state.internalFncName?.forEach( name => {
         if(file.fileName === name) {
+          let index = state.internalFncName.indexOf(name);
           if(state.circuitImport[index]==='true') {
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
@@ -34,7 +34,7 @@ const internalCallVisitor = {
                  })
                  state.newParameterList.forEach(node => {
                   if(node.nodeType === 'Boilerplate') {
-                    for(const [index, oldStateName] of  state.oldStateArray?.entries()) {
+                    for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                       node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[index])
                       if(node.newCommitmentValue === oldStateName)
                        node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[index])
@@ -43,7 +43,7 @@ const internalCallVisitor = {
                      }
                    }
                    if(node.nodeType === 'VariableDeclaration'){
-                     for(const [index, oldStateName] of state.oldStateArray?.entries()) {
+                     for(const [index, oldStateName] of state.oldStateArray.entries()) {
                        node.name = node.name.replace(oldStateName, state.newStateArray[index])
                      }
                    }
@@ -124,6 +124,7 @@ const internalCallVisitor = {
                   if(node.nodeType === 'ExpressionStatement') {
                     if(node.expression.nodeType === 'Assignment') {
                       let  expressionList = cloneDeep(node);
+                      console.log()
                       for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                         if(node.expression.rightHandSide.rightExpression.name === oldStateName)
                          expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[index])
