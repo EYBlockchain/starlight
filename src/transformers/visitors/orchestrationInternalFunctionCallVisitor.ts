@@ -232,19 +232,18 @@ const internalCallVisitor = {
              if(file.fileName === state.callingFncName[index]) {
                file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
-
                    childNode.body.statements.forEach(node => {
-                     console.log((node.nodeType === 'ExpressionStatement' && node.expression.name === state.internalFncName[index]))
-                     if(node.nodeType === 'ExpressionStatement' && node.expression.name === state.internalFncName[index]) {
+                     if(node.nodeType === 'VariableDeclarationStatement') {
                        state.newStatementList.forEach(list => {
-                         if(list.nodeType === 'VariableDeclarationStatement')
-                          node.expression = Object.assign(node.expression,list.initialValue);
-                          if(list.nodeType === 'Assignment')
-                          childNode.body.statements?.splice(childNode.body.statements.indexOf(node)+1, 0, list);
+                         if(list.nodeType === 'VariableDeclarationStatement' && node.declarations[0].name === list.declarations[0].name)
+                         childNode.body.statements.splice(childNode.body.statements.indexOf(node)+2, 0, list.initialValue);
+                         // Added 2 to the index as next element in the array will be the Assigment node and we want to add after that
+                         if(list.nodeType === 'Assignment')
+                         childNode.body.statements.splice(childNode.body.statements.indexOf(node)+3, 0, list);
+                         // Added 3 to the index as we want to add assigment node after the above node
                         })
                       }
                     });
-                    console.log(state.newStatementList);
                   }
 
                 })
