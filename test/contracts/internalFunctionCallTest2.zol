@@ -13,7 +13,7 @@ contract Assign {
   }
 
   function addA(secret uint256 value) public {
-    known a += value;
+    known a = a + 2 * value;
   }
   function remove(secret uint256 value) public {
     a -= value;
