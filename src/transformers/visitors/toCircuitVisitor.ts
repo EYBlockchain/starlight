@@ -3,7 +3,7 @@
 import cloneDeep from 'lodash.clonedeep';
 import { buildNode } from '../../types/zokrates-types.js';
 import { TODOError } from '../../error/errors.js';
-import { traversePathsFast } from '../../traverse/traverse.js';
+import { traversePathsFast, traverseOutputNodesFastVisitor } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
@@ -67,8 +67,6 @@ const visitor = {
     },
   // We Add the InternalFunctionCall nodes at the exit node so that all others gets build we need to access
     exit(path: NodePath, state: any) {
-
-
       // Internal Call Visitor
       path.traverse(explode(internalCallVisitor), state);
     },
@@ -640,7 +638,7 @@ const visitor = {
       parent._newASTPointer.push(newNode);
     },
   },
-  
+
   Literal: {
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;

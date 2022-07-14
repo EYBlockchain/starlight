@@ -35,6 +35,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import logger from '../utils/logger.js';
 import NodePath from './NodePath.js';
 import { getVisitableKeys } from '../types/solidity-types.js';
+import { getCircuitVisitableKeys } from '../types/zokrates-types.js';
 
 // So we define a traverser function which accepts an AST and a
 // visitor. Inside we're going to define two functions...
@@ -143,6 +144,34 @@ export function traverseNodesFastVisitor(node: any, visitor: any, state?: any) {
     } else if (node[key]) {
       const subNode = node[key];
       traverseNodesFastVisitor(subNode, visitor, state);
+    }
+  }
+
+  if (state?.skipSubNodes) state.skipSubNodes = false;
+}
+
+export function traverseOutputNodesFastVisitor(node: any, visitor: any, state?: any) {
+  if (!node) return;
+  if (state?.stopTraversal || state?.skipSubNodes) return;
+
+  const keys = getCircuitVisitableKeys(node.nodeType);
+  if (!keys) return;
+
+  const methods = visitor[node.nodeType];
+  if (methods?.enter) {
+    methods.enter(node, state);
+    if (state?.stopTraversal) return;
+  }
+
+  for (const key of keys) {
+    if (Array.isArray(node[key])) {
+      const subNodes = node[key];
+      for (const subNode of subNodes) {
+        traverseOutputNodesFastVisitor(subNode, visitor, state);
+      }
+    } else if (node[key]) {
+      const subNode = node[key];
+      traverseOutputNodesFastVisitor(subNode, visitor, state);
     }
   }
 

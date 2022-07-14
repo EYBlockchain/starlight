@@ -12,6 +12,7 @@ contract MyContract {
 
   function decrement(secret uint256 param3) public {
     a[msg.sender] -= param3;
+    increment(param3);
   }
 
 }

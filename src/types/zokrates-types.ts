@@ -13,6 +13,55 @@ const generateBoilerplate = ({ indicators, bpSection }) => {
   return bpArray;
 };
 
+export function getCircuitVisitableKeys(nodeType: string): string[] {
+  switch (nodeType) {
+    case 'Folder':
+      return ['files'];
+    case 'File':
+      return ['nodes'];
+    case 'ImportStatementList':
+      return ['imports'];
+    case 'SourceUnit':
+    case 'ContractDefinition':
+      return ['nodes'];
+    case 'FunctionDefinition':
+      return ['parameters', 'returnParameters', 'body'];
+    case 'ParameterList':
+      return ['parameters'];
+    case 'ReturnParameterList':
+      return ['parameters'];
+    case 'IfStatement':
+      return ['condition', 'trueBody' , 'falseBody'];
+    case 'ForStatement':
+        return ['condition', 'initializationExpression', 'loopExpression' , 'body'];
+    case 'Block':
+      return ['statements'];
+    case 'VariableDeclarationStatement':
+      return ['declarations', 'initialValue'];
+    case 'ExpressionStatement':
+      return ['expression'];
+    case 'Assignment':
+      return ['leftHandSide', 'rightHandSide'];
+    case 'BinaryOperation':
+      return ['leftExpression', 'rightExpression'];
+    case 'VariableDeclaration':
+      return ['typeName'];
+    case 'PragmaDirective':
+    case 'ElementaryTypeName':
+    case 'Identifier':
+    case 'Literal':
+      return [];
+    case 'PartitionedIncrementationStatementBoilerplate':
+      return ['addend'];
+    case 'PartitionedDecrementationStatementBoilerplate':
+      return ['subtrahend'];
+    // And again, if we haven't recognized the nodeType then we'll throw an
+    // error.
+    default:
+      throw new TypeError(nodeType);
+  }
+}
+
 const generateBoilerplateStatement = fields => {
   const { bpType, indicators } = fields;
   const bp = new CircuitBP(indicators);
