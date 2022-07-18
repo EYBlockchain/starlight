@@ -1,5 +1,6 @@
 import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
+import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import buildNode from '../../types/orchestration-types.js';
 import { internalFunctionCallVisitor } from './common.js';
 
@@ -18,7 +19,7 @@ const internalCallVisitor = {
       let sendTransactionNode : any;
       let newdecrementedSecretStates = [];
       node._newASTPointer.forEach(file => {
-       state.internalFncName?.forEach( (name, index) => {
+       state.internalFncName?.forEach( (index, name)=> {
          if(file.fileName === name && file.nodeType === 'File') {
            if(state.circuitImport[index]==='true') {
              file.nodes.forEach(childNode => {
@@ -201,14 +202,16 @@ const internalCallVisitor = {
                      if(node.nodeType === 'GenerateProof'){
                        node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
                        node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
-                     }
+                      }
 
-                    if(node.nodeType === 'SendTransaction')
+                      if(node.nodeType === 'SendTransaction')
                        node.privateStates = Object.assign(node.privateStates,sendTransactionNode.privateStates)
 
-                    if(node.nodeType === 'WritePreimage')
+                      if(node.nodeType === 'WritePreimage')
                        node.privateStates = Object.assign(node.privateStates,writePreimageNode.privateStates)
+
                     })
+
                   }
                 })
               }
@@ -221,8 +224,8 @@ const internalCallVisitor = {
                state.newStatementList.forEach(node => {
                  if(node.nodeType === 'VariableDeclarationStatement') {
                    for(const [index, oldStateName] of  oldStateArray.entries()) {
-                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name?.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
-                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name?.replace(oldStateName,  state.newStateArray[index]);
+                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
+                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[index]);
                     }
                   }
                 })
@@ -233,27 +236,20 @@ const internalCallVisitor = {
                file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.body.statements.forEach(node => {
-                     if(node.nodeType === 'VariableDeclarationStatement') {
+                     if(node.nodeType === 'ExpressionStatement' && node.expression.name === state.internalFncName[index]) {
                        state.newStatementList.forEach(list => {
-                         if(list.nodeType === 'VariableDeclarationStatement' && node.declarations[0].name === list.declarations[0].name)
-                         childNode.body.statements.splice(childNode.body.statements.indexOf(node)+2, 0, list.initialValue);
-                         // Added 2 to the index as next element in the array will be the Assigment node and we want to add after that
-                         if(list.nodeType === 'Assignment')
-                         childNode.body.statements.splice(childNode.body.statements.indexOf(node)+3, 0, list);
-                         // Added 3 to the index as we want to add assigment node after the above node
+                         if(list.nodeType === 'VariableDeclarationStatement')
+                          node.expression = Object.assign(node.expression,list.initialValue);
+                          if(list.nodeType === 'Assignment')
+                          childNode.body.statements?.splice(childNode.body.statements.indexOf(node)+1, 0, list);
                         })
                       }
                     });
                   }
-
                 })
-
               }
-
             })
-
           }
-
         }
       })
     })
@@ -267,14 +263,12 @@ FunctionCall: {
       let isCircuit = false;
       state.newStateArray =  args.map(arg => (arg.name));
       let internalFunctionInteractsWithSecret = false;
-      let isInternalFunctionCallValid  = false;
       const newState: any = {};
       oldStateArray = internalFunctionCallVisitor(path, newState)
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
-      isInternalFunctionCallValid  ||= newState.isInternalFunctionCallValid;
       state.internalFncName ??= [];
       state.internalFncName.push(node.expression.name);
-     if(isInternalFunctionCallValid  === true) {
+     if(internalFunctionInteractsWithSecret === true) {
        const callingfnDefPath = path.getFunctionDefinition();
        const callingfnDefIndicators = callingfnDefPath.scope.indicators;
        const functionReferncedNode = scope.getReferencedPath(node.expression);
@@ -311,12 +305,10 @@ FunctionCall: {
             }
           }
         });
-
         const newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,
           internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
         });
-
         node._newASTPointer = newNode ;
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
           parent._newASTPointer[path.containerName].push(newNode);
@@ -324,15 +316,10 @@ FunctionCall: {
         parent._newASTPointer[path.containerName] = newNode;
         }
       }
-
      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
      state.callingFncName ??= [];
      state.callingFncName.push(fnDefNode.node.name);
-
-
     }
-
-
 
   },
 },
