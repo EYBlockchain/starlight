@@ -2,7 +2,8 @@
 import NodePath from '../../traverse/NodePath.js';
 import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-import MappingKey from '../../traverse/MappingKey.js'
+import MappingKey from '../../traverse/MappingKey.js';
+import cloneDeep from 'lodash.clonedeep';
 import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
