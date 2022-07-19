@@ -68,6 +68,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
 
 let internalFuncInteractsWithSecret = false;
+let interactsWithSecret = false;
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.sol` AST (for a 'shield' contract)
@@ -210,7 +211,6 @@ export default {
         ...buildNode('ContractBoilerplate', {
           bpSection: 'stateVariableDeclarations',
           scope,
-          internalFuncInteractsWithSecret,
         }),
       );
 
@@ -564,7 +564,7 @@ EmitStatement: {
 
   VariableDeclaration: {
     enter(path: NodePath, state : any) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
 
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
@@ -583,11 +583,26 @@ EmitStatement: {
         declarationType = 'parameter';
       }
 
+      scope.bindings[node.id].referencingPaths.forEach(refPath => {
+        const newState: any = {};
+        refPath.parentPath.traversePathsFast(
+          interactsWithSecretVisitor,
+          newState,
+        );
+        interactsWithSecret ||= !!(newState.interactsWithSecret);
+      });
+      if (
+        parent.nodeType === 'VariableDeclarationStatement' &&
+        interactsWithSecret
+      )
+        parent._newASTPointer.interactsWithSecret = interactsWithSecret;
+        node.interactsWithSecret = interactsWithSecret;
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
         isSecret: node.isSecret,
         declarationType,
+        interactsWithSecret:interactsWithSecret,
         typeString: node.typeDescriptions?.typeString,
         visibility: node.visibility,
       });
@@ -597,6 +612,7 @@ EmitStatement: {
       } else {
         parent._newASTPointer[path.containerName].push(newNode);
       }
+      interactsWithSecret = false;
     },
   },
 

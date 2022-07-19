@@ -187,6 +187,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         visibility,
         storageLocation,
         isSecret,
+        interactsWithSecret,
         declarationType,
       } = fields;
       return {
@@ -199,6 +200,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
           typeDescriptions: { typeString },
         }),
         isSecret,
+        interactsWithSecret,
         declarationType,
       };
     }
