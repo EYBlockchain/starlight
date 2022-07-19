@@ -30,6 +30,7 @@ class FunctionBoilerplateGenerator {
 
   categorySelector = () => {
     const { scope } = this;
+
     const isConstructorFunction =
       scope.path.node.nodeType === 'FunctionDefinition' && scope.path.node.kind === 'constructor';
     if (isConstructorFunction && scope.containsSecret) {
@@ -108,6 +109,9 @@ class FunctionBoilerplateGenerator {
       };
     },
   };
+
+
+
 }
 
 export default FunctionBoilerplateGenerator;

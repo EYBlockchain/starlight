@@ -65,10 +65,9 @@ const visitor = {
     },
   // We Add the InternalFunctionCall nodes at the exit node so that all others gets build we need to access
     exit(path: NodePath, state: any) {
-
-
       // Internal Call Visitor
       path.traverse(explode(internalCallVisitor), state);
+
     },
   },
 
@@ -549,7 +548,6 @@ const visitor = {
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
-
       //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
@@ -640,21 +638,21 @@ const visitor = {
   },
 
   Literal: {
-    enter(path: NodePath) {
-      const { node, parent , parentPath } = path;
-      const { value } = node;
-      if (node.kind !== 'number')
-       if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
-        throw new Error(
-          `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
-        );
+   enter(path: NodePath) {
+     const { node, parent , parentPath } = path;
+     const { value } = node;
+     if (node.kind !== 'number')
+      if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
+       throw new Error(
+         `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
+       );
 
-      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode('Literal', {
-        value,
-      });
-    },
-  },
+     // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+     parent._newASTPointer[path.containerName] = buildNode('Literal', {
+       value,
+     });
+   },
+ },
 
   MemberAccess: {
     enter(path: NodePath, state: any) {

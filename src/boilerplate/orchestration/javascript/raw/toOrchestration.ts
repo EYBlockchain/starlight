@@ -218,11 +218,11 @@ export const preimageBoilerPlate = (node: any) => {
     const stateVarIds = stateVariableIds({ privateStateName, stateNode });
     const initialiseParams = [];
     const preimageParams = [];
-
     if (stateNode.accessedOnly) {
       output.push(
         Orchestrationbp.readPreimage.postStatements({
           stateName:privateStateName,
+          contractName: node.contractName,
           stateType: 'whole',
           mappingName: null,
           mappingKey: null,
@@ -253,17 +253,16 @@ export const preimageBoilerPlate = (node: any) => {
         } else if (stateNode.mappingOwnershipType === 'key') {
           // the stateVarId[1] is the mapping key
           newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
+        } else if (stateNode.mappingOwnershipType === 'value') {
+          // TODO test below
+          // if the private state is an address (as here) its still in eth form - we need to convert
+          newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
+          \nif (${privateStateName}_newOwnerPublicKey === 0) {
+            console.log('WARNING: Public key for given eth address not found - reverting to your public key');
+            ${privateStateName}_newOwnerPublicKey = publicKey;
+          }
+          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
-        //   if (stateNode.mappingOwnershipType === 'value') {
-        //   // TODO test below
-        //   // if the private state is an address (as here) its still in eth form - we need to convert
-        //   newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
-        //   \nif (${privateStateName}_newOwnerPublicKey === 0) {
-        //     console.log('WARNING: Public key for given eth address not found - reverting to your public key');
-        //     ${privateStateName}_newOwnerPublicKey = publicKey;
-        //   }
-        //   \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
-        // } else {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
         break;
@@ -289,6 +288,7 @@ export const preimageBoilerPlate = (node: any) => {
         output.push(
           Orchestrationbp.readPreimage.postStatements({
             stateName: privateStateName,
+            contractName: node.contractName,
             stateType: 'whole',
             mappingName: null,
             mappingKey: null,
@@ -309,6 +309,7 @@ export const preimageBoilerPlate = (node: any) => {
             output.push(
               Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
+                contractName: node.contractName,
                 stateType: 'decrement',
                 mappingName: stateNode.mappingName || privateStateName,
                 mappingKey: stateNode.mappingKey
@@ -329,6 +330,7 @@ export const preimageBoilerPlate = (node: any) => {
             output.push(
             Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
+                contractName: node.contractName,
                 stateType: 'increment',
                 mappingName: null,
                 mappingKey: null,

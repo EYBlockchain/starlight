@@ -102,7 +102,9 @@ export default {
 
       parent._newASTPointer.push(newNode);
       node._newASTPointer = parent._newASTPointer;
+
     },
+
   },
 
   PragmaDirective: {
@@ -144,6 +146,8 @@ export default {
       node._newASTPointer = newNode.nodes;
       // parent._newASTPointer[0] is the SourceUnit created earlier by this visitor module.
       parent._newASTPointer[0].nodes.push(newNode);
+
+
     },
 
     exit(path: NodePath, state: any) {
@@ -164,6 +168,7 @@ export default {
           }
         }
       }
+
 
       const contractIndex = sourceUnitNodes.findIndex(
         (n: any) => n.name === node.name,
