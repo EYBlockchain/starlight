@@ -8,7 +8,7 @@ import NodePath from '../../traverse/NodePath.js';
 import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-import { StateVariableIndicator, FunctionDefinitionIndicator} from '../../traverse/Indicator.js';
+import { StateVariableIndicator} from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
@@ -48,8 +48,6 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 };
 
 let interactsWithSecret = false; // Added globaly as two objects are accesing it
-let oldStateArray : string[];
-let circuitImport = [];
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.zok` AST
@@ -640,7 +638,7 @@ const visitor = {
       parent._newASTPointer.push(newNode);
     },
   },
-  
+
   Literal: {
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;
@@ -724,7 +722,7 @@ const visitor = {
         state.newStateArray =  args.map(arg => (arg.name));
         let internalFunctionInteractsWithSecret = false;
         const newState: any = {};
-        oldStateArray = internalFunctionCallVisitor(path, newState)
+        state.oldStateArray = internalFunctionCallVisitor(path, newState)
         internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
         state.internalFncName ??= [];
         state.internalFncName.push(node.expression.name);
@@ -737,13 +735,15 @@ const visitor = {
          startNodePath.node.nodes.forEach(node => {
            if(node.nodeType === 'VariableDeclaration'){
              if(node.typeName.nodeType === 'Mapping') {
-               for(const [index, oldStateName] of  oldStateArray.entries()) {
+               for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                  if(oldStateName !== state.newStateArray[index]){
-                   circuitImport.push('true');
+                   state.circuitImport ??= []
+                   state.circuitImport.push('true');
                    isCircuit = true;
                    break;
                   }
-                 circuitImport.push('false');
+                  state.circuitImport ??= []
+                  state.circuitImport.push('false');
                  isCircuit = false;
                 }
               }
@@ -756,10 +756,14 @@ const visitor = {
                 }
               else
                 isCircuit = true;
-            if(isCircuit)
-              circuitImport.push('true');
-            else
-              circuitImport.push('false');
+            if(isCircuit){
+            state.circuitImport ??= []
+            state.circuitImport.push('true');
+          }
+            else{
+            state.circuitImport ??= []
+            state.circuitImport.push('false');
+          }
             }
             }
           });

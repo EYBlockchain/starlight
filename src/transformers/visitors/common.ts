@@ -21,20 +21,19 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
  if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedNode(node.expression);
   const params = functionReferncedNode.parameters.parameters;
+  if((params.length !== 0) && (params.some(node => node.isSecret)))
+  {
+    thisState.internalFunctionInteractsWithSecret = true;
+} else
+thisState.internalFunctionInteractsWithSecret = false;
   oldStateArray = params.map(param => (param.name) );
   for (const [index, param] of params.entries()) {
     if(isSecretArray[index] !== param.isSecret)
     parametercheck = false;
     break;
   }
-  const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
-  if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
-  thisState.internalFunctionInteractsWithSecret = true;
-   }
-   if(!fnIndicator.internalFunctionInteractsWithSecret){
-       if(params.some(node => node.isSecret))
-       {
-       thisState.internalFunctionInteractsWithSecret = true; }
+  if(parametercheck && thisState.internalFunctionInteractsWithSecret){
+  thisState.isInternalFunctionCallValid = true;
    }
  }
  return oldStateArray;
@@ -49,7 +48,7 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
   let path = oldAST;
 
   if(type !== 'orchestration')
-  { 
+  {
     const dummyParent = {
       ast: oldAST,
     };
@@ -88,4 +87,3 @@ export function parentnewASTPointer(parent:any , path:any , newNode:any, type:an
     parent._newASTPointer[path.containerName] = newNode;
   }
 }
-
