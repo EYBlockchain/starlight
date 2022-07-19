@@ -3,7 +3,7 @@
 import cloneDeep from 'lodash.clonedeep';
 import { buildNode } from '../../types/zokrates-types.js';
 import { TODOError } from '../../error/errors.js';
-import { traversePathsFast, traverseOutputNodesFastVisitor } from '../../traverse/traverse.js';
+import { traversePathsFast, circuittraversePathsFast} from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';

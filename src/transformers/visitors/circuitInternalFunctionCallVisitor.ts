@@ -1,5 +1,6 @@
 import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
+import CircuitNodePath from '../../traverse/CircuitNodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import buildNode from '../../types/orchestration-types.js'
 
@@ -14,7 +15,6 @@ const internalCallVisitor = {
  ContractDefinition: {
  // We Add the InternalFunctionCall nodes at the exit node so that all others gets build we need to access
    exit(path: NodePath, state: any) {
-
      // Find the Internal Function Node,
      const { node, parent } = path;
      node._newASTPointer.forEach(file => {

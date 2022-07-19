@@ -34,6 +34,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import logger from '../utils/logger.js';
 import NodePath from './NodePath.js';
+import CircuitNodePath from './CircuitNodePath.js';
 import { getVisitableKeys } from '../types/solidity-types.js';
 import { getCircuitVisitableKeys } from '../types/zokrates-types.js';
 
@@ -90,6 +91,54 @@ export function traverse(path: NodePath, visitor: any, state?: any) {
   if (state?.skipSubNodes) state.skipSubNodes = false;
 }
 
+// So we define a traverser function which accepts an AST and a
+// visitor. Inside we're going to define two functions...
+export function circuittraverse(path: CircuitNodePath, visitor: any, state?: any) {
+  logger.debug(
+    'pathLocation:',
+    ` ${path.node.nodeType} ${path.node.name || ''}`,
+  );
+
+  if (state?.stopTraversal || state?.skipSubNodes) return;
+
+  const { node } = path;
+  const keys = getCircuitVisitableKeys(node.nodeType);
+  if (!keys) return;
+
+  const methods = visitor[node.nodeType];
+  if (methods?.enter) {
+    methods.enter(path, state);
+    if (state?.stopTraversal) return;
+  }
+
+  for (const key of keys) {
+    if (Array.isArray(node[key])) {
+      const subNodes = node[key];
+      for (const [index, subNode] of subNodes.entries()) {
+        if (!subNode) continue;
+        const subNodePath = new CircuitNodePath({
+          parent: node,
+          node: subNode,
+          parentPath: path,
+        });
+        subNodePath.circuittraverse(visitor, state);
+      }
+    } else if (node[key]) {
+      const subNode = node[key];
+      const subNodePath = new CircuitNodePath({
+        parent: node,
+        node: subNode,
+        parentPath: path,
+      });
+      subNodePath.circuittraverse(visitor, state);
+    }
+  }
+
+  if (methods?.exit && !state?.skipSubNodes) methods.exit(path, state);
+  if (state?.skipSubNodes) state.skipSubNodes = false;
+}
+
+
 /**
  * Fast traversal function for quick searching of a subtree. No scoping calcs.
  * @param {function} enter - a visitor function.
@@ -112,6 +161,34 @@ export function traverseNodesFast(node: any, enter: any, state?: any): void {
     } else if (node[key]) {
       const subNode = node[key];
       traverseNodesFast(subNode, enter, state);
+    }
+  }
+
+  if (state?.skipSubNodes) state.skipSubNodes = false;
+}
+
+/**
+ * Fast traversal function for quick searching of a subtree. No scoping calcs.
+ * @param {function} enter - a visitor function.
+ */
+export function circuittraverseNodesFast(node: any, enter: any, state?: any): void {
+  if (!node) return;
+  if (state?.stopTraversal || state?.skipSubNodes) return;
+
+  const keys = getCircuitVisitableKeys(node.nodeType);
+  if (!keys) return;
+
+  enter(node, state);
+
+  for (const key of keys) {
+    if (Array.isArray(node[key])) {
+      const subNodes = node[key];
+      for (const subNode of subNodes) {
+        circuittraverseNodesFast(subNode, enter, state);
+      }
+    } else if (node[key]) {
+      const subNode = node[key];
+      circuittraverseNodesFast(subNode, enter, state);
     }
   }
 
@@ -150,7 +227,7 @@ export function traverseNodesFastVisitor(node: any, visitor: any, state?: any) {
   if (state?.skipSubNodes) state.skipSubNodes = false;
 }
 
-export function traverseOutputNodesFastVisitor(node: any, visitor: any, state?: any) {
+export function circuittraverseNodesFastVisitor(node: any, visitor: any, state?: any) {
   if (!node) return;
   if (state?.stopTraversal || state?.skipSubNodes) return;
 
@@ -167,11 +244,11 @@ export function traverseOutputNodesFastVisitor(node: any, visitor: any, state?: 
     if (Array.isArray(node[key])) {
       const subNodes = node[key];
       for (const subNode of subNodes) {
-        traverseOutputNodesFastVisitor(subNode, visitor, state);
+        circuittraverseNodesFastVisitor(subNode, visitor, state);
       }
     } else if (node[key]) {
       const subNode = node[key];
-      traverseOutputNodesFastVisitor(subNode, visitor, state);
+      circuittraverseNodesFastVisitor(subNode, visitor, state);
     }
   }
 
@@ -219,6 +296,42 @@ export function traversePathsFast(path: NodePath, enter: any, state?: any) {
         parentPath: path,
       });
       traversePathsFast(subNodePath, enter, state);
+    }
+  }
+
+  if (state?.skipSubNodes) state.skipSubNodes = false;
+}
+export function circuittraversePathsFast(path: CircuitNodePath, enter: any, state?: any) {
+  if (!path) return;
+  if (state?.stopTraversal || state?.skipSubNodes) return;
+
+  const keys = getCircuitVisitableKeys(path.node.nodeType);
+  if (!keys) return;
+
+  enter(path, state);
+
+  const { node } = path;
+
+  for (const key of keys) {
+    if (Array.isArray(node[key])) {
+      const subNodes = node[key];
+      for (const [index, subNode] of subNodes.entries()) {
+        if (!subNode) continue;
+        const subCircuitNodePath = new CircuitNodePath({
+          parent: node,
+          node: subNode,
+          parentPath: path,
+        });
+        circuittraversePathsFast(subCircuitNodePath, enter, state);
+      }
+    } else if (node[key]) {
+      const subNode = node[key];
+      const subCircuitNodePath = new CircuitNodePath({
+        parent: node,
+        node: subNode,
+        parentPath: path,
+      });
+      circuittraversePathsFast(subCircuitNodePath, enter, state);
     }
   }
 
