@@ -135,6 +135,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         visibility,
         isConstructor,
+        kind,
+        stateMutability,
         body = buildNode('Block'),
         parameters = buildNode('ParameterList'),
         returnParameters = buildNode('ParameterList'), // TODO
@@ -145,6 +147,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         visibility,
         isConstructor,
+        kind,
+        stateMutability,
         body,
         parameters,
         returnParameters,
