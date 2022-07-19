@@ -7,8 +7,6 @@ import buildNode from '../../types/orchestration-types.js'
 
 
 // let interactsWithSecret = false; // Added globaly as two objects are accesing it
-let oldStateArray : string[];
- let circuitImport = [];
 
 const internalCallVisitor = {
  ContractDefinition: {
@@ -21,7 +19,7 @@ const internalCallVisitor = {
       state.internalFncName?.forEach( name => {
         if(file.fileName === name) {
           let index = state.internalFncName.indexOf(name);
-          if(circuitImport[index]==='true') {
+          if(state.circuitImport[index]==='true') {
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
@@ -36,7 +34,7 @@ const internalCallVisitor = {
                  })
                  state.newParameterList.forEach(node => {
                   if(node.nodeType === 'Boilerplate') {
-                    for(const [index, oldStateName] of  oldStateArray.entries()) {
+                    for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                       node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[index])
                       if(node.newCommitmentValue === oldStateName)
                        node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[index])
@@ -45,7 +43,7 @@ const internalCallVisitor = {
                      }
                    }
                    if(node.nodeType === 'VariableDeclaration'){
-                     for(const [index, oldStateName] of oldStateArray.entries()) {
+                     for(const [index, oldStateName] of state.oldStateArray.entries()) {
                        node.name = node.name.replace(oldStateName, state.newStateArray[index])
                      }
                    }
@@ -118,7 +116,7 @@ const internalCallVisitor = {
                }
              })
            }
-          else if(circuitImport[index] === 'false'){
+          else if(state.circuitImport[index] === 'false'){
             let newExpressionList = [];
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
@@ -126,7 +124,7 @@ const internalCallVisitor = {
                   if(node.nodeType === 'ExpressionStatement') {
                     if(node.expression.nodeType === 'Assignment') {
                       let  expressionList = cloneDeep(node);
-                      for(const [index, oldStateName] of  oldStateArray.entries()) {
+                      for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                         if(node.expression.rightHandSide.rightExpression.name === oldStateName)
                          expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[index])
                         if(node.expression.leftHandSide.name === oldStateName)

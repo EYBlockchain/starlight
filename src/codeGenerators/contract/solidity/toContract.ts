@@ -65,9 +65,22 @@ function codeGenerator(node: any) {
 
     case 'FunctionDefinition': {
       // prettier-ignore
-      const functionSignature = `${
-        node.isConstructor ? 'constructor ' : `function ${node.name}`
-      }(${codeGenerator(node.parameters)}) ${node.visibility} {`;
+      let functionType: string;
+      switch (node.kind)
+      {
+        case 'fallback':
+        case 'receive':
+          functionType = node.kind;
+          break;
+        case 'constructor':
+          functionType = 'constructor ';
+          break;
+        case 'function':
+          functionType = `function ${node.name}`;
+          break;
+
+      }
+      const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} {`;
       const body = codeGenerator(node.body);
 
 
@@ -167,8 +180,10 @@ function codeGenerator(node: any) {
 
     }
     case 'InternalFunctionCall' :{
-      if(node.parameters){
+      if(node.parameters ){
+        if(node.internalFunctionInteractsWithSecret)
          return `\t \t \t \t ${node.name} (${node.parameters});`
+        return  `\t \t \t \t ${node.name} (${node.parameters.map(codeGenerator)});`
       } else {
          return `\t \t \t \t${node.name} (${node.arguments.name});`
       }

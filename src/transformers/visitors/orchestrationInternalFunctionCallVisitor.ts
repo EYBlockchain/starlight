@@ -19,9 +19,8 @@ const internalCallVisitor = {
       let sendTransactionNode : any;
       let newdecrementedSecretStates = [];
       node._newASTPointer.forEach(file => {
-       state.internalFncName?.forEach( name => {
+       state.internalFncName?.forEach( (index, name)=> {
          if(file.fileName === name && file.nodeType === 'File') {
-           let index = state.internalFncName.indexOf(name);
            if(state.circuitImport[index]==='true') {
              file.nodes.forEach(childNode => {
                if(childNode.nodeType === 'FunctionDefinition'){
@@ -50,7 +49,7 @@ const internalCallVisitor = {
                           node.privateStates[ newstateName ] = node.privateStates[stateName];
                           delete(node.privateStates[ stateName ]);
                          }
-                        
+
                          switch (node.nodeType)
                         {
                          case 'InitialisePreimage': {
