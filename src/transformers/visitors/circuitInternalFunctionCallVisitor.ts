@@ -124,7 +124,6 @@ const internalCallVisitor = {
                   if(node.nodeType === 'ExpressionStatement') {
                     if(node.expression.nodeType === 'Assignment') {
                       let  expressionList = cloneDeep(node);
-                      console.log()
                       for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                         if(node.expression.rightHandSide.rightExpression.name === oldStateName)
                          expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[index])
