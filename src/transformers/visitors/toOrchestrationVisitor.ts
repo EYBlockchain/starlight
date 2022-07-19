@@ -1,7 +1,4 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
-
-// import logger from '../../utils/logger.js';
-import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
 import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { VariableBinding } from '../../traverse/Binding.js';
@@ -263,7 +260,7 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
-      const initialiseOrchestrationBoilerplateNodes = (fnIndicator) => {
+      const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
         const newNodes: any = {};
         const contractName = `${parent.name}Shield`;
         newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
@@ -281,7 +278,7 @@ const visitor = {
           });
           newNodes.calculateNullifierNode = buildNode('CalculateNullifier');
         }
-        if (fnIndicator.newCommitmentsRequired)
+        if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
           newNodes.generateProofNode = buildNode('GenerateProof', {
           circuitName: node.fileName,
@@ -323,8 +320,7 @@ const visitor = {
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
-        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret
-      ) {
+        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret ) {
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
         );
