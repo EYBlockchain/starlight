@@ -1,6 +1,5 @@
 import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
-import CircuitNodePath from '../../traverse/CircuitNodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import buildNode from '../../types/orchestration-types.js'
 
@@ -10,6 +9,7 @@ import buildNode from '../../types/orchestration-types.js'
 // let interactsWithSecret = false; // Added globaly as two objects are accesing it
 let oldStateArray : string[];
  let circuitImport = [];
+
 
 const internalCallVisitor = {
  ContractDefinition: {
@@ -21,7 +21,7 @@ const internalCallVisitor = {
       state.internalFncName?.forEach( name => {
         if(file.fileName === name) {
           let index = state.internalFncName.indexOf(name);
-          if(circuitImport[index]==='true') {
+          if(circuitImport[index] === 'true') {
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);

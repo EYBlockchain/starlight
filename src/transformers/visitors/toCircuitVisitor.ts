@@ -5,6 +5,7 @@ import { buildNode } from '../../types/zokrates-types.js';
 import { TODOError } from '../../error/errors.js';
 import { traversePathsFast, circuittraversePathsFast} from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
+import CircuitNodePath from '../../traverse/CircuitNodePath.js';
 import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
