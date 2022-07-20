@@ -562,6 +562,10 @@ const visitor = {
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
+        if(!interactsWithSecret) {
+        state.skipSubNodes = true;
+        return;
+        }
       //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
