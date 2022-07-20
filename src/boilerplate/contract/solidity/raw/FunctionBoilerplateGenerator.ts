@@ -106,6 +106,8 @@ class FunctionBoilerplateGenerator {
       ];
     },
   };
+
+
 }
 
 export default FunctionBoilerplateGenerator;
