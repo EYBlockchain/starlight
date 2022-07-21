@@ -156,7 +156,7 @@ const addPublicInput = (path: NodePath, state: any) => {
 
     // if the node is the indexExpression, we dont need its value in the circuit
     state.publicInputs ??= [];
-    if (!(path.containerName === 'indexExpression' && !binding.stateVariable)) state.publicInputs.push(node);
+    if (!(path.containerName === 'indexExpression' && !path.parentPath.isSecret)) state.publicInputs.push(node);
 
     // check we haven't already imported this node
     if (fnDefNode.node._newASTPointer.body.preStatements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name)) return;
@@ -612,7 +612,8 @@ const visitor = {
         }
         if (state.publicInputs) {
           state.publicInputs.forEach((input: any) => {
-            newNodes.generateProofNode.parameters.push(input.name);
+            if (!newNodes.generateProofNode.parameters.includes(input.name))
+              newNodes.generateProofNode.parameters.push(input.name);
           })
 
           delete state.publicInputs; // reset

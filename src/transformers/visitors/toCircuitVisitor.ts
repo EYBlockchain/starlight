@@ -34,8 +34,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
-    // if the node is the indexExpression, we dont need its value in the circuit unless its a public state variable
-    !(thisPath.containerName === 'indexExpression' && !binding.stateVariable)
+    // if the node is the indexExpression, we dont need its value in the circuit unless its a public state variable which is needed for the stateVarId
+    !(thisPath.containerName === 'indexExpression' && !thisPath.parentPath.isSecret)
   ) {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
@@ -44,7 +44,9 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
       name = binding.getMappingKeyName(thisPath)
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition').node;
-    fnDefNode._newASTPointer.parameters.parameters.push(parameterNode);
+    const params = fnDefNode._newASTPointer.parameters.parameters;
+    if (!params.some(n => n === parameterNode))
+      params.push(parameterNode);
     // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
     thisState.skipSubNodes = true;
   }
@@ -120,24 +122,6 @@ const visitor = {
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
 
-        const joinCommitmentsNode = buildNode('File', {
-         fileName: `joinCommitments`,
-          fileId: node.id,
-          nodes: [],
-        });
-
-        // check for joinCommitments
-        for(const [, indicator ] of Object.entries(indicators)){
-          if(
-            (indicator instanceof StateVariableIndicator)
-            && indicator.isPartitioned
-            && indicator.isNullified
-            && !indicator.isStruct) {
-              if (!parent._newASTPointer.some(n => n.fileName = joinCommitmentsNode.fileName))
-                parent._newASTPointer.push(joinCommitmentsNode);
-           }
-        }
-
 
         // After getting an appropriate Name , we build the node
         const newNode = buildNode('File', {
@@ -157,9 +141,27 @@ const visitor = {
     },
 
     exit(path: NodePath, state: any) {
-      const { node, scope } = path;
+      const { node, parent, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
+
+      const joinCommitmentsNode = buildNode('File', {
+       fileName: `joinCommitments`,
+        fileId: node.id,
+        nodes: [],
+      });
+
+      // check for joinCommitments
+      for(const [, indicator ] of Object.entries(indicators)){
+        if(
+          (indicator instanceof StateVariableIndicator)
+          && indicator.isPartitioned
+          && indicator.isNullified
+          && !indicator.isStruct) {
+            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
+              parent._newASTPointer.push(joinCommitmentsNode);
+         }
+      }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
@@ -429,7 +431,7 @@ const visitor = {
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName:
+                  mappingKeyName: scope.getMappingKeyName(lhs) ||
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
@@ -443,7 +445,7 @@ const visitor = {
                 indicators: lhsIndicator,
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName:
+                  mappingKeyName: scope.getMappingKeyName(lhs) ||
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this

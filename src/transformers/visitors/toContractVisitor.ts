@@ -20,32 +20,29 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+
   if(thisPath.nodeType === 'Return') {
-   thisPath.container.forEach(item => {
-     if(item.nodeType === 'Return'){
-      if(item.expression.components) {
-        item.expression.components.forEach(element => {
-          if(element.kind === 'bool'){
-          thisState.customInputs ??= [];
-          thisState.customInputs.push(1);
-    }
-  });
-}
-    else {
-      if(item.expression.kind === 'bool'){
-        thisState.customInputs ??= [];
-        thisState.customInputs.push(1);
+    thisPath.container.forEach(item => {
+      if(item.nodeType === 'Return'){
+        if(item.expression.components) {
+          item.expression.components.forEach(element => {
+            if(element.kind === 'bool'){
+              thisState.customInputs ??= [];
+              thisState.customInputs.push(1);
+            }
+          });
+        } else {
+          if(item.expression.kind === 'bool'){
+            thisState.customInputs ??= [];
+            thisState.customInputs.push(1);
+          }
+        }
       }
-    }
+    });
   }
-  });
-}
-  if(thisPath.getAncestorOfType('Return')){
-  if( binding instanceof VariableBinding && binding.isSecret){
+  if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
     thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
-  }
-
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -57,7 +54,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (indicator.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
-    !(thisPath.containerName === 'indexExpression'&& !binding.stateVariable)
+    !(thisPath.containerName === 'indexExpression'&& !thisPath.parent.isSecret)
   ) {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
