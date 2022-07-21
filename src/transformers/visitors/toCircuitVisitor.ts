@@ -120,6 +120,24 @@ const visitor = {
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
 
+        const joinCommitmentsNode = buildNode('File', {
+         fileName: `joinCommitments`,
+          fileId: node.id,
+          nodes: [],
+        });
+
+        // check for joinCommitments
+        for(const [, indicator ] of Object.entries(indicators)){
+          if(
+            (indicator instanceof StateVariableIndicator)
+            && indicator.isPartitioned
+            && indicator.isNullified
+            && !indicator.isStruct) {
+              if (!parent._newASTPointer.some(n => n.fileName = joinCommitmentsNode.fileName))
+                parent._newASTPointer.push(joinCommitmentsNode);
+           }
+        }
+
 
         // After getting an appropriate Name , we build the node
         const newNode = buildNode('File', {
