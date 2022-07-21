@@ -295,6 +295,7 @@ class BoilerplateGenerator {
         case 'whole':
           const value = structProperties ? structProperties.map(p => `${stateName}.${p}.hex(32)`) :` ${stateName}.hex(32)`;
           return [`
+            \n ${structProperties ? structProperties.map(p => `\n${stateName}.${p} = ${stateName}.${p} ? ${stateName}.${p} : ${stateName}_prev.${p};`).join('') : ''}
             \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
             \nlet ${stateName}_newCommitment = generalise(utils.shaHash(${stateName}_stateVarId, ${value}, ${stateName}_newOwnerPublicKey.hex(32), ${stateName}_newSalt.hex(32)));
             \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32, 31)); // truncate`];
