@@ -52,6 +52,24 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
 };
 
+const addStructDefinition = (path: NodePath) => {
+  const structDef = path.getStructDeclaration(path.node);
+  const structNode = buildNode('StructDefinition', {
+    name: structDef.name,
+    members: structDef.members.map((mem: any) => {
+      return { name: mem.name,
+        type: mem.typeName.name === 'bool' ? 'bool' : 'field',
+      }
+    }),
+  });
+  const thisFnPath = path.getAncestorOfType('FunctionDefinition');
+  const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
+  if (!thisFile.nodes.some(n => n.nodeType === 'StructDefinition' && n.name === structNode.name))
+  // add struct def after imports, before fndef
+    thisFile.nodes.splice(1, 0, structNode);
+  return structNode;
+}
+
 let interactsWithSecret = false; // Added globaly as two objects are accesing it
 /**
  * @desc:
@@ -586,20 +604,8 @@ const visitor = {
       });
 
       if (path.isStruct(node)) {
-        const structDef = path.getStructDeclaration(node);
-        const structNode = buildNode('StructDefinition', {
-          name: structDef.name,
-          members: structDef.members.map((mem: any) => {
-            return { name: mem.name,
-              type: mem.typeName.name === 'bool' ? 'bool' : 'field',
-            }
-          }),
-        });
-        const thisFnPath = path.getAncestorOfType('FunctionDefinition');
-        const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
-        // add struct def after imports, before fndef
-        thisFile.nodes.splice(1, 0, structNode);
-        newNode.typeName.name = structDef.name;
+        const structNode = addStructDefinition(path);
+        newNode.typeName.name = structNode.name;
         newNode.typeName.members = structNode.members;
       }
       node._newASTPointer = newNode;
@@ -658,7 +664,9 @@ const visitor = {
 
       const newNode = buildNode(
         node.nodeType,
-        { name, });
+        { name },
+      );
+      if (path.isStruct(node)) addStructDefinition(path);
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
