@@ -1,5 +1,6 @@
+cd zapps/
 echo “$(tput setaf 3) SHIELDCONTRACTS” 
-SOLFILES=$(find . -type f -name "*Shield*.sol" -maxdepth 4 -mindepth 4)
+SOLFILES=$(find . -type f -name "*Shield*.sol" -maxdepth 3 -mindepth 3)
 solarray=($SOLFILES)
 for solelement in "${solarray[@]}"
 do
@@ -10,7 +11,7 @@ do
 done
 
 echo “$(tput setaf 3) CIRCUITS” 
-ZOKFILES=$(find . -type f -name "*.zok" -maxdepth 4 -mindepth 4)
+ZOKFILES=$(find . -type f -name "*.zok" -maxdepth 3 -mindepth 3)
 zokarray=($ZOKFILES)
 for zokelement in "${zokarray[@]}"
 do
