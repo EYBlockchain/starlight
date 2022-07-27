@@ -15,7 +15,8 @@ class BoilerplateGenerator {
 
   PoKoSK = {
     importStatements(): string[] {
-      return [`from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256`];
+      return [`from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
+    `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`];
     },
 
     parameters({ name: x }): string[] {
@@ -29,7 +30,7 @@ class BoilerplateGenerator {
         // ${x}_oldCommitment - PoKoSK:
         // The correctness of this secret key will be constrained within the oldCommitment existence check.
 
-        u32[8] ${x}_oldCommitment_owner_publicKey = sha256of256([...${x}_oldCommitment_owner_secretKey])`,
+        u32[8] ${x}_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(${x}_oldCommitment_owner_secretKey))`,
       ];
     },
   };
@@ -39,7 +40,7 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-        `from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768`,
+        `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
       ];
     },
 
@@ -55,7 +56,7 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        bool[256] ${x}_stateVarId = field_to_bool_256(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
@@ -65,10 +66,10 @@ class BoilerplateGenerator {
         `
         // Nullify ${x}:
 
-        u32[8] ${x}_oldCommitment_nullifier_check = sha256of768([\\
+        u32[8] ${x}_oldCommitment_nullifier_check = sha256Padded([\\
           ...${x}_stateVarId,\\
-          ...${x}_oldCommitment_owner_secretKey,\\
-          ...${x}_oldCommitment_salt\\
+          ...u32_8_to_bool_256(${x}_oldCommitment_owner_secretKey),\\
+          ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
         ])
 
         assert(\\
@@ -94,37 +95,51 @@ class BoilerplateGenerator {
   oldCommitmentPreimage = {
     importStatements(): string[] {
       return [
-        `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
+        `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
+        `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
+        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
       ];
     },
 
-    parameters({ name: x }): string[] {
+    parameters({ name: x, typeName }): string[] {
       // prettier-ignore
       return [
-        `private field ${x}_oldCommitment_value`,
+        `private ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
         `private u32[8] ${x}_oldCommitment_salt`,
       ];
     },
 
-    preStatements({ name: x }): string[] {
+    preStatements({ name: x, typeName }): string[] {
       // For a state variable, we'll have passed in `${x}_oldCommitment_value` as a parameter. But our AST nodes will be using `${x}`. This line resolves the two.
       return [
         `
-        field ${x} = ${x}_oldCommitment_value`,
+        ${typeName ? typeName : 'field'} ${x} = ${x}_oldCommitment_value`,
       ];
     },
 
-    postStatements({ name: x }): string[] {
+    postStatements({ name: x, structProperties }): string[] {
+      if (structProperties)
+        return [
+          `
+          // ${x}_oldCommitment_commitment: preimage check
+          // TODO - SHA length and prop types
+
+          u32[8] ${x}_oldCommitment_commitment = sha256Padded([\\
+            ...${x}_stateVarId,\\
+            ${structProperties.map(p => `\t ...field_to_bool_256(${x}_oldCommitment_value.${p}),\\`).join('\n')}
+            ...u32_8_to_bool_256(${x}_oldCommitment_owner_publicKey),\\
+            ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
+          ])`,
+        ];
       return [
         `
         // ${x}_oldCommitment_commitment: preimage check
 
-        u32[8] ${x}_oldCommitment_commitment = sha256of1024([\\
+        u32[8] ${x}_oldCommitment_commitment = sha256Padded([\\
           ...${x}_stateVarId,\\
-          ...field_to_u32_8(${x}_oldCommitment_value),\\
-          ...${x}_oldCommitment_owner_publicKey,\\
-          ...${x}_oldCommitment_salt\\
+          ...field_to_bool_256(${x}_oldCommitment_value),\\
+          ...u32_8_to_bool_256(${x}_oldCommitment_owner_publicKey),\\
+          ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
         ])`,
       ];
     },
@@ -192,7 +207,7 @@ class BoilerplateGenerator {
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
-        `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
+        `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
       ];
     },
@@ -210,11 +225,11 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        bool[256] ${x}_stateVarId = field_to_bool_256(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
-    postStatements({ name: x, isWhole, isNullified, newCommitmentValue }): string[] {
+    postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       const y = isWhole ? x : newCommitmentValue;
       const lines = [];
@@ -223,15 +238,48 @@ class BoilerplateGenerator {
         const i = parseInt(x.slice(-1), 10);
         const x0 = x.slice(0, -1) + `${i-2}`;
         const x1 = x.slice(0, -1) + `${i-1}`;
-        lines.push(
-          `assert(${x0} + ${x1} > ${y})
-          // TODO: assert no under/overflows
+        if (!structProperties) {
+          lines.push(
+            `assert(${x0} + ${x1} > ${y})
+            // TODO: assert no under/overflows
 
-          u32[8] ${x}_newCommitment_value = field_to_u32_8((${x0} + ${x1}) - (${y}))`
-        );
+            bool[256] ${x}_newCommitment_value = field_to_bool_256((${x0} + ${x1}) - (${y}))`
+          );
+        } else {
+          // TODO types for each structProperty
+          lines.push(
+            `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${x0}.${p} + ${x1}.${p} >= ${y[p]})`).join('\n')}
+            // TODO: assert no under/overflows
+
+            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: (${x0}.${p} + ${x1}.${p}) - ${y[p]}`)} }`
+          );
+        }
       } else {
-        lines.push(`u32[8] ${x}_newCommitment_value = field_to_u32_8(${y})`);
+        if (!structProperties) lines.push(`bool[256] ${x}_newCommitment_value = field_to_bool_256(${y})`);
+        else lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y[p]}`}`)} }`)
       }
+
+      if (structProperties)
+        return [
+          `
+          // prepare secret state '${x}' for commitment
+
+          ${lines}
+
+          // ${x}_newCommitment_commitment - preimage check
+          // TODO - SHA length and prop types
+
+          u32[8] ${x}_newCommitment_commitment_check = sha256Padded([\\
+            ...${x}_stateVarId,\\
+            ${structProperties.map(p => `\t ...field_to_bool_256(${x}_newCommitment_value.${p}),\\`).join('\n')}
+            ...u32_8_to_bool_256(${x}_newCommitment_owner_publicKey),\\
+            ...u32_8_to_bool_256(${x}_newCommitment_salt)\\
+          ])
+
+          assert(\\
+            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
+          )`,
+        ];
 
       return [
         `
@@ -241,11 +289,11 @@ class BoilerplateGenerator {
 
         // ${x}_newCommitment_commitment - preimage check
 
-        u32[8] ${x}_newCommitment_commitment_check = sha256of1024([\\
+        u32[8] ${x}_newCommitment_commitment_check = sha256Padded([\\
           ...${x}_stateVarId,\\
           ...${x}_newCommitment_value,\\
-          ...${x}_newCommitment_owner_publicKey,\\
-          ...${x}_newCommitment_salt\\
+          ...u32_8_to_bool_256(${x}_newCommitment_owner_publicKey),\\
+          ...u32_8_to_bool_256(${x}_newCommitment_salt)\\
         ])
 
         assert(\\
@@ -258,7 +306,7 @@ class BoilerplateGenerator {
   mapping = {
     importStatements(): string[] {
       return [
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
+        `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
       ];
     },
@@ -284,7 +332,7 @@ class BoilerplateGenerator {
         field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
 
         `
-        u32[8] ${x}_stateVarId = field_to_u32_8(${x}_stateVarId_field)`, // convert to u32[8], for later sha256 hashing
+        bool[256] ${x}_stateVarId = field_to_bool_256(${x}_stateVarId_field)`, // convert to bool, for later sha256 hashing
       ];
     },
   };

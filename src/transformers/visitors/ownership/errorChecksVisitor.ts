@@ -64,12 +64,23 @@ export default {
     exit(path: NodePath) {
       const { scope } = path;
       if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
+      if (path.node.containsSecret && (path.node.kind === 'fallback' || path.node.kind === 'receive'))
+      throw new TODOError(`Secret states on fallback / receive functions is currently not supported`, path.node);
       for (const [, indicator] of Object.entries(scope.indicators)) {
         // we may have a function indicator property we'd like to skip
         if (!(indicator instanceof StateVariableIndicator)) continue;
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();
+        if (indicator.isStruct) {
+          let found = { whole: false, partitioned: false };
+          for (const [, structProperty] of Object.entries(indicator.structProperties)) {
+            found.whole = structProperty.isWhole;
+            found.partitioned = structProperty.isPartitioned;
+          }
+          if (found.whole && found.partitioned)
+            throw new TODOError(`Found a struct which has both whole and partitioned states, this currently is not supported as these state types require different commitment structures. For now, one commitment per struct is supported.`, indicator.node);
+        }
       }
       // finally, we update commitments req for the whole function
       scope.indicators.updateNewCommitmentsRequired();

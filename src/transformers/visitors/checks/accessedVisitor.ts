@@ -53,8 +53,7 @@ export default {
       const lhsNode = path.getCorrespondingLhsNode();
       // TODO getReferencedBinding should return the VariableDeclaration binding if the input is a VariableDeclaration
       const lhsBinding: any =
-        lhsNode?.nodeType === 'Identifier' ||
-        lhsNode?.nodeType === 'IndexAccess'
+        ['Identifier', 'IndexAccess', 'MemberAccess'].includes(lhsNode?.nodeType )
           ? scope.getReferencedBinding(lhsNode) ||
             scope.getReferencedBinding({
               nodeType: 'Identifier',
@@ -164,14 +163,17 @@ export default {
           !referencedBinding.isWhole &&
           !referencedBinding.isKnown &&
           !referencedBinding.isUnknown
-        )
+        ) {
           logger.warn(
             `We don't know whether this state ${node.name} is whole or partitioned - but since there are no known/unknown decorators, we assume its a whole state which nobody but the owner can edit.`,
           );
+          referencedBinding.isWhole ??= true;
+        }
+
         logger.debug(
           `Found an accessed secret state ${node.name} (accessed in ${leftAncestor.parent.operator} operation)`,
         );
-        scope.getReferencedBinding(node)?.updateAccessed(path);
+        referencedBinding.updateAccessed(path);
         const indicator = scope.getReferencedIndicator(node);
         if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
       }

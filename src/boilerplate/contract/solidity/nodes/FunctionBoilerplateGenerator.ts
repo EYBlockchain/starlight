@@ -3,6 +3,7 @@
 
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 import Scope from '../../../../traverse/Scope.js';
+import NodePath from '../../../../traverse/NodePath.js';
 
 const bpCache = new WeakMap();
 
@@ -30,6 +31,7 @@ class FunctionBoilerplateGenerator {
 
   categorySelector = () => {
     const { scope } = this;
+
     const isConstructorFunction =
       scope.path.node.nodeType === 'FunctionDefinition' && scope.path.node.kind === 'constructor';
     if (isConstructorFunction && scope.containsSecret) {
@@ -87,27 +89,42 @@ class FunctionBoilerplateGenerator {
     postStatements(customInputs: any[] = []) {
       const { scope } = this;
       const { path } = scope;
+
+      const customInputsMap = (node: any) => {
+        if (path.isStruct(node)) {
+          const structDef = path.getStructDeclaration(node);
+          const names = structDef.members.map((mem: any) => {
+            return { name: `${node.name}.${mem.name}`, type: mem.typeName.name };
+          });
+          return { structName: structDef.name, properties: names };
+        }
+        return { name: node.name, type: node.typeName.name };
+      }
+
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => p.name).concat(customInputs);
-      const publicParamstype = params?.filter((p: any) => !p.isSecret).map((p: any) => p.typeDescriptions.typeString);
+      const publicParams = params?.filter((p: any) => !p.isSecret).flatMap((p: any) => customInputsMap(p)).concat(customInputs);
+
       const functionName = path.getUniqueFunctionName();
-      if(path.node.returnParameters.parameters.length === 0){
-      publicParams?.push(1);
-      };
 
       const indicators = this.customFunction.getIndicators.bind(this)();
 
       // special check for msgSender param. If found, prepend a msgSender uint256 param to the contact's function.
-      if (indicators.msgSenderParam) publicParams.unshift('msgSender');
+      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' });
+
+      if(path.node.returnParameters.parameters.length === 0) {
+        publicParams?.push({ name: 1, type: 'uint256', dummy: true });
+      }
 
       return {
         ...(publicParams?.length && { customInputs: publicParams }),
-        publicParamstype,
         functionName,
         ...indicators,
       };
     },
   };
+
+
+
 }
 
 export default FunctionBoilerplateGenerator;

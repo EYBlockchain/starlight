@@ -95,7 +95,8 @@ class ContractBoilerplateGenerator {
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
       circuitParams,
-      constructorContainsSecret
+      constructorContainsSecret,
+      isjoinCommitmentsFunction,
     }): string[] {
       const verifyFunctionSignature = `
         function verify(
@@ -105,7 +106,7 @@ class ContractBoilerplateGenerator {
       	) private {
         `;
       let verifyInput: string[] = [];
-      const verifyInputsMap = (type: string,input: string, counter: any) => {
+      const verifyInputsMap = (type: string, input: string, counter: any) => {
         if(type  === 'parameters'){
         switch (input) {
           case 'nullifier':
@@ -130,10 +131,10 @@ class ContractBoilerplateGenerator {
             break;
         }
       }
-      else if(type  === 'returnParameters'){
-          verifyInput.push( `
-          inputs[k++] = ${input};`);
-      }
+        else if(type  === 'returnParameters') {
+            verifyInput.push( `
+            inputs[k++] = ${input};`);
+        }
       }
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
@@ -179,20 +180,21 @@ class ContractBoilerplateGenerator {
 
       ];
       const verifyInputs: string[] = [];
+      const joinCommitmentsInputs: string[] = [];
       for (let [name, _params] of Object.entries(circuitParams)) {
         for (let [type, _inputs] of Object.entries(_params)) {
-        const counter = {
-          customInputs: 0,
-          newNullifiers: 0,
-          checkNullifiers: 0,
-          newCommitments: 0,
-        };
+          const counter = {
+            customInputs: 0,
+            newNullifiers: 0,
+            checkNullifiers: 0,
+            newCommitments: 0,
+          };
 
-        _inputs.map(i => verifyInputsMap(type, i, counter));
+          _inputs.map(i => verifyInputsMap(type, i, counter));
 
-      }
+        }
 
-      if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
+        if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
 
         verifyInputs.push(`
           if (functionId == uint(FunctionNames.${name})) {
@@ -221,16 +223,54 @@ class ContractBoilerplateGenerator {
         ),
       ];
 
+      if (isjoinCommitmentsFunction?.includes('true')) {
+
+       joinCommitmentsInputs.push(
+        `
+           function joinCommitments(uint256[] calldata newNullifiers, uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
+
+            bytes4 sig = bytes4(keccak256("joinCommitments(uint256[],uint256,uint256[],uint256[])"));
+
+            Inputs memory inputs;
+
+            inputs.customInputs = new uint[](1);
+            inputs.customInputs[0] = 1;
+
+            inputs.newNullifiers = newNullifiers;
+
+            inputs.commitmentRoot = commitmentRoot;
+
+            inputs.newCommitments = newCommitments;
+
+            verify(proof, uint(FunctionNames.joinCommitments), inputs);
+        }`)
+       verifyInputs.push(`
+
+         if (functionId == uint(FunctionNames.joinCommitments)) {
+           uint k = 0;
+
+           inputs[k++] = newNullifiers[0];
+           inputs[k++] = newNullifiers[1];
+           inputs[k++] = _inputs.commitmentRoot;
+           inputs[k++] = newCommitments[0];
+                inputs[k++] = 1;
+         }`)
+
+       }
+
       const verify = [
         `${verifyFunctionSignature}
           ${verifyPreStatements.join('\n')}
           ${verifyInputs.join('\n')}
           ${verification.join('\n')}
         }`,
+        `${joinCommitmentsInputs}`
       ];
+
 
       return verify;
     },
+
   };
 }
 

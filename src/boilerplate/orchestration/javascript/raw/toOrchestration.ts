@@ -137,6 +137,7 @@ export const generateProofBoilerplate = (node: any) => {
             stateName,
             stateType: 'whole',
             stateVarIds: stateVarIdLines,
+            structProperties: stateNode.structProperties,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
@@ -153,6 +154,7 @@ export const generateProofBoilerplate = (node: any) => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
+            if (stateNode.structProperties) stateNode.increment = Object.values(stateNode.increment).flat(Infinity);
             stateNode.increment.forEach((inc: any) => {
               // +inc.name tries to convert into a number -  we don't want to add constants here
               if (
@@ -168,6 +170,7 @@ export const generateProofBoilerplate = (node: any) => {
                 stateName,
                 stateType: 'decrement',
                 stateVarIds: stateVarIdLines,
+                structProperties: stateNode.structProperties,
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 initialisationRequired: false,
@@ -181,6 +184,7 @@ export const generateProofBoilerplate = (node: any) => {
           case false:
           default:
             // increment
+            if (stateNode.structProperties) stateNode.increment = Object.values(stateNode.increment).flat(Infinity);
             stateNode.increment.forEach((inc: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
@@ -194,6 +198,7 @@ export const generateProofBoilerplate = (node: any) => {
                 stateName,
                 stateType: 'increment',
                 stateVarIds: stateVarIdLines,
+                structProperties: stateNode.structProperties,
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 initialisationRequired: false,
@@ -218,11 +223,11 @@ export const preimageBoilerPlate = (node: any) => {
     const stateVarIds = stateVariableIds({ privateStateName, stateNode });
     const initialiseParams = [];
     const preimageParams = [];
-
     if (stateNode.accessedOnly) {
       output.push(
         Orchestrationbp.readPreimage.postStatements({
           stateName:privateStateName,
+          contractName: node.contractName,
           stateType: 'whole',
           mappingName: null,
           mappingKey: null,
@@ -230,6 +235,7 @@ export const preimageBoilerPlate = (node: any) => {
           newOwnerStatment: null,
           reinitialisedOnly: false,
           initialised: stateNode.initialised,
+          structProperties: stateNode.structProperties,
           accessedOnly: true,
           stateVarIds,
         }));
@@ -253,17 +259,16 @@ export const preimageBoilerPlate = (node: any) => {
         } else if (stateNode.mappingOwnershipType === 'key') {
           // the stateVarId[1] is the mapping key
           newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
+        } else if (stateNode.mappingOwnershipType === 'value') {
+          // TODO test below
+          // if the private state is an address (as here) its still in eth form - we need to convert
+          newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
+          \nif (${privateStateName}_newOwnerPublicKey === 0) {
+            console.log('WARNING: Public key for given eth address not found - reverting to your public key');
+            ${privateStateName}_newOwnerPublicKey = publicKey;
+          }
+          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
-        //   if (stateNode.mappingOwnershipType === 'value') {
-        //   // TODO test below
-        //   // if the private state is an address (as here) its still in eth form - we need to convert
-        //   newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
-        //   \nif (${privateStateName}_newOwnerPublicKey === 0) {
-        //     console.log('WARNING: Public key for given eth address not found - reverting to your public key');
-        //     ${privateStateName}_newOwnerPublicKey = publicKey;
-        //   }
-        //   \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
-        // } else {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
         break;
@@ -289,10 +294,12 @@ export const preimageBoilerPlate = (node: any) => {
         output.push(
           Orchestrationbp.readPreimage.postStatements({
             stateName: privateStateName,
+            contractName: node.contractName,
             stateType: 'whole',
             mappingName: null,
             mappingKey: null,
             initialised: stateNode.initialised,
+            structProperties: stateNode.structProperties,
             reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
@@ -309,12 +316,14 @@ export const preimageBoilerPlate = (node: any) => {
             output.push(
               Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
+                contractName: node.contractName,
                 stateType: 'decrement',
                 mappingName: stateNode.mappingName || privateStateName,
                 mappingKey: stateNode.mappingKey
                   ? `[${privateStateName}_stateVarId_key.integer]`
                   : ``,
                 increment: stateNode.increment,
+                structProperties: stateNode.structProperties,
                 newOwnerStatment,
                 initialised: false,
                 reinitialisedOnly: false,
@@ -329,11 +338,13 @@ export const preimageBoilerPlate = (node: any) => {
             output.push(
             Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
+                contractName: node.contractName,
                 stateType: 'increment',
                 mappingName: null,
                 mappingKey: null,
                 increment: stateNode.increment,
                 newOwnerStatment,
+                structProperties: stateNode.structProperties,
                 initialised: false,
                 reinitialisedOnly: false,
                 accessedOnly: false,
@@ -445,7 +456,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             accessedOnly: stateNode.accessedOnly,
             stateVarIds: stateVariableIds({ privateStateName: stateName, stateNode}),
             mappingKey,
-            mappingName: stateNode.mappingName || stateName
+            mappingName: stateNode.mappingName || stateName,
+            structProperties: stateNode.structProperties
           }));
 
       }
@@ -494,6 +506,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
                     burnedOnly: false,
+                    structProperties: stateNode.structProperties,
                   }));
 
                 break;
@@ -517,7 +530,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       ? `[${stateName}_stateVarId_key.integer]`
                       : ``,
                     burnedOnly: false,
-
+                    structProperties: stateNode.structProperties,
                   }));
 
                 break;
@@ -542,6 +555,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   ? `[${stateName}_stateVarId_key.integer]`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
+                structProperties: stateNode.structProperties,
               }));
         }
       }
@@ -633,6 +647,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               Orchestrationbp.calculateCommitment.postStatements( {
                 stateName,
                 stateType: 'whole',
+                structProperties: stateNode.structProperties,
               }));
 
             break;
@@ -645,6 +660,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'decrement',
+                    structProperties: stateNode.structProperties,
                   }));
 
                 break;
@@ -655,6 +671,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'increment',
+                    structProperties: stateNode.structProperties,
                   }));
 
             }
@@ -679,8 +696,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'SendTransaction':
       if (node.publicInputs[0]) {
-        node.publicInputs.forEach((input: string) => {
-          lines.push(`${input}.integer`);
+        node.publicInputs.forEach((input: any) => {
+          if (input.properties) {
+            lines.push(`[${input.properties.map(p => `${input.name}.${p}.integer`).join(',')}]`)
+          } else
+            lines.push(`${input}.integer`);
         });
         lines[lines.length - 1] += `, `;
       }

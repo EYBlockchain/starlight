@@ -1,4 +1,5 @@
 import NodePath from './NodePath.js';
+import { Binding } from './Binding.js';
 import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError } from '../error/errors.js';
 
@@ -44,8 +45,9 @@ export default class MappingKey {
   interactsWithSecret: boolean;
   newCommitmentsRequired: boolean;
 
-  isMapping: boolean = true;
-  mappingKeys: any = {}; // object of objects, indexed by node id.
+  isMapping: boolean;
+  mappingKeys?: any;
+  isStruct: boolean;
 
   isKnown?:boolean;
   isUnknown?:boolean;
@@ -75,7 +77,7 @@ export default class MappingKey {
     this.referencedKeyId = keyPath.node.referencedDeclaration;
     this.referencedKeyName = keyPath.isMsg()
       ? 'msg'
-      : keyPath.getReferencedNode().name;
+      : keyPath.isStruct ? keyPath.node.memberName : keyPath.getReferencedNode().name;
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
       : keyPath.getReferencedNode().nodeType;
@@ -84,9 +86,16 @@ export default class MappingKey {
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
 
-    this.name = this.isMsgSender
-      ? `${container.name}[msg.sender]`
-      : `${container.name}[${keyPath.node.name}]`;
+    this.isMapping = container.isMapping;
+    this.isStruct = keyPath.isStruct();
+
+    if (this.isMapping) {
+      this.name = this.isMsgSender
+        ? `${container.name}[msg.sender]`
+        : `${container.name}[${keyPath.node.name}]`;
+    } else if (this.isStruct) {
+      this.name = `${container.name}.${keyPath.node.memberName}`;
+    }
 
     this.isReferenced = false;
     this.referenceCount = 0;
@@ -206,15 +215,6 @@ export default class MappingKey {
   }
 
   prelimTraversalErrorChecks() {
-    // warning: state is clearly whole, don't need known decorator
-    if (this.isKnown && this.isWhole) {
-      logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to: ${this.isWholeReason}`,
-      );
-      this.isWholeReason?.forEach(reason => {
-        console.log(reason[0]);
-      });
-    }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
       console.log('err 2');
@@ -242,17 +242,18 @@ export default class MappingKey {
 
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
-    this.isWhole ??= this.container.binding.isWhole;
+    const container = this.container instanceof Binding ? this.container : this.container.binding;
+    this.isWhole ??= container.isWhole;
     this.isWholeReason = this.isWhole
-      ? this.container.binding.isWholeReason
+      ? container.isWholeReason
       : this.isWholeReason;
-    this.isPartitioned ??= this.container.binding.isPartitioned;
+    this.isPartitioned ??= container.isPartitioned;
     this.isPartitionedReason = this.isPartitioned
-      ? this.container.binding.isPartitionedReason
+      ? container.isPartitionedReason
       : this.isPartitionedReason;
-    this.isOwned ??= this.container.binding.isOwned;
-    this.owner ??= this.container.binding.owner;
+    this.isOwned ??= container.isOwned;
+    this.owner ??= container.owner;
     this.mappingOwnershipType = this.owner?.mappingOwnershipType;
-    this.onChainKeyRegistry ??= this.container.binding.onChainKeyRegistry;
+    this.onChainKeyRegistry ??= container.onChainKeyRegistry;
   }
 }

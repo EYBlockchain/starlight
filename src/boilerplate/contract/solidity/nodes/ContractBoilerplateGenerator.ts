@@ -1,5 +1,7 @@
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 import Scope from '../../../../traverse/Scope.js';
+import { VariableBinding } from '../../../../traverse/Binding.js';
+import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 
 const bpCache = new WeakMap();
 
@@ -53,6 +55,8 @@ class ContractBoilerplateGenerator {
         'stateVariableDeclarations',
         'registerZKPPublicKey', // TODO: this is only needed if conversion between zkp PK's and Eth PK's is required.
         'verify',
+        'joinCommitmentsFunction',
+        'joinCommitmentsCircuitName',
       ];
     },
 
@@ -65,6 +69,11 @@ class ContractBoilerplateGenerator {
 
     stateVariableDeclarations() {
       const { scope } = this;
+      let isjoinCommitmentsFunction : string[]=[];
+      for(const [, binding ] of Object.entries(scope.bindings)){
+       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+          isjoinCommitmentsFunction?.push('true');
+      }
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = scope;
@@ -72,8 +81,8 @@ class ContractBoilerplateGenerator {
       const fnDefBindings = scope.filterBindings(
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
-      const functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
-
+      let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
+      if (isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments')
       return {
         functionNames,
         nullifiersRequired,
@@ -91,6 +100,11 @@ class ContractBoilerplateGenerator {
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = this.scope;
+      let isjoinCommitmentsFunction : string[]=[];
+      for(const [, binding ] of Object.entries(this.scope.bindings)){
+       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+          isjoinCommitmentsFunction?.push('true');
+      }
       const returnpara = {};
       let parameterList: any[];
       let paramtype: string;
@@ -120,8 +134,16 @@ class ContractBoilerplateGenerator {
               if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
               break;
             case undefined: {
-              if (circuitParamNode.nodeType === 'VariableDeclaration' && !circuitParamNode.isPrivate && !newList.some(str => str === circuitParamNode.name))
-              newList.push(circuitParamNode.name);
+              if (
+                circuitParamNode.nodeType === 'VariableDeclaration' &&
+                !circuitParamNode.isPrivate &&
+                !newList.some(str => str === circuitParamNode.name)
+              ){
+                if (circuitParamNode.typeName?.members) {
+                  newList.push(...circuitParamNode.typeName.members.map(m => `${circuitParamNode.name}.${m.name}`));
+                  break;
+                } else newList.push(circuitParamNode.name);
+              }
             }
             break;
 
@@ -138,7 +160,7 @@ class ContractBoilerplateGenerator {
 
     }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, constructorContainsSecret, circuitParams};
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};
     },
 
   };

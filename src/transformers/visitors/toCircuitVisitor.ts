@@ -8,7 +8,8 @@ import NodePath from '../../traverse/NodePath.js';
 import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
-import { StateVariableIndicator, FunctionDefinitionIndicator} from '../../traverse/Indicator.js';
+import { StateVariableIndicator} from '../../traverse/Indicator.js';
+import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -18,9 +19,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
   if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
   if (thisPath.isRequireStatement(node)) return;
-  // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
-  thisState.skipSubNodes = true;
-  let { name } = thisPath.scope.getReferencedIndicator(node, true);
+
+  let { name } = thisPath.isMsg(node) ? node.name : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
@@ -34,60 +34,43 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
-    // if the node is the indexExpression, we dont need its value in the circuit
-    !(thisPath.containerName === 'indexExpression')
+    // if the node is the indexExpression, we dont need its value in the circuit unless its a public state variable which is needed for the stateVarId
+    !(thisPath.containerName === 'indexExpression' && !thisPath.parentPath.isSecret)
   ) {
     // TODO other types
-    if (thisPath.isMapping)
+    if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+    if (thisPath.containerName === 'indexExpression')
+      name = binding.getMappingKeyName(thisPath)
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition').node;
-    fnDefNode._newASTPointer.parameters.parameters.push(parameterNode);
+    const params = fnDefNode._newASTPointer.parameters.parameters;
+    if (!params.some(n => n === parameterNode))
+      params.push(parameterNode);
+    // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
+    thisState.skipSubNodes = true;
   }
 };
+
+const addStructDefinition = (path: NodePath) => {
+  const structDef = path.getStructDeclaration(path.node);
+  const structNode = buildNode('StructDefinition', {
+    name: structDef.name,
+    members: structDef.members.map((mem: any) => {
+      return { name: mem.name,
+        type: mem.typeName.name === 'bool' ? 'bool' : 'field',
+      }
+    }),
+  });
+  const thisFnPath = path.getAncestorOfType('FunctionDefinition');
+  const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
+  if (!thisFile.nodes.some(n => n.nodeType === 'StructDefinition' && n.name === structNode.name))
+  // add struct def after imports, before fndef
+    thisFile.nodes.splice(1, 0, structNode);
+  return structNode;
+}
 
 let interactsWithSecret = false; // Added globaly as two objects are accesing it
-let oldStateArray : string[];
-let circuitImport = [];
-// to match the parameters and if they don't match, we throw an error
-const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
-  if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)
-    thisState.interactsWithSecret = true;
-};
-
-const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
- const { node, scope } = thisPath;
-  const args = node.arguments;
-  let parametercheck = true ;
-  let isSecretArray : string[];
-  for (const arg of args) {
-    if (arg.nodeType !== 'Identifier') continue;
-  isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
-}
-if(node.expression.nodeType === 'Identifier') {
- const functionReferncedNode = scope.getReferencedNode(node.expression);
- const params = functionReferncedNode.parameters.parameters;
- oldStateArray = params.map(param => (param.name) );
- for (const [index, param] of params.entries()) {
-   if(isSecretArray[index] !== param.isSecret)
-   parametercheck = false;
- }
- const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
- if(parametercheck && fnIndicator.internalFunctionInteractsWithSecret){
- thisState.internalFunctionInteractsWithSecret = true;
-  }
-  if(!fnIndicator.internalFunctionInteractsWithSecret){
-      if(params.some(node => node.isSecret))
-      {
-      thisState.internalFunctionInteractsWithSecret = true; }
-  }
-}
-};
-
-
-
-
-
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.zok` AST
@@ -105,10 +88,9 @@ const visitor = {
     },
   // We Add the InternalFunctionCall nodes at the exit node so that all others gets build we need to access
     exit(path: NodePath, state: any) {
-
-
       // Internal Call Visitor
       path.traverse(explode(internalCallVisitor), state);
+
     },
   },
 
@@ -177,9 +159,27 @@ const visitor = {
     },
 
     exit(path: NodePath, state: any) {
-      const { node, scope } = path;
+      const { node, parent, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
+
+      const joinCommitmentsNode = buildNode('File', {
+       fileName: `joinCommitments`,
+        fileId: node.id,
+        nodes: [],
+      });
+
+      // check for joinCommitments
+      for(const [, indicator ] of Object.entries(indicators)){
+        if(
+          (indicator instanceof StateVariableIndicator)
+          && indicator.isPartitioned
+          && indicator.isNullified
+          && !indicator.isStruct) {
+            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
+              parent._newASTPointer.push(joinCommitmentsNode);
+         }
+      }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
@@ -307,11 +307,11 @@ const visitor = {
        { value: node.expression.value });
        node._newASTPointer = newNode;
        if (Array.isArray(parent._newASTPointer)) {
-         parent._newASTPointer.push(newNode);
-       } else {
-         parent._newASTPointer[path.containerName].push(newNode);
-       }
-     },
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName].push(newNode);
+      }
+    },
 
    },
 
@@ -410,11 +410,7 @@ const visitor = {
       const { operator, prefix, subExpression } = node;
       const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
       node._newASTPointer = newNode;
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(newNode);
-      } else {
-        parent._newASTPointer[path.containerName] = newNode;
-      }
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     }
   },
 
@@ -453,7 +449,7 @@ const visitor = {
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName:
+                  mappingKeyName: scope.getMappingKeyName(lhs) ||
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
@@ -467,7 +463,7 @@ const visitor = {
                 indicators: lhsIndicator,
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName:
+                  mappingKeyName: scope.getMappingKeyName(lhs) ||
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
@@ -526,6 +522,12 @@ const visitor = {
         parent._newASTPointer[path.containerName] = newNode;
       }
     },
+  },
+
+  StructDefinition: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
   },
 
   VariableDeclaration: {
@@ -593,7 +595,6 @@ const visitor = {
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
-
       //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
@@ -601,6 +602,12 @@ const visitor = {
         interactsWithSecret,
         declarationType,
       });
+
+      if (path.isStruct(node)) {
+        const structNode = addStructDefinition(path);
+        newNode.typeName.name = structNode.name;
+        newNode.typeName.members = structNode.members;
+      }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
@@ -647,23 +654,21 @@ const visitor = {
   Identifier: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      const { name } = node;
+      let { name } = node;
       // const binding = path.getReferencedBinding(node);
       // below: we have a public state variable we need as a public input to the circuit
       // local variable decs and parameters are dealt with elsewhere
       // secret state vars are input via commitment values
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
+      name = path.scope.getIdentifierMappingKeyName(node);
 
+      const newNode = buildNode(
+        node.nodeType,
+        { name },
+      );
+      if (path.isStruct(node)) addStructDefinition(path);
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      if (Array.isArray(parent._newASTPointer[path.containerName])) {
-        parent._newASTPointer[path.containerName].push(buildNode('Identifier', {
-          name,
-        }));
-      } else {
-        parent._newASTPointer[path.containerName] = buildNode('Identifier', {
-          name,
-        });
-      }
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -688,13 +693,13 @@ const visitor = {
       parent._newASTPointer.push(newNode);
     },
   },
-  
+
   Literal: {
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;
       const { value } = node;
-      if (node.kind !== 'number')
-       if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
+
+      if (node.kind !== 'number' && node.kind !== 'bool' && !path.getAncestorOfType('Return'))
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
         );
@@ -708,17 +713,27 @@ const visitor = {
 
   MemberAccess: {
     enter(path: NodePath, state: any) {
-      const { parent } = path;
+      const { parent, node } = path;
 
-      if (!path.isMsgSender())
-        throw new Error(`Struct property access isn't yet supported.`);
+      let newNode: any;
 
-      // What follows assumes this node represents msg.sender:
-      const newNode = buildNode('MsgSender');
+      if (path.isMsgSender()) {
+        newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+      } else {
+        newNode = buildNode('MemberAccess', { memberName: node.memberName, isStruct: path.isStruct(node)});
+        node._newASTPointer = newNode;
+      }
+
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = newNode;
-      state.skipSubNodes = true;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+
+
     },
   },
 
@@ -772,7 +787,7 @@ const visitor = {
         state.newStateArray =  args.map(arg => (arg.name));
         let internalFunctionInteractsWithSecret = false;
         const newState: any = {};
-        internalFunctionCallVisitor(path, newState)
+        state.oldStateArray = internalFunctionCallVisitor(path, newState)
         internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
         state.internalFncName ??= [];
         state.internalFncName.push(node.expression.name);
@@ -785,28 +800,36 @@ const visitor = {
          startNodePath.node.nodes.forEach(node => {
            if(node.nodeType === 'VariableDeclaration'){
              if(node.typeName.nodeType === 'Mapping') {
-               for(const [index, oldStateName] of  oldStateArray.entries()) {
+               for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                  if(oldStateName !== state.newStateArray[index]){
-                   circuitImport.push('true');
+                   state.circuitImport ??= []
+                   state.circuitImport.push('true');
                    isCircuit = true;
                    break;
                   }
-                 circuitImport.push('false');
+                  state.circuitImport ??= []
+                  state.circuitImport.push('false');
                  isCircuit = false;
                 }
               }
-             else if(callingfnDefIndicators[node.id] && callingfnDefIndicators[node.id].isModified && internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified ){
-               circuitImport.push('false');
-               isCircuit = false;
-              }
-              if(callingfnDefIndicators[node.id] && !callingfnDefIndicators[node.id].isModified && internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-               circuitImport.push('true');
-               isCircuit = true;
-              }
-             if(!callingfnDefIndicators[node.id] && internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-                circuitImport.push('true');
+              else if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
+                if(callingfnDefIndicators[node.id]) {
+                  if(callingfnDefIndicators[node.id].isModified)
+                    isCircuit = false;
+                   else
+                    isCircuit = true;
+                }
+              else
                 isCircuit = true;
-              }
+            if(isCircuit){
+            state.circuitImport ??= []
+            state.circuitImport.push('true');
+          }
+            else{
+            state.circuitImport ??= []
+            state.circuitImport.push('false');
+          }
+            }
             }
           });
           const newNode = buildNode('InternalFunctionCall', {
@@ -821,13 +844,7 @@ const visitor = {
         circuitImport: isCircuit,
          });
          node._newASTPointer = newNode ;
-         if (Array.isArray(parent._newASTPointer[path.containerName])) {
-           parent._newASTPointer[path.containerName].push(newNode);
-          } else {
-            parent._newASTPointer[path.containerName] = newNode;
-          }
-
-
+         parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
           const fnDefNode = path.getAncestorOfType('FunctionDefinition');
           state.callingFncName ??= [];
           state.callingFncName.push(fnDefNode.node.name);

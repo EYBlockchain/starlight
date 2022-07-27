@@ -8,13 +8,29 @@ import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 import NodePath from '../../../../traverse/NodePath.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 
-const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
+const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
   const incrementsArray = [];
   let incrementsString = '';
+
+  if (stateVarIndicator.isStruct && stateVarIndicator instanceof StateVariableIndicator) {
+    let structIncs = { incrementsArray: {}, incrementsString: {}};
+    for (const [key, value] of Object.entries(stateVarIndicator.structProperties)) {
+      if (value instanceof MappingKey) {
+        structIncs.incrementsArray[key] = collectIncrements(value).incrementsArray;
+        structIncs.incrementsString[key] = collectIncrements(value).incrementsString;
+      } else {
+        structIncs.incrementsArray[key] = [];
+        structIncs.incrementsString[key] = '0';
+      }
+    }
+    return structIncs;
+  }
+
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
   for (const inc of stateVarIndicator.increments) {
     if (inc.nodeType === 'IndexAccess') inc.name ??= `${inc.baseExpression.name}_${NodePath.getPath(inc).scope.getMappingKeyName(inc)}`;
+    if (inc.nodeType === 'MemberAccess') inc.name ??= `${inc.expression.name}.${inc.memberName}`;
     if (!inc.name) inc.name = inc.value;
 
     if (incrementsArray.some(existingInc => inc.name === existingInc.name))
@@ -31,6 +47,8 @@ const collectIncrements = (stateVarIndicator: BoilerplateGenerator) => {
     }
   }
   for (const dec of stateVarIndicator.decrements) {
+    if (dec.nodeType === 'IndexAccess') dec.name ??= `${dec.baseExpression.name}_${NodePath.getPath(dec).scope.getMappingKeyName(dec)}`;
+    if (dec.nodeType === 'MemberAccess') dec.name ??= `${dec.expression.name}.${dec.memberName}`;
     if (!dec.name) dec.name = dec.value;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
       continue;
@@ -63,6 +81,9 @@ class BoilerplateGenerator {
   initialisationRequired?: boolean;
   newCommitmentsRequired?: boolean;
   isMapping: boolean;
+  isStruct: boolean;
+  structProperties?: string[];
+  typeName?: string;
   increments: any;
   decrements: any;
   burnedOnly: any;
@@ -100,6 +121,7 @@ class BoilerplateGenerator {
       isAccessed,
       newCommitmentsRequired,
       isMapping,
+      isStruct,
       increments,
       decrements,
       initialisationRequired,
@@ -114,6 +136,7 @@ class BoilerplateGenerator {
       isAccessed,
       newCommitmentsRequired,
       isMapping,
+      isStruct,
       increments,
       decrements,
       initialisationRequired,
@@ -132,6 +155,10 @@ class BoilerplateGenerator {
         this.generateBoilerplate();
       }
     } else {
+      if (indicators instanceof StateVariableIndicator && indicators.structProperties) {
+        this.structProperties = Object.keys(indicators.structProperties);
+        this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+      }
       this.assignIndicators(indicators);
       this.generateBoilerplate();
     }
@@ -168,7 +195,7 @@ class BoilerplateGenerator {
 
   _addBP = (bpType: string, extraParams?: any) => {
     if (this.isPartitioned) {
-      this.newCommitmentValue = collectIncrements(this).incrementsString;
+      this.newCommitmentValue = collectIncrements(this.indicators).incrementsString;
     }
     this.bpSections.forEach(bpSection => {
       this[bpSection] = this[bpSection]
@@ -183,6 +210,8 @@ class BoilerplateGenerator {
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
           ...(this.isNullified && { isNullified: this.isNullified }),
           ...(this.isMapping && { isMapping: this.isMapping }),
+          ...(this.isStruct && { structProperties: this.structProperties}),
+          ...(this.isStruct && { typeName: this.typeName}),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),

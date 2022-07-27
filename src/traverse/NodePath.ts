@@ -436,7 +436,7 @@ export default class NodePath {
       'trueExpression', // a conditional requires value accessing
       'falseExpression',
       'indexExpression', // as arg
-      'subExpression',
+      // 'subExpression', // removing subExpression as can be considered lhs
       'rightExpression',
       'arguments', // a value used as an arg needs to be accessed
     ];
@@ -783,6 +783,11 @@ export default class NodePath {
     return this.isMappingDeclaration(varDecNode || node);
   }
 
+  /**
+   * Checks whether a node is a mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
   isMapping(node: any = this.node): boolean {
     return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
   }
@@ -800,6 +805,17 @@ export default class NodePath {
       ? indexExpression?.expression
       : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
     return keyNode;
+  }
+
+  /**
+   * A struct property will contain a MemberAccess node pointing to a previously-declared variable.
+   * @param {Object} - the struct's identifier node.
+   * @returns {Node} - a MemberAccess node
+   */
+  getStructPropertyNode(node: any = this.node): any {
+    if (node.nodeType !== 'MemberAccess')
+      return this.getAncestorOfType('MemberAccess').getStructPropertyNode();
+    return node;
   }
 
   /**
@@ -834,6 +850,68 @@ export default class NodePath {
       default:
         return false;
     }
+  }
+
+  /**
+   * Checks whether a node is of a struct type.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isStruct(node: any = this.node): boolean {
+    if (this.isStructDeclaration(node)) return true;
+    const parent = node.nodeType === 'MemberAccess' ? node : this.getAncestorOfType('MemberAccess')?.node;
+    return !!parent && (parent.expression.typeDescriptions?.typeString.includes('struct') || parent.expression?.typeDescriptions?.typeString.includes('struct'));
+  }
+
+  /**
+   * Checks whether a node is a VariableDeclaration of a struct.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isStructDeclaration(node: any = this.node): boolean {
+    // with a space ('struct ') to avoid custom type NAMES that include struct without being a struct
+    return !!this.getAncestorOfType('StructDefinition') || (node.nodeType === 'VariableDeclaration' && ( node.typeDescriptions?.typeString?.includes('struct ') || node.typeName?.typeDescriptions?.typeString?.includes('struct ')));
+  }
+
+  getStructDeclaration(node: any = this.node): any {
+    if (!this.isStruct(node)) return null;
+    if (this.getAncestorOfType('StructDefinition')) return this.getAncestorOfType('StructDefinition');
+    // if this is at the contract level, the StructDefinition will be a sibling
+    const fnDef = this.getAncestorOfType('FunctionDefinition') || this;
+    const parent = (node.nodeType === 'MemberAccess' || node.nodeType === 'VariableDeclaration') ? node : this.getAncestorOfType('MemberAccess')?.node;
+    if (parent.typeName) {
+      const typeId = parent.typeName.pathNode.referencedDeclaration;
+      const structNode = fnDef.getAllPrevSiblingNodes().find(n => n.id === typeId);
+      return structNode;
+    } else {
+      const structNode = this.getReferencedNode(parent);
+      return this.getStructDeclaration(structNode);
+    }
+  }
+
+ /**
+  * Checks whether a node is of an array type.
+  * @param {node} node (optional - defaults to this.node)
+  * @returns {Boolean}
+  */
+  isArray(node: any = this.node): boolean {
+    if (this.getReferencedNode(node) && this.isArrayDeclaration(this.getReferencedNode(node))) return true;
+    const memberAccNode = this.getAncestorOfType('MemberAccess');
+    return memberAccNode && memberAccNode.node.baseExpression?.typeDescriptions?.typeIdentifier.includes('array');
+  }
+
+  /**
+   * Checks whether a node is a VariableDeclaration of a Mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isArrayDeclaration(node: any = this.node): boolean {
+    if (
+      node.nodeType === 'VariableDeclaration' &&
+      node.typeName.nodeType === 'ArrayTypeName'
+    )
+      return true;
+    return false;
   }
 
   /**
@@ -875,6 +953,7 @@ export default class NodePath {
       case 'VariableDeclarationStatement':
         id = this.getReferencedDeclarationId(referencingNode.declarations[0]);
         break;
+      case 'StructDefinition':
       case 'VariableDeclaration':
         id = referencingNode.id;
         break;

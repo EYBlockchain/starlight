@@ -88,7 +88,14 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         kind,
       };
     }
-
+    case 'StructDefinition': {
+      const { name, members = [] } = fields;
+      return {
+        nodeType,
+        name,
+        members,
+      }
+    }
     case 'VariableDeclaration': {
       const { name, type, isSecret: isPrivate = false, interactsWithSecret, declarationType } = fields;
       return {
@@ -141,6 +148,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         baseExpression,
         indexExpression,
+      };
+    }
+    case 'MemberAccess': {
+      const { expression = {}, memberName, isStruct = false } = fields;
+      return {
+        nodeType,
+        memberName,
+        expression,
+        isStruct,
       };
     }
     case 'TupleExpression': {
@@ -274,6 +290,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'SetupCommonFilesBoilerplate':
+    
     case 'Boilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
       return generateBoilerplate(fields);

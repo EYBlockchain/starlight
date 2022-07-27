@@ -72,6 +72,12 @@ if(returnStatement.length === 0){
         `;
     }
 
+    case 'StructDefinition': {
+      return `struct ${node.name} {
+        ${node.members.map((mem: any) => mem.type + ' ' + mem.name).join(`\n`)}
+      }`;
+    }
+
     case 'ParameterList': {
       const paramList = CircuitBP.uniqueify(node.parameters.flatMap(codeGenerator));
 
@@ -162,6 +168,10 @@ if(returnStatement.length === 0){
     case 'IndexAccess':
       return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression)}`;
 
+    case 'MemberAccess':
+      if (node.isStruct) return `${codeGenerator(node.expression)}.${node.memberName}`;
+      return `${codeGenerator(node.expression)}_${node.memberName}`;
+
     case 'TupleExpression':
       return `(${node.components.map(codeGenerator).join(` `)})`;
 
@@ -195,6 +205,10 @@ if(returnStatement.length === 0){
       return 'msg';
 
     case 'Assert':
+      // only happens if we have a single bool identifier which is a struct property
+      // these get converted to fields so we need to assert == 1 rather than true
+      if (node.arguments[0].isStruct && node.arguments[0].nodeType === "MemberAccess") return `
+        assert(${node.arguments.flatMap(codeGenerator)} == 1)`;
       return `
         assert(${node.arguments.flatMap(codeGenerator)})`;
 

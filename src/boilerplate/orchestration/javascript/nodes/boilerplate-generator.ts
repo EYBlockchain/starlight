@@ -14,6 +14,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         stateVarId: id,
         mappingKey: indicator.referencedKeyName || null,
         mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
       };
     }
     case 'ReadPreimage': {
@@ -30,6 +31,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         mappingKey: indicator.referencedKeyName || null,
         mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -54,6 +56,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         mappingKey: indicator.referencedKeyName || null,
         mappingName: indicator.referencedKeyName ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -100,6 +103,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -128,6 +132,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         nullifierRequired: indicator.isNullified,
         increment,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         isMapping: indicator.isMapping,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
@@ -188,10 +193,11 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'ReadPreimage': {
-      const { privateStates = {} } = fields;
+      const { contractName, privateStates = {} } = fields;
       return {
         nodeType,
         privateStates,
+        contractName,
       };
     }
     case 'WritePreimage': {
