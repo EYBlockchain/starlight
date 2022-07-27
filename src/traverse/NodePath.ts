@@ -381,6 +381,15 @@ export default class NodePath {
     return functionDefinition?.node?.parameters?.parameters ?? null;
   }
 
+    /**
+   * Callable from any nodeType below (or equal to) a 'EventDefintion' node.
+   * @returns {Array[Node] || null} the parameters of the event.
+   */
+     getEventParameters(): any[] | null {
+      const eventDefinition = this.getAncestorOfType('EventDefinition');
+      return eventDefinition?.node?.parameters?.parameters ?? null;
+    }
+
   /**
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
    * @returns {Array[Node] || null} the parameters of the function.
@@ -560,6 +569,11 @@ export default class NodePath {
 
   isFunctionParameterDeclaration(): boolean {
     const functionParameters = this.getFunctionParameters();
+    return functionParameters?.some(node => node === this.node);
+  }
+
+  isEventParameterDeclaration(): boolean {
+    const functionParameters = this.getEventParameters();
     return functionParameters?.some(node => node === this.node);
   }
 
@@ -770,6 +784,17 @@ export default class NodePath {
       return true;
     return false;
   }
+
+   /**
+   * Checks whether a node is an EventDefinition.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+    isEventDefinition(node: any = this.node): boolean {
+      if (node.typeDescriptions.typeIdentifier.includes('t_function_event'))
+      return true;
+      return false;
+    }
 
   /**
    * Checks whether a node is an Identifier for a mapping.

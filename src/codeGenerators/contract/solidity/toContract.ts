@@ -91,6 +91,11 @@ function codeGenerator(node: any) {
       }`;
     }
 
+    case 'EventDefinition': {
+      const functionSignature = ` \t \t \t \tevent ${node.name}(${codeGenerator(node.parameters)});`;
+    return functionSignature;
+    }
+
     case 'ParameterList':
       return node.parameters.flatMap(codeGenerator).filter(Boolean).join(', ');
 
@@ -166,6 +171,9 @@ function codeGenerator(node: any) {
 
     case 'UnaryOperation':
       return `${codeGenerator(node.subExpression)} ${node.operator};`;
+
+    case 'EmitStatement':
+        return `\t \t \t \temit ${codeGenerator(node.eventCall)};`;
 
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);

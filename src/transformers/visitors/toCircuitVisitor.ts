@@ -216,11 +216,24 @@ const visitor = {
       }
     },
   },
+  
+  EventDefinition: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
+  EmitStatement: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
 
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       let returnName : string[] =[];
+      if(!!path.getAncestorOfType('EventDefinition')) return;
        if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
@@ -533,6 +546,7 @@ const visitor = {
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
       if (node.stateVariable && !node.value) {
         // Then the node represents assignment of a state variable.
         // State variables don't get declared within a circuit;
@@ -595,6 +609,10 @@ const visitor = {
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
+        if(!interactsWithSecret) {
+        state.skipSubNodes = true;
+        return;
+        }
       //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
@@ -635,6 +653,7 @@ const visitor = {
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
       const supportedTypes = ['uint', 'uint256', 'address', 'bool'];
       if (!supportedTypes.includes(node.name))
         throw new Error(
@@ -655,6 +674,8 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       let { name } = node;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
+      if(!!path.getAncestorOfType('EmitStatement')) return;
       // const binding = path.getReferencedBinding(node);
       // below: we have a public state variable we need as a public input to the circuit
       // local variable decs and parameters are dealt with elsewhere

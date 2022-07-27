@@ -51,6 +51,23 @@ export default {
     }
   },
 
+  EventDefinition: {
+    exit(path: NodePath) {
+      const { parameters } = path.node;
+      for(let i=0 ; i< parameters.parameters.length ; i++) {
+      if(parameters.parameters[i].isSecret)
+      throw new TODOError(`EventDefinition contains secret states , which isn't supported.`, path.node);
+      }
+    }
+  },
+
+  EmitStatement: {
+    exit(path: NodePath) {
+      if(path.node.eventCall.containsSecret)
+      throw new TODOError(`EmitStatement contains secret states , which isn't supported.`, path.node);
+    }
+  },
+
   ForStatement: {
     exit(path: NodePath) {
       const { initializationExpression, loopExpression, condition, body } = path.node;
