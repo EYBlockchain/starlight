@@ -97,6 +97,8 @@ function codeGenerator(node: any) {
     case 'VariableDeclaration': {
       if (node.isSecret) return '';
       let { typeString } = node.typeDescriptions;
+      // we crop 'struct ContractName.structname' to just 'structname'
+      if (typeString.includes('struct ')) typeString = typeString.substring(typeString.indexOf(".") + 1);
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
       const constant = node.constant ? ' constant' : '';
       const visibility = node.visibility ? ` ${node.visibility}` : '';
@@ -120,6 +122,7 @@ function codeGenerator(node: any) {
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
       const initialValue = codeGenerator(node.initialValue);
+      if (!initialValue || initialValue === '') return `${declarations};`;
       return `
           ${declarations} = ${initialValue};`;
     }
@@ -167,7 +170,7 @@ function codeGenerator(node: any) {
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);
       const args = node.arguments.map(codeGenerator);
-      const semicolon = expression === 'require' ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
+      const semicolon = expression === 'require' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
 
     }
@@ -210,6 +213,13 @@ function codeGenerator(node: any) {
       const baseExpression = codeGenerator(node.baseExpression);
       const indexExpression = codeGenerator(node.indexExpression);
       return `${baseExpression}[${indexExpression}]`;
+    }
+
+    case 'StructDefinition': {
+      node.members.forEach((member: any) => delete member.visibility);
+      return `struct ${node.name} {
+        ${node.members.map(codeGenerator).join('\n')}
+      }`
     }
 
     case 'ContractBoilerplate':

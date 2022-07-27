@@ -17,9 +17,10 @@ import { boolean } from 'yargs';
 const decorators = [/(?<![\w])known(?![\w])/g, /(?<![\w])unknown(?![\w])/g, /(?<![\w])secret(?![\w])/g, /(?<![\w])reinitialisable(?![\w])/g];
 
 // keywords - throws an error if function name/ variable name/ contracts etc is a decorator.
-// eg:  function secret (...) is not allowed , permits functions secret12(...) 
+// eg:  function secret (...) is not allowed , permits functions secret12(...)
 
 let solKeywords = [/contract/,/function/,/struct/,/enum/,/bool/,/fixed/,/address/,/uint[0-9]{0,3}/,/int[0-9]{0,3}/];
+let solVisib = ['public', 'private', 'memory', 'storage', 'calldata'];
 let zolKeywords = [/secret[\W]/,/known[\W]/,/unknown[\W]/,/reinitialisable[\W]/];
 let keywords = solKeywords.flatMap(sk => zolKeywords.map(zk => new RegExp(sk.source +' '+ zk.source)));
 
@@ -57,78 +58,154 @@ function inComment(file: string, char: number): boolean {
 }
 
 /**
+ * Takes an input '.zol' file and rearranges any complete struct overwrites.
+ * returns deDecoratedFile // a '.sol' file, where the struct overwrites
+ *    are rewritten per property.
+ */
+
+function arrangeStructOverwrite(substrings: any) {
+  let structTypes = [];
+  let structProps = [];
+  let structStates = [];
+  let newSubStrings = substrings;
+  let offset = 0;
+  const getTypeNameRegExp = /(?<=struct )(.*)(?={)/;
+  const getStateNameRegExp = (type: string, storage: string) => {
+    return new RegExp('(?<=' + type + ' ' + storage + ')(.*)' + '(?=\,|\\)|\;)');
+  };
+
+  // fill array of struct types
+  for (let i=0; i<substrings.length; i++) {
+    if (substrings[i].startsWith('struct')) {
+      structTypes.push(substrings[i].match(getTypeNameRegExp)[0].replace(' ', ''));
+      structProps[structTypes.length - 1] = [];
+      let j = i;
+      let props = [];
+      while (!substrings[j].includes('}')) {
+        props.push(substrings[j])
+        j++;
+      }
+      props = props.join('').match(/{(.*)/)[0].replace('{', '').replace('}', '').split(';');
+      props.forEach(p => {
+        p = p.split(' ')[1];
+        if (p) structProps[structTypes.length - 1].push(p);
+      });
+    }
+  }
+
+  // fill array of struct state names
+  for (let j = 0; j<substrings.length; j++) {
+    for (let k = 0; k<structTypes.length; k++) {
+      solVisib.forEach(r => {
+        if (getStateNameRegExp(structTypes[k], r).test(substrings[j])) {
+          structStates.push({ name: substrings[j].match(getStateNameRegExp(structTypes[k], r))[0].replace(' ', ''), type: structTypes[k]} )
+        }
+      })
+
+    }
+  }
+  // find overwrites of structs
+  for (let i = 0; i<substrings.length; i++) {
+    for (let k = 0; k<structStates.length; k++) {
+      if ((substrings[i].includes(`${structStates[k].name} =`) || substrings[i].includes(`${structStates[k].name}=`)) && !substrings[i].includes('.')) {
+        const lhs = structStates[k].name;
+        const rhs = substrings[i].replace(structStates[k].name, '').replace('=', '').replace(';', '').replace(' ', '');
+        let newLines = [];
+        structProps[structTypes.indexOf(structStates[k].type)].forEach(prop => {
+          newLines.push(`${lhs}.${prop} = ${rhs}.${prop};`);
+        });
+        newSubStrings.splice(i + offset, 1, ...newLines);
+        offset += newLines.length;
+      }
+    }
+  }
+  return newSubStrings;
+}
+
+/**
  * Takes an input '.zol' file and rearranges the modifiers.
  * returns deDecoratedFile // a '.sol' file, where the modifiiers
  *     body is copied over to function body .
  */
 
-function arrangeModifiers(options: any) {
+function arrangeModifiers(substrings: any) {
   let splCharsRegExp = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
   let parameterRegExp = /\(|\)|\[|\]/g;
-  const fileString = fs.readFileSync(options.inputFilePath, 'utf-8').split(/\r?\n/);
-  let substrings = fileString.map(decLine => tidy(decLine));
+
+
   let modifierRemovedSubString = substrings;
   let modifierContent = '';
   let ParameterList = [];
   let modifierParameterList= [];
-  for(var i=0; i<substrings.length; i++) {
+
+  for (var i=0; i<substrings.length; i++) {
+
     if(substrings[i].startsWith('function'))  {
+
       const substringsRemoved = substrings[i].replace("public", "").replace("private","");
       let modifierslist = substringsRemoved.slice(
-      substringsRemoved.indexOf(')') + 1,
-      substringsRemoved.lastIndexOf('{'),
+        substringsRemoved.indexOf(')') + 1,
+        substringsRemoved.lastIndexOf('{'),
       ).trim();
       modifierslist = modifierslist.replace(/\s+(?=[.,?!()])/,'');
       modifierslist = modifierslist.replace(/\s*,\s*/g, ",");
       const modifierslistArray = modifierslist.split(" ");
+
       for(var m=0; m<modifierslistArray.length; m++) {
+
         modifierslist = 'modifier '+ modifierslistArray[m];
+
         let hasParameters = parameterRegExp.test(modifierslistArray[m]);
-        if(hasParameters) {
+        if (hasParameters) {
           modifierParameterList = modifierslistArray[m].slice(
           modifierslistArray[m].indexOf('(') + 1,
           modifierslistArray[m].lastIndexOf(')'),
           ).trim().split(",");
          }
+
         modifierslist = modifierslist.replace(/ *\([^)(]*/g, "");
+
         if(modifierslist.endsWith(')'))
           modifierslist =modifierslist.slice(0, -1);
+
         modifierContent = '';
+
         for (var j=0; j<i; j++) {
-          if(substrings[j].startsWith(modifierslist))  {
+
+          if (substrings[j].startsWith(modifierslist))  {
+
             ParameterList = substrings[j].slice(
-            substrings[j].indexOf('(') + 1,
-            substrings[j].lastIndexOf(')'),
+              substrings[j].indexOf('(') + 1,
+              substrings[j].lastIndexOf(')'),
             ).trim().split(",");
-            for(var n =0; n < ParameterList.length ;  n++) {
-            ParameterList[n] = ParameterList[n].substring(ParameterList[n].replace(/^\s/, '').indexOf(' ') + 1);
-            ParameterList[n] = ParameterList[n].replace(/\s/g,'')
+            for (var n =0; n < ParameterList.length ;  n++) {
+              ParameterList[n] = ParameterList[n].substring(ParameterList[n].replace(/^\s/, '').indexOf(' ') + 1);
+              ParameterList[n] = ParameterList[n].replace(/\s/g,'')
             }
-            for(var k=j+1; k<i; k++) {
-              if(hasParameters) {
-                for(var n =0; n < ParameterList.length ;  n++) {
+            for (var k=j+1; k<i; k++) {
+              if (hasParameters) {
+                for (var n =0; n < ParameterList.length ;  n++) {
                   const indexes = [...substrings[k].matchAll(new RegExp(ParameterList[n], 'gi'))].map(a => a.index);
-                  if(indexes.length>0) {
+                  if (indexes.length>0) {
                     for (var p =0;p<indexes.length;p++) {
-                      if(splCharsRegExp.test(substrings[k].charAt(indexes[p]-1)) && splCharsRegExp.test(substrings[k].charAt(indexes[p]+(ParameterList[n].length)))) {
+                      if (splCharsRegExp.test(substrings[k].charAt(indexes[p]-1)) && splCharsRegExp.test(substrings[k].charAt(indexes[p]+(ParameterList[n].length)))) {
                         substrings[k] = substrings[k].replace(ParameterList[n],modifierParameterList[n]);
                       }
                     }
                   }
                 }
               }
-            if (substrings[k] === "_;") 
+            if (substrings[k] === "_;")
             break;
-            modifierContent += substrings[k];
+            modifierContent += substrings[k] + '\n';
             }
           }
-        } 
+        }
        modifierRemovedSubString.splice(i+1, 0, modifierContent);
-      } 
+      }
     }
   }
-  const substringsMod = modifierRemovedSubString.join(",,").toString().replace(/,,/g, '\n');
-  return substringsMod;
+  return modifierRemovedSubString;
 }
 
 /**
@@ -144,7 +221,26 @@ function removeDecorators(options: any): {
     deDecoratedFile: string;
     toRedecorate: ToRedecorate[];
 } {
- const decoratedFile = arrangeModifiers(options);
+  logger.verbose(`Parsing decorated file ${options.inputFilePath}... `);
+  const decLines = fs
+    .readFileSync(options.inputFilePath, 'utf-8')
+    .split(/\r?\n/);
+
+  let decoratedFile: any;
+
+  // tidy each line before any changes - so no char numbers are skewed
+  let tidyDecLines = decLines.map(decLine => tidy(decLine));
+
+  if (tidyDecLines.join(' ').includes('modifier'))
+    tidyDecLines = arrangeModifiers(tidyDecLines);
+
+  if (tidyDecLines.join(' ').includes('struct'))
+    tidyDecLines = arrangeStructOverwrite(tidyDecLines)
+
+  // combine lines in new file
+  decoratedFile = tidyDecLines.join('\r\n');
+
+  // now we remove decorators and remember how many characters are offset
 
   // init file
   let deDecoratedFile = decoratedFile;
@@ -163,8 +259,8 @@ function removeDecorators(options: any): {
 
   // sort the array of decorators by their location (char index) in the contract
   matches.sort((matchA, matchB) => matchA.index - matchB.index);
-  
-  // feat: fo future use add a struct name also as keyword to identify object names that are not allowed.  
+
+  // feat: fo future use add a struct name also as keyword to identify object names that are not allowed.
   const decoratedFileWords = deDecoratedFile.split(" ");
   for(var j=0; j< decoratedFileWords.length; j++) {
     if(decoratedFileWords[j] === 'struct')

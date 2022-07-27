@@ -16,7 +16,7 @@ export default {
       let isSecretArray : string[];
       for (const arg of args) {
         if (arg.nodeType !== 'Identifier') continue;
-         isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+         isSecretArray = args.map(arg => scope.getReferencedBinding(arg)?.isSecret);
        }
       if(path.isInternalFunctionCall()) {
        if(node.expression.nodeType === 'Identifier') {

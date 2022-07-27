@@ -281,6 +281,7 @@ export class Scope {
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
       case 'IfStatement':
+      case 'StructDefinition':
       case 'ModifierDefinition':
       case 'ForStatement':
         break;
@@ -389,7 +390,17 @@ export class Scope {
       path.getReferencedDeclarationId(referencingNode),
     );
 
-    if (!path.isMapping(referencingNode)) return indicator;
+    if (!path.isMapping(referencingNode) && !path.isArray(referencingNode) && !path.isStruct(referencingNode)) return indicator;
+
+    if (path.isStruct(referencingNode)) {
+      const memberAccessNode = referencingNode.nodeType === 'MemberAccess'
+        ? referencingNode
+        : NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')
+            .node;
+      return mappingKeyIndicatorOnly
+        ? indicator.structProperties[memberAccessNode.memberName]
+        : indicator;
+    }
 
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
     const indexAccessNode =
@@ -629,7 +640,40 @@ export class Scope {
   }
 
   /**
-   * Gets a mapping's indicator object for a particular key.
+   * Gets a mapping key name for an identifier (not nec. an index access node).
+   * @param {Object} - the possible mapping key's identifier.
+   * @returns {String} - the name under which the mapping[key]'s indicator is stored
+   */
+  getIdentifierMappingKeyName(identifierNode: any, forceNotModification = false): any {
+    if (this.path.isMsg(identifierNode)) return identifierNode.name;
+    if (identifierNode.nodeType === 'MemberAccess') return identifierNode.memberName;
+    const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
+    const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
+    if (refPaths && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess')?.node);
+
+    let { name } = identifierNode;
+
+    // we find the next indexExpression after this identifier
+    for (let i = thisIndex; i < refPaths?.length; i++) {
+      if (refPaths[i].key !== 'indexExpression') continue;
+      if (refPaths[thisIndex].isModification() && !forceNotModification) {
+        name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess')?.node);
+        break;
+        // if this identifier is not a modification, we need the previous indexExpression
+      } else {
+        for (let j = i - 1; j >= 0; j--) {
+          if (refPaths[j].key === 'indexExpression') {
+            name = this.getMappingKeyName(refPaths[j].getAncestorOfType('IndexAccess')?.node);
+            return name;
+          }
+        }
+      }
+    }
+    return name;
+  }
+
+  /**
+   * Gets a mapping's indicator name for a particular key.
    * @param {Object} - the mapping's index access node.
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */

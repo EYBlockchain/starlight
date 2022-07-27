@@ -23,6 +23,17 @@ export default {
     },
   },
 
+  MemberAccess: {
+    enter(path: NodePath) {
+      const { node } = path;
+      // node.isUnknown gets added during the 'parsing' stage
+      // @Node new properties
+      if (node.expression?.isUnknown) node.isUnknown = true;
+      if (node.expression?.isKnown) node.isKnown = true;
+      if (node.expression?.reinitialisable) node.reinitialisable = true;
+    },
+  },
+
   Identifier: {
     exit(path: NodePath) {
       const { node, scope } = path;

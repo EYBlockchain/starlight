@@ -106,7 +106,7 @@ class ContractBoilerplateGenerator {
       	) private {
         `;
       let verifyInput: string[] = [];
-      const verifyInputsMap = (type: string,input: string, counter: any) => {
+      const verifyInputsMap = (type: string, input: string, counter: any) => {
         if(type  === 'parameters'){
         switch (input) {
           case 'nullifier':
@@ -131,10 +131,10 @@ class ContractBoilerplateGenerator {
             break;
         }
       }
-      else if(type  === 'returnParameters'){
-          verifyInput.push( `
-          inputs[k++] = ${input};`);
-      }
+        else if(type  === 'returnParameters') {
+            verifyInput.push( `
+            inputs[k++] = ${input};`);
+        }
       }
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
@@ -183,18 +183,18 @@ class ContractBoilerplateGenerator {
       const joinCommitmentsInputs: string[] = [];
       for (let [name, _params] of Object.entries(circuitParams)) {
         for (let [type, _inputs] of Object.entries(_params)) {
-        const counter = {
-          customInputs: 0,
-          newNullifiers: 0,
-          checkNullifiers: 0,
-          newCommitments: 0,
-        };
+          const counter = {
+            customInputs: 0,
+            newNullifiers: 0,
+            checkNullifiers: 0,
+            newCommitments: 0,
+          };
 
-        _inputs.map(i => verifyInputsMap(type, i, counter));
+          _inputs.map(i => verifyInputsMap(type, i, counter));
 
-      }
+        }
 
-      if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
+        if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
 
         verifyInputs.push(`
           if (functionId == uint(FunctionNames.${name})) {

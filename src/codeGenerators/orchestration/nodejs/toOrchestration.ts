@@ -23,7 +23,7 @@ const getAccessedValue = (name: string) => {
  */
 const getPublicValue = (node: any) => {
   if (node.nodeType !== 'IndexAccess')
-    return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
+    return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
   return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
 };
 
@@ -83,6 +83,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
             node.declarations[0].name,
           )}\n${codeGenerator(node.initialValue)};`;
         }
+        if (node.declarations[0].isStruct) return `\n let ${codeGenerator(node.declarations[0])} = {}; \n${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
         return `${getPublicValue(node.declarations[0])}`
@@ -177,8 +178,13 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 
+    case 'UnaryOperation':
+      // ++ or -- on a parseInt() does not work
+      return `generalise(${node.subExpression.name}.integer${node.operator})`;
+
     case 'Literal':
       return node.value;
+
     case 'Identifier':
       if (options?.lhs) return node.name;
       switch (node.subType) {
@@ -191,6 +197,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
         case 'generalNumber':
           return `generalise(${node.name})`;
       }
+
+    case 'MemberAccess':
+      if (options?.lhs) return `${node.name}.${node.memberName}`;
+      return codeGenerator({ nodeType: 'Identifier', name: `${node.name}.${node.memberName}`, subType: node.subType });
+
 
     case 'Folder':
     case 'File':
