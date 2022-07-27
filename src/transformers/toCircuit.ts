@@ -32,7 +32,7 @@ export default function toCircuit(ast: any, options: any) {
     `Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`,
   );
   for (const fileObj of circuitFileData) {
-    const filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
+    let filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
     logger.debug(`About to save to ${filepath}...`);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.

@@ -98,7 +98,6 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
         if (params.some(node => node.isSecret))
             this.internalFunctionInteractsWithSecret = true;
     }
-
   }
 
   updateIncrementation(path: NodePath, state: any) {
@@ -677,6 +676,20 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
           mappingKey.prelimTraversalErrorChecks();
         } else {
           mappingKey.node = this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
+          logger.warn(
+             `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
+           );
+        }
+      }
+    }
+    if (this.isStruct) {
+      const structProperties = Object.entries(this.structProperties);
+      for (const [name, mappingKey] of structProperties) {
+        // we may have empty struct properties if they are never edited
+        if (mappingKey instanceof MappingKey) {
+          mappingKey.prelimTraversalErrorChecks();
+        } else {
+          mappingKey.node= this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
           logger.warn(
              `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
            );

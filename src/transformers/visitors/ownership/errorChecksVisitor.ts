@@ -32,12 +32,39 @@ export default {
   IfStatement: {
     exit(path: NodePath) {
       const { trueBody, falseBody, condition } = path.node;
-      if ((trueBody.containsSecret && trueBody.containsPublic) || (falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic) ) {
+      if ((trueBody.containsSecret && trueBody.containsPublic) || !!falseBody && ((falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic))) {
         throw new TODOError(`This if statement contains edited secret and public states - we currently can't edit both in the same statement. Consider separating into public and secret methods.`, path.node);
       }
-      if (condition.containsSecret && (falseBody.containsPublic || trueBody.containsPublic)) {
+      if (condition.containsSecret && ( (!!falseBody && falseBody.containsPublic) || trueBody.containsPublic)) {
         throw new TODOError(`This if statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
       }
+      for (var i=0; i<trueBody.statements.length; i++) {
+        if((trueBody.statements[i].nodeType !== 'ExpressionStatement' || trueBody.statements[i].expression.nodeType !== 'Assignment') && trueBody.containsSecret)
+        throw new TODOError(`This if statement expression contains a non assignment operation , which currently isn't supported`, path.node);
+      }
+      if(falseBody) {
+      for(var i=0; i< falseBody.statements.length; i++) {
+        if(( falseBody.statements[i].nodeType !== 'ExpressionStatement'  || falseBody.statements[i].expression.nodeType !== 'Assignment') && falseBody.containsSecret)
+        throw new TODOError(`This if statement contains a non assignment operation , which currently isn't supported`, path.node);
+        }
+      }
+    }
+  },
+
+  EventDefinition: {
+    exit(path: NodePath) {
+      const { parameters } = path.node;
+      for(let i=0 ; i< parameters.parameters.length ; i++) {
+      if(parameters.parameters[i].isSecret)
+      throw new TODOError(`EventDefinition contains secret states , which isn't supported.`, path.node);
+      }
+    }
+  },
+
+  EmitStatement: {
+    exit(path: NodePath) {
+      if(path.node.eventCall.containsSecret)
+      throw new TODOError(`EmitStatement contains secret states , which isn't supported.`, path.node);
     }
   },
 
@@ -54,6 +81,8 @@ export default {
     exit(path: NodePath) {
       const { scope } = path;
       if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
+      if (path.node.containsSecret && (path.node.kind === 'fallback' || path.node.kind === 'receive'))
+      throw new TODOError(`Secret states on fallback / receive functions is currently not supported`, path.node);
       for (const [, indicator] of Object.entries(scope.indicators)) {
         // we may have a function indicator property we'd like to skip
         if (!(indicator instanceof StateVariableIndicator)) continue;

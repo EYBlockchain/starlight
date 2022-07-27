@@ -1,6 +1,5 @@
 import NodePath from './NodePath.js';
 import { Binding } from './Binding.js';
-import { StateVariableIndicator } from './Indicator.js';
 import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError } from '../error/errors.js';
 

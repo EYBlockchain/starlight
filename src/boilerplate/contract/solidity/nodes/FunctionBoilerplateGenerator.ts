@@ -31,6 +31,7 @@ class FunctionBoilerplateGenerator {
 
   categorySelector = () => {
     const { scope } = this;
+
     const isConstructorFunction =
       scope.path.node.nodeType === 'FunctionDefinition' && scope.path.node.kind === 'constructor';
     if (isConstructorFunction && scope.containsSecret) {
@@ -101,8 +102,11 @@ class FunctionBoilerplateGenerator {
       }
 
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter((p: any) => !p.isSecret).flatMap((p: any) => customInputsMap(p)).concat(customInputs);
-
+      const publicParams = params?
+      .filter((p: any) => (!p.isSecret && p.interactsWithSecret))
+      .map((p: any) => 
+        { name: p.name, type: p.typeDescriptions.typeString }
+      ).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
 
       const indicators = this.customFunction.getIndicators.bind(this)();
@@ -121,6 +125,9 @@ class FunctionBoilerplateGenerator {
       };
     },
   };
+
+
+
 }
 
 export default FunctionBoilerplateGenerator;

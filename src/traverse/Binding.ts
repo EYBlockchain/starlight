@@ -54,6 +54,8 @@ export class Binding {
       case 'VariableDeclarationStatement':
       case 'StructDefinition':
       case 'ModifierDefinition':
+      case 'EventDefinition':
+      case 'EmitStatement':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);
@@ -264,7 +266,7 @@ export class VariableBinding extends Binding {
     // we DONT want to add a struct property if we have a mapping of a struct
     // the mappingKey deals with that
     if (this.isMapping && this.addMappingKey(referencingPath).structProperties) return this.addMappingKey(referencingPath).addStructProperty(referencingPath);
-    
+
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');

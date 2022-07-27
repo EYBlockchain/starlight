@@ -7,7 +7,7 @@ import { traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
-import { interactsWithSecretVisitor, parentnewASTPointer } from './common.js';
+import { interactsWithSecretVisitor, parentnewASTPointer, internalFunctionCallVisitor } from './common.js';
 
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
@@ -20,32 +20,29 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+
   if(thisPath.nodeType === 'Return') {
-   thisPath.container.forEach(item => {
-     if(item.nodeType === 'Return'){
-      if(item.expression.components) {
-        item.expression.components.forEach(element => {
-          if(element.kind === 'bool'){
-          thisState.customInputs ??= [];
-          thisState.customInputs.push(1);
-    }
-  });
-}
-    else {
-      if(item.expression.kind === 'bool'){
-        thisState.customInputs ??= [];
-        thisState.customInputs.push(1);
+    thisPath.container.forEach(item => {
+      if(item.nodeType === 'Return'){
+        if(item.expression.components) {
+          item.expression.components.forEach(element => {
+            if(element.kind === 'bool'){
+              thisState.customInputs ??= [];
+              thisState.customInputs.push(1);
+            }
+          });
+        } else {
+          if(item.expression.kind === 'bool'){
+            thisState.customInputs ??= [];
+            thisState.customInputs.push(1);
+          }
+        }
       }
-    }
+    });
   }
-  });
-}
-  if(thisPath.getAncestorOfType('Return')){
-  if( binding instanceof VariableBinding && binding.isSecret){
+  if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
     thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
-  }
-
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -57,7 +54,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (indicator.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
-    !(thisPath.containerName === 'indexExpression'&& !binding.stateVariable)
+    !(thisPath.containerName === 'indexExpression'&& !thisPath.parent.isSecret)
   ) {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
@@ -68,6 +65,8 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
 
 let internalFuncInteractsWithSecret = false;
+let interactsWithSecret = false;
+
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.sol` AST (for a 'shield' contract)
@@ -104,7 +103,9 @@ export default {
 
       parent._newASTPointer.push(newNode);
       node._newASTPointer = parent._newASTPointer;
+
     },
+
   },
 
   PragmaDirective: {
@@ -146,6 +147,8 @@ export default {
       node._newASTPointer = newNode.nodes;
       // parent._newASTPointer[0] is the SourceUnit created earlier by this visitor module.
       parent._newASTPointer[0].nodes.push(newNode);
+
+
     },
 
     exit(path: NodePath, state: any) {
@@ -166,6 +169,7 @@ export default {
           }
         }
       }
+
 
       const contractIndex = sourceUnitNodes.findIndex(
         (n: any) => n.name === node.name,
@@ -210,10 +214,8 @@ export default {
         ...buildNode('ContractBoilerplate', {
           bpSection: 'stateVariableDeclarations',
           scope,
-          internalFuncInteractsWithSecret,
         }),
       );
-
       if (state.mainPrivateFunctionName) {
         parent._newASTPointer[0].mainPrivateFunctionName =
           state.mainPrivateFunctionName; // TODO fix bodge
@@ -222,14 +224,16 @@ export default {
             node.mainPrivateFunctionName = state.mainPrivateFunctionName;
         });
       }
+
       node._newASTPointer.forEach(node => {
-        if(node.nodeType === 'FunctionDefinition'){
-          state.internalFncName?.forEach( name => {
+
+        if(node.nodeType === 'FunctionDefinition' && node.kind === 'function'){
+          state.internalFncName?.forEach( (name, index) => {
             if(node.name === name) {
              state.postStatements ??= [];
              state.postStatements = cloneDeep(node.body.postStatements);
             }
-            if(node.name === state.callingFncName[state.internalFncName.indexOf(name)]){
+            if(node.name === state.callingFncName[index]){
              node.body.postStatements.forEach( childNode => {
                state.postStatements?.forEach(node => {
                  if(!childNode.nullifiersRequired && node.nullifiersRequired)
@@ -252,7 +256,6 @@ export default {
               })
             }
           });
-
         }
       })
     },
@@ -262,11 +265,19 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
-      state.functionName = path.getUniqueFunctionName()
+      if(node.kind === 'fallback' || node.kind === 'receive')
+      {
+        node.fileName = node.kind;
+        state.functionName = node.kind;
+      }
+      else
+      state.functionName = path.getUniqueFunctionName();
       const newNode = buildNode('FunctionDefinition', {
         name: node.fileName || state.functionName,
         id: node.id,
-        visibility: isConstructor ? '' : 'public',
+        kind: node.kind,
+        stateMutability: node.stateMutability === 'payable'? node.stateMutability : '',
+        visibility: node.kind ==='function' ? 'public' : node.kind === 'constructor'? '': 'external',
         isConstructor,
       });
 
@@ -540,9 +551,31 @@ export default {
     },
   },
 
+  EventDefinition: {
+    enter(path: NodePath , state:any) {
+        const { node, parent } = path;
+        state.functionName = path.getUniqueFunctionName()
+        const newNode = buildNode('EventDefinition', {
+          name: node.fileName || state.functionName,
+          id: node.id,
+        });
+        node._newASTPointer = newNode;
+        parent._newASTPointer.push(newNode);
+    },
+},
+
+EmitStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('EmitStatement');
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+  },
+},
+
   VariableDeclaration: {
     enter(path: NodePath, state : any) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
 
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
@@ -557,15 +590,30 @@ export default {
         state.variableName.push(node.name);
       } else if (path.isLocalStackVariableDeclaration()) {
         declarationType = 'localStack';
-      } else if (path.isFunctionParameterDeclaration()) {
+      } else if (path.isFunctionParameterDeclaration() || path.isEventParameterDeclaration()) {
         declarationType = 'parameter';
       }
 
+      scope.bindings[node.id].referencingPaths.forEach(refPath => {
+        const newState: any = {};
+        refPath.parentPath.traversePathsFast(
+          interactsWithSecretVisitor,
+          newState,
+        );
+        interactsWithSecret ||= !!(newState.interactsWithSecret);
+      });
+      if (
+        parent.nodeType === 'VariableDeclarationStatement' &&
+        interactsWithSecret
+      )
+        parent._newASTPointer.interactsWithSecret = interactsWithSecret;
+        node.interactsWithSecret = interactsWithSecret;
       // If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
         isSecret: node.isSecret,
         declarationType,
+        interactsWithSecret:interactsWithSecret,
         typeString: node.typeDescriptions?.typeString,
         visibility: node.visibility,
         storageLocation: node.storageLocation,
@@ -576,6 +624,7 @@ export default {
       } else {
         parent._newASTPointer[path.containerName].push(newNode);
       }
+      interactsWithSecret = false;
     },
   },
 
@@ -729,11 +778,18 @@ export default {
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;
       }
+      // Like External function calls ,it's easiest (from the pov of writing this transpiler) if Event calls appear at the very start or very end of a function.
+      // TODO: need a warning message to this effect ^^^
+      if (parent.nodeType === 'EmitStatement') {
+      newNode = buildNode('FunctionCall');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      return;
+    }
 
       if (path.isExternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
         // TODO: need a warning message to this effect ^^^
-
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
@@ -742,16 +798,17 @@ export default {
       if (path.isInternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
         // TODO: need a warning message to this effect ^^^
-       const fnIndicator : FunctionDefinitionIndicator = scope.indicators;
-       internalFuncInteractsWithSecret = fnIndicator.internalFunctionInteractsWithSecret;
+
        const functionReferncedNode = scope.getReferencedNode(node.expression);
        const params = functionReferncedNode.parameters.parameters;
-       if(!fnIndicator.internalFunctionInteractsWithSecret){
-         if(params.some(node => node.isSecret))
-          internalFuncInteractsWithSecret = true;
-        }
+       if((params.length !== 0) && (params.some(node => node.isSecret)))
+       {
+         state.internalFunctionInteractsWithSecret = true;
+     } else
+     state.internalFunctionInteractsWithSecret = false;
 
-        if(internalFuncInteractsWithSecret){
+
+        if(state.internalFunctionInteractsWithSecret){
           state.internalFncName ??= [];
           state.internalFncName.push(node.expression.name);
           const fnDefNode = path.getAncestorOfType('FunctionDefinition');
@@ -766,13 +823,28 @@ export default {
           ]
           newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,
-          internalFunctionInteractsWithSecret: internalFuncInteractsWithSecret,
+          internalFunctionInteractsWithSecret: state.internalFunctionInteractsWithSecret,
           parameters: state.fnParameters,
          });
          node._newASTPointer = newNode;
          parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
          return;
-        }
+       } else if(!state.internalFunctionInteractsWithSecret){
+         state.internalFncName ??= [];
+         state.internalFncName.push(node.expression.name);
+         const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+         state.callingFncName ??= [];
+         state.callingFncName.push(fnDefNode.node.name);
+         newNode = buildNode('InternalFunctionCall', {
+         name: node.expression.name,
+         internalFunctionInteractsWithSecret: state.internalFunctionInteractsWithSecret,
+         parameters: node.arguments,
+        });
+        node._newASTPointer = newNode;
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+        return;
+       }
+
         newNode = buildNode('FunctionCall');
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);

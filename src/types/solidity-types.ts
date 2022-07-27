@@ -14,6 +14,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['parameters', 'returnParameters', 'body'];
     case 'ParameterList':
       return ['parameters'];
+      case 'EventDefinition':
+      return ['parameters'];
     case 'ReturnParameterList':
       return ['parameters'];
     case 'IfStatement':
@@ -50,6 +52,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['baseType'];
     case 'ElementaryTypeNameExpression':
       return ['typeName'];
+    case 'EmitStatement':
+      return ['eventCall'];
     case 'StructDefinition':
       return ['members'];
     case 'PragmaDirective':
@@ -135,6 +139,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         visibility,
         isConstructor,
+        kind,
+        stateMutability,
         body = buildNode('Block'),
         parameters = buildNode('ParameterList'),
         returnParameters = buildNode('ParameterList'), // TODO
@@ -145,6 +151,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         visibility,
         isConstructor,
+        kind,
+        stateMutability,
         body,
         parameters,
         returnParameters,
@@ -185,6 +193,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         visibility,
         storageLocation,
         isSecret,
+        interactsWithSecret,
         declarationType,
       } = fields;
       return {
@@ -197,6 +206,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
           typeDescriptions: { typeString },
         }),
         isSecret,
+        interactsWithSecret,
         declarationType,
       };
     }
@@ -217,6 +227,23 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         leftHandSide,
         rightHandSide,
       };
+    }
+    case 'EventDefinition':
+      {
+      const { name , parameters = buildNode('ParameterList') } = fields;
+      return {
+        nodeType,
+        name,
+        parameters
+        };
+      }
+    case 'EmitStatement':
+      {
+      const { eventCall = {} } = fields;
+      return {
+        nodeType,
+        eventCall,
+        };
     }
     case 'Return': {
       const { value, kind } = fields;
