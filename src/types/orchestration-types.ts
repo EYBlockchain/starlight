@@ -186,11 +186,12 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       }
     }
     case 'ForStatement': {
-      const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
+      const { condition = {} ,initializationExpression = {} ,interactsWithSecret, loopExpression = {}, body= {} } = fields;
       return {
         nodeType,
         condition,
         initializationExpression,
+        interactsWithSecret,
         loopExpression,
         body,
       }

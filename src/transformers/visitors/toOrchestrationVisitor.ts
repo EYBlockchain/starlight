@@ -1219,7 +1219,9 @@ const visitor = {
   ForStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
+      const newNode = buildNode(node.nodeType, {
+        interactsWithSecret: node.containsSecret
+      });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },

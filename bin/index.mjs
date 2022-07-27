@@ -56,6 +56,8 @@ const inputFileName = path.parse(inputFilePath).name;
 // commander converts 'zapp-name' to 'zappName'
 const zappName = opts.zappName || inputFileName;
 const outputDirPath = `${opts.output}/${zappName}`;
+const configDirPath = `${outputDirPath}/config`;
+const migrationsDirPath = `${outputDirPath}/migrations`;
 const parseDirPath = `${outputDirPath}/parse`;
 const circuitsDirPath = `${outputDirPath}/circuits`;
 const contractsDirPath = `${outputDirPath}/contracts`;
@@ -85,6 +87,12 @@ const validateOptions = ({
     } else {
       throw new FilingError(`Invalid input file extension. Expected '.zol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
     }
+    fs.rmSync(parseDirPath, { recursive: true, force: true });
+    fs.rmSync(circuitsDirPath, { recursive: true, force: true });
+    fs.rmSync(contractsDirPath, { recursive: true, force: true });
+    fs.rmSync(orchestrationDirPath, { recursive: true, force: true });
+    fs.rmSync(configDirPath, { recursive: true, force: true });
+    fs.rmSync(migrationsDirPath, { recursive: true, force: true });
 };
 
 validateOptions(options);

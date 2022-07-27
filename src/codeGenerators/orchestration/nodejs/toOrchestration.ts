@@ -152,7 +152,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       }
 
       case 'ForStatement': {
-        if(node.body.statements.statements.interactsWithSecret) {
+        if(node.interactsWithSecret) {
           node.initializationExpression.interactsWithSecret = true;
           node.loopExpression.interactsWithSecret = true;
         }
