@@ -122,7 +122,7 @@ function codeGenerator(node: any) {
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
       const initialValue = codeGenerator(node.initialValue);
-      if (!initialValue || initialValue === '') return `${declarations};`;
+      if (!initialValue || initialValue === '') return `${declarations};`
       return `
           ${declarations} = ${initialValue};`;
       else
