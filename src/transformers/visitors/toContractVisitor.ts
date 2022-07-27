@@ -20,32 +20,29 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+
   if(thisPath.nodeType === 'Return') {
-   thisPath.container.forEach(item => {
-     if(item.nodeType === 'Return'){
-      if(item.expression.components) {
-        item.expression.components.forEach(element => {
-          if(element.kind === 'bool'){
-          thisState.customInputs ??= [];
-          thisState.customInputs.push(1);
-    }
-  });
-}
-    else {
-      if(item.expression.kind === 'bool'){
-        thisState.customInputs ??= [];
-        thisState.customInputs.push(1);
+    thisPath.container.forEach(item => {
+      if(item.nodeType === 'Return'){
+        if(item.expression.components) {
+          item.expression.components.forEach(element => {
+            if(element.kind === 'bool'){
+              thisState.customInputs ??= [];
+              thisState.customInputs.push(1);
+            }
+          });
+        } else {
+          if(item.expression.kind === 'bool'){
+            thisState.customInputs ??= [];
+            thisState.customInputs.push(1);
+          }
+        }
       }
-    }
+    });
   }
-  });
-}
-  if(thisPath.getAncestorOfType('Return')){
-  if( binding instanceof VariableBinding && binding.isSecret){
+  if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
     thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
-  }
-
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -57,12 +54,12 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (indicator.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
-    !(thisPath.containerName === 'indexExpression')
+    !(thisPath.containerName === 'indexExpression'&& !thisPath.parent.isSecret)
   ) {
     thisState.customInputs ??= [];
-    if (!thisState.customInputs.some((input: string) => input === indicator.name)){
-      thisState.customInputs.push(indicator.name);
-}
+    const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
+    if (!thisState.customInputs.some((input: any) => input.name === indicator.name))
+      thisState.customInputs.push({name: indicator.name, type });
   }
 };
 
@@ -619,6 +616,7 @@ EmitStatement: {
         interactsWithSecret:interactsWithSecret,
         typeString: node.typeDescriptions?.typeString,
         visibility: node.visibility,
+        storageLocation: node.storageLocation,
       });
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
@@ -630,12 +628,40 @@ EmitStatement: {
     },
   },
 
+  StructDefinition: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, { name: node.name });
+      node._newASTPointer = newNode;
+
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName].push(newNode);
+      }
+    }
+  },
+
+  ArrayTypeName: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('ElementaryTypeNameExpression');
+
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+
+    }
+  },
+
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
 
-      // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = buildNode(
+      const newNode = buildNode(
         'ElementaryTypeName',
         {
           typeDescriptions: {
@@ -643,6 +669,12 @@ EmitStatement: {
           },
         },
       );
+      // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
     },
   },
 
@@ -730,7 +762,7 @@ EmitStatement: {
       let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
-      if (path.isRequireStatement()) {
+      if (path.isRequireStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
         const subState = { interactsWithSecret: false };
         path.traversePathsFast(interactsWithSecretVisitor, subState);

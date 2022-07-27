@@ -54,6 +54,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['typeName'];
     case 'EmitStatement':
       return ['eventCall'];
+    case 'StructDefinition':
+      return ['members'];
     case 'PragmaDirective':
     case 'ElementaryTypeName':
     case 'Identifier':
@@ -411,6 +413,21 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         typeName,
       };
+    }
+    case 'ArrayTypeName': {
+      const { baseType = {} } = fields;
+      return {
+        nodeType,
+        baseType,
+      };
+    }
+    case 'StructDefinition': {
+      const { name, members = []} = fields;
+      return {
+        nodeType,
+        name,
+        members,
+      }
     }
     case 'ContractBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.

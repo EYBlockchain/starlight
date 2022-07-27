@@ -52,7 +52,6 @@ class FunctionBoilerplateGenerator {
     postStatements({
       functionName,
       customInputs, // array of custom input names
-      publicParamstype,
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
@@ -60,42 +59,51 @@ class FunctionBoilerplateGenerator {
       isConstructor
     }): string[] {
       // prettier-ignore
-      let parameter = publicParamstype.concat([...(newNullifiers ? [`uint256[]`] : []),
+      let parameter = [
+      ...(customInputs ? customInputs.filter(input => !input.dummy).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
+      ...(newNullifiers ? [`uint256[]`] : []),
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),
       `uint256[]`,
-    ])
+      ]
 
-    let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])])
+      customInputs?.forEach((input, i) => {
+        if (input.structName) customInputs[i] = input.properties;
+      });
 
-    return [
-      `
-        Inputs memory inputs;`,
-      `
-        inputs.customInputs = new uint[](${customInputs?.length});
-        ${customInputs?.map((name: string, i: number) => {
-          if (customInputs[i] === 'msgSender') return `inputs.customInputs[${i}] = uint256(uint160(address(msg.sender)));`
-          return `inputs.customInputs[${i}] = ${name};`;
-        }).join('\n \n \t\t\t\t\t')}`,
+      let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
+      
+      return [
+        `
+          Inputs memory inputs;`,
 
-      ...(newNullifiers ? [`
-        inputs.newNullifiers = newNullifiers;`] : []),
+        ...(customInputs?.length ?
+          [`
+          inputs.customInputs = new uint[](${customInputs.flat(Infinity).length});
+        	${customInputs.flat(Infinity).map((input: any, i: number) => {
+            if (input.type === 'address') return `inputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
+            if (input.type === 'bool') return `inputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
+            return `inputs.customInputs[${i}] = ${input.name};`;
+          }).join('\n')}`]
+          : []),
 
-      ...(checkNullifiers ? [`
-        inputs.checkNullifiers = checkNullifiers;`] : []),
+        ...(newNullifiers ? [`
+          inputs.newNullifiers = newNullifiers;`] : []),
 
-      ...(commitmentRoot ? [`
-        inputs.commitmentRoot = commitmentRoot;`] : []),
+        ...(checkNullifiers ? [`
+          inputs.checkNullifiers = checkNullifiers;`] : []),
 
-      ...(newCommitments ? [`
-        inputs.newCommitments = newCommitments;`] : []),
-      `
-        ${msgSigCheck.join('\n')}
+        ...(commitmentRoot ? [`
+          inputs.commitmentRoot = commitmentRoot;`] : []),
 
-        verify(proof, uint(FunctionNames.${functionName}), inputs);`,
-    ];
-
+        ...(newCommitments ? [`
+          inputs.newCommitments = newCommitments;`] : []),
+        `
+          ${msgSigCheck.join('\n')}`,
+        `
+          verify(proof, uint(FunctionNames.${functionName}), inputs);`,
+      ];
     },
   };
 

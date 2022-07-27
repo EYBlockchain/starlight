@@ -23,8 +23,10 @@ const editableCommitmentCommonFilesBoilerplate = () => {
  * @param type - a solidity type
  * @returns - a suitable function input of that type
  */
-const testInputsByType = (solidityType: string) => {
-  switch (solidityType) {
+const testInputsByType = (solidityType: any) => {
+  switch (solidityType.name) {
+    case 'bool':
+      return `true`;
     case 'uint':
     case 'uint256':
       return Math.floor(Math.random() * Math.floor(200) + 1); // random number between 1 and 200
@@ -38,6 +40,9 @@ const testInputsByType = (solidityType: string) => {
       return `0`;
     //  return `'this-is-an-old-commitment'`;
     default:
+      if (solidityType.isStruct) {
+        return `{ ${solidityType.properties.map(p => `${p.name}:${testInputsByType({name: p.type})}`)}}`
+      }
       return 0;
   }
 };
@@ -66,7 +71,7 @@ const prepareIntegrationTest = (node: any) => {
     // the user may not have enough commitments to do so
     let removeSecondCall = false;
     let removeMerkleTreeTest = false;
-    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName.name);
+    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
     if (fn.decrementsSecretState) {
       removeSecondCall = true;
     }
