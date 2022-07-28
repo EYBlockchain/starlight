@@ -15,7 +15,10 @@ class BoilerplateGenerator {
 
   PoKoSK = {
     importStatements(): string[] {
-      return [`from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256`];
+      return [
+      `from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256`,
+      `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
+    ];
     },
 
     parameters({ name: x }): string[] {
@@ -40,6 +43,9 @@ class BoilerplateGenerator {
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768`,
+        `from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field`,
+        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
+        `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
       ];
     },
 
@@ -55,7 +61,9 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        u32[8] ${x}_stateVarId = field_to_u32_8(${id})
+        field ${x}_stateVarId_field =u32_array_to_field(${x}_stateVarId)`,
+         // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
@@ -65,15 +73,20 @@ class BoilerplateGenerator {
         `
         // Nullify ${x}:
 
-        u32[8] ${x}_oldCommitment_nullifier_check = sha256of768([\\
-          ...${x}_stateVarId,\\
-          ...${x}_oldCommitment_owner_secretKey,\\
-          ...${x}_oldCommitment_salt\\
-        ])
+        field ${x}_oldCommitment_owner_secretKey_field =u32_array_to_field(${x}_oldCommitment_owner_secretKey)
 
+        field ${x}_oldCommitment_salt_field =u32_array_to_field(${x}_oldCommitment_salt)
+
+        field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_oldCommitment_owner_secretKey_field,\\
+          ${x}_oldCommitment_salt_field\\
+        ])
+        
         assert(\\
-        field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(${x}_oldCommitment_nullifier_check)[8..256]\\
-        )`,
+        field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
+        )`
+        ,
       ];
 
       if (this.initialisationRequired && this.isWhole) {
@@ -96,6 +109,9 @@ class BoilerplateGenerator {
       return [
         `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
+        `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field`,
+        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
 
@@ -120,12 +136,17 @@ class BoilerplateGenerator {
         `
         // ${x}_oldCommitment_commitment: preimage check
 
-        u32[8] ${x}_oldCommitment_commitment = sha256of1024([\\
-          ...${x}_stateVarId,\\
-          ...field_to_u32_8(${x}_oldCommitment_value),\\
-          ...${x}_oldCommitment_owner_publicKey,\\
-          ...${x}_oldCommitment_salt\\
-        ])`,
+        field ${x}_oldCommitment_owner_publicKey_field =u32_array_to_field(${x}_oldCommitment_owner_publicKey)
+
+
+        field ${x}_oldCommitment_commitment_field = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_oldCommitment_value,\\
+          ${x}_oldCommitment_owner_publicKey_field,\\
+          ${x}_oldCommitment_salt_field\\
+        ])
+        
+        u32[8] ${x}_oldCommitment_commitment = field_to_u32_8(${x}_oldCommitment_owner_publicKey_field)`,
       ];
     },
   };
@@ -169,7 +190,8 @@ class BoilerplateGenerator {
         `
         assert(\\
           field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(${x}_commitmentRoot_check)[8..256]\\
-        )`,
+        )`
+        ,
       ];
 
       if (isWhole && initialisationRequired) {
@@ -194,6 +216,9 @@ class BoilerplateGenerator {
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
         `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
         `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
+        `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field`,
+        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
 
@@ -210,7 +235,9 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] ${x}_stateVarId = field_to_u32_8(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        u32[8] ${x}_stateVarId = field_to_u32_8(${id})
+        field ${x}_stateVarId_field =u32_array_to_field(${x}_stateVarId)`, 
+        // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
@@ -241,16 +268,23 @@ class BoilerplateGenerator {
 
         // ${x}_newCommitment_commitment - preimage check
 
-        u32[8] ${x}_newCommitment_commitment_check = sha256of1024([\\
-          ...${x}_stateVarId,\\
-          ...${x}_newCommitment_value,\\
-          ...${x}_newCommitment_owner_publicKey,\\
-          ...${x}_newCommitment_salt\\
+        field ${x}_newCommitment_value_field =u32_array_to_field(${x}_newCommitment_value)
+
+        field ${x}_newCommitment_owner_publicKey_field =u32_array_to_field(${x}_newCommitment_owner_publicKey)
+
+        field ${x}_newCommitment_salt_field =u32_array_to_field(${x}_newCommitment_salt)
+
+        field ${x}_newCommitment_commitment_check_field = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_newCommitment_value_field,\\
+          ${x}_newCommitment_owner_publicKey_field,\\
+          ${x}_newCommitment_salt_field\\
         ])
 
         assert(\\
-          field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
-        )`,
+          field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
+        )`
+        ,
       ];
     },
   };
