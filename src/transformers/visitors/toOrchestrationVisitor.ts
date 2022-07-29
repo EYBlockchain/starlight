@@ -780,6 +780,7 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+
       // ts complains if I don't include a number in this list
       if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
         node._newASTPointer = parent._newASTPointer[path.containerName];
@@ -880,6 +881,7 @@ const visitor = {
       const newState: any = {};
       path.traversePathsFast(interactsWithSecretVisitor, newState);
       const { interactsWithSecret } = newState;
+
       let indicator;
       let name;
       // we mark this to grab anything we need from the db / contract
@@ -888,7 +890,7 @@ const visitor = {
       if (node.expression.nodeType === 'Assignment' || node.expression.nodeType === 'UnaryOperation') {
         let { leftHandSide: lhs } = node.expression;
         if (!lhs) lhs = node.expression.subExpression;
-        const indicator = scope.getReferencedIndicator(lhs, true);
+       indicator = scope.getReferencedIndicator(lhs, true);
 
         const name = indicator.isMapping
           ? indicator.name
@@ -950,7 +952,6 @@ const visitor = {
             ],
             interactsWithSecret: true,
           });
-          if (indicator.isStruct) newNode.declarations[0].isStruct = true;
 
           if (indicator.isStruct) newNode.declarations[0].isStruct = true;
 
@@ -977,18 +978,19 @@ const visitor = {
             decrementsSecretState: node.expression.isDecremented,
             privateStateName: name,
           });
-
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
+
           // state.skipSubNodes = true;
           return;
         }
       }
       if (node.expression.expression?.name !== 'require') {
         const newNode = buildNode(node.nodeType, {
-          interactsWithSecret,
+          interactsWithSecret: interactsWithSecret || indicator?.interactsWithSecret,
           oldASTId: node.id,
         });
+
         node._newASTPointer = newNode;
         if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
           parent._newASTPointer.push(newNode);
@@ -1027,6 +1029,20 @@ const visitor = {
           )
         );
       }
+
+      if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
+       path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
+      if(indicator){
+         path.getAncestorOfType('ForStatement').node._newASTPointer.body.statements.push(
+          buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', { name: indicator.name }),
+              operator: '=',
+              rightHandSide: buildNode('Identifier', {  name: indicator.name, subType: 'generalNumber' })
+            }
+          )
+        );
+      }
+}
     },
   },
 
