@@ -831,8 +831,8 @@ const visitor = {
             if(callingfnDefIndicators[node.id]) {
             if(callingfnDefIndicators[node.id].isModified) {
               if(internalfnDefIndicators[node.id].isMapping){
-               Object.keys(internalfnDefIndicators[node.id].mappingKeys).forEach(name => {
-                 if(state.newStateArray.some(statename => statename === name))
+               Object.keys(internalfnDefIndicators[node.id].mappingKeys).forEach(vars => {
+                 if(state.newStateArray[name].some(statename => statename === vars))
                   isCircuit = false;
                  else
                  isCircuit = true;
