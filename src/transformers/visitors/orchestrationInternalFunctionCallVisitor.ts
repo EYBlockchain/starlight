@@ -1,11 +1,16 @@
 import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
-import buildNode from '../../types/orchestration-types.js';
+import  buildNode  from '../../types/orchestration-types.js';
 import { internalFunctionCallVisitor } from './common.js';
 
 function merge(array1, array2, index=0) {
 return array1.slice(0, index).concat(array2, array1.slice(index));
+}
+function joinWithoutDupes(A, B) {
+  const a = new Set(A.map(x => x.name))
+  const b = new Set(B.map(x => x.name))
+  return [...A, ...B.filter(x => !a.has(x.name))]
 }
 
 let oldStateArray : string[];
@@ -19,7 +24,7 @@ const internalCallVisitor = {
       let sendTransactionNode : any;
       let newdecrementedSecretStates = [];
       node._newASTPointer.forEach(file => {
-       state.internalFncName?.forEach( (index, name)=> {
+       state.internalFncName?.forEach( (name, index)=> {
          if(file.fileName === name && file.nodeType === 'File') {
            if(state.circuitImport[index]==='true') {
              file.nodes.forEach(childNode => {
@@ -191,27 +196,95 @@ const internalCallVisitor = {
              if(file.fileName === state.callingFncName[index]) {
                 file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
-                   childNode.parameters.modifiedStateVariables = [...new Set([...childNode.parameters.modifiedStateVariables, ...state.newParametersList])];
+                   childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
                    if(childNode.decrementedSecretStates)
                     childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
-                   childNode.body.preStatements = [...new Set([...childNode.body.preStatements, ...state.newPreStatementList])]
-                   childNode.body.statements = [...new Set([...childNode.body.statements, ...state.newStatementList])]
-                   const index = childNode.body.postStatements.findIndex((node) => (node.nodeType=== 'CalculateCommitment'));
-                   childNode.body.postStatements = merge(childNode.body.postStatements, state.newPostStatementList , index+1);
-                   childNode.body.postStatements.forEach(node => {
-                     if(node.nodeType === 'GenerateProof'){
-                       node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
-                       node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+                    childNode.body.preStatements.forEach(node => {
+                      switch(node.nodeType) {
+                        case 'InitialisePreimage' : {
+                         state.newPreStatementList.forEach(statenode => {
+                           if(statenode.nodeType === 'InitialisePreimage'){
+                             node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
+                            }
+                         });
+                         break;
+                        }
+                        case 'ReadPreimage': {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.nodeType === 'ReadPreimage'){
+                              node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
+                             }
+                          });
+                          break;
+                          }
+                          case 'MembershipWitness': {
+                            state.newPreStatementList.forEach(statenode => {
+                              if(statenode.nodeType === 'MembershipWitness'){
+                                node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
+                               }
+                            });
+                            break;
+                          }
+                          default :
+                          break;
+                        }
+                     });
+                     let dupNode;
+                     let dupIndex;
+                     let dupAssignNode;
+                    childNode.body.statements.forEach((node, index)=> {
+                      if(node.nodeType === 'VariableDeclarationStatement'){
+                        state.newStatementList.some((statenode, id ) => {
+                          if(statenode.nodeType === 'VariableDeclarationStatement' && (node.declarations[0].name === statenode.declarations[0].name)){
+                            dupNode = statenode;
+                            dupIndex = index;
+                            dupAssignNode = state.newStatementList[id+1];
+
+                          }
+                        })
                       }
-
-                      if(node.nodeType === 'SendTransaction')
-                       node.privateStates = Object.assign(node.privateStates,sendTransactionNode.privateStates)
-
-                      if(node.nodeType === 'WritePreimage')
-                       node.privateStates = Object.assign(node.privateStates,writePreimageNode.privateStates)
-
                     })
-
+                    if(dupNode){
+                      childNode.body.statements.splice(dupIndex+2, 0, dupNode.initialValue);
+                      childNode.body.statements.splice(dupIndex+3, 0, dupAssignNode);
+                    }
+                    else
+                    childNode.body.statements = [...new Set([...childNode.body.statements, ...state.newStatementList])]
+                   childNode.body.postStatements.forEach(node => {
+                     switch(node.nodeType) {
+                       case 'CalculateNullifier' : {
+                        state.newPostStatementList.forEach(statenode => {
+                          if(statenode.nodeType === 'CalculateNullifier'){
+                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
+                           }
+                        });
+                        break;
+                       }
+                       case 'CalculateCommitment': {
+                         state.newPostStatementList.forEach(statenode => {
+                           if(statenode.nodeType === 'CalculateCommitment'){
+                             node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
+                            }
+                         });
+                         break;
+                         }
+                        case 'GenerateProof': {
+                          node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
+                          node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+                          break;
+                        }
+                        case 'SendTransaction': {
+                           node.privateStates = Object.assign(node.privateStates,sendTransactionNode.privateStates)
+                          break;
+                        }
+                        case 'WritePreimage': {
+                          node.privateStates = Object.assign(node.privateStates,writePreimageNode.privateStates)
+                          break;
+                        }
+                         default :
+                         break;
+                       }
+                    });
                   }
                 })
               }
@@ -224,8 +297,8 @@ const internalCallVisitor = {
                state.newStatementList.forEach(node => {
                  if(node.nodeType === 'VariableDeclarationStatement') {
                    for(const [index, oldStateName] of  oldStateArray.entries()) {
-                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
-                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[index]);
+                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name?.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
+                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name?.replace(oldStateName,  state.newStateArray[index]);
                     }
                   }
                 })
@@ -268,6 +341,7 @@ FunctionCall: {
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
       state.internalFncName ??= [];
       state.internalFncName.push(node.expression.name);
+      console.log(state.internalFncName)
      if(internalFunctionInteractsWithSecret === true) {
        const callingfnDefPath = path.getFunctionDefinition();
        const callingfnDefIndicators = callingfnDefPath.scope.indicators;
@@ -276,35 +350,30 @@ FunctionCall: {
        const startNodePath = path.getAncestorOfType('ContractDefinition')
        startNodePath.node.nodes.forEach(node => {
          if(node.nodeType === 'VariableDeclaration'){
-           if(node.typeName.nodeType === 'Mapping') {
-             for(const [index, oldStateName] of  oldStateArray.entries()) {
-               if(oldStateName === state.newStateArray[index]) {
-                 state.circuitImport ??= [];
-                 state.circuitImport.push('false');
-                 isCircuit = false;
-                }
-                state.circuitImport ??= [];
-                state.circuitImport.push('true');
-                isCircuit = true;
-              }
-            }
            if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
              if(callingfnDefIndicators[node.id]) {
-             if(callingfnDefIndicators[node.id].isModified)
-                 isCircuit = false;
+             if(callingfnDefIndicators[node.id].isModified) {
+               if(internalfnDefIndicators[node.id].isMapping){
+                Object.keys(internalfnDefIndicators[node.id].mappingKeys).forEach(name => {
+                  if(state.newStateArray.some(statename => statename === name))
+                   isCircuit = false;
+                  else
+                  isCircuit = true;
+                })
+              } else
+              isCircuit = false;
+             }
+             }
              else
                  isCircuit = true;
             }
-            else
-                isCircuit = true;
-              state.circuitImport ??= [];
-              if(isCircuit)
-              state.circuitImport.push('true');
-              else
-              state.circuitImport.push('false');
             }
-          }
         });
+        state.circuitImport ??= [];
+        if(isCircuit)
+        state.circuitImport.push('true');
+        else
+        state.circuitImport.push('false');
         const newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,
           internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
@@ -316,11 +385,25 @@ FunctionCall: {
         parent._newASTPointer[path.containerName] = newNode;
         }
       }
+      else if(!internalFunctionInteractsWithSecret){
+      state.circuitImport ??= [];
+      state.circuitImport.push('false');
+      const newNode = buildNode('InternalFunctionCall', {
+        name: node.expression.name,
+        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+      });
+      node._newASTPointer = newNode ;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+      parent._newASTPointer[path.containerName] = newNode;
+      }
+    }
+    console.log(state.circuitImport);
      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
      state.callingFncName ??= [];
      state.callingFncName.push(fnDefNode.node.name);
     }
-
   },
 },
 }

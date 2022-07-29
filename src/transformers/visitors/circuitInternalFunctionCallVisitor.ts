@@ -1,3 +1,4 @@
+
 import cloneDeep from 'lodash.clonedeep';
 import NodePath from '../../traverse/NodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
@@ -35,16 +36,17 @@ const internalCallVisitor = {
                  state.newParameterList.forEach(node => {
                   if(node.nodeType === 'Boilerplate') {
                     for(const [index, oldStateName] of  state.oldStateArray.entries()) {
-                      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[index])
+                      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
                       if(node.newCommitmentValue === oldStateName)
-                       node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[index])
+                       node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[name][index])
                       if(node.mappingKeyName === oldStateName)
-                       node.mappingKeyName = node.mappingKeyName.replace(oldStateName, state.newStateArray[index])
+                       node.mappingKeyName = node.mappingKeyName.replace(oldStateName, state.newStateArray[name][index])
                      }
                    }
                    if(node.nodeType === 'VariableDeclaration'){
                      for(const [index, oldStateName] of state.oldStateArray.entries()) {
-                       node.name = node.name.replace(oldStateName, state.newStateArray[index])
+                    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
+
                      }
                    }
                  })
@@ -54,7 +56,8 @@ const internalCallVisitor = {
 // Collect the internal call ParameterList
             let internalFncParameters = [];
             state.newParameterList.forEach(node => {
-              switch(node.bpType) {
+
+             switch(node.bpType) {
                  case 'PoKoSK' :{
                    internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`)
                    break;
@@ -88,7 +91,7 @@ const internalCallVisitor = {
                  break;
                }
              })
-            internalFncParameters =  state.newStateArray.concat(internalFncParameters);
+            internalFncParameters =  state.newStateArray[name].concat(internalFncParameters);
             // to remove duplicates from the parameters
             internalFncParameters.forEach(param => {
               if (!state.circuitArguments?.includes(param)) {
@@ -126,9 +129,9 @@ const internalCallVisitor = {
                       let  expressionList = cloneDeep(node);
                       for(const [index, oldStateName] of  state.oldStateArray.entries()) {
                         if(node.expression.rightHandSide.rightExpression.name === oldStateName)
-                         expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[index])
+                         expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][index])
                         if(node.expression.leftHandSide.name === oldStateName)
-                         expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, state.newStateArray[index])
+                         expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, state.newStateArray[name][index])
                        }
                       newExpressionList = newExpressionList.concat(expressionList);
                      }

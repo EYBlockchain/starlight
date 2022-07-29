@@ -216,7 +216,7 @@ const visitor = {
       }
     },
   },
-  
+
   EventDefinition: {
     enter(path: NodePath, state: any) {
       state.skipSubNodes = true;
@@ -434,6 +434,10 @@ const visitor = {
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
+      if(expression.nodeType === 'FunctionCall'){
+      if((scope.getReferencedNode(expression.expression)).containsSecret)
+      node.containsSecret = 'true';
+    }
       const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if (!node.containsSecret && !childOfSecret) {
         state.skipSubNodes = true;
@@ -802,83 +806,77 @@ const visitor = {
         // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
         state.skipSubNodes = true;
       }
-     if(path.isInternalFunctionCall()) {
-       const args = node.arguments;
-       let isCircuit = false;
-        state.newStateArray =  args.map(arg => (arg.name));
-        let internalFunctionInteractsWithSecret = false;
-        const newState: any = {};
-        state.oldStateArray = internalFunctionCallVisitor(path, newState)
-        internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
-        state.internalFncName ??= [];
-        state.internalFncName.push(node.expression.name);
-        if(internalFunctionInteractsWithSecret === true && interactsWithSecret === true){
-         const callingfnDefPath = path.getFunctionDefinition();
-         const callingfnDefIndicators = callingfnDefPath.scope.indicators;
-         const functionReferncedNode = scope.getReferencedPath(node.expression);
-         const internalfnDefIndicators = functionReferncedNode.scope.indicators;;
-         const startNodePath = path.getAncestorOfType('ContractDefinition')
-         startNodePath.node.nodes.forEach(node => {
-           if(node.nodeType === 'VariableDeclaration'){
-             if(node.typeName.nodeType === 'Mapping') {
-               for(const [index, oldStateName] of  state.oldStateArray.entries()) {
-                 if(oldStateName !== state.newStateArray[index]){
-                   state.circuitImport ??= []
-                   state.circuitImport.push('true');
-                   isCircuit = true;
-                   break;
-                  }
-                  state.circuitImport ??= []
-                  state.circuitImport.push('false');
-                 isCircuit = false;
-                }
-              }
-              else if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-                if(callingfnDefIndicators[node.id]) {
-                  if(callingfnDefIndicators[node.id].isModified)
-                    isCircuit = false;
-                   else
-                    isCircuit = true;
-                }
-              else
+      if(path.isInternalFunctionCall()) {
+    const args = node.arguments;
+    let isCircuit = false;
+    state.newStateArray ??= {};
+    const name = node.expression.name;
+    state.newStateArray[name] ??= [];
+     state.newStateArray[name] =   args.map(arg =>  arg.name)
+     let internalFunctionInteractsWithSecret = false;
+     const newState: any = {};
+     state.oldStateArray = internalFunctionCallVisitor(path, newState)
+     internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
+     state.internalFncName ??= [];
+     state.internalFncName.push(node.expression.name);
+     if(internalFunctionInteractsWithSecret === true && interactsWithSecret === true){
+      const callingfnDefPath = path.getFunctionDefinition();
+      const callingfnDefIndicators = callingfnDefPath.scope.indicators;
+      const functionReferncedNode = scope.getReferencedPath(node.expression);
+      const internalfnDefIndicators = functionReferncedNode.scope.indicators;;
+      const startNodePath = path.getAncestorOfType('ContractDefinition')
+      startNodePath.node.nodes.forEach(node => {
+        if(node.nodeType === 'VariableDeclaration'){
+          if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
+            if(callingfnDefIndicators[node.id]) {
+            if(callingfnDefIndicators[node.id].isModified) {
+              if(internalfnDefIndicators[node.id].isMapping){
+               Object.keys(internalfnDefIndicators[node.id].mappingKeys).forEach(name => {
+                 if(state.newStateArray.some(statename => statename === name))
+                  isCircuit = false;
+                 else
+                 isCircuit = true;
+               })
+             } else
+             isCircuit = false;
+            }
+            }
+            else
                 isCircuit = true;
-            if(isCircuit){
-            state.circuitImport ??= []
-            state.circuitImport.push('true');
-          }
-            else{
-            state.circuitImport ??= []
-            state.circuitImport.push('false');
-          }
-            }
-            }
-          });
-          const newNode = buildNode('InternalFunctionCall', {
-          name: node.expression.name,
-          internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-          CircuitArguments: [],
-          circuitImport: isCircuit,
-         });
-         const fnNode = buildNode('InternalFunctionBoilerplate', {
-        name: node.expression.name,
-        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-        circuitImport: isCircuit,
-         });
-         node._newASTPointer = newNode ;
-         parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
-          const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-          state.callingFncName ??= [];
-          state.callingFncName.push(fnDefNode.node.name);
-          fnDefNode.parent._newASTPointer.forEach(file => {
-           if (file.fileName === fnDefNode.node.name) {
-             file.nodes.forEach(childNode => {
-               if (childNode.nodeType === 'ImportStatementList')
-                childNode.imports?.push(fnNode);
-              })
-            }
-          })
+           }
+           }
+       });
+       state.circuitImport ??= [];
+       if(isCircuit)
+       state.circuitImport.push('true');
+       else
+       state.circuitImport.push('false');
+       const newNode = buildNode('InternalFunctionCall', {
+       name: node.expression.name,
+       internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+       CircuitArguments: [],
+       circuitImport: isCircuit,
+      });
+      const fnNode = buildNode('InternalFunctionBoilerplate', {
+     name: node.expression.name,
+     internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+     circuitImport: isCircuit,
+      });
+      node._newASTPointer = newNode ;
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+       state.callingFncName ??= [];
+       state.callingFncName.push(fnDefNode.node.name);
+       fnDefNode.parent._newASTPointer.forEach(file => {
+        if (file.fileName === fnDefNode.node.name) {
+          file.nodes.forEach(childNode => {
+            if (childNode.nodeType === 'ImportStatementList')
+             childNode.imports?.push(fnNode);
+           })
          }
-        }
+       })
+      }
+     }
        if(path.isTypeConversion()) {
          const newNode = buildNode('TypeConversion', {
          type: node.typeDescriptions.typeString,
