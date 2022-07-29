@@ -434,8 +434,8 @@ const visitor = {
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
-      if(expression.nodeType === 'FunctionCall'){
-      if((scope.getReferencedNode(expression.expression)).containsSecret)
+      if(expression.nodeType === 'FunctionCall'){  
+      if((scope.getReferencedNode(expression.expression))?.containsSecret)
       node.containsSecret = 'true';
     }
       const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
