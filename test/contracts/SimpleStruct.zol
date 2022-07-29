@@ -14,7 +14,11 @@ contract Assign {
   MyStruct public x;
 
   function add(MyStruct memory value) public {
-    known a += value.prop1;
+    unknown a += value.prop1;
+    x.prop2 = true;
+  }
+  function remove(MyStruct memory value) public {
+     a -= value.prop1;
     x.prop2 = true;
   }
 }

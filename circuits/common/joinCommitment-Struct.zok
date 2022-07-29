@@ -1,0 +1,173 @@
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768
+from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+def main(\
+	private field fromId,\
+	private field stateVarId,\
+	private bool isMapping,\
+	private u32[8] oldCommitment_0_owner_secretKey,\
+	private u32[8] oldCommitment_1_owner_secretKey,\
+	public field oldCommitment_0_nullifier,\
+	public field oldCommitment_1_nullifier,\
+	private field oldCommitment_0_value,\
+	private u32[8] oldCommitment_0_salt,\
+	private field oldCommitment_1_value,\
+	private u32[8] oldCommitment_1_salt,\
+	public field commitmentRoot,\
+	private field oldCommitment_0_membershipWitness_index,\
+	private field[32] oldCommitment_0_membershipWitness_siblingPath,\
+	private field oldCommitment_1_membershipWitness_index,\
+	private field[32] oldCommitment_1_membershipWitness_siblingPath,\
+	private u32[8] newCommitment_owner_publicKey,\
+	private u32[8] newCommitment_salt,\
+	public field newCommitment_commitment\
+) -> bool:
+
+
+        // We need to hard-code the mappingId's of mappings into the circuit:
+
+
+        field oldCommitment_0 = oldCommitment_0_value
+
+
+        field oldCommitment_1 = oldCommitment_1_value
+
+
+// check if state is mapping or not
+
+        field oldCommitment_0_stateVarId_field =  if isMapping == true then mimc2([stateVarId, fromId]) else stateVarId fi
+
+
+        u32[8] oldCommitment_0_stateVarId = field_to_u32_8(oldCommitment_0_stateVarId_field)
+
+
+        field oldCommitment_1_stateVarId_field = if isMapping == true then mimc2([stateVarId, fromId]) else stateVarId fi
+
+
+        u32[8] oldCommitment_1_stateVarId = field_to_u32_8(oldCommitment_1_stateVarId_field)
+
+
+        field newCommitment_stateVarId_field = if isMapping == true then mimc2([stateVarId, fromId]) else stateVarId fi
+
+
+        u32[8] newCommitment_stateVarId = field_to_u32_8(newCommitment_stateVarId_field)
+
+
+        // oldCommitment_0 - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] oldCommitment_0_owner_publicKey = sha256of256([...oldCommitment_0_owner_secretKey])
+
+
+        // oldCommitment_1 - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] oldCommitment_1_owner_publicKey = sha256of256([...oldCommitment_1_owner_secretKey])
+
+
+        // Nullify oldCommitment_0:
+
+        u32[8] oldCommitment_0_nullifier_check = sha256of768([\
+          ...oldCommitment_0_stateVarId,\
+          ...oldCommitment_0_owner_secretKey,\
+          ...oldCommitment_0_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(oldCommitment_0_nullifier)[8..256] == u32_8_to_bool_256(oldCommitment_0_nullifier_check)[8..256]\
+        )
+
+
+        // Nullify oldCommitment_1:
+
+        u32[8] oldCommitment_1_nullifier_check = sha256of768([\
+          ...oldCommitment_1_stateVarId,\
+          ...oldCommitment_1_owner_secretKey,\
+          ...oldCommitment_1_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(oldCommitment_1_nullifier)[8..256] == u32_8_to_bool_256(oldCommitment_1_nullifier_check)[8..256]\
+        )
+
+
+        // oldCommitment_0_commitment: preimage check
+
+        u32[8] oldCommitment_0_commitment = sha256of1024([\
+          ...oldCommitment_0_stateVarId,\
+          ...field_to_u32_8(oldCommitment_0_value),\
+          ...oldCommitment_0_owner_publicKey,\
+          ...oldCommitment_0_salt\
+        ])
+
+
+        // oldCommitment_1_commitment: preimage check
+
+        u32[8] oldCommitment_1_commitment = sha256of1024([\
+          ...oldCommitment_1_stateVarId,\
+          ...field_to_u32_8(oldCommitment_1_value),\
+          ...oldCommitment_1_owner_publicKey,\
+          ...oldCommitment_1_salt\
+        ])
+
+
+        // oldCommitment_0_commitment: existence check
+
+        field oldCommitment_0_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(oldCommitment_0_commitment)[8..256]])
+
+
+        field oldCommitment_0_commitmentRoot_check = checkRoot(\
+          oldCommitment_0_membershipWitness_siblingPath,\
+          oldCommitment_0_commitment_truncated,\
+          oldCommitment_0_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(oldCommitment_0_commitmentRoot_check)[8..256]\
+        )
+
+
+        // oldCommitment_1_commitment: existence check
+
+        field oldCommitment_1_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(oldCommitment_1_commitment)[8..256]])
+
+
+        field oldCommitment_1_commitmentRoot_check = checkRoot(\
+          oldCommitment_1_membershipWitness_siblingPath,\
+          oldCommitment_1_commitment_truncated,\
+          oldCommitment_1_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(oldCommitment_1_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'newCommitment' for commitment
+
+
+          u32[8] newCommitment_value = field_to_u32_8((oldCommitment_0 + oldCommitment_1))
+
+        // newCommitment_commitment - preimage check
+
+        u32[8] newCommitment_commitment_check = sha256of1024([\
+          ...newCommitment_stateVarId,\
+          ...newCommitment_value,\
+          ...newCommitment_owner_publicKey,\
+          ...newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(newCommitment_commitment)[8..256] == u32_8_to_bool_256(newCommitment_commitment_check)[8..256]\
+        )
+
+        return true
