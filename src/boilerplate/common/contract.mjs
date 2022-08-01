@@ -5,6 +5,7 @@ import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 import { generateProof } from './zokrates.mjs';
+import poseidonHash from './poseidon.mjs';
 
 
 const web3 = Web3.connection();
@@ -112,7 +113,8 @@ export async function registerKey(
   registerWithContract,
 ) {
   const secretKey = generalise(_secretKey);
-  const publicKey = generalise(utils.shaHash(secretKey.hex(32)));
+  const BN128_GROUP_ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+  const publicKey = generalise(BigInt(utils.shaHash(secretKey.hex(32))) % BN128_GROUP_ORDER);
   if (registerWithContract) {
     const instance = await getContractInstance(contractName);
     await instance.methods.registerZKPPublicKey(publicKey.integer).send({
@@ -198,14 +200,14 @@ export function getInputCommitments(publicKey, value, commitments) {
 
 
 
-	let oldCommitment_0_nullifier = generalise(
-		utils.shaHash(oldCommitment_stateVarId, secretKey.hex(32), oldCommitment_0_prevSalt.hex(32))
-	);
-	let oldCommitment_1_nullifier = generalise(
-		utils.shaHash(oldCommitment_stateVarId, secretKey.hex(32), oldCommitment_1_prevSalt.hex(32))
-	);
-	oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32, 31)); // truncate
-	oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32, 31)); // truncate
+	let oldCommitment_0_nullifier = poseidonHash([
+		BigInt(oldCommitment_stateVarId), BigInt(secretKey.hex(32)), BigInt(oldCommitment_0_prevSalt.hex(32))
+  ],);
+	let oldCommitment_1_nullifier = poseidonHash([
+		BigInt(oldCommitment_stateVarId), BigInt(secretKey.hex(32)), BigInt(oldCommitment_1_prevSalt.hex(32))
+  ],);
+	oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
+	oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32)); // truncate
 
 	// Calculate commitment(s):
 
@@ -217,16 +219,15 @@ export function getInputCommitments(publicKey, value, commitments) {
 
 	newCommitment_value = generalise(newCommitment_value);
 
-	let newCommitment = generalise(
-		utils.shaHash(
-			oldCommitment_stateVarId,
-			newCommitment_value.hex(32),
-			publicKey.hex(32),
-			newCommitment_newSalt.hex(32)
-		)
+	let newCommitment = poseidonHash([
+			BigInt(oldCommitment_stateVarId),
+			BigInt(newCommitment_value.hex(32)),
+			BigInt(publicKey.hex(32)),
+			BigInt(newCommitment_newSalt.hex(32))
+  ],
 	);
 
-	newCommitment = generalise(newCommitment.hex(32, 31)); // truncate
+	newCommitment = generalise(newCommitment.hex(32)); // truncate
 
   let stateVarID = parseInt(oldCommitment_stateVarId,16);
   let  fromID = 0;

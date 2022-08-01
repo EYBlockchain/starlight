@@ -140,12 +140,12 @@ def main(\
 
         // oldCommitment_0_commitment: existence check
 
-        field oldCommitment_0_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(oldCommitment_0_commitment)[8..256]])
+        // field oldCommitment_0_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(oldCommitment_0_commitment)[8..256]])
 
 
         field oldCommitment_0_commitmentRoot_check = checkRoot(\
           oldCommitment_0_membershipWitness_siblingPath,\
-          oldCommitment_0_commitment_truncated,\
+          oldCommitment_1_commitment_field,\
           oldCommitment_0_membershipWitness_index\
         )
 
@@ -157,12 +157,12 @@ def main(\
 
         // oldCommitment_1_commitment: existence check
 
-        field oldCommitment_1_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(oldCommitment_1_commitment)[8..256]])
+        // field oldCommitment_1_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(oldCommitment_1_commitment)[8..256]])
 
 
         field oldCommitment_1_commitmentRoot_check = checkRoot(\
           oldCommitment_1_membershipWitness_siblingPath,\
-          oldCommitment_1_commitment_truncated,\
+          oldCommitment_1_commitment_field,\
           oldCommitment_1_membershipWitness_index\
         )
 
