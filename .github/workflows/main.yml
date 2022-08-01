@@ -31,7 +31,11 @@ jobs:
           npm i npm@7
           tsc
           npm test
-          chmod +x ./test.sh && bash ./test.sh temp-zapps
+
+      - name: compile shield contracts and circuits
+        run: |
+        chmod +x ./test.sh
+        TERM=xterm bash ./test.sh temp-zapps
 
   test-zapp:
     runs-on: ubuntu-latest
