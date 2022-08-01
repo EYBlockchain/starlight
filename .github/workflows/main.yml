@@ -6,7 +6,7 @@ name: test-on-pr
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [ master, miranda/compiletest ]
   pull_request:
     branches: [ master ]
 
@@ -31,6 +31,7 @@ jobs:
           npm i npm@7
           tsc
           npm test
+          chmod +x ./test.sh && ./test.sh
 
   test-zapp:
     runs-on: ubuntu-latest
