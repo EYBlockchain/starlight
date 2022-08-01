@@ -34,6 +34,7 @@ jobs:
 
       - name: compile shield contracts and circuits
         run: |
+          npm i solc@^0.8.0 -g
           chmod +x ./test.sh
           TERM=xterm bash ./test.sh temp-zapps
 

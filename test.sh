@@ -1,4 +1,4 @@
-cd $1/
+cd zapps/
 echo “$(tput setaf 3) SHIELDCONTRACTS”
 SOLFILES=$(find . -type f -name "*Shield*.sol" -maxdepth 3 -mindepth 3)
 solarray=($SOLFILES)
@@ -17,6 +17,6 @@ for zokelement in "${zokarray[@]}"
 do
     zokelement="${zokelement:1}"
     echo “$(tput setaf 7) $zokelement compiling”
-    docker run -v $PWD:/app/code --name testcircuits -ti zokrates/zokrates:0.7.12 ./zokrates/bin/zokrates compile -i code$zokelement || echo “$(tput setaf 1) $zokelement failed”
+    docker run -t -v $PWD:/home/zokrates/code --name=testcircuits zokrates/zokrates:0.7.12 .zokrates/bin/zokrates compile -i code$zokelement || echo “$(tput setaf 1) $zokelement failed”
     docker rm testcircuits
 done
