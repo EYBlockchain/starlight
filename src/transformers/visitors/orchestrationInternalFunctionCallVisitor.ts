@@ -341,7 +341,6 @@ FunctionCall: {
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
       state.internalFncName ??= [];
       state.internalFncName.push(node.expression.name);
-      console.log(state.internalFncName)
      if(internalFunctionInteractsWithSecret === true) {
        const callingfnDefPath = path.getFunctionDefinition();
        const callingfnDefIndicators = callingfnDefPath.scope.indicators;
@@ -399,7 +398,6 @@ FunctionCall: {
       parent._newASTPointer[path.containerName] = newNode;
       }
     }
-    console.log(state.circuitImport);
      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
      state.callingFncName ??= [];
      state.callingFncName.push(fnDefNode.node.name);

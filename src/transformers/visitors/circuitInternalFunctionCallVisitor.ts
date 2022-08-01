@@ -45,6 +45,8 @@ const internalCallVisitor = {
                    }
                    if(node.nodeType === 'VariableDeclaration'){
                      for(const [index, oldStateName] of state.oldStateArray.entries()) {
+                       if(oldStateName !== state.newStateArray[name][index])
+                       node.name = state.newStateArray[name][index];
                     node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
 
                      }
@@ -56,6 +58,9 @@ const internalCallVisitor = {
 // Collect the internal call ParameterList
             let internalFncParameters = [];
             state.newParameterList.forEach(node => {
+              if(node.nodeType === 'VariableDeclaration'){
+                internalFncParameters.push(node.name);
+              }
 
              switch(node.bpType) {
                  case 'PoKoSK' :{
@@ -91,7 +96,7 @@ const internalCallVisitor = {
                  break;
                }
              })
-            internalFncParameters =  state.newStateArray[name].concat(internalFncParameters);
+
             // to remove duplicates from the parameters
             internalFncParameters.forEach(param => {
               if (!state.circuitArguments?.includes(param)) {
