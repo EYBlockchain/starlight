@@ -1,4 +1,4 @@
-cd zapps/
+cd temp-zapps/
 echo “$(tput setaf 3) SHIELDCONTRACTS”
 SOLFILES=$(find . -type f -name "*Shield*.sol" -maxdepth 3 -mindepth 3)
 solarray=($SOLFILES)
