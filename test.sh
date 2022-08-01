@@ -7,7 +7,7 @@ do
     DIR="$(dirname "${solelement}")"
     solelement="${solelement:2}"
     echo “$(tput setaf 7) $solelement compiling”
-    solcjs --abi -o $DIR --include-path node_modules/ --base-path . $solelement || echo “$(tput setaf 1) $solelement failed”
+    solcjs --abi -o $DIR --include-path node_modules/ --base-path . $solelement || echo “$(tput setaf 1) $solelement failed” && exit 1
 done
 
 echo “$(tput setaf 3) CIRCUITS”
@@ -17,6 +17,6 @@ for zokelement in "${zokarray[@]}"
 do
     zokelement="${zokelement:1}"
     echo “$(tput setaf 7) $zokelement compiling”
-    docker run -t -v $PWD:/home/zokrates/code --name=testcircuits zokrates/zokrates:0.7.12 .zokrates/bin/zokrates compile -i code$zokelement || echo “$(tput setaf 1) $zokelement failed”
+    docker run -t -v $PWD:/home/zokrates/code --name=testcircuits zokrates/zokrates:0.7.12 .zokrates/bin/zokrates compile -i code$zokelement || echo “$(tput setaf 1) $zokelement failed” && exit 1
     docker rm testcircuits
 done
