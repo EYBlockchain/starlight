@@ -35,8 +35,8 @@ jobs:
       - name: compile shield contracts and circuits
         run: |
           npm i solc@^0.8.0 -g
-          chmod +x ./test-zapp-actions.sh
-          TERM=xterm bash ./test-zapp-actions.sh
+          chmod +x ./test/test-zapp-actions.sh
+          TERM=xterm bash ./test/test-zapp-actions.sh
 
   test-zapp:
     runs-on: ubuntu-latest
