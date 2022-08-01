@@ -31,7 +31,7 @@ jobs:
           npm i npm@7
           tsc
           npm test
-          chmod +x ./test.sh && ./test.sh
+          chmod +x ./test.sh && bash ./test.sh temp-zapps
 
   test-zapp:
     runs-on: ubuntu-latest
