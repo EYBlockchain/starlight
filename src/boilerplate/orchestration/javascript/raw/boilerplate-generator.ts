@@ -308,8 +308,8 @@ class BoilerplateGenerator {
         case 'increment':
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \t${stateName}_newOwnerPublicKey.limbs(32, 8),
-              \t${stateName}_newSalt.limbs(32, 8),
+              \t${stateName}_newOwnerPublicKey.integer,
+              \t${stateName}_newSalt.integer,
               \t${stateName}_newCommitment.integer`];
         case 'decrement':
           return [`
@@ -319,24 +319,24 @@ class BoilerplateGenerator {
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_1_nullifier.integer,
               \t${stateName}_0_prev.integer,
-              \t${stateName}_0_prevSalt.limbs(32, 8),
+              \t${stateName}_0_prevSalt.integer,
               \t${stateName}_1_prev.integer,
-              \t${stateName}_1_prevSalt.limbs(32, 8),
+              \t${stateName}_1_prevSalt.integer,
               ${rootRequired ? `\t${stateName}_root.integer,` : ``}
               \t${stateName}_0_index.integer,
               \t${stateName}_0_path.integer,
               \t${stateName}_1_index.integer,
               \t${stateName}_1_path.integer,
-              \t${stateName}_newOwnerPublicKey.limbs(32, 8),
-              \t${stateName}_2_newSalt.limbs(32, 8),
+              \t${stateName}_newOwnerPublicKey.integer,
+              \t${stateName}_2_newSalt.integer,
               \t${stateName}_2_newCommitment.integer`];
         case 'whole':
           switch (reinitialisedOnly) {
             case true:
               return [`
                   ${parameters.join('\n')}${stateVarIds.join('\n')}
-                  \t${stateName}_newOwnerPublicKey.limbs(32, 8),
-                  \t${stateName}_newSalt.limbs(32, 8),
+                  \t${stateName}_newOwnerPublicKey.integer,
+                  \t${stateName}_newSalt.integer,
                   \t${stateName}_newCommitment.integer`];
             default:
               switch (burnedOnly) {
@@ -346,7 +346,7 @@ class BoilerplateGenerator {
                       \tsecretKey.limbs(32, 8),
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_prev.integer,
-                      \t${stateName}_prevSalt.limbs(32, 8),
+                      \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
@@ -359,23 +359,23 @@ class BoilerplateGenerator {
                           \tsecretKey.limbs(32, 8),
                           \t${stateName}_nullifier.integer,
                           \t${stateName}_prev.integer,
-                          \t${stateName}_prevSalt.limbs(32, 8),
+                          \t${stateName}_prevSalt.integer,
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                           \t${stateName}_index.integer,
                           \t${stateName}_path.integer`];
                     default:
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
+                      \t${stateName}_commitmentExists ? secretKey.integer : generalise(0).integer,
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_prev.integer,
-                      \t${stateName}_prevSalt.limbs(32, 8),
+                      \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
-                      \t${stateName}_newOwnerPublicKey.limbs(32, 8),
-                      \t${stateName}_newSalt.limbs(32, 8),
+                      \t${stateName}_newOwnerPublicKey.integer,
+                      \t${stateName}_newSalt.integer,
                       \t${stateName}_newCommitment.integer`];
         }
       }

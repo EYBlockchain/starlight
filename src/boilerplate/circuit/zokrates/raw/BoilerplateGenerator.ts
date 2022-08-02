@@ -42,8 +42,6 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-        `from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768`,
-        `from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field`,
         `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
         `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
       ];
@@ -61,8 +59,7 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] ${x}_stateVarId = field_to_u32_8(${id})
-        field ${x}_stateVarId_field =u32_array_to_field(${x}_stateVarId)`,
+        field ${x}_stateVarId_field = ${id}`
          // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
@@ -74,8 +71,6 @@ class BoilerplateGenerator {
         // Nullify ${x}:
 
         field ${x}_oldCommitment_owner_secretKey_field =u32_array_to_field(${x}_oldCommitment_owner_secretKey)
-
-        field ${x}_oldCommitment_salt_field =u32_array_to_field(${x}_oldCommitment_salt)
 
         field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
           ${x}_stateVarId_field,\\
@@ -107,10 +102,7 @@ class BoilerplateGenerator {
   oldCommitmentPreimage = {
     importStatements(): string[] {
       return [
-        `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
         `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
-        `from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field`,
         `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
@@ -119,7 +111,7 @@ class BoilerplateGenerator {
       // prettier-ignore
       return [
         `private field ${x}_oldCommitment_value`,
-        `private u32[8] ${x}_oldCommitment_salt`,
+        `private field ${x}_oldCommitment_salt_field`,
       ];
     },
 
@@ -144,9 +136,7 @@ class BoilerplateGenerator {
           ${x}_oldCommitment_value,\\
           ${x}_oldCommitment_owner_publicKey_field,\\
           ${x}_oldCommitment_salt_field\\
-        ])
-        
-        u32[8] ${x}_oldCommitment_commitment = field_to_u32_8(${x}_oldCommitment_owner_publicKey_field)`,
+        ])`,
       ];
     },
   };
@@ -176,9 +166,7 @@ class BoilerplateGenerator {
     postStatements({ name: x, isWhole, isAccessed, isNullified, initialisationRequired }): string[] {
       const lines = [
         `
-        // ${x}_oldCommitment_commitment: existence check
-
-        // field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])`,
+        // ${x}_oldCommitment_commitment: existence check`,
 
         `
         field ${x}_commitmentRoot_check = checkRoot(\\
@@ -213,19 +201,15 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
-        `from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024`,
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
         `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
-        `from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field`,
         `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
 
     parameters({ name: x }): string[] {
       return [
-        `private u32[8] ${x}_newCommitment_owner_publicKey`,
-        `private u32[8] ${x}_newCommitment_salt`,
+        `private field ${x}_newCommitment_owner_publicKey_field`,
+        `private field ${x}_newCommitment_salt_field`,
         `public field ${x}_newCommitment_commitment`,
       ];
     },
@@ -235,8 +219,7 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        u32[8] ${x}_stateVarId = field_to_u32_8(${id})
-        field ${x}_stateVarId_field =u32_array_to_field(${x}_stateVarId)`, 
+        field ${x}_stateVarId_field = ${id}`, 
         // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
@@ -254,10 +237,10 @@ class BoilerplateGenerator {
           `assert(${x0} + ${x1} > ${y})
           // TODO: assert no under/overflows
 
-          u32[8] ${x}_newCommitment_value = field_to_u32_8((${x0} + ${x1}) - (${y}))`
+          field ${x}_newCommitment_value_field = (${x0} + ${x1}) - (${y})`
         );
       } else {
-        lines.push(`u32[8] ${x}_newCommitment_value = field_to_u32_8(${y})`);
+        lines.push(`field ${x}_newCommitment_value_field = ${y}`);
       }
 
       return [
@@ -267,12 +250,6 @@ class BoilerplateGenerator {
         ${lines}
 
         // ${x}_newCommitment_commitment - preimage check
-
-        field ${x}_newCommitment_value_field =u32_array_to_field(${x}_newCommitment_value)
-
-        field ${x}_newCommitment_owner_publicKey_field =u32_array_to_field(${x}_newCommitment_owner_publicKey)
-
-        field ${x}_newCommitment_salt_field =u32_array_to_field(${x}_newCommitment_salt)
 
         field ${x}_newCommitment_commitment_check_field = poseidon([\\
           ${x}_stateVarId_field,\\
@@ -292,7 +269,6 @@ class BoilerplateGenerator {
   mapping = {
     importStatements(): string[] {
       return [
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
         `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
       ];
     },
@@ -316,9 +292,6 @@ class BoilerplateGenerator {
       return [
         `
         field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
-
-        `
-        u32[8] ${x}_stateVarId = field_to_u32_8(${x}_stateVarId_field)`, // convert to u32[8], for later sha256 hashing
       ];
     },
   };
