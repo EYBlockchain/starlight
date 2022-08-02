@@ -59,7 +59,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
     if (!thisState.customInputs.some((input: any) => input.name === indicator.name))
-      thisState.customInputs.push({name: indicator.name, type });
+      thisState.customInputs.push({name: indicator.name, typeName: {name: type} });
   }
 };
 
