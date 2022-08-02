@@ -306,12 +306,12 @@ const visitor = {
           contractName,
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
-        if (fnIndicator.oldCommitmentAccessRequired)
+        if (fnIndicator.oldCommitmentAccessRequired|| fnIndicator.internalFunctionInteractsWithSecret)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
         newNodes.readPreimageNode = buildNode('ReadPreimage', {
           contractName,
         });
-        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
+        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,
           });

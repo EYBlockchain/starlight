@@ -28,13 +28,13 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
           item.expression.components.forEach(element => {
             if(element.kind === 'bool'){
               thisState.customInputs ??= [];
-              thisState.customInputs.push(1);
+              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
             }
           });
         } else {
           if(item.expression.kind === 'bool'){
             thisState.customInputs ??= [];
-            thisState.customInputs.push(1);
+            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
           }
         }
       }
@@ -42,7 +42,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
-    thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
+    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.name))+']', typeName: {name: 'uint256'}});
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit

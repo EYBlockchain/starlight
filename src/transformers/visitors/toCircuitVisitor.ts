@@ -601,7 +601,6 @@ const visitor = {
       }
 let interactsWithSecret = false ;
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
-
         const newState: any = {};
         refPath.parentPath.traversePathsFast(
           interactsWithSecretVisitor,
@@ -611,13 +610,16 @@ let interactsWithSecret = false ;
         interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
 
         // check for internal function call if the parameter passed in the function call interacts with secret or not
-        refPath.parentPath.node.arguments?.forEach((element, index) => {
-          if(node.id === element.referencedDeclaration) {
-           let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
-           interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
-          }
-        })
+        if(refPath.parentPath.node.kind === 'functionCall'){
+          refPath.parentPath.node.arguments?.forEach((element, index) => {
+            if(node.id === element.referencedDeclaration) {
+             let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
+             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
+            }
+          })
+        }
       });
+
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&
