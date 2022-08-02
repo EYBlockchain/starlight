@@ -216,7 +216,7 @@ const visitor = {
       }
     },
   },
-  
+
   EventDefinition: {
     enter(path: NodePath, state: any) {
       state.skipSubNodes = true;
@@ -594,14 +594,14 @@ const visitor = {
         return;
       }
 
-
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
+        console.log(refPath.node);
         refPath.parentPath.traversePathsFast(
           interactsWithSecretVisitor,
           newState,
         );
-        interactsWithSecret ||= newState.interactsWithSecret;
+        interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret ;
       });
 
       if (

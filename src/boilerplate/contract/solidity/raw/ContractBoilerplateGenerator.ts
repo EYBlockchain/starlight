@@ -229,8 +229,6 @@ class ContractBoilerplateGenerator {
         `
            function joinCommitments(uint256[] calldata newNullifiers, uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
 
-            bytes4 sig = bytes4(keccak256("joinCommitments(uint256[],uint256,uint256[],uint256[])"));
-
             Inputs memory inputs;
 
             inputs.customInputs = new uint[](1);

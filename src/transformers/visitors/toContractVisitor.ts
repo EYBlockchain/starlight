@@ -28,13 +28,13 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
           item.expression.components.forEach(element => {
             if(element.kind === 'bool'){
               thisState.customInputs ??= [];
-              thisState.customInputs.push(1);
+              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
             }
           });
         } else {
           if(item.expression.kind === 'bool'){
             thisState.customInputs ??= [];
-            thisState.customInputs.push(1);
+            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
           }
         }
       }
@@ -42,7 +42,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
-    thisState.customInputs.push('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']');
+    thisState.customInputs.push({name : ('newCommitments['+(thisState.variableName.indexOf(indicator.name))+']'),typeName: {name: 'uint256'} });
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -558,7 +558,7 @@ export default {
         const newNode = buildNode('EventDefinition', {
           name: node.fileName || state.functionName,
           id: node.id,
-        });   
+        });
         node._newASTPointer = newNode;
         parent._newASTPointer.push(newNode);
     },
@@ -778,7 +778,7 @@ EmitStatement: {
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;
       }
-      // Like External function calls ,it's easiest (from the pov of writing this transpiler) if Event calls appear at the very start or very end of a function. 
+      // Like External function calls ,it's easiest (from the pov of writing this transpiler) if Event calls appear at the very start or very end of a function.
       // TODO: need a warning message to this effect ^^^
       if (parent.nodeType === 'EmitStatement') {
       newNode = buildNode('FunctionCall');
