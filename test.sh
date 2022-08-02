@@ -1,3 +1,4 @@
+npm i solc@^0.8.0 -g
 cd zapps/
 echo “$(tput setaf 3) SHIELDCONTRACTS” 
 SOLFILES=$(find . -type f -name "*Shield*.sol" -maxdepth 3 -mindepth 3)
