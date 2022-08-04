@@ -306,18 +306,18 @@ const visitor = {
           contractName,
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
-        if (fnIndicator.oldCommitmentAccessRequired|| fnIndicator.internalFunctionInteractsWithSecret)
+        if (fnIndicator.oldCommitmentAccessRequired|| fnIndicator.parentIndicator.oldCommitmentAccessRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
         newNodes.readPreimageNode = buildNode('ReadPreimage', {
           contractName,
         });
-        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret) {
+        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.parentIndicator.nullifiersRequired || fnIndicator.parentIndicator.containsAccessedOnlyState ) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,
           });
           newNodes.calculateNullifierNode = buildNode('CalculateNullifier');
         }
-        if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
+        if (fnIndicator.newCommitmentsRequired || fnIndicator.parentIndicator.newCommitmentsRequired)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
           newNodes.generateProofNode = buildNode('GenerateProof', {
           circuitName: node.fileName,
