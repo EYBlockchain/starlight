@@ -31,9 +31,7 @@ def main(\
 ) -> bool:
 
 
-        // We need to hard-code the mappingId's of mappings into the circuit:
-
-
+        
         field oldCommitment_0 = oldCommitment_0_value
 
 

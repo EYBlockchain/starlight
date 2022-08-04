@@ -5,13 +5,13 @@ contract Assign {
   secret uint256 private b;
   uint256 public c;
   function addB(secret uint256 value) public {
-    known b += value;
+    unknown b += value;
   }
     function addC() public {
     c += 2;
   }
   function addA(secret uint256 value) public {
-    known a += value;
+    unknown a += value;
   }
   function remove(secret uint256 value) public {
     addB(value);

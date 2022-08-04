@@ -596,7 +596,6 @@ const visitor = {
 
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
-        console.log(refPath.node);
         refPath.parentPath.traversePathsFast(
           interactsWithSecretVisitor,
           newState,
