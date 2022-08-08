@@ -168,18 +168,21 @@ const internalCallVisitor = {
                     })
                     childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
                     childNode.body.preStatements.forEach( node => {
-                      if(internalFncbpType === callingFncbpType)
+                      if(isPartitioned){
+                      if((internalFncbpType === callingFncbpType))
                        node.newCommitmentValue = node.newCommitmentValue+' + ('+commitmentValue+')';
                       else
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
+                     }
                     })
 
                     childNode.body.postStatements.forEach( node => {
+                      if(isPartitioned){
                       if(internalFncbpType === callingFncbpType)
                        node.newCommitmentValue = node.newCommitmentValue+' + ('+commitmentValue+')';
                       else
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
-
+                     }
                     })
                   }
 
