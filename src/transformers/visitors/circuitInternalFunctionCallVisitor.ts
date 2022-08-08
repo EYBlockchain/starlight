@@ -16,10 +16,10 @@ const internalCallVisitor = {
 
      // Find the Internal Function Node,
      const { node, parent } = path;
-     node._newASTPointer.forEach(file => {
-      state.internalFncName?.forEach( name => {
+
+      state.internalFncName?.forEach( (name,index) => {
+         node._newASTPointer.forEach(file => {
         if(file.fileName === name) {
-          let index = state.internalFncName.indexOf(name);
           if(state.circuitImport[index]==='true') {
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
@@ -35,19 +35,19 @@ const internalCallVisitor = {
                  })
                  state.newParameterList.forEach(node => {
                   if(node.nodeType === 'Boilerplate') {
-                    for(const [index, oldStateName] of  state.oldStateArray.entries()) {
-                      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
+                    for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id])
                       if(node.newCommitmentValue === oldStateName)
-                       node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[name][index])
+                       node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[name][id])
                       if(node.mappingKeyName === oldStateName)
-                       node.mappingKeyName = node.mappingKeyName.replace(oldStateName, state.newStateArray[name][index])
+                       node.mappingKeyName = node.mappingKeyName.replace(oldStateName, state.newStateArray[name][id])
                      }
                    }
                    if(node.nodeType === 'VariableDeclaration'){
-                     for(const [index, oldStateName] of state.oldStateArray.entries()) {
-                       if(oldStateName !== state.newStateArray[name][index])
-                       node.name = state.newStateArray[name][index];
-                    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
+                     for(const [id, oldStateName] of state.oldStateArray.entries()) {
+                       if(oldStateName !== state.newStateArray[name][id])
+                       node.name = state.newStateArray[name][id];
+                    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id])
 
                      }
                    }
@@ -104,13 +104,13 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
-
             node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index]){
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
                     childNode.body.statements.forEach(node => {
+
                       if(node.nodeType === 'ExpressionStatement') {
                         if(node.expression.nodeType === 'InternalFunctionCall' && node.expression.name === name){
                           node.expression.CircuitArguments = node.expression.CircuitArguments.concat(state.circuitArguments);
@@ -120,35 +120,69 @@ const internalCallVisitor = {
                      })
                    }
                  })
-                index++;
                }
+
              })
            }
           else if(state.circuitImport[index] === 'false'){
             let newExpressionList = [];
+            let isPartitioned = false
+            let internalFncbpType: string;
+            let callingFncbpType: string;
+            let commitmentValue: string;
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
                 childNode.body.statements.forEach(node => {
+                  if(node.isPartitioned) {
+                    isPartitioned = true;
+                    internalFncbpType = node.bpType;
+                  }
                   if(node.nodeType === 'ExpressionStatement') {
                     if(node.expression.nodeType === 'Assignment') {
                       let  expressionList = cloneDeep(node);
-                      for(const [index, oldStateName] of  state.oldStateArray.entries()) {
+                      for(const [id, oldStateName] of  state.oldStateArray.entries()) {
                         if(node.expression.rightHandSide.rightExpression.name === oldStateName)
-                         expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][index])
+                         expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][id])
                         if(node.expression.leftHandSide.name === oldStateName)
-                         expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, state.newStateArray[name][index])
+                         expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, state.newStateArray[name][id])
                        }
                       newExpressionList = newExpressionList.concat(expressionList);
                      }
                    }
                  });
+                 childNode.body.preStatements.forEach(node => {
+                   if(node.isPartitioned){
+                     commitmentValue = node.newCommitmentValue;
+                   }
+                 })
                }
              })
              node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index]) {
                 file.nodes.forEach(childNode => {
-                  if(childNode.nodeType === 'FunctionDefinition')
-                   childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
+                  if(childNode.nodeType === 'FunctionDefinition') {
+                    childNode.body.statements.forEach(node => {
+                      if(node.nodeType==='BoilerplateStatement'){
+                        callingFncbpType = node.bpType;
+                      }
+                    })
+                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
+                    childNode.body.preStatements.forEach( node => {
+                      if(internalFncbpType === callingFncbpType)
+                       node.newCommitmentValue = node.newCommitmentValue+' + ('+commitmentValue+')';
+                      else
+                       node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
+                    })
+
+                    childNode.body.postStatements.forEach( node => {
+                      if(internalFncbpType === callingFncbpType)
+                       node.newCommitmentValue = node.newCommitmentValue+' + ('+commitmentValue+')';
+                      else
+                       node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
+
+                    })
+                  }
+
                  })
                }
              })

@@ -420,7 +420,7 @@ export default {
        path.traversePathsFast(findCustomInputsVisitor, state);
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
-       state.returnpara[state.functionName].returnParameters = state.customInputs;
+       state.returnpara[state.functionName].returnParameters = state.customInputs.map(n => n.name);
 
        const newNode = buildNode(
        node.nodeType,

@@ -866,6 +866,7 @@ let interactsWithSecret = false ;
        state.circuitImport.push('true');
      else
        state.circuitImport.push('false');
+
      const newNode = buildNode('InternalFunctionCall', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
