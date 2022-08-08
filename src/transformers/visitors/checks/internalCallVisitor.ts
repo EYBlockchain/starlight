@@ -15,7 +15,7 @@ export default {
       const args = node.arguments;
       let isSecretArray : string[];
       for (const arg of args) {
-         if (arg.nodeType !== 'Identifier' && !arg.expression.typeDescriptions.typeIdentifier.includes('_struct')) continue;
+         if (arg.nodeType !== 'Identifier' && !arg.expression?.typeDescriptions.typeIdentifier.includes('_struct')) continue;
          isSecretArray = args.map(arg => scope.getReferencedBinding(arg)?.isSecret);
        }
       if(path.isInternalFunctionCall()) {
