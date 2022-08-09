@@ -283,7 +283,7 @@ const visitor = {
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
-          if (!param.isSecret) state.constructorParams.push(
+          state.constructorParams.push(
             buildNode('VariableDeclaration', {
               name: param.name,
               type: param.typeName.name,
@@ -299,12 +299,6 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
-      const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
-        const newNodes: any = {};
-        const contractName = `${parent.name}Shield`;
-        newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
-          contractName,
-          onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
         if (fnIndicator.oldCommitmentAccessRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
