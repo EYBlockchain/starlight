@@ -16,7 +16,6 @@ const internalCallVisitor = {
 
      // Find the Internal Function Node,
      const { node, parent } = path;
-
       state.internalFncName?.forEach( (name,index) => {
          node._newASTPointer.forEach(file => {
         if(file.fileName === name) {
@@ -33,22 +32,25 @@ const internalCallVisitor = {
                      })
                    }
                  })
-                 state.newParameterList.forEach(node => {
+                 state.newParameterList.forEach((node, nodeIndex) => {
                   if(node.nodeType === 'Boilerplate') {
                     for(const [id, oldStateName] of  state.oldStateArray.entries()) {
-                      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id])
+                      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
                       if(node.newCommitmentValue === oldStateName)
-                       node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[name][id])
+                       node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[name][id].name)
                       if(node.mappingKeyName === oldStateName)
-                       node.mappingKeyName = node.mappingKeyName.replace(oldStateName, state.newStateArray[name][id])
+                       node.mappingKeyName = node.mappingKeyName.replace(oldStateName, state.newStateArray[name][id].name)
                      }
                    }
                    if(node.nodeType === 'VariableDeclaration'){
                      for(const [id, oldStateName] of state.oldStateArray.entries()) {
-                       if(oldStateName !== state.newStateArray[name][id])
-                       node.name = state.newStateArray[name][id];
-                    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id])
-
+                       if(oldStateName !== state.newStateArray[name][id].name)
+                       node.name = state.newStateArray[name][id].name;
+                    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
+                    if(state.newStateArray[name][id].memberName)
+                       state.newParameterList.splice(nodeIndex,1);
+                       else
+                       node.name = node.name.replace(oldStateName, state.newStateArray[name][id].name)
                      }
                    }
                  })
@@ -141,10 +143,24 @@ const internalCallVisitor = {
                     if(node.expression.nodeType === 'Assignment') {
                       let  expressionList = cloneDeep(node);
                       for(const [id, oldStateName] of  state.oldStateArray.entries()) {
-                        if(node.expression.rightHandSide.rightExpression.name === oldStateName)
-                         expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][id])
+                          if(state.newStateArray[name][id].memberName ){
+                            if(node.expression.rightHandSide.rightExpression.name === oldStateName)
+                             expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName)
+                            if(expressionList.expression.rightHandSide.rightExpression.leftExpression){
+                             expressionList.expression.rightHandSide.rightExpression.leftExpression.name = expressionList.expression.rightHandSide.rightExpression.leftExpression.name?.replace(oldStateName, state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName)
+                             expressionList.expression.rightHandSide.rightExpression.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.rightExpression.name?.replace(oldStateName, state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName)
+                           }
+                         }
+                          else{
+                            if(node.expression.rightHandSide.rightExpression.name === oldStateName)
+                             expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][id].name)
+                            if(expressionList.expression.rightHandSide.rightExpression.leftExpression){
+                             expressionList.expression.rightHandSide.rightExpression.leftExpression.name = expressionList.expression.rightHandSide.rightExpression.leftExpression.name?.replace(oldStateName, state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName)
+                             expressionList.expression.rightHandSide.rightExpression.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.rightExpression.name?.replace(oldStateName, state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName)
+                           }
+                          }
                         if(node.expression.leftHandSide.name === oldStateName)
-                         expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, state.newStateArray[name][id])
+                         expressionList.expression.leftHandSide.name = expressionList.expression.leftHandSide.name.replace(oldStateName, state.newStateArray[name][id].name)
                        }
                       newExpressionList = newExpressionList.concat(expressionList);
                      }
@@ -153,6 +169,14 @@ const internalCallVisitor = {
                  childNode.body.preStatements.forEach(node => {
                    if(node.isPartitioned){
                      commitmentValue = node.newCommitmentValue;
+                     for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                       if(commitmentValue.includes(oldStateName)){
+                         if(state.newStateArray[name][id].memberName)
+                           commitmentValue = commitmentValue.replace(oldStateName,state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName);
+                         else
+                          commitmentValue = commitmentValue.replace(oldStateName,state.newStateArray[name][id].name);
+                       }
+                     }
                    }
                  })
                }

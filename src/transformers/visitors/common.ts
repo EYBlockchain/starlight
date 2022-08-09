@@ -15,8 +15,8 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
    let isSecretArray : string[];
    let oldStateArray : string[];
    for (const arg of args) {
-     if (arg.nodeType !== 'Identifier') continue;
-   isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+     if (arg.nodeType !== 'Identifier' && !arg.expression.typeDescriptions.typeIdentifier.includes('_struct')) continue;
+     isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
  }
  if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedNode(node.expression);

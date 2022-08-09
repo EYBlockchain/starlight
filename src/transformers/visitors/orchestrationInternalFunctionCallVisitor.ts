@@ -135,7 +135,7 @@ const internalCallVisitor = {
                        if(stateNode.privateStateName === oldStateName )
                         stateNode.privateStateName = stateNode.privateStateName.replace(oldStateName,  state.newStateArray[index])
                        else
-                        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
+                        stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+state.newStateArray[index])
                        if(stateNode.stateVarId[1] === oldStateName)
                         stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
                       }
@@ -147,11 +147,18 @@ const internalCallVisitor = {
                    let newstateName: string;
                    for( stateName of Object.keys(generateProofNode.privateStates)) {
                      for(const [index, oldStateName] of  oldStateArray.entries()) {
-                       newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[index])
+                       newstateName = stateName.replace('_'+oldStateName, '_'+state.newStateArray[index])
                        if(newstateName != stateName ){
                          generateProofNode.privateStates[ newstateName ] = generateProofNode.privateStates[stateName];
                          delete(generateProofNode.privateStates[ stateName ]);
+                         stateName = newstateName;
                         }
+
+                        for( const [id, node] of Object.entries(generateProofNode.privateStates[stateName].increment) ){
+                          if(generateProofNode.privateStates[stateName].increment[id].name === oldStateName)
+                         generateProofNode.privateStates[stateName].increment[id].name = state.newStateArray[index];
+                    }
+
                       }
                     }
                    generateProofNode.parameters = [];
@@ -232,6 +239,7 @@ const internalCallVisitor = {
                      let dupNode;
                      let dupIndex;
                      let dupAssignNode;
+
                     childNode.body.statements.forEach((node, index)=> {
                       if(node.nodeType === 'VariableDeclarationStatement'){
                         state.newStatementList.some((statenode, id ) => {
@@ -317,6 +325,11 @@ const internalCallVisitor = {
                           childNode.body.statements?.splice(childNode.body.statements.indexOf(node)+1, 0, list);
                         })
                       }
+                      if(node.nodeType === 'VariableDeclarationStatement' && childNode.body.statements.indexOf(node) != 0){
+                        childNode.body.statements.splice(0, 0, childNode.body.statements.splice(childNode.body.statements.indexOf(node)+1, 1)[0]);
+                        childNode.body.statements.splice(0, 0, childNode.body.statements.splice(childNode.body.statements.indexOf(node), 1)[0]);
+
+                      }
                     });
                   }
                 })
@@ -334,7 +347,12 @@ FunctionCall: {
     if(path.isInternalFunctionCall()) {
       const args = node.arguments;
       let isCircuit = false;
-      state.newStateArray =  args.map(arg => (arg.name));
+      for (const arg of args) {
+      if(arg.expression?.typeDescriptions.typeIdentifier.includes('_struct'))
+        state.newStateArray =  args.map(arg => (arg.expression.name+'.'+arg.memberName));
+      else
+       state.newStateArray =  args.map(arg => (arg.name));
+      }
       let internalFunctionInteractsWithSecret = false;
       const newState: any = {};
       oldStateArray = internalFunctionCallVisitor(path, newState)

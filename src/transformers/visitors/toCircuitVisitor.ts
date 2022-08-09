@@ -827,7 +827,12 @@ let interactsWithSecret = false ;
     state.newStateArray ??= {};
     const name = node.expression.name;
     state.newStateArray[name] ??= [];
-     state.newStateArray[name] =   args.map(arg =>  arg.name)
+    for (const arg of args) {
+      if(arg.expression?.typeDescriptions.typeIdentifier.includes('_struct'))
+        state.newStateArray[name] =  args.map(arg => ({name: arg.expression.name, memberName: arg.memberName} ));
+      else
+       state.newStateArray[name] =  args.map(arg => ({name: arg.name}));
+      }
      let internalFunctionInteractsWithSecret = false;
      const newState: any = {};
      state.oldStateArray = internalFunctionCallVisitor(path, newState)
