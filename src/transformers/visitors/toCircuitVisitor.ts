@@ -420,12 +420,22 @@ const visitor = {
   },
 
   UnaryOperation: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { operator, prefix, subExpression } = node;
-      const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
+      const newNode = buildNode(node.nodeType, {
+        operator,
+        prefix,
+        subExpression: buildNode(subExpression.nodeType, {
+          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
+        }),
+        initialValue: buildNode(subExpression.nodeType, {
+          name: path.scope.getIdentifierMappingKeyName(subExpression)
+        }),
+      });
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+      state.skipSubNodes = true;
     }
   },
 

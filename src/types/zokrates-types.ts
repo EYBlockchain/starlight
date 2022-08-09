@@ -194,15 +194,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         expression,
       };
     }
-    case 'UnaryOperation': {
-      const { operator, prefix, subExpression = {} } = fields;
-      return {
-        nodeType,
-        operator,
-        prefix,
-        subExpression,
-      };
-    }
     case 'IfStatement': {
       const { condition = {} , trueBody= {} , falseBody= {} } = fields;
       return {
@@ -222,12 +213,13 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'UnaryOperation': {
-      const { operator, prefix, subExpression = {} } = fields;
+      const { operator, prefix, subExpression = {}, initialValue = {} } = fields;
       return {
         nodeType,
         operator,
         prefix,
         subExpression,
+        initialValue,
       };
     }
     case 'MsgSender': {

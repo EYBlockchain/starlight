@@ -153,6 +153,9 @@ if(returnStatement.length === 0){
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
+    case 'UnaryOperation':
+      return `${codeGenerator(node.initialValue)} = ${codeGenerator(node.subExpression)} ${node.operator[0]} 1`
+
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
         node.rightExpression,
