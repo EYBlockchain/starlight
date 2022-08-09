@@ -156,7 +156,7 @@ const addPublicInput = (path: NodePath, state: any) => {
 
     // if the node is the indexExpression, we dont need its value in the circuit
     state.publicInputs ??= [];
-    if (!(path.containerName === 'indexExpression' && !path.parentPath.isSecret)) state.publicInputs.push(node);
+    if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);
 
     // check we haven't already imported this node
     if (fnDefNode.node._newASTPointer.body.preStatements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name)) return;
@@ -654,6 +654,93 @@ const visitor = {
           0,
           newNodes.InitialiseKeysNode,
         );
+
+        // OR they are local variable declarations we need for initialising preimage...
+
+        let localVariableDeclarations = [];
+        newFunctionDefinitionNode.body.statements.forEach((n, index) => {
+          if (n.nodeType === 'VariableDeclarationStatement' && n.declarations[0].declarationType === 'localStack')
+            localVariableDeclarations.push({node: cloneDeep(n), index});
+        });
+
+        if (localVariableDeclarations[0]) {
+          localVariableDeclarations.forEach(n => {
+            const localIndicator = scope.indicators[n.node.declarations[0].id];
+            const indexExpressionPath = localIndicator.referencingPaths.find(p =>
+              p.getAncestorContainedWithin('indexExpression') && p.getAncestorOfType('IndexAccess')?.node.containsSecret
+            );
+            if (indexExpressionPath) {
+              // we have found a local variable which is used as an indexExpression, so we need it before we get the mapping value
+              // NB if there are multiple, we have just found the first one
+              const varDecComesAfter = scope.getReferencedIndicator(
+                NodePath.getPath(localIndicator.node)?.getCorrespondingRhsNode(), true
+              );
+              if (!varDecComesAfter) {
+                // here, we don't need to worry about defining anything first, so we push this local var to the top
+                newFunctionDefinitionNode.body.preStatements.splice(
+                  earliestPublicAccessIndex + 2,
+                  0,
+                  n.node,
+                );
+              } else {
+                // now we have to split initPreimage
+                const varDecComesBefore = scope.getReferencedIndicator(
+                  indexExpressionPath.getAncestorOfType('IndexAccess').node.baseExpression, true
+                );
+                const varDecComesBeforeSVID = [varDecComesBefore.id, localIndicator.name];
+                const varDecComesAfterSVID = [varDecComesAfter.id, varDecComesAfter instanceof MappingKey ? varDecComesAfter.referencedKeyName : ''];
+                let newInitPreimageNode1 = { nodeType: 'InitialisePreimage', privateStates: {}};
+                let newInitPreimageNode2 = { nodeType: 'InitialisePreimage', privateStates: {}};
+                let sortPreimage = 1;
+                let correctlyComesAfter = false;
+                let stateName: string;
+                let stateNode: any;
+                for ([stateName, stateNode] of
+                  Object.entries(
+                    newFunctionDefinitionNode.body.preStatements[earliestPublicAccessIndex + 2].privateStates
+                  )
+                ) {
+                  // we need to splice this local var dec between two initialisePreimage nodes
+                  // so here we find the place to split
+                  if (
+                    stateNode.stateVarId[0] === varDecComesAfterSVID[0] &&
+                    stateNode.stateVarId[1] === varDecComesAfterSVID[1] &&
+                    sortPreimage === 1
+                  ) {
+                    correctlyComesAfter = true;
+                  }
+
+                  if (
+                    stateNode.stateVarId[0] === varDecComesBeforeSVID[0] &&
+                    stateNode.stateVarId[1] === varDecComesBeforeSVID[1]
+                  ) {
+                    if (!correctlyComesAfter) throw new Error('A local variable declaration is required to access some secret state but requires a different one to be defined - this level of complexity is currently not supported by the compiler.')
+                    sortPreimage = 2;
+                  }
+
+                  if (sortPreimage === 1) newInitPreimageNode1.privateStates[stateName] = cloneDeep(stateNode);
+                  else newInitPreimageNode2.privateStates[stateName] = cloneDeep(stateNode);
+                }
+
+                newFunctionDefinitionNode.body.preStatements[earliestPublicAccessIndex + 2] = newInitPreimageNode1;
+                newFunctionDefinitionNode.body.preStatements.splice(
+                  earliestPublicAccessIndex + 3,
+                  0,
+                  n.node,
+                );
+                newFunctionDefinitionNode.body.preStatements.splice(
+                  earliestPublicAccessIndex + 4,
+                  0,
+                  newInitPreimageNode2,
+                );
+
+              }
+              delete newFunctionDefinitionNode.body.statements[n.index];
+            }
+          });
+        }
+
+
 
         // 1 - InitialisePreimage - whole states - per state
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state

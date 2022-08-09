@@ -210,6 +210,9 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   isStruct?: boolean;
   structProperties?: any;
 
+  isMapping?:boolean;
+  mappingKeys?: any;
+
   initialValue?: any;
 
   /** @param {NodePath} path the path of the localVariable for which we're creating an indicator
@@ -238,10 +241,36 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
 
     this.isParam = path.isInType('ParameterList');
 
+    if (path.isMappingIdentifier() || path.isArray()) {
+      this.isMapping = true;
+      this.mappingKeys = {};
+    }
     if (path.isStruct()) {
       this.isStruct = true;
       this.structProperties = {};
     }
+  }
+
+  addMappingKey(referencingPath: NodePath): MappingKey {
+    const keyNode = referencingPath.getMappingKeyIdentifier();
+    const keyPath = NodePath.getPath(keyNode);
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+
+    if (!['Identifier', 'MemberAccess', 'Literal'].includes(keyNode.nodeType)) {
+      throw new Error(
+        `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
+      );
+    }
+
+    // naming of the key within mappingKeys:
+    const keyName = this.scope.getMappingKeyName(referencingPath);
+
+    // add this mappingKey if it hasn't yet been added:
+    const mappingKeyExists = !!this.mappingKeys[keyName];
+    if (!mappingKeyExists)
+      this.mappingKeys[keyName] = new MappingKey(this, keyPath);
+
+    return this.mappingKeys[keyName];
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
@@ -249,7 +278,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!this.structProperties[keyNode.memberName])
-      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath, true);
 
     return this.structProperties[keyNode.memberName];
   }
@@ -259,8 +288,10 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
-    if (this.isStruct) {
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
+    } else if (this.isMapping) {
+      this.addMappingKey(path).updateProperties(path);
     }
   }
 

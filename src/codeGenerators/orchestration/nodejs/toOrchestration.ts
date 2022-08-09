@@ -98,6 +98,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `\nlet ${node.declarations[0].name} = generalise(${codeGenerator(
           node.initialValue,
         )});`;
+      if (!node.initialValue.operator) // local var dec
+        return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 

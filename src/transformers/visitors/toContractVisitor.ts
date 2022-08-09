@@ -54,7 +54,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (indicator.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
-    !(thisPath.containerName === 'indexExpression'&& !thisPath.parent.isSecret)
+    !(thisPath.containerName === 'indexExpression'&& !(thisPath.parentPath.isSecret|| thisPath.parent.containsSecret))
   ) {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
