@@ -114,12 +114,14 @@ class BoilerplateGenerator {
         case 'increment':
           if (structProperties)
             return [`
+              \n\n// read preimage for incremented state
               ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
               ${stateVarIds.join('\n')}
               \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
               \n
             `];
           return [`
+            \n\n// read preimage for incremented state
             ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
             \nconst ${stateName}_newCommitmentValue = generalise(${increment});
@@ -127,6 +129,7 @@ class BoilerplateGenerator {
         case 'decrement':
           if (structProperties)
             return [`
+              \n\n// read preimage for decremented state
               ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
               ${stateVarIds.join('\n')}
               \nconst ${stateName}_preimage = JSON.parse(
@@ -146,6 +149,7 @@ class BoilerplateGenerator {
               \n
             `];
           return [`
+            \n\n// read preimage for decremented state
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
             \n let ${stateName}_preimage = JSON.parse(
@@ -187,6 +191,7 @@ class BoilerplateGenerator {
           switch (reinitialisedOnly) {
             case true:
               return [`
+                \n\n// read preimage for reinitialised state
                 ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
                 ${initialised ? `` : stateVarIds.join('\n')}
                 \n`];
@@ -194,6 +199,7 @@ class BoilerplateGenerator {
               switch (accessedOnly) {
                 case true:
                   return [`
+                    \n\n// read preimage for accessed state
                     ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
                     const ${stateName}_prev = generalise(${stateName}_preimage.value);
@@ -201,6 +207,7 @@ class BoilerplateGenerator {
                     \n`];
                 default:
                   return [`
+                    \n\n// read preimage for whole state
                     ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
                     ${initialised ? `` : stateVarIds.join('\n')}
                     const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
@@ -222,8 +229,9 @@ class BoilerplateGenerator {
       switch (stateType) {
         case 'partitioned':
           return [`
-             ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
-             ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
+            \n\n// generate witness for partitioned state
+            ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
+            ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
             const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
             const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
             const ${stateName}_root = generalise(${stateName}_witness_0.root);
@@ -231,6 +239,7 @@ class BoilerplateGenerator {
             const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
         case 'whole':
           return [`
+            \n\n// generate witness for whole state
             const ${stateName}_emptyPath = new Array(32).fill(0);
             const ${stateName}_witness = ${stateName}_witnessRequired
             \t? await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer)
@@ -240,6 +249,7 @@ class BoilerplateGenerator {
             const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`];
         case 'accessedOnly':
           return [`
+            \n\n// generate witness for whole accessed state
             const ${stateName}_witness = await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer);
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);

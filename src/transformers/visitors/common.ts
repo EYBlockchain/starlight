@@ -1,7 +1,53 @@
 import NodePath from '../../traverse/NodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import explode from './explode.js';
+import buildNode from '../../types/orchestration-types.js';
 import { traversePathsFast } from '../../traverse/traverse.js';
+
+
+// 1 - InitialisePreimage - whole states - per state
+// 2 - ReadPreimage - oldCommitmentAccessRequired - per state
+// 3 - MembershipWitness - nullifiersRequired - per state
+// 4 - CalculateNullifier - nullifiersRequired - per state
+// 5 - CalculateCommitment - newCommitmentsRequired - per state
+// 6 - GenerateProof - all - per function
+// 7 - SendTransaction - all - per function
+// 8 - WritePreimage - all - per state
+export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator, path: NodePath) => {
+  const { node, parent } = path;
+  const newNodes: any = {};
+  const contractName = `${parent.name}Shield`;
+  newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
+    contractName,
+    onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
+  });
+  if (fnIndicator.oldCommitmentAccessRequired)
+    newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
+  newNodes.readPreimageNode = buildNode('ReadPreimage', {
+    contractName,
+  });
+  if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
+    newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
+      contractName,
+    });
+    newNodes.calculateNullifierNode = buildNode('CalculateNullifier');
+  }
+  if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
+    newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
+    newNodes.generateProofNode = buildNode('GenerateProof', {
+    circuitName: node.fileName,
+  });
+  newNodes.sendTransactionNode = buildNode('SendTransaction', {
+    functionName: node.fileName,
+    contractName,
+  });
+  newNodes.writePreimageNode = buildNode('WritePreimage', {
+    contractName,
+    onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
+  });
+  return newNodes;
+
+};
 
 export const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) => {
   if (thisPath.scope.getReferencedBinding(thisPath.node)?.isSecret)

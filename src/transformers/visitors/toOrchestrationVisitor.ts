@@ -8,7 +8,7 @@ import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
 import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-import { interactsWithSecretVisitor, parentnewASTPointer } from './common.js';
+import { interactsWithSecretVisitor, parentnewASTPointer, initialiseOrchestrationBoilerplateNodes } from './common.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
@@ -299,38 +299,10 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
-        });
-        if (fnIndicator.oldCommitmentAccessRequired)
-          newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
-        newNodes.readPreimageNode = buildNode('ReadPreimage', {
-          contractName,
-        });
-        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
-          newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
-            contractName,
-          });
-          newNodes.calculateNullifierNode = buildNode('CalculateNullifier');
-        }
-        if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
-          newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
-          newNodes.generateProofNode = buildNode('GenerateProof', {
-          circuitName: node.fileName,
-        });
-        newNodes.sendTransactionNode = buildNode('SendTransaction', {
-          functionName: node.fileName,
-          contractName,
-        });
-        newNodes.writePreimageNode = buildNode('WritePreimage', {
-          contractName,
-          onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
-        });
-        return newNodes;
 
-      };
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
       for(const [, indicators ] of Object.entries(functionIndicator)){
-
         if(
           (indicators instanceof StateVariableIndicator) &&
           indicators.isPartitioned &&
@@ -340,6 +312,7 @@ const visitor = {
            state.isjoinCommitmentsFunction?.push('true');
          }
       }
+
       let thisIntegrationTestFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
@@ -351,128 +324,101 @@ const visitor = {
           file.functionNames.push(node.fileName);
         }
       }
+
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
       thisIntegrationTestFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
+
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
-        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret ) {
+        scope.modifiesSecretState()) ||
+        functionIndicator.internalFunctionInteractsWithSecret) {
+
         const newNodes = initialiseOrchestrationBoilerplateNodes(
-          functionIndicator,
+          functionIndicator, path
         );
-        // 1 - InitialisePreimage - whole states - per state
-        // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
-        // 3 - MembershipWitness - nullifiersRequired - per state
-        // 4 - CalculateNullifier - nullifiersRequired - per state
-        // 5 - CalculateCommitment - newCommitmentsRequired - per state
-        // 6 - GenerateProof - all - per function
+
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
           delete state.msgSenderParam; // reset
         }
-        // 7 - SendTransaction - all - per function
-        // 8 - WritePreimage - all - per state
 
-        // this only includes accessed states which are not modified
-        const accessedStateIndicators = [];
-
-        const modifiedStateVariableIndicators: any[] = []; // array of StateVarIndicator or MappingKey
+        const allIndicators = [];
         let stateVarIndicator: StateVariableIndicator | MappingKey;
         for ([, stateVarIndicator] of Object.entries(
           functionIndicator,
         )) {
-          if (stateVarIndicator?.isAccessed && !stateVarIndicator?.isModified) {
-            if (stateVarIndicator.isMapping) {
-              for (const [, mappingKey] of Object.entries(
-                stateVarIndicator.mappingKeys,
-              )) {
-                accessedStateIndicators.push(mappingKey);
-              }
-            } else {
-              accessedStateIndicators.push(stateVarIndicator);
-            }
-            continue;
-          }
-          if (!stateVarIndicator?.isSecret || !stateVarIndicator?.isModified)
-            continue;
-          if (stateVarIndicator.isMapping) {
+          if (stateVarIndicator instanceof StateVariableIndicator && stateVarIndicator.isMapping) {
             for (const [, mappingKey] of Object.entries(
               stateVarIndicator.mappingKeys,
             )) {
-              modifiedStateVariableIndicators.push(mappingKey);
+              allIndicators.push(mappingKey);
             }
-          } else {
-            modifiedStateVariableIndicators.push(stateVarIndicator);
+          } else if (stateVarIndicator instanceof StateVariableIndicator) {
+            allIndicators.push(stateVarIndicator);
           }
         }
 
-        for (stateVarIndicator of modifiedStateVariableIndicators) {
+        for (stateVarIndicator of allIndicators) {
           let id: number | (number | string)[] = stateVarIndicator.id;
           let { name, isIncremented } = stateVarIndicator;
+          let accessedOnly = stateVarIndicator?.isAccessed && !stateVarIndicator?.isModified;
+          let secretModified = stateVarIndicator.isSecret && stateVarIndicator.isModified;
+
           if (stateVarIndicator instanceof MappingKey) {
-            id = [id, scope.getIdentifierMappingKeyName(stateVarIndicator.keyPath.node)];
-            name = getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess').node);
-            // name = name
-            //   .replace('[', '_')
-            //   .replace(']', '')
-            //   .replace('.sender', '');
+            accessedOnly =
+              stateVarIndicator.container?.isAccessed && !stateVarIndicator.container?.isModified;
+            secretModified =
+              stateVarIndicator.container?.isSecret && stateVarIndicator.container?.isModified;
+            id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node)];
+
+            name = accessedOnly ?
+              getIndexAccessName(stateVarIndicator.accessedPaths[stateVarIndicator.accessedPaths.length -1]?.getAncestorOfType('IndexAccess').node) :
+              stateVarIndicator.container?.isModified ?
+                getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess').node) :
+                getIndexAccessName(stateVarIndicator.referencingPaths[stateVarIndicator.referencingPaths.length -1].getAncestorOfType('IndexAccess').node);
           }
+
           let { incrementsArray, incrementsString } = isIncremented
             ? collectIncrements(stateVarIndicator)
             : { incrementsArray: null, incrementsString: null };
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
-          if (stateVarIndicator.isDecremented) {
-            // TODO refactor
-            node._newASTPointer.decrementedSecretStates ??= [];
-            node._newASTPointer.decrementedSecretStates.push(name);
-            node._newASTPointer.decrementsSecretState = true;
-            thisIntegrationTestFunction.decrementsSecretState = true;
-          }
-
-          const modifiedStateVariableNode = buildNode('VariableDeclaration', {
-            name,
-            isSecret: stateVarIndicator.isSecret,
-            type: stateVarIndicator.node.typeDescriptions.typeString,
-          });
-          node._newASTPointer.parameters.modifiedStateVariables.push(
-            modifiedStateVariableNode,
-          );
-
-          if (
-            stateVarIndicator.isWhole &&
-            functionIndicator.oldCommitmentAccessRequired
-          ) {
+          if (accessedOnly || (stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired)) {
             newNodes.initialisePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('InitialisePreimage', {
               privateStateName: name,
               indicator: stateVarIndicator,
+              accessedOnly,
               id,
             });
           }
 
-          newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
-            'ReadPreimage',
-            {
-              id,
-              increment: isIncremented ? incrementsString : undefined,
-              indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
-              reinitialisedOnly:
-                stateVarIndicator.reinitialisable &&
-                !stateVarIndicator.isNullified,
-            },
-          );
+          if (accessedOnly || secretModified)
+            newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
+              'ReadPreimage',
+              {
+                id,
+                increment: isIncremented ? incrementsString : undefined,
+                indicator: stateVarIndicator,
+                initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
+                reinitialisedOnly:
+                  stateVarIndicator.reinitialisable &&
+                  !stateVarIndicator.isNullified,
+                accessedOnly,
+              },
+            );
 
-          if (stateVarIndicator.isNullified) {
+          if (stateVarIndicator.isNullified || accessedOnly) {
             newNodes.membershipWitnessNode.privateStates[
               name
             ] = buildPrivateStateNode('MembershipWitness', {
               privateStateName: name,
               indicator: stateVarIndicator,
+              accessedOnly,
             });
             newNodes.calculateNullifierNode.privateStates[
               name
@@ -480,6 +426,7 @@ const visitor = {
               indicator: stateVarIndicator,
             });
           }
+
           if (stateVarIndicator.newCommitmentsRequired) {
             newNodes.calculateCommitmentNode.privateStates[
               name
@@ -489,7 +436,8 @@ const visitor = {
               indicator: stateVarIndicator,
             });
           }
-          if (stateVarIndicator.isModified) {
+
+          if (secretModified || accessedOnly) {
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -502,9 +450,10 @@ const visitor = {
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
               increment: isIncremented ? incrementsArray : undefined,
+              accessedOnly,
               indicator: stateVarIndicator,
             });
-            newNodes.generateProofNode.parameters.push(name);
+
             newNodes.sendTransactionNode.privateStates[
               name
             ] = buildPrivateStateNode('SendTransaction', {
@@ -515,7 +464,28 @@ const visitor = {
               burnedOnly:
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
+              accessedOnly,
             });
+          }
+          if (secretModified && !accessedOnly) {
+            // accessedOnly should be false, but just in case...
+            if (stateVarIndicator.isDecremented) {
+              // TODO refactor
+              node._newASTPointer.decrementedSecretStates ??= [];
+              node._newASTPointer.decrementedSecretStates.push(name);
+              node._newASTPointer.decrementsSecretState = true;
+              thisIntegrationTestFunction.decrementsSecretState = true;
+            }
+
+            const modifiedStateVariableNode = buildNode('VariableDeclaration', {
+              name,
+              isSecret: stateVarIndicator.isSecret,
+              type: stateVarIndicator.node.typeDescriptions.typeString,
+            });
+            node._newASTPointer.parameters.modifiedStateVariables.push(
+              modifiedStateVariableNode,
+            );
+            newNodes.generateProofNode.parameters.push(name);
             newNodes.writePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('WritePreimage', {
@@ -533,67 +503,6 @@ const visitor = {
           newNodes.membershipWitnessNode.isConstructor = true;
         }
 
-        for (const stateVarIndicator of accessedStateIndicators) {
-          // these ONLY require :
-          // Init and ReadPreimage
-          // MembershipWitness
-          // CalculateNullifier
-          // GenerateProof
-          // SendTransaction
-
-          let { name, id } = stateVarIndicator;
-          if (stateVarIndicator.isMapping) {
-            id = [id, scope.getIdentifierMappingKeyName(stateVarIndicator.keyPath.node)];
-            name = getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess').node);
-            // name = name
-            //   .replace('[', '_')
-            //   .replace(']', '')
-            //   .replace('.sender', '');
-          }
-          newNodes.initialisePreimageNode.privateStates[name] = {
-            stateVarId: id,
-            privateStateName: name,
-            accessedOnly: true,
-          };
-
-          newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
-            'ReadPreimage',
-            {
-              id,
-              indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
-              accessedOnly: true,
-            },
-          );
-          newNodes.membershipWitnessNode.privateStates[
-            name
-          ] = buildPrivateStateNode('MembershipWitness', {
-            privateStateName: name,
-            indicator: stateVarIndicator,
-            accessedOnly: true,
-          });
-          newNodes.calculateNullifierNode.privateStates[
-            name
-          ] = buildPrivateStateNode('CalculateNullifier', {
-            indicator: stateVarIndicator,
-          });
-
-          newNodes.generateProofNode.privateStates[
-            name
-          ] = buildPrivateStateNode('GenerateProof', {
-            privateStateName: name,
-            id,
-            accessedOnly: true,
-            indicator: stateVarIndicator,
-          });
-          // newNodes.generateProofNode.parameters.push(name);
-          newNodes.sendTransactionNode.privateStates[
-            name
-          ] = buildPrivateStateNode('SendTransaction', {
-            indicator: stateVarIndicator,
-            accessedOnly: true,
-          });
-        }
         const newFunctionDefinitionNode = node._newASTPointer;
 
         // this adds other values we need in the circuit
