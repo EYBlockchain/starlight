@@ -354,12 +354,15 @@ export class Scope {
   /**
    * @returns {Binding || null} - the binding of the VariableDeclaration being referred-to by the input referencingNode. The returned binding might be in a higher-level (ancestor) scope.
    */
-  getReferencedBinding(referencingNode: any): VariableBinding | null {
+  getReferencedBinding(referencingNode: any, mappingKeyIndicatorOnly = false): VariableBinding | null {
     const node = referencingNode;
     const id = this.path.getReferencedDeclarationId(node);
     if (!id) return null; // if the node doesn't refer to another variable
     return this.queryAncestors((s: Scope) => {
-      return s.bindings[id];
+
+      const binding = s.bindings[id]
+      if (!mappingKeyIndicatorOnly) return binding;
+      if (binding instanceof VariableBinding) return binding.mappingKeys[this.getMappingKeyName(referencingNode)];
     });
   }
 
@@ -394,7 +397,7 @@ export class Scope {
 
     if (!path.isMapping(referencingNode) && !path.isArray(referencingNode) && !path.isStruct(referencingNode)) return indicator;
 
-    if (path.isStruct(referencingNode) && path.isMapping(referencingNode)) {
+    if (path.isStruct(referencingNode) && NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess') && path.isMapping(referencingNode)) {
       const memberAccessNode = referencingNode.nodeType === 'MemberAccess'
         ? referencingNode
         : NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')
@@ -411,7 +414,7 @@ export class Scope {
         : indicator;
     }
 
-    if (path.isStruct(referencingNode)) {
+    if (path.isStruct(referencingNode) && NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')) {
       const memberAccessNode = referencingNode.nodeType === 'MemberAccess'
         ? referencingNode
         : NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')
@@ -668,7 +671,7 @@ export class Scope {
     if (identifierNode.nodeType === 'MemberAccess') return identifierNode.memberName;
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
-    if (refPaths && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess')?.node);
+    if (refPaths && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
 
     let { name } = identifierNode;
 
@@ -676,13 +679,13 @@ export class Scope {
     for (let i = thisIndex; i < refPaths?.length; i++) {
       if (refPaths[i].key !== 'indexExpression') continue;
       if (refPaths[thisIndex].isModification() && !forceNotModification) {
-        name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess')?.node);
+        name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess'));
         break;
         // if this identifier is not a modification, we need the previous indexExpression
       } else {
         for (let j = i - 1; j >= 0; j--) {
           if (refPaths[j].key === 'indexExpression') {
-            name = this.getMappingKeyName(refPaths[j].getAncestorOfType('IndexAccess')?.node);
+            name = this.getMappingKeyName(refPaths[j].getAncestorOfType('IndexAccess'));
             return name;
           }
         }
@@ -697,20 +700,54 @@ export class Scope {
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
   getMappingKeyName(indexAccessNode: any): string | null {
-    if (indexAccessNode.nodeType !== 'IndexAccess') return null;
-
-    const keyIdentifierNode = this.getMappingKeyIdentifier(indexAccessNode);
-    if (keyIdentifierNode === null)
-      return (
-        indexAccessNode.indexExpression.name ||
-        indexAccessNode.indexExpression.value
-      );
-    const keyBinding: Binding = this.getReferencedBinding(keyIdentifierNode);
-    let keyName = keyIdentifierNode.name;
-
+    let indexAccessPath: NodePath;
+    if (indexAccessNode instanceof NodePath) {
+      indexAccessPath = indexAccessNode;
+      indexAccessNode = indexAccessPath.node;
+    } else {
+      indexAccessPath = NodePath.getPath(indexAccessNode);
+    }
+    if (indexAccessNode.nodeType === 'MemberAccess' && indexAccessNode.expression.nodeType === 'IndexAccess')
+      return this.getMappingKeyName(NodePath.getPath(indexAccessNode.expression).node);
+    const keyIdentifierNode = indexAccessPath.getMappingKeyIdentifier(indexAccessNode);
+    if (!keyIdentifierNode)
+      return indexAccessNode.indexExpression.name || indexAccessNode.indexExpression.value;
+    keyIdentifierNode.name ??= keyIdentifierNode.value;
+    const returnKeyName = node => {
+      if (this.path.isMsg(node)) return 'msg';
+      switch (node.nodeType) {
+        case 'VariableDeclaration':
+        case 'Identifier':
+          return node.name;
+        case 'MemberAccess':
+          return `${returnKeyName(node.expression)}.${node.memberName}`;
+        case 'IndexAccess':
+          return `${returnKeyName(node.baseExpression)}[${returnKeyName(node.indexExpression)}]`;
+        case 'Literal':
+          return node.value;
+        default:
+          return ``;
+      }
+    };
+    const returnBinding = node => {
+      if (this.path.isMsg(node)) return null;
+      switch (node.nodeType) {
+      case 'Literal':
+        return null;
+      case 'Identifier':
+        return this.getReferencedBinding(node)
+      case 'MemberAccess':
+        return returnBinding(node.expression).structProperties[node.memberName];
+      case 'IndexAccess':
+        return returnBinding(node.baseExpression).mappingKeys[returnKeyName(node.indexExpression)]
+      default:
+        return null;
+      }
+    };
+    const keyBinding = returnBinding(keyIdentifierNode);
+    let keyName = returnKeyName(keyIdentifierNode);
 
     if (!(keyBinding instanceof VariableBinding) && !(keyBinding instanceof MappingKey)) return keyName;
-
     // If the value of the mapping key is edited between mapping accesses then the below copes with that.
     // NB: we can't use the modification count because this may refer to a mappingKey before its modified for the nth time
     if (keyBinding?.isModified) {
@@ -728,7 +765,7 @@ export class Scope {
         )
           break;
       }
-      if (i > 0) keyName = `${keyIdentifierNode.name}_${i}`;
+      if (i > 0) keyName = `${returnKeyName(keyIdentifierNode)}_${i}`;
     }
     return keyName;
   }

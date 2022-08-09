@@ -72,13 +72,15 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, interactsWithSecret, isSecret, isAccessed } = fields;
+      const { name, type, interactsWithSecret, isSecret, isAccessed, declarationType = 'state', oldASTId = 0 } = fields;
       return {
         nodeType,
         name,
+        id: oldASTId,
         isSecret,
         isAccessed,
         interactsWithSecret,
+        declarationType,
         typeName: buildNode('ElementaryTypeName', { name: type }),
       };
     }
@@ -161,12 +163,13 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'MemberAccess': {
-      const { name, memberName, expression = {} } = fields;
+      const { name, memberName, expression = {}, subType } = fields;
       return {
         nodeType,
         name,
         memberName,
         expression,
+        subType,
       };
     }
     case 'TupleExpression': {

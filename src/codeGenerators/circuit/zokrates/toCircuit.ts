@@ -93,6 +93,8 @@ if(returnStatement.length === 0){
               linesToDelete.push(paramList[i]);
             if (paramList[j].includes('private'))
               linesToDelete.push(paramList[j]);
+          } else if (slicedParamList[i].replace('_oldCommitment_value', '') === slicedParamList[j]) {
+            linesToDelete.push(paramList[j]);
           }
         }
       }
@@ -163,7 +165,7 @@ if(returnStatement.length === 0){
       return node.value;
 
     case 'IndexAccess':
-      return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression)}`;
+      return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression).replace('.', 'dot')}`;
 
     case 'MemberAccess':
       if (node.isStruct) return `${codeGenerator(node.expression)}.${node.memberName}`;

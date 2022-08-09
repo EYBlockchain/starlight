@@ -612,7 +612,7 @@ export default class NodePath {
   // NOTE: this does not consider function parameters to be local stack variables.
   isLocalStackVariable(node: any = this.node): boolean {
     const referencedBinding = this.scope.getReferencedBinding(node);
-    return referencedBinding.path.isLocalStackVariableDeclaration();
+    return referencedBinding?.path.isLocalStackVariableDeclaration();
   }
 
   isExternalContractInstanceDeclaration(node: any = this.node): boolean {
@@ -901,19 +901,25 @@ export default class NodePath {
   }
 
   getStructDeclaration(node: any = this.node): any {
-    if (!this.isStruct(node)) return null;
+    if (!this.isStruct(node) && !node.typeDescriptions?.typeString.includes('struct ')) return null;
     if (this.getAncestorOfType('StructDefinition')) return this.getAncestorOfType('StructDefinition');
     // if this is at the contract level, the StructDefinition will be a sibling
     const fnDef = this.getAncestorOfType('FunctionDefinition') || this;
-    const parent = (node.nodeType === 'MemberAccess' || node.nodeType === 'VariableDeclaration') ? node : this.getAncestorOfType('MemberAccess')?.node;
-    if (parent.typeName) {
+    let parent = node.typeName?.pathNode || node.typeDescriptions?.typeString.includes('struct ') ? node : null;
+    parent ??= (NodePath.getPath(node) || this).queryAncestors(p => {
+      if (p.node.typeName?.pathNode ||
+      p.node.typeDescriptions?.typeString.includes('struct ') ||
+      p.node.expression?.typeDescriptions?.typeString.includes('struct ')) return p;
+    }
+    ).node;
+    if (parent.typeName?.pathNode) {
       const typeId = parent.typeName.pathNode ? parent.typeName.pathNode.referencedDeclaration : parent.typeName.valueType.referencedDeclaration;
       const structNode = fnDef.getAllPrevSiblingNodes().concat(fnDef.getAllNextSiblingNodes()).find(n => `${n.id}` === `${typeId}`);
       return structNode;
-    } else if (parent.expression?.typeDescriptions?.typeString.includes('struct ')) {
+    } else if (parent.typeDescriptions?.typeString.includes('struct ')) {
       // matches number between $ and _ in typeIdentifier (this is where id is stored)
       // e.g. 8 in "t_struct$_MyStruct_$8_storage_ptr"
-      const structID = parent.expression?.typeDescriptions?.typeIdentifier.match(/(?<=\$)(\d+)(?=\_)/)[0];
+      const structID = parent.typeDescriptions?.typeIdentifier.match(/(?<=\$)(\d+)(?=\_)/)[0];
       const structNode = fnDef.getAllPrevSiblingNodes().concat(fnDef.getAllNextSiblingNodes()).find(n => `${n.id}` === `${structID}`);
       return structNode;
     } else {
@@ -965,7 +971,7 @@ export default class NodePath {
         //   - a unary operator
         // prettier-ignore
         return (
-          this.containerName !== 'indexExpression' && !this.getAncestorOfType('FunctionCall') &&
+          !(this.queryAncestors(path => path.containerName === 'indexExpression')) && !this.getAncestorOfType('FunctionCall') &&
           !this.getAncestorContainedWithin('initialValue') &&
           this.getLhsAncestor(true) && !(this.queryAncestors(path => path.containerName === 'condition') ||  this.queryAncestors(path => path.containerName === 'initializationExpression') ||  this.queryAncestors(path => path.containerName === 'loopExpression'))
         );

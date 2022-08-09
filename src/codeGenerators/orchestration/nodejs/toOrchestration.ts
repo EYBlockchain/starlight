@@ -166,9 +166,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
         }`
       }
 
-    case 'UnaryOperation':
-      return `${codeGenerator(node.subExpression)} ${node.operator}`;
-
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param

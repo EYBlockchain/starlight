@@ -84,6 +84,7 @@ class BoilerplateGenerator {
   isStruct: boolean;
   structProperties?: string[];
   typeName?: string;
+  mappingKeyTypeName?: string;
   increments: any;
   decrements: any;
   burnedOnly: any;
@@ -149,12 +150,26 @@ class BoilerplateGenerator {
       for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
         mappingKeyIndicator.isMapping = true; // TODO: put isMapping in every mappingKeys indicator during prelim traversals
         this.assignIndicators(mappingKeyIndicator);
-        this.mappingKeyName = mappingKeyName;
+        this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
+        if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName = this.mappingKeyName.replace('.', 'dot');
+
+        if (mappingKeyIndicator.keyPath.isStruct() && !(mappingKeyIndicator.keyPath.node.nodeType === 'Identifier' && !mappingKeyIndicator.keyPath.node.typeDescriptions.typeString.includes('struct ')))
+          this.mappingKeyTypeName = mappingKeyIndicator.keyPath.getStructDeclaration().name;
+
+        console.log(mappingKeyIndicator.keyPath.node);
+
+        if (!mappingKeyIndicator.keyPath.isMsg() &&
+        (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
+          this.mappingKeyTypeName = 'local';
+
         this.mappingName = this.indicators.name;
-        this.name = `${this.mappingName}_${mappingKeyName}`;
+        this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
+
         if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
-          this.structProperties = Object.keys(mappingKeyIndicator.structProperties);
           this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+        } else if (mappingKeyIndicator.referencingPaths[0]?.node.typeDescriptions.typeString.includes('struct ')) {
+          // somewhat janky way to include referenced structs not separated by property
+          this.typeName = mappingKeyIndicator.referencingPaths[0]?.getStructDeclaration()?.name;
         }
         this.generateBoilerplate();
       }
@@ -171,9 +186,10 @@ class BoilerplateGenerator {
   refresh(mappingKeyName: string) {
     const mappingKeyIndicator = this.indicators.mappingKeys[mappingKeyName];
     this.assignIndicators(mappingKeyIndicator);
-    this.mappingKeyName = mappingKeyName;
+    this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
+    if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName.replace('.', 'dot');
     this.mappingName = this.indicators.name;
-    this.name = `${this.mappingName}_${mappingKeyName}`;
+    this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
   }
 
   generateBoilerplateStatement(bpType: string, extraParams?: any) {
@@ -215,12 +231,13 @@ class BoilerplateGenerator {
           ...(this.isNullified && { isNullified: this.isNullified }),
           ...(this.isMapping && { isMapping: this.isMapping }),
           ...(this.isStruct && { structProperties: this.structProperties}),
-          ...(this.isStruct && { typeName: this.typeName}),
+          ...(this.typeName && { typeName: this.typeName}),
+          ...(this.mappingKeyName && { mappingKeyTypeName: this.mappingKeyTypeName }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
           // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }), // TODO
-          ...this[bpType](extraParams),
+          ...this[bpType](bpSection),
         })
         .filter(Boolean);
     });
@@ -310,9 +327,9 @@ class BoilerplateGenerator {
 
   newCommitment = () => ({});
 
-  mapping = () => ({
+  mapping = (bpSection) => ({
     mappingName: this.mappingName,
-    mappingKeyName: this.mappingKeyName,
+    mappingKeyName: bpSection === 'postStatements' ? this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */

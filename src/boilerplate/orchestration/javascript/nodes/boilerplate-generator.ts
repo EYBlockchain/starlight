@@ -8,10 +8,11 @@ import buildNode from '../../../../types/orchestration-types.js';
 export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'InitialisePreimage': {
-      const { privateStateName, id, indicator = {} } = fields;
+      const { privateStateName, id, accessedOnly = false, indicator = {} } = fields;
       return {
         privateStateName,
         stateVarId: id,
+        accessedOnly,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
@@ -56,7 +57,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         stateVarId: id,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -103,7 +104,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -124,6 +125,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         privateStateName,
         indicator = {},
       } = fields;
+      const structProperties = !indicator.isStruct ? null : indicator.isAccessed ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : Object.keys(indicator.structProperties);
       return {
         privateStateName,
         stateVarId: id,
@@ -132,7 +134,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         nullifierRequired: indicator.isNullified,
         increment,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties,
         isMapping: indicator.isMapping,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,

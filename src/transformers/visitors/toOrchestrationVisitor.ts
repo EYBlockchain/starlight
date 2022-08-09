@@ -171,7 +171,7 @@ const addPublicInput = (path: NodePath, state: any) => {
 
 const getIndexAccessName = (node: any) => {
   if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
-  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${NodePath.getPath(node).scope.getMappingKeyName(node)}`;
+  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${(NodePath.getPath(node).scope.getMappingKeyName(node)).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
   return null;
 }
 /**
@@ -802,6 +802,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
+      newNode.id = node.id;
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -900,6 +901,7 @@ const visitor = {
               .replace('[', '_')
               .replace(']', '')
               .replace('.sender', '')
+              .replace('.', 'dot')
           : indicator.name;
 
         if (indicator.isMapping && lhs.baseExpression) {
@@ -949,7 +951,7 @@ const visitor = {
               buildNode('VariableDeclaration', {
                 name: indicator.isStruct && !indicator.isMapping ? lhs.name : name,
                 isAccessed: accessed,
-                isSecret: true,
+                isSecret: indicator.isSecret,
               }),
             ],
             interactsWithSecret: true,
@@ -1019,6 +1021,7 @@ const visitor = {
               .replace('[', '_')
               .replace(']', '')
               .replace('.sender', '')
+              .replace('.', 'dot')
           : indicator.name;
         // we add a general number statement after each whole state edit
         if (node._newASTPointer.interactsWithSecret)  path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
@@ -1077,17 +1080,10 @@ const visitor = {
       }
 
       // we now have a param or a local var dec
-      // TODO just use interactsWithSecret when thats added
       let interactsWithSecret = false;
 
-      scope.bindings[node.id].referencingPaths.forEach(refPath => {
-        const newState: any = {};
-        (refPath.getAncestorOfType('ExpressionStatement') || refPath.parentPath).traversePathsFast(
-          interactsWithSecretVisitor,
-          newState,
-        );
-        interactsWithSecret ||= newState.interactsWithSecret;
-      });
+      if (scope.bindings[node.id].referencingPaths.some(refPath => refPath.node.interactsWithSecret))
+        interactsWithSecret = true;
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&
@@ -1095,11 +1091,18 @@ const visitor = {
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
 
+      let declarationType: string;
+      if (path.isLocalStackVariableDeclaration())
+        declarationType = 'localStack';
+      if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
+
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = buildNode(node.nodeType, {
         name: node.name,
         isSecret: node.isSecret || false,
+        oldASTId: node.id,
         interactsWithSecret,
+        declarationType,
         typeName: {},
       });
       node._newASTPointer = newNode;
@@ -1109,8 +1112,8 @@ const visitor = {
         parent._newASTPointer[path.containerName].push(newNode);
       }
     },
-
   },
+
   Return: {
      enter(path: NodePath) {
        const { node, parent } = path;
@@ -1122,8 +1125,8 @@ const visitor = {
          parent._newASTPointer[path.containerName].push(newNode);
        }
      },
+  },
 
-   },
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
@@ -1213,7 +1216,7 @@ const visitor = {
         return;
       }
       const name = node.expression.name || getIndexAccessName(node.expression);
-      const newNode = buildNode('MemberAccess', { name, memberName: node.memberName });
+      const newNode = buildNode('MemberAccess', { name, memberName: node.memberName, subType: node.typeDescriptions.typeString });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },

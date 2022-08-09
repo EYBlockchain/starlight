@@ -40,7 +40,8 @@ class BoilerplateGenerator {
               fs.readFileSync(db, 'utf-8', err => {
                 console.log(err);
               }),
-            ).${mappingName}${mappingKey};`];
+            ).${mappingName}${mappingKey};
+          \nconst ${stateName} = generalise(${stateName}_preimage.value);`];
         default:
           return [`
               \n // Initialise commitment preimage of whole state:
@@ -52,7 +53,7 @@ class BoilerplateGenerator {
               \tsalt: 0,
               \tcommitment: 0,
               };
-              if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName}${mappingKey}) {
+              if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName} || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName}${mappingKey}) {
                   ${stateName}_commitmentExists = false;
                   ${stateName}_witnessRequired = false;
                 } else {

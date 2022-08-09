@@ -8,6 +8,7 @@
  */
 
 import { TODOError, ZKPError } from '../../../error/errors.js';
+import { traverseNodesFast } from '../../../traverse/traverse.js';
 
 
 export default {
@@ -16,6 +17,15 @@ export default {
       throw new TODOError(`Solidity type ${node.nodeType}`, node);
     },
 
+  },
+
+  IndexAccess: {
+    enter(node: any) {
+      const nestedIndexAccessVisitor = (thisNode: any) => {
+        if (thisNode.nodeType === 'IndexAccess') throw new TODOError(`Nested mapping calls require complex naming and accessing logic we haven't completed. Consider using local variables or simplifying mappings.`, thisNode);
+      }
+      traverseNodesFast(node.indexExpression, nestedIndexAccessVisitor, {});
+    }
   },
 
   InlineAssembly: {

@@ -408,7 +408,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
-    if (keyNode.nodeType !== 'Identifier') {
+    if (!['Identifier', 'MemberAccess', 'Literal'].includes(keyNode.nodeType)) {
       throw new Error(
         `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
       );
@@ -428,12 +428,13 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   addStructProperty(referencingPath: NodePath): MappingKey {
     // we DONT want to add a struct property if we have a mapping of a struct
     // the mappingKey deals with that
-    if (this.isMapping && this.addMappingKey(referencingPath).structProperties) return this.addMappingKey(referencingPath).addStructProperty(referencingPath);
+    if (this.isMapping && this.addMappingKey(referencingPath).structProperties)
+      return this.addMappingKey(referencingPath).addStructProperty(referencingPath);
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!(this.structProperties[keyNode.memberName] instanceof MappingKey))
-      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath, true);
 
     return this.structProperties[keyNode.memberName];
   }
@@ -676,20 +677,6 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
           mappingKey.prelimTraversalErrorChecks();
         } else {
           mappingKey.node = this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
-          logger.warn(
-             `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
-           );
-        }
-      }
-    }
-    if (this.isStruct) {
-      const structProperties = Object.entries(this.structProperties);
-      for (const [name, mappingKey] of structProperties) {
-        // we may have empty struct properties if they are never edited
-        if (mappingKey instanceof MappingKey) {
-          mappingKey.prelimTraversalErrorChecks();
-        } else {
-          mappingKey.node= this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
           logger.warn(
              `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
            );

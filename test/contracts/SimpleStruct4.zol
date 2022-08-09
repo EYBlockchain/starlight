@@ -4,21 +4,39 @@ pragma solidity ^0.8.0;
 
 contract Receipt {
 
-  secret mapping (address => Rct) private total;
+  secret mapping (uint256 => PO) private POs;
+  secret mapping (uint256 => Invoice) private invoices;
 
-  struct Rct {
+  struct Invoice {
     uint256 amount;
-    uint256 tax;
+    uint256 id;
   }
 
-
-  function add(secret Rct memory myrct) public {
-    known total[msg.sender].amount += myrct.amount;
-    known total[msg.sender].tax += myrct.tax;
+  struct PO {
+    uint256 count;
+    uint256 ppunit;
+    uint256 id;
+    address owner;
   }
 
-  function remove(secret Rct memory invalidrct) public {
-    total[msg.sender].amount -= invalidrct.amount;
-    total[msg.sender].tax -= invalidrct.tax;
+  function addPO(secret PO memory newpo) public {
+    require(newpo.owner == msg.sender);
+    require(POs[newpo.id].id == 0); // inv shouldnt exist
+    POs[newpo.id] = newpo;
+  }
+
+  function addInvoice(secret Invoice memory inv) public {
+    invoices[inv.id] = inv;
+    require(POs[inv.id].count != 0);
+    require(invoices[inv.id].id == 0); // inv shouldnt exist
+    require(inv.amount == POs[inv.id].count * POs[inv.id].ppunit);
+  }
+
+  function pay(secret uint256 id, secret uint256 amount) public {
+    // imagine a real payment here
+    require(invoices[id].amount == amount);
+    invoices[id].amount = 0;
+    require(POs[id].count != 0);
+    require(POs[id].owner == msg.sender);
   }
 }

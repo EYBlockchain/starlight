@@ -311,9 +311,10 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ mappingKeyName: k }): string[] {
+    parameters({ mappingKeyName: k, mappingKeyTypeName: t }): string[] {
+      if (t === 'local') return [];
       return [
-        `private field ${k}`, // must be a field, in case we need to do arithmetic on it.
+        `private ${t ? t : 'field'} ${k}`, // must be a field, in case we need to do arithmetic on it.
       ];
     },
 
