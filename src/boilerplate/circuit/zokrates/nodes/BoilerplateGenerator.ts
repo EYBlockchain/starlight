@@ -148,15 +148,13 @@ class BoilerplateGenerator {
     this.indicators = indicators;
     if (indicators.isMapping) {
       for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
-        mappingKeyIndicator.isMapping = true; // TODO: put isMapping in every mappingKeys indicator during prelim traversals
+        mappingKeyIndicator.isMapping = true;
         this.assignIndicators(mappingKeyIndicator);
         this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
         if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName = this.mappingKeyName.replace('.', 'dot');
 
         if (mappingKeyIndicator.keyPath.isStruct() && !(mappingKeyIndicator.keyPath.node.nodeType === 'Identifier' && !mappingKeyIndicator.keyPath.node.typeDescriptions.typeString.includes('struct ')))
           this.mappingKeyTypeName = mappingKeyIndicator.keyPath.getStructDeclaration().name;
-
-        console.log(mappingKeyIndicator.keyPath.node);
 
         if (!mappingKeyIndicator.keyPath.isMsg() &&
         (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
@@ -167,6 +165,7 @@ class BoilerplateGenerator {
 
         if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
           this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+          this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name)
         } else if (mappingKeyIndicator.referencingPaths[0]?.node.typeDescriptions.typeString.includes('struct ')) {
           // somewhat janky way to include referenced structs not separated by property
           this.typeName = mappingKeyIndicator.referencingPaths[0]?.getStructDeclaration()?.name;
@@ -175,7 +174,7 @@ class BoilerplateGenerator {
       }
     } else {
       if (indicators instanceof StateVariableIndicator && indicators.structProperties) {
-        this.structProperties = Object.keys(indicators.structProperties);
+        this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
         this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
       }
       this.assignIndicators(indicators);
