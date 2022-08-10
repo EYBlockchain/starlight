@@ -28,14 +28,7 @@ def main(\
 	private u32[8] newCommitment_owner_publicKey,\
 	private u32[8] newCommitment_salt,\
 	public field newCommitment_commitment\
-) -> bool:
-
-
-        
-        field oldCommitment_0 = oldCommitment_0_value
-
-
-        field oldCommitment_1 = oldCommitment_1_value
+) -> (bool):
 
 
 // check if state is mapping or not
@@ -56,6 +49,11 @@ def main(\
 
 
         u32[8] newCommitment_stateVarId = field_to_u32_8(newCommitment_stateVarId_field)
+
+
+		field oldCommitment_0 = oldCommitment_0_value
+
+        field oldCommitment_1 = oldCommitment_1_value
 
 
         // oldCommitment_0 - PoKoSK:
@@ -155,7 +153,7 @@ def main(\
 
           u32[8] newCommitment_value = field_to_u32_8((oldCommitment_0 + oldCommitment_1))
 
-        // newCommitment_commitment - preimage check
+        //  preimage check - newCommitment_commitment
 
         u32[8] newCommitment_commitment_check = sha256of1024([\
           ...newCommitment_stateVarId,\
