@@ -722,19 +722,20 @@ export class Scope {
   modifiesSecretState(): boolean {
     if (this.scopeType !== 'FunctionDefinition') return false;
     const { indicators } = this;
-
     for (const stateVarId of Object.keys(indicators)) {
       const indicator = indicators[stateVarId];
 
       if (indicator?.isModified && indicator.binding?.isSecret) return true;
 
       if(indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionInteractsWithSecret) return true;
-      for (const id of Object.keys(indicator.scope.referencedBindings)){
-        const binding = indicator.scope.referencedBindings[id];
-      if(binding instanceof Binding && binding.node.body?.containsSecret) {
-        if(!indicators.internalFunctionInteractsWithSecret) indicators.internalFunctionInteractsWithSecret = true;
-        return true;
-      }
+     if(this.path.node.kind ==='function'){
+        for (const id of Object.keys(indicator.scope.referencedBindings)){
+          const binding = indicator.scope.referencedBindings[id];
+          if(binding instanceof Binding && binding.node.body?.containsSecret) {
+            if(!indicators.internalFunctionInteractsWithSecret) indicators.internalFunctionInteractsWithSecret = true;
+            return true;
+          }
+        }
       }
     }
     return false;
