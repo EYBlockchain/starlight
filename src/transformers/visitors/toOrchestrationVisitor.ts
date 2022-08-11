@@ -311,13 +311,13 @@ const visitor = {
         newNodes.readPreimageNode = buildNode('ReadPreimage', {
           contractName,
         });
-        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.parentIndicator.nullifiersRequired || fnIndicator.parentIndicator.containsAccessedOnlyState ) {
+        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret ) {
           newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
             contractName,
           });
           newNodes.calculateNullifierNode = buildNode('CalculateNullifier');
         }
-        if (fnIndicator.newCommitmentsRequired || fnIndicator.parentIndicator.newCommitmentsRequired)
+        if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
           newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
           newNodes.generateProofNode = buildNode('GenerateProof', {
           circuitName: node.fileName,
@@ -783,6 +783,7 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+
       // ts complains if I don't include a number in this list
       if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
         node._newASTPointer = parent._newASTPointer[path.containerName];
