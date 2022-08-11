@@ -976,9 +976,9 @@ const visitor = {
             decrementsSecretState: node.expression.isDecremented,
             privateStateName: name,
           });
-
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
+
           // state.skipSubNodes = true;
           return;
         }
