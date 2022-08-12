@@ -6,8 +6,8 @@ contract Test {
 
 secret uint private z;
 
-function add(uint j) public {
-  uint i;
+function add(uint256 j) public {
+uint256 i;
 for(i =0 ; i<5 ; i++) {
       z += j;
     }
