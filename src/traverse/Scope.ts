@@ -730,7 +730,7 @@ export class Scope {
       if(indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionInteractsWithSecret) return true;
 
       this.path.node.body.statements.forEach(node => {
-          if(node.expression.kind === 'functionCall'){
+          if(node.expression?.kind === 'functionCall'){
             for (const id of Object.keys(indicator.scope.referencedBindings)){
               const binding = indicator.scope.referencedBindings[id];
               if(binding instanceof Binding && binding.node.body?.containsSecret) {
