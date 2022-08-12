@@ -728,15 +728,18 @@ export class Scope {
       if (indicator?.isModified && indicator.binding?.isSecret) return true;
 
       if(indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionInteractsWithSecret) return true;
-     if(this.path.node.kind ==='function'){
-        for (const id of Object.keys(indicator.scope.referencedBindings)){
-          const binding = indicator.scope.referencedBindings[id];
-          if(binding instanceof Binding && binding.node.body?.containsSecret) {
-            if(!indicators.internalFunctionInteractsWithSecret) indicators.internalFunctionInteractsWithSecret = true;
-            return true;
-          }
+
+      this.path.node.body.statements.forEach(node => {
+          if(node.expression.kind === 'functionCall'){
+            for (const id of Object.keys(indicator.scope.referencedBindings)){
+              const binding = indicator.scope.referencedBindings[id];
+              if(binding instanceof Binding && binding.node.body?.containsSecret) {
+                if(!indicators.internalFunctionInteractsWithSecret) indicators.internalFunctionInteractsWithSecret = true;
+                return true;
+              }
+            }
         }
-      }
+      })
     }
     return false;
   }
