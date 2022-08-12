@@ -169,7 +169,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
           let condition = `${node.condition.leftExpression.name} ${node.condition.operator} ${node.condition.rightExpression.value};`
           let loopExpression = ` ${node.loopExpression.expression.rightHandSide.subExpression.name} ${node.loopExpression.expression.rightHandSide.operator}`;
           let loopBody;
-          if ( !!node.body.statements[0] && node.body.statements[0].nodeType == 'IfStatement')
+          if ( !!node.body.statements[0] && (node.body.statements[0].nodeType == 'IfStatement'  || node.body.statements[0].nodeType == 'ForStatement'))
           loopBody = `${codeGenerator(node.body)}`;
           else
           loopBody = `${codeGenerator(node.body.statements.statements)} 
