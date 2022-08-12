@@ -830,10 +830,11 @@ EmitStatement: {
        if(state.internalFunctionInteractsWithSecret){
          state.internalFncName ??= [];
          state.internalFncName.push(node.expression.name);
+         const functionReferncedNode = scope.getReferencedPath(node.expression);
+         const internalfnDefIndicators = functionReferncedNode.scope.indicators;
          const fnDefNode = path.getAncestorOfType('FunctionDefinition');
          state.callingFncName ??= [];
          state.callingFncName.push(fnDefNode.node.name);
-         const contractIndicator : FunctionDefinitionIndicator = scope.indicators;
          state.fnParameters = [];
          const args = node.arguments.map(arg =>  arg.name)
          state.pubparams.forEach(index => {
@@ -841,10 +842,10 @@ EmitStatement: {
            state.fnParameters.push(args[index]);
 
          });
-         const params = [...(contractIndicator.parentIndicator.nullifiersRequired? [`newNullifiers`] : []),
-               ...(contractIndicator.parentIndicator.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
-               ...(contractIndicator.parentIndicator.newCommitmentsRequired ? [`newCommitments`] : []),
-               ...(contractIndicator.parentIndicator.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+         const params = [...(internalfnDefIndicators.nullifiersRequired? [`newNullifiers`] : []),
+               ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
+               ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
+               ...(internalfnDefIndicators.containsAccessedOnlyState ? [`checkNullifiers`] : []),
                `proof`,
          ]
 

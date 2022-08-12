@@ -96,6 +96,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       {
         const functionReferncedNode = path.scope.getReferencedNode(path.node);
         const params = functionReferncedNode.parameters.parameters ;
+
           if (params.some(node => node.isSecret))
           {
             this.internalFunctionInteractsWithSecret = true;
