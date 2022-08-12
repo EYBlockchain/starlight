@@ -15,19 +15,19 @@ export default {
       const args = node.arguments;
       let isSecretArray : string[];
       for (const arg of args) {
-        if (arg.nodeType !== 'Identifier') continue;
+         if (arg.nodeType !== 'Identifier' && !arg.expression?.typeDescriptions.typeIdentifier.includes('_struct')) continue;
          isSecretArray = args.map(arg => scope.getReferencedBinding(arg)?.isSecret);
        }
       if(path.isInternalFunctionCall()) {
        if(node.expression.nodeType === 'Identifier') {
          const functionReferncedNode = scope.getReferencedNode(node.expression);
          const params = functionReferncedNode.parameters.parameters;
-         for (const [index, param] of params.entries()){
-          if(param.isSecret){
-            if(isSecretArray[index] !== param.isSecret)
-               throw new Error('Make sure that passed parameters have same decorators');
-            }
-          }
+         params.forEach((param, index) => {
+           if(param.isSecret){
+             if(isSecretArray[index] !== param.isSecret)
+                throw new Error('Make sure that passed parameters have same decorators');
+             }
+         });
         }
       }
     },
