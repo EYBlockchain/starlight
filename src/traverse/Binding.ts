@@ -252,7 +252,7 @@ export class VariableBinding extends Binding {
   update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
-    } else if (this.isStruct) {
+    } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
     } else {
       this.updateProperties(path);
@@ -363,7 +363,7 @@ export class VariableBinding extends Binding {
       this.addMappingKey(path).accessedPaths.push(path);
     }
 
-    if (this.isStruct) {
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).isAccessed = true;
       this.addStructProperty(path).accessedPaths ??= [];
       this.addStructProperty(path).accessedPaths.push(path);
@@ -407,7 +407,7 @@ export class VariableBinding extends Binding {
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
-    if (this.isStruct) this.addStructProperty(path).addNullifyingPath(path);
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).addNullifyingPath(path);
   }
 
   prelimTraversalErrorChecks() {
@@ -439,7 +439,6 @@ export class VariableBinding extends Binding {
     }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
-      console.log('err 1');
       throw new SyntaxUsageError(
         `Can't mark a whole state as 'unknown'`,
         this.node,

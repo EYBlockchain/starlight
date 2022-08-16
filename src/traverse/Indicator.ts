@@ -475,7 +475,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
-    } else if (this.isStruct) {
+    } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
     } else {
       this.updateProperties(path);
@@ -568,7 +568,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       this.addMappingKey(path).accessedPaths.push(path);
     }
 
-    if (this.isStruct) {
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).isAccessed = true;
       this.addStructProperty(path).accessedPaths ??= [];
       this.addStructProperty(path).accessedPaths.push(path);
@@ -664,7 +664,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       } else if(!this.binding.initialisedInConstructor) {
         this.initialisationRequired = true;
         if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
-        if (this.isStruct) this.addStructProperty(path).initialisationRequired = true;
+        if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).initialisationRequired = true;
       }
 
       const { node } = path;
@@ -683,7 +683,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.nullifyingPaths.push(path);
     this.binding.addNullifyingPath(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
-    if (this.isStruct) this.addStructProperty(path).addNullifyingPath(path);
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).addNullifyingPath(path);
   }
 
   addBurningPath(path: NodePath) {

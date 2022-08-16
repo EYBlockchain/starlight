@@ -258,7 +258,6 @@ export default class MappingKey {
   prelimTraversalErrorChecks() {
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
-      console.log('err 2');
       throw new SyntaxUsageError(
         `Can't mark a whole state as 'unknown'`,
         this.node,
