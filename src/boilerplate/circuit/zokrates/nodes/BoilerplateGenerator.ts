@@ -2,25 +2,32 @@
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 
 
-// collects increments and decrements into a string (for new commitment calculation) and array
-// (for collecting zokrates inputs
 import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 import NodePath from '../../../../traverse/NodePath.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 
-const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
+// collects increments and decrements into a string (for new commitment calculation) and array
+// (for collecting zokrates inputs
+const collectIncrements = (bpg: BoilerplateGenerator) => {
+  const stateVarIndicator = bpg.thisIndicator || bpg.indicators;
   const incrementsArray = [];
   let incrementsString = '';
 
-  if (stateVarIndicator.isStruct && stateVarIndicator instanceof StateVariableIndicator) {
+  if (stateVarIndicator.isStruct && (
+      stateVarIndicator instanceof StateVariableIndicator ||
+      stateVarIndicator.isParent
+    )
+  ) {
     let structIncs = { incrementsArray: {}, incrementsString: {}};
-    for (const [key, value] of Object.entries(stateVarIndicator.structProperties)) {
-      if (value instanceof MappingKey) {
-        structIncs.incrementsArray[key] = collectIncrements(value).incrementsArray;
-        structIncs.incrementsString[key] = collectIncrements(value).incrementsString;
+    for (const sp of bpg.structProperties) {
+      if (stateVarIndicator.structProperties[sp] instanceof MappingKey) {
+        bpg.thisIndicator = stateVarIndicator.structProperties[sp];
+        structIncs.incrementsArray[sp] = collectIncrements(bpg).incrementsArray;
+        structIncs.incrementsString[sp] = collectIncrements(bpg).incrementsString;
+        bpg.thisIndicator = stateVarIndicator;
       } else {
-        structIncs.incrementsArray[key] = [];
-        structIncs.incrementsString[key] = '0';
+        structIncs.incrementsArray[sp] = [];
+        structIncs.incrementsString[sp] = '0';
       }
     }
     return structIncs;
@@ -85,8 +92,7 @@ class BoilerplateGenerator {
   structProperties?: string[];
   typeName?: string;
   mappingKeyTypeName?: string;
-  increments: any;
-  decrements: any;
+  thisIndicator: any;
   burnedOnly: any;
   mappingKeyName: string;
   mappingName: string;
@@ -123,8 +129,6 @@ class BoilerplateGenerator {
       newCommitmentsRequired,
       isMapping,
       isStruct,
-      increments,
-      decrements,
       initialisationRequired,
       // burnedOnly,
     } = indicators;
@@ -138,12 +142,12 @@ class BoilerplateGenerator {
       newCommitmentsRequired,
       isMapping,
       isStruct,
-      increments,
-      decrements,
       initialisationRequired,
+      thisIndicator: indicators, // used for gathering increments of mappings and/or structs
       // burnedOnly,
     });
   }
+
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
     if (indicators.isMapping) {
@@ -214,7 +218,7 @@ class BoilerplateGenerator {
 
   _addBP = (bpType: string, extraParams?: any) => {
     if (this.isPartitioned) {
-      this.newCommitmentValue = collectIncrements(this.indicators).incrementsString;
+      this.newCommitmentValue = collectIncrements(this).incrementsString;
     }
     this.bpSections.forEach(bpSection => {
       this[bpSection] = this[bpSection]
@@ -295,7 +299,7 @@ class BoilerplateGenerator {
   getIndex({ addendId, subtrahendId }): number | null {
     if (addendId && subtrahendId)
       throw new Error('Expected only one of addend xor subtrahend; got both.');
-    const { increments, decrements } = this;
+    const { increments, decrements } = this.thisIndicator;
     const notFoundErr = new Error('Not found in array.');
 
     let index: number;

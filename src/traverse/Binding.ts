@@ -382,7 +382,8 @@ export class VariableBinding extends Binding {
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
-        state.incrementedIdentifier.baseExpression?.isUnknown)
+        state.incrementedIdentifier.baseExpression?.isUnknown ||
+        state.incrementedIdentifier.expression?.baseExpression?.isUnknown )
     ) {
       this.isPartitioned = true;
       const reason = {

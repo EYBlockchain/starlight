@@ -17,15 +17,19 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
   let incrementsString = '';
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
-  if (stateVarIndicator.isStruct && stateVarIndicator instanceof StateVariableIndicator) {
+  if (stateVarIndicator.isStruct && (
+      stateVarIndicator instanceof StateVariableIndicator ||
+      stateVarIndicator.isParent
+    )) {
     let structIncs = { incrementsArray: {}, incrementsString: {}};
-    for (const [key, value] of Object.entries(stateVarIndicator.structProperties)) {
-      if (value instanceof MappingKey) {
-        structIncs.incrementsArray[key] = collectIncrements(value).incrementsArray;
-        structIncs.incrementsString[key] = collectIncrements(value).incrementsString;
+    const sps = stateVarIndicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
+    for (const sp of sps) {
+      if (stateVarIndicator.structProperties[sp] instanceof MappingKey) {
+        structIncs.incrementsArray[sp] = collectIncrements(stateVarIndicator.structProperties[sp]).incrementsArray;
+        structIncs.incrementsString[sp] = collectIncrements(stateVarIndicator.structProperties[sp]).incrementsString;
       } else {
-        structIncs.incrementsArray[key] = [];
-        structIncs.incrementsString[key] = '0';
+        structIncs.incrementsArray[sp] = [];
+        structIncs.incrementsString[sp] = '0';
       }
     }
     return structIncs;

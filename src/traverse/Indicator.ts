@@ -601,7 +601,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
         state.incrementedIdentifier.baseExpression?.isUnknown ||
-        state.incrementedIdentifier.expression?.isUnknown)
+        state.incrementedIdentifier.expression?.isUnknown ||
+        state.incrementedIdentifier.expression?.baseExpression?.isUnknown)
     ) {
       this.isPartitioned = true;
       const reason = {
