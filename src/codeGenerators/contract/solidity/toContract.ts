@@ -188,9 +188,11 @@ function codeGenerator(node: any) {
          return `\t \t \t \t ${node.name} (${node.parameters});`
         return  `\t \t \t \t ${node.name} (${node.parameters.map(codeGenerator)});`
       } else {
-         return `\t \t \t \t${node.name} (${node.arguments.name});`
+         const args = node.arguments.map(codeGenerator);
+         return `\t \t \t \t${node.name} (${args.join(', ')});`
       }
     }
+
 
     case 'IfStatement':
       return `if (${codeGenerator(node.condition)})

@@ -303,6 +303,7 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
+    
 
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
@@ -780,6 +781,7 @@ const visitor = {
   Block: {
     enter(path: NodePath) {
       const { node, parent } = path;
+
       // ts complains if I don't include a number in this list
       if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
         node._newASTPointer = parent._newASTPointer[path.containerName];
@@ -977,9 +979,9 @@ const visitor = {
             decrementsSecretState: node.expression.isDecremented,
             privateStateName: name,
           });
-
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
+
           // state.skipSubNodes = true;
           return;
         }
