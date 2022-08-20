@@ -726,8 +726,12 @@ let interactsWithSecret = false ;
   },
 
   ForStatement: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
+    if(!path?.containsSecret){
+    state.skipSubNodes = true;
+    return ;
+  }
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
