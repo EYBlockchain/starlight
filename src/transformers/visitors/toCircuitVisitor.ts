@@ -891,7 +891,7 @@ let interactsWithSecret = false ;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
        state.callingFncName ??= [];
-       state.callingFncName.push(fnDefNode.node.name);
+       state.callingFncName.push({name: fnDefNode.node.name, parent: path.parentPath.parentPath.parent.nodeType});
        fnDefNode.parent._newASTPointer.forEach(file => {
          if (file.fileName === fnDefNode.node.name) {
            file.nodes.forEach(childNode => {
