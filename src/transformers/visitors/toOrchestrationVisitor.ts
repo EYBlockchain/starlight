@@ -1029,7 +1029,7 @@ const visitor = {
         );
       }
 
-      if (node._newASTPointer.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
+      if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
        path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
       if(indicator){
          path.getAncestorOfType('ForStatement').node._newASTPointer.body.statements.push(
