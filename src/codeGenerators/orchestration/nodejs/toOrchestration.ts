@@ -134,7 +134,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       } ${codeGenerator(node.rightHandSide)}`;
 
     case 'BinaryOperation':
-      return `${codeGenerator(node.leftExpression)} ${
+      return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${
         node.operator
       } ${codeGenerator(node.rightExpression)}`;
 
@@ -161,9 +161,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
           node.initializationExpression.interactsWithSecret = true;
           node.loopExpression.interactsWithSecret = true;
         }
-          let initializationExpression = `${codeGenerator(node.initializationExpression)}`;
-          initializationExpression = initializationExpression.trim();
-          let condition = `${node.condition.leftExpression.name} ${node.condition.operator} ${node.condition.rightExpression.value};`
+          let initializationExpression = `${codeGenerator(node.initializationExpression).trim()}`;
+          let condition = `${codeGenerator(node.condition, { condition: true })};`;
           let loopExpression = ` ${node.loopExpression.expression.rightHandSide.subExpression.name} ${node.loopExpression.expression.rightHandSide.operator}`;
           return `for( let ${initializationExpression} ${condition} ${loopExpression}) {
           ${codeGenerator(node.body)}
