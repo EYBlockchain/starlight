@@ -185,9 +185,6 @@ export class Scope {
         // `Identifier` nodes _refer_ to already-declared variables. We grab the binding for that referenced variable:
         const referencedBinding = this.getReferencedBinding(node);
 
-
-        if (!referencedBinding && this.getReferencedExportedSymbolName(node) )
-          break; // the node is referring to some external contract name
         if (!referencedBinding)
           break;
 
@@ -727,20 +724,8 @@ export class Scope {
 
        if (indicator?.isModified && indicator.binding?.isSecret) return true;
 
-       if(indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionInteractsWithSecret) return true;
-
-       this.path.node.body.statements.forEach(node => {
-           if(node.expression?.kind === 'functionCall'){
-             for (const id of Object.keys(indicator.scope.referencedBindings)){
-               const binding = indicator.scope.referencedBindings[id];
-               if(binding instanceof Binding && binding.node.body?.containsSecret) {
-                 if(!indicators.internalFunctionInteractsWithSecret) indicators.internalFunctionInteractsWithSecret = true;
-                 return true;
-               }
-             }
-         }
-       })
      }
+    if (indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionModifiesSecretState) return true;
      return false;
    }
 
