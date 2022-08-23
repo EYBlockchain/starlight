@@ -134,7 +134,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       } ${codeGenerator(node.rightHandSide)}`;
 
     case 'BinaryOperation':
-      return `${codeGenerator(node.leftExpression)} ${
+      return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${
         node.operator
       } ${codeGenerator(node.rightExpression)}`;
 
@@ -144,11 +144,16 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return ` `;
 
     case 'IfStatement': {
-        return `if (${codeGenerator(node.condition)}) {
+      if(node.falseBody.length)
+      return `if (${codeGenerator(node.condition)}) {
           ${node.trueBody.flatMap(codeGenerator).join('\n')}
         } else {
           ${node.falseBody.flatMap(codeGenerator).join('\n')}
         }`
+        else
+        return `if (${codeGenerator(node.condition)}) {
+            ${node.trueBody.flatMap(codeGenerator).join('\n')}
+          }`
       }
 
       case 'ForStatement': {
@@ -156,18 +161,14 @@ export default function codeGenerator(node: any, options: any = {}): any {
           node.initializationExpression.interactsWithSecret = true;
           node.loopExpression.interactsWithSecret = true;
         }
-          let initializationExpression = `${codeGenerator(node.initializationExpression)}`;
-          initializationExpression=initializationExpression.trim();
-          let condition = `${codeGenerator(node.condition)};`
-          let loopExpression = `${codeGenerator(node.loopExpression)}`;
-          loopExpression=loopExpression.trim().slice(0,-1);
-          return `for(${initializationExpression} ${condition} ${loopExpression}) {
+          let initializationExpression = `${codeGenerator(node.initializationExpression).trim()}`;
+          let condition = `${codeGenerator(node.condition, { condition: true })};`;
+          let loopExpression = ` ${node.loopExpression.expression.rightHandSide.subExpression.name} ${node.loopExpression.expression.rightHandSide.operator}`;
+          return `for( let ${initializationExpression} ${condition} ${loopExpression}) {
           ${codeGenerator(node.body)}
         }`
-      }  
+      }
 
-    case 'UnaryOperation':
-      return `${codeGenerator(node.subExpression)} ${node.operator}`;
 
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here

@@ -328,12 +328,13 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'InternalFunctionCall': {
-      const { name, internalFunctionInteractsWithSecret = false, parameters = [] } = fields;
+      const { name, internalFunctionInteractsWithSecret = false, parameters = [], arguments: args = [] } = fields;
       return {
         nodeType,
         name,
         internalFunctionInteractsWithSecret,
-        parameters
+        parameters,
+        arguments: args
       };
     }
     case 'IndexAccess': {
