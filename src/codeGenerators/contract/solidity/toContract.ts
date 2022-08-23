@@ -193,6 +193,7 @@ function codeGenerator(node: any) {
       }
     }
 
+
     case 'IfStatement':
       return `if (${codeGenerator(node.condition)})
           ${codeGenerator(node.trueBody.statements[0].expression)}

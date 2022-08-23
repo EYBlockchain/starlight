@@ -31,7 +31,6 @@ export default {
          });
 
          const thisFunctionIndicator = path.scope.indicators;
-
          thisFunctionIndicator.internalFunctionInteractsWithSecret ??= functionReferencedPath.scope.indicators.interactsWithSecret;
          thisFunctionIndicator.internalFunctionModifiesSecretState ??= functionReferencedPath.scope.modifiesSecretState();
       }

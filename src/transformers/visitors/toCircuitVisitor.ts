@@ -583,6 +583,8 @@ const visitor = {
     }
   },
 
+
+
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
