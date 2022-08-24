@@ -16,7 +16,8 @@ class BoilerplateGenerator {
   PoKoSK = {
     importStatements(): string[] {
       return [
-      `from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256`,
+      `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
+      `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
       `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
     ];
     },
@@ -285,7 +286,7 @@ class BoilerplateGenerator {
           ])
 
           assert(\\
-            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_8_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
+            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
           )`,
         ];
 

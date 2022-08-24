@@ -278,7 +278,7 @@ class BoilerplateGenerator {
         case 'increment':
           return [`
           \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
-          \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...` : ``}BigInt(${stateName}_newCommitmentValue.hex(32)), BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
+          \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_newCommitmentValue.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_newCommitmentValue.hex(32))`}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
           \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];
         case 'decrement':
           const change = structProperties ? `[
@@ -290,7 +290,7 @@ class BoilerplateGenerator {
           return [`
             \nconst ${stateName}_2_newSalt = generalise(utils.randomHex(32));
             \nlet ${stateName}_change = ${change}
-            \nlet ${stateName}_2_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...` : ``}BigInt(${stateName}_change.hex(32)), BigInt(publicKey.hex(32)), BigInt(${stateName}_2_newSalt.hex(32))],);
+            \nlet ${stateName}_2_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_change.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_change.hex(32))`}, BigInt(publicKey.hex(32)), BigInt(${stateName}_2_newSalt.hex(32))],);
             \n${stateName}_2_newCommitment = generalise(${stateName}_2_newCommitment.hex(32)); // truncate`];
         case 'whole':
           const value = structProperties ? structProperties.map(p => `BigInt(${stateName}.${p}.hex(32))`) :` BigInt(${stateName}.hex(32))`;
@@ -404,7 +404,7 @@ class BoilerplateGenerator {
                     default:
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \t${stateName}_commitmentExists ? secretKey.integer : generalise(0).integer,
+                      \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
                       \t${stateName}_nullifier.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
