@@ -110,7 +110,7 @@ class BoilerplateGenerator {
     parameters({ name: x, typeName }): string[] {
       // prettier-ignore
       return [
-        `private field ${x}_oldCommitment_value`,
+        `private  ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
         `private field ${x}_oldCommitment_salt_field`,
       ];
     },
@@ -128,13 +128,14 @@ class BoilerplateGenerator {
         return [
           `
           // ${x}_oldCommitment_commitment: preimage check
-          // TODO - SHA length and prop types
 
-          u32[8] ${x}_oldCommitment_commitment = sha256Padded([\\
-            ...${x}_stateVarId,\\
-            ${structProperties.map(p => `\t ...field_to_bool_256(${x}_oldCommitment_value.${p}),\\`).join('\n')}
-            ...u32_8_to_bool_256(${x}_oldCommitment_owner_publicKey),\\
-            ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
+          field ${x}_oldCommitment_owner_publicKey_field =u32_array_to_field(${x}_oldCommitment_owner_publicKey)
+
+          field ${x}_oldCommitment_commitment_field = poseidon([\\
+            ${x}_stateVarId_field,\\
+            ${structProperties.map(p => `\t ${x}_oldCommitment_value.${p},\\`).join('\n')}
+            ${x}_oldCommitment_owner_publicKey_field,\\
+            ${x}_oldCommitment_salt_field\\
           ])`,
         ];
       return [
@@ -275,9 +276,8 @@ class BoilerplateGenerator {
           ${lines}
 
           // ${x}_newCommitment_commitment - preimage check
-          // TODO - SHA length and prop types
 
-          u32[8] ${x}_newCommitment_commitment_check_field = poseidon([\\
+          field ${x}_newCommitment_commitment_check_field = poseidon([\\
             ${x}_stateVarId_field,\\
             ${structProperties.map(p => `\t ${x}_newCommitment_value.${p},\\`).join('\n')}
             ${x}_newCommitment_owner_publicKey_field,\\
