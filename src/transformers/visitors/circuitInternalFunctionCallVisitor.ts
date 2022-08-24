@@ -89,7 +89,7 @@ const internalCallVisitor = {
                  };
                 case 'newCommitment' : {
                   internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey_field`) ;
-                  internalFncParameters.push(`${node.name}_newCommitment_salt`) ;
+                  internalFncParameters.push(`${node.name}_newCommitment_salt_field`) ;
                   internalFncParameters.push(`${node.name}_newCommitment_commitment`);
                   break;
                  };
