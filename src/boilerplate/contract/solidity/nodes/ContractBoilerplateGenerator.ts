@@ -70,8 +70,8 @@ class ContractBoilerplateGenerator {
     stateVariableDeclarations() {
       const { scope } = this;
       let isjoinCommitmentsFunction : string[]=[];
-      for(const [ id , bindings ] of Object.entries(scope.bindings)){
-       if((bindings instanceof VariableBinding) && bindings.isUnknown )
+      for(const [, binding ] of Object.entries(scope.bindings)){
+       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
           isjoinCommitmentsFunction?.push('true');
       }
       const {
@@ -82,7 +82,7 @@ class ContractBoilerplateGenerator {
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
       let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
-      if(isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments')
+      if (isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments')
       return {
         functionNames,
         nullifiersRequired,
@@ -101,9 +101,9 @@ class ContractBoilerplateGenerator {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = this.scope;
       let isjoinCommitmentsFunction : string[]=[];
-      for(const [ id , bindings ] of Object.entries(this.scope.bindings)){
-       if((bindings instanceof VariableBinding) && bindings.isUnknown )
-           isjoinCommitmentsFunction?.push('true');
+      for(const [, binding ] of Object.entries(this.scope.bindings)){
+       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+          isjoinCommitmentsFunction?.push('true');
       }
       const returnpara = {};
       let parameterList: any[];
@@ -134,8 +134,16 @@ class ContractBoilerplateGenerator {
               if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
               break;
             case undefined: {
-              if (circuitParamNode.nodeType === 'VariableDeclaration' && !circuitParamNode.isPrivate && !newList.some(str => str === circuitParamNode.name))
-              newList.push(circuitParamNode.name);
+              if (
+                circuitParamNode.nodeType === 'VariableDeclaration' &&
+                !circuitParamNode.isPrivate &&
+                !newList.some(str => str === circuitParamNode.name)
+              ){
+                if (circuitParamNode.typeName?.members) {
+                  newList.push(...circuitParamNode.typeName.members.map(m => `${circuitParamNode.name}.${m.name}`));
+                  break;
+                } else newList.push(circuitParamNode.name);
+              }
             }
             break;
 

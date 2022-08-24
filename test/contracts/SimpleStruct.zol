@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a;
+
+  struct MyStruct {
+    uint256 prop1;
+    bool prop2;
+  }
+
+  MyStruct public x;
+
+  function add( secret uint256 value) public {
+    known a -= 2*value;
+
+  }
+
+  function remove( secret MyStruct memory value) public {
+    add(value.prop1);
+  known a += value.prop1;
+    x.prop2 = true;
+  }
+}

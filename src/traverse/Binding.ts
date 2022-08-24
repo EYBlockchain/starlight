@@ -30,7 +30,7 @@ export class Binding {
       case 'VariableDeclaration':
         return true;
       case 'IfStatement':  
-      case 'ForStatement':  
+      case 'ForStatement':
       case 'ArrayTypeName':
       case 'Assignment':
       case 'Block':
@@ -52,7 +52,10 @@ export class Binding {
       case 'UnaryOperation':
       case 'UserDefinedTypeName':
       case 'VariableDeclarationStatement':
+      case 'StructDefinition':
       case 'ModifierDefinition':
+      case 'EventDefinition':
+      case 'EmitStatement':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);
@@ -144,6 +147,9 @@ export class VariableBinding extends Binding {
   isMapping?: boolean;
   mappingKeys: any = {}; // object of objects, indexed by node id.
 
+  isStruct?: boolean;
+  structProperties: any = {};
+
   isKnown?: boolean;
   isUnknown?: boolean;
   isIncremented?: boolean;
@@ -182,9 +188,14 @@ export class VariableBinding extends Binding {
     this.isSecret = node.isSecret ?? false;
 
 
-    if (path.isMappingDeclaration()) {
+    if (path.isMappingDeclaration() || path.isArrayDeclaration()) {
       this.isMapping = true;
       this.mappingKeys = {};
+    }
+
+    if (path.isStruct()) {
+      this.isStruct = true;
+      this.structProperties = {};
     }
   }
 
@@ -250,11 +261,23 @@ export class VariableBinding extends Binding {
     return this.mappingKeys[keyName];
   }
 
+  addStructProperty(referencingPath: NodePath): MappingKey {
+    const keyNode = referencingPath.getStructPropertyNode();
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+    if (!this.structProperties[keyNode.memberName])
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+
+    return this.structProperties[keyNode.memberName];
+  }
+
   // A binding will be updated if (some time after its creation) we encounter an AST node which refers to this binding's variable.
   // E.g. if we encounter an Identifier node.
   update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
+    } else if (this.isStruct) {
+      this.addStructProperty(path).updateProperties(path);
     } else {
       this.updateProperties(path);
     }
@@ -336,6 +359,13 @@ export class VariableBinding extends Binding {
         mappingKey.updateOwnership(ownerNode);
       }
     }
+
+    if (this.isStruct) {
+      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+      for (const [, mappingKey] of structProperties) {
+        mappingKey.updateFromBinding();
+      }
+    }
   }
 
   updateBlacklist(blacklistedNode: any) {
@@ -345,12 +375,23 @@ export class VariableBinding extends Binding {
 
   updateAccessed(path: NodePath) {
     // The binding level tells us about the state everywhere, so we only need to update if it's whole/partitioned
-    // TODO split if isMapping
     this.isWhole = true;
     this.isAccessed = true;
     const reason = { src: path.node.src, 0: `Accessed` };
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
+
+    if (this.isMapping) {
+      this.addMappingKey(path).isAccessed = true;
+      this.addMappingKey(path).accessedPaths ??= [];
+      this.addMappingKey(path).accessedPaths.push(path);
+    }
+
+    if (this.isStruct) {
+      this.addStructProperty(path).isAccessed = true;
+      this.addStructProperty(path).accessedPaths ??= [];
+      this.addStructProperty(path).accessedPaths.push(path);
+    }
   }
 
   updateIncrementation(path: NodePath, state: any) {
@@ -390,6 +431,7 @@ export class VariableBinding extends Binding {
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+    if (this.isStruct) this.addStructProperty(path).addNullifyingPath(path);
   }
 
   prelimTraversalErrorChecks() {
@@ -397,6 +439,12 @@ export class VariableBinding extends Binding {
     if (this.isMapping) {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
+        mappingKey.prelimTraversalErrorChecks();
+      }
+    }
+    if (this.isStruct) {
+      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+      for (const [, mappingKey] of structProperties) {
         mappingKey.prelimTraversalErrorChecks();
       }
     }

@@ -91,12 +91,19 @@ function codeGenerator(node: any) {
       }`;
     }
 
+    case 'EventDefinition': {
+      const functionSignature = ` \t \t \t \tevent ${node.name}(${codeGenerator(node.parameters)});`;
+    return functionSignature;
+    }
+
     case 'ParameterList':
       return node.parameters.flatMap(codeGenerator).filter(Boolean).join(', ');
 
     case 'VariableDeclaration': {
       if (node.isSecret) return '';
       let { typeString } = node.typeDescriptions;
+      // we crop 'struct ContractName.structname' to just 'structname'
+      if (typeString.includes('struct ')) typeString = typeString.substring(typeString.indexOf(".") + 1);
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
       const constant = node.constant ? ' constant' : '';
       const visibility = node.visibility ? ` ${node.visibility}` : '';
@@ -120,6 +127,7 @@ function codeGenerator(node: any) {
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
       const initialValue = codeGenerator(node.initialValue);
+      if (!initialValue || initialValue === '') return `${declarations};`;
       return `
           ${declarations} = ${initialValue};`;
     }
@@ -164,10 +172,13 @@ function codeGenerator(node: any) {
     case 'UnaryOperation':
       return `${codeGenerator(node.subExpression)} ${node.operator};`;
 
+    case 'EmitStatement':
+        return `\t \t \t \temit ${codeGenerator(node.eventCall)};`;
+
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);
       const args = node.arguments.map(codeGenerator);
-      const semicolon = expression === 'require' ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
+      const semicolon = expression === 'require' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
 
     }
@@ -177,9 +188,11 @@ function codeGenerator(node: any) {
          return `\t \t \t \t ${node.name} (${node.parameters});`
         return  `\t \t \t \t ${node.name} (${node.parameters.map(codeGenerator)});`
       } else {
-         return `\t \t \t \t${node.name} (${node.arguments.name});`
+         const args = node.arguments.map(codeGenerator);
+         return `\t \t \t \t${node.name} (${args.join(', ')});`
       }
     }
+
 
     case 'IfStatement':
       return `if (${codeGenerator(node.condition)})
@@ -210,6 +223,13 @@ function codeGenerator(node: any) {
       const baseExpression = codeGenerator(node.baseExpression);
       const indexExpression = codeGenerator(node.indexExpression);
       return `${baseExpression}[${indexExpression}]`;
+    }
+
+    case 'StructDefinition': {
+      node.members.forEach((member: any) => delete member.visibility);
+      return `struct ${node.name} {
+        ${node.members.map(codeGenerator).join('\n')}
+      }`
     }
 
     case 'ContractBoilerplate':

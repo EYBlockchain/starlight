@@ -32,7 +32,7 @@ class BoilerplateGenerator {
         // ${x}_oldCommitment - PoKoSK:
         // The correctness of this secret key will be constrained within the oldCommitment existence check.
 
-        u32[8] ${x}_oldCommitment_owner_publicKey = sha256of256([...${x}_oldCommitment_owner_secretKey])`,
+        u32[8] ${x}_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(${x}_oldCommitment_owner_secretKey))`,
       ];
     },
   };
@@ -77,7 +77,7 @@ class BoilerplateGenerator {
           ${x}_oldCommitment_owner_secretKey_field,\\
           ${x}_oldCommitment_salt_field\\
         ])
-        
+
         assert(\\
         field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
         )`
@@ -107,7 +107,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x }): string[] {
+    parameters({ name: x, typeName }): string[] {
       // prettier-ignore
       return [
         `private field ${x}_oldCommitment_value`,
@@ -115,15 +115,28 @@ class BoilerplateGenerator {
       ];
     },
 
-    preStatements({ name: x }): string[] {
+    preStatements({ name: x, typeName }): string[] {
       // For a state variable, we'll have passed in `${x}_oldCommitment_value` as a parameter. But our AST nodes will be using `${x}`. This line resolves the two.
       return [
         `
-        field ${x} = ${x}_oldCommitment_value`,
+        ${typeName ? typeName : 'field'} ${x} = ${x}_oldCommitment_value`,
       ];
     },
 
-    postStatements({ name: x }): string[] {
+    postStatements({ name: x, structProperties }): string[] {
+      if (structProperties)
+        return [
+          `
+          // ${x}_oldCommitment_commitment: preimage check
+          // TODO - SHA length and prop types
+
+          u32[8] ${x}_oldCommitment_commitment = sha256Padded([\\
+            ...${x}_stateVarId,\\
+            ${structProperties.map(p => `\t ...field_to_bool_256(${x}_oldCommitment_value.${p}),\\`).join('\n')}
+            ...u32_8_to_bool_256(${x}_oldCommitment_owner_publicKey),\\
+            ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
+          ])`,
+        ];
       return [
         `
         // ${x}_oldCommitment_commitment: preimage check
@@ -219,12 +232,12 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        field ${x}_stateVarId_field = ${id}`, 
+        field ${x}_stateVarId_field = ${id}`,
         // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
-    postStatements({ name: x, isWhole, isNullified, newCommitmentValue }): string[] {
+    postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       const y = isWhole ? x : newCommitmentValue;
       const lines = [];
@@ -233,15 +246,48 @@ class BoilerplateGenerator {
         const i = parseInt(x.slice(-1), 10);
         const x0 = x.slice(0, -1) + `${i-2}`;
         const x1 = x.slice(0, -1) + `${i-1}`;
-        lines.push(
-          `assert(${x0} + ${x1} > ${y})
-          // TODO: assert no under/overflows
+        if (!structProperties) {
+          lines.push(
+            `assert(${x0} + ${x1} > ${y})
+            // TODO: assert no under/overflows
 
-          field ${x}_newCommitment_value_field = (${x0} + ${x1}) - (${y})`
-        );
+            field ${x}_newCommitment_value_field = (${x0} + ${x1}) - (${y})`
+          );
+        } else {
+          // TODO types for each structProperty
+          lines.push(
+            `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${x0}.${p} + ${x1}.${p} >= ${y[p]})`).join('\n')}
+            // TODO: assert no under/overflows
+
+            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: (${x0}.${p} + ${x1}.${p}) - ${y[p]}`)} }`
+          );
+        }
       } else {
-        lines.push(`field ${x}_newCommitment_value_field = ${y}`);
+        if (!structProperties) lines.push(`field ${x}_newCommitment_value_field = ${y}`);
+        else lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y[p]}`}`)} }`)
       }
+
+      if (structProperties)
+        return [
+          `
+          // prepare secret state '${x}' for commitment
+
+          ${lines}
+
+          // ${x}_newCommitment_commitment - preimage check
+          // TODO - SHA length and prop types
+
+          u32[8] ${x}_newCommitment_commitment_check_field = poseidon([\\
+            ${x}_stateVarId_field,\\
+            ${structProperties.map(p => `\t ${x}_newCommitment_value.${p},\\`).join('\n')}
+            ${x}_newCommitment_owner_publicKey_field,\\
+            ${x}_newCommitment_salt_field\\
+          ])
+
+          assert(\\
+            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_8_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
+          )`,
+        ];
 
       return [
         `

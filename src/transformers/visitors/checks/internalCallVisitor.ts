@@ -14,21 +14,26 @@ export default {
       const { node, scope } = path;
       const args = node.arguments;
       let isSecretArray : string[];
+
       for (const arg of args) {
-        if (arg.nodeType !== 'Identifier') continue;
-         isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+         if (arg.nodeType !== 'Identifier' && !arg.expression?.typeDescriptions.typeIdentifier.includes('_struct')) continue;
+         isSecretArray = args.map(arg => scope.getReferencedBinding(arg)?.isSecret);
        }
-      if(path.isInternalFunctionCall()) {
-       if(node.expression.nodeType === 'Identifier') {
-         const functionReferncedNode = scope.getReferencedNode(node.expression);
-         const params = functionReferncedNode.parameters.parameters;
-         for (const [index, param] of params.entries()){
-          if(param.isSecret){
-            if(isSecretArray[index] !== param.isSecret)
-               throw new Error('Make sure that passed parameters have same decorators');
-            }
-          }
-        }
+
+      if(path.isInternalFunctionCall() && node.expression.nodeType === 'Identifier') {
+         const functionReferencedPath = scope.getReferencedPath(node.expression);
+         const params = functionReferencedPath.node.parameters.parameters;
+         params.forEach((param, index) => {
+           if(param.isSecret){
+             if(isSecretArray[index] !== param.isSecret)
+                throw new Error('Make sure that passed parameters have same decorators');
+             }
+         });
+
+         const thisFunctionIndicator = path.scope.indicators;
+         
+         thisFunctionIndicator.internalFunctionInteractsWithSecret ??= functionReferencedPath.scope.indicators.interactsWithSecret;
+         thisFunctionIndicator.internalFunctionModifiesSecretState ??= functionReferencedPath.scope.modifiesSecretState();
       }
     },
   },

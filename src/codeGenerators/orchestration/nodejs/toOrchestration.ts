@@ -23,7 +23,7 @@ const getAccessedValue = (name: string) => {
  */
 const getPublicValue = (node: any) => {
   if (node.nodeType !== 'IndexAccess')
-    return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
+    return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
   return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
 };
 
@@ -83,6 +83,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
             node.declarations[0].name,
           )}\n${codeGenerator(node.initialValue)};`;
         }
+        if (node.declarations[0].isStruct) return `\n let ${codeGenerator(node.declarations[0])} = {}; \n${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
         return `${getPublicValue(node.declarations[0])}`
@@ -133,7 +134,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       } ${codeGenerator(node.rightHandSide)}`;
 
     case 'BinaryOperation':
-      return `${codeGenerator(node.leftExpression)} ${
+      return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${
         node.operator
       } ${codeGenerator(node.rightExpression)}`;
 
@@ -143,30 +144,31 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return ` `;
 
     case 'IfStatement': {
-        return `if (${codeGenerator(node.condition)}) {
+      if(node.falseBody.length)
+      return `if (${codeGenerator(node.condition)}) {
           ${node.trueBody.flatMap(codeGenerator).join('\n')}
         } else {
           ${node.falseBody.flatMap(codeGenerator).join('\n')}
         }`
+        else
+        return `if (${codeGenerator(node.condition)}) {
+            ${node.trueBody.flatMap(codeGenerator).join('\n')}
+          }`
       }
 
       case 'ForStatement': {
-        if(node.body.statements.statements.interactsWithSecret) {
+        if(node.interactsWithSecret) {
           node.initializationExpression.interactsWithSecret = true;
           node.loopExpression.interactsWithSecret = true;
         }
-          let initializationExpression = `${codeGenerator(node.initializationExpression)}`;
-          initializationExpression=initializationExpression.trim();
-          let condition = `${codeGenerator(node.condition)};`
-          let loopExpression = `${codeGenerator(node.loopExpression)}`;
-          loopExpression=loopExpression.trim().slice(0,-1);
-          return `for(${initializationExpression} ${condition} ${loopExpression}) {
+          let initializationExpression = `${codeGenerator(node.initializationExpression).trim()}`;
+          let condition = `${codeGenerator(node.condition, { condition: true })};`;
+          let loopExpression = ` ${node.loopExpression.expression.rightHandSide.subExpression.name} ${node.loopExpression.expression.rightHandSide.operator}`;
+          return `for( let ${initializationExpression} ${condition} ${loopExpression}) {
           ${codeGenerator(node.body)}
         }`
-      }  
+      }
 
-    case 'UnaryOperation':
-      return `${codeGenerator(node.subExpression)} ${node.operator}`;
 
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
@@ -177,8 +179,13 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 
+    case 'UnaryOperation':
+      // ++ or -- on a parseInt() does not work
+      return `generalise(${node.subExpression.name}.integer${node.operator})`;
+
     case 'Literal':
       return node.value;
+
     case 'Identifier':
       if (options?.lhs) return node.name;
       switch (node.subType) {
@@ -191,6 +198,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
         case 'generalNumber':
           return `generalise(${node.name})`;
       }
+
+    case 'MemberAccess':
+      if (options?.lhs) return `${node.name}.${node.memberName}`;
+      return codeGenerator({ nodeType: 'Identifier', name: `${node.name}.${node.memberName}`, subType: node.subType });
+
 
     case 'Folder':
     case 'File':

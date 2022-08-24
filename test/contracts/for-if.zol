@@ -4,12 +4,14 @@ pragma solidity ^0.8.0;
 
 contract Test {
 
-secret uint private z;
+secret uint256 private z;
 
 function add(uint256 j) public {
-uint256 i;
+  uint256 i;
 for(i =0 ; i<5 ; i++) {
-      z += j;
+    if(z>5) {
+    z += j;
+      }
     }
   }
 }

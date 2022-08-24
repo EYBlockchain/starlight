@@ -23,6 +23,17 @@ export default {
     },
   },
 
+  MemberAccess: {
+    enter(path: NodePath) {
+      const { node } = path;
+      // node.isUnknown gets added during the 'parsing' stage
+      // @Node new properties
+      if (node.expression?.isUnknown) node.isUnknown = true;
+      if (node.expression?.isKnown) node.isKnown = true;
+      if (node.expression?.reinitialisable) node.reinitialisable = true;
+    },
+  },
+
   Identifier: {
     exit(path: NodePath) {
       const { node, scope } = path;
@@ -30,7 +41,7 @@ export default {
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
       if (path.isExportedSymbol()) return; // the node represents an external contract name
       if (path.isRequireStatement()) return;
-
+      if(path.isEventDefinition()) return;
       const varDec = scope.getReferencedBinding(node);
 
       if (!varDec.stateVariable) return;

@@ -87,9 +87,11 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         declarations = [],
         initialValue = {},
         interactsWithSecret,
+        oldASTId = 0,
       } = fields;
       return {
         nodeType,
+        id: oldASTId,
         interactsWithSecret,
         declarations,
         initialValue,
@@ -116,6 +118,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'ExpressionStatement': {
       const {
         expression = {},
+        oldASTId,
         interactsWithSecret,
         incrementsSecretState,
         decrementsSecretState,
@@ -123,6 +126,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       } = fields;
       return {
         nodeType,
+        id: oldASTId,
         expression,
         interactsWithSecret,
         incrementsSecretState,
@@ -157,10 +161,11 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'MemberAccess': {
-      const { name, expression = {} } = fields;
+      const { name, memberName, expression = {} } = fields;
       return {
         nodeType,
         name,
+        memberName,
         expression,
       };
     }
@@ -181,11 +186,12 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       }
     }
     case 'ForStatement': {
-      const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
+      const { condition = {} ,initializationExpression = {} ,interactsWithSecret, loopExpression = {}, body= {} } = fields;
       return {
         nodeType,
         condition,
         initializationExpression,
+        interactsWithSecret,
         loopExpression,
         body,
       }

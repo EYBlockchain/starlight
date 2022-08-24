@@ -19,9 +19,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
   if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
   if (thisPath.isRequireStatement(node)) return;
-  // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
-  thisState.skipSubNodes = true;
-  let { name } = thisPath.scope.getReferencedIndicator(node, true);
+
+  let { name } = thisPath.isMsg(node) ? node.name : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
@@ -35,17 +34,41 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (node.interactsWithSecret || node.baseExpression?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
-    // if the node is the indexExpression, we dont need its value in the circuit
-    !(thisPath.containerName === 'indexExpression')
+    // if the node is the indexExpression, we dont need its value in the circuit unless its a public state variable which is needed for the stateVarId
+    !(thisPath.containerName === 'indexExpression' && !thisPath.parentPath.isSecret)
   ) {
     // TODO other types
-    if (thisPath.isMapping)
+    if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+    if (thisPath.containerName === 'indexExpression')
+      name = binding.getMappingKeyName(thisPath)
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition').node;
-    fnDefNode._newASTPointer.parameters.parameters.push(parameterNode);
+    const params = fnDefNode._newASTPointer.parameters.parameters;
+    if (!params.some(n => n === parameterNode))
+      params.push(parameterNode);
+    // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
+    thisState.skipSubNodes = true;
   }
 };
+
+const addStructDefinition = (path: NodePath) => {
+  const structDef = path.getStructDeclaration(path.node);
+  const structNode = buildNode('StructDefinition', {
+    name: structDef.name,
+    members: structDef.members.map((mem: any) => {
+      return { name: mem.name,
+        type: mem.typeName.name === 'bool' ? 'bool' : 'field',
+      }
+    }),
+  });
+  const thisFnPath = path.getAncestorOfType('FunctionDefinition');
+  const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
+  if (!thisFile.nodes.some(n => n.nodeType === 'StructDefinition' && n.name === structNode.name))
+  // add struct def after imports, before fndef
+    thisFile.nodes.splice(1, 0, structNode);
+  return structNode;
+}
 
 let interactsWithSecret = false; // Added globaly as two objects are accesing it
 /**
@@ -136,9 +159,27 @@ const visitor = {
     },
 
     exit(path: NodePath, state: any) {
-      const { node, scope } = path;
+      const { node, parent, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
+
+      const joinCommitmentsNode = buildNode('File', {
+       fileName: `joinCommitments`,
+        fileId: node.id,
+        nodes: [],
+      });
+
+      // check for joinCommitments
+      for(const [, indicator ] of Object.entries(indicators)){
+        if(
+          (indicator instanceof StateVariableIndicator)
+          && indicator.isPartitioned
+          && indicator.isNullified
+          && !indicator.isStruct) {
+            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
+              parent._newASTPointer.push(joinCommitmentsNode);
+         }
+      }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
@@ -176,10 +217,23 @@ const visitor = {
     },
   },
 
+  EventDefinition: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
+  EmitStatement: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       let returnName : string[] =[];
+      if(!!path.getAncestorOfType('EventDefinition')) return;
        if(path.key === 'parameters'){
       const newNode = buildNode('ParameterList');
       node._newASTPointer = newNode.parameters;
@@ -282,7 +336,6 @@ const visitor = {
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
         );
       }
-
       let declarationType: string;
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
@@ -294,6 +347,7 @@ const visitor = {
         !scope.getReferencedIndicator(node).interactsWithSecret
       ) {
         // we don't want to add non secret local vars
+
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
         return;
@@ -380,6 +434,10 @@ const visitor = {
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
+      if(expression.nodeType === 'FunctionCall'){
+      if((scope.getReferencedNode(expression.expression))?.containsSecret)
+      node.containsSecret = 'true';
+    }
       const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if (!node.containsSecret && !childOfSecret) {
         state.skipSubNodes = true;
@@ -408,7 +466,7 @@ const visitor = {
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName:
+                  mappingKeyName: scope.getMappingKeyName(lhs) ||
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
@@ -422,7 +480,7 @@ const visitor = {
                 indicators: lhsIndicator,
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName:
+                  mappingKeyName: scope.getMappingKeyName(lhs) ||
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
@@ -483,9 +541,18 @@ const visitor = {
     },
   },
 
+  StructDefinition: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
+
+
   VariableDeclaration: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
       if (node.stateVariable && !node.value) {
         // Then the node represents assignment of a state variable.
         // State variables don't get declared within a circuit;
@@ -532,22 +599,37 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
-
-
+let interactsWithSecret = false ;
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
         refPath.parentPath.traversePathsFast(
           interactsWithSecretVisitor,
           newState,
         );
-        interactsWithSecret ||= newState.interactsWithSecret;
+
+        interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
+
+        // check for internal function call if the parameter passed in the function call interacts with secret or not
+        if(refPath.parentPath.node.kind === 'functionCall' && refPath.parentPath.node.expression.name != 'eventFunction'){
+          refPath.parentPath.node.arguments?.forEach((element, index) => {
+            if(node.id === element.referencedDeclaration) {
+             let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
+             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
+            }
+          })
+        }
       });
+
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
+        if(!interactsWithSecret) {
+        state.skipSubNodes = true;
+        return;
+}
       //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
@@ -555,6 +637,13 @@ const visitor = {
         interactsWithSecret,
         declarationType,
       });
+
+
+      if (path.isStruct(node)) {
+        const structNode = addStructDefinition(path);
+        newNode.typeName.name = structNode.name;
+        newNode.typeName.members = structNode.members;
+      }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
@@ -562,6 +651,7 @@ const visitor = {
         parent._newASTPointer[path.containerName].push(newNode);
       }
     },
+
   },
 
   ElementaryTypeNameExpression: {
@@ -582,6 +672,7 @@ const visitor = {
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
       const supportedTypes = ['uint', 'uint256', 'address', 'bool'];
       if (!supportedTypes.includes(node.name))
         throw new Error(
@@ -601,15 +692,21 @@ const visitor = {
   Identifier: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      const { name } = node;
+      let { name } = node;
+      if(!!path.getAncestorOfType('EventDefinition')) return;
+      if(!!path.getAncestorOfType('EmitStatement')) return;
       // const binding = path.getReferencedBinding(node);
       // below: we have a public state variable we need as a public input to the circuit
       // local variable decs and parameters are dealt with elsewhere
       // secret state vars are input via commitment values
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
+      name = path.scope.getIdentifierMappingKeyName(node);
+
       const newNode = buildNode(
         node.nodeType,
-        { name, });
+        { name },
+      );
+      if (path.isStruct(node)) addStructDefinition(path);
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
@@ -629,8 +726,12 @@ const visitor = {
   },
 
   ForStatement: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
+    if(!path?.containsSecret){
+    state.skipSubNodes = true;
+    return ;
+  }
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
@@ -638,35 +739,45 @@ const visitor = {
   },
 
   Literal: {
-   enter(path: NodePath) {
-     const { node, parent , parentPath } = path;
-     const { value } = node;
-     if (node.kind !== 'number')
-      if(parent.nodeType !== 'Return' && parentPath.parent.nodeType !== 'Return')
-       throw new Error(
-         `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
-       );
+    enter(path: NodePath) {
+      const { node, parent , parentPath } = path;
+      const { value } = node;
 
-     // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-     parent._newASTPointer[path.containerName] = buildNode('Literal', {
-       value,
-     });
-   },
- },
+      if (node.kind !== 'number' && node.kind !== 'bool' && !path.getAncestorOfType('Return'))
+        throw new Error(
+          `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
+        );
+
+      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      parent._newASTPointer[path.containerName] = buildNode('Literal', {
+        value,
+      });
+    },
+  },
 
   MemberAccess: {
     enter(path: NodePath, state: any) {
-      const { parent } = path;
+      const { parent, node } = path;
 
-      if (!path.isMsgSender())
-        throw new Error(`Struct property access isn't yet supported.`);
+      let newNode: any;
 
-      // What follows assumes this node represents msg.sender:
-      const newNode = buildNode('MsgSender');
+      if (path.isMsgSender()) {
+        newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+      } else {
+        newNode = buildNode('MemberAccess', { memberName: node.memberName, isStruct: path.isStruct(node)});
+        node._newASTPointer = newNode;
+      }
+
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
-      parent._newASTPointer[path.containerName] = newNode;
-      state.skipSubNodes = true;
+      if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+
+
     },
   },
 
@@ -714,83 +825,83 @@ const visitor = {
         // ignore external function calls; they'll be retained in Solidity, so won't be copied over to a circuit.
         state.skipSubNodes = true;
       }
-     if(path.isInternalFunctionCall()) {
-       const args = node.arguments;
-       let isCircuit = false;
-        state.newStateArray =  args.map(arg => (arg.name));
-        let internalFunctionInteractsWithSecret = false;
-        const newState: any = {};
-        state.oldStateArray = internalFunctionCallVisitor(path, newState)
-        internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
-        state.internalFncName ??= [];
-        state.internalFncName.push(node.expression.name);
-        if(internalFunctionInteractsWithSecret === true && interactsWithSecret === true){
-         const callingfnDefPath = path.getFunctionDefinition();
-         const callingfnDefIndicators = callingfnDefPath.scope.indicators;
-         const functionReferncedNode = scope.getReferencedPath(node.expression);
-         const internalfnDefIndicators = functionReferncedNode.scope.indicators;;
-         const startNodePath = path.getAncestorOfType('ContractDefinition')
-         startNodePath.node.nodes.forEach(node => {
-           if(node.nodeType === 'VariableDeclaration'){
-             if(node.typeName.nodeType === 'Mapping') {
-               for(const [index, oldStateName] of  state.oldStateArray.entries()) {
-                 if(oldStateName !== state.newStateArray[index]){
-                   state.circuitImport ??= []
-                   state.circuitImport.push('true');
-                   isCircuit = true;
-                   break;
-                  }
-                  state.circuitImport ??= []
-                  state.circuitImport.push('false');
-                 isCircuit = false;
-                }
-              }
-              else if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-                if(callingfnDefIndicators[node.id]) {
-                  if(callingfnDefIndicators[node.id].isModified)
-                    isCircuit = false;
+      if(path.isInternalFunctionCall()) {
+    const args = node.arguments;
+    let isCircuit = false;
+    state.newStateArray ??= {};
+    const name = node.expression.name;
+    state.newStateArray[name] ??= [];
+    for (const arg of args) {
+      if(arg.expression?.typeDescriptions.typeIdentifier.includes('_struct'))
+        state.newStateArray[name] =  args.map(arg => ({name: arg.expression.name, memberName: arg.memberName} ));
+      else
+       state.newStateArray[name] =  args.map(arg => ({name: arg.name}));
+      }
+     let internalFunctionInteractsWithSecret = false;
+     const newState: any = {};
+     state.oldStateArray = internalFunctionCallVisitor(path, newState)
+     internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
+     state.internalFncName ??= [];
+     state.internalFncName.push(node.expression.name);
+     if(internalFunctionInteractsWithSecret === true){
+      const callingfnDefPath = path.getFunctionDefinition();
+      const callingfnDefIndicators = callingfnDefPath.scope.indicators;
+      const functionReferncedNode = scope.getReferencedPath(node.expression);
+      const internalfnDefIndicators = functionReferncedNode.scope.indicators;
+      const startNodePath = path.getAncestorOfType('ContractDefinition')
+      startNodePath.node.nodes.forEach(node => {
+        if(node.nodeType === 'VariableDeclaration'){
+          if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
+            if(callingfnDefIndicators[node.id]) {
+             if(callingfnDefIndicators[node.id].isModified) {
+               if(internalfnDefIndicators[node.id].isMapping){
+                 Object.keys(internalfnDefIndicators[node.id].mappingKeys).forEach(vars => {
+                   if(state.newStateArray[name].some(statename => statename === vars))
+                     isCircuit = false;
                    else
                     isCircuit = true;
-                }
-              else
-                isCircuit = true;
-            if(isCircuit){
-            state.circuitImport ??= []
-            state.circuitImport.push('true');
+                 })
+                } else
+                 isCircuit = false;
+              }
+            }
+            else
+             isCircuit = true;
           }
-            else{
-            state.circuitImport ??= []
-            state.circuitImport.push('false');
-          }
-            }
-            }
-          });
-          const newNode = buildNode('InternalFunctionCall', {
-          name: node.expression.name,
-          internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-          CircuitArguments: [],
-          circuitImport: isCircuit,
-         });
-         const fnNode = buildNode('InternalFunctionBoilerplate', {
-        name: node.expression.name,
-        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-        circuitImport: isCircuit,
-         });
-         node._newASTPointer = newNode ;
-         parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
-          const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-          state.callingFncName ??= [];
-          state.callingFncName.push(fnDefNode.node.name);
-          fnDefNode.parent._newASTPointer.forEach(file => {
-           if (file.fileName === fnDefNode.node.name) {
-             file.nodes.forEach(childNode => {
-               if (childNode.nodeType === 'ImportStatementList')
-                childNode.imports?.push(fnNode);
-              })
-            }
-          })
-         }
         }
+      });
+     state.circuitImport ??= [];
+     if(isCircuit)
+       state.circuitImport.push('true');
+     else
+       state.circuitImport.push('false');
+
+     const newNode = buildNode('InternalFunctionCall', {
+       name: node.expression.name,
+       internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+       CircuitArguments: [],
+       circuitImport: isCircuit,
+     });
+     const fnNode = buildNode('InternalFunctionBoilerplate', {
+       name: node.expression.name,
+       internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+       circuitImport: isCircuit,
+      });
+      node._newASTPointer = newNode ;
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+       state.callingFncName ??= [];
+       state.callingFncName.push({name: fnDefNode.node.name, parent: path.parentPath.parentPath.parent.nodeType});
+       fnDefNode.parent._newASTPointer.forEach(file => {
+         if (file.fileName === fnDefNode.node.name) {
+           file.nodes.forEach(childNode => {
+             if (childNode.nodeType === 'ImportStatementList')
+              childNode.imports?.push(fnNode);
+           })
+         }
+       })
+      }
+     }
        if(path.isTypeConversion()) {
          const newNode = buildNode('TypeConversion', {
          type: node.typeDescriptions.typeString,

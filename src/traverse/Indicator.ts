@@ -75,6 +75,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
   interactsWithSecret?: boolean;
   interactsWithPublic?: boolean;
   internalFunctionInteractsWithSecret?: boolean;
+  internalFunctionModifiesSecretState?: boolean;
   onChainKeyRegistry?: boolean;
 
   constructor(scope: Scope) {
@@ -88,18 +89,6 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.interactsWithSecret = true;
       this.zkSnarkVerificationRequired = true;
-
-
-    }
-
-    if(path.node.typeDescriptions.typeIdentifier.includes(`_internal_`))
-      {
-        const functionReferncedNode = path.scope.getReferencedNode(path.node);
-        const params = functionReferncedNode.parameters.parameters ;
-          if (params.some(node => node.isSecret))
-          {
-            this.internalFunctionInteractsWithSecret = true;
-        }
     }
   }
 
@@ -210,6 +199,9 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   interactsWith: NodePath[];
   isParam: boolean;
 
+  isStruct?: boolean;
+  structProperties?: any;
+
   initialValue?: any;
 
   /** @param {NodePath} path the path of the localVariable for which we're creating an indicator
@@ -237,6 +229,21 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     }
 
     this.isParam = path.isInType('ParameterList');
+
+    if (path.isStruct()) {
+      this.isStruct = true;
+      this.structProperties = {};
+    }
+  }
+
+  addStructProperty(referencingPath: NodePath): MappingKey {
+    const keyNode = referencingPath.getStructPropertyNode();
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+    if (!this.structProperties[keyNode.memberName])
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+
+    return this.structProperties[keyNode.memberName];
   }
 
   update(path: NodePath) {
@@ -244,6 +251,13 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
+    if (this.isStruct) {
+      this.addStructProperty(path).updateProperties(path);
+    }
+  }
+
+  updateProperties(path: NodePath) {
+    return;
   }
 
   addReferencingPath(path: NodePath) {
@@ -297,6 +311,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   isKnown?: boolean;
 
   isMapping?: boolean;
+  isStruct?: boolean;
+  structProperties?: {[key: string]: any};
   mappingKeys?: {[key: string]: MappingKey};
   mappingOwnershipType?: string;
 
@@ -364,9 +380,16 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
     this.interactsWith = [];
 
-    if (path.isMappingIdentifier()) {
+    if (path.isMappingIdentifier() || path.isArray()) {
       this.isMapping = true;
       this.mappingKeys = {};
+    }
+    if (path.isStruct()) {
+      this.isStruct = true;
+      this.structProperties = {};
+      path.getStructDeclaration()?.members.forEach((member: any) => {
+        this.structProperties[member.name] = {};
+      });
     }
   }
 
@@ -394,11 +417,23 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     return this.mappingKeys[keyName];
   }
 
+  addStructProperty(referencingPath: NodePath): MappingKey {
+    const keyNode = referencingPath.getStructPropertyNode();
+    const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+    if (!(this.structProperties[keyNode.memberName] instanceof MappingKey))
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+
+    return this.structProperties[keyNode.memberName];
+  }
+
   // A StateVariableIndicator will be updated if (some time after its creation) we encounter an AST node which refers to this state variable.
   // E.g. if we encounter an Identifier node.
   update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
+    } else if (this.isStruct) {
+      this.addStructProperty(path).updateProperties(path);
     } else {
       this.updateProperties(path);
     }
@@ -411,10 +446,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.isKnown ??= path.node.isKnown;
     this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification())
-    {
       this.addModifyingPath(path);
   }
-}
 
   addSecretInteractingPath(path: NodePath) {
     this.interactsWithSecret = true;
@@ -435,11 +468,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
     // add nullifyingPaths we didn't know were nullifying
-    if (this.binding.isWhole && this.isModified) {
+    if (this.binding.isWhole && this.isModified && this.isSecret) {
       this.modifyingPaths.forEach(modPath => {
         // if not included, we add it
         if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id)) this.addNullifyingPath(modPath);
-      })
+      });
     }
     this.isWhole ??= this.binding.isWhole;
     this.isWholeReason = this.isWhole
@@ -458,6 +491,14 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
         mappingKey.updateFromBinding();
+      }
+    }
+
+    if (this.isStruct) {
+      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+      for (const [, mappingKey] of structProperties) {
+        // we may have empty struct properties if they are never edited
+        if (mappingKey instanceof MappingKey) mappingKey.updateFromBinding();
       }
     }
   }
@@ -483,10 +524,18 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       this.addMappingKey(path).accessedPaths ??= [];
       this.addMappingKey(path).accessedPaths.push(path);
     }
+
+    if (this.isStruct) {
+      this.addStructProperty(path).isAccessed = true;
+      this.addStructProperty(path).accessedPaths ??= [];
+      this.addStructProperty(path).accessedPaths.push(path);
+    }
   }
 
   updateIncrementation(path: NodePath, state: any) {
     if (this.isSecret) this.parentIndicator.updateIncrementation(path, state);
+    // ensure non secret states don't get marked as nullifications/imports
+    if (!state.incrementedIdentifier.interactsWithSecret && !this.interactsWithSecret && !this.isSecret) return;
     state.initialisedInConstructor = this.binding.initialisedInConstructor;
     // if an incrementation is marked as unknown anywhere, the binding will know
     if (
@@ -508,7 +557,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
-        state.incrementedIdentifier.baseExpression?.isUnknown)
+        state.incrementedIdentifier.baseExpression?.isUnknown ||
+        state.incrementedIdentifier.expression?.isUnknown)
     ) {
       this.isPartitioned = true;
       const reason = {
@@ -541,6 +591,13 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         state,
       );
     }
+
+    if (this.isStruct) {
+      this.addStructProperty(state.incrementedPath).updateIncrementation(
+        path,
+        state,
+      );
+    }
   }
 
   addReferencingPath(path: NodePath) {
@@ -560,9 +617,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         this.binding.initialisedInConstructor = true;
         this.initialisationRequired = true; // we need the dummy nullifier in the constructor
         if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+        if (this.isStruct) this.addStructProperty(path).initialisationRequired = true;
       } else if(!this.binding.initialisedInConstructor) {
         this.initialisationRequired = true;
         if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+        if (this.isStruct) this.addStructProperty(path).initialisationRequired = true;
       }
 
       const { node } = path;
@@ -575,17 +634,20 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.isNullified = true;
     this.nullifiersRequired = true;
     this.parentIndicator.nullifiersRequired = true;
+    this.parentIndicator.parentIndicator.nullifiersRequired = true;
     this.oldCommitmentAccessRequired = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
     this.binding.addNullifyingPath(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+    if (this.isStruct) this.addStructProperty(path).addNullifyingPath(path);
   }
 
   addBurningPath(path: NodePath) {
     this.isBurned = true;
     this.burningPaths.push(path);
     if (this.isMapping) this.addMappingKey(path).addBurningPath(path);
+    if (this.isStruct) this.addStructProperty(path).addBurningPath(path);
   }
 
   prelimTraversalErrorChecks() {
@@ -596,16 +658,30 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         mappingKey.prelimTraversalErrorChecks();
       }
     }
-    // warning: state is clearly whole, don't need known decorator
-    // added not accessed because this flags incrementations marked as known, they need to be marked as known
-    if (this.isKnown && this.isWhole && !this.isIncremented) {
-      logger.warn(
-        `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to:`,
-      );
-      this.isWholeReason.forEach(reason => {
-        console.log(reason[0]);
-      });
+    if (this.isStruct) {
+      const structProperties = Object.entries(this.structProperties);
+      for (const [name, mappingKey] of structProperties) {
+        // we may have empty struct properties if they are never edited
+        if (mappingKey instanceof MappingKey) {
+          mappingKey.prelimTraversalErrorChecks();
+        } else {
+          mappingKey.node= this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
+          logger.warn(
+             `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
+           );
+        }
+      }
     }
+    // // warning: state is clearly whole, don't need known decorator
+    // // added not accessed because this flags incrementations marked as known, they need to be marked as known
+    // if (this.isKnown && this.isWhole && !this.isIncremented) {
+    //   logger.warn(
+    //     `PEDANTIC: Unnecessary 'known' decorator. Secret state '${this.name}' is trivially 'known' because it is 'whole', due to:`,
+    //   );
+    //   this.isWholeReason.forEach(reason => {
+    //     console.log(reason[0]);
+    //   });
+    // }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
       throw new SyntaxUsageError(
@@ -635,6 +711,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
           mappingKey.newCommitmentsRequired = true;
         }
       }
+      if (this.isStruct) {
+        const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+        for (const [, mappingKey] of structProperties) {
+          mappingKey.newCommitmentsRequired = true;
+        }
+      }
       return;
     }
     if (!this.isSecret || !this.isBurned) return;
@@ -650,6 +732,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         this.parentIndicator.newCommitmentsRequired = true;
         if (this.isMapping)
           this.addMappingKey(path).newCommitmentsRequired = true;
+        if (this.isStruct)
+          this.addStructProperty(path).newCommitmentsRequired = true;
         burnedOnly = false;
       }
     });

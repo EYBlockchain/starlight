@@ -88,7 +88,14 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         kind,
       };
     }
-
+    case 'StructDefinition': {
+      const { name, members = [] } = fields;
+      return {
+        nodeType,
+        name,
+        members,
+      }
+    }
     case 'VariableDeclaration': {
       const { name, type, isSecret: isPrivate = false, interactsWithSecret, declarationType } = fields;
       return {
@@ -141,6 +148,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         nodeType,
         baseExpression,
         indexExpression,
+      };
+    }
+    case 'MemberAccess': {
+      const { expression = {}, memberName, isStruct = false } = fields;
+      return {
+        nodeType,
+        memberName,
+        expression,
+        isStruct,
       };
     }
     case 'TupleExpression': {
