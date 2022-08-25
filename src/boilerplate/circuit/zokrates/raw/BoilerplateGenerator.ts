@@ -18,7 +18,7 @@ class BoilerplateGenerator {
       return [
       `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
       `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-      `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
+      `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
     ];
     },
 
@@ -44,7 +44,7 @@ class BoilerplateGenerator {
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
-        `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
       ];
     },
 
@@ -103,7 +103,7 @@ class BoilerplateGenerator {
   oldCommitmentPreimage = {
     importStatements(): string[] {
       return [
-        `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
         `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
@@ -216,7 +216,7 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-        `from "hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
         `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },

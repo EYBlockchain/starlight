@@ -38,11 +38,11 @@ function mix(state, m) {
 }
 
 function poseidonHash(_inputs) {
-  if (_inputs.length > 6) throw new Error('To many inputs to Poseidon hash');
+  if (_inputs.length > 16) throw new Error('To many inputs to Poseidon hash');
   const inputs = _inputs;
   const N = inputs.length;
   const t = N + 1;
-  const roundsP = [56, 57, 56, 60, 60, 63, 64, 63];
+  const roundsP = [56, 57, 56, 60, 60, 63, 64, 63, 60, 66, 60, 65, 70, 60, 64, 68];
   const f = 8;
   const p = roundsP[t - 2];
   const c = C[t - 2];
