@@ -1,5 +1,7 @@
 /* eslint-disable no-param-reassign */
 // Implements the Poseidon hash, drawing on the ZoKrates implementation
+// roundsP values referred from circom library
+// https://github.com/iden3/circomlibjs/blob/main/src/poseidon_opt.js
 import gen from 'general-number';
 import poseidonConstants from './poseidon-constants.mjs';
 import { addMod, mulMod, powerMod } from './number-theory.mjs';

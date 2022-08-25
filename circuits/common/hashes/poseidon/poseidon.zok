@@ -1,3 +1,6 @@
+// circuit code (with more inputs) with reference from zokrates core library 
+// https://github.com/Zokrates/ZoKrates/blob/develop/zokrates_stdlib/stdlib/hashes/poseidon/constants.zok
+
 from "./constants.zok" import POSEIDON_C, POSEIDON_M
 
 def ark<N>(field[N] state, field[1292] c, u32 it) -> field[N]:
