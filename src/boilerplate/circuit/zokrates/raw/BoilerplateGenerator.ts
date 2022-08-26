@@ -15,8 +15,11 @@ class BoilerplateGenerator {
 
   PoKoSK = {
     importStatements(): string[] {
-      return [`from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
-    `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`];
+      return [
+      `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
+      `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
+      `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+    ];
     },
 
     parameters({ name: x }): string[] {
@@ -40,7 +43,8 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-        `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
+        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
       ];
     },
 
@@ -56,7 +60,8 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        bool[256] ${x}_stateVarId = field_to_bool_256(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        field ${x}_stateVarId_field = ${id}`
+         // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
@@ -66,15 +71,18 @@ class BoilerplateGenerator {
         `
         // Nullify ${x}:
 
-        u32[8] ${x}_oldCommitment_nullifier_check = sha256Padded([\\
-          ...${x}_stateVarId,\\
-          ...u32_8_to_bool_256(${x}_oldCommitment_owner_secretKey),\\
-          ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
+        field ${x}_oldCommitment_owner_secretKey_field =u32_array_to_field(${x}_oldCommitment_owner_secretKey)
+
+        field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_oldCommitment_owner_secretKey_field,\\
+          ${x}_oldCommitment_salt_field\\
         ])
 
         assert(\\
-        field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == u32_8_to_bool_256(${x}_oldCommitment_nullifier_check)[8..256]\\
-        )`,
+        field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
+        )`
+        ,
       ];
 
       if (this.initialisationRequired && this.isWhole) {
@@ -95,17 +103,16 @@ class BoilerplateGenerator {
   oldCommitmentPreimage = {
     importStatements(): string[] {
       return [
-        `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
-        `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
-        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
 
     parameters({ name: x, typeName }): string[] {
       // prettier-ignore
       return [
-        `private ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
-        `private u32[8] ${x}_oldCommitment_salt`,
+        `private  ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
+        `private field ${x}_oldCommitment_salt_field`,
       ];
     },
 
@@ -122,24 +129,28 @@ class BoilerplateGenerator {
         return [
           `
           // ${x}_oldCommitment_commitment: preimage check
-          // TODO - SHA length and prop types
 
-          u32[8] ${x}_oldCommitment_commitment = sha256Padded([\\
-            ...${x}_stateVarId,\\
-            ${structProperties.map(p => `\t ...field_to_bool_256(${x}_oldCommitment_value.${p}),\\`).join('\n')}
-            ...u32_8_to_bool_256(${x}_oldCommitment_owner_publicKey),\\
-            ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
+          field ${x}_oldCommitment_owner_publicKey_field =u32_array_to_field(${x}_oldCommitment_owner_publicKey)
+
+          field ${x}_oldCommitment_commitment_field = poseidon([\\
+            ${x}_stateVarId_field,\\
+            ${structProperties.map(p => `\t ${x}_oldCommitment_value.${p},\\`).join('\n')}
+            ${x}_oldCommitment_owner_publicKey_field,\\
+            ${x}_oldCommitment_salt_field\\
           ])`,
         ];
       return [
         `
         // ${x}_oldCommitment_commitment: preimage check
 
-        u32[8] ${x}_oldCommitment_commitment = sha256Padded([\\
-          ...${x}_stateVarId,\\
-          ...field_to_bool_256(${x}_oldCommitment_value),\\
-          ...u32_8_to_bool_256(${x}_oldCommitment_owner_publicKey),\\
-          ...u32_8_to_bool_256(${x}_oldCommitment_salt)\\
+        field ${x}_oldCommitment_owner_publicKey_field =u32_array_to_field(${x}_oldCommitment_owner_publicKey)
+
+
+        field ${x}_oldCommitment_commitment_field = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_oldCommitment_value,\\
+          ${x}_oldCommitment_owner_publicKey_field,\\
+          ${x}_oldCommitment_salt_field\\
         ])`,
       ];
     },
@@ -170,21 +181,20 @@ class BoilerplateGenerator {
     postStatements({ name: x, isWhole, isAccessed, isNullified, initialisationRequired }): string[] {
       const lines = [
         `
-        // ${x}_oldCommitment_commitment: existence check
-
-        field ${x}_oldCommitment_commitment_truncated = bool_256_to_field([...[false; 8], ...u32_8_to_bool_256(${x}_oldCommitment_commitment)[8..256]])`,
+        // ${x}_oldCommitment_commitment: existence check`,
 
         `
         field ${x}_commitmentRoot_check = checkRoot(\\
           ${x}_oldCommitment_membershipWitness_siblingPath,\\
-          ${x}_oldCommitment_commitment_truncated,\\
+          ${x}_oldCommitment_commitment_field,\\
           ${x}_oldCommitment_membershipWitness_index\\
         )`,
 
         `
         assert(\\
           field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(${x}_commitmentRoot_check)[8..256]\\
-        )`,
+        )`
+        ,
       ];
 
       if (isWhole && initialisationRequired) {
@@ -206,16 +216,15 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
-        `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
-        `from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
 
     parameters({ name: x }): string[] {
       return [
-        `private u32[8] ${x}_newCommitment_owner_publicKey`,
-        `private u32[8] ${x}_newCommitment_salt`,
+        `private field ${x}_newCommitment_owner_publicKey_field`,
+        `private field ${x}_newCommitment_salt_field`,
         `public field ${x}_newCommitment_commitment`,
       ];
     },
@@ -225,7 +234,8 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        bool[256] ${x}_stateVarId = field_to_bool_256(${id})`, // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        field ${x}_stateVarId_field = ${id}`,
+        // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
 
@@ -243,7 +253,7 @@ class BoilerplateGenerator {
             `assert(${x0} + ${x1} > ${y})
             // TODO: assert no under/overflows
 
-            bool[256] ${x}_newCommitment_value = field_to_bool_256((${x0} + ${x1}) - (${y}))`
+            field ${x}_newCommitment_value_field = (${x0} + ${x1}) - (${y})`
           );
         } else {
           // TODO types for each structProperty
@@ -255,7 +265,7 @@ class BoilerplateGenerator {
           );
         }
       } else {
-        if (!structProperties) lines.push(`bool[256] ${x}_newCommitment_value = field_to_bool_256(${y})`);
+        if (!structProperties) lines.push(`field ${x}_newCommitment_value_field = ${y}`);
         else lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y[p]}`}`)} }`)
       }
 
@@ -267,17 +277,16 @@ class BoilerplateGenerator {
           ${lines}
 
           // ${x}_newCommitment_commitment - preimage check
-          // TODO - SHA length and prop types
 
-          u32[8] ${x}_newCommitment_commitment_check = sha256Padded([\\
-            ...${x}_stateVarId,\\
-            ${structProperties.map(p => `\t ...field_to_bool_256(${x}_newCommitment_value.${p}),\\`).join('\n')}
-            ...u32_8_to_bool_256(${x}_newCommitment_owner_publicKey),\\
-            ...u32_8_to_bool_256(${x}_newCommitment_salt)\\
+          field ${x}_newCommitment_commitment_check_field = poseidon([\\
+            ${x}_stateVarId_field,\\
+            ${structProperties.map(p => `\t ${x}_newCommitment_value.${p},\\`).join('\n')}
+            ${x}_newCommitment_owner_publicKey_field,\\
+            ${x}_newCommitment_salt_field\\
           ])
 
           assert(\\
-            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
+            field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
           )`,
         ];
 
@@ -289,16 +298,17 @@ class BoilerplateGenerator {
 
         // ${x}_newCommitment_commitment - preimage check
 
-        u32[8] ${x}_newCommitment_commitment_check = sha256Padded([\\
-          ...${x}_stateVarId,\\
-          ...${x}_newCommitment_value,\\
-          ...u32_8_to_bool_256(${x}_newCommitment_owner_publicKey),\\
-          ...u32_8_to_bool_256(${x}_newCommitment_salt)\\
+        field ${x}_newCommitment_commitment_check_field = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_newCommitment_value_field,\\
+          ${x}_newCommitment_owner_publicKey_field,\\
+          ${x}_newCommitment_salt_field\\
         ])
 
         assert(\\
-          field_to_bool_256(${x}_newCommitment_commitment)[8..256] == u32_8_to_bool_256(${x}_newCommitment_commitment_check)[8..256]\\
-        )`,
+          field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
+        )`
+        ,
       ];
     },
   };
@@ -306,7 +316,6 @@ class BoilerplateGenerator {
   mapping = {
     importStatements(): string[] {
       return [
-        `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
       ];
     },
@@ -330,9 +339,6 @@ class BoilerplateGenerator {
       return [
         `
         field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
-
-        `
-        bool[256] ${x}_stateVarId = field_to_bool_256(${x}_stateVarId_field)`, // convert to bool, for later sha256 hashing
       ];
     },
   };
