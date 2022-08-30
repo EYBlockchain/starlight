@@ -15,13 +15,13 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
    let isSecretArray : string[];
    let oldStateArray : string[];
    for (const arg of args) {
-     if (arg.nodeType !== 'Identifier') continue;
-   isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+     if (arg.nodeType !== 'Identifier' && !arg.expression.typeDescriptions.typeIdentifier.includes('_struct')) continue;
+     isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
  }
  if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedNode(node.expression);
   const params = functionReferncedNode.parameters.parameters;
-  if((params.length !== 0) && (params.some(node => node.isSecret)))
+  if((params.length !== 0) && (params.some(node => (node.isSecret || node._newASTPointer?.interactsWithSecret))))
   {
     thisState.internalFunctionInteractsWithSecret = true;
 } else
@@ -38,6 +38,7 @@ thisState.internalFunctionInteractsWithSecret = false;
  }
  return oldStateArray;
  };
+
 
  export function transformation1(type:string , oldAST: any , state: any , visitor: any) {
   const newAST = {

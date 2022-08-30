@@ -185,9 +185,6 @@ export class Scope {
         // `Identifier` nodes _refer_ to already-declared variables. We grab the binding for that referenced variable:
         const referencedBinding = this.getReferencedBinding(node);
 
-
-        if (!referencedBinding && this.getReferencedExportedSymbolName(node) )
-          break; // the node is referring to some external contract name
         if (!referencedBinding)
           break;
 
@@ -719,17 +716,18 @@ export class Scope {
   /**
    * @returns {Boolean} - if some stateVariable is modified within the scope (of a FunctionDefinition scope).
    */
-  modifiesSecretState(): boolean {
-    if (this.scopeType !== 'FunctionDefinition') return false;
-    const { indicators } = this;
-    for (const stateVarId of Object.keys(indicators)) {
-      const indicator = indicators[stateVarId];
-      if (indicator?.isModified && indicator.binding?.isSecret) return true;
+   modifiesSecretState(): boolean {
+     if (this.scopeType !== 'FunctionDefinition') return false;
+     const { indicators } = this;
+     for (const stateVarId of Object.keys(indicators)) {
+       const indicator = indicators[stateVarId];
 
-      if(indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionInteractsWithSecret) return true;
-    }
-    return false;
-  }
+       if (indicator?.isModified && indicator.binding?.isSecret) return true;
+
+     }
+    if (indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionModifiesSecretState) return true;
+     return false;
+   }
 
   /**
    * @returns {Boolean} - if some stateVariable is nullified within the scope (of a FunctionDefinition scope).
