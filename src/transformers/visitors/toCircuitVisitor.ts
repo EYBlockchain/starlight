@@ -866,11 +866,12 @@ let interactsWithSecret = false ;
       if(path.isInternalFunctionCall()) {
 
     const args = node.arguments;
+    state.isAddStructDefinition = true;
     path.getAncestorOfType('FunctionDefinition').node.parameters.parameters.some(para => {
       for (const arg of args) {
-        if(arg.typeDescriptions.typeIdentifier === para.typeDescriptions.typeIdentifier)
+        if((arg.typeDescriptions.typeIdentifier === para.typeDescriptions.typeIdentifier)
+         && arg.typeDescriptions.typeIdentifier.includes('_struct') && para.typeDescriptions.typeIdentifier.includes('_struct'))
           state.isAddStructDefinition = false}})
-
 
 
 
