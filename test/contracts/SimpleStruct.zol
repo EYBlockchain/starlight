@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 contract Assign {
 
   secret uint256 private a;
+  secret uint256 private b;
+
 
 
   struct MyStruct {
@@ -21,7 +23,7 @@ contract Assign {
 
   function remove( secret MyStruct memory value) public {
     add(value);
-  known a -= value.prop1;
+  known b += value.prop1;
     x.prop2 = true;
   }
 }
