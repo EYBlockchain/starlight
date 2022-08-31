@@ -145,18 +145,18 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return `(${node.components.map(codeGenerator).join(` `)})`;
       return ` `;
 
-    case 'IfStatement': {
-      if(node.falseBody.length)
-      return `if (${codeGenerator(node.condition)}) {
-          ${node.trueBody.flatMap(codeGenerator).join('\n')}
-        } else {
-          ${node.falseBody.statements.flatMap(codeGenerator).join('\n')}
-        }`
-        else
+      case 'IfStatement': {
+        if(node.falseBody.length)
         return `if (${codeGenerator(node.condition)}) {
-            ${node.trueBody.flatMap(codeGenerator).join('\n')}
+            ${node.trueBody.statements.flatMap(codeGenerator).join('\n')}
+          } else {
+            ${node.falseBody.statements.flatMap(codeGenerator).join('\n')}
           }`
-      }
+          else
+          return `if (${codeGenerator(node.condition)}) {
+              ${node.trueBody.statements.flatMap(codeGenerator).join('\n')}
+            }`
+        }
 
       case 'ForStatement': {
         if(node.interactsWithSecret) {
