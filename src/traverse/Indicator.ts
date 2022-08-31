@@ -75,6 +75,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
   interactsWithSecret?: boolean;
   interactsWithPublic?: boolean;
   internalFunctionInteractsWithSecret?: boolean;
+  internalFunctionModifiesSecretState?: boolean;
   onChainKeyRegistry?: boolean;
 
   constructor(scope: Scope) {
@@ -88,10 +89,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.interactsWithSecret = true;
       this.zkSnarkVerificationRequired = true;
-
-
     }
-
     if (path.node.typeDescriptions.typeIdentifier.includes(`_internal_`)) {
         const functionReferncedNode = path.scope.getReferencedNode(path.node);
         const params = functionReferncedNode.parameters.parameters;

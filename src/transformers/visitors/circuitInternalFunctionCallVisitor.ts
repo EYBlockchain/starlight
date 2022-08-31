@@ -24,7 +24,7 @@ const internalCallVisitor = {
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
                 node._newASTPointer.forEach(file => {
-                  if(file.fileName === state.callingFncName[index]){
+                  if(file.fileName === state.callingFncName[index].name){
                     file.nodes.forEach(childNode => {
                       if(childNode.nodeType === 'FunctionDefinition'){
                         let callParameterList = cloneDeep(childNode.parameters.parameters);
@@ -76,7 +76,7 @@ const internalCallVisitor = {
                  };
                  case 'oldCommitmentPreimage' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_value`) ;
-                  internalFncParameters.push(`${node.name}_oldCommitment_salt`);
+                  internalFncParameters.push(`${node.name}_oldCommitment_salt_field`);
                   break;
                  };
                 case 'oldCommitmentExistence' :{
@@ -88,8 +88,8 @@ const internalCallVisitor = {
                   break;
                  };
                 case 'newCommitment' : {
-                  internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
-                  internalFncParameters.push(`${node.name}_newCommitment_salt`) ;
+                  internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey_field`) ;
+                  internalFncParameters.push(`${node.name}_newCommitment_salt_field`) ;
                   internalFncParameters.push(`${node.name}_newCommitment_commitment`);
                   break;
                  };
@@ -107,12 +107,12 @@ const internalCallVisitor = {
                }
              });
             node._newASTPointer.forEach(file => {
-              if(file.fileName === state.callingFncName[index]){
+              if(file.fileName === state.callingFncName[index].name){
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
+                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition'){
                     childNode.body.statements.forEach(node => {
-
                       if(node.nodeType === 'ExpressionStatement') {
                         if(node.expression.nodeType === 'InternalFunctionCall' && node.expression.name === name){
                           node.expression.CircuitArguments = node.expression.CircuitArguments.concat(state.circuitArguments);
@@ -120,7 +120,24 @@ const internalCallVisitor = {
                          }
                        }
                      })
+                   } else {
+                        childNode.body.statements.forEach(node => {
+                          if(node.nodeType === state.callingFncName[index].parent){
+                            node.body.statements.forEach(kidNode => {
+                              if(kidNode.nodeType === 'ExpressionStatement') {
+                                if(kidNode.expression.nodeType === 'InternalFunctionCall' && kidNode.expression.name === name){
+                                  kidNode.expression.CircuitArguments = kidNode.expression.CircuitArguments.concat(state.circuitArguments);
+                                  state.circuitArguments = [];
+                                 }
+                               }
+                             })
+                          }
+                        })
+
+
                    }
+                 }
+
                  })
                }
 
@@ -182,7 +199,7 @@ const internalCallVisitor = {
                }
              })
              node._newASTPointer.forEach(file => {
-              if(file.fileName === state.callingFncName[index]) {
+              if(file.fileName === state.callingFncName[index].name) {
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition') {
                     childNode.body.statements.forEach(node => {
@@ -190,7 +207,14 @@ const internalCallVisitor = {
                         callingFncbpType = node.bpType;
                       }
                     })
+                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName === 'FunctionDefinition')
                     childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
+                    else{
+                      childNode.body.statements.forEach(node => {
+                        if(node.nodeType === state.callingFncName[index].parent)
+                          node.body.statements = [...new Set([...node.body.statements, ...newExpressionList])];
+                           })
+                    }
                     childNode.body.preStatements.forEach( node => {
                       if(isPartitioned){
                       if((internalFncbpType === callingFncbpType))

@@ -132,7 +132,7 @@ const internalCallVisitor = {
                          node.privateStates[ newstateName ] = node.privateStates[stateName];
                          delete(node.privateStates[ stateName ]);
                         }
-                       if(stateNode.privateStateName === oldStateName )
+                       if(stateNode.privateStateName === oldStateName)
                         stateNode.privateStateName = stateNode.privateStateName.replace(oldStateName,  state.newStateArray[index])
                        else
                         stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+state.newStateArray[index])
@@ -200,7 +200,7 @@ const internalCallVisitor = {
               }
             })
             node._newASTPointer.forEach(file => {
-             if(file.fileName === state.callingFncName[index]) {
+             if(file.fileName === state.callingFncName[index].name) {
                 file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
@@ -239,25 +239,46 @@ const internalCallVisitor = {
                      let dupNode;
                      let dupIndex;
                      let dupAssignNode;
+                     if(state.callingFncName[index].parent === 'FunctionDefinition'){
+                       childNode.body.statements.forEach((node, index)=> {
+                         if(node.nodeType === 'VariableDeclarationStatement'){
+                           state.newStatementList.some((statenode, id ) => {
+                             if(statenode.nodeType === 'VariableDeclarationStatement' && (node.declarations[0].name === statenode.declarations[0].name)){
+                               dupNode = statenode;
+                               dupIndex = index;
+                               dupAssignNode = state.newStatementList[id+1];
 
-                    childNode.body.statements.forEach((node, index)=> {
-                      if(node.nodeType === 'VariableDeclarationStatement'){
-                        state.newStatementList.some((statenode, id ) => {
-                          if(statenode.nodeType === 'VariableDeclarationStatement' && (node.declarations[0].name === statenode.declarations[0].name)){
-                            dupNode = statenode;
-                            dupIndex = index;
-                            dupAssignNode = state.newStatementList[id+1];
+                             }
+                           })
+                         }
+                       })
+                       if(dupNode){
+                         childNode.body.statements.splice(dupIndex+2, 0, dupNode.initialValue);
+                         childNode.body.statements.splice(dupIndex+3, 0, dupAssignNode);
+                       }
+                       else
+                       childNode.body.statements = [...new Set([...childNode.body.statements, ...state.newStatementList])]
+                     } else{
+                       state.newStatementList.forEach((statenode, stateid) => {
+                       childNode.body.statements.forEach((node, id)=> {
+                         if(node.nodeType === state.callingFncName[index].parent){
+                          if(statenode.nodeType === 'VariableDeclarationStatement'){
+                            childNode.body.statements[id-1] = statenode;
+                           node.body.statements.forEach(kidNode =>{
+                            if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
+                               kidNode.expression = Object.assign(kidNode.expression,statenode.initialValue);
+                               node.body.statements?.splice(node.body.statements.indexOf(kidNode)+1, 0, state.newStatementList[stateid+1]);
+                               }
+                     })
+                     childNode.body.statements[id-1].initialValue ={};
+                   }
+                 }
+                  })
 
-                          }
-                        })
-                      }
-                    })
-                    if(dupNode){
-                      childNode.body.statements.splice(dupIndex+2, 0, dupNode.initialValue);
-                      childNode.body.statements.splice(dupIndex+3, 0, dupAssignNode);
-                    }
-                    else
-                    childNode.body.statements = [...new Set([...childNode.body.statements, ...state.newStatementList])]
+            })
+
+                   }
+
                    childNode.body.postStatements.forEach(node => {
                      switch(node.nodeType) {
                        case 'CalculateNullifier' : {
@@ -312,27 +333,36 @@ const internalCallVisitor = {
                 })
               }
             })
+
             node._newASTPointer.forEach(file => {
-             if(file.fileName === state.callingFncName[index]) {
+             if(file.fileName === state.callingFncName[index].name) {
                file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
-                   childNode.body.statements.forEach(node => {
-                     if(node.nodeType === 'ExpressionStatement' && node.expression.name === state.internalFncName[index]) {
+                   if(state.callingFncName[index].parent === 'FunctionDefinition'){
+                     state.statementnode = childNode;
+                   } else{
+                     childNode.body.statements.forEach(kidNode => {
+                       if(kidNode.nodeType === state.callingFncName[index].parent)
+                         state.statementnode = kidNode;
+                   })
+                 }
+                   state.statementnode.body.statements.forEach(node => {
+                     if(node.nodeType === 'ExpressionStatement'&& node.expression.name === state.internalFncName[index]) {
                        state.newStatementList.forEach(list => {
                          if(list.nodeType === 'VariableDeclarationStatement')
                           node.expression = Object.assign(node.expression,list.initialValue);
                           if(list.nodeType === 'Assignment')
-                          childNode.body.statements?.splice(childNode.body.statements.indexOf(node)+1, 0, list);
+                          state.statementnode.body.statements?.splice(state.statementnode.body.statements.indexOf(node)+1, 0, list);
                         })
                       }
-                      if(node.nodeType === 'VariableDeclarationStatement' && childNode.body.statements.indexOf(node) != 0){
-                        childNode.body.statements.splice(0, 0, childNode.body.statements.splice(childNode.body.statements.indexOf(node)+1, 1)[0]);
-                        childNode.body.statements.splice(0, 0, childNode.body.statements.splice(childNode.body.statements.indexOf(node), 1)[0]);
-
+                      if(node.nodeType === 'VariableDeclarationStatement' && state.statementnode.body.statements.indexOf(node) != 0){
+                        state.statementnode.body.statements.splice(0, 0, state.statementnode.body.statements.splice(state.statementnode.body.statements.indexOf(node)+1, 1)[0]);
+                        state.statementnode.body.statements.splice(0, 0, state.statementnode.body.statements.splice(state.statementnode.body.statements.indexOf(node), 1)[0]);
                       }
                     });
                   }
                 })
+
               }
             })
           }
@@ -418,7 +448,7 @@ FunctionCall: {
     }
      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
      state.callingFncName ??= [];
-     state.callingFncName.push(fnDefNode.node.name);
+     state.callingFncName.push({name: fnDefNode.node.name, parent: path.parentPath.parentPath.parent.nodeType});
     }
   },
 },

@@ -5,9 +5,8 @@ name: test-on-pr
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
-  push:
-    branches: [ master ]
   pull_request:
+  push:
     branches: [ master ]
 
   # Allows you to run this workflow manually from the Actions tab
@@ -31,6 +30,12 @@ jobs:
           npm i npm@7
           tsc
           npm test
+
+      - name: compile shield contracts and circuits
+        run: |
+          npm i solc@^0.8.0 -g
+          chmod +x ./test/test-zapp-actions.sh
+          TERM=xterm bash ./test/test-zapp-actions.sh
 
   test-zapp:
     runs-on: ubuntu-latest
