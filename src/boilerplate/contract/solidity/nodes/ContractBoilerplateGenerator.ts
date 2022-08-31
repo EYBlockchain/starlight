@@ -71,11 +71,10 @@ class ContractBoilerplateGenerator {
       const { scope } = this;
       let isjoinCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(scope.bindings)){
-       if((binding instanceof VariableBinding) && binding.isPartitioned
-       && binding.isNullified
-       && !binding.isStruct)
+       if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct)
           isjoinCommitmentsFunction?.push('true');
       }
+
       const {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = scope;
@@ -85,6 +84,7 @@ class ContractBoilerplateGenerator {
       );
       let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
       if (isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments')
+
       return {
         functionNames,
         nullifiersRequired,
@@ -104,7 +104,7 @@ class ContractBoilerplateGenerator {
       } = this.scope;
       let isjoinCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(this.scope.bindings)){
-       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+       if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct )
           isjoinCommitmentsFunction?.push('true');
       }
       const returnpara = {};

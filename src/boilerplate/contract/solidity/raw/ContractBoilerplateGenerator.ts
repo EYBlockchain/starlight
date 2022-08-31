@@ -222,7 +222,6 @@ class ContractBoilerplateGenerator {
           []
         ),
       ];
-
       if (isjoinCommitmentsFunction?.includes('true')) {
 
        joinCommitmentsInputs.push(
