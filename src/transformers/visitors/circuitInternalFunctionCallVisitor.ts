@@ -106,8 +106,13 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
+
             node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index].name){
+                file.nodes.forEach(childNode => {
+                  if(childNode.nodeType === 'StructDefinition' && !state.isAddStructDefinition)
+                   file.nodes.splice(file.nodes.indexOf(childNode),1);
+                })
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
@@ -137,7 +142,6 @@ const internalCallVisitor = {
 
                    }
                  }
-
                  })
                }
 

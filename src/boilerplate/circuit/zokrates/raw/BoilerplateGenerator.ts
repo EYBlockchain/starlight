@@ -394,10 +394,13 @@ class BoilerplateGenerator {
     },
   };
   internalFunctionCall = {
-    importStatements( { name: x , circuitImport} ): string[] {
-      if(circuitImport){
+    importStatements( { name: x , circuitImport, structImport, structName: structName} ): string[] {
+      if(circuitImport && !structImport)
         return [`from "./${x}.zok" import main as ${x} `];
-       }
+      else if(circuitImport && structImport)
+        return [
+          `from "./${x}.zok" import main as ${x} `,
+          `from "./${x}.zok" import ${structName} as ${structName} `];
        return [];
     },
   };
