@@ -143,6 +143,7 @@ const internalCallVisitor = {
 
              })
            }
+
           else if(state.circuitImport[index] === 'false'){
             let newExpressionList = [];
             let isPartitioned = false
@@ -207,8 +208,8 @@ const internalCallVisitor = {
                         callingFncbpType = node.bpType;
                       }
                     })
-                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName === 'FunctionDefinition')
-                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
+                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition')
+                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])];
                     else{
                       childNode.body.statements.forEach(node => {
                         if(node.nodeType === state.callingFncName[index].parent)
