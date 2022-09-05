@@ -394,6 +394,7 @@ FunctionCall: {
        const callingfnDefIndicators = callingfnDefPath.scope.indicators;
        const functionReferncedNode = scope.getReferencedPath(node.expression);
        const internalfnDefIndicators = functionReferncedNode.scope.indicators;
+       callingfnDefIndicators.internalFunctionoldCommitmentAccessRequired = internalfnDefIndicators.oldCommitmentAccessRequired;
        const startNodePath = path.getAncestorOfType('ContractDefinition')
        startNodePath.node.nodes.forEach(node => {
          if(node.nodeType === 'VariableDeclaration'){
