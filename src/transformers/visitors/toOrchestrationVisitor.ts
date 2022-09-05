@@ -306,7 +306,8 @@ const visitor = {
           contractName,
           onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
         });
-        if (fnIndicator.oldCommitmentAccessRequired|| fnIndicator.parentIndicator.oldCommitmentAccessRequired)
+
+        if (fnIndicator.oldCommitmentAccessRequired || fnIndicator.internalFunctionoldCommitmentAccessRequired)
           newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
         newNodes.readPreimageNode = buildNode('ReadPreimage', {
           contractName,
@@ -1278,6 +1279,10 @@ const visitor = {
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
 
+     if(path.isInternalFunctionCall()) {
+      state.isInternalFunctionCall = true;
+      console.log('entered path');
+     }
 
     },
   },
