@@ -174,8 +174,7 @@ const visitor = {
         if(
           (indicator instanceof StateVariableIndicator)
           && indicator.isPartitioned
-          && indicator.isNullified
-          && !indicator.isStruct) {
+          && indicator.isNullified) {
             if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
               parent._newASTPointer.push(joinCommitmentsNode);
          }

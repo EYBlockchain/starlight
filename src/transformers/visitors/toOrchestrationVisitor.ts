@@ -340,7 +340,6 @@ const visitor = {
         if(
           (indicators instanceof StateVariableIndicator) &&
           indicators.isPartitioned &&
-          !indicators.isStruct &&
           indicators.isNullified ) {
            state.isjoinCommitmentsFunction ??= [];
            state.isjoinCommitmentsFunction?.push('true');

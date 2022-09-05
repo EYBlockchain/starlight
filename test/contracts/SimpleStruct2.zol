@@ -18,4 +18,9 @@ contract Receipt {
     unknown cmt.amount += myrct.amount;
     unknown cmt.tax += myrct.tax;
   }
+  function remove(secret Rct memory myrct) public {
+    total[msg.sender] -= myrct.amount + myrct.tax;
+    unknown cmt.amount -= myrct.amount;
+    unknown cmt.tax -= myrct.tax;
+  }
 }
