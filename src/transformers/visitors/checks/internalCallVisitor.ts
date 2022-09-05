@@ -29,7 +29,6 @@ export default {
                 throw new Error('Make sure that passed parameters have same decorators');
              }
          });
-
          const thisFunctionIndicator = path.scope.indicators;
          thisFunctionIndicator.internalFunctionInteractsWithSecret ??= functionReferencedPath.scope.indicators.interactsWithSecret;
          thisFunctionIndicator.internalFunctionModifiesSecretState ??= functionReferencedPath.scope.modifiesSecretState();

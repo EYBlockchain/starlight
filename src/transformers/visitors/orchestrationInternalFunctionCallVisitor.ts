@@ -385,7 +385,6 @@ FunctionCall: {
       }
       let internalFunctionInteractsWithSecret = false;
       const newState: any = {};
-      const newNodes: any = {};
       oldStateArray = internalFunctionCallVisitor(path, newState)
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
       state.internalFncName ??= [];
