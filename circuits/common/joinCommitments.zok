@@ -1,3 +1,6 @@
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
@@ -50,12 +53,26 @@ def main(\
         // oldCommitment_0 - PoKoSK:
         // The correctness of this secret key will be constrained within the oldCommitment existence check.
 
-        field oldCommitment_0_owner_publicKey_field = poseidon([oldCommitment_0_owner_secretKey_field])
+        field[2] oldCommitment_0_owner_publicKey_point = scalarMult(field_to_bool_256(oldCommitment_0_owner_secretKey_field), [curveParams().Gu, curveParams().Gv], curveParams())
+
+		bool oldCommitment_0_owner_publicKey_sign = edwardsCompress(oldCommitment_0_owner_publicKey_point)[0]
+
+		bool[254] yBits = field_to_bool_256(oldCommitment_0_owner_publicKey_point[1])[2..256]
+		yBits[0] = oldCommitment_0_owner_publicKey_sign
+
+		field oldCommitment_0_owner_publicKey_field = bool_256_to_field([false, false, ...yBits])
 
         // oldCommitment_1 - PoKoSK:
         // The correctness of this secret key will be constrained within the oldCommitment existence check.
 
-        field oldCommitment_1_owner_publicKey_field = poseidon([oldCommitment_1_owner_secretKey_field])
+        field[2] oldCommitment_1_owner_publicKey_point = scalarMult(field_to_bool_256(oldCommitment_1_owner_secretKey_field), [curveParams().Gu, curveParams().Gv], curveParams())
+
+		bool oldCommitment_1_owner_publicKey_sign = edwardsCompress(oldCommitment_1_owner_publicKey_point)[0]
+
+		yBits = field_to_bool_256(oldCommitment_1_owner_publicKey_point[1])[2..256]
+		yBits[0] = oldCommitment_0_owner_publicKey_sign
+
+		field oldCommitment_1_owner_publicKey_field = bool_256_to_field([false, false, ...yBits])
 
         // Nullify oldCommitment_0:
 

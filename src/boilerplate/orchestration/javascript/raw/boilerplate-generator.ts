@@ -74,7 +74,7 @@ class BoilerplateGenerator {
       return [
         `
         \n\n// Read dbs for keys and previous commitment values:
-        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(32), '${contractName}', ${onChainKeyRegistry});
+        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry});
         const keys = JSON.parse(
                     fs.readFileSync(keyDb, 'utf-8', err => {
                       console.log(err);
@@ -288,7 +288,7 @@ class BoilerplateGenerator {
       switch (stateType) {
         case 'increment':
           return [`
-          \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
+          \nconst ${stateName}_newSalt = generalise(utils.randomHex(31));
           \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_newCommitmentValue.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_newCommitmentValue.hex(32))`}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
           \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];
         case 'decrement':
@@ -299,7 +299,7 @@ class BoilerplateGenerator {
             `parseInt(${stateName}_0_prev.integer, 10) + parseInt(${stateName}_1_prev.integer, 10) - parseInt(${stateName}_newCommitmentValue.integer, 10);
             \n${stateName}_change = generalise(${stateName}_change);`;
           return [`
-            \nconst ${stateName}_2_newSalt = generalise(utils.randomHex(32));
+            \nconst ${stateName}_2_newSalt = generalise(utils.randomHex(31));
             \nlet ${stateName}_change = ${change}
             \nlet ${stateName}_2_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_change.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_change.hex(32))`}, BigInt(publicKey.hex(32)), BigInt(${stateName}_2_newSalt.hex(32))],);
             \n${stateName}_2_newCommitment = generalise(${stateName}_2_newCommitment.hex(32)); // truncate`];
@@ -307,7 +307,7 @@ class BoilerplateGenerator {
           const value = structProperties ? structProperties.map(p => `BigInt(${stateName}.${p}.hex(32))`) :` BigInt(${stateName}.hex(32))`;
           return [`
             \n ${structProperties ? structProperties.map(p => `\n${stateName}.${p} = ${stateName}.${p} ? ${stateName}.${p} : ${stateName}_prev.${p};`).join('') : ''}
-            \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
+            \nconst ${stateName}_newSalt = generalise(utils.randomHex(31));
             \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${value}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
             \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];
         default:
@@ -362,8 +362,8 @@ class BoilerplateGenerator {
           prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \tsecretKey.limbs(32, 8),
-              \tsecretKey.limbs(32, 8),
+              \tsecretKey.integer,
+              \tsecretKey.integer,
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_1_nullifier.integer,
               ${prev(0)},
@@ -392,7 +392,7 @@ class BoilerplateGenerator {
                 case true:
                   return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \tsecretKey.limbs(32, 8),
+                      \tsecretKey.integer,
                       \t${stateName}_nullifier.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
@@ -405,7 +405,7 @@ class BoilerplateGenerator {
                     case true:
                       return [`
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
-                          \tsecretKey.limbs(32, 8),
+                          \tsecretKey.integer,
                           \t${stateName}_nullifier.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
@@ -415,7 +415,7 @@ class BoilerplateGenerator {
                     default:
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
+                      \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
                       \t${stateName}_nullifier.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,

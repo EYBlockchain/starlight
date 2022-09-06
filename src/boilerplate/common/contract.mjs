@@ -1,15 +1,15 @@
 import fs from 'fs';
 import config from 'config';
-import GN from 'general-number';
+import pkg from 'general-number';
 import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 import { generateProof } from './zokrates.mjs';
 import poseidonHash from './poseidon.mjs';
-
+import { scalarMult, compressStarlightKey } from './number-theory.mjs';
 
 const web3 = Web3.connection();
-const { generalise } = GN;
+const { generalise, GN } = pkg;
 const db = '/app/orchestration/common/db/preimage.json';
 const keyDb = '/app/orchestration/common/db/key.json';
 
@@ -112,9 +112,19 @@ export async function registerKey(
   contractName,
   registerWithContract,
 ) {
-  const secretKey = generalise(_secretKey);
-  const BN128_GROUP_ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-  const publicKey = generalise(BigInt(utils.shaHash(secretKey.hex(32))) % BN128_GROUP_ORDER);
+  let secretKey = generalise(_secretKey);
+  let publicKeyPoint = generalise(
+    scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
+  );
+  let publicKey = compressStarlightKey(publicKeyPoint);
+  while (publicKey === null) {
+    logger.warn(`your secret key created a large public key - resetting`);
+    secretKey = generalise(utils.randomHex(31));
+    publicKeyPoint = generalise(
+      scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
+    );
+    publicKey = compressStarlightKey(publicKeyPoint);
+  }
   if (registerWithContract) {
     const instance = await getContractInstance(contractName);
     await instance.methods.registerZKPPublicKey(publicKey.integer).send({

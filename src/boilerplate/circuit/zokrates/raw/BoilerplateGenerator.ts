@@ -16,14 +16,16 @@ class BoilerplateGenerator {
   PoKoSK = {
     importStatements(): string[] {
       return [
-      `from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded`,
-      `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-      `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
-    ];
+      `from "ecc/babyjubjubParams" import main as curveParams`,
+      `from "ecc/edwardsScalarMult" import main as scalarMult`,
+      `from "ecc/edwardsCompress" import main as edwardsCompress`,
+      `from "utils/pack/bool/pack256.zok" import main as bool_256_to_field`,
+      `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
+      ];
     },
 
     parameters({ name: x }): string[] {
-      return [`private u32[8] ${x}_oldCommitment_owner_secretKey`];
+      return [`private field ${x}_oldCommitment_owner_secretKey`];
     },
 
     postStatements({ name: x }): string[] {
@@ -33,7 +35,14 @@ class BoilerplateGenerator {
         // ${x}_oldCommitment - PoKoSK:
         // The correctness of this secret key will be constrained within the oldCommitment existence check.
 
-        u32[8] ${x}_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(${x}_oldCommitment_owner_secretKey))`,
+        field[2] ${x}_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(${x}_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool ${x}_oldCommitment_owner_publicKey_sign = edwardsCompress(${x}_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] ${x}_yBits = field_to_bool_256(${x}_oldCommitment_owner_publicKey_point[1])[2..256]
+        ${x}_yBits[0] = ${x}_oldCommitment_owner_publicKey_sign
+
+        field ${x}_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_yBits])`,
       ];
     },
   };
@@ -42,15 +51,13 @@ class BoilerplateGenerator {
     importStatements(): string[] {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
-        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
-        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
       ];
     },
 
     parameters({ name: x }): string[] {
       return [
-        `private u32[8] ${x}_oldCommitment_owner_secretKey`,
+        `private field ${x}_oldCommitment_owner_secretKey`,
         `public field ${x}_oldCommitment_nullifier`,
       ];
     },
@@ -71,12 +78,10 @@ class BoilerplateGenerator {
         `
         // Nullify ${x}:
 
-        field ${x}_oldCommitment_owner_secretKey_field =u32_array_to_field(${x}_oldCommitment_owner_secretKey)
-
         field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
           ${x}_stateVarId_field,\\
-          ${x}_oldCommitment_owner_secretKey_field,\\
-          ${x}_oldCommitment_salt_field\\
+          ${x}_oldCommitment_owner_secretKey,\\
+          ${x}_oldCommitment_salt\\
         ])
 
         assert(\\
@@ -89,9 +94,9 @@ class BoilerplateGenerator {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [
           `
-          ${x}_oldCommitment_owner_secretKey = if ${x}_oldCommitment_isDummy then [0x00000000; 8] else ${x}_oldCommitment_owner_secretKey fi
+          ${x}_oldCommitment_owner_secretKey = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_owner_secretKey fi
 
-          ${x}_oldCommitment_salt = if ${x}_oldCommitment_isDummy then [0x00000000; 8] else ${x}_oldCommitment_salt fi`,
+          ${x}_oldCommitment_salt = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_salt fi`,
         ];
         newLines.concat(lines);
       }
@@ -104,7 +109,6 @@ class BoilerplateGenerator {
     importStatements(): string[] {
       return [
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
-        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
 
@@ -112,7 +116,7 @@ class BoilerplateGenerator {
       // prettier-ignore
       return [
         `private  ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
-        `private field ${x}_oldCommitment_salt_field`,
+        `private field ${x}_oldCommitment_salt`,
       ];
     },
 
@@ -130,27 +134,23 @@ class BoilerplateGenerator {
           `
           // ${x}_oldCommitment_commitment: preimage check
 
-          field ${x}_oldCommitment_owner_publicKey_field =u32_array_to_field(${x}_oldCommitment_owner_publicKey)
-
           field ${x}_oldCommitment_commitment_field = poseidon([\\
             ${x}_stateVarId_field,\\
             ${structProperties.map(p => `\t ${x}_oldCommitment_value.${p},\\`).join('\n')}
-            ${x}_oldCommitment_owner_publicKey_field,\\
-            ${x}_oldCommitment_salt_field\\
+            ${x}_oldCommitment_owner_publicKey,\\
+            ${x}_oldCommitment_salt\\
           ])`,
         ];
       return [
         `
         // ${x}_oldCommitment_commitment: preimage check
 
-        field ${x}_oldCommitment_owner_publicKey_field =u32_array_to_field(${x}_oldCommitment_owner_publicKey)
-
 
         field ${x}_oldCommitment_commitment_field = poseidon([\\
           ${x}_stateVarId_field,\\
           ${x}_oldCommitment_value,\\
-          ${x}_oldCommitment_owner_publicKey_field,\\
-          ${x}_oldCommitment_salt_field\\
+          ${x}_oldCommitment_owner_publicKey,\\
+          ${x}_oldCommitment_salt\
         ])`,
       ];
     },
@@ -160,8 +160,6 @@ class BoilerplateGenerator {
     importStatements(): string[] {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
-        `from "utils/pack/bool/pack256.zok" import main as bool_256_to_field`,
-        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot`,
       ];
     },
@@ -215,16 +213,14 @@ class BoilerplateGenerator {
     importStatements(): string[] {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
-        `from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
-        `from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field`,
       ];
     },
 
     parameters({ name: x }): string[] {
       return [
-        `private field ${x}_newCommitment_owner_publicKey_field`,
-        `private field ${x}_newCommitment_salt_field`,
+        `private field ${x}_newCommitment_owner_publicKey`,
+        `private field ${x}_newCommitment_salt`,
         `public field ${x}_newCommitment_commitment`,
       ];
     },
@@ -281,8 +277,8 @@ class BoilerplateGenerator {
           field ${x}_newCommitment_commitment_check_field = poseidon([\\
             ${x}_stateVarId_field,\\
             ${structProperties.map(p => `\t ${x}_newCommitment_value.${p},\\`).join('\n')}
-            ${x}_newCommitment_owner_publicKey_field,\\
-            ${x}_newCommitment_salt_field\\
+            ${x}_newCommitment_owner_publicKey,\\
+            ${x}_newCommitment_salt\\
           ])
 
           assert(\\
@@ -301,8 +297,8 @@ class BoilerplateGenerator {
         field ${x}_newCommitment_commitment_check_field = poseidon([\\
           ${x}_stateVarId_field,\\
           ${x}_newCommitment_value_field,\\
-          ${x}_newCommitment_owner_publicKey_field,\\
-          ${x}_newCommitment_salt_field\\
+          ${x}_newCommitment_owner_publicKey,\\
+          ${x}_newCommitment_salt\\
         ])
 
         assert(\\
