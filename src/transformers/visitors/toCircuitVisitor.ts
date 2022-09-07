@@ -646,11 +646,11 @@ let interactsWithSecret = false ;
         interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
 
         // check for internal function call if the parameter passed in the function call interacts with secret or not
-        if(refPath.parentPath.node.kind === 'functionCall' && refPath.parentPath.node.expression.name != 'eventFunction'){
+        if(refPath.parentPath.isInternalFunctionCall()){
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
              let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
-             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
+             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key]?.interactsWithSecret
             }
           })
         }
