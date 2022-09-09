@@ -14,6 +14,7 @@ export class ContractDefinitionIndicator {
   oldCommitmentAccessRequired: boolean;
   nullifiersRequired: boolean;
   newCommitmentsRequired: boolean;
+  encryptionRequired?: boolean;
   initialisationRequired?: boolean;
   containsAccessedOnlyState?: boolean;
   constructor() {
@@ -733,6 +734,21 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
     }
+  }
+
+  updateEncryption() {
+    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned) return;
+    if (this.isMapping) {
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
+        mappingKey.updateEncryption()
+      }
+      return;
+    }
+    if (this.isNullified) return;
+    this.encryptionRequired = true;
+    this.parentIndicator.encryptionRequired = true;
+    this.parentIndicator.parentIndicator.encryptionRequired = true;
   }
 
   updateNewCommitmentsRequired() {

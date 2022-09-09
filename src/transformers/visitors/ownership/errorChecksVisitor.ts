@@ -89,6 +89,7 @@ export default {
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();
+        indicator.updateEncryption();
         if (indicator.isStruct) {
           let found = { whole: false, partitioned: false };
           for (const [, structProperty] of Object.entries(indicator.structProperties)) {

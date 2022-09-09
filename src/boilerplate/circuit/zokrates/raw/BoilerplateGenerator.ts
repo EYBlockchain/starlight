@@ -309,6 +309,69 @@ class BoilerplateGenerator {
     },
   };
 
+  encryption = {
+    importStatements(): string[] {
+      return [
+        `from "ecc/babyjubjubParams" import BabyJubJubParams`,
+        `from "ecc/babyjubjubParams" import main as curveParams`,
+        `from "ecc/edwardsScalarMult" import main as scalarMult`,
+        `from "ecc/edwardsCompress" import main as edwardsCompress`,
+        `from "utils/pack/bool/pack256.zok" import main as bool_256_to_field`,
+        `from "utils/casts/u32_to_field" import main as u32_to_field`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/encryption/kem-dem.zok" import main as enc`,
+        `from "./common/encryption/kem-dem.zok" import EncryptedMsgs as EncryptedMsgs`,
+      ];
+    },
+
+    parameters({ name: x }): string[] {
+      return [
+        `private field ${x}_newCommitment_ephSecretKey`,
+        `private field[2] ${x}_newCommitment_owner_publicKey_point`,
+      ];
+    },
+
+    preStatements({ name: x }): string[] {
+      return [
+        `
+        // calculate ${x}_newCommitment_owner_publicKey from its point
+        bool ${x}_newCommitment_owner_publicKey_sign = edwardsCompress(${x}_newCommitment_owner_publicKey_point)[0]
+
+        bool[254] ${x}_yBits = field_to_bool_256(${x}_newCommitment_owner_publicKey_point[1])[2..256]
+        ${x}_yBits[0] = ${x}_newCommitment_owner_publicKey_sign
+
+        field ${x}_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_yBits])`,
+      ];
+    },
+
+    postStatements({ name: x, structProperties}): string[] {
+      return [
+        `
+        // ${x}_newCommitment encryption for owner
+
+        ${structProperties ?
+          `EncryptedMsgs<${structProperties.length + 2}> ${x}_cipherText = enc(\\
+            field_to_bool_256(${x}_newCommitment_ephSecretKey),\\
+            ${x}_newCommitment_owner_publicKey_point,\\
+            [\\
+              ${x}_stateVarId_field,\\
+              ${structProperties.map(p => `\t ${x}_newCommitment_value.${p},\\`).join('\n')}
+              ${x}_newCommitment_salt\\
+            ])`
+          :
+          `EncryptedMsgs<3> ${x}_cipherText = enc(\\
+            field_to_bool_256(${x}_newCommitment_ephSecretKey),\\
+            ${x}_newCommitment_owner_publicKey_point,\\
+            [\\
+              ${x}_stateVarId_field,\\
+              ${x}_newCommitment_value_field,\\
+              ${x}_newCommitment_salt\\
+            ])`
+        }`,
+      ];
+    },
+  };
+
   mapping = {
     importStatements(): string[] {
       return [

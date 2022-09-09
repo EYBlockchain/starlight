@@ -282,6 +282,31 @@ function compressStarlightKey(publicKeyPoint) {
   return publicKey;
 }
 
+/**
+Decrypt messages encrypted with KEM-DEM
+@param {string[]} encryptedMessages - hex string[]
+@param {string} secretKey - hex string
+@param {string[2]} encPublicKey - hex string[]
+@return {string[]} plainText - int string[]
+*/
+function decrypt(encryptedMessages, secretKey, encPublicKey) {
+  const plainText = [];
+  const sharedSecret = scalarMult(secretKey, [
+    BigInt(encPublicKey[0]),
+    BigInt(encPublicKey[1]),
+  ]);
+  const key = poseidonHash([
+    sharedSecret[0],
+    sharedSecret[1],
+    BigInt(DOMAIN_KEM),
+  ]);
+  encryptedMessages.forEach((msg, index) => {
+    const hash = poseidonHash([key.bigInt, BigInt(DOMAIN_DEM), BigInt(index)]);
+    plainText[index] = addMod([BigInt(msg), -hash.bigInt], Fp);
+  });
+  return plainText;
+}
+
 // These exports are not unused, but find-unused-exports linter will complain because they are not used
 // within the common-files folder, hence the special disable line below.
 /* ignore unused exports */
@@ -293,4 +318,5 @@ export {
   scalarMult,
   compressStarlightKey,
   decompressStarlightKey,
+  decrypt,
 };

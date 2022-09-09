@@ -74,10 +74,10 @@ class FunctionBoilerplateGenerator {
       const { indicators } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
 
-      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState } = indicators;
+      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState, encryptionRequired } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState, isConstructor };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
     },
 
     parameters() {
@@ -110,7 +110,7 @@ class FunctionBoilerplateGenerator {
       // special check for msgSender param. If found, prepend a msgSender address param to the contact's function.
       if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address', dummy: true });
 
-      if(path.node.returnParameters.parameters.length === 0) {
+      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
       }
 

@@ -328,7 +328,8 @@ class BoilerplateGenerator {
         `\nimport { getContractInstance, registerKey, getInputCommitments, joinCommitments } from './common/contract.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport poseidonHash from './common/poseidon.mjs';`,
-        `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';
+        `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
+        `\nimport { decompressStarlightKey } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
@@ -345,6 +346,7 @@ class BoilerplateGenerator {
       burnedOnly,
       accessedOnly,
       initialisationRequired,
+      encryptionRequired,
       rootRequired,
       parameters,
     }): string[] {
@@ -355,9 +357,14 @@ class BoilerplateGenerator {
         case 'increment':
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \t${stateName}_newOwnerPublicKey.integer,
+              ${encryptionRequired ? `` : `\t${stateName}_newOwnerPublicKey.integer,`}
               \t${stateName}_newSalt.integer,
-              \t${stateName}_newCommitment.integer`];
+              \t${stateName}_newCommitment.integer
+              ${encryptionRequired ? `,
+                \tgeneralise(utils.randomHex(31)).integer,
+                \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
+              decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}
+            `];
         case 'decrement':
           prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
