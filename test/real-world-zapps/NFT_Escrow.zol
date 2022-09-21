@@ -15,7 +15,7 @@ contract NFT_Escrow {
        erc721 = IERC721(_erc721);
     }
 
-    function deposit(uint tokenId) public {
+    function deposit(uint256 tokenId) public {
         bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
         require(success == true);
         reinitialisable tokenOwners[tokenId] = msg.sender;

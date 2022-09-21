@@ -1,7 +1,9 @@
 import NodePath from './NodePath.js';
 import { Binding } from './Binding.js';
+import { StateVariableIndicator } from './Indicator.js';
 import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError } from '../error/errors.js';
+import backtrace from '../error/backtrace.js';
 
 /**
  * If a Binding/StateVarIndicator represents a mapping, it will contain a MappingKey class.
@@ -46,8 +48,11 @@ export default class MappingKey {
   newCommitmentsRequired: boolean;
 
   isMapping: boolean;
-  mappingKeys?: any;
   isStruct: boolean;
+
+  isParent?: boolean;
+  isChild?: boolean;
+  structProperties?: {[key: string]: any};
 
   isKnown?:boolean;
   isUnknown?:boolean;
@@ -68,31 +73,52 @@ export default class MappingKey {
   onChainKeyRegistry?: boolean;
   owner: any = null; // object of objects, indexed by node id.
 
-  constructor(container: any, keyPath: NodePath) {
+  returnKeyName(keyNode: any) {
+    if (this.keyPath.isMsg(keyNode)) return 'msg';
+    switch (keyNode.nodeType) {
+      case 'VariableDeclaration':
+      case 'Identifier':
+        return keyNode.name;
+      case 'MemberAccess':
+        return `${this.returnKeyName(keyNode.expression)}.${keyNode.memberName}`;
+      case 'IndexAccess':
+        return `${this.returnKeyName(keyNode.baseExpression)}[${this.keyPath.scope.getMappingKeyName(keyNode)}]`;
+      case 'Literal':
+        return keyNode.value;
+      default:
+        return ``;
+    }
+  }
+
+  constructor(container: any, keyPath: NodePath, isStructProperty = false) {
     this.container = container;
     this.id = container.id;
     this.node = container.node;
 
-    // TODO: distinguish between if the key is a reference and if the key is not a reference - the prefix 'referenced' is misleading below:
+    this.keyPath = keyPath;
+
     this.referencedKeyId = keyPath.node.referencedDeclaration;
-    this.referencedKeyName = keyPath.isMsg()
-      ? 'msg'
-      : keyPath.isStruct ? keyPath.node.memberName : keyPath.getReferencedNode().name;
+    this.referencedKeyName = isStructProperty ? keyPath.node.memberName : this.returnKeyName(keyPath.node);
+
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
-      : keyPath.getReferencedNode().nodeType;
+      : keyPath.getReferencedNode()?.nodeType;
     this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
-    this.keyPath = keyPath;
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
 
     this.isMapping = container.isMapping;
-    this.isStruct = keyPath.isStruct();
+    this.isStruct = container.isStruct; // keyPath.isStruct();
 
-    if (this.isMapping) {
+    if (this.isStruct && this.container.isParent) {
+      // must be a mapping of a struct
+      // we do not currently allow struct of mapping types
+      this.name = `${container.name}.${keyPath.node.memberName}`;
+
+    } else if (this.isMapping) {
       this.name = this.isMsgSender
         ? `${container.name}[msg.sender]`
-        : `${container.name}[${keyPath.node.name}]`;
+        : `${container.name}[${this.referencedKeyName}]`;
     } else if (this.isStruct) {
       this.name = `${container.name}.${keyPath.node.memberName}`;
     }
@@ -110,14 +136,30 @@ export default class MappingKey {
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
   }
 
+  addStructProperty(referencingPath: NodePath): MappingKey {
+    this.isParent = true;
+    this.isStruct = true;
+    this.structProperties ??= {};
+    const memberAccPath = referencingPath.findAncestor(p => p.node.nodeType === 'MemberAccess' && !p.isMsgSender());
+    if (!(this.structProperties[memberAccPath.node.memberName] instanceof MappingKey))
+      this.structProperties[memberAccPath.node.memberName] = new MappingKey(this, memberAccPath, true);
+    this.structProperties[memberAccPath.node.memberName].isChild = true;
+    return this.structProperties[memberAccPath.node.memberName];
+  }
+
   updateProperties(path: NodePath) {
+    if (this.isMapping && this.node.typeDescriptions.typeString.includes('struct ') && !this.isChild && path.getAncestorOfType('MemberAccess')) {
+
+      // in mapping[key].property, the node for .property is actually a parent value, so we need to make sure this isnt already a child of a mappingKey
+      this.addStructProperty(path).updateProperties(path);
+    }
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
     this.isKnown ??= path.node.isKnown;
     this.reinitialisable ??= path.node.reinitialisable;
     if (path.isModification()) this.addModifyingPath(path);
 
-    this.container.updateProperties(path);
+    if (!(this.container instanceof MappingKey)) this.container.updateProperties(path);
   }
 
   updateOwnership(ownerNode: any) {
@@ -217,7 +259,6 @@ export default class MappingKey {
   prelimTraversalErrorChecks() {
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
-      console.log('err 2');
       throw new SyntaxUsageError(
         `Can't mark a whole state as 'unknown'`,
         this.node,
@@ -232,6 +273,21 @@ export default class MappingKey {
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
     }
+
+    if (this.isStruct && this.structProperties) {
+     const structProperties = Object.entries(this.structProperties);
+     const ogStructProperties = this.referencingPaths[0].getStructDeclaration(this.node).members.map(n => n.name);
+     for (const name of ogStructProperties) {
+       // we may have empty struct properties if they are never edited
+       if (this.structProperties[name] instanceof MappingKey) {
+        this.structProperties[name].prelimTraversalErrorChecks();
+       } else {
+         logger.warn(
+            `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.keyPath.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
+          );
+       }
+     }
+   }
   }
 
   isNullifiable() {
