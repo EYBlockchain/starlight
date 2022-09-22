@@ -35,6 +35,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the t
 
 **Output zApps use the proof system Groth16 which is known to have [vulnerabilities](https://zokrates.github.io/toolbox/proving_schemes.html#g16-malleability). Check if you can protect against them, or are protected by the zApps logic.**
 
+**In the same way that Solidity does not protect against contract vulnerabilities, Starlight cannot protect against zApp vulnerabilities once they are written into the code. This compiler assumes knowledge of smart contract security.**
+
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->

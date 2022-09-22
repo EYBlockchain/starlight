@@ -29,7 +29,7 @@ export class Binding {
       case 'FunctionDefinition':
       case 'VariableDeclaration':
         return true;
-      case 'IfStatement':  
+      case 'IfStatement':
       case 'ForStatement':
       case 'ArrayTypeName':
       case 'Assignment':
@@ -205,35 +205,7 @@ export class VariableBinding extends Binding {
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
   getMappingKeyName(path: NodePath): string {
-    const { node } = path;
-    if (node.nodeType !== 'IndexAccess')
-      return this.getMappingKeyName(path.getAncestorOfType('IndexAccess'));
-    const keyIdentifierNode = path.getMappingKeyIdentifier();
-    if (!keyIdentifierNode)
-      return node.indexExpression.name || node.indexExpression.value;
-    const keyBinding = path.isMsg(keyIdentifierNode)
-      ? null
-      : Binding.getBinding(path.getReferencedNode(keyIdentifierNode));
-    let keyName = keyIdentifierNode.name;
-
-    // If the value of the mapping key is edited between mapping accesses then the below copes with that.
-    // NB: we can't use the modification count because this may refer to a mappingKey before its modified for the nth time
-    if (keyBinding?.isModified) {
-      let i = 0;
-      // Consider each time the variable (which becomes the mapping's key) is edited throughout the scope:
-      for (const modifyingPath of keyBinding.modifyingPaths) {
-        // we have found the 'current' state (relative to the input node), so we don't need to move any further
-        if (node.id < modifyingPath.node.id && i === 0) break;
-        i++;
-        if (
-          modifyingPath.node.id < node.id && // a modification to the variable _before_ it was used as the mapping's key
-          node.id < keyBinding.modifyingPaths[i]?.node.id
-        )
-          break;
-      }
-      if (i > 0) keyName = `${keyIdentifierNode.name}_${i}`;
-    }
-    return keyName;
+    return path.scope.getMappingKeyName(path);
   }
 
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
@@ -243,12 +215,12 @@ export class VariableBinding extends Binding {
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
-    if (keyNode.nodeType !== 'Identifier') {
-      throw new TODOError(
-        `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
-        keyNode,
-      );
-    }
+    // if (keyNode.nodeType !== 'Identifier') {
+    //   throw new TODOError(
+    //     `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
+    //     keyNode,
+    //   );
+    // }
 
     // naming of the key within mappingKeys:
     const keyName = this.getMappingKeyName(referencingPath);
@@ -262,11 +234,15 @@ export class VariableBinding extends Binding {
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
+    // we DONT want to add a struct property if we have a mapping of a struct
+    // the mappingKey deals with that
+    if (this.isMapping && this.addMappingKey(referencingPath).structProperties) return this.addMappingKey(referencingPath).addStructProperty(referencingPath);
+
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!this.structProperties[keyNode.memberName])
-      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath, true);
 
     return this.structProperties[keyNode.memberName];
   }
@@ -276,7 +252,7 @@ export class VariableBinding extends Binding {
   update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
-    } else if (this.isStruct) {
+    } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
     } else {
       this.updateProperties(path);
@@ -389,7 +365,7 @@ export class VariableBinding extends Binding {
       this.addMappingKey(path).accessedPaths.push(path);
     }
 
-    if (this.isStruct) {
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).isAccessed = true;
       this.addStructProperty(path).accessedPaths ??= [];
       this.addStructProperty(path).accessedPaths.push(path);
@@ -408,7 +384,8 @@ export class VariableBinding extends Binding {
     } else if (
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
-        state.incrementedIdentifier.baseExpression?.isUnknown)
+        state.incrementedIdentifier.baseExpression?.isUnknown ||
+        state.incrementedIdentifier.expression?.baseExpression?.isUnknown )
     ) {
       this.isPartitioned = true;
       const reason = {
@@ -433,7 +410,7 @@ export class VariableBinding extends Binding {
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
-    if (this.isStruct) this.addStructProperty(path).addNullifyingPath(path);
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).addNullifyingPath(path);
   }
 
   prelimTraversalErrorChecks() {
@@ -465,7 +442,6 @@ export class VariableBinding extends Binding {
     }
     // error: conflicting unknown/whole state
     if (this.isUnknown && this.isWhole) {
-      console.log('err 1');
       throw new SyntaxUsageError(
         `Can't mark a whole state as 'unknown'`,
         this.node,
@@ -510,7 +486,7 @@ export class VariableBinding extends Binding {
       }
       // we reach here, there's no msg sender/param keys, so we must check each one
       for (const [, mappingKey] of mappingKeys) {
-        if (!mappingKey.isNullifiable() && this.isWhole)
+        if (!mappingKey.isNullifiable() && !mappingKey.isAccessed && this.isWhole)
           throw new ZKPError(
             `All whole states must be nullifiable, otherwise they are useless after initialisation! Consider making ${this.name} editable or constant.`,
             this.node,

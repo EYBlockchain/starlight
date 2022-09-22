@@ -19,12 +19,18 @@ const stateVariableIds = (node: any) => {
     );
     // ... and the mapping key is not msg.sender, but is a parameter
     if (
-      privateStateName.includes(stateNode.stateVarId[1]) &&
+      privateStateName.includes(stateNode.stateVarId[1].replaceAll('.', 'dot')) &&
       stateNode.stateVarId[1] !== 'msg'
     ) {
-      stateVarIds.push(
-        `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
-      );
+      if (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0') {
+        stateVarIds.push(
+          `\nconst ${privateStateName}_stateVarId_key = generalise(${stateNode.stateVarId[1]});`,
+        );
+      } else {
+        stateVarIds.push(
+          `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
+        );
+      }
     }
     // ... and the mapping key is msg, and the caller of the fn has the msg key
     if (
@@ -83,7 +89,8 @@ export const sendTransactionBoilerplate = (node: any) => {
       case false:
       default:
         // whole
-        output[1].push(`${privateStateName}_root.integer`);
+        if (!stateNode.reinitialisedOnly)
+          output[1].push(`${privateStateName}_root.integer`);
         if (stateNode.accessedOnly) {
           output[3].push(`${privateStateName}_nullifier.integer`);
         } else {
@@ -109,10 +116,12 @@ export const generateProofBoilerplate = (node: any) => {
   for ([stateName, stateNode] of Object.entries(node.privateStates)) {
     const parameters = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
-    const msgSenderParamAndMappingKey = stateNode.isMapping && node.parameters.includes('msgSender') && stateNode.stateVarId[1] === 'msg';
-    const msgValueParamAndMappingKey = stateNode.isMapping && node.parameters.includes('msgValue') && stateNode.stateVarId[1] === 'msg';
+    const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
+    const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
+
+    const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
     const stateVarIdLines =
-      stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey
+      stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];
     // we add any extra params the circuit needs
@@ -122,7 +131,7 @@ export const generateProofBoilerplate = (node: any) => {
           !privateStateNames.includes(para) && (
           !output.join().includes(`${para}.integer`) && !output.join().includes('msgValue')),
       )
-      .forEach((param: string) => {
+      ?.forEach((param: string) => {
         if (param == 'msgSender') {
           parameters.unshift(`\t${param}.integer,`);
         } 
@@ -282,7 +291,7 @@ export const preimageBoilerPlate = (node: any) => {
         // we have to let the user submit the key and check it in the contract
         if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(await instance.methods.${newOwner}().call()).call()) : ${privateStateName}_newOwnerPublicKey;`;
-        } else if (stateNode.ownerIsParam) {
+        } else if (stateNode.ownerIsParam && newOwner) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         } else {
           // is secret - we just use the users to avoid revealing the secret owner
@@ -455,8 +464,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             mappingKey = ``;
             break;
           default:
-            // any other => a param or accessed var
-            mappingKey = `[${stateNode.mappingKey}.integer]`;
+            if (+stateNode.mappingKey || stateNode.mappingKey === '0') {
+              // we have a constant number
+              mappingKey = `[${stateNode.mappingKey}]`;
+            } else {
+              // any other => a param or accessed var
+              mappingKey = `[${stateNode.mappingKey}.integer]`;
+            }
         }
         lines.push(
           Orchestrationbp.initialisePreimage.preStatements( {
@@ -486,14 +500,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'ReadPreimage':
       lines[0] = preimageBoilerPlate(node);
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.accessedOnly) {
-          // if the state is only accessed, we need to initalise it here before statements
-          params.push(
-            `\nconst ${stateName} = generalise(${stateName}_preimage.${stateName});`,
-          );
-        }
-      }
       return {
         statements: [`${params.join('\n')}`, lines[0].join('\n')],
       };

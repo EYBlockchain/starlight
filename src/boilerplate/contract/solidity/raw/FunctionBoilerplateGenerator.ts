@@ -66,7 +66,7 @@ class FunctionBoilerplateGenerator {
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),
       `uint256[]`,
-      ]
+    ];
 
       customInputs?.forEach((input, i) => {
         if (input.structName) customInputs[i] = input.properties;
