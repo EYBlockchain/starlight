@@ -176,6 +176,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
 
+    case 'MsgValue':
+        return `msgValue`;
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 

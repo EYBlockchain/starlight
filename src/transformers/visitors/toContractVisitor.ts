@@ -739,6 +739,10 @@ EmitStatement: {
         newNode = buildNode('MsgSender');
         // node._newASTPointer = // no pointer needed in this case, because this is effectively leaf, so we won't be recursing any further.
         state.skipSubNodes = true;
+      } else if (path.isMsgValue()) {
+        newNode = buildNode('MsgValue');
+        // node._newASTPointer = // no pointer needed in this case, because this is effectively leaf, so we won't be recursing any further.
+        state.skipSubNodes = true;
       } else {
         newNode = buildNode('MemberAccess', { memberName: node.memberName });
         node._newASTPointer = newNode;

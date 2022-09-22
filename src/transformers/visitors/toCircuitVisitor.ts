@@ -208,11 +208,20 @@ const visitor = {
       if (indicators.msgSenderParam) {
         node._newASTPointer.parameters.parameters.unshift(
           buildNode('VariableDeclaration', {
-            name: 'msg',
+            name: 'msgSender',
             declarationType: 'parameter',
             type: 'field',
           }),
         ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
+      }
+      if (indicators.msgValueParam) {
+        node._newASTPointer.parameters.parameters.unshift(
+          buildNode('VariableDeclaration', {
+            name: 'msgValue',
+            declarationType: 'parameter',
+            type: 'field',
+          }),
+        ); // insert a msgValue parameter, because we've found msg.value in the body of this function.
       }
     },
   },
@@ -763,6 +772,9 @@ let interactsWithSecret = false ;
 
       if (path.isMsgSender()) {
         newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+      } else if (path.isMsgValue()) {
+        newNode = buildNode('MsgValue');
         state.skipSubNodes = true;
       } else {
         newNode = buildNode('MemberAccess', { memberName: node.memberName, isStruct: path.isStruct(node)});

@@ -110,21 +110,26 @@ export const generateProofBoilerplate = (node: any) => {
     const parameters = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
     const msgSenderParamAndMappingKey = stateNode.isMapping && node.parameters.includes('msgSender') && stateNode.stateVarId[1] === 'msg';
+    const msgValueParamAndMappingKey = stateNode.isMapping && node.parameters.includes('msgValue') && stateNode.stateVarId[1] === 'msg';
     const stateVarIdLines =
-      stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey
+      stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];
     // we add any extra params the circuit needs
     node.parameters
       .filter(
         (para: string) =>
-          !privateStateNames.includes(para) &&
-          !output.join().includes(`${para}.integer`),
+          !privateStateNames.includes(para) && (
+          !output.join().includes(`${para}.integer`) && !output.join().includes('msgValue')),
       )
       .forEach((param: string) => {
         if (param == 'msgSender') {
           parameters.unshift(`\t${param}.integer,`);
-        } else {
+        } 
+        else if (param == 'msgValue') {
+          parameters.unshift(`\t${param},`);
+        }
+        else {
           parameters.push(`\t${param}.integer,`);
         }
 
@@ -384,6 +389,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
+      if (node.msgValueParam)
+        lines.push(`
+              \nconst msgValue = 1;`);
       node.inputParameters.forEach((param: string) => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
@@ -727,6 +735,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,
+              value: msgValue,
             });\n`,
         ],
       };

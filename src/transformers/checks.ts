@@ -13,6 +13,7 @@ import accessedVisitor from './visitors/checks/accessedVisitor.js';
 import requireStatementVisitor from './visitors/checks/requireStatementVisitor.js';
 import localDeclarationsVisitor from './visitors/checks/localDeclarationsVisitor.js';
 import msgSenderParam from './visitors/checks/msgSenderParam.js';
+import msgValueParam from './visitors/checks/msgValueParam.js';
 import interactsWithSecretVisitor from './visitors/checks/interactsWithSecretVisitor.js';
 
 /**
@@ -69,6 +70,7 @@ function transformation1(oldAST: any) {
   path.traverse(explode(localDeclarationsVisitor), state);
   logger.verbose('Checked for unsupported local variable declarations');
   path.traverse(explode(msgSenderParam), state);
+  path.traverse(explode(msgValueParam),state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.

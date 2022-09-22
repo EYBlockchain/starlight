@@ -103,13 +103,16 @@ const addPublicInput = (path: NodePath, state: any) => {
     if (path.isMapping(node)) {
       name = getIndexAccessName(node);
       node.name = name;
-      const indexExpressionNode = path.isMsgSender(node.indexExpression) ?
-      buildNode('MsgSender') :
-      buildNode(node.indexExpression.nodeType, {
+      let indexExpressionNode: any;
+      if(path.isMsgSender(node.indexExpression))
+      indexExpressionNode = buildNode('MsgSender');
+      else if(path.isMsgValue(node.indexExpression))
+      indexExpressionNode = buildNode('MsgValue');
+      else
+      indexExpressionNode = buildNode(node.indexExpression.nodeType, {
           name: node.indexExpression.name,
           value: node.indexExpression.value,
-          subType: node.indexExpression.typeDescriptions?.typeString,
-        });
+          subType: node.indexExpression.typeDescriptions?.typeString,});
       innerNode = buildNode('IndexAccess', {
           name,
           baseExpression: buildNode('Identifier', { name: node.baseExpression.name }),
@@ -298,7 +301,9 @@ const visitor = {
     exit(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
+      state.msgValueParam ??= scope.indicators.msgValueParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
+      node._newASTPointer.msgValueParam ??= state.msgValueParam;
       const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
         const newNodes: any = {};
         const contractName = `${parent.name}Shield`;
@@ -376,6 +381,10 @@ const visitor = {
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
           delete state.msgSenderParam; // reset
+        }
+        if (state.msgValueParam) {
+          newNodes.generateProofNode.parameters.push(`msgValue`);
+          delete state.msgValueParam; // reset
         }
         // 7 - SendTransaction - all - per function
         // 8 - WritePreimage - all - per state
@@ -1220,6 +1229,11 @@ const visitor = {
       const { node, parent } = path;
       if (path.isMsgSender()) {
         const newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+        parent._newASTPointer[path.containerName] = newNode;
+        return;
+      } else if (path.isMsgValue()) {
+        const newNode = buildNode('MsgValue');
         state.skipSubNodes = true;
         parent._newASTPointer[path.containerName] = newNode;
         return;

@@ -230,7 +230,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         subExpression,
       };
     }
-    case 'MsgSender': {
+    case 'MsgSender':
+    case 'MsgValue': {
       return {
         nodeType,
       };
