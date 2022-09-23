@@ -400,6 +400,57 @@ class BoilerplateGenerator {
        return [];
     },
   };
+
+  joinCommitments = {
+    statements({structProperties}): string[] {
+    return[`from "./common/joinCircuit.zok" import main as joinCircuit
+
+    def main (private field fromId,\
+    private field stateVarId,\
+    private bool isMapping,\
+    private u32[8] oldCommitment_0_owner_secretKey,\
+    private u32[8] oldCommitment_1_owner_secretKey,\
+    public field oldCommitment_0_nullifier,\
+    public field oldCommitment_1_nullifier,\
+    private field[${structProperties.length}] oldCommitment_0_value,\
+    private field oldCommitment_0_salt_field,\
+    private field[${structProperties.length}] oldCommitment_1_value,\
+    private field oldCommitment_1_salt_field,\
+    public field commitmentRoot,\
+    private field oldCommitment_0_membershipWitness_index,\
+    private field[32] oldCommitment_0_membershipWitness_siblingPath,\
+    private field oldCommitment_1_membershipWitness_index,\
+    private field[32] oldCommitment_1_membershipWitness_siblingPath,\
+    private field newCommitment_owner_publicKey_field,\
+    private field newCommitment_salt_field,\
+    public field newCommitment_commitment) -> (bool) :
+
+
+    assert(joinCircuit(fromId,\
+    stateVarId,\
+    isMapping,\
+    size,\
+    oldCommitment_0_owner_secretKey,\
+    oldCommitment_1_owner_secretKey,\
+    oldCommitment_0_nullifier,\
+    oldCommitment_1_nullifier,\
+    oldCommitment_0_value,\
+    oldCommitment_0_salt_field,\
+    oldCommitment_1_value,\
+    oldCommitment_1_salt_field,\
+    commitmentRoot,\
+    oldCommitment_0_membershipWitness_index,\
+    oldCommitment_0_membershipWitness_siblingPath,\
+    oldCommitment_1_membershipWitness_index,\
+    oldCommitment_1_membershipWitness_siblingPath,\
+    newCommitment_owner_publicKey_field,\
+    newCommitment_salt_field,\
+    newCommitment_commitment))
+
+     return true`]
+   }
+  }
+
 }
 
 export default BoilerplateGenerator;

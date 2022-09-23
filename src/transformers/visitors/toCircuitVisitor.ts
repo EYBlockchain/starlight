@@ -171,13 +171,17 @@ const visitor = {
 
       // check for joinCommitments
       for(const [, indicator ] of Object.entries(indicators)){
-        if(
-          (indicator instanceof StateVariableIndicator)
+        if((indicator instanceof StateVariableIndicator)
           && indicator.isPartitioned
-          && indicator.isNullified
-          && !indicator.isStruct) {
-            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
+          && indicator.isNullified) {
+            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName)){
               parent._newASTPointer.push(joinCommitmentsNode);
+            if(indicator.isStruct)
+              state.joinCommitmentsNodes = cloneDeep(state.structNode);
+              state.joinCommitmentsNodes.nodeType = 'joinCommitments';
+              state.joinCommitmentsNodes.bpSection = 'statements';
+              joinCommitmentsNode.nodes.push(state.joinCommitmentsNodes);
+            }
          }
       }
 
@@ -640,9 +644,9 @@ let interactsWithSecret = false ;
 
 
       if (path.isStruct(node)) {
-        const structNode = addStructDefinition(path);
-        newNode.typeName.name = structNode.name;
-        newNode.typeName.members = structNode.members;
+        state.structNode = addStructDefinition(path);
+        newNode.typeName.name = state.structNode.name;
+        newNode.typeName.members = state.structNode.members;
       }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {

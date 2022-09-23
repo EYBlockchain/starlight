@@ -269,6 +269,12 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
 
     }
+    case 'joinCommitments' : {
+      const {structProperties} = fields ;
+      return{
+        structProperties
+      };
+    }
     case 'InternalFunctionBoilerplate':{
       const { name, internalFunctionInteractsWithSecret = false,circuitImport = false} = fields;
       return{
@@ -290,7 +296,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'SetupCommonFilesBoilerplate':
-    
+
     case 'Boilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
       return generateBoilerplate(fields);
