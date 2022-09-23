@@ -2,25 +2,32 @@
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 
 
-// collects increments and decrements into a string (for new commitment calculation) and array
-// (for collecting zokrates inputs
 import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 import NodePath from '../../../../traverse/NodePath.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 
-const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
+// collects increments and decrements into a string (for new commitment calculation) and array
+// (for collecting zokrates inputs
+const collectIncrements = (bpg: BoilerplateGenerator) => {
+  const stateVarIndicator = bpg.thisIndicator || bpg.indicators;
   const incrementsArray = [];
   let incrementsString = '';
 
-  if (stateVarIndicator.isStruct && stateVarIndicator instanceof StateVariableIndicator) {
+  if (stateVarIndicator.isStruct && (
+      stateVarIndicator instanceof StateVariableIndicator ||
+      stateVarIndicator.isParent
+    )
+  ) {
     let structIncs = { incrementsArray: {}, incrementsString: {}};
-    for (const [key, value] of Object.entries(stateVarIndicator.structProperties)) {
-      if (value instanceof MappingKey) {
-        structIncs.incrementsArray[key] = collectIncrements(value).incrementsArray;
-        structIncs.incrementsString[key] = collectIncrements(value).incrementsString;
+    for (const sp of bpg.structProperties) {
+      if (stateVarIndicator.structProperties[sp] instanceof MappingKey) {
+        bpg.thisIndicator = stateVarIndicator.structProperties[sp];
+        structIncs.incrementsArray[sp] = collectIncrements(bpg).incrementsArray;
+        structIncs.incrementsString[sp] = collectIncrements(bpg).incrementsString;
+        bpg.thisIndicator = stateVarIndicator;
       } else {
-        structIncs.incrementsArray[key] = [];
-        structIncs.incrementsString[key] = '0';
+        structIncs.incrementsArray[sp] = [];
+        structIncs.incrementsString[sp] = '0';
       }
     }
     return structIncs;
@@ -84,8 +91,8 @@ class BoilerplateGenerator {
   isStruct: boolean;
   structProperties?: string[];
   typeName?: string;
-  increments: any;
-  decrements: any;
+  mappingKeyTypeName?: string;
+  thisIndicator: any;
   burnedOnly: any;
   mappingKeyName: string;
   mappingName: string;
@@ -122,8 +129,6 @@ class BoilerplateGenerator {
       newCommitmentsRequired,
       isMapping,
       isStruct,
-      increments,
-      decrements,
       initialisationRequired,
       // burnedOnly,
     } = indicators;
@@ -137,26 +142,43 @@ class BoilerplateGenerator {
       newCommitmentsRequired,
       isMapping,
       isStruct,
-      increments,
-      decrements,
       initialisationRequired,
+      thisIndicator: indicators, // used for gathering increments of mappings and/or structs
       // burnedOnly,
     });
   }
+
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
     if (indicators.isMapping) {
       for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
-        mappingKeyIndicator.isMapping = true; // TODO: put isMapping in every mappingKeys indicator during prelim traversals
+        mappingKeyIndicator.isMapping = true;
         this.assignIndicators(mappingKeyIndicator);
-        this.mappingKeyName = mappingKeyName;
+        this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
+        if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName = this.mappingKeyName.replace('.', 'dot');
+
+        if (mappingKeyIndicator.keyPath.isStruct() && !(mappingKeyIndicator.keyPath.node.nodeType === 'Identifier' && !mappingKeyIndicator.keyPath.node.typeDescriptions.typeString.includes('struct ')))
+          this.mappingKeyTypeName = mappingKeyIndicator.keyPath.getStructDeclaration().name;
+
+        if (!mappingKeyIndicator.keyPath.isMsg() &&
+        (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
+          this.mappingKeyTypeName = 'local';
+
         this.mappingName = this.indicators.name;
-        this.name = `${this.mappingName}_${mappingKeyName}`;
+        this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
+
+        if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
+          this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+          this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name)
+        } else if (mappingKeyIndicator.referencingPaths[0]?.node.typeDescriptions.typeString.includes('struct ')) {
+          // somewhat janky way to include referenced structs not separated by property
+          this.typeName = mappingKeyIndicator.referencingPaths[0]?.getStructDeclaration()?.name;
+        }
         this.generateBoilerplate();
       }
     } else {
       if (indicators instanceof StateVariableIndicator && indicators.structProperties) {
-        this.structProperties = Object.keys(indicators.structProperties);
+        this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
         this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
       }
       this.assignIndicators(indicators);
@@ -167,9 +189,10 @@ class BoilerplateGenerator {
   refresh(mappingKeyName: string) {
     const mappingKeyIndicator = this.indicators.mappingKeys[mappingKeyName];
     this.assignIndicators(mappingKeyIndicator);
-    this.mappingKeyName = mappingKeyName;
+    this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
+    if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName.replace('.', 'dot');
     this.mappingName = this.indicators.name;
-    this.name = `${this.mappingName}_${mappingKeyName}`;
+    this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
   }
 
   generateBoilerplateStatement(bpType: string, extraParams?: any) {
@@ -195,7 +218,7 @@ class BoilerplateGenerator {
 
   _addBP = (bpType: string, extraParams?: any) => {
     if (this.isPartitioned) {
-      this.newCommitmentValue = collectIncrements(this.indicators).incrementsString;
+      this.newCommitmentValue = collectIncrements(this).incrementsString;
     }
     this.bpSections.forEach(bpSection => {
       this[bpSection] = this[bpSection]
@@ -211,12 +234,13 @@ class BoilerplateGenerator {
           ...(this.isNullified && { isNullified: this.isNullified }),
           ...(this.isMapping && { isMapping: this.isMapping }),
           ...(this.isStruct && { structProperties: this.structProperties}),
-          ...(this.isStruct && { typeName: this.typeName}),
+          ...(this.typeName && { typeName: this.typeName}),
+          ...(this.mappingKeyName && { mappingKeyTypeName: this.mappingKeyTypeName }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
           // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }), // TODO
-          ...this[bpType](extraParams),
+          ...this[bpType](bpSection),
         })
         .filter(Boolean);
     });
@@ -275,7 +299,7 @@ class BoilerplateGenerator {
   getIndex({ addendId, subtrahendId }): number | null {
     if (addendId && subtrahendId)
       throw new Error('Expected only one of addend xor subtrahend; got both.');
-    const { increments, decrements } = this;
+    const { increments, decrements } = this.thisIndicator;
     const notFoundErr = new Error('Not found in array.');
 
     let index: number;
@@ -306,9 +330,9 @@ class BoilerplateGenerator {
 
   newCommitment = () => ({});
 
-  mapping = () => ({
+  mapping = (bpSection) => ({
     mappingName: this.mappingName,
-    mappingKeyName: this.mappingKeyName,
+    mappingKeyName: bpSection === 'postStatements' ? this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */

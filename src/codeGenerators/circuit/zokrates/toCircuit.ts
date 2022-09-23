@@ -97,6 +97,8 @@ if(returnStatement.length === 0){
               linesToDelete.push(paramList[i]);
             if (paramList[j].includes('private'))
               linesToDelete.push(paramList[j]);
+          } else if (slicedParamList[i].replace('_oldCommitment_value', '') === slicedParamList[j]) {
+            linesToDelete.push(paramList[j]);
           }
         }
       }
@@ -135,9 +137,6 @@ if(returnStatement.length === 0){
     }
 
     case 'ExpressionStatement': {
-      if(!node.expression.circuitImport){
-      return codeGenerator(node.expression);
-      }
       if (node.isVarDec) {
         return `
         field ${codeGenerator(node.expression)}`;
@@ -158,6 +157,9 @@ if(returnStatement.length === 0){
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
+    case 'UnaryOperation':
+      return `${codeGenerator(node.initialValue)} = ${codeGenerator(node.subExpression)} ${node.operator[0]} 1`
+
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
         node.rightExpression,
@@ -170,7 +172,7 @@ if(returnStatement.length === 0){
       return node.value;
 
     case 'IndexAccess':
-      return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression)}`;
+      return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression).replace('.', 'dot')}`;
 
     case 'MemberAccess':
       if (node.isStruct) return `${codeGenerator(node.expression)}.${node.memberName}`;

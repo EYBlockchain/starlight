@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "skipLibCheck": true,
-    "lib": ["es2020", "es2020.string"]
+    "lib": ["es2020", "es2021.string"]
   },
   "include": ["./src/**/*"],
   "exclude": [

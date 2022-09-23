@@ -4,6 +4,7 @@ _Generate a zApp from a Solidity contract._
 
 This high-level document explains what the transpiler is, how it works, and how we came to make certain design decisions.
 
+Please note this write-up may be out of date as more features are added and design decisions are being made.
 
 **Authors:** Michael Connor, Miranda Wood
 

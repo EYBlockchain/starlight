@@ -20,7 +20,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
   if (thisPath.isRequireStatement(node)) return;
 
-  let { name } = thisPath.isMsg(node) ? node.name : thisPath.scope.getReferencedIndicator(node, true);
+  let { name } = thisPath.isMsg(node) ? node : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
   const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
@@ -35,17 +35,18 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit unless its a public state variable which is needed for the stateVarId
-    !(thisPath.containerName === 'indexExpression' && !thisPath.parentPath.isSecret)
+    !(thisPath.containerName === 'indexExpression' && !(thisPath.parentPath.isSecret|| thisPath.parent.containsSecret))
   ) {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', '');
     if (thisPath.containerName === 'indexExpression')
-      name = binding.getMappingKeyName(thisPath)
+      name = binding.getMappingKeyName(thisPath);
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
+    parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess').node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition').node;
     const params = fnDefNode._newASTPointer.parameters.parameters;
-    if (!params.some(n => n === parameterNode))
+    if (!params.some(n => n.id === parameterNode.id))
       params.push(parameterNode);
     // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
     thisState.skipSubNodes = true;
@@ -71,6 +72,8 @@ const addStructDefinition = (path: NodePath) => {
 }
 
 let interactsWithSecret = false; // Added globaly as two objects are accesing it
+let oldStateArray : string[];
+let circuitImport = [];
 /**
  * @desc:
  * Visitor transforms a `.zol` AST into a `.zok` AST
@@ -418,12 +421,22 @@ const visitor = {
   },
 
   UnaryOperation: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { operator, prefix, subExpression } = node;
-      const newNode = buildNode(node.nodeType, { operator, prefix, subExpression });
+      const newNode = buildNode(node.nodeType, {
+        operator,
+        prefix,
+        subExpression: buildNode(subExpression.nodeType, {
+          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
+        }),
+        initialValue: buildNode(subExpression.nodeType, {
+          name: path.scope.getIdentifierMappingKeyName(subExpression)
+        }),
+      });
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+      state.skipSubNodes = true;
     }
   },
 
@@ -439,7 +452,13 @@ const visitor = {
       node.containsSecret = 'true';
     }
       const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
-      if (!node.containsSecret && !childOfSecret) {
+      const thisState = { interactsWithSecretInScope: false };
+
+      path.traverseNodesFast(n => {
+        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret)
+          thisState.interactsWithSecretInScope = true;
+      }, thisState);
+      if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
         state.skipSubNodes = true;
         return;
       }
@@ -512,16 +531,33 @@ const visitor = {
       // But, let's check to see if this ExpressionStatement is an Assignment to a state variable. If it's the _first_ such assignment, we'll need to mutate this ExpressionStatement node into a VariableDeclarationStatement.
 
       let isVarDec: boolean = false;
-      if (
-        node.expression.nodeType === 'Assignment' &&
-        node.expression.operator === '='
-      ) {
-        const assignmentNode = node.expression;
-        const { leftHandSide: lhs } = assignmentNode;
-        const referencedIndicator = scope.getReferencedIndicator(lhs);
+      if (node.expression.nodeType === 'Assignment' || node.expression.nodeType === 'UnaryOperation') {
+        let { leftHandSide: lhs } = node.expression;
+        if (!lhs) lhs = node.expression.subExpression;
+        const referencedIndicator = scope.getReferencedIndicator(lhs, true);
+
+        const name = referencedIndicator.isMapping
+          ? referencedIndicator.name
+              .replace('[', '_')
+              .replace(']', '')
+              .replace('.sender', '')
+              .replace('.', 'dot')
+          : referencedIndicator.name;
+
+        if (referencedIndicator.isMapping && lhs.baseExpression) {
+          lhs = lhs.baseExpression;
+        } else if (lhs.nodeType === 'MemberAccess') {
+          lhs = lhs.expression;
+          if (lhs.baseExpression) lhs = lhs.baseExpression;
+        }
+        // collect all index names
+        const names = referencedIndicator.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
+
+        // check whether this is the first instance of a new index name
+        const firstInstanceOfNewName = names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
         if (referencedIndicator instanceof StateVariableIndicator &&
-          (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
-            lhs.id === referencedIndicator.referencingPaths[0].parent.id) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+          (firstInstanceOfNewName || (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
+            lhs.id === referencedIndicator.referencingPaths[0].parent.id)) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
           !(
             referencedIndicator.isWhole &&
             referencedIndicator.oldCommitmentAccessRequired

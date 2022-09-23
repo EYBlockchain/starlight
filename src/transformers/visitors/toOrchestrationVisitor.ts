@@ -8,7 +8,7 @@ import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
 import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-import { interactsWithSecretVisitor, parentnewASTPointer } from './common.js';
+import { interactsWithSecretVisitor, parentnewASTPointer, initialiseOrchestrationBoilerplateNodes } from './common.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
@@ -17,15 +17,19 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
   let incrementsString = '';
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
-  if (stateVarIndicator.isStruct && stateVarIndicator instanceof StateVariableIndicator) {
+  if (stateVarIndicator.isStruct && (
+      stateVarIndicator instanceof StateVariableIndicator ||
+      stateVarIndicator.isParent
+    )) {
     let structIncs = { incrementsArray: {}, incrementsString: {}};
-    for (const [key, value] of Object.entries(stateVarIndicator.structProperties)) {
-      if (value instanceof MappingKey) {
-        structIncs.incrementsArray[key] = collectIncrements(value).incrementsArray;
-        structIncs.incrementsString[key] = collectIncrements(value).incrementsString;
+    const sps = stateVarIndicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
+    for (const sp of sps) {
+      if (stateVarIndicator.structProperties[sp] instanceof MappingKey) {
+        structIncs.incrementsArray[sp] = collectIncrements(stateVarIndicator.structProperties[sp]).incrementsArray;
+        structIncs.incrementsString[sp] = collectIncrements(stateVarIndicator.structProperties[sp]).incrementsString;
       } else {
-        structIncs.incrementsArray[key] = [];
-        structIncs.incrementsString[key] = '0';
+        structIncs.incrementsArray[sp] = [];
+        structIncs.incrementsString[sp] = '0';
       }
     }
     return structIncs;
@@ -156,7 +160,7 @@ const addPublicInput = (path: NodePath, state: any) => {
 
     // if the node is the indexExpression, we dont need its value in the circuit
     state.publicInputs ??= [];
-    if (!(path.containerName === 'indexExpression' && !path.parentPath.isSecret)) state.publicInputs.push(node);
+    if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);
 
     // check we haven't already imported this node
     if (fnDefNode.node._newASTPointer.body.preStatements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name)) return;
@@ -171,7 +175,7 @@ const addPublicInput = (path: NodePath, state: any) => {
 
 const getIndexAccessName = (node: any) => {
   if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
-  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${NodePath.getPath(node).scope.getMappingKeyName(node)}`;
+  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${(NodePath.getPath(node).scope.getMappingKeyName(node)).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
   return null;
 }
 /**
@@ -283,7 +287,7 @@ const visitor = {
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
-          if (!param.isSecret) state.constructorParams.push(
+          state.constructorParams.push(
             buildNode('VariableDeclaration', {
               name: param.name,
               type: param.typeName.name,
@@ -299,6 +303,7 @@ const visitor = {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
+
       const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
         const newNodes: any = {};
         const contractName = `${parent.name}Shield`;
@@ -332,11 +337,9 @@ const visitor = {
         });
         return newNodes;
 
-      };
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
       for(const [, indicators ] of Object.entries(functionIndicator)){
-
         if(
           (indicators instanceof StateVariableIndicator) &&
           indicators.isPartitioned &&
@@ -346,6 +349,7 @@ const visitor = {
            state.isjoinCommitmentsFunction?.push('true');
          }
       }
+
       let thisIntegrationTestFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
@@ -357,128 +361,101 @@ const visitor = {
           file.functionNames.push(node.fileName);
         }
       }
+
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
       thisIntegrationTestFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
+
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
-        scope.modifiesSecretState()) || functionIndicator.internalFunctionInteractsWithSecret ) {
+        scope.modifiesSecretState()) ||
+        functionIndicator.internalFunctionInteractsWithSecret) {
+
         const newNodes = initialiseOrchestrationBoilerplateNodes(
-          functionIndicator,
+          functionIndicator, path
         );
-        // 1 - InitialisePreimage - whole states - per state
-        // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
-        // 3 - MembershipWitness - nullifiersRequired - per state
-        // 4 - CalculateNullifier - nullifiersRequired - per state
-        // 5 - CalculateCommitment - newCommitmentsRequired - per state
-        // 6 - GenerateProof - all - per function
+
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
           delete state.msgSenderParam; // reset
         }
-        // 7 - SendTransaction - all - per function
-        // 8 - WritePreimage - all - per state
 
-        // this only includes accessed states which are not modified
-        const accessedStateIndicators = [];
-
-        const modifiedStateVariableIndicators: any[] = []; // array of StateVarIndicator or MappingKey
+        const allIndicators = [];
         let stateVarIndicator: StateVariableIndicator | MappingKey;
         for ([, stateVarIndicator] of Object.entries(
           functionIndicator,
         )) {
-          if (stateVarIndicator?.isAccessed && !stateVarIndicator?.isModified) {
-            if (stateVarIndicator.isMapping) {
-              for (const [, mappingKey] of Object.entries(
-                stateVarIndicator.mappingKeys,
-              )) {
-                accessedStateIndicators.push(mappingKey);
-              }
-            } else {
-              accessedStateIndicators.push(stateVarIndicator);
-            }
-            continue;
-          }
-          if (!stateVarIndicator?.isSecret || !stateVarIndicator?.isModified)
-            continue;
-          if (stateVarIndicator.isMapping) {
+          if (stateVarIndicator instanceof StateVariableIndicator && stateVarIndicator.isMapping) {
             for (const [, mappingKey] of Object.entries(
               stateVarIndicator.mappingKeys,
             )) {
-              modifiedStateVariableIndicators.push(mappingKey);
+              allIndicators.push(mappingKey);
             }
-          } else {
-            modifiedStateVariableIndicators.push(stateVarIndicator);
+          } else if (stateVarIndicator instanceof StateVariableIndicator) {
+            allIndicators.push(stateVarIndicator);
           }
         }
 
-        for (stateVarIndicator of modifiedStateVariableIndicators) {
+        for (stateVarIndicator of allIndicators) {
           let id: number | (number | string)[] = stateVarIndicator.id;
           let { name, isIncremented } = stateVarIndicator;
+          let accessedOnly = stateVarIndicator?.isAccessed && !stateVarIndicator?.isModified;
+          let secretModified = stateVarIndicator.isSecret && stateVarIndicator.isModified;
+
           if (stateVarIndicator instanceof MappingKey) {
-            id = [id, scope.getIdentifierMappingKeyName(stateVarIndicator.keyPath.node)];
-            name = getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess').node);
-            // name = name
-            //   .replace('[', '_')
-            //   .replace(']', '')
-            //   .replace('.sender', '');
+            accessedOnly =
+              stateVarIndicator.container?.isAccessed && !stateVarIndicator.container?.isModified;
+            secretModified =
+              stateVarIndicator.container?.isSecret && stateVarIndicator.container?.isModified;
+            id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node)];
+
+            name = accessedOnly ?
+              getIndexAccessName(stateVarIndicator.accessedPaths[stateVarIndicator.accessedPaths.length -1]?.getAncestorOfType('IndexAccess').node) :
+              stateVarIndicator.container?.isModified ?
+                getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess').node) :
+                getIndexAccessName(stateVarIndicator.referencingPaths[stateVarIndicator.referencingPaths.length -1].getAncestorOfType('IndexAccess').node);
           }
+
           let { incrementsArray, incrementsString } = isIncremented
             ? collectIncrements(stateVarIndicator)
             : { incrementsArray: null, incrementsString: null };
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
-          if (stateVarIndicator.isDecremented) {
-            // TODO refactor
-            node._newASTPointer.decrementedSecretStates ??= [];
-            node._newASTPointer.decrementedSecretStates.push(name);
-            node._newASTPointer.decrementsSecretState = true;
-            thisIntegrationTestFunction.decrementsSecretState = true;
-          }
-
-          const modifiedStateVariableNode = buildNode('VariableDeclaration', {
-            name,
-            isSecret: stateVarIndicator.isSecret,
-            type: stateVarIndicator.node.typeDescriptions.typeString,
-          });
-          node._newASTPointer.parameters.modifiedStateVariables.push(
-            modifiedStateVariableNode,
-          );
-
-          if (
-            stateVarIndicator.isWhole &&
-            functionIndicator.oldCommitmentAccessRequired
-          ) {
+          if (accessedOnly || (stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired)) {
             newNodes.initialisePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('InitialisePreimage', {
               privateStateName: name,
               indicator: stateVarIndicator,
+              accessedOnly,
               id,
             });
           }
 
-          newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
-            'ReadPreimage',
-            {
-              id,
-              increment: isIncremented ? incrementsString : undefined,
-              indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
-              reinitialisedOnly:
-                stateVarIndicator.reinitialisable &&
-                !stateVarIndicator.isNullified,
-            },
-          );
+          if (accessedOnly || secretModified)
+            newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
+              'ReadPreimage',
+              {
+                id,
+                increment: isIncremented ? incrementsString : undefined,
+                indicator: stateVarIndicator,
+                initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
+                reinitialisedOnly:
+                  stateVarIndicator.reinitialisable &&
+                  !stateVarIndicator.isNullified,
+                accessedOnly,
+              },
+            );
 
-          if (stateVarIndicator.isNullified) {
+          if (stateVarIndicator.isNullified || accessedOnly) {
             newNodes.membershipWitnessNode.privateStates[
               name
             ] = buildPrivateStateNode('MembershipWitness', {
               privateStateName: name,
               indicator: stateVarIndicator,
+              accessedOnly,
             });
             newNodes.calculateNullifierNode.privateStates[
               name
@@ -486,6 +463,7 @@ const visitor = {
               indicator: stateVarIndicator,
             });
           }
+
           if (stateVarIndicator.newCommitmentsRequired) {
             newNodes.calculateCommitmentNode.privateStates[
               name
@@ -495,7 +473,8 @@ const visitor = {
               indicator: stateVarIndicator,
             });
           }
-          if (stateVarIndicator.isModified) {
+
+          if (secretModified || accessedOnly) {
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -508,17 +487,42 @@ const visitor = {
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
               increment: isIncremented ? incrementsArray : undefined,
+              accessedOnly,
               indicator: stateVarIndicator,
             });
-            newNodes.generateProofNode.parameters.push(name);
+
             newNodes.sendTransactionNode.privateStates[
               name
             ] = buildPrivateStateNode('SendTransaction', {
               indicator: stateVarIndicator,
+              reinitialisedOnly:
+                stateVarIndicator.reinitialisable &&
+                !stateVarIndicator.isNullified,
               burnedOnly:
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
+              accessedOnly,
             });
+          }
+          if (secretModified && !accessedOnly) {
+            // accessedOnly should be false, but just in case...
+            if (stateVarIndicator.isDecremented) {
+              // TODO refactor
+              node._newASTPointer.decrementedSecretStates ??= [];
+              node._newASTPointer.decrementedSecretStates.push(name);
+              node._newASTPointer.decrementsSecretState = true;
+              thisIntegrationTestFunction.decrementsSecretState = true;
+            }
+
+            const modifiedStateVariableNode = buildNode('VariableDeclaration', {
+              name,
+              isSecret: stateVarIndicator.isSecret,
+              type: stateVarIndicator.node.typeDescriptions.typeString,
+            });
+            node._newASTPointer.parameters.modifiedStateVariables.push(
+              modifiedStateVariableNode,
+            );
+            newNodes.generateProofNode.parameters.push(name);
             newNodes.writePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('WritePreimage', {
@@ -536,67 +540,6 @@ const visitor = {
           newNodes.membershipWitnessNode.isConstructor = true;
         }
 
-        for (const stateVarIndicator of accessedStateIndicators) {
-          // these ONLY require :
-          // Init and ReadPreimage
-          // MembershipWitness
-          // CalculateNullifier
-          // GenerateProof
-          // SendTransaction
-
-          let { name, id } = stateVarIndicator;
-          if (stateVarIndicator.isMapping) {
-            id = [id, scope.getIdentifierMappingKeyName(stateVarIndicator.keyPath.node)];
-            name = getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess').node);
-            // name = name
-            //   .replace('[', '_')
-            //   .replace(']', '')
-            //   .replace('.sender', '');
-          }
-          newNodes.initialisePreimageNode.privateStates[name] = {
-            stateVarId: id,
-            privateStateName: name,
-            accessedOnly: true,
-          };
-
-          newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
-            'ReadPreimage',
-            {
-              id,
-              indicator: stateVarIndicator,
-              initialised: stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired,
-              accessedOnly: true,
-            },
-          );
-          newNodes.membershipWitnessNode.privateStates[
-            name
-          ] = buildPrivateStateNode('MembershipWitness', {
-            privateStateName: name,
-            indicator: stateVarIndicator,
-            accessedOnly: true,
-          });
-          newNodes.calculateNullifierNode.privateStates[
-            name
-          ] = buildPrivateStateNode('CalculateNullifier', {
-            indicator: stateVarIndicator,
-          });
-
-          newNodes.generateProofNode.privateStates[
-            name
-          ] = buildPrivateStateNode('GenerateProof', {
-            privateStateName: name,
-            id,
-            accessedOnly: true,
-            indicator: stateVarIndicator,
-          });
-          // newNodes.generateProofNode.parameters.push(name);
-          newNodes.sendTransactionNode.privateStates[
-            name
-          ] = buildPrivateStateNode('SendTransaction', {
-            indicator: stateVarIndicator,
-            accessedOnly: true,
-          });
-        }
         const newFunctionDefinitionNode = node._newASTPointer;
 
         // this adds other values we need in the circuit
@@ -657,6 +600,93 @@ const visitor = {
           0,
           newNodes.InitialiseKeysNode,
         );
+
+        // OR they are local variable declarations we need for initialising preimage...
+
+        let localVariableDeclarations = [];
+        newFunctionDefinitionNode.body.statements.forEach((n, index) => {
+          if (n.nodeType === 'VariableDeclarationStatement' && n.declarations[0].declarationType === 'localStack')
+            localVariableDeclarations.push({node: cloneDeep(n), index});
+        });
+
+        if (localVariableDeclarations[0]) {
+          localVariableDeclarations.forEach(n => {
+            const localIndicator = scope.indicators[n.node.declarations[0].id];
+            const indexExpressionPath = localIndicator.referencingPaths.find(p =>
+              p.getAncestorContainedWithin('indexExpression') && p.getAncestorOfType('IndexAccess')?.node.containsSecret
+            );
+            if (indexExpressionPath) {
+              // we have found a local variable which is used as an indexExpression, so we need it before we get the mapping value
+              // NB if there are multiple, we have just found the first one
+              const varDecComesAfter = scope.getReferencedIndicator(
+                NodePath.getPath(localIndicator.node)?.getCorrespondingRhsNode(), true
+              );
+              if (!varDecComesAfter) {
+                // here, we don't need to worry about defining anything first, so we push this local var to the top
+                newFunctionDefinitionNode.body.preStatements.splice(
+                  earliestPublicAccessIndex + 2,
+                  0,
+                  n.node,
+                );
+              } else {
+                // now we have to split initPreimage
+                const varDecComesBefore = scope.getReferencedIndicator(
+                  indexExpressionPath.getAncestorOfType('IndexAccess').node.baseExpression, true
+                );
+                const varDecComesBeforeSVID = [varDecComesBefore.id, localIndicator.name];
+                const varDecComesAfterSVID = [varDecComesAfter.id, varDecComesAfter instanceof MappingKey ? varDecComesAfter.referencedKeyName : ''];
+                let newInitPreimageNode1 = { nodeType: 'InitialisePreimage', privateStates: {}};
+                let newInitPreimageNode2 = { nodeType: 'InitialisePreimage', privateStates: {}};
+                let sortPreimage = 1;
+                let correctlyComesAfter = false;
+                let stateName: string;
+                let stateNode: any;
+                for ([stateName, stateNode] of
+                  Object.entries(
+                    newFunctionDefinitionNode.body.preStatements[earliestPublicAccessIndex + 2].privateStates
+                  )
+                ) {
+                  // we need to splice this local var dec between two initialisePreimage nodes
+                  // so here we find the place to split
+                  if (
+                    stateNode.stateVarId[0] === varDecComesAfterSVID[0] &&
+                    stateNode.stateVarId[1] === varDecComesAfterSVID[1] &&
+                    sortPreimage === 1
+                  ) {
+                    correctlyComesAfter = true;
+                  }
+
+                  if (
+                    stateNode.stateVarId[0] === varDecComesBeforeSVID[0] &&
+                    stateNode.stateVarId[1] === varDecComesBeforeSVID[1]
+                  ) {
+                    if (!correctlyComesAfter) throw new Error('A local variable declaration is required to access some secret state but requires a different one to be defined - this level of complexity is currently not supported by the compiler.')
+                    sortPreimage = 2;
+                  }
+
+                  if (sortPreimage === 1) newInitPreimageNode1.privateStates[stateName] = cloneDeep(stateNode);
+                  else newInitPreimageNode2.privateStates[stateName] = cloneDeep(stateNode);
+                }
+
+                newFunctionDefinitionNode.body.preStatements[earliestPublicAccessIndex + 2] = newInitPreimageNode1;
+                newFunctionDefinitionNode.body.preStatements.splice(
+                  earliestPublicAccessIndex + 3,
+                  0,
+                  n.node,
+                );
+                newFunctionDefinitionNode.body.preStatements.splice(
+                  earliestPublicAccessIndex + 4,
+                  0,
+                  newInitPreimageNode2,
+                );
+
+              }
+              delete newFunctionDefinitionNode.body.statements[n.index];
+            }
+          });
+        }
+
+
 
         // 1 - InitialisePreimage - whole states - per state
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
@@ -800,6 +830,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
+      newNode.id = node.id;
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -899,12 +930,14 @@ const visitor = {
               .replace('[', '_')
               .replace(']', '')
               .replace('.sender', '')
+              .replace('.', 'dot')
           : indicator.name;
 
-        if (indicator.isMapping) {
+        if (indicator.isMapping && lhs.baseExpression) {
           lhs = lhs.baseExpression;
         } else if (lhs.nodeType === 'MemberAccess') {
           lhs = lhs.expression;
+          if (lhs.baseExpression) lhs = lhs.baseExpression;
         }
 
         // check whether this statement should be init separately in the constructor
@@ -919,8 +952,10 @@ const visitor = {
         // check whether this should be a VariableDeclaration
         const firstEdit =
           (firstInstanceOfNewName && indicator.interactsWithSecret) ||
-          (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole) ||
-          (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs.id && indicator.isSecret && indicator.isWhole);
+          (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) ||
+          (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole);
+
+
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
@@ -944,9 +979,9 @@ const visitor = {
             oldASTId: node.id,
             declarations: [
               buildNode('VariableDeclaration', {
-                name: indicator.isStruct ? lhs.name : name,
+                name: indicator.isStruct && !indicator.isMapping ? lhs.name : name,
                 isAccessed: accessed,
-                isSecret: true,
+                isSecret: indicator.isSecret,
               }),
             ],
             interactsWithSecret: true,
@@ -1016,9 +1051,9 @@ const visitor = {
               .replace('[', '_')
               .replace(']', '')
               .replace('.sender', '')
+              .replace('.', 'dot')
           : indicator.name;
         // we add a general number statement after each whole state edit
-
         if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
           buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name }),
@@ -1089,17 +1124,10 @@ const visitor = {
       }
 
       // we now have a param or a local var dec
-      // TODO just use interactsWithSecret when thats added
       let interactsWithSecret = false;
 
-      scope.bindings[node.id].referencingPaths.forEach(refPath => {
-        const newState: any = {};
-        (refPath.getAncestorOfType('ExpressionStatement') || refPath.parentPath).traversePathsFast(
-          interactsWithSecretVisitor,
-          newState,
-        );
-        interactsWithSecret ||= newState.interactsWithSecret;
-      });
+      if (scope.bindings[node.id].referencingPaths.some(refPath => refPath.node.interactsWithSecret))
+        interactsWithSecret = true;
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&
@@ -1107,11 +1135,18 @@ const visitor = {
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
 
+      let declarationType: string;
+      if (path.isLocalStackVariableDeclaration())
+        declarationType = 'localStack';
+      if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
+
       // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
       const newNode = buildNode(node.nodeType, {
         name: node.name,
         isSecret: node.isSecret || false,
+        oldASTId: node.id,
         interactsWithSecret,
+        declarationType,
         typeName: {},
       });
       node._newASTPointer = newNode;
@@ -1121,8 +1156,8 @@ const visitor = {
         parent._newASTPointer[path.containerName].push(newNode);
       }
     },
-
   },
+
   Return: {
      enter(path: NodePath) {
        const { node, parent } = path;
@@ -1134,8 +1169,8 @@ const visitor = {
          parent._newASTPointer[path.containerName].push(newNode);
        }
      },
+  },
 
-   },
   ElementaryTypeName: {
     enter(path: NodePath) {
       const { node, parent } = path;
@@ -1224,8 +1259,8 @@ const visitor = {
         parent._newASTPointer[path.containerName] = newNode;
         return;
       }
-      // const name = getIndexAccessName(node);
-      const newNode = buildNode('MemberAccess', { name: node.expression.name, memberName: node.memberName });
+      const name = node.expression.name || getIndexAccessName(node.expression);
+      const newNode = buildNode('MemberAccess', { name, memberName: node.memberName, subType: node.typeDescriptions.typeString });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
@@ -1244,11 +1279,7 @@ const visitor = {
   IfStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, {
-        condition: {},
-        trueBody: [],
-        falseBody: []
-      });
+      const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
@@ -1263,6 +1294,15 @@ const visitor = {
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
+
+    exit(path: NodePath) {
+      const { node } = path;
+      const newNode = node._newASTPointer;
+      if (newNode.body.statements.some(n => n.interactsWithSecret)) {
+        newNode.initializationExpression.interactsWithSecret = true;
+        newNode.loopExpression.interactsWithSecret = true;
+      }
+    }
   },
 
   FunctionCall: {

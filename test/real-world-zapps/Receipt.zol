@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+// import "./Escrow-imports/IERC20.sol";
+
+contract Receipt {
+  // NB contract too large when erc20 imported
+
+  secret mapping (address => uint256) private balances;
+  secret mapping (address => Rct) private unpaid;
+  // IERC20 public erc20;
+
+  // constructor(address _erc20) {
+  //     erc20 = IERC20(_erc20);
+  // }
+
+  struct Rct {
+    uint256 amount;
+    uint256 tax;
+    uint256 amountPaid;
+  }
+
+  function add(secret Rct memory myrct, uint256 amount) public {
+    require(myrct.amountPaid == 0);
+    require(unpaid[msg.sender].amount == 0);
+    // bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+    // require(hasBalance == true);
+    secret uint256 total = myrct.amount + myrct.tax;
+    if (amount >= total) {
+      known balances[msg.sender] += amount - total;
+    } else {
+      unpaid[msg.sender].amount = myrct.amount;
+      unpaid[msg.sender].tax = myrct.tax;
+      unpaid[msg.sender].amountPaid = amount;
+    }
+  }
+
+  function payIn(uint256 amount) public {
+    // bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+    // require(hasBalance == true);
+    require(unpaid[msg.sender].amount != 0);
+    balances[msg.sender] += amount;
+    secret uint256 total = unpaid[msg.sender].amount + unpaid[msg.sender].tax - unpaid[msg.sender].amountPaid;
+    if (balances[msg.sender] >= total) {
+      unpaid[msg.sender].amount = 0;
+      unpaid[msg.sender].tax = 0;
+      unpaid[msg.sender].amountPaid = 0;
+      balances[msg.sender] -= total;
+    } else {
+      unpaid[msg.sender].amountPaid += balances[msg.sender];
+      balances[msg.sender] = 0;
+    }
+  }
+}

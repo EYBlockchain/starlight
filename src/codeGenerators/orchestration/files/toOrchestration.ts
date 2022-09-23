@@ -132,7 +132,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     `'${node.functionNames.join(`', '`)}'`,
   );
   // collect any extra constructor parameters
-  const constructorParams = node.constructorParams?.map((obj: any) => obj.name) || ``;
+  const constructorParams = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
   const iwsConstructorParams = node.constructorParams?.filter((param: any) => param.interactsWithSecret === true);
   // initialise variables
   let customImports = ``;
@@ -219,8 +219,8 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     });
     customProofInputs += `, ...proofInput`
   }
-  // we need to add a comma if we have a single constructor param
-  if (constructorParams?.length === 1) constructorParams[0] += `,`;
+  // we need to add a comma if we have 1+ constructor param
+  if (constructorParams?.length >= 1) constructorParams[constructorParams.length - 1] += `,`;
   // finally, import all above findings to the migrationsfile
   file.file = file.file.replace(/CUSTOM_CONTRACT_IMPORT/g, customImports);
   file.file = file.file.replace(/CUSTOM_CONTRACTS/g, customDeployments);
