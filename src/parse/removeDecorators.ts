@@ -67,12 +67,29 @@ function arrangeStructOverwrite(substrings: any) {
   let structTypes = [];
   let structProps = [];
   let structStates = [];
-  let newSubStrings = substrings;
+  // clones array
+  let newSubStrings = substrings.slice();
   let offset = 0;
   const getTypeNameRegExp = /(?<=struct )(.*)(?={)/;
+  // matches type exactly, allowing for whitespace
+  const getLHSRegExp = (type: string) => { return new RegExp('\\s?' + type + '(?![\\w])\\s?'); };
+  // matches struct names by finding name in (e.g.) MyStruct memory <name> <ending char e.g.;>
   const getStateNameRegExp = (type: string, storage: string) => {
-    return new RegExp('(?<=' + type + ' ' + storage + ')(.*)' + '(?=\,|\\)|\;)');
+    return new RegExp('(?<=' + type + ' ' + storage + ').+?' + '(?=\,|\\)|\;|=)');
   };
+  // matches if is a secret mapping where value is a struct
+  // to get the mapping name, choose group 1, not match
+  const getMappingStateNameRegExp = (type: string, storage: string) => {
+    return new RegExp(`\\bsecret mapping\\b.*=>\\s?` + type + `\\)\\s?` + storage + `\\s?(.*?);`)
+  }
+
+  const notDeclaration = (line: string) => {
+    let result = true;
+    solVisib.forEach(keyword => {
+      if (line.includes(`${keyword} `)) result = false;
+    });
+    return result;
+  }
 
   // fill array of struct types
   for (let i=0; i<substrings.length; i++) {
@@ -98,7 +115,9 @@ function arrangeStructOverwrite(substrings: any) {
     for (let k = 0; k<structTypes.length; k++) {
       solVisib.forEach(r => {
         if (getStateNameRegExp(structTypes[k], r).test(substrings[j])) {
-          structStates.push({ name: substrings[j].match(getStateNameRegExp(structTypes[k], r))[0].replace(' ', ''), type: structTypes[k]} )
+          structStates.push({ name: tidy(substrings[j].match(getStateNameRegExp(structTypes[k], r))[0]).replace(' ', ''), type: structTypes[k], line: j} )
+        } else if (getMappingStateNameRegExp(structTypes[k], r).test(substrings[j])) {
+          structStates.push({ name: substrings[j].match(getMappingStateNameRegExp(structTypes[k], r))[1], type: structTypes[k], line: j} )
         }
       })
 
@@ -107,15 +126,22 @@ function arrangeStructOverwrite(substrings: any) {
   // find overwrites of structs
   for (let i = 0; i<substrings.length; i++) {
     for (let k = 0; k<structStates.length; k++) {
-      if ((substrings[i].includes(`${structStates[k].name} =`) || substrings[i].includes(`${structStates[k].name}=`)) && !substrings[i].includes('.')) {
-        const lhs = structStates[k].name;
-        const rhs = substrings[i].replace(structStates[k].name, '').replace('=', '').replace(';', '').replace(' ', '');
-        let newLines = [];
-        structProps[structTypes.indexOf(structStates[k].type)].forEach(prop => {
-          newLines.push(`${lhs}.${prop} = ${rhs}.${prop};`);
-        });
-        newSubStrings.splice(i + offset, 1, ...newLines);
-        offset += newLines.length;
+      if (substrings[i].includes(`=`) &&
+        // remove anything inside brackets
+        !substrings[i].replace(/\s*\[.*?\]\s*/g, '').includes('.') &&
+        notDeclaration(substrings[i])
+      ) {
+        const [lhs, rhs] = substrings[i].split('=');
+        if (getLHSRegExp(structStates[k].name).test(lhs.replace(/\s*\[.*?\]\s*/g, ''))) {
+          // const lhs = structStates[k].name;
+          // const rhs = substrings[i].replace(structStates[k].name, '').replace('=', '').replace(';', '').replace(' ', '');
+          let newLines = [];
+          structProps[structTypes.indexOf(structStates[k].type)].forEach(prop => {
+            newLines.push(`${tidy(lhs)}.${prop} = ${tidy(rhs).replace(';', '')}.${prop};`);
+          });
+          newSubStrings.splice(i + offset, 1, ...newLines);
+          offset += newLines.length - 1;
+        }
       }
     }
   }

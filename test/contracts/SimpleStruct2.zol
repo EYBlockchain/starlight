@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 contract Receipt {
 
-  secret mapping (address => uint256) private total;
+  secret mapping (address => Rct) private total;
 
   struct Rct {
     uint256 amount;
@@ -14,7 +14,8 @@ contract Receipt {
   secret Rct public cmt;
 
   function add(secret Rct memory myrct) public {
-    total[msg.sender] += myrct.amount + myrct.tax;
+    unknown total[msg.sender].amount += myrct.amount;
+    unknown total[msg.sender].tax += myrct.tax;
     unknown cmt.amount += myrct.amount;
     unknown cmt.tax += myrct.tax;
   }

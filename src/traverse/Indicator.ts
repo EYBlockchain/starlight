@@ -202,6 +202,9 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   isStruct?: boolean;
   structProperties?: any;
 
+  isMapping?:boolean;
+  mappingKeys?: any;
+
   initialValue?: any;
 
   /** @param {NodePath} path the path of the localVariable for which we're creating an indicator
@@ -230,10 +233,36 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
 
     this.isParam = path.isInType('ParameterList');
 
+    if (path.isMappingIdentifier() || path.isArray()) {
+      this.isMapping = true;
+      this.mappingKeys = {};
+    }
     if (path.isStruct()) {
       this.isStruct = true;
       this.structProperties = {};
     }
+  }
+
+  addMappingKey(referencingPath: NodePath): MappingKey {
+    const keyNode = referencingPath.getMappingKeyIdentifier();
+    const keyPath = NodePath.getPath(keyNode);
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+
+    if (!['Identifier', 'MemberAccess', 'Literal'].includes(keyNode.nodeType)) {
+      throw new Error(
+        `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
+      );
+    }
+
+    // naming of the key within mappingKeys:
+    const keyName = this.scope.getMappingKeyName(referencingPath);
+
+    // add this mappingKey if it hasn't yet been added:
+    const mappingKeyExists = !!this.mappingKeys[keyName];
+    if (!mappingKeyExists)
+      this.mappingKeys[keyName] = new MappingKey(this, keyPath);
+
+    return this.mappingKeys[keyName];
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
@@ -241,7 +270,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getReferencedPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!this.structProperties[keyNode.memberName])
-      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath, true);
 
     return this.structProperties[keyNode.memberName];
   }
@@ -251,8 +280,10 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
-    if (this.isStruct) {
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
+    } else if (this.isMapping) {
+      this.addMappingKey(path).updateProperties(path);
     }
   }
 
@@ -400,7 +431,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
-    if (keyNode.nodeType !== 'Identifier') {
+    if (!['Identifier', 'MemberAccess', 'Literal'].includes(keyNode.nodeType)) {
       throw new Error(
         `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
       );
@@ -418,11 +449,15 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
+    // we DONT want to add a struct property if we have a mapping of a struct
+    // the mappingKey deals with that
+    if (this.isMapping && this.addMappingKey(referencingPath).structProperties)
+      return this.addMappingKey(referencingPath).addStructProperty(referencingPath);
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');
     if (!(this.structProperties[keyNode.memberName] instanceof MappingKey))
-      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath);
+      this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath, true);
 
     return this.structProperties[keyNode.memberName];
   }
@@ -432,7 +467,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   update(path: NodePath) {
     if (this.isMapping) {
       this.addMappingKey(path).updateProperties(path);
-    } else if (this.isStruct) {
+    } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
     } else {
       this.updateProperties(path);
@@ -471,7 +506,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (this.binding.isWhole && this.isModified && this.isSecret) {
       this.modifyingPaths.forEach(modPath => {
         // if not included, we add it
-        if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id)) this.addNullifyingPath(modPath);
+        if (!this.nullifyingPaths.some(p => p.node.id === modPath.node.id) && !modPath.node.reinitialisable) this.addNullifyingPath(modPath);
       });
     }
     this.isWhole ??= this.binding.isWhole;
@@ -525,7 +560,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       this.addMappingKey(path).accessedPaths.push(path);
     }
 
-    if (this.isStruct) {
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).isAccessed = true;
       this.addStructProperty(path).accessedPaths ??= [];
       this.addStructProperty(path).accessedPaths.push(path);
@@ -558,7 +593,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       !path.isDecremented &&
       (state.incrementedIdentifier.isUnknown ||
         state.incrementedIdentifier.baseExpression?.isUnknown ||
-        state.incrementedIdentifier.expression?.isUnknown)
+        state.incrementedIdentifier.expression?.isUnknown ||
+        state.incrementedIdentifier.expression?.baseExpression?.isUnknown)
     ) {
       this.isPartitioned = true;
       const reason = {
@@ -621,7 +657,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       } else if(!this.binding.initialisedInConstructor) {
         this.initialisationRequired = true;
         if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
-        if (this.isStruct) this.addStructProperty(path).initialisationRequired = true;
+        if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).initialisationRequired = true;
       }
 
       const { node } = path;
@@ -640,7 +676,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.nullifyingPaths.push(path);
     this.binding.addNullifyingPath(path);
     if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
-    if (this.isStruct) this.addStructProperty(path).addNullifyingPath(path);
+    if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).addNullifyingPath(path);
   }
 
   addBurningPath(path: NodePath) {
@@ -657,15 +693,14 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       for (const [, mappingKey] of mappingKeys) {
         mappingKey.prelimTraversalErrorChecks();
       }
-    }
-    if (this.isStruct) {
+    } else if (this.isStruct) {
       const structProperties = Object.entries(this.structProperties);
       for (const [name, mappingKey] of structProperties) {
         // we may have empty struct properties if they are never edited
         if (mappingKey instanceof MappingKey) {
           mappingKey.prelimTraversalErrorChecks();
         } else {
-          mappingKey.node= this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
+          mappingKey.node = this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
           logger.warn(
              `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
            );
