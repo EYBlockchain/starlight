@@ -214,7 +214,7 @@ function codeGenerator(node: any) {
     case 'MsgSender':
       return 'msg.sender';
 
-      case 'MsgSender':
+      case 'MsgValue':
         return 'msg.value';
 
     case 'MemberAccess': {
