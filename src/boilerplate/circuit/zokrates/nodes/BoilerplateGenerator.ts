@@ -36,7 +36,13 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
   for (const inc of stateVarIndicator.increments) {
-    if (inc.nodeType === 'IndexAccess') inc.name ??= `${inc.baseExpression.name}_${NodePath.getPath(inc).scope.getMappingKeyName(inc)}`;
+    if (inc.nodeType === 'IndexAccess') {
+      const mappingKeyName = NodePath.getPath(inc).scope.getMappingKeyName(inc);
+      if(mappingKeyName == 'msg')
+      inc.name??= `${inc.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${inc.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+      else
+      inc.name??= `${inc.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+    }
     if (inc.nodeType === 'MemberAccess') inc.name ??= `${inc.expression.name}.${inc.memberName}`;
     if (!inc.name) inc.name = inc.value;
 
@@ -54,7 +60,14 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     }
   }
   for (const dec of stateVarIndicator.decrements) {
-    if (dec.nodeType === 'IndexAccess') dec.name ??= `${dec.baseExpression.name}_${NodePath.getPath(dec).scope.getMappingKeyName(dec)}`;
+    if (dec.nodeType === 'IndexAccess') {
+      const mappingKeyName = NodePath.getPath(dec).scope.getMappingKeyName(dec);
+      if(mappingKeyName == 'msg')
+      dec.name??= `${dec.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${dec.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+      else
+      dec.name??= `${dec.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+      //  dec.name ??= `${dec.baseExpression.name}_${NodePath.getPath(dec).scope.getMappingKeyName(dec)}`;
+    }
     if (dec.nodeType === 'MemberAccess') dec.name ??= `${dec.expression.name}.${dec.memberName}`;
     if (!dec.name) dec.name = dec.value;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
