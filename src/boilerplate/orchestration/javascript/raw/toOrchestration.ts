@@ -401,6 +401,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.msgValueParam)
         lines.push(`
               \nconst msgValue = 1;`);
+              else
+              lines.push(`
+              \nconst msgValue = 0;`);  
       node.inputParameters.forEach((param: string) => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);

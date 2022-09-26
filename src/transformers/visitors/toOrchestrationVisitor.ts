@@ -178,7 +178,12 @@ const addPublicInput = (path: NodePath, state: any) => {
 
 const getIndexAccessName = (node: any) => {
   if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
-  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${(NodePath.getPath(node).scope.getMappingKeyName(node)).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+  if (node.nodeType == 'IndexAccess') {
+    const mappingKeyName = NodePath.getPath(node).scope.getMappingKeyName(node);
+    if(mappingKeyName == 'msg')
+      return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${node.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+    return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+  }
   return null;
 }
 /**
@@ -905,7 +910,8 @@ const visitor = {
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value', 'Value')
               .replace('.', 'dot')
           : indicator.name;
 
@@ -1026,7 +1032,8 @@ const visitor = {
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value', 'Value')
               .replace('.', 'dot')
           : indicator.name;
         // we add a general number statement after each whole state edit

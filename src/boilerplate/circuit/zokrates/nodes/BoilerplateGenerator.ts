@@ -151,9 +151,11 @@ class BoilerplateGenerator {
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
     if (indicators.isMapping) {
-      for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
+      for (let [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
         mappingKeyIndicator.isMapping = true;
         this.assignIndicators(mappingKeyIndicator);
+        if(mappingKeyName == 'msg')
+        mappingKeyName = mappingKeyName+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
         this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
         if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName = this.mappingKeyName.replace('.', 'dot');
 

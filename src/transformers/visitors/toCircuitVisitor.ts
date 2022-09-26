@@ -39,7 +39,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   ) {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
-      name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+      name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
     if (thisPath.containerName === 'indexExpression')
       name = binding.getMappingKeyName(thisPath);
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
@@ -549,7 +549,8 @@ const visitor = {
           ? referencedIndicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value','Value')
               .replace('.', 'dot')
           : referencedIndicator.name;
 
