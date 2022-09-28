@@ -165,25 +165,23 @@ const visitor = {
       const { node, parent, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
+      const joinImportStatementListNode = buildNode('ImportStatementList');
+      const joinFunctionListNode = buildNode('JoinCommitmentFunctionDefinition');
+
 
       const joinCommitmentsNode = buildNode('File', {
        fileName: `joinCommitments`,
         fileId: node.id,
-        nodes: [],
+        nodes: [joinImportStatementListNode, joinFunctionListNode],
       });
 
       // check for joinCommitments
       for(const [, indicator ] of Object.entries(indicators)){
         if((indicator instanceof StateVariableIndicator)
           && indicator.isPartitioned
-          && indicator.isNullified) {
+          && indicator.isNullified && !indicator.isStruct) {
             if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName)){
               parent._newASTPointer.push(joinCommitmentsNode);
-            if(indicator.isStruct)
-              state.joinCommitmentsNodes = cloneDeep(state.structNode);
-              state.joinCommitmentsNodes.nodeType = 'joinCommitments';
-              state.joinCommitmentsNodes.bpSection = 'statements';
-              joinCommitmentsNode.nodes.push(state.joinCommitmentsNodes);
             }
          }
       }

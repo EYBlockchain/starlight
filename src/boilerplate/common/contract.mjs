@@ -131,47 +131,65 @@ export async function registerKey(
   return publicKey;
 }
 
+function getStructInputCommitments(
+	value,
+	possibleCommitments
+) {
+	let possibleCommitmentsProp = [];
+	value.forEach((propValue, i) => {
+		let possibleCommitmentsTemp = [];
+		possibleCommitments.sort(
+			(preimageA, preimageB) =>
+				parseInt(Object.values(preimageB[1].value)[0], 10) -
+				parseInt(Object.values(preimageA[1].value)[0], 10)
+		);
+		if(possibleCommitmentsProp.length === 0){
+			if (
+					parseInt(Object.values(possibleCommitments[0][1].value)[i], 10) +
+						parseInt(Object.values(possibleCommitments[1][1].value)[i], 10) >
+					parseInt(propValue, 10)
+				) {
+					possibleCommitmentsProp.push([
+						possibleCommitments[0][0],
+						possibleCommitments[1][0],
+					]);
+				}
+		}
+		else {
+			possibleCommitmentsProp.forEach((commitment) => {
+				commitment.forEach((item) => {
+				 possibleCommitments.forEach((possibleCommit) => {
+					 if(item === possibleCommit[0]){
+						possibleCommitmentsTemp.push(possibleCommit)
+					 }
+				  });
+				})
+			})
+			if (
+					parseInt(Object.values(possibleCommitmentsTemp[0][1].value)[i], 10) +
+						parseInt(Object.values(possibleCommitmentsTemp[1][1].value)[i], 10) <
+					parseInt(propValue, 10)
+				) {
+					possibleCommitments.splice(0,2);
+				  possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
+			 }
+		}
+});
+return possibleCommitmentsProp;
+}
+
 export function getInputCommitments(publicKey, value, commitments, isStruct = false) {
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );
   if (isStruct) {
-    let possibleCommitmentsProp = [];
-    let isjoinCommitment = [];
-    value.forEach((propValue, i) => {
-      possibleCommitments.sort(
-        (preimageA, preimageB) =>
-          parseInt(Object.values(preimageB[1].value)[i], 10) - parseInt(Object.values(preimageA[1].value)[i], 10),
-      );
-      var commitmentsSum = new Array(value.length).fill(0);
-			for (var j = 0; j < possibleCommitments.length; j++) {
-				for (var k = 0; k < possibleCommitments.length; k++) {
-					if (possibleCommitments[j][k] && possibleCommitments[j][k].value)
-						commitmentsSum[i] =
-							commitmentsSum[i] + parseInt(Object.values(possibleCommitments[j][k].value)[i],10);
-				}
-			}
-      if (
-        parseInt(Object.values(possibleCommitments[0][1].value)[i], 10) +
-        parseInt(Object.values(possibleCommitments[1][1].value)[i], 10) >
-        parseInt(propValue, 10)
-      ) {
-        isjoinCommitment.push('false');
-        possibleCommitmentsProp.push([possibleCommitments[0][0], possibleCommitments[1][0]])
-      } else if(commitmentsSum[i] > parseInt(propValue, 10)){
-					isjoinCommitment.push('true');
-  				possibleCommitmentsProp.push([
-  					possibleCommitments[0][0],
-  					possibleCommitments[1][0],
-  				]);
-
- 		 }
-    });
-    const possibleCommitmentsSet = [...new Set(possibleCommitmentsProp.flat(Infinity).filter((item, index) => possibleCommitmentsProp.flat(Infinity).indexOf(item) !== index))]
-    if (possibleCommitmentsSet.length >= 2 && !isjoinCommitment.includes('true')) return [true,possibleCommitmentsSet[0],possibleCommitmentsSet[1]];
-		else if(possibleCommitmentsSet.length >= 2 && isjoinCommitment.includes('true')) return [false,possibleCommitmentsSet[0],possibleCommitmentsSet[1]];
+		let possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
+		if (
+			possibleCommitmentsProp.length > 0
+		)
+			return [possibleCommitmentsProp[0][0], possibleCommitmentsProp[0][1]];
 		return null;
-  }
+	}
   possibleCommitments.sort(
     (preimageA, preimageB) =>
       parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
@@ -311,7 +329,6 @@ const allInputs = [
 fromID,
 stateVarID,
 isMapping,
-size,
 secretKey.limbs(32, 8),
 secretKey.limbs(32, 8),
 oldCommitment_0_nullifier.integer,

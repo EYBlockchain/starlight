@@ -141,7 +141,8 @@ class BoilerplateGenerator {
 
               \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage, ${structProperties ? `true` : `false`})[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
               \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage, ${structProperties ? `true` : `false`})[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
-
+              \n let ${stateName}_witness_0 ;
+              \n let ${stateName}_witness_1 ;
               const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
               const ${stateName}_1_prevSalt = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].salt);
               const ${stateName}_0_prev = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].value);

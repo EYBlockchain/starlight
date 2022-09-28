@@ -14,7 +14,7 @@ def commitmentsSum<N>(field[N] a, field[N] b, field[N] result ) -> field[N] :
     endfor
 	return result
 
-def main<N>(\
+def main(\
 	private field fromId,\
 	private field stateVarId,\
 	private bool isMapping,\
@@ -22,9 +22,9 @@ def main<N>(\
 	private u32[8] oldCommitment_1_owner_secretKey,\
 	public field oldCommitment_0_nullifier,\
 	public field oldCommitment_1_nullifier,\
-	private field[N] oldCommitment_0_value,\
+	private field oldCommitment_0_value,\
 	private field oldCommitment_0_salt_field,\
-	private field[N] oldCommitment_1_value,\
+	private field oldCommitment_1_value,\
 	private field oldCommitment_1_salt_field,\
 	public field commitmentRoot,\
 	private field oldCommitment_0_membershipWitness_index,\
@@ -99,7 +99,7 @@ def main<N>(\
 
         field oldCommitment_0_commitment_field = poseidon([\
           oldCommitment_0_stateVarId_field,\
-          ...oldCommitment_0,\
+          oldCommitment_0,\
           oldCommitment_0_owner_publicKey_field,\
           oldCommitment_0_salt_field\
         ])
@@ -110,7 +110,7 @@ def main<N>(\
 
 		field oldCommitment_1_commitment_field = poseidon([\
           oldCommitment_1_stateVarId_field,\
-          ...oldCommitment_1,\
+          oldCommitment_1,\
           oldCommitment_1_owner_publicKey_field,\
           oldCommitment_1_salt_field\
         ])
@@ -145,14 +145,14 @@ def main<N>(\
         // prepare secret state 'newCommitment' for commitment
 
 
-      field[N] newCommitment_value_field = [0; N]
-	  newCommitment_value_field = commitmentsSum( oldCommitment_0, oldCommitment_1, newCommitment_value_field)
+
+	  field newCommitment_value_field = commitmentsSum( oldCommitment_0, oldCommitment_1, newCommitment_value_field)
 
         //  preimage check - newCommitment_commitment
 
         field newCommitment_commitment_check_field = poseidon([\
           newCommitment_stateVarId_field,\
-          ...newCommitment_value_field,\
+          newCommitment_value_field,\
           newCommitment_owner_publicKey_field,\
           newCommitment_salt_field\
         ])
