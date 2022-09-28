@@ -21,7 +21,7 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
     contractName,
     onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
   });
-  if (fnIndicator.oldCommitmentAccessRequired)
+  if (fnIndicator.oldCommitmentAccessRequired || fnIndicator.internalFunctionoldCommitmentAccessRequired)
     newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
   newNodes.readPreimageNode = buildNode('ReadPreimage', {
     contractName,

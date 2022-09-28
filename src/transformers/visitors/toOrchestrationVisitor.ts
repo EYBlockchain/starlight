@@ -304,39 +304,7 @@ const visitor = {
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
 
-      const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator) => {
-        const newNodes: any = {};
-        const contractName = `${parent.name}Shield`;
-        newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
-          contractName,
-          onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
-        });
-        if (fnIndicator.oldCommitmentAccessRequired || fnIndicator.internalFunctionoldCommitmentAccessRequired)
-          newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
-        newNodes.readPreimageNode = buildNode('ReadPreimage', {
-          contractName,
-        });
-        if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret ) {
-          newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
-            contractName,
-          });
-          newNodes.calculateNullifierNode = buildNode('CalculateNullifier');
-        }
-        if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
-          newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
-          newNodes.generateProofNode = buildNode('GenerateProof', {
-          circuitName: node.fileName,
-        });
-        newNodes.sendTransactionNode = buildNode('SendTransaction', {
-          functionName: node.fileName,
-          contractName,
-        });
-        newNodes.writePreimageNode = buildNode('WritePreimage', {
-          contractName,
-          onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
-        });
-        return newNodes;
-}
+
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
       for(const [, indicators ] of Object.entries(functionIndicator)){
@@ -373,7 +341,8 @@ const visitor = {
         functionIndicator.internalFunctionInteractsWithSecret) {
 
         const newNodes = initialiseOrchestrationBoilerplateNodes(
-          functionIndicator, 
+          functionIndicator,
+          path 
         );
 
         if (state.msgSenderParam) {
