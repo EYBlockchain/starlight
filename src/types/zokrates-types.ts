@@ -2,7 +2,7 @@
 import CircuitBP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerator.js';
 import { StateVariableIndicator } from '../traverse/Indicator.js';
 
-const generateBoilerplate = ({ indicators = [], bpSection }) => {
+const generateBoilerplate = ({ indicators, bpSection }) => {
   const bpArray = [];
   // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
   for (const indicatorObj of Object.values(indicators)) {
@@ -259,13 +259,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         CircuitArguments,
         circuitImport,
       };
-
-    }
-    case 'joinCommitments' : {
-      const {structProperties} = fields ;
-      return{
-        structProperties
-      };
     }
     case 'InternalFunctionBoilerplate':{
       const { name, internalFunctionInteractsWithSecret = false,circuitImport = false} = fields;
@@ -278,33 +271,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         circuitImport,
       };
 
-    }
-    case 'JoinCommitmentBoilerplate' : {
-      const {isStruct = false, structProperties} = fields;
-      return {
-        nodeType: 'Boilerplate',
-        bpSection: 'importStatements',
-        bpType: 'joinCommitments',
-        isStruct,
-        structProperties
-      }
-    }
-    case 'JoinCommitmentFunctionDefinition': {
-      const { body = buildNode('Block') } = fields;
-      return {
-        nodeType,
-        body,
-      }
-    }
-    case 'JoinFunctionBoilerplate' : {
-      const {isStruct = false, structProperties} = fields;
-      return {
-        nodeType: 'Boilerplate',
-        bpSection: 'statements',
-        bpType: 'joinCommitments',
-        isStruct,
-        structProperties
-      }
     }
     case 'Assert': {
       // A very specific zokrates nodeType, which is similar to a Solidity 'require' statement. It asserts a truth.

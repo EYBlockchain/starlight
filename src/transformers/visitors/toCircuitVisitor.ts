@@ -165,14 +165,12 @@ const visitor = {
       const { node, parent, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
-      const joinImportStatementListNode = buildNode('ImportStatementList');
-      const joinFunctionListNode = buildNode('JoinCommitmentFunctionDefinition');
 
 
       const joinCommitmentsNode = buildNode('File', {
        fileName: `joinCommitments`,
         fileId: node.id,
-        nodes: [joinImportStatementListNode, joinFunctionListNode],
+        nodes: [ ],
       });
 
       // check for joinCommitments
