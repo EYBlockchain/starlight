@@ -8,12 +8,6 @@ from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
 
-def commitmentsSum(field[N] a, field[N] b, field[N] result ) -> field[N] :
-	for u32 i in 0..N do
-        result[i] =  a[i] + b[i]
-    endfor
-	return result
-
 def main(\
 	private field fromId,\
 	private field stateVarId,\
@@ -146,8 +140,7 @@ def main(\
 
 
 
-	  field newCommitment_value_field = commitmentsSum( oldCommitment_0, oldCommitment_1, newCommitment_value_field)
-
+	  field newCommitment_value_field =  oldCommitment_0 + oldCommitment_1
         //  preimage check - newCommitment_commitment
 
         field newCommitment_commitment_check_field = poseidon([\
