@@ -501,9 +501,37 @@ sendTransaction = {
 integrationTestBoilerplate = {
   import(): string {
     return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
-    `},
+    `
+  },
+  encryption(): string {
+    return `
+    it("should recieve and decrypt messages", async () => {
+      try {
+        const { secretKey } = JSON.parse(
+          fs.readFileSync("/app/orchestration/common/db/key.json", "utf-8", (err) => {
+            console.log(err);
+          })
+        );
+        const plainText = decrypt(encryption.msgs, secretKey, encryption.key);
+        console.log('Decrypted plainText:');
+        console.log(plainText);
+        const salt = plainText[plainText.length - 1];
+        const commitmentSet = JSON.parse(
+          fs.readFileSync("/app/orchestration/common/db/preimage.json", "utf-8", (err) => {
+            console.log(err);
+          })
+        );
+        assert.equal(searchPartitionedCommitments(commitmentSet, { salt }), true);
+
+      } catch (err) {
+        logger.error(err);
+        process.exit(1);
+      }
+    });
+    `
+  },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport logger from './common/logger.mjs';\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { searchPartitionedCommitments } from "./common/contract.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -515,6 +543,7 @@ integrationTestBoilerplate = {
       */
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       let leafIndex;
+      let encryption = {};
       // eslint-disable-next-line func-names
        describe('CONTRACT_NAME', async function () {
         this.timeout(3660000);

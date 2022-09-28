@@ -304,12 +304,14 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         name,
         parameters = buildNode('ParameterList', fields),
         decrementsSecretState = false,
+        encryptionRequired = false,
       } = fields;
       return {
         nodeType,
         name,
         parameters,
         decrementsSecretState,
+        encryptionRequired,
       };
     }
     default:

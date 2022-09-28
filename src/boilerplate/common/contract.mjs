@@ -140,6 +140,35 @@ export async function registerKey(
   return publicKey;
 }
 
+// this fn is useful for checking decrypted values match some existing commitment
+// expecting search term in the form { key: value }
+export function searchPartitionedCommitments(commitmentSet, searchTerm) {
+  // for a mapping, we have commitments stored by:
+  // stateName.mappingKeyName.commitmentHash
+  let allCommitments = [];
+  const stateNames = Object.keys(commitmentSet);
+  stateNames.forEach((stateName) => {
+    if (Object.entries(commitmentSet[stateName])[0][1].salt) {
+      // isMapping = false;
+      allCommitments = allCommitments.concat(Object.values(commitmentSet[stateName]));
+    } else {
+      Object.keys(commitmentSet[stateName]).forEach(mappingKey => {
+        allCommitments = allCommitments.concat(
+          Object.values(commitmentSet[stateName][mappingKey]),
+        );
+      });
+    }
+  });
+  const [key, value] = Object.entries(searchTerm)[0];
+  let foundValue = false;
+  allCommitments.forEach(commitment => {
+    if (commitment[key] === generalise(value).integer) {
+			foundValue = true;
+		}
+  });
+  return foundValue;
+}
+
 export function getInputCommitments(publicKey, value, commitments, isStruct = false) {
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,

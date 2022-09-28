@@ -9,6 +9,8 @@ import web3 from './common/web3.mjs';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // initialises leafIndex so we can use it to test the merkle tree is working across tests
 let leafIndex;
+// initialises encryption to extract encrypted secret data and decrypt
+let encryption;
 /**
 Welcome to your zApp's integration test!
 Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -44,6 +46,12 @@ describe('FUNCTION_NAME', async function () {
           // prints the new leaves (commitments) added by this function call
           console.log(`Merkle tree event returnValues:`);
           console.log(tx.events.NewLeaves.returnValues);
+        }
+        if (tx.events.EncryptedData) {
+          encryption.msgs = tx.events.EncryptedData.returnValues[0];
+          encryption.key = tx.events.EncryptedData.returnValues[1];
+          console.log('EncryptedMsgs:');
+          console.log(tx.events.EncryptedData.returnValues);
         }
         await sleep(10);
       } catch (err) {
