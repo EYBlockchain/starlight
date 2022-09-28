@@ -327,9 +327,8 @@ class BoilerplateGenerator {
         \n`,
         `\nimport { getContractInstance, registerKey, getInputCommitments, joinCommitments } from './common/contract.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
-        `\nimport poseidonHash from './common/poseidon.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
-        `\nimport { decompressStarlightKey } from './common/number-theory.mjs';
+        `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,

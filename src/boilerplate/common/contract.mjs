@@ -5,8 +5,7 @@ import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 import { generateProof } from './zokrates.mjs';
-import poseidonHash from './poseidon.mjs';
-import { scalarMult, compressStarlightKey } from './number-theory.mjs';
+import { scalarMult, compressStarlightKey, poseidonHash } from './number-theory.mjs';
 
 const web3 = Web3.connection();
 const { generalise, GN } = pkg;
