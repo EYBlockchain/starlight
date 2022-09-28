@@ -955,8 +955,6 @@ const visitor = {
           });
           if (indicator.isStruct) newNode.declarations[0].isStruct = true;
 
-          if (indicator.isStruct) newNode.declarations[0].isStruct = true;
-
           if (accessedBeforeModification || path.isInSubScope()) {
             // we need to initialise an accessed state
             // or declare it outside of this subscope e.g. if statement
