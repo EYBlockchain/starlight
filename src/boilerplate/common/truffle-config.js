@@ -18,6 +18,8 @@
  *
  */
 
+const { config } = require("yargs");
+
 // const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
@@ -46,6 +48,15 @@ module.exports = {
       host: 'ganache', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
+    },
+
+    // Remote web3
+    development_geth: {
+      url: config.web3.url,
+      network_id: 1337, // Any network (default: none)
+      gas: 90000000,
+      websockets: true,
+      networkCheckTimeout: 1000000000,
     },
     // localhost: {
     //   host: 'localhost', // Localhost (default: none)

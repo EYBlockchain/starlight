@@ -8,7 +8,6 @@ services:
     depends_on:
       - zokrates
       - timber
-      - ganache
     volumes:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
@@ -21,9 +20,9 @@ services:
       - ./test/:/app/test:delegated
       - ./config/:/app/config:delegated
     environment:
+      LOG_LEVEL: info
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
-      LOG_LEVEL: info
     networks:
       - zapp_network
 
@@ -38,7 +37,7 @@ services:
     environment:
       PROVING_SCHEME: 'g16'
     ports:
-      - '8080:80'
+      - '9080:80'
     networks:
       - zapp_network
 
@@ -47,7 +46,6 @@ services:
     restart: on-failure
     depends_on:
       - timber-mongo
-      - ganache
     volumes:
       - ./config/:/app/config
       - ./contracts/:/app/contracts:consistent
@@ -83,29 +81,20 @@ services:
     networks:
       - zapp_network
 
-  ganache:
-    image: trufflesuite/ganache-cli:latest
-    command: ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=100000000 --deterministic
-    ports:
-      - '8545:8545'
-    networks:
-      - zapp_network
-
   deployer:
     build:
       context: .
       dockerfile: Dockerfile.deployer
-    depends_on:
-      - ganache
+    environment:
+      NETWORK: 'development_ganache'
+      BLOCKCHAIN_HOST: ws://ganache
+      BLOCKCHAIN_PORT: 8545
     volumes:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
       - ./migrations/:/app/migrations/
       - ./truffle-config.js:/app/truffle-config.js
       - ./orchestration/:/app/orchestration:delegated
-    environment:
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
     networks:
       - zapp_network
 

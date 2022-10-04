@@ -1,0 +1,22 @@
+version: '3.5'
+
+services:
+  zapp:
+    environment:
+      BLOCKCHAIN_HOST: ws://${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: 8546
+      DEFAULT_ACCOUNT: ${DEFAULT_ACCOUNT}  # Account used to deploy contracts
+
+  deployer:
+    environment:
+      BLOCKCHAIN_HOST: ws://${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: 8546
+      GETH_DEPLOYMENT: 'yes'
+      NETWORK: 'development_geth'         # Network to deploy from truffle_config.js
+      DEFAULT_ACCOUNT: ${DEFAULT_ACCOUNT} # Account used to deploy contracts
+
+  timber:
+    environment:
+      BLOCKCHAIN_HOST: ws://${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: 8546
+

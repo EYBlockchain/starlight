@@ -1,21 +1,70 @@
 #!/bin/sh
 set -e
 
-docker-compose -f docker-compose.zapp.yml down -v
+usage()
+{
+  echo "Usage:"
+  echo "  -l or --localhost; for a ganache simulator running on localhost"
+  echo "  -g or --geth;  to connect to an already running geth node" 
+  echo "  -m or --mongo; o connect to an already running mongodb" 
+}
+
+# select a Ganache or remove web3 client
+if [ -z "$1" ]; then
+  usage
+  exit 1
+fi
+
+FILE="-f docker-compose.zapp.yml"
+while [ -n "$1" ]; do
+  case $1 in
+      -l  | --localhost )           FILE="${FILE} -f docker-compose.zapp.ganache.yml";
+                                    WEB3=ganache
+                                    ;;
+      -g  | --geth )                FILE="${FILE} -f docker-compose.zapp.geth.yml"
+                                    if [ -z "${BLOCKCHAIN_WS_HOST}}" ]; then
+                                      echo "ENV BLOCKCHAIN_WS_HOST is undefined. Exiting..."
+                                      exit 1
+                                    fi
+                                    ;;
+      -m  | --mongo )               FILE="${FILE} -f docker-compose.zapp.mongo.yml"
+                                    if [ -z "${MONGO_URL}}" ]; then
+                                      echo "ENV MONGO_URLB is undefined. Exiting..."
+                                      exit 1
+                                    fi
+                                    ;;
+      -h  | --help )                usage
+                                    ;;
+      * )                           usage
+                              exit 1
+    esac
+  shift
+done
+
+# FILE should always be set. 
+if [ -z "$FILE" ]; then
+  usage
+  exit 1
+fi
+
+docker-compose ${FILE} down -v --remove-orphans
 
 sleep 5
 
-docker-compose -f docker-compose.zapp.yml up -d ganache
-docker-compose -f docker-compose.zapp.yml up -d zokrates
+if [ "$WEB3" ]; then
+  docker-compose ${FILE} up -d ganache
+fi
+
+docker-compose ${FILE} up -d zokrates
 
 sleep 5
 
-docker-compose -f docker-compose.zapp.yml up -d deployer
+docker-compose ${FILE} up -d deployer
 
-sleep 15
+sleep 65
 
-docker-compose -f docker-compose.zapp.yml up -d timber
+docker-compose ${FILE} up -d timber
 
 sleep 5
 
-docker-compose -f docker-compose.zapp.yml up -d zapp
+docker-compose ${FILE} up -d zapp

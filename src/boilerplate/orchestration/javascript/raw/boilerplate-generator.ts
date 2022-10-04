@@ -536,6 +536,11 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
+      readPath: 'src/boilerplate/common/bin/down',
+      writePath: '/bin/down',
+      generic: true,
+    },
+    {
       readPath: 'src/boilerplate/common/config/default.js',
       writePath: '/config/default.js',
       generic: false,
@@ -553,6 +558,21 @@ zappFilesBoilerplate = () => {
     {
       readPath: 'src/boilerplate/common/boilerplate-docker-compose.yml',
       writePath: './docker-compose.zapp.yml',
+      generic: true,
+    },
+    {
+      readPath: 'src/boilerplate/common/boilerplate-docker-compose.ganache.yml',
+      writePath: './docker-compose.zapp.ganache.yml',
+      generic: true,
+    },
+    {
+      readPath: 'src/boilerplate/common/boilerplate-docker-compose.geth.yml',
+      writePath: './docker-compose.zapp.geth.yml',
+      generic: true,
+    },
+    {
+      readPath: 'src/boilerplate/common/boilerplate-docker-compose.mongo.yml',
+      writePath: './docker-compose.zapp.mongo.yml',
       generic: true,
     },
     {

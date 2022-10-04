@@ -2,8 +2,10 @@
   "name": "zapp",
   "version": "0.0.1",
   "scripts": {
-    "test": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
-    "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'"
+    "test": "./bin/startup -l && docker-compose -f docker-compose.zapp.yml -f docker-compose.zapp.geth.yml -f docker-compose.zapp.mongo.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
+    "test-nightfall": "./bin/startup -g -m && docker-compose -f docker-compose.zapp.yml -f docker-compose.zapp.geth.yml -f docker-compose.zapp.mongo.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
+    "retest": "docker-compose -f docker-compose.zapp.yml -f docker-compose.zapp.ganache.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
+    "retest-nightfall": "docker-compose -f docker-compose.zapp.yml -f docker-compose.zapp.geth.yml -f docker-compose.zapp.mongo.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'"
   },
   "keywords": [
     "private contract",
@@ -25,6 +27,7 @@
     "enquirer": "^2.3.6",
     "general-number": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
+    "mongodb": "^4.7.0",
     "solc": "0.8.0",
     "truffle": "5.1.65",
     "web3": "^1.2.11",

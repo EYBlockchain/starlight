@@ -1,0 +1,7 @@
+version: '3.5'
+
+services:
+  zapp:
+    environment:
+      MONGO_URL: mongodb://${MONGO_URL}:27017
+

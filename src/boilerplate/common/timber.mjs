@@ -2,6 +2,14 @@ import axios from 'axios';
 import config from 'config';
 import { getContractAddress } from './contract.mjs';
 import logger from './logger.mjs';
+import mongo from "mongodb";
+import fs from "fs";
+
+const { ZAPP_DB, MONGO_URL } = config;
+
+const { MongoClient } = mongo;
+const connection = {};
+
 // rough draft of timber service - we may not need treeids but kept in just in case
 const { url } = config.merkleTree;
 export const startEventFilter = async (contractName, address) => {
@@ -158,9 +166,74 @@ export const getMembershipWitness = async (contractName, leafValue) => {
     throw new Error(error);
   }
 };
+
+/////
+
+export const connect = async (url) => {
+	if (connection[url]) return connection[url];
+	// Check if we are connecting to MongoDb or DocumentDb
+	const { MONGO_CONNECTION_STRING = "" } = process.env;
+	if (MONGO_CONNECTION_STRING !== "") {
+		const client = await new MongoClient(`${MONGO_CONNECTION_STRING}`, {
+			useUnifiedTopology: true,
+		});
+		connection[url] = await client.connect();
+	} else {
+		const client = await new MongoClient(url, { useUnifiedTopology: true });
+	    connection[url] = await client.connect();
+	}
+	return connection[url];
+};
+
+export const disconnect = async (url) => {
+	connection[url].close();
+	delete connection[url];
+};
+
+/**
+ * Function to save a commit, used in a challenge commit-reveal process
+ */
+export async function saveCommitment(dbFile, preimage) {
+	// Store in file
+	fs.writeFileSync(dbFile, JSON.stringify(preimage, null, 4));
+
+	const connection = await connect(MONGO_URL);
+	const dbMongo = connection.db(ZAPP_DB);
+
+	const collectionName = Object.keys(preimage)[0];
+    const ids = Object.keys(preimage[collectionName]);
+	logger.info("Connect to mongodb", MONGO_URL);
+
+	for (let id of ids){
+	  // unreconized format. Return
+	  const update = { $set: { ...preimage[collectionName][id] } };
+
+	  dbMongo
+		.collection(collectionName)
+		.updateOne({ _id: id }, update, { upsert: true });
+	}
+	
+}
+
+export function readCommitment(db) {
+	let preimage = {};
+	if (fs.existsSync(db)) {
+		preimage = JSON.parse(
+			fs.readFileSync(db, "utf-8", (err) => {
+				console.log(err);
+			})
+		);
+	}
+	return preimage;
+}
+
 export default {
-  getLeafIndex,
-  getRoot,
-  getSiblingPath,
-  getMembershipWitness,
+	getLeafIndex,
+	getRoot,
+	getSiblingPath,
+	getMembershipWitness,
+	connect,
+	disconnect,
+	saveCommitment,
+	readCommitment,
 };

@@ -1,0 +1,10 @@
+version: '3.5'
+
+services:
+  ganache:
+    image: trufflesuite/ganache-cli:latest
+    command: ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=100000000 --deterministic
+    ports:
+      - '8545:8545'
+    networks:
+      - zapp_network

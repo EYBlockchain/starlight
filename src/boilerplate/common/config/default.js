@@ -14,6 +14,8 @@ module.exports = {
   NODE_HASHLENGTH: 32, // expected length of nodes' values up the merkle tree, in bytes
   POLLING_FREQUENCY: 6000, // milliseconds
   FILTER_GENESIS_BLOCK_NUMBER: 0, // blockNumber
+  ZAPP_DB: 'zapp_db', // MongoDb 
+  MONGO_URL: process.env.MONGO_URL,
 
   tolerances: {
     LAG_BEHIND_CURRENT_BLOCK: 5, // add warnings for use of tree data which lags further behind the current block (e.g. due to anonymity concerns)
@@ -57,10 +59,10 @@ module.exports = {
   web3: {
     host: process.env.BLOCKCHAIN_HOST,
     port: process.env.BLOCKCHAIN_PORT,
-    url: `${process.env.BLOCKCHAIN_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+    url: `${process.env.BLOCKCHAIN_HOST}:${process.env.BLOCKCHAIN_PORT}` || 'ws://ganache:8545',
 
     options: {
-      defaultAccount: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1',
+      defaultAccount: process.env.DEFAULT_ACCOUNT || '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1',
       defaultBlock: '0', // e.g. the genesis block our blockchain
       defaultGas: 90000000,
       defaultGasPrice: 20000000000,
