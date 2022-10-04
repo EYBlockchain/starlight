@@ -52,7 +52,7 @@ module.exports = {
 
     // Remote web3
     development_geth: {
-      url: config.web3.url,
+      url: `${process.env.BLOCKCHAIN_HOST}:${process.env.BLOCKCHAIN_PORT}`,
       network_id: 1337, // Any network (default: none)
       gas: 90000000,
       websockets: true,
