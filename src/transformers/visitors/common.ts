@@ -21,7 +21,7 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
     contractName,
     onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
   });
-  if (fnIndicator.oldCommitmentAccessRequired)
+  if (fnIndicator.oldCommitmentAccessRequired || fnIndicator.internalFunctionoldCommitmentAccessRequired)
     newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
   newNodes.readPreimageNode = buildNode('ReadPreimage', {
     contractName,
@@ -65,8 +65,9 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
      isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
  }
  if(node.expression.nodeType === 'Identifier') {
-  const functionReferncedNode = scope.getReferencedNode(node.expression);
-  const params = functionReferncedNode.parameters.parameters;
+  const functionReferncedNode = scope.getReferencedPath(node.expression);
+  const params = functionReferncedNode.node.parameters.parameters;
+  thisPath.scope.indicators.internalFunctionoldCommitmentAccessRequired = functionReferncedNode.scope.indicators.oldCommitmentAccessRequired;
   if((params.length !== 0) && (params.some(node => (node.isSecret || node._newASTPointer?.interactsWithSecret))))
   {
     thisState.internalFunctionInteractsWithSecret = true;

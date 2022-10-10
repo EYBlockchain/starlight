@@ -304,6 +304,7 @@ const visitor = {
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
 
+
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
       for(const [, indicators ] of Object.entries(functionIndicator)){
@@ -340,7 +341,8 @@ const visitor = {
         functionIndicator.internalFunctionInteractsWithSecret) {
 
         const newNodes = initialiseOrchestrationBoilerplateNodes(
-          functionIndicator, path
+          functionIndicator,
+          path 
         );
 
         if (state.msgSenderParam) {
@@ -1284,8 +1286,6 @@ const visitor = {
       });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
-
-
     },
   },
 };
