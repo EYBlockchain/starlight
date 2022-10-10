@@ -48,10 +48,17 @@ describe('FUNCTION_NAME', async function () {
           console.log(tx.events.NewLeaves.returnValues);
         }
         if (tx.events.EncryptedData) {
-          encryption.msgs = tx.events.EncryptedData.returnValues[0];
-          encryption.key = tx.events.EncryptedData.returnValues[1];
-          console.log('EncryptedMsgs:');
-          console.log(tx.events.EncryptedData.returnValues);
+          if (tx.events.EncryptedData.length) {
+            encryption.msgs = tx.events.EncryptedData[0].returnValues[0];
+            encryption.key = tx.events.EncryptedData[0].returnValues[1];
+            console.log("EncryptedMsgs:");
+            console.log(tx.events.EncryptedData[0].returnValues[0]);
+          } else {
+            encryption.msgs = tx.events.EncryptedData.returnValues[0];
+            encryption.key = tx.events.EncryptedData.returnValues[1];
+            console.log("EncryptedMsgs:");
+            console.log(tx.events.EncryptedData.returnValues);
+          }
         }
         await sleep(10);
       } catch (err) {
