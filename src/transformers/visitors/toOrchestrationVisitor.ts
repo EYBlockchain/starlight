@@ -341,7 +341,8 @@ const visitor = {
         functionIndicator.internalFunctionInteractsWithSecret) {
 
         const newNodes = initialiseOrchestrationBoilerplateNodes(
-          functionIndicator, path
+          functionIndicator,
+          path 
         );
 
         if (state.msgSenderParam) {
@@ -1283,8 +1284,6 @@ const visitor = {
       });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
-
-
     },
   },
 };

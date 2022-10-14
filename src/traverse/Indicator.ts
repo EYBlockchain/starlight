@@ -76,6 +76,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
   interactsWithPublic?: boolean;
   internalFunctionInteractsWithSecret?: boolean;
   internalFunctionModifiesSecretState?: boolean;
+  internalFunctionoldCommitmentAccessRequired?: boolean;
   onChainKeyRegistry?: boolean;
 
   constructor(scope: Scope) {
