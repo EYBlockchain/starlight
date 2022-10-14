@@ -148,13 +148,13 @@ export default function codeGenerator(node: any, options: any = {}): any {
       case 'IfStatement': {
         if(node.falseBody.length)
         return `if (${codeGenerator(node.condition)}) {
-            ${node.trueBody.statements.flatMap(codeGenerator).join('\n')}
+            ${node.trueBody.flatMap(codeGenerator).join('\n')}
           } else {
-            ${node.falseBody.statements.flatMap(codeGenerator).join('\n')}
+            ${node.falseBody.flatMap(codeGenerator).join('\n')}
           }`
           else
           return `if (${codeGenerator(node.condition)}) {
-              ${node.trueBody.statements.flatMap(codeGenerator).join('\n')}
+              ${node.trueBody.flatMap(codeGenerator).join('\n')}
             }`
         }
 
