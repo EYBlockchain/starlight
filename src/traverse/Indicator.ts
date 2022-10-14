@@ -522,6 +522,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.owner ??= this.binding.owner;
     this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     this.parentIndicator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+
+    const functionType = this.scope.path.node.kind;
+     if (functionType === 'constructor') {
+         this.onChainKeyRegistry = false;
+         this.parentIndicator.onChainKeyRegistry = false;
+     }
     if (this.isMapping) {
       this.mappingOwnershipType = this.owner?.mappingOwnershipType;
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);

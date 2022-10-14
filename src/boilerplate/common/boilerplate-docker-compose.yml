@@ -84,8 +84,8 @@ services:
       - zapp_network
 
   ganache:
-    image: trufflesuite/ganache-cli:latest
-    command: ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=100000000 --deterministic
+    image: trufflesuite/ganache:v7.4.4
+    command: --accounts=10 --gasLimit=100000000 --deterministic
     ports:
       - '8545:8545'
     networks:
