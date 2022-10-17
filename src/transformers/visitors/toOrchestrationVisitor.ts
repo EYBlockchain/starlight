@@ -304,6 +304,7 @@ const visitor = {
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
 
+
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
       for(const [, indicators ] of Object.entries(functionIndicator)){
@@ -341,7 +342,8 @@ const visitor = {
         functionIndicator.internalFunctionInteractsWithSecret) {
 
         const newNodes = initialiseOrchestrationBoilerplateNodes(
-          functionIndicator, path
+          functionIndicator,
+          path 
         );
 
         if (state.msgSenderParam) {
@@ -923,7 +925,6 @@ const visitor = {
           (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) ||
           (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole);
 
-
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
@@ -954,7 +955,6 @@ const visitor = {
             ],
             interactsWithSecret: true,
           });
-
           if (indicator.isStruct) newNode.declarations[0].isStruct = true;
 
           if (accessedBeforeModification || path.isInSubScope()) {
@@ -1022,7 +1022,7 @@ const visitor = {
               .replace('.', 'dot')
           : indicator.name;
         // we add a general number statement after each whole state edit
-        if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
+        if (node._newASTPointer.interactsWithSecret)  path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
           buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name }),
               operator: '=',
@@ -1285,8 +1285,6 @@ const visitor = {
       });
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
-
-
     },
   },
 };
