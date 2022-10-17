@@ -200,10 +200,16 @@ function codeGenerator(node: any) {
           else
           ${codeGenerator(node.falseBody.statements[0].expression)}`;
 
-    case 'ForStatement':
-            return `for (${codeGenerator(node.initializationExpression)}; ${codeGenerator(node.condition)}; ${codeGenerator(node.loopExpression)}) {
-              ${codeGenerator(node.body)}
+    case 'ForStatement': {
+      const initializationExpression = codeGenerator(node.initializationExpression);
+      const condition = codeGenerator(node.condition);
+      const loopExpression = codeGenerator(node.loopExpression).replaceAll(";", "");
+      const body = codeGenerator(node.body.statements.statements);
+
+            return `for (${initializationExpression} ${condition}; ${loopExpression}) {
+              ${body}
                   }`
+                }
 
     case 'ElementaryTypeNameExpression':
       return codeGenerator(node.typeName);

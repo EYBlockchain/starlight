@@ -455,7 +455,7 @@ export default {
   ForStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      if (path.scope.containsSecret) {
+      if (node.containsSecret) {
         path.traversePathsFast(findCustomInputsVisitor, state);
         state.skipSubNodes=true;
         return;
@@ -544,10 +544,9 @@ export default {
   ExpressionStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-
       const newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
