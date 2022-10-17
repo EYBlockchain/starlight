@@ -54,6 +54,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 };
 
 const addStructDefinition = (path: NodePath) => {
+  const { node, parent, scope } = path;
+  const { indicators } = scope;
   const structDef = path.getStructDeclaration(path.node);
   const structNode = buildNode('StructDefinition', {
     name: structDef.name,
@@ -862,14 +864,26 @@ let interactsWithSecret = false ;
         state.skipSubNodes = true;
       }
       if(path.isInternalFunctionCall()) {
+
     const args = node.arguments;
+    state.isAddStructDefinition = true;
+    path.getAncestorOfType('FunctionDefinition').node.parameters.parameters.some(para => {
+      for (const arg of args) {
+        if((arg.typeDescriptions.typeIdentifier === para.typeDescriptions.typeIdentifier)
+         && arg.typeDescriptions.typeIdentifier.includes('_struct') && para.typeDescriptions.typeIdentifier.includes('_struct'))
+          state.isAddStructDefinition = false}})
+
+
+
     let isCircuit = false;
     state.newStateArray ??= {};
     const name = node.expression.name;
     state.newStateArray[name] ??= [];
     for (const arg of args) {
-      if(arg.expression?.typeDescriptions.typeIdentifier.includes('_struct'))
-        state.newStateArray[name] =  args.map(arg => ({name: arg.expression.name, memberName: arg.memberName} ));
+      if(arg.typeDescriptions.typeIdentifier.includes('_struct')){
+        state.newStateArray[name] =  args.map(arg => ({name: arg.name, memberName: arg.memberName} ));
+        state.structName = (arg.typeDescriptions.typeString.split(' '))[1].split('.')[1];
+      }
       else
        state.newStateArray[name] =  args.map(arg => ({name: arg.name}));
       }
@@ -886,7 +900,7 @@ let interactsWithSecret = false ;
       const internalfnDefIndicators = functionReferncedNode.scope.indicators;
       const startNodePath = path.getAncestorOfType('ContractDefinition')
       startNodePath.node.nodes.forEach(node => {
-        if(node.nodeType === 'VariableDeclaration'){
+        if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
           if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
             if(callingfnDefIndicators[node.id]) {
              if(callingfnDefIndicators[node.id].isModified) {
@@ -912,6 +926,7 @@ let interactsWithSecret = false ;
      else
        state.circuitImport.push('false');
 
+
      const newNode = buildNode('InternalFunctionCall', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
@@ -922,6 +937,8 @@ let interactsWithSecret = false ;
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        circuitImport: isCircuit,
+       structImport: !state.isAddStructDefinition,
+       structName: state.structName,
       });
       node._newASTPointer = newNode ;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);

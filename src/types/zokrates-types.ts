@@ -262,7 +262,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
 
     }
     case 'InternalFunctionBoilerplate':{
-      const { name, internalFunctionInteractsWithSecret = false,circuitImport = false} = fields;
+      const { name, internalFunctionInteractsWithSecret = false,circuitImport = false,structImport = false, structName} = fields;
       return{
         nodeType: 'Boilerplate',
         bpSection: 'importStatements',
@@ -270,6 +270,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         name,
         internalFunctionInteractsWithSecret,
         circuitImport,
+        structImport,
+        structName,
       };
 
     }
