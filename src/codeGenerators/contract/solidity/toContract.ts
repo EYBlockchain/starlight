@@ -146,6 +146,9 @@ function codeGenerator(node: any) {
 
       return ` `;
 
+    case 'Break': 
+      return `break;`;
+
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${
@@ -195,16 +198,36 @@ function codeGenerator(node: any) {
 
 
     case 'IfStatement':
-      return `if (${codeGenerator(node.condition)})
-          ${codeGenerator(node.trueBody.statements[0].expression)}
+      {
+        let trueStatements: any = ``;
+        let falseStatements: any= ``;
+        let initialStatements: any= codeGenerator(node.condition);
+        for (let i =0; i<node.trueBody.statements.length; i++) {
+          trueStatements+= `
+          ${codeGenerator(node.trueBody.statements[i])}`
+        }
+        if(node.falseBody.statements) {
+        for (let j =0; j<node.falseBody.statements.length; j++) {
+          falseStatements+= `
+          ${codeGenerator(node.falseBody.statements[j])}`
+          }
+        }
+        if(node.falseBody.statements)
+        return `if (${initialStatements})
+          ${trueStatements}
           else
-          ${codeGenerator(node.falseBody.statements[0].expression)}`;
+          ${falseStatements}`;
+          else
+          return `if (${initialStatements})
+          ${trueStatements}`;
+
+      }
 
     case 'ForStatement': {
       const initializationExpression = codeGenerator(node.initializationExpression);
       const condition = codeGenerator(node.condition);
       const loopExpression = codeGenerator(node.loopExpression).replaceAll(";", "");
-      const body = codeGenerator(node.body.statements.statements);
+      const body = codeGenerator(node.body);
 
             return `for (${initializationExpression} ${condition}; ${loopExpression}) {
               ${body}
