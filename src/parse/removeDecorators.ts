@@ -93,7 +93,7 @@ function arrangeStructOverwrite(substrings: any) {
 
   // fill array of struct types
   for (let i=0; i<substrings.length; i++) {
-    if (substrings[i].startsWith('struct')) {
+    if (substrings[i].startsWith('struct ')) {
       structTypes.push(substrings[i].match(getTypeNameRegExp)[0].replace(' ', ''));
       structProps[structTypes.length - 1] = [];
       let j = i;
