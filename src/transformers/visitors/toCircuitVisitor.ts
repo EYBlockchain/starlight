@@ -760,7 +760,7 @@ let interactsWithSecret = false ;
 
       const newNode = buildNode(
         node.nodeType,
-        { name },
+        { name, type: node.typeDescriptions?.typeString },
       );
       if (path.isStruct(node)) addStructDefinition(path);
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.

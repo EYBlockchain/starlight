@@ -185,7 +185,7 @@ function codeGenerator(node: any) {
       let initialStatements: any= ``;
       initialStatements+= `
         // if statements start , copies over left expression variable to temporary variable
-        field ${codeGenerator(node.condition.leftExpression)}_temp = ${codeGenerator(node.condition.leftExpression)}`;
+        ${node.condition.leftExpression.typeName?.name && node.condition.leftExpression.typeName?.name !== 'uint256' ? node.condition.leftExpression.typeName.name : 'field'} ${codeGenerator(node.condition.leftExpression)}_temp = ${codeGenerator(node.condition.leftExpression)}`;
       node.condition.leftExpression.name+= '_temp';
       for (let i =0; i<node.trueBody.length; i++) {
         trueStatements+= `
