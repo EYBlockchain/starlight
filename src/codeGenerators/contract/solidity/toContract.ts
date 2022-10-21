@@ -102,7 +102,7 @@ function codeGenerator(node: any) {
     case 'VariableDeclaration': {
       if (node.isSecret) return '';
       let { typeString } = node.typeDescriptions;
-      if(!node.declarationType)
+      if (!node.declarationType && !!node._newASTPointer?.declarationType)
       node.declarationType = node._newASTPointer.declarationType;
       // we crop 'struct ContractName.structname' to just 'structname'
       if (typeString.includes('struct ')) typeString = typeString.substring(typeString.indexOf(".") + 1);

@@ -574,7 +574,7 @@ EmitStatement: {
       const { node, parent } = path;
       const newNode = buildNode('EmitStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
   },
 },
 
