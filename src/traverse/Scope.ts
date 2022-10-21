@@ -284,6 +284,7 @@ export class Scope {
       case 'ModifierDefinition':
       case 'ForStatement':
       case 'Break':
+      case 'Continue':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an

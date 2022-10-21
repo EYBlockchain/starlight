@@ -57,6 +57,7 @@ export class Binding {
       case 'EventDefinition':
       case 'EmitStatement':
       case 'Break':
+      case 'Continue':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);

@@ -1246,17 +1246,27 @@ const visitor = {
   },
 
   IfStatement: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
-      const newNode = buildNode(node.nodeType);
+    enter(path: NodePath , state: any) {
+      const { node, parent, } = path;
+      if(!node.containsSecret) {
+        state.skipSubNodes = true;
+        return;
+      }
+      const newNode = buildNode(node.nodeType , {
+        interactsWithSecret: node.containsSecret
+      });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
   },
 
   ForStatement: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      if(!node.containsSecret) {
+        state.skipSubNodes = true;
+        return;
+      }
       const newNode = buildNode(node.nodeType, {
         interactsWithSecret: node.containsSecret
       });

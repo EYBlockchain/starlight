@@ -102,6 +102,8 @@ function codeGenerator(node: any) {
     case 'VariableDeclaration': {
       if (node.isSecret) return '';
       let { typeString } = node.typeDescriptions;
+      if(!node.declarationType)
+      node.declarationType = node._newASTPointer.declarationType;
       // we crop 'struct ContractName.structname' to just 'structname'
       if (typeString.includes('struct ')) typeString = typeString.substring(typeString.indexOf(".") + 1);
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
@@ -126,7 +128,9 @@ function codeGenerator(node: any) {
     case 'VariableDeclarationStatement': {
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
-      const initialValue = codeGenerator(node.initialValue);
+      let initialValue;
+       if(node.initialValue)
+       initialValue = codeGenerator(node.initialValue);
       if (!initialValue || initialValue === '') return `${declarations};`;
       return `
           ${declarations} = ${initialValue};`;
@@ -149,6 +153,8 @@ function codeGenerator(node: any) {
     case 'Break': 
       return `break;`;
 
+    case 'Continue':
+      return 'continue;';
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${
@@ -212,14 +218,20 @@ function codeGenerator(node: any) {
           ${codeGenerator(node.falseBody.statements[j])}`
           }
         }
-        if(node.falseBody.statements)
-        return `if (${initialStatements})
+        if(node.falseBody.condition) {
+          falseStatements+= `${codeGenerator(node.falseBody)}`;
+        }
+        if(falseStatements!==``)
+        return `if (${initialStatements}) {
           ${trueStatements}
+        }
+          else {
+          ${falseStatements} 
+          }`;
           else
-          ${falseStatements}`;
-          else
-          return `if (${initialStatements})
-          ${trueStatements}`;
+          return `if (${initialStatements}) {
+          ${trueStatements} 
+        }`;
 
       }
 
