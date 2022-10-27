@@ -205,6 +205,16 @@ function codeGenerator(node: any) {
               ${codeGenerator(node.body)}
                   }`
 
+    case 'WhileStatement':
+      return `while(${codeGenerator(node.condition)}) {
+        ${codeGenerator(node.body)}
+      }`
+
+      case 'DoWhileStatement':
+        return ` do { 
+          ${codeGenerator(node.body)}
+        } while(${codeGenerator(node.condition)});`
+
     case 'ElementaryTypeNameExpression':
       return codeGenerator(node.typeName);
 

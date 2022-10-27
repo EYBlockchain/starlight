@@ -74,7 +74,7 @@ class ContractBoilerplateGenerator {
        if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
           isjoinCommitmentsFunction?.push('true');
       }
-      const {
+      let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = scope;
 
@@ -82,7 +82,11 @@ class ContractBoilerplateGenerator {
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
       let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
-      if (isjoinCommitmentsFunction.includes('true')) functionNames.push('joinCommitments')
+      if (isjoinCommitmentsFunction.includes('true')) { 
+        functionNames.push('joinCommitments')
+        nullifiersRequired = true;
+        oldCommitmentAccessRequired = true;
+      }
       return {
         functionNames,
         nullifiersRequired,
@@ -97,7 +101,7 @@ class ContractBoilerplateGenerator {
     registerZKPPublicKey() {},
 
     verify(circuitParams: Object ) {
-      const {
+      let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
       } = this.scope;
       let isjoinCommitmentsFunction : string[]=[];
@@ -160,6 +164,11 @@ class ContractBoilerplateGenerator {
 
     }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
+      if (isjoinCommitmentsFunction.includes('true')) {
+        nullifiersRequired = true;
+        oldCommitmentAccessRequired = true;
+      }
+
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};
     },
 

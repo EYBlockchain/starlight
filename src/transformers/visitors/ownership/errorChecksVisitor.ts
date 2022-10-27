@@ -68,6 +68,20 @@ export default {
     }
   },
 
+  WhileStatement: {
+    exit(path: NodePath) {
+      if(path.node.containsSecret)
+      throw new TODOError(`WhileStatement contains secret states , which isn't supported.`, path.node);
+    }
+  },
+
+  DoWhileStatement: {
+    exit(path: NodePath) {
+      if(path.node.containsSecret)
+      throw new TODOError(`DoWhileStatement contains secret states , which isn't supported.`, path.node);
+    }
+  },
+
   ForStatement: {
     exit(path: NodePath) {
       const { initializationExpression, loopExpression, condition, body } = path.node;

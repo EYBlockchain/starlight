@@ -60,12 +60,14 @@ export default {
     },
   },
 
-  WhileStatement: {
-    enter(node: any) {
-      throw new ZKPError(
-        'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
-        node,
-      );
-    },
-  },
+  // WhileStatement: {
+  //   enter(node: any) {
+  //     console.log(' while node ' , node.body.statements);
+  //     if(node.interactsWithSecret)
+  //     throw new ZKPError(
+  //       'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
+  //       node,
+  //     );
+  //   },
+  // },
 };

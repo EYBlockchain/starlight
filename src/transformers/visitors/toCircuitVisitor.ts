@@ -234,6 +234,18 @@ const visitor = {
     }
   },
 
+  WhileStatement: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
+  DoWhileStatement: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;

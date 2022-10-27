@@ -573,6 +573,24 @@ EmitStatement: {
   },
 },
 
+WhileStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('WhileStatement');
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+  },
+},
+
+DoWhileStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('DoWhileStatement');
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+  },
+},
+
   VariableDeclaration: {
     enter(path: NodePath, state : any) {
       const { node, parent, scope } = path;
