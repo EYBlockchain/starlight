@@ -12,6 +12,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['baseName'];
     case 'FunctionDefinition':
       return ['parameters', 'returnParameters', 'body'];
+    case 'Conditional':
+      return ['condition', 'trueExpression', 'falseExpression'];
     case 'ParameterList':
       return ['parameters'];
       case 'EventDefinition':
@@ -369,6 +371,17 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       };
     }
+
+    case 'Conditional': {
+      const { condition = {} , trueExpression= {} , falseExpression= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueExpression,
+        falseExpression,
+      };
+    }
+
     case 'ForStatement': {
       const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
       return {

@@ -763,6 +763,19 @@ let interactsWithSecret = false ;
     },
   },
 
+  Conditional: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        falseExpression: [],
+        trueExpression: []
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
   ForStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;

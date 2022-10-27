@@ -199,6 +199,9 @@ if(returnStatement.length === 0){
       }
       return initialStatements + trueStatements + falseStatements;
 
+      case 'Conditional':
+        return `(${codeGenerator(node.condition)}) ? ${codeGenerator(node.trueExpression[0])} : ${codeGenerator(node.falseExpression[0])}`
+
       case 'ForStatement':
         return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} do
         ${codeGenerator(node.body)}

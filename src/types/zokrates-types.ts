@@ -175,6 +175,15 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       };
     }
+    case 'Conditional': {
+      const { condition = {} , trueExpression= {} , falseExpression= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueExpression,
+        falseExpression,
+      };
+    }
     case 'ForStatement': {
       const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
       return {

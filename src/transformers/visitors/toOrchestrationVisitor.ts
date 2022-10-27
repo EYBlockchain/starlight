@@ -1252,6 +1252,15 @@ const visitor = {
     },
   },
 
+  Conditional: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType);
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
   ForStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;

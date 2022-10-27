@@ -158,6 +158,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
             }`
         }
 
+        case 'Conditional': {
+            return ` ${codeGenerator(node.condition)} ?
+            ${node.trueExpression.flatMap(codeGenerator).join('\n')} : ${node.falseExpression.flatMap(codeGenerator).join('\n')}`
+        }
+
       case 'ForStatement': {
         if(node.interactsWithSecret) {
           node.initializationExpression.interactsWithSecret = true;
