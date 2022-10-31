@@ -173,6 +173,10 @@ function getStructInputCommitments(
 					possibleCommitments.splice(0,2);
 				  possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
 			 }
+       else {
+         logger.warn('Enough Commitments dont exists to use.' )
+         return null;
+       }
 		}
 });
 return possibleCommitmentsProp;
