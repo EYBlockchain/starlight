@@ -396,7 +396,7 @@ FunctionCall: {
        const internalfnDefIndicators = functionReferncedNode.scope.indicators;
        const startNodePath = path.getAncestorOfType('ContractDefinition')
        startNodePath.node.nodes.forEach(node => {
-         if(node.nodeType === 'VariableDeclaration'){
+         if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
            if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
              if(callingfnDefIndicators[node.id]) {
              if(callingfnDefIndicators[node.id].isModified) {

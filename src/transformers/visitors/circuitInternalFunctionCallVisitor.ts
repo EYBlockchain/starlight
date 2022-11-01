@@ -76,7 +76,7 @@ const internalCallVisitor = {
                  };
                  case 'oldCommitmentPreimage' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_value`) ;
-                  internalFncParameters.push(`${node.name}_oldCommitment_salt_field`);
+                  internalFncParameters.push(`${node.name}_oldCommitment_salt`);
                   break;
                  };
                 case 'oldCommitmentExistence' :{
@@ -88,8 +88,8 @@ const internalCallVisitor = {
                   break;
                  };
                 case 'newCommitment' : {
-                  internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey_field`) ;
-                  internalFncParameters.push(`${node.name}_newCommitment_salt_field`) ;
+                  internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
+                  internalFncParameters.push(`${node.name}_newCommitment_salt`) ;
                   internalFncParameters.push(`${node.name}_newCommitment_commitment`);
                   break;
                  };
@@ -106,8 +106,13 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
+
             node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index].name){
+                file.nodes.forEach(childNode => {
+                  if(childNode.nodeType === 'StructDefinition' && !state.isAddStructDefinition)
+                   file.nodes.splice(file.nodes.indexOf(childNode),1);
+                })
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
@@ -137,12 +142,12 @@ const internalCallVisitor = {
 
                    }
                  }
-
                  })
                }
 
              })
            }
+
           else if(state.circuitImport[index] === 'false'){
             let newExpressionList = [];
             let isPartitioned = false
@@ -207,8 +212,8 @@ const internalCallVisitor = {
                         callingFncbpType = node.bpType;
                       }
                     })
-                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName === 'FunctionDefinition')
-                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])]
+                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition')
+                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])];
                     else{
                       childNode.body.statements.forEach(node => {
                         if(node.nodeType === state.callingFncName[index].parent)

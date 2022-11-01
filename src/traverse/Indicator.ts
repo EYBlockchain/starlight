@@ -14,6 +14,7 @@ export class ContractDefinitionIndicator {
   oldCommitmentAccessRequired: boolean;
   nullifiersRequired: boolean;
   newCommitmentsRequired: boolean;
+  encryptionRequired?: boolean;
   initialisationRequired?: boolean;
   containsAccessedOnlyState?: boolean;
   constructor() {
@@ -76,6 +77,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
   interactsWithPublic?: boolean;
   internalFunctionInteractsWithSecret?: boolean;
   internalFunctionModifiesSecretState?: boolean;
+  internalFunctionoldCommitmentAccessRequired?: boolean;
   onChainKeyRegistry?: boolean;
 
   constructor(scope: Scope) {
@@ -89,6 +91,12 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       // These Indicator properties are used to construct import statements & boilerplate for the shield contract AST:
       this.interactsWithSecret = true;
       this.zkSnarkVerificationRequired = true;
+    }
+    if (path.node.typeDescriptions.typeIdentifier.includes(`_internal_`)) {
+        const functionReferncedNode = path.scope.getReferencedNode(path.node);
+        const params = functionReferncedNode.parameters.parameters;
+        if (params.some(node => node.isSecret))
+            this.internalFunctionInteractsWithSecret = true;
     }
   }
 
@@ -521,6 +529,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.owner ??= this.binding.owner;
     this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     this.parentIndicator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
+    const functionType = this.scope.path.node.kind;
+    if (functionType === 'constructor') {
+        this.onChainKeyRegistry = false;
+        this.parentIndicator.onChainKeyRegistry = false;
+    }
     if (this.isMapping) {
       this.mappingOwnershipType = this.owner?.mappingOwnershipType;
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
@@ -733,6 +746,21 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
     }
+  }
+
+  updateEncryption() {
+    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned) return;
+    if (this.isMapping) {
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
+        mappingKey.updateEncryption()
+      }
+      return;
+    }
+    if (this.isNullified) return;
+    this.encryptionRequired = true;
+    this.parentIndicator.encryptionRequired = true;
+    this.parentIndicator.parentIndicator.encryptionRequired = true;
   }
 
   updateNewCommitmentsRequired() {

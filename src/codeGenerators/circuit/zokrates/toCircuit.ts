@@ -40,40 +40,34 @@ function codeGenerator(node: any) {
           if(param.bpType === 'newCommitment')
           returnName.push(param.name);
         });
-      node.returnParameters.parameters.forEach( (node) => {
-        if(node.typeName.name === 'bool')
-          returnStatement.push(`${node.name}`);
-        else {
-
-        if( node.isPrivate === true){
-         returnName.forEach( (name, index) => {
-          if(name.includes(node.name))
-         returnStatement.push( `${returnName[index]}_newCommitment_commitment`);
-         })
-        }
-        }
+        node.returnParameters.parameters.forEach((node) => {
+          if (node.typeName.name === 'bool')
+            returnStatement.push(`${node.name}`);
+          else if (node.typeName.name.includes('EncryptedMsgs'))
+            returnStatement.push( `${node.name}_0_cipherText`); // TODO test always 0
+          else if (node.isPrivate === true){
+              returnName.forEach( (name, index) => {
+                if(name.includes(node.name))
+                  returnStatement.push( `${returnName[index]}_newCommitment_commitment`);
+              });
+          }
         });
-    }
+      }
 
-    functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `
-    returnStatement.forEach( para => {
-       if(para.includes('true') || para.includes('false')) {
-         returnType.push('bool') ;
-        } else {
-           returnType.push('field') ;
-        }
-    })
-if(returnStatement.length === 0){
-  returnStatement.push('true');
-  returnType.push('bool') ;
-}
+      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
+      node.returnParameters.parameters.forEach((node) => {
+          returnType.push(node.typeName.name);
+      });
+      if(returnStatement.length === 0){
+        returnStatement.push('true');
+        returnType.push('bool') ;
+      }
 
       return `${functionSignature}(${returnType}):
 
         ${body}
 
-         return ${returnStatement}
-        `;
+         return ${returnStatement}`;
     }
 
     case 'StructDefinition': {
@@ -99,6 +93,10 @@ if(returnStatement.length === 0){
               linesToDelete.push(paramList[j]);
           } else if (slicedParamList[i].replace('_oldCommitment_value', '') === slicedParamList[j]) {
             linesToDelete.push(paramList[j]);
+          }
+          if (`${slicedParamList[i]}_point` === slicedParamList[j].replace('[2]', '')) {
+            // if we have public key in the form of a point, we can compress it inside the circuit - no need for two pub key inputs
+            linesToDelete.push(paramList[i]);
           }
         }
       }
