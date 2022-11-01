@@ -49,7 +49,7 @@ jobs:
       - name: run zappify
         run: |
           npm ci && ./bin/start
-          zappify -i test/contracts/Assign-public-admin.zol -o temp-zapps
+          zappify -i test/contracts/User-Friendly-tests/Assign-public-admin.zol -o temp-zapps
 
       - name: replace zokrates image for actions test
         uses: jacobtomlinson/gha-find-replace@v2
