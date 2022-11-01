@@ -183,7 +183,25 @@ const visitor = {
           && !indicator.isStruct) {
             if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
               parent._newASTPointer.push(joinCommitmentsNode);
-         }
+        }
+        if(indicator instanceof StateVariableIndicator && indicator.encryptionRequired) {
+          const num = indicator.isStruct ? indicators.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
+          if (indicator.isMapping && indicator.mappingKeys) {
+            for(const [, mappingKey ] of Object.entries(indicator.mappingKeys)) {
+              if (mappingKey.encryptionRequired)
+                newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+                  name: `${indicator.name}_${mappingKey.returnKeyName(mappingKey.keyPath.node)}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
+                  type: `EncryptedMsgs<${num}>`,
+                }));
+            };
+          } else {
+            newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+              name: indicator.name,
+              type: `EncryptedMsgs<${num}>`,
+            }));
+          }
+        }
+
       }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
@@ -648,11 +666,11 @@ let interactsWithSecret = false ;
         interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
 
         // check for internal function call if the parameter passed in the function call interacts with secret or not
-        if(refPath.parentPath.node.kind === 'functionCall' && refPath.parentPath.node.expression.name != 'eventFunction'){
+        if(refPath.parentPath.isInternalFunctionCall()){
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
              let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
-             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
+             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key]?.interactsWithSecret
             }
           })
         }

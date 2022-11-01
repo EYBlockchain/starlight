@@ -333,6 +333,7 @@ const visitor = {
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
       thisIntegrationTestFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
+      thisIntegrationTestFunction.encryptionRequired = functionIndicator.encryptionRequired;
 
       if (
         ((functionIndicator.newCommitmentsRequired ||

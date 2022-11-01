@@ -96,6 +96,12 @@ const prepareIntegrationTest = (node: any) => {
       fnboilerplate = fnboilerplate.replace(toRemove, `\n});`);
     }
 
+    // test encryption
+    if (fn.encryptionRequired) {
+      const indexToInsert = fnboilerplate.split(`it('should update`);
+      fnboilerplate = indexToInsert[0] + '\n' + genericTestFile.encryption() + '\n' + `it('should update`+ indexToInsert[1];
+    }
+
     // remove merkle tree test
     if (removeMerkleTreeTest) {
       // regex: matches everything between 'it('should update the merkle tree'' and the first '});'
@@ -113,7 +119,7 @@ const prepareIntegrationTest = (node: any) => {
     outputTestFile = `${fnimport}\n${outputTestFile}\n${fnboilerplate}`;
   });
   // add linting and config
-  const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\n`;
+  const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
   outputTestFile = `${preprefix}\n${outputTestFile}\n });\n`;
   return outputTestFile;
 };
