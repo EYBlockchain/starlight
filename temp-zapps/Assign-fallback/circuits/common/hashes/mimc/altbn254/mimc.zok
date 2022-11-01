@@ -1,0 +1,13 @@
+// the mimc function, used as the basis of hashing rounds
+
+// we use an exponent of 7 and 91 rounds
+
+from "./mimc-constants.zok" import main as constants
+
+def main(field x, field k)->(field):
+  field[91] c = constants()
+  for u32 i in 0..91 do
+    field t = x + c[i] + k
+    x = t**7 // t^7 because 7th power is bijective in this field
+  endfor
+  return x + k

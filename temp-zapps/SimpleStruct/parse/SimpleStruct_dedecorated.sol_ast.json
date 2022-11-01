@@ -1,0 +1,628 @@
+{
+    "absolutePath": "input",
+    "exportedSymbols": {
+        "Receipt": [
+            54
+        ]
+    },
+    "id": 55,
+    "license": "CC0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+        {
+            "id": 1,
+            "literals": [
+                "solidity",
+                "^",
+                "0.8",
+                ".0"
+            ],
+            "nodeType": "PragmaDirective",
+            "src": "35:23:0"
+        },
+        {
+            "abstract": false,
+            "baseContracts": [],
+            "contractDependencies": [],
+            "contractKind": "contract",
+            "fullyImplemented": true,
+            "id": 54,
+            "linearizedBaseContracts": [
+                54
+            ],
+            "name": "Receipt",
+            "nodeType": "ContractDefinition",
+            "nodes": [
+                {
+                    "constant": false,
+                    "id": 6,
+                    "mutability": "mutable",
+                    "name": "total",
+                    "nodeType": "VariableDeclaration",
+                    "scope": 54,
+                    "src": "84:38:0",
+                    "stateVariable": true,
+                    "storageLocation": "default",
+                    "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Rct_$11_storage_$",
+                        "typeString": "mapping(address => struct Receipt.Rct)"
+                    },
+                    "typeName": {
+                        "id": 5,
+                        "keyType": {
+                            "id": 2,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "93:7:0",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                            }
+                        },
+                        "nodeType": "Mapping",
+                        "src": "84:24:0",
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Rct_$11_storage_$",
+                            "typeString": "mapping(address => struct Receipt.Rct)"
+                        },
+                        "valueType": {
+                            "id": 4,
+                            "nodeType": "UserDefinedTypeName",
+                            "pathNode": {
+                                "id": 3,
+                                "name": "Rct",
+                                "nodeType": "IdentifierPath",
+                                "referencedDeclaration": 11,
+                                "src": "104:3:0"
+                            },
+                            "referencedDeclaration": 11,
+                            "src": "104:3:0",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_Rct_$11_storage_ptr",
+                                "typeString": "struct Receipt.Rct"
+                            }
+                        }
+                    },
+                    "visibility": "private"
+                },
+                {
+                    "canonicalName": "Receipt.Rct",
+                    "id": 11,
+                    "members": [
+                        {
+                            "constant": false,
+                            "id": 8,
+                            "mutability": "mutable",
+                            "name": "amount",
+                            "nodeType": "VariableDeclaration",
+                            "scope": 11,
+                            "src": "141:14:0",
+                            "stateVariable": false,
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "id": 7,
+                                "name": "uint256",
+                                "nodeType": "ElementaryTypeName",
+                                "src": "141:7:0",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "visibility": "internal"
+                        },
+                        {
+                            "constant": false,
+                            "id": 10,
+                            "mutability": "mutable",
+                            "name": "tax",
+                            "nodeType": "VariableDeclaration",
+                            "scope": 11,
+                            "src": "158:11:0",
+                            "stateVariable": false,
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "id": 9,
+                                "name": "uint256",
+                                "nodeType": "ElementaryTypeName",
+                                "src": "158:7:0",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "visibility": "internal"
+                        }
+                    ],
+                    "name": "Rct",
+                    "nodeType": "StructDefinition",
+                    "scope": 54,
+                    "src": "127:46:0",
+                    "visibility": "public"
+                },
+                {
+                    "constant": false,
+                    "functionSelector": "d49f76b0",
+                    "id": 14,
+                    "mutability": "mutable",
+                    "name": "cmt",
+                    "nodeType": "VariableDeclaration",
+                    "scope": 54,
+                    "src": "177:14:0",
+                    "stateVariable": true,
+                    "storageLocation": "default",
+                    "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Rct_$11_storage",
+                        "typeString": "struct Receipt.Rct"
+                    },
+                    "typeName": {
+                        "id": 13,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                            "id": 12,
+                            "name": "Rct",
+                            "nodeType": "IdentifierPath",
+                            "referencedDeclaration": 11,
+                            "src": "177:3:0"
+                        },
+                        "referencedDeclaration": 11,
+                        "src": "177:3:0",
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Rct_$11_storage_ptr",
+                            "typeString": "struct Receipt.Rct"
+                        }
+                    },
+                    "visibility": "public"
+                },
+                {
+                    "body": {
+                        "id": 52,
+                        "nodeType": "Block",
+                        "src": "234:136:0",
+                        "statements": [
+                            {
+                                "expression": {
+                                    "id": 27,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "expression": {
+                                            "baseExpression": {
+                                                "id": 20,
+                                                "name": "total",
+                                                "nodeType": "Identifier",
+                                                "overloadedDeclarations": [],
+                                                "referencedDeclaration": 6,
+                                                "src": "237:5:0",
+                                                "typeDescriptions": {
+                                                    "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Rct_$11_storage_$",
+                                                    "typeString": "mapping(address => struct Receipt.Rct storage ref)"
+                                                }
+                                            },
+                                            "id": 23,
+                                            "indexExpression": {
+                                                "expression": {
+                                                    "id": 21,
+                                                    "name": "msg",
+                                                    "nodeType": "Identifier",
+                                                    "overloadedDeclarations": [],
+                                                    "referencedDeclaration": 4294967281,
+                                                    "src": "243:3:0",
+                                                    "typeDescriptions": {
+                                                        "typeIdentifier": "t_magic_message",
+                                                        "typeString": "msg"
+                                                    }
+                                                },
+                                                "id": 22,
+                                                "isConstant": false,
+                                                "isLValue": false,
+                                                "isPure": false,
+                                                "lValueRequested": false,
+                                                "memberName": "sender",
+                                                "nodeType": "MemberAccess",
+                                                "src": "243:10:0",
+                                                "typeDescriptions": {
+                                                    "typeIdentifier": "t_address",
+                                                    "typeString": "address"
+                                                }
+                                            },
+                                            "isConstant": false,
+                                            "isLValue": true,
+                                            "isPure": false,
+                                            "lValueRequested": false,
+                                            "nodeType": "IndexAccess",
+                                            "src": "237:17:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_storage",
+                                                "typeString": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "id": 24,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": true,
+                                        "memberName": "amount",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 8,
+                                        "src": "237:24:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "rightHandSide": {
+                                        "expression": {
+                                            "id": 25,
+                                            "name": "myrct",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 17,
+                                            "src": "265:5:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_memory_ptr",
+                                                "typeString": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "id": 26,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "memberName": "amount",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 8,
+                                        "src": "265:12:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "src": "237:40:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "id": 28,
+                                "nodeType": "ExpressionStatement",
+                                "src": "237:40:0"
+                            },
+                            {
+                                "expression": {
+                                    "id": 36,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "expression": {
+                                            "baseExpression": {
+                                                "id": 29,
+                                                "name": "total",
+                                                "nodeType": "Identifier",
+                                                "overloadedDeclarations": [],
+                                                "referencedDeclaration": 6,
+                                                "src": "280:5:0",
+                                                "typeDescriptions": {
+                                                    "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Rct_$11_storage_$",
+                                                    "typeString": "mapping(address => struct Receipt.Rct storage ref)"
+                                                }
+                                            },
+                                            "id": 32,
+                                            "indexExpression": {
+                                                "expression": {
+                                                    "id": 30,
+                                                    "name": "msg",
+                                                    "nodeType": "Identifier",
+                                                    "overloadedDeclarations": [],
+                                                    "referencedDeclaration": 4294967281,
+                                                    "src": "286:3:0",
+                                                    "typeDescriptions": {
+                                                        "typeIdentifier": "t_magic_message",
+                                                        "typeString": "msg"
+                                                    }
+                                                },
+                                                "id": 31,
+                                                "isConstant": false,
+                                                "isLValue": false,
+                                                "isPure": false,
+                                                "lValueRequested": false,
+                                                "memberName": "sender",
+                                                "nodeType": "MemberAccess",
+                                                "src": "286:10:0",
+                                                "typeDescriptions": {
+                                                    "typeIdentifier": "t_address",
+                                                    "typeString": "address"
+                                                }
+                                            },
+                                            "isConstant": false,
+                                            "isLValue": true,
+                                            "isPure": false,
+                                            "lValueRequested": false,
+                                            "nodeType": "IndexAccess",
+                                            "src": "280:17:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_storage",
+                                                "typeString": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "id": 33,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": true,
+                                        "memberName": "tax",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 10,
+                                        "src": "280:21:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "rightHandSide": {
+                                        "expression": {
+                                            "id": 34,
+                                            "name": "myrct",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 17,
+                                            "src": "305:5:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_memory_ptr",
+                                                "typeString": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "id": 35,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "memberName": "tax",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 10,
+                                        "src": "305:9:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "src": "280:34:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "id": 37,
+                                "nodeType": "ExpressionStatement",
+                                "src": "280:34:0"
+                            },
+                            {
+                                "expression": {
+                                    "id": 43,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "expression": {
+                                            "id": 38,
+                                            "name": "cmt",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 14,
+                                            "src": "317:3:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_storage",
+                                                "typeString": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "id": 40,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": true,
+                                        "memberName": "amount",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 8,
+                                        "src": "317:10:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "rightHandSide": {
+                                        "expression": {
+                                            "id": 41,
+                                            "name": "myrct",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 17,
+                                            "src": "331:5:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_memory_ptr",
+                                                "typeString": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "id": 42,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "memberName": "amount",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 8,
+                                        "src": "331:12:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "src": "317:26:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "id": 44,
+                                "nodeType": "ExpressionStatement",
+                                "src": "317:26:0"
+                            },
+                            {
+                                "expression": {
+                                    "id": 50,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "expression": {
+                                            "id": 45,
+                                            "name": "cmt",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 14,
+                                            "src": "346:3:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_storage",
+                                                "typeString": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "id": 47,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": true,
+                                        "memberName": "tax",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 10,
+                                        "src": "346:7:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "rightHandSide": {
+                                        "expression": {
+                                            "id": 48,
+                                            "name": "myrct",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 17,
+                                            "src": "357:5:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_Rct_$11_memory_ptr",
+                                                "typeString": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "id": 49,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "memberName": "tax",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 10,
+                                        "src": "357:9:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "src": "346:20:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "id": 51,
+                                "nodeType": "ExpressionStatement",
+                                "src": "346:20:0"
+                            }
+                        ]
+                    },
+                    "functionSelector": "8985855d",
+                    "id": 53,
+                    "implemented": true,
+                    "kind": "function",
+                    "modifiers": [],
+                    "name": "add",
+                    "nodeType": "FunctionDefinition",
+                    "parameters": {
+                        "id": 18,
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "constant": false,
+                                "id": 17,
+                                "mutability": "mutable",
+                                "name": "myrct",
+                                "nodeType": "VariableDeclaration",
+                                "scope": 53,
+                                "src": "209:16:0",
+                                "stateVariable": false,
+                                "storageLocation": "memory",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_Rct_$11_memory_ptr",
+                                    "typeString": "struct Receipt.Rct"
+                                },
+                                "typeName": {
+                                    "id": 16,
+                                    "nodeType": "UserDefinedTypeName",
+                                    "pathNode": {
+                                        "id": 15,
+                                        "name": "Rct",
+                                        "nodeType": "IdentifierPath",
+                                        "referencedDeclaration": 11,
+                                        "src": "209:3:0"
+                                    },
+                                    "referencedDeclaration": 11,
+                                    "src": "209:3:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_Rct_$11_storage_ptr",
+                                        "typeString": "struct Receipt.Rct"
+                                    }
+                                },
+                                "visibility": "internal"
+                            }
+                        ],
+                        "src": "208:18:0"
+                    },
+                    "returnParameters": {
+                        "id": 19,
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "src": "234:0:0"
+                    },
+                    "scope": 54,
+                    "src": "196:174:0",
+                    "stateMutability": "nonpayable",
+                    "virtual": false,
+                    "visibility": "public"
+                }
+            ],
+            "scope": 55,
+            "src": "62:311:0"
+        }
+    ],
+    "src": "35:340:0"
+}

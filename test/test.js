@@ -7,9 +7,28 @@ import mkdirs from '../bin/mkdirs.mjs';
 import zappify from '../built/index.js';
 import logger from "../built/utils/logger.js";
 
-var files = fs.readdirSync('./test/contracts/')
-let options = {}
+let files =  [] ;
 
+function getFiles(dir) {
+
+    // get all 'files' in this directory
+    var all = fs.readdirSync(dir);
+
+    // process each checking directories and saving files
+    return all.map(file => {
+        // am I a directory?
+        if (fs.statSync(`${dir}/${file}`).isDirectory()) {
+            // recursively scan me for my files
+            return getFiles(`${dir}/${file}`);
+        }
+        // WARNING! I could be something else here!!!
+        return `${dir}/${file}`;     // file name (see warning)
+    });
+}
+
+files = getFiles('./test/contracts').flat(Infinity);
+console.log(files);
+let options = {}
 
 describe("AST testing", function () {
 
@@ -17,10 +36,10 @@ describe("AST testing", function () {
     it("zappifies each contract", function () {
       this.timeout(100000);
       files.forEach((file) => {
-        logger.info('zappifying', file);
-        options.inputFilePath = './test/contracts/'+file;
-        options.modifyAST = 'n';
         options.inputFileName = path.parse(options.inputFilePath).name;
+        logger.info('zappifying', options.inputFileName);
+        options.inputFilePath = file;
+        options.modifyAST = 'n';
         // commander converts 'zapp-name' to 'zappName'
         options.zappName = options.inputFileName;
         options.outputDirPath = `./temp-zapps/${options.zappName}`;
@@ -35,7 +54,7 @@ describe("AST testing", function () {
   });
 
   let chosenFile = files[Math.floor(Math.random() * files.length)]
-  const inputFilePath = './test/contracts/'+chosenFile;
+  const inputFilePath = chosenFile;
   const modifyAST = 'n';
   const inputFileName = path.parse(inputFilePath).name;
   // commander converts 'zapp-name' to 'zappName'
@@ -46,7 +65,7 @@ describe("AST testing", function () {
   const contractsDirPath = `${outputDirPath}/contracts`;
   const orchestrationDirPath = `${outputDirPath}/orchestration`;
 
-  logger.info('Testing', chosenFile);
+  logger.info('Testing', inputFileName);
 
   options = {
     zappName,

@@ -1,0 +1,624 @@
+{
+    "absolutePath": "input",
+    "exportedSymbols": {
+        "Assign": [
+            54
+        ]
+    },
+    "id": 55,
+    "license": "CC0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+        {
+            "id": 1,
+            "literals": [
+                "solidity",
+                "^",
+                "0.8",
+                ".0"
+            ],
+            "nodeType": "PragmaDirective",
+            "src": "35:23:0"
+        },
+        {
+            "abstract": false,
+            "baseContracts": [],
+            "contractDependencies": [],
+            "contractKind": "contract",
+            "fullyImplemented": true,
+            "id": 54,
+            "linearizedBaseContracts": [
+                54
+            ],
+            "name": "Assign",
+            "nodeType": "ContractDefinition",
+            "nodes": [
+                {
+                    "constant": false,
+                    "id": 3,
+                    "mutability": "mutable",
+                    "name": "a",
+                    "nodeType": "VariableDeclaration",
+                    "scope": 54,
+                    "src": "83:17:0",
+                    "stateVariable": true,
+                    "storageLocation": "default",
+                    "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                    },
+                    "typeName": {
+                        "id": 2,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "83:7:0",
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                        }
+                    },
+                    "visibility": "private",
+                    "isSecret": true
+                },
+                {
+                    "constant": false,
+                    "id": 5,
+                    "mutability": "mutable",
+                    "name": "b",
+                    "nodeType": "VariableDeclaration",
+                    "scope": 54,
+                    "src": "103:17:0",
+                    "stateVariable": true,
+                    "storageLocation": "default",
+                    "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                    },
+                    "typeName": {
+                        "id": 4,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "103:7:0",
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                        }
+                    },
+                    "visibility": "private",
+                    "isSecret": true
+                },
+                {
+                    "canonicalName": "Assign.MyStruct",
+                    "id": 10,
+                    "members": [
+                        {
+                            "constant": false,
+                            "id": 7,
+                            "mutability": "mutable",
+                            "name": "prop1",
+                            "nodeType": "VariableDeclaration",
+                            "scope": 10,
+                            "src": "148:13:0",
+                            "stateVariable": false,
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "id": 6,
+                                "name": "uint256",
+                                "nodeType": "ElementaryTypeName",
+                                "src": "148:7:0",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "visibility": "internal"
+                        },
+                        {
+                            "constant": false,
+                            "id": 9,
+                            "mutability": "mutable",
+                            "name": "prop2",
+                            "nodeType": "VariableDeclaration",
+                            "scope": 10,
+                            "src": "164:10:0",
+                            "stateVariable": false,
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_bool",
+                                "typeString": "bool"
+                            },
+                            "typeName": {
+                                "id": 8,
+                                "name": "bool",
+                                "nodeType": "ElementaryTypeName",
+                                "src": "164:4:0",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_bool",
+                                    "typeString": "bool"
+                                }
+                            },
+                            "visibility": "internal"
+                        }
+                    ],
+                    "name": "MyStruct",
+                    "nodeType": "StructDefinition",
+                    "scope": 54,
+                    "src": "129:49:0",
+                    "visibility": "public"
+                },
+                {
+                    "constant": false,
+                    "functionSelector": "0c55699c",
+                    "id": 13,
+                    "mutability": "mutable",
+                    "name": "x",
+                    "nodeType": "VariableDeclaration",
+                    "scope": 54,
+                    "src": "182:17:0",
+                    "stateVariable": true,
+                    "storageLocation": "default",
+                    "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MyStruct_$10_storage",
+                        "typeString": "struct Assign.MyStruct"
+                    },
+                    "typeName": {
+                        "id": 12,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                            "id": 11,
+                            "name": "MyStruct",
+                            "nodeType": "IdentifierPath",
+                            "referencedDeclaration": 10,
+                            "src": "182:8:0"
+                        },
+                        "referencedDeclaration": 10,
+                        "src": "182:8:0",
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_MyStruct_$10_storage_ptr",
+                            "typeString": "struct Assign.MyStruct"
+                        }
+                    },
+                    "visibility": "public"
+                },
+                {
+                    "body": {
+                        "id": 30,
+                        "nodeType": "Block",
+                        "src": "248:40:0",
+                        "statements": [
+                            {
+                                "expression": {
+                                    "id": 22,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "id": 19,
+                                        "name": "a",
+                                        "nodeType": "Identifier",
+                                        "overloadedDeclarations": [],
+                                        "referencedDeclaration": 3,
+                                        "src": "251:1:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        },
+                                        "isKnown": true
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "rightHandSide": {
+                                        "expression": {
+                                            "id": 20,
+                                            "name": "value",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 16,
+                                            "src": "256:5:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_MyStruct_$10_memory_ptr",
+                                                "typeString": "struct Assign.MyStruct memory"
+                                            }
+                                        },
+                                        "id": 21,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "memberName": "prop1",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 7,
+                                        "src": "256:11:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "src": "251:16:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "id": 23,
+                                "nodeType": "ExpressionStatement",
+                                "src": "251:16:0"
+                            },
+                            {
+                                "expression": {
+                                    "id": 28,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "expression": {
+                                            "id": 24,
+                                            "name": "x",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 13,
+                                            "src": "270:1:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_MyStruct_$10_storage",
+                                                "typeString": "struct Assign.MyStruct storage ref"
+                                            }
+                                        },
+                                        "id": 26,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": true,
+                                        "memberName": "prop2",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 9,
+                                        "src": "270:7:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "rightHandSide": {
+                                        "hexValue": "74727565",
+                                        "id": 27,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "280:4:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "src": "270:14:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    }
+                                },
+                                "id": 29,
+                                "nodeType": "ExpressionStatement",
+                                "src": "270:14:0"
+                            }
+                        ]
+                    },
+                    "functionSelector": "0ca3b583",
+                    "id": 31,
+                    "implemented": true,
+                    "kind": "function",
+                    "modifiers": [],
+                    "name": "add",
+                    "nodeType": "FunctionDefinition",
+                    "parameters": {
+                        "id": 17,
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "constant": false,
+                                "id": 16,
+                                "mutability": "mutable",
+                                "name": "value",
+                                "nodeType": "VariableDeclaration",
+                                "scope": 31,
+                                "src": "218:21:0",
+                                "stateVariable": false,
+                                "storageLocation": "memory",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_MyStruct_$10_memory_ptr",
+                                    "typeString": "struct Assign.MyStruct"
+                                },
+                                "typeName": {
+                                    "id": 15,
+                                    "nodeType": "UserDefinedTypeName",
+                                    "pathNode": {
+                                        "id": 14,
+                                        "name": "MyStruct",
+                                        "nodeType": "IdentifierPath",
+                                        "referencedDeclaration": 10,
+                                        "src": "218:8:0"
+                                    },
+                                    "referencedDeclaration": 10,
+                                    "src": "218:8:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_MyStruct_$10_storage_ptr",
+                                        "typeString": "struct Assign.MyStruct"
+                                    }
+                                },
+                                "visibility": "internal",
+                                "isSecret": true
+                            }
+                        ],
+                        "src": "216:24:0"
+                    },
+                    "returnParameters": {
+                        "id": 18,
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "src": "248:0:0"
+                    },
+                    "scope": 54,
+                    "src": "204:84:0",
+                    "stateMutability": "nonpayable",
+                    "virtual": false,
+                    "visibility": "public"
+                },
+                {
+                    "body": {
+                        "id": 52,
+                        "nodeType": "Block",
+                        "src": "339:53:0",
+                        "statements": [
+                            {
+                                "expression": {
+                                    "arguments": [
+                                        {
+                                            "id": 38,
+                                            "name": "value",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 34,
+                                            "src": "346:5:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_MyStruct_$10_memory_ptr",
+                                                "typeString": "struct Assign.MyStruct memory"
+                                            }
+                                        }
+                                    ],
+                                    "expression": {
+                                        "argumentTypes": [
+                                            {
+                                                "typeIdentifier": "t_struct$_MyStruct_$10_memory_ptr",
+                                                "typeString": "struct Assign.MyStruct memory"
+                                            }
+                                        ],
+                                        "id": 37,
+                                        "name": "add",
+                                        "nodeType": "Identifier",
+                                        "overloadedDeclarations": [],
+                                        "referencedDeclaration": 31,
+                                        "src": "342:3:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_MyStruct_$10_memory_ptr_$returns$__$",
+                                            "typeString": "function (struct Assign.MyStruct memory)"
+                                        }
+                                    },
+                                    "id": 39,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "kind": "functionCall",
+                                    "lValueRequested": false,
+                                    "names": [],
+                                    "nodeType": "FunctionCall",
+                                    "src": "342:10:0",
+                                    "tryCall": false,
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_tuple$__$",
+                                        "typeString": "tuple()"
+                                    }
+                                },
+                                "id": 40,
+                                "nodeType": "ExpressionStatement",
+                                "src": "342:10:0"
+                            },
+                            {
+                                "expression": {
+                                    "id": 44,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "id": 41,
+                                        "name": "b",
+                                        "nodeType": "Identifier",
+                                        "overloadedDeclarations": [],
+                                        "referencedDeclaration": 5,
+                                        "src": "355:1:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        },
+                                        "isKnown": true
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "rightHandSide": {
+                                        "expression": {
+                                            "id": 42,
+                                            "name": "value",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 34,
+                                            "src": "360:5:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_MyStruct_$10_memory_ptr",
+                                                "typeString": "struct Assign.MyStruct memory"
+                                            }
+                                        },
+                                        "id": 43,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "memberName": "prop1",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 7,
+                                        "src": "360:11:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "src": "355:16:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "id": 45,
+                                "nodeType": "ExpressionStatement",
+                                "src": "355:16:0"
+                            },
+                            {
+                                "expression": {
+                                    "id": 50,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "leftHandSide": {
+                                        "expression": {
+                                            "id": 46,
+                                            "name": "x",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 13,
+                                            "src": "374:1:0",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_struct$_MyStruct_$10_storage",
+                                                "typeString": "struct Assign.MyStruct storage ref"
+                                            }
+                                        },
+                                        "id": 48,
+                                        "isConstant": false,
+                                        "isLValue": true,
+                                        "isPure": false,
+                                        "lValueRequested": true,
+                                        "memberName": "prop2",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": 9,
+                                        "src": "374:7:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "rightHandSide": {
+                                        "hexValue": "74727565",
+                                        "id": 49,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "384:4:0",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "src": "374:14:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    }
+                                },
+                                "id": 51,
+                                "nodeType": "ExpressionStatement",
+                                "src": "374:14:0"
+                            }
+                        ]
+                    },
+                    "functionSelector": "07df837b",
+                    "id": 53,
+                    "implemented": true,
+                    "kind": "function",
+                    "modifiers": [],
+                    "name": "remove",
+                    "nodeType": "FunctionDefinition",
+                    "parameters": {
+                        "id": 35,
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "constant": false,
+                                "id": 34,
+                                "mutability": "mutable",
+                                "name": "value",
+                                "nodeType": "VariableDeclaration",
+                                "scope": 53,
+                                "src": "309:21:0",
+                                "stateVariable": false,
+                                "storageLocation": "memory",
+                                "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_MyStruct_$10_memory_ptr",
+                                    "typeString": "struct Assign.MyStruct"
+                                },
+                                "typeName": {
+                                    "id": 33,
+                                    "nodeType": "UserDefinedTypeName",
+                                    "pathNode": {
+                                        "id": 32,
+                                        "name": "MyStruct",
+                                        "nodeType": "IdentifierPath",
+                                        "referencedDeclaration": 10,
+                                        "src": "309:8:0"
+                                    },
+                                    "referencedDeclaration": 10,
+                                    "src": "309:8:0",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_MyStruct_$10_storage_ptr",
+                                        "typeString": "struct Assign.MyStruct"
+                                    }
+                                },
+                                "visibility": "internal",
+                                "isSecret": true
+                            }
+                        ],
+                        "src": "307:24:0"
+                    },
+                    "returnParameters": {
+                        "id": 36,
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "src": "339:0:0"
+                    },
+                    "scope": 54,
+                    "src": "292:100:0",
+                    "stateMutability": "nonpayable",
+                    "virtual": false,
+                    "visibility": "public"
+                }
+            ],
+            "scope": 55,
+            "src": "62:333:0"
+        }
+    ],
+    "src": "35:362:0"
+}

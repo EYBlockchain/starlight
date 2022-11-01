@@ -1,0 +1,43 @@
+{
+  "name": "zapp",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
+    "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'"
+  },
+  "keywords": [
+    "private contract",
+    "zapp",
+    "zappify",
+    "starlight",
+    "zk-snark",
+    "compiler",
+    "transpiler",
+    "solidity"
+  ],
+  "author": "starlight",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "@babel/register": "^7.11.5",
+    "@truffle/contract": "^4.2.21",
+    "axios": "^0.19.2",
+    "config": "^3.3.1",
+    "enquirer": "^2.3.6",
+    "general-number": "^1.0.1",
+    "lodash.clonedeep": "^4.5.0",
+    "solc": "0.8.0",
+    "truffle": "5.1.65",
+    "web3": "^1.2.11",
+    "winston": "^3.3.3",
+    "yargs": "^15.4.1",
+    "zkp-utils": "^1.0.8"
+  },
+  "devDependencies": {
+    "cod-scripts": "^6.0.0",
+    "eslint": "^7.19.0",
+    "husky": "^4.2.5",
+    "mocha": "^8.2.1",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-alpha.54"
+  }
+}

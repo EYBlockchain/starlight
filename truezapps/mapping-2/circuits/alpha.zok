@@ -1,0 +1,327 @@
+from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+def main(\
+	public field msg,\
+	private u32[8] gm_account_oldCommitment_owner_secretKey,\
+	public field gm_account_oldCommitment_nullifier,\
+	private  field gm_account_oldCommitment_value,\
+	private field gm_account_oldCommitment_salt_field,\
+	private bool gm_account_oldCommitment_isDummy,\
+	public field commitmentRoot,\
+	private field gm_account_oldCommitment_membershipWitness_index,\
+	private field[32] gm_account_oldCommitment_membershipWitness_siblingPath,\
+	private field gm_account_newCommitment_owner_publicKey_field,\
+	private field gm_account_newCommitment_salt_field,\
+	public field gm_account_newCommitment_commitment,\
+	private u32[8] admin12_oldCommitment_owner_secretKey,\
+	public field admin12_oldCommitment_nullifier,\
+	private  field admin12_oldCommitment_value,\
+	private field admin12_oldCommitment_salt_field,\
+	private bool admin12_oldCommitment_isDummy,\
+	private field admin12_oldCommitment_membershipWitness_index,\
+	private field[32] admin12_oldCommitment_membershipWitness_siblingPath,\
+	private field admin12_newCommitment_owner_publicKey_field,\
+	private field admin12_newCommitment_salt_field,\
+	public field admin12_newCommitment_commitment,\
+	private u32[8] admin_oldCommitment_owner_secretKey,\
+	public field admin_oldCommitment_nullifier,\
+	private  field admin_oldCommitment_value,\
+	private field admin_oldCommitment_salt_field,\
+	private field admin_oldCommitment_membershipWitness_index,\
+	private field[32] admin_oldCommitment_membershipWitness_siblingPath,\
+	private u32[8] gamer_oldCommitment_owner_secretKey,\
+	public field gamer_oldCommitment_nullifier,\
+	private  field gamer_oldCommitment_value,\
+	private field gamer_oldCommitment_salt_field,\
+	private field gamer_oldCommitment_membershipWitness_index,\
+	private field[32] gamer_oldCommitment_membershipWitness_siblingPath\
+) -> (bool):
+
+        
+        // We need to hard-code each stateVarId into the circuit:
+        field gm_account_stateVarId_field = 3
+
+
+        field gm_account = gm_account_oldCommitment_value
+
+
+        // We need to hard-code each stateVarId into the circuit:
+        field admin12_stateVarId_field = 5
+
+
+        field admin12 = admin12_oldCommitment_value
+
+
+        // We need to hard-code each stateVarId into the circuit:
+        field admin_stateVarId_field = 7
+
+
+        field admin = admin_oldCommitment_value
+
+
+        // We need to hard-code each stateVarId into the circuit:
+        field gamer_stateVarId_field = 9
+
+
+        field gamer = gamer_oldCommitment_value
+
+gm_account = gm_account + 3
+
+admin12 = 3
+
+
+        assert(msg == admin)
+
+
+        assert(msg == gamer)
+
+admin12 = admin12 + 1
+
+
+        // gm_account_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] gm_account_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(gm_account_oldCommitment_owner_secretKey))
+
+
+        // Nullify gm_account:
+
+        field gm_account_oldCommitment_owner_secretKey_field =u32_array_to_field(gm_account_oldCommitment_owner_secretKey)
+
+        field gm_account_oldCommitment_nullifier_check_field = poseidon([\
+          gm_account_stateVarId_field,\
+          gm_account_oldCommitment_owner_secretKey_field,\
+          gm_account_oldCommitment_salt_field\
+        ])
+
+        assert(\
+        field_to_bool_256(gm_account_oldCommitment_nullifier)[8..256] == field_to_bool_256(gm_account_oldCommitment_nullifier_check_field)[8..256]\
+        )
+
+
+        // gm_account_oldCommitment_commitment: preimage check
+
+        field gm_account_oldCommitment_owner_publicKey_field =u32_array_to_field(gm_account_oldCommitment_owner_publicKey)
+
+
+        field gm_account_oldCommitment_commitment_field = poseidon([\
+          gm_account_stateVarId_field,\
+          gm_account_oldCommitment_value,\
+          gm_account_oldCommitment_owner_publicKey_field,\
+          gm_account_oldCommitment_salt_field\
+        ])
+
+
+        // gm_account_oldCommitment_commitment: existence check
+
+
+        field gm_account_commitmentRoot_check = checkRoot(\
+          gm_account_oldCommitment_membershipWitness_siblingPath,\
+          gm_account_oldCommitment_commitment_field,\
+          gm_account_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        gm_account_commitmentRoot_check = if gm_account_oldCommitment_isDummy == true then commitmentRoot else gm_account_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(gm_account_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'gm_account' for commitment
+
+        field gm_account_newCommitment_value_field = gm_account
+
+        // gm_account_newCommitment_commitment - preimage check
+
+        field gm_account_newCommitment_commitment_check_field = poseidon([\
+          gm_account_stateVarId_field,\
+          gm_account_newCommitment_value_field,\
+          gm_account_newCommitment_owner_publicKey_field,\
+          gm_account_newCommitment_salt_field\
+        ])
+
+        assert(\
+          field_to_bool_256(gm_account_newCommitment_commitment)[8..256] == field_to_bool_256(gm_account_newCommitment_commitment_check_field)[8..256]\
+        )
+
+
+        // admin12_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] admin12_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(admin12_oldCommitment_owner_secretKey))
+
+
+        // Nullify admin12:
+
+        field admin12_oldCommitment_owner_secretKey_field =u32_array_to_field(admin12_oldCommitment_owner_secretKey)
+
+        field admin12_oldCommitment_nullifier_check_field = poseidon([\
+          admin12_stateVarId_field,\
+          admin12_oldCommitment_owner_secretKey_field,\
+          admin12_oldCommitment_salt_field\
+        ])
+
+        assert(\
+        field_to_bool_256(admin12_oldCommitment_nullifier)[8..256] == field_to_bool_256(admin12_oldCommitment_nullifier_check_field)[8..256]\
+        )
+
+
+        // admin12_oldCommitment_commitment: preimage check
+
+        field admin12_oldCommitment_owner_publicKey_field =u32_array_to_field(admin12_oldCommitment_owner_publicKey)
+
+
+        field admin12_oldCommitment_commitment_field = poseidon([\
+          admin12_stateVarId_field,\
+          admin12_oldCommitment_value,\
+          admin12_oldCommitment_owner_publicKey_field,\
+          admin12_oldCommitment_salt_field\
+        ])
+
+
+        // admin12_oldCommitment_commitment: existence check
+
+
+        field admin12_commitmentRoot_check = checkRoot(\
+          admin12_oldCommitment_membershipWitness_siblingPath,\
+          admin12_oldCommitment_commitment_field,\
+          admin12_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        admin12_commitmentRoot_check = if admin12_oldCommitment_isDummy == true then commitmentRoot else admin12_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(admin12_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'admin12' for commitment
+
+        field admin12_newCommitment_value_field = admin12
+
+        // admin12_newCommitment_commitment - preimage check
+
+        field admin12_newCommitment_commitment_check_field = poseidon([\
+          admin12_stateVarId_field,\
+          admin12_newCommitment_value_field,\
+          admin12_newCommitment_owner_publicKey_field,\
+          admin12_newCommitment_salt_field\
+        ])
+
+        assert(\
+          field_to_bool_256(admin12_newCommitment_commitment)[8..256] == field_to_bool_256(admin12_newCommitment_commitment_check_field)[8..256]\
+        )
+
+
+        // admin_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] admin_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(admin_oldCommitment_owner_secretKey))
+
+
+        // Nullify admin:
+
+        field admin_oldCommitment_owner_secretKey_field =u32_array_to_field(admin_oldCommitment_owner_secretKey)
+
+        field admin_oldCommitment_nullifier_check_field = poseidon([\
+          admin_stateVarId_field,\
+          admin_oldCommitment_owner_secretKey_field,\
+          admin_oldCommitment_salt_field\
+        ])
+
+        assert(\
+        field_to_bool_256(admin_oldCommitment_nullifier)[8..256] == field_to_bool_256(admin_oldCommitment_nullifier_check_field)[8..256]\
+        )
+
+
+        // admin_oldCommitment_commitment: preimage check
+
+        field admin_oldCommitment_owner_publicKey_field =u32_array_to_field(admin_oldCommitment_owner_publicKey)
+
+
+        field admin_oldCommitment_commitment_field = poseidon([\
+          admin_stateVarId_field,\
+          admin_oldCommitment_value,\
+          admin_oldCommitment_owner_publicKey_field,\
+          admin_oldCommitment_salt_field\
+        ])
+
+
+        // admin_oldCommitment_commitment: existence check
+
+
+        field admin_commitmentRoot_check = checkRoot(\
+          admin_oldCommitment_membershipWitness_siblingPath,\
+          admin_oldCommitment_commitment_field,\
+          admin_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(admin_commitmentRoot_check)[8..256]\
+        )
+
+
+        // gamer_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] gamer_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(gamer_oldCommitment_owner_secretKey))
+
+
+        // Nullify gamer:
+
+        field gamer_oldCommitment_owner_secretKey_field =u32_array_to_field(gamer_oldCommitment_owner_secretKey)
+
+        field gamer_oldCommitment_nullifier_check_field = poseidon([\
+          gamer_stateVarId_field,\
+          gamer_oldCommitment_owner_secretKey_field,\
+          gamer_oldCommitment_salt_field\
+        ])
+
+        assert(\
+        field_to_bool_256(gamer_oldCommitment_nullifier)[8..256] == field_to_bool_256(gamer_oldCommitment_nullifier_check_field)[8..256]\
+        )
+
+
+        // gamer_oldCommitment_commitment: preimage check
+
+        field gamer_oldCommitment_owner_publicKey_field =u32_array_to_field(gamer_oldCommitment_owner_publicKey)
+
+
+        field gamer_oldCommitment_commitment_field = poseidon([\
+          gamer_stateVarId_field,\
+          gamer_oldCommitment_value,\
+          gamer_oldCommitment_owner_publicKey_field,\
+          gamer_oldCommitment_salt_field\
+        ])
+
+
+        // gamer_oldCommitment_commitment: existence check
+
+
+        field gamer_commitmentRoot_check = checkRoot(\
+          gamer_oldCommitment_membershipWitness_siblingPath,\
+          gamer_oldCommitment_commitment_field,\
+          gamer_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(gamer_commitmentRoot_check)[8..256]\
+        )
+
+         return true
+        

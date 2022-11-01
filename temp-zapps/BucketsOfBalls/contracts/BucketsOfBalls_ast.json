@@ -1,0 +1,213 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "SourceUnit",
+            "name": "Assign",
+            "license": "CC0",
+            "nodes": [
+                {
+                    "nodeType": "PragmaDirective",
+                    "literals": [
+                        "solidity",
+                        "^",
+                        "0.8",
+                        ".0"
+                    ]
+                },
+                {
+                    "nodeType": "ContractBoilerplate",
+                    "bpSection": "importStatements",
+                    "bpCategory": "contract",
+                    "newCommitmentsRequired": true
+                },
+                {
+                    "nodeType": "ContractDefinition",
+                    "name": "Assign",
+                    "baseContracts": [
+                        {
+                            "nodeType": "InheritanceSpecifier",
+                            "baseName": {
+                                "name": "MerkleTree"
+                            }
+                        }
+                    ],
+                    "nodes": [
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "stateVariableDeclarations",
+                            "bpCategory": "contract",
+                            "functionNames": [
+                                "deposit"
+                            ],
+                            "nullifiersRequired": true,
+                            "oldCommitmentAccessRequired": true,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "constructor",
+                            "bpCategory": "contract"
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "registerZKPPublicKey",
+                            "bpCategory": "contract"
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "verify",
+                            "bpCategory": "contract",
+                            "nullifiersRequired": true,
+                            "oldCommitmentAccessRequired": true,
+                            "newCommitmentsRequired": true,
+                            "constructorContainsSecret": false,
+                            "circuitParams": {
+                                "deposit": {
+                                    "parameters": [
+                                        "nullifier",
+                                        "oldCommitmentExistence",
+                                        "newCommitment"
+                                    ]
+                                }
+                            },
+                            "isjoinCommitmentsFunction": []
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "a",
+                            "visibility": "private",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "nodeType": "ElementaryTypeName",
+                                "typeDescriptions": {
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "isSecret": true,
+                            "interactsWithSecret": true,
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "EventDefinition",
+                            "name": "eventFunction",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "id",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "interactsWithSecret": false,
+                                        "declarationType": "parameter"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "nodeType": "FunctionDefinition",
+                            "name": "deposit",
+                            "visibility": "public",
+                            "isConstructor": false,
+                            "kind": "function",
+                            "stateMutability": "payable",
+                            "body": {
+                                "nodeType": "Block",
+                                "preStatements": [],
+                                "statements": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    },
+                                    {
+                                        "nodeType": "EmitStatement",
+                                        "eventCall": {
+                                            "nodeType": "FunctionCall",
+                                            "expression": {
+                                                "nodeType": "Identifier",
+                                                "name": "eventFunction"
+                                            },
+                                            "arguments": [
+                                                {
+                                                    "nodeType": "Identifier",
+                                                    "name": "fid"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ],
+                                "postStatements": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "postStatements",
+                                        "bpCategory": "customFunction",
+                                        "customInputs": [
+                                            {
+                                                "name": 1,
+                                                "type": "uint256",
+                                                "dummy": true
+                                            }
+                                        ],
+                                        "functionName": "deposit",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "fid",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "declarationType": "parameter"
+                                    },
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "parameters",
+                                        "bpCategory": "customFunction",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": []
+                            }
+                        }
+                    ],
+                    "isShieldContract": true
+                }
+            ]
+        }
+    ]
+}

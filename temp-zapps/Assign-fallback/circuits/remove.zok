@@ -1,0 +1,202 @@
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
+from "hashes/sha256/sha256Padded.zok" import sha256Padded as sha256Padded
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+def main(\
+	private field value,\
+	private field fromBucketId,\
+	private field toBucketId,\
+	private u32[8] buckets_fromBucketId_0_oldCommitment_owner_secretKey,\
+	private u32[8] buckets_fromBucketId_1_oldCommitment_owner_secretKey,\
+	public field buckets_fromBucketId_0_oldCommitment_nullifier,\
+	public field buckets_fromBucketId_1_oldCommitment_nullifier,\
+	private  field buckets_fromBucketId_0_oldCommitment_value,\
+	private field buckets_fromBucketId_0_oldCommitment_salt_field,\
+	private  field buckets_fromBucketId_1_oldCommitment_value,\
+	private field buckets_fromBucketId_1_oldCommitment_salt_field,\
+	public field commitmentRoot,\
+	private field buckets_fromBucketId_0_oldCommitment_membershipWitness_index,\
+	private field[32] buckets_fromBucketId_0_oldCommitment_membershipWitness_siblingPath,\
+	private field buckets_fromBucketId_1_oldCommitment_membershipWitness_index,\
+	private field[32] buckets_fromBucketId_1_oldCommitment_membershipWitness_siblingPath,\
+	private field buckets_fromBucketId_2_newCommitment_owner_publicKey_field,\
+	private field buckets_fromBucketId_2_newCommitment_salt_field,\
+	public field buckets_fromBucketId_2_newCommitment_commitment,\
+	private field buckets_toBucketId_0_newCommitment_owner_publicKey_field,\
+	private field buckets_toBucketId_0_newCommitment_salt_field,\
+	public field buckets_toBucketId_0_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field buckets_mappingId = 7
+
+
+        field buckets_fromBucketId_0 = buckets_fromBucketId_0_oldCommitment_value
+
+
+        field buckets_fromBucketId_1 = buckets_fromBucketId_1_oldCommitment_value
+
+// Moved decrementation of buckets_fromBucketId
+
+// Skipping incrementation of buckets_toBucketId
+
+
+        field buckets_fromBucketId_0_stateVarId_field = mimc2([buckets_mappingId, fromBucketId])
+
+
+        field buckets_fromBucketId_1_stateVarId_field = mimc2([buckets_mappingId, fromBucketId])
+
+
+        field buckets_fromBucketId_2_stateVarId_field = mimc2([buckets_mappingId, fromBucketId])
+
+
+        // buckets_fromBucketId_0_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] buckets_fromBucketId_0_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(buckets_fromBucketId_0_oldCommitment_owner_secretKey))
+
+
+        // buckets_fromBucketId_1_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        u32[8] buckets_fromBucketId_1_oldCommitment_owner_publicKey = sha256Padded(u32_8_to_bool_256(buckets_fromBucketId_1_oldCommitment_owner_secretKey))
+
+
+        // Nullify buckets_fromBucketId_0:
+
+        field buckets_fromBucketId_0_oldCommitment_owner_secretKey_field =u32_array_to_field(buckets_fromBucketId_0_oldCommitment_owner_secretKey)
+
+        field buckets_fromBucketId_0_oldCommitment_nullifier_check_field = poseidon([\
+          buckets_fromBucketId_0_stateVarId_field,\
+          buckets_fromBucketId_0_oldCommitment_owner_secretKey_field,\
+          buckets_fromBucketId_0_oldCommitment_salt_field\
+        ])
+
+        assert(\
+        field_to_bool_256(buckets_fromBucketId_0_oldCommitment_nullifier)[8..256] == field_to_bool_256(buckets_fromBucketId_0_oldCommitment_nullifier_check_field)[8..256]\
+        )
+
+
+        // Nullify buckets_fromBucketId_1:
+
+        field buckets_fromBucketId_1_oldCommitment_owner_secretKey_field =u32_array_to_field(buckets_fromBucketId_1_oldCommitment_owner_secretKey)
+
+        field buckets_fromBucketId_1_oldCommitment_nullifier_check_field = poseidon([\
+          buckets_fromBucketId_1_stateVarId_field,\
+          buckets_fromBucketId_1_oldCommitment_owner_secretKey_field,\
+          buckets_fromBucketId_1_oldCommitment_salt_field\
+        ])
+
+        assert(\
+        field_to_bool_256(buckets_fromBucketId_1_oldCommitment_nullifier)[8..256] == field_to_bool_256(buckets_fromBucketId_1_oldCommitment_nullifier_check_field)[8..256]\
+        )
+
+
+        // buckets_fromBucketId_0_oldCommitment_commitment: preimage check
+
+        field buckets_fromBucketId_0_oldCommitment_owner_publicKey_field =u32_array_to_field(buckets_fromBucketId_0_oldCommitment_owner_publicKey)
+
+
+        field buckets_fromBucketId_0_oldCommitment_commitment_field = poseidon([\
+          buckets_fromBucketId_0_stateVarId_field,\
+          buckets_fromBucketId_0_oldCommitment_value,\
+          buckets_fromBucketId_0_oldCommitment_owner_publicKey_field,\
+          buckets_fromBucketId_0_oldCommitment_salt_field\
+        ])
+
+
+        // buckets_fromBucketId_1_oldCommitment_commitment: preimage check
+
+        field buckets_fromBucketId_1_oldCommitment_owner_publicKey_field =u32_array_to_field(buckets_fromBucketId_1_oldCommitment_owner_publicKey)
+
+
+        field buckets_fromBucketId_1_oldCommitment_commitment_field = poseidon([\
+          buckets_fromBucketId_1_stateVarId_field,\
+          buckets_fromBucketId_1_oldCommitment_value,\
+          buckets_fromBucketId_1_oldCommitment_owner_publicKey_field,\
+          buckets_fromBucketId_1_oldCommitment_salt_field\
+        ])
+
+
+        // buckets_fromBucketId_0_oldCommitment_commitment: existence check
+
+
+        field buckets_fromBucketId_0_commitmentRoot_check = checkRoot(\
+          buckets_fromBucketId_0_oldCommitment_membershipWitness_siblingPath,\
+          buckets_fromBucketId_0_oldCommitment_commitment_field,\
+          buckets_fromBucketId_0_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(buckets_fromBucketId_0_commitmentRoot_check)[8..256]\
+        )
+
+
+        // buckets_fromBucketId_1_oldCommitment_commitment: existence check
+
+
+        field buckets_fromBucketId_1_commitmentRoot_check = checkRoot(\
+          buckets_fromBucketId_1_oldCommitment_membershipWitness_siblingPath,\
+          buckets_fromBucketId_1_oldCommitment_commitment_field,\
+          buckets_fromBucketId_1_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(buckets_fromBucketId_1_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'buckets_fromBucketId_2' for commitment
+
+        assert(buckets_fromBucketId_0 + buckets_fromBucketId_1 > value)
+            // TODO: assert no under/overflows
+
+            field buckets_fromBucketId_2_newCommitment_value_field = (buckets_fromBucketId_0 + buckets_fromBucketId_1) - (value)
+
+        // buckets_fromBucketId_2_newCommitment_commitment - preimage check
+
+        field buckets_fromBucketId_2_newCommitment_commitment_check_field = poseidon([\
+          buckets_fromBucketId_2_stateVarId_field,\
+          buckets_fromBucketId_2_newCommitment_value_field,\
+          buckets_fromBucketId_2_newCommitment_owner_publicKey_field,\
+          buckets_fromBucketId_2_newCommitment_salt_field\
+        ])
+
+        assert(\
+          field_to_bool_256(buckets_fromBucketId_2_newCommitment_commitment)[8..256] == field_to_bool_256(buckets_fromBucketId_2_newCommitment_commitment_check_field)[8..256]\
+        )
+
+
+        field buckets_toBucketId_0_stateVarId_field = mimc2([buckets_mappingId, toBucketId])
+
+
+        field buckets_toBucketId_1_stateVarId_field = mimc2([buckets_mappingId, toBucketId])
+
+
+        // prepare secret state 'buckets_toBucketId_0' for commitment
+
+        field buckets_toBucketId_0_newCommitment_value_field = value
+
+        // buckets_toBucketId_0_newCommitment_commitment - preimage check
+
+        field buckets_toBucketId_0_newCommitment_commitment_check_field = poseidon([\
+          buckets_toBucketId_0_stateVarId_field,\
+          buckets_toBucketId_0_newCommitment_value_field,\
+          buckets_toBucketId_0_newCommitment_owner_publicKey_field,\
+          buckets_toBucketId_0_newCommitment_salt_field\
+        ])
+
+        assert(\
+          field_to_bool_256(buckets_toBucketId_0_newCommitment_commitment)[8..256] == field_to_bool_256(buckets_toBucketId_0_newCommitment_commitment_check_field)[8..256]\
+        )
+
+         return true
+        

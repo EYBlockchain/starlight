@@ -1,0 +1,545 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileId": 53,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msg_0",
+                            "id": 6,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true,
+                            "newCommitmentValue": {
+                                "amount": "myrct.amount",
+                                "tax": "myrct.tax"
+                            },
+                            "mappingName": "total",
+                            "mappingKeyName": "msg"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msg_1",
+                            "id": 6,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true,
+                            "newCommitmentValue": {
+                                "amount": "myrct.amount",
+                                "tax": "myrct.tax"
+                            },
+                            "mappingName": "total",
+                            "mappingKeyName": "msg"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msg_0",
+                            "id": 6,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true,
+                            "newCommitmentValue": {
+                                "amount": "myrct.amount",
+                                "tax": "myrct.tax"
+                            },
+                            "mappingName": "total",
+                            "mappingKeyName": "msg"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "total_msg_0",
+                            "id": 6,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true,
+                            "newCommitmentValue": {
+                                "amount": "myrct.amount",
+                                "tax": "myrct.tax"
+                            }
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "cmt_0",
+                            "id": 14,
+                            "isPartitioned": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true,
+                            "newCommitmentValue": {
+                                "amount": "myrct.amount",
+                                "tax": "myrct.tax"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "StructDefinition",
+                    "name": "Rct",
+                    "members": [
+                        {
+                            "name": "amount",
+                            "type": "field"
+                        },
+                        {
+                            "name": "tax",
+                            "type": "field"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msg_1",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "cmt_0",
+                                "id": 14,
+                                "isPartitioned": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                }
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "total_msg",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "addend": {
+                                    "nodeType": "MemberAccess",
+                                    "memberName": "amount",
+                                    "expression": {
+                                        "nodeType": "Identifier",
+                                        "name": "myrct"
+                                    },
+                                    "isStruct": true
+                                }
+                            },
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "total_msg",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "addend": {
+                                    "nodeType": "MemberAccess",
+                                    "memberName": "tax",
+                                    "expression": {
+                                        "nodeType": "Identifier",
+                                        "name": "myrct"
+                                    },
+                                    "isStruct": true
+                                }
+                            },
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "cmt",
+                                "id": 14,
+                                "isPartitioned": true,
+                                "addend": {
+                                    "nodeType": "MemberAccess",
+                                    "memberName": "amount",
+                                    "expression": {
+                                        "nodeType": "Identifier",
+                                        "name": "myrct"
+                                    },
+                                    "isStruct": true
+                                }
+                            },
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "cmt",
+                                "id": 14,
+                                "isPartitioned": true,
+                                "addend": {
+                                    "nodeType": "MemberAccess",
+                                    "memberName": "tax",
+                                    "expression": {
+                                        "nodeType": "Identifier",
+                                        "name": "myrct"
+                                    },
+                                    "isStruct": true
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msg_1",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "cmt_0",
+                                "id": 14,
+                                "isPartitioned": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                }
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "myrct",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "Rct",
+                                    "members": [
+                                        {
+                                            "name": "amount",
+                                            "type": "field"
+                                        },
+                                        {
+                                            "name": "tax",
+                                            "type": "field"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msg_1",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                },
+                                "mappingName": "total",
+                                "mappingKeyName": "msg"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "total_msg_0",
+                                "id": 6,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "cmt_0",
+                                "id": 14,
+                                "isPartitioned": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true,
+                                "newCommitmentValue": {
+                                    "amount": "myrct.amount",
+                                    "tax": "myrct.tax"
+                                }
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": []
+                    }
+                }
+            ]
+        }
+    ]
+}
