@@ -56,6 +56,8 @@ export class Binding {
       case 'ModifierDefinition':
       case 'EventDefinition':
       case 'EmitStatement':
+      case 'Break':
+      case 'Continue':
       case 'Conditional':
       case 'WhileStatement':
       case 'DoWhileStatement':
