@@ -27,7 +27,6 @@ function getFiles(dir) {
 }
 
 files = getFiles('./test/contracts').flat(Infinity);
-console.log(files);
 let options = {}
 
 describe("AST testing", function () {
