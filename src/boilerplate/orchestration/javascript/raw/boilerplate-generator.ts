@@ -159,13 +159,13 @@ class BoilerplateGenerator {
             ).${mappingName}${mappingKey};
             \n const ${stateName}_newCommitmentValue = generalise(${increment});
             // First check if required commitments exist or not
-            \n let commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+            \n let ${stateName}_commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
             \nlet ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
             \nlet ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
             \n let ${stateName}_witness_0 ;
             \n let ${stateName}_witness_1 ;
 
-                      while( commitmentFlag === false) {
+                      while( ${stateName}_commitmentFlag === false) {
                 \n  ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
                 \n  ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
 
@@ -177,7 +177,7 @@ class BoilerplateGenerator {
                   }),
                 ).${mappingName}${mappingKey};
 
-                commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+                ${stateName}_commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
                 \n ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
                 \n ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
 
