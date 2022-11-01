@@ -200,8 +200,8 @@ const visitor = {
             }));
           }
         }
-
       }
+    }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
