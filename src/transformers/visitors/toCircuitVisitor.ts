@@ -765,10 +765,23 @@ let interactsWithSecret = false ;
   IfStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
+      if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')
+      {
+        const newNode = buildNode(node.nodeType, {
+          condition: {},
+          trueBody: [],
+          falseBody: [],
+          isRevert : true
+        });
+        node._newASTPointer = newNode;
+        parent._newASTPointer.push(newNode);
+        return;
+      }
       const newNode = buildNode(node.nodeType, {
         condition: {},
         trueBody: [],
-        falseBody: []
+        falseBody: [],
+        isRevert : node.isrevert
       });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);

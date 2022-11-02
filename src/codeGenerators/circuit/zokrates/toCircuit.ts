@@ -185,6 +185,11 @@ if(returnStatement.length === 0){
       let trueStatements: any = ``;
       let falseStatements: any= ``;
       let initialStatements: any= ``;
+      if(node.isRevert) {
+      initialStatements+= `
+      assert(${codeGenerator(node.condition)})`;
+      return initialStatements;
+      }
       initialStatements+= `
         // if statements start , copies over left expression variable to temporary variable
         field ${codeGenerator(node.condition.leftExpression)}_temp = ${codeGenerator(node.condition.leftExpression)}`;
