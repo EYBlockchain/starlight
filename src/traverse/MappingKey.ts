@@ -75,6 +75,8 @@ export default class MappingKey {
   encryptionRequired?: boolean;
 
   returnKeyName(keyNode: any) {
+    if (this.keyPath.isMsgSender(keyNode)) return 'msgSender';
+    if (this.keyPath.isMsgValue(keyNode)) return 'msgValue';
     if (this.keyPath.isMsg(keyNode)) return 'msg';
     switch (keyNode.nodeType) {
       case 'VariableDeclaration':

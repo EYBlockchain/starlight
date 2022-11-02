@@ -188,11 +188,17 @@ const visitor = {
           const num = indicator.isStruct ? indicators.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
           if (indicator.isMapping && indicator.mappingKeys) {
             for(const [, mappingKey ] of Object.entries(indicator.mappingKeys)) {
-              if (mappingKey.encryptionRequired)
+              if (mappingKey.encryptionRequired) {
+                let indicatorname: any;
+                if(mappingKey.returnKeyName(mappingKey.keyPath.node) == 'msg')
+                indicatorname  = mappingKey.returnKeyName(mappingKey.keyPath.parent)
+                else
+                indicatorname = mappingKey.returnKeyName(mappingKey.keyPath.node)
                 newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
-                  name: `${indicator.name}_${mappingKey.returnKeyName(mappingKey.keyPath.node)}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
+                  name: `${indicator.name}_${indicatorname}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
                   type: `EncryptedMsgs<${num}>`,
                 }));
+              }
             };
           } else {
             newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
