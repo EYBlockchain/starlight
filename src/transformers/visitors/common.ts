@@ -13,6 +13,7 @@ import { traversePathsFast } from '../../traverse/traverse.js';
 // 6 - GenerateProof - all - per function
 // 7 - SendTransaction - all - per function
 // 8 - WritePreimage - all - per state
+
 export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator, path: NodePath) => {
   const { node, parent } = path;
   const newNodes: any = {};
@@ -21,12 +22,12 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
     contractName,
     onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
   });
-  if (fnIndicator.oldCommitmentAccessRequired)
+  if (fnIndicator.oldCommitmentAccessRequired || fnIndicator.internalFunctionoldCommitmentAccessRequired)
     newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
   newNodes.readPreimageNode = buildNode('ReadPreimage', {
     contractName,
   });
-  if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
+  if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret) {
     newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
       contractName,
     });
@@ -65,8 +66,9 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
      isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
  }
  if(node.expression.nodeType === 'Identifier') {
-  const functionReferncedNode = scope.getReferencedNode(node.expression);
-  const params = functionReferncedNode.parameters.parameters;
+  const functionReferncedNode = scope.getReferencedPath(node.expression);
+  const params = functionReferncedNode.node.parameters.parameters;
+  thisPath.scope.indicators.internalFunctionoldCommitmentAccessRequired = functionReferncedNode.scope.indicators.oldCommitmentAccessRequired;
   if((params.length !== 0) && (params.some(node => (node.isSecret || node._newASTPointer?.interactsWithSecret))))
   {
     thisState.internalFunctionInteractsWithSecret = true;

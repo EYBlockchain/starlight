@@ -160,6 +160,7 @@ export class VariableBinding extends Binding {
   isBurned?: boolean;
   reinitialisable?: boolean;
   initialisedInConstructor?: boolean;
+  encryptionRequired?: boolean;
 
   isWholeReason?: {}[];
   isPartitionedReason?: {}[];

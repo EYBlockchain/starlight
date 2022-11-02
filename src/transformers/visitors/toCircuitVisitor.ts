@@ -54,6 +54,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 };
 
 const addStructDefinition = (path: NodePath) => {
+  const { node, parent, scope } = path;
+  const { indicators } = scope;
   const structDef = path.getStructDeclaration(path.node);
   const structNode = buildNode('StructDefinition', {
     name: structDef.name,
@@ -181,7 +183,25 @@ const visitor = {
           && !indicator.isStruct) {
             if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
               parent._newASTPointer.push(joinCommitmentsNode);
-         }
+        }
+        if(indicator instanceof StateVariableIndicator && indicator.encryptionRequired) {
+          const num = indicator.isStruct ? indicators.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
+          if (indicator.isMapping && indicator.mappingKeys) {
+            for(const [, mappingKey ] of Object.entries(indicator.mappingKeys)) {
+              if (mappingKey.encryptionRequired)
+                newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+                  name: `${indicator.name}_${mappingKey.returnKeyName(mappingKey.keyPath.node)}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
+                  type: `EncryptedMsgs<${num}>`,
+                }));
+            };
+          } else {
+            newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+              name: indicator.name,
+              type: `EncryptedMsgs<${num}>`,
+            }));
+          }
+        }
+
       }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
@@ -656,11 +676,11 @@ let interactsWithSecret = false ;
         interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
 
         // check for internal function call if the parameter passed in the function call interacts with secret or not
-        if(refPath.parentPath.node.kind === 'functionCall' && refPath.parentPath.node.expression.name != 'eventFunction'){
+        if(refPath.parentPath.isInternalFunctionCall()){
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
              let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
-             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
+             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key]?.interactsWithSecret
             }
           })
         }
@@ -875,14 +895,26 @@ let interactsWithSecret = false ;
         state.skipSubNodes = true;
       }
       if(path.isInternalFunctionCall()) {
+
     const args = node.arguments;
+    state.isAddStructDefinition = true;
+    path.getAncestorOfType('FunctionDefinition').node.parameters.parameters.some(para => {
+      for (const arg of args) {
+        if((arg.typeDescriptions.typeIdentifier === para.typeDescriptions.typeIdentifier)
+         && arg.typeDescriptions.typeIdentifier.includes('_struct') && para.typeDescriptions.typeIdentifier.includes('_struct'))
+          state.isAddStructDefinition = false}})
+
+
+
     let isCircuit = false;
     state.newStateArray ??= {};
     const name = node.expression.name;
     state.newStateArray[name] ??= [];
     for (const arg of args) {
-      if(arg.expression?.typeDescriptions.typeIdentifier.includes('_struct'))
-        state.newStateArray[name] =  args.map(arg => ({name: arg.expression.name, memberName: arg.memberName} ));
+      if(arg.typeDescriptions.typeIdentifier.includes('_struct')){
+        state.newStateArray[name] =  args.map(arg => ({name: arg.name, memberName: arg.memberName} ));
+        state.structName = (arg.typeDescriptions.typeString.split(' '))[1].split('.')[1];
+      }
       else
        state.newStateArray[name] =  args.map(arg => ({name: arg.name}));
       }
@@ -899,7 +931,7 @@ let interactsWithSecret = false ;
       const internalfnDefIndicators = functionReferncedNode.scope.indicators;
       const startNodePath = path.getAncestorOfType('ContractDefinition')
       startNodePath.node.nodes.forEach(node => {
-        if(node.nodeType === 'VariableDeclaration'){
+        if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
           if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
             if(callingfnDefIndicators[node.id]) {
              if(callingfnDefIndicators[node.id].isModified) {
@@ -925,6 +957,7 @@ let interactsWithSecret = false ;
      else
        state.circuitImport.push('false');
 
+
      const newNode = buildNode('InternalFunctionCall', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
@@ -935,6 +968,8 @@ let interactsWithSecret = false ;
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        circuitImport: isCircuit,
+       structImport: !state.isAddStructDefinition,
+       structName: state.structName,
       });
       node._newASTPointer = newNode ;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);

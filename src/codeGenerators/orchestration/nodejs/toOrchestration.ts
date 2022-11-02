@@ -145,18 +145,18 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return `(${node.components.map(codeGenerator).join(` `)})`;
       return ` `;
 
-    case 'IfStatement': {
-      if(node.falseBody.length)
-      return `if (${codeGenerator(node.condition)}) {
-          ${node.trueBody.flatMap(codeGenerator).join('\n')}
-        } else {
-          ${node.falseBody.flatMap(codeGenerator).join('\n')}
-        }`
-        else
+      case 'IfStatement': {
+        if(node.falseBody.length)
         return `if (${codeGenerator(node.condition)}) {
             ${node.trueBody.flatMap(codeGenerator).join('\n')}
+          } else {
+            ${node.falseBody.flatMap(codeGenerator).join('\n')}
           }`
-      }
+          else
+          return `if (${codeGenerator(node.condition)}) {
+              ${node.trueBody.flatMap(codeGenerator).join('\n')}
+            }`
+        }
 
       case 'ForStatement': {
         if(node.interactsWithSecret) {
@@ -170,7 +170,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
           ${codeGenerator(node.body)}
         }`
       }
-
 
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here

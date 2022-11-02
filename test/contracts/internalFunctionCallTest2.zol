@@ -16,7 +16,7 @@ contract Assign {
     known a += value;
   }
   function remove( uint256 value, uint256 value1 ) public {
-    known b += value;
+    unknown b += value;
     addB( value, value1);
     addA(value1);
   }

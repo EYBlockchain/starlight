@@ -100,6 +100,7 @@ class BoilerplateGenerator {
   isAccessed?: boolean;
   initialisationRequired?: boolean;
   newCommitmentsRequired?: boolean;
+  encryptionRequired?: boolean;
   isMapping: boolean;
   isStruct: boolean;
   structProperties?: string[];
@@ -143,6 +144,7 @@ class BoilerplateGenerator {
       isMapping,
       isStruct,
       initialisationRequired,
+      encryptionRequired,
       // burnedOnly,
     } = indicators;
     Object.assign(this, {
@@ -156,6 +158,7 @@ class BoilerplateGenerator {
       isMapping,
       isStruct,
       initialisationRequired,
+      encryptionRequired,
       thisIndicator: indicators, // used for gathering increments of mappings and/or structs
       // burnedOnly,
     });
@@ -279,7 +282,7 @@ class BoilerplateGenerator {
       }
       if (this.isNullified && ['newCommitment', 'mapping'].includes(bpType)) {
         this._addBP(bpType, { name: `${name}_${j + 2}`, ...extraParams });
-      } else if (['newCommitment', 'mapping'].includes(bpType)) {
+      } else if (['newCommitment', 'mapping', 'encryption'].includes(bpType)) {
         this._addBP(bpType, { name: `${name}_${j}`, ...extraParams });
       }
     },
@@ -300,6 +303,9 @@ class BoilerplateGenerator {
     }
     if (this.newCommitmentsRequired && !this.burnedOnly) {
       addBP('newCommitment');
+    }
+    if (this.encryptionRequired) {
+      addBP('encryption');
     }
   }
 
@@ -344,6 +350,8 @@ class BoilerplateGenerator {
   oldCommitmentExistence = () => ({});
 
   newCommitment = () => ({});
+
+  encryption = () => ({});
 
   mapping = (bpSection) => ({
     mappingName: this.mappingName,

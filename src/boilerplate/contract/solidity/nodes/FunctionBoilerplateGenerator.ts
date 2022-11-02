@@ -74,10 +74,10 @@ class FunctionBoilerplateGenerator {
       const { indicators } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
 
-      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState } = indicators;
+      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, encryptionRequired } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
     },
 
     parameters() {
@@ -102,7 +102,7 @@ class FunctionBoilerplateGenerator {
       }
 
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter((p: any) => (!p.isSecret && p.interactsWithSecret)).concat(customInputs).map((p: any) => customInputsMap(p));
+      const publicParams = params?.filter((p: any) => (!p.isSecret && p.interactsWithSecret)).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
 
       const indicators = this.customFunction.getIndicators.bind(this)();
@@ -112,7 +112,7 @@ class FunctionBoilerplateGenerator {
       if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
 
 
-      if(path.node.returnParameters.parameters.length === 0) {
+      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
       }
 

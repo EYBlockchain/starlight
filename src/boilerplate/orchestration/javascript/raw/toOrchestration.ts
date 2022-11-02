@@ -61,10 +61,14 @@ export const sendTransactionBoilerplate = (node: any) => {
   output[1] = [];
   output[2] = [];
   output[3] = [];
+  output[4] = [];
+  output[5] = [];
   // output[0] = arr of nullifiers
   // output[1] = root(s)
   // output[2] = arr of commitments
   // output[3] = arr of nullifiers to check, not add (for accessed states)
+  // output[4] = arr of cipherText
+  // output[5] = arr of enc keys
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(privateStates)) {
@@ -83,6 +87,10 @@ export const sendTransactionBoilerplate = (node: any) => {
           default:
             // increment
             output[2].push(`${privateStateName}_newCommitment.integer`);
+            if (stateNode.encryptionRequired) {
+              output[4].push(`${privateStateName}_cipherText`);
+              output[5].push(`${privateStateName}_encKey`);
+            }
             break;
         }
         break;
@@ -109,11 +117,21 @@ export const sendTransactionBoilerplate = (node: any) => {
 
 export const generateProofBoilerplate = (node: any) => {
   const output = [];
+  const enc = [];
+  const cipherTextLength = [];
   let containsRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
   let stateNode: any;
   for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+    // we prepare the return cipherText and encKey when required
+    if (stateNode.encryptionRequired) {
+      stateNode.structProperties ? cipherTextLength.push(stateNode.structProperties.length + 2) : cipherTextLength.push(3);
+      enc[0] ??= [];
+      enc[0].push(`const ${stateName}_cipherText = res.inputs.slice(START_SLICE, END_SLICE).map(e => generalise(e).integer);`);
+      enc[1] ??= [];
+      enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
+    }
     const parameters = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
     const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
@@ -156,6 +174,7 @@ export const generateProofBoilerplate = (node: any) => {
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
             initialisationRequired: stateNode.initialisationRequired,
+            encryptionRequired: false,
             rootRequired: !containsRoot,
             parameters,
           })
@@ -188,6 +207,7 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 initialisationRequired: false,
+                encryptionRequired: false,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
                 parameters,
@@ -216,6 +236,7 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 initialisationRequired: false,
+                encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: false,
                 accessedOnly: false,
                 parameters,
@@ -225,8 +246,20 @@ export const generateProofBoilerplate = (node: any) => {
         }
     }
   }
+  // we now want to go backwards and calculate where our cipherText is
+  let start = 0;
+  for (let i = cipherTextLength.length -1; i >= 0; i--) {
+    // extract enc key
+    enc[1][i] = start === 0 ? enc[1][i].replace('END_SLICE', '') : enc[1][i].replace('END_SLICE', ', ' + start);
+    enc[1][i] = enc[1][i].replace('START_SLICE', start - 2);
+    // extract cipherText
+    enc[0][i] = enc[0][i].replace('END_SLICE', start - 2);
+    start -= cipherTextLength[i] + 2;
+    enc[0][i] = enc[0][i].replace('START_SLICE', start);
+
+  }
   output.push(`\n].flat(Infinity);`);
-  return output;
+  return [output, enc];
 };
 
 export const preimageBoilerPlate = (node: any) => {
@@ -699,15 +732,17 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'GenerateProof':
+      [ lines[0], params[0] ] = generateProofBoilerplate(node);
       return {
         statements: [
           `\n\n// Call Zokrates to generate the proof:
           \nconst allInputs = [`,
-          generateProofBoilerplate(node),
+          `${lines[0]}`,
           `\nconst res = await generateProof('${node.circuitName}', allInputs);`,
           `\nconst proof = generalise(Object.values(res.proof).flat(Infinity))
           .map(coeff => coeff.integer)
           .flat(Infinity);`,
+          `${params[0].flat(Infinity).join('\n')}`
         ],
       };
 
@@ -729,6 +764,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
       if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array
+      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
+      if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
@@ -740,7 +777,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst tx = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof)
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof)
           .send({
               from: config.web3.options.defaultAccount,
               gas: config.web3.options.defaultGas,

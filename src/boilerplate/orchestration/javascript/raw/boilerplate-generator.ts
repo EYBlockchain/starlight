@@ -74,7 +74,7 @@ class BoilerplateGenerator {
       return [
         `
         \n\n// Read dbs for keys and previous commitment values:
-        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(32), '${contractName}', ${onChainKeyRegistry});
+        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry});
         const keys = JSON.parse(
                     fs.readFileSync(keyDb, 'utf-8', err => {
                       console.log(err);
@@ -288,7 +288,7 @@ class BoilerplateGenerator {
       switch (stateType) {
         case 'increment':
           return [`
-          \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
+          \nconst ${stateName}_newSalt = generalise(utils.randomHex(31));
           \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_newCommitmentValue.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_newCommitmentValue.hex(32))`}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
           \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];
         case 'decrement':
@@ -299,7 +299,7 @@ class BoilerplateGenerator {
             `parseInt(${stateName}_0_prev.integer, 10) + parseInt(${stateName}_1_prev.integer, 10) - parseInt(${stateName}_newCommitmentValue.integer, 10);
             \n${stateName}_change = generalise(${stateName}_change);`;
           return [`
-            \nconst ${stateName}_2_newSalt = generalise(utils.randomHex(32));
+            \nconst ${stateName}_2_newSalt = generalise(utils.randomHex(31));
             \nlet ${stateName}_change = ${change}
             \nlet ${stateName}_2_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_change.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_change.hex(32))`}, BigInt(publicKey.hex(32)), BigInt(${stateName}_2_newSalt.hex(32))],);
             \n${stateName}_2_newCommitment = generalise(${stateName}_2_newCommitment.hex(32)); // truncate`];
@@ -307,7 +307,7 @@ class BoilerplateGenerator {
           const value = structProperties ? structProperties.map(p => `BigInt(${stateName}.${p}.hex(32))`) :` BigInt(${stateName}.hex(32))`;
           return [`
             \n ${structProperties ? structProperties.map(p => `\n${stateName}.${p} = ${stateName}.${p} ? ${stateName}.${p} : ${stateName}_prev.${p};`).join('') : ''}
-            \nconst ${stateName}_newSalt = generalise(utils.randomHex(32));
+            \nconst ${stateName}_newSalt = generalise(utils.randomHex(31));
             \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${value}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
             \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];
         default:
@@ -327,8 +327,8 @@ class BoilerplateGenerator {
         \n`,
         `\nimport { getContractInstance, registerKey, getInputCommitments, joinCommitments } from './common/contract.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
-        `\nimport poseidonHash from './common/poseidon.mjs';`,
-        `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';
+        `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
+        `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
@@ -345,6 +345,7 @@ class BoilerplateGenerator {
       burnedOnly,
       accessedOnly,
       initialisationRequired,
+      encryptionRequired,
       rootRequired,
       parameters,
     }): string[] {
@@ -355,15 +356,20 @@ class BoilerplateGenerator {
         case 'increment':
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \t${stateName}_newOwnerPublicKey.integer,
+              ${encryptionRequired ? `` : `\t${stateName}_newOwnerPublicKey.integer,`}
               \t${stateName}_newSalt.integer,
-              \t${stateName}_newCommitment.integer`];
+              \t${stateName}_newCommitment.integer
+              ${encryptionRequired ? `,
+                \tgeneralise(utils.randomHex(31)).integer,
+                \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
+              decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}
+            `];
         case 'decrement':
           prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \tsecretKey.limbs(32, 8),
-              \tsecretKey.limbs(32, 8),
+              \tsecretKey.integer,
+              \tsecretKey.integer,
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_1_nullifier.integer,
               ${prev(0)},
@@ -392,7 +398,7 @@ class BoilerplateGenerator {
                 case true:
                   return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \tsecretKey.limbs(32, 8),
+                      \tsecretKey.integer,
                       \t${stateName}_nullifier.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
@@ -405,7 +411,7 @@ class BoilerplateGenerator {
                     case true:
                       return [`
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
-                          \tsecretKey.limbs(32, 8),
+                          \tsecretKey.integer,
                           \t${stateName}_nullifier.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
@@ -415,7 +421,7 @@ class BoilerplateGenerator {
                     default:
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \t${stateName}_commitmentExists ? secretKey.limbs(32, 8) : generalise(0).limbs(32, 8),
+                      \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
                       \t${stateName}_nullifier.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
@@ -495,9 +501,37 @@ sendTransaction = {
 integrationTestBoilerplate = {
   import(): string {
     return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
-    `},
+    `
+  },
+  encryption(): string {
+    return `
+    it("should recieve and decrypt messages", async () => {
+      try {
+        const { secretKey } = JSON.parse(
+          fs.readFileSync("/app/orchestration/common/db/key.json", "utf-8", (err) => {
+            console.log(err);
+          })
+        );
+        const plainText = decrypt(encryption.msgs, secretKey, encryption.key);
+        console.log('Decrypted plainText:');
+        console.log(plainText);
+        const salt = plainText[plainText.length - 1];
+        const commitmentSet = JSON.parse(
+          fs.readFileSync("/app/orchestration/common/db/preimage.json", "utf-8", (err) => {
+            console.log(err);
+          })
+        );
+        assert.equal(searchPartitionedCommitments(commitmentSet, { salt }), true);
+
+      } catch (err) {
+        logger.error(err);
+        process.exit(1);
+      }
+    });
+    `
+  },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport logger from './common/logger.mjs';\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { searchPartitionedCommitments } from "./common/contract.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -509,6 +543,7 @@ integrationTestBoilerplate = {
       */
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       let leafIndex;
+      let encryption = {};
       // eslint-disable-next-line func-names
        describe('CONTRACT_NAME', async function () {
         this.timeout(3660000);

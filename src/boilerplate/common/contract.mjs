@@ -1,15 +1,14 @@
 import fs from 'fs';
 import config from 'config';
-import GN from 'general-number';
+import pkg from 'general-number';
 import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 import { generateProof } from './zokrates.mjs';
-import poseidonHash from './poseidon.mjs';
-
+import { scalarMult, compressStarlightKey, poseidonHash } from './number-theory.mjs';
 
 const web3 = Web3.connection();
-const { generalise } = GN;
+const { generalise, GN } = pkg;
 const db = '/app/orchestration/common/db/preimage.json';
 const keyDb = '/app/orchestration/common/db/key.json';
 
@@ -112,9 +111,19 @@ export async function registerKey(
   contractName,
   registerWithContract,
 ) {
-  const secretKey = generalise(_secretKey);
-  const BN128_GROUP_ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-  const publicKey = generalise(BigInt(utils.shaHash(secretKey.hex(32))) % BN128_GROUP_ORDER);
+  let secretKey = generalise(_secretKey);
+  let publicKeyPoint = generalise(
+    scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
+  );
+  let publicKey = compressStarlightKey(publicKeyPoint);
+  while (publicKey === null) {
+    logger.warn(`your secret key created a large public key - resetting`);
+    secretKey = generalise(utils.randomHex(31));
+    publicKeyPoint = generalise(
+      scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
+    );
+    publicKey = compressStarlightKey(publicKeyPoint);
+  }
   if (registerWithContract) {
     const instance = await getContractInstance(contractName);
     await instance.methods.registerZKPPublicKey(publicKey.integer).send({
@@ -129,6 +138,35 @@ export async function registerKey(
   fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
 
   return publicKey;
+}
+
+// this fn is useful for checking decrypted values match some existing commitment
+// expecting search term in the form { key: value }
+export function searchPartitionedCommitments(commitmentSet, searchTerm) {
+  // for a mapping, we have commitments stored by:
+  // stateName.mappingKeyName.commitmentHash
+  let allCommitments = [];
+  const stateNames = Object.keys(commitmentSet);
+  stateNames.forEach((stateName) => {
+    if (Object.entries(commitmentSet[stateName])[0][1].salt) {
+      // isMapping = false;
+      allCommitments = allCommitments.concat(Object.values(commitmentSet[stateName]));
+    } else {
+      Object.keys(commitmentSet[stateName]).forEach(mappingKey => {
+        allCommitments = allCommitments.concat(
+          Object.values(commitmentSet[stateName][mappingKey]),
+        );
+      });
+    }
+  });
+  const [key, value] = Object.entries(searchTerm)[0];
+  let foundValue = false;
+  allCommitments.forEach(commitment => {
+    if (commitment[key] === generalise(value).integer) {
+			foundValue = true;
+		}
+  });
+  return foundValue;
 }
 
 export function getInputCommitments(publicKey, value, commitments, isStruct = false) {

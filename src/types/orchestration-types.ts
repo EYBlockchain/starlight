@@ -180,7 +180,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       }
     }
     case 'IfStatement': {
-      const { condition = {} , trueBody= [], falseBody= [] } = fields;
+      const { condition = {} , trueBody= [] , falseBody= [] } = fields;
       return {
         nodeType,
         condition,
