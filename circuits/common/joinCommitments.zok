@@ -15,8 +15,8 @@ def main(\
 	private field fromId,\
 	private field stateVarId,\
 	private bool isMapping,\
-	private u32[8] oldCommitment_0_owner_secretKey,\
-	private u32[8] oldCommitment_1_owner_secretKey,\
+	private u32[8] oldCommitment_0_owner_secretKey_field,\
+	private u32[8] oldCommitment_1_owner_secretKey_field,\
 	public field oldCommitment_0_nullifier,\
 	public field oldCommitment_1_nullifier,\
 	private field oldCommitment_0_value,\
@@ -76,8 +76,6 @@ def main(\
 
         // Nullify oldCommitment_0:
 
-        field oldCommitment_0_owner_secretKey_field = u32_array_to_field(oldCommitment_0_owner_secretKey)
-
         field oldCommitment_0_nullifier_check_field = poseidon([\
           oldCommitment_0_stateVarId_field,\
           oldCommitment_0_owner_secretKey_field,\
@@ -91,7 +89,6 @@ def main(\
 
         // Nullify oldCommitment_1:
 
-        field oldCommitment_1_owner_secretKey_field = u32_array_to_field(oldCommitment_1_owner_secretKey)
 
         field oldCommitment_1_nullifier_check_field = poseidon([\
           oldCommitment_1_stateVarId_field,\
@@ -106,8 +103,6 @@ def main(\
 
         // oldCommitment_0_commitment: preimage check
 
-        field oldCommitment_0_owner_publicKey_field =u32_array_to_field(oldCommitment_0_owner_publicKey)
-
         field oldCommitment_0_commitment_field = poseidon([\
           oldCommitment_0_stateVarId_field,\
           oldCommitment_0,\
@@ -116,8 +111,6 @@ def main(\
         ])
 
         // oldCommitment_1_commitment: preimage check
-
-		field oldCommitment_1_owner_publicKey_field =u32_array_to_field(oldCommitment_1_owner_publicKey)
 
 		field oldCommitment_1_commitment_field = poseidon([\
           oldCommitment_1_stateVarId_field,\
