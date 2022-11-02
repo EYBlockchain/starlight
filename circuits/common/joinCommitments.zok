@@ -15,8 +15,8 @@ def main(\
 	private field fromId,\
 	private field stateVarId,\
 	private bool isMapping,\
-	private u32[8] oldCommitment_0_owner_secretKey_field,\
-	private u32[8] oldCommitment_1_owner_secretKey_field,\
+	private field oldCommitment_0_owner_secretKey_field,\
+	private field oldCommitment_1_owner_secretKey_field,\
 	public field oldCommitment_0_nullifier,\
 	public field oldCommitment_1_nullifier,\
 	private field oldCommitment_0_value,\
