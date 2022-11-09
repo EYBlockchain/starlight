@@ -206,7 +206,10 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.arguments)}`;
 
     case 'MsgSender':
-      return 'msg';
+      return 'msgSender';
+
+      case 'MsgValue':
+        return 'msgValue';
 
     case 'Assert':
       // only happens if we have a single bool identifier which is a struct property

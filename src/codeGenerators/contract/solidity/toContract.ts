@@ -214,6 +214,9 @@ function codeGenerator(node: any) {
     case 'MsgSender':
       return 'msg.sender';
 
+      case 'MsgValue':
+        return 'msg.value';
+
     case 'MemberAccess': {
       const expression = codeGenerator(node.expression);
       return `${expression}.${node.memberName}`;

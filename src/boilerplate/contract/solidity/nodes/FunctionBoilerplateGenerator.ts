@@ -74,10 +74,10 @@ class FunctionBoilerplateGenerator {
       const { indicators } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
 
-      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, containsAccessedOnlyState, encryptionRequired } = indicators;
+      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, encryptionRequired } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
 
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
     },
 
     parameters() {
@@ -107,8 +107,10 @@ class FunctionBoilerplateGenerator {
 
       const indicators = this.customFunction.getIndicators.bind(this)();
 
-      // special check for msgSender param. If found, prepend a msgSender address param to the contact's function.
-      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address', dummy: true });
+      // special check for msgSender and msgValue param. If msgsender is found, prepend a msgSender uint256 param to the contact's function.
+      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true});
+      if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
+
 
       if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
