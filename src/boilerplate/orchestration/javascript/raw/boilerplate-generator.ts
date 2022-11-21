@@ -38,11 +38,8 @@ class BoilerplateGenerator {
           \n // Initialise commitment preimage of whole accessed state:
           ${stateVarIds.join('\n')}
           \nlet ${stateName}_commitmentExists = true;
-          \nconst ${stateName}_preimage = JSON.parse(
-              fs.readFileSync(db, 'utf-8', err => {
-                console.log(err);
-              }),
-            ).${mappingName}${mappingKey};
+          \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId);
+          \nconst ${stateName}_preimage = ${stateName}_commitment.preimage;
           \nconst ${stateName} = generalise(${stateName}_preimage.value);`];
         default:
           return [`
@@ -50,21 +47,18 @@ class BoilerplateGenerator {
               ${stateVarIds.join('\n')}
               \nlet ${stateName}_commitmentExists = true;
               let ${stateName}_witnessRequired = true;
+              \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId);
               \nlet ${stateName}_preimage = {
               \tvalue: ${structProperties ? `{` + structProperties.map(p => `${p}: 0`) + `}` : `0`},
               \tsalt: 0,
               \tcommitment: 0,
               };
-              if (!fs.existsSync(db) || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName} || !JSON.parse(fs.readFileSync(db, 'utf-8')).${mappingName}${mappingKey}) {
+              if (!${stateName}_commitment) {
                   ${stateName}_commitmentExists = false;
                   ${stateName}_witnessRequired = false;
                 } else {
-                  ${stateName}_preimage = JSON.parse(
-                      fs.readFileSync(db, 'utf-8', err => {
-                console.log(err);
-              }),
-            ).${mappingName}${mappingKey};
-          }`];
+                  ${stateName}_preimage = ${stateName}_commitment.preimage;
+              }`];
         }
       },
     };
@@ -134,61 +128,55 @@ class BoilerplateGenerator {
               \n\n// read preimage for decremented state
               ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
               ${stateVarIds.join('\n')}
-              \nconst ${stateName}_preimage = JSON.parse(
-                fs.readFileSync(db, 'utf-8', err => {
-                  console.log(err);
-                }),
-              ).${mappingName}${mappingKey};
+              \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
               \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
 
-              \nconst ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage, ${structProperties ? `true` : `false`})[0] : generalise(_${stateName}_0_oldCommitment).hex(32);
-              \nconst ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage, ${structProperties ? `true` : `false`})[1] : generalise(_${stateName}_1_oldCommitment).hex(32);
-              \n let ${stateName}_witness_0 ;
-              \n let ${stateName}_witness_1 ;
-              const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
-              const ${stateName}_1_prevSalt = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].salt);
-              const ${stateName}_0_prev = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].value);
-              const ${stateName}_1_prev = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].value);
+              \nlet [commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+                publicKey.hex(32),
+                ${stateName}_newCommitmentValue.integer,
+                ${stateName}_preimage,
+                true,
+              );
+
+              const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
+              const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
+              const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
+              const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
               \n
             `];
           return [`
             \n\n// read preimage for decremented state
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
-            \n let ${stateName}_preimage = JSON.parse(
-              fs.readFileSync(db, 'utf-8', err => {
-                console.log(err);
-              }),
-            ).${mappingName}${mappingKey};
+            \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
             \n const ${stateName}_newCommitmentValue = generalise(${increment});
             // First check if required commitments exist or not
-            \n let ${stateName}_commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
-            \nlet ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
-            \nlet ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
-            \n let ${stateName}_witness_0 ;
-            \n let ${stateName}_witness_1 ;
+            \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+              publicKey.hex(32),
+              ${stateName}_newCommitmentValue.integer,
+              ${stateName}_preimage,
+            );
+            \nlet ${stateName}_witness_0;
+            \nlet ${stateName}_witness_1;
 
-                      while( ${stateName}_commitmentFlag === false) {
-                \n  ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
-                \n  ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
+            while(${stateName}_commitmentFlag === false) {
+                \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+                \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_preimage, [${stateName}_0_oldCommitment,${stateName}_1_oldCommitment], [${stateName}_witness_0,${stateName}_witness_1], instance);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance);
 
-                ${stateName}_preimage = JSON.parse(
-                  fs.readFileSync(db, 'utf-8', err => {
-                    console.log(err);
-                  }),
-                ).${mappingName}${mappingKey};
+                ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
-                ${stateName}_commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
-                \n ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
-                \n ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
-
+                [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+                  publicKey.hex(32),
+                  ${stateName}_newCommitmentValue.integer,
+                  ${stateName}_preimage,
+                );
             }
-            const ${stateName}_0_prevSalt = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].salt);
-            const ${stateName}_1_prevSalt = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].salt);
-            const ${stateName}_0_prev = generalise(${stateName}_preimage[${stateName}_0_oldCommitment].value);
-            const ${stateName}_1_prev = generalise(${stateName}_preimage[${stateName}_1_oldCommitment].value);
+            const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
+            const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
+            const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
+            const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
             \n`  ];
         case 'whole':
           switch (reinitialisedOnly) {
@@ -204,7 +192,7 @@ class BoilerplateGenerator {
                   return [`
                     \n\n// read preimage for accessed state
                     ${initialised ? `` : stateVarIds.join('\n')}
-                    const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
+                    const ${stateName}_currentCommitment = generalise(${stateName}_commitment._id);
                     const ${stateName}_prev = generalise(${stateName}_preimage.value);
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
                     \n`];
@@ -213,7 +201,7 @@ class BoilerplateGenerator {
                     \n\n// read preimage for whole state
                     ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
                     ${initialised ? `` : stateVarIds.join('\n')}
-                    const ${stateName}_currentCommitment = generalise(${stateName}_preimage.commitment);
+                    const ${stateName}_currentCommitment = ${stateName}_commitmentExists ? generalise(${stateName}_commitment._id) : generalise(0);
                     const ${stateName}_prev = generalise(${stateName}_preimage.value);
                     const ${stateName}_prevSalt = generalise(${stateName}_preimage.salt);
                     \n`];
@@ -233,8 +221,8 @@ class BoilerplateGenerator {
         case 'partitioned':
           return [`
             \n\n// generate witness for partitioned state
-            ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
-            ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
+            ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+            ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
             const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
             const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
             const ${stateName}_root = generalise(${stateName}_witness_0.root);
@@ -328,7 +316,8 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, registerKey, getInputCommitments, joinCommitments } from './common/contract.mjs';`,
+        `\nimport { getContractInstance, registerKey } from './common/contract.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
@@ -461,39 +450,55 @@ sendTransaction = {
       let value;
       switch (stateType) {
         case 'increment':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue.integer`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue[${i}]`)} }` : `${stateName}_newCommitmentValue`;
           return [`
-            \npreimage.${mappingName}${mappingKey}[${stateName}_newCommitment.hex(32)] = {
-            \tvalue: ${value},
-            \tsalt: ${stateName}_newSalt.integer,
-            \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
-            \tcommitment: ${stateName}_newCommitment.integer,
-          };`];
+          \nawait storeCommitment({
+            hash: ${stateName}_newCommitment,
+            preimage: {
+              \tstateVarId: generalise(${stateName}_stateVarId),
+              \tvalue: ${value},
+              \tsalt: ${stateName}_newSalt,
+              \tpublicKey: ${stateName}_newOwnerPublicKey,
+            },
+            secretKey: ${stateName}_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
+            isNullified: false,
+          });`];
         case 'decrement':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change.integer`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change[${i}]`)} }` : `${stateName}_change`;
           return [`
-            \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_0_oldCommitment).hex(32)].isNullified = true;
-            \npreimage.${mappingName}${mappingKey}[generalise(${stateName}_1_oldCommitment).hex(32)].isNullified = true;
-            \npreimage.${mappingName}${mappingKey}[${stateName}_2_newCommitment.hex(32)] = {
-            \tvalue: ${value},
-            \tsalt: ${stateName}_2_newSalt.integer,
-            \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
-            \tcommitment: ${stateName}_2_newCommitment.integer,
-          };`];
+            \nawait markNullified(generalise(${stateName}_0_oldCommitment._id), secretKey.hex(32));
+            \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));
+            \nawait storeCommitment({
+              hash: ${stateName}_2_newCommitment,
+              preimage: {
+                \tstateVarId: generalise(${stateName}_stateVarId),
+                \tvalue: ${value},
+                \tsalt: ${stateName}_2_newSalt,
+                \tpublicKey: ${stateName}_newOwnerPublicKey,
+              },
+              secretKey: ${stateName}_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
+              isNullified: false,
+            });`];
         case 'whole':
           switch (burnedOnly) {
             case true:
               return [`
-                \npreimage.${mappingName}${mappingKey} = {};`];
+                \nawait markNullified(${stateName}_currentCommitment, secretKey.hex(32));`];
             default:
-              value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}.integer`)} }` : `${stateName}.integer`;
+              value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}`)} }` : `${stateName}`;
               return [`
-                \npreimage.${mappingName}${mappingKey} = {
-                \tvalue: ${value},
-                \tsalt: ${stateName}_newSalt.integer,
-                \tpublicKey: ${stateName}_newOwnerPublicKey.integer,
-                \tcommitment: ${stateName}_newCommitment.integer,
-              };`];
+                \nif (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32));
+                \nawait storeCommitment({
+                  hash: ${stateName}_newCommitment,
+                  preimage: {
+                    \tstateVarId: generalise(${stateName}_stateVarId),
+                    \tvalue: ${value},
+                    \tsalt: ${stateName}_newSalt,
+                    \tpublicKey: ${stateName}_newOwnerPublicKey,
+                  },
+                  secretKey: ${stateName}_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
+                  isNullified: false,
+                });`];
           }
         default:
           throw new TypeError(stateType);
@@ -519,12 +524,9 @@ integrationTestBoilerplate = {
         console.log('Decrypted plainText:');
         console.log(plainText);
         const salt = plainText[plainText.length - 1];
-        const commitmentSet = JSON.parse(
-          fs.readFileSync("/app/orchestration/common/db/preimage.json", "utf-8", (err) => {
-            console.log(err);
-          })
-        );
-        assert.equal(searchPartitionedCommitments(commitmentSet, { salt }), true);
+        const commitmentSet = await getAllCommitments();
+        const thisCommit = commitmentSet.find(c => generalise(c.preimage.salt).integer === generalise(salt.integer));
+        assert.equal(!!thisCommit, true);
 
       } catch (err) {
         logger.error(err);
@@ -534,7 +536,7 @@ integrationTestBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { searchPartitionedCommitments } from "./common/contract.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
