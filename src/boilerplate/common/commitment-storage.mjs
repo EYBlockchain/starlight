@@ -25,19 +25,13 @@ export async function storeCommitment(commitment) {
     BigInt(commitment.preimage.salt.hex(32)),
   ]) : '';
   const preimage = generalise(commitment.preimage).all.hex(32);
-  preimage.value = commitment.preimage.value.integer;
+  preimage.value = generalise(commitment.preimage.value).all ? generalise(commitment.preimage.value).all.integer : generalise(commitment.preimage.value).integer;
   const data = {
     _id: commitment.hash.hex(32),
-	secretKey: commitment.secretKey.hex(32),
-    // compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
+	secretKey: commitment.secretKey? commitment.secretKey.hex(32) : null,
     preimage,
-    // isDeposited: commitment.isDeposited || false,
-    // isOnChain: Number(commitment.isOnChain) || -1,
-    // isPendingNullification: false, // will not be pending when stored
     isNullified: commitment.isNullified,
-    // isNullifiedOnChain: Number(commitment.isNullifiedOnChain) || -1,
-    nullifier: nullifierHash.hex(32),
-    // blockNumber: -1,
+    nullifier: commitment.secretKey? nullifierHash.hex(32) : null,
   };
   logger.debug(`Storing commitment ${data._id}`);
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);

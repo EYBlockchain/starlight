@@ -525,7 +525,7 @@ integrationTestBoilerplate = {
         console.log(plainText);
         const salt = plainText[plainText.length - 1];
         const commitmentSet = await getAllCommitments();
-        const thisCommit = commitmentSet.find(c => generalise(c.preimage.salt).integer === generalise(salt.integer));
+        const thisCommit = commitmentSet.find(c => generalise(c.preimage.salt).integer === generalise(salt).integer);
         assert.equal(!!thisCommit, true);
 
       } catch (err) {
@@ -536,7 +536,7 @@ integrationTestBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -547,6 +547,7 @@ integrationTestBoilerplate = {
       NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
       */
       const sleep = ms => new Promise(r => setTimeout(r, ms));
+      const { generalise } = GN;
       let leafIndex;
       let encryption = {};
       // eslint-disable-next-line func-names
