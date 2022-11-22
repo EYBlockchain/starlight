@@ -107,13 +107,16 @@ const addPublicInput = (path: NodePath, state: any) => {
     if (path.isMapping(node)) {
       name = getIndexAccessName(node);
       node.name = name;
-      const indexExpressionNode = path.isMsgSender(node.indexExpression) ?
-      buildNode('MsgSender') :
-      buildNode(node.indexExpression.nodeType, {
+      let indexExpressionNode: any;
+      if(path.isMsgSender(node.indexExpression))
+      indexExpressionNode = buildNode('MsgSender');
+      else if(path.isMsgValue(node.indexExpression))
+      indexExpressionNode = buildNode('MsgValue');
+      else
+      indexExpressionNode = buildNode(node.indexExpression.nodeType, {
           name: node.indexExpression.name,
           value: node.indexExpression.value,
-          subType: node.indexExpression.typeDescriptions?.typeString,
-        });
+          subType: node.indexExpression.typeDescriptions?.typeString,});
       innerNode = buildNode('IndexAccess', {
           name,
           baseExpression: buildNode('Identifier', { name: node.baseExpression.name }),
@@ -175,7 +178,12 @@ const addPublicInput = (path: NodePath, state: any) => {
 
 const getIndexAccessName = (node: any) => {
   if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
-  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${(NodePath.getPath(node).scope.getMappingKeyName(node)).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+  if (node.nodeType == 'IndexAccess') {
+    const mappingKeyName = NodePath.getPath(node).scope.getMappingKeyName(node);
+    if(mappingKeyName == 'msg')
+      return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${node.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+    return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+  }
   return null;
 }
 /**
@@ -302,7 +310,9 @@ const visitor = {
     exit(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
+      state.msgValueParam ??= scope.indicators.msgValueParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
+      node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
 
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
@@ -349,6 +359,10 @@ const visitor = {
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
           delete state.msgSenderParam; // reset
+        }
+        if (state.msgValueParam) {
+          newNodes.generateProofNode.parameters.push(`msgValue`);
+          delete state.msgValueParam; // reset
         }
 
         const allIndicators = [];
@@ -899,7 +913,8 @@ const visitor = {
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value', 'Value')
               .replace('.', 'dot')
           : indicator.name;
 
@@ -1012,7 +1027,8 @@ const visitor = {
         ? indicator.name
             .replace('[', '_')
             .replace(']', '')
-            .replace('.sender', '')
+             .replace('.sender', 'Sender')
+             .replace('.value', 'Value')
             .replace('.', 'dot')
         : indicator?.name || lhs?.name;
       // reset
@@ -1222,6 +1238,11 @@ const visitor = {
       const { node, parent } = path;
       if (path.isMsgSender()) {
         const newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+        parent._newASTPointer[path.containerName] = newNode;
+        return;
+      } else if (path.isMsgValue()) {
+        const newNode = buildNode('MsgValue');
         state.skipSubNodes = true;
         parent._newASTPointer[path.containerName] = newNode;
         return;

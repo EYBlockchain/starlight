@@ -39,7 +39,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   ) {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
-      name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+      name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
     if (thisPath.containerName === 'indexExpression')
       name = binding.getMappingKeyName(thisPath);
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
@@ -188,11 +188,17 @@ const visitor = {
           const num = indicator.isStruct ? indicators.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
           if (indicator.isMapping && indicator.mappingKeys) {
             for(const [, mappingKey ] of Object.entries(indicator.mappingKeys)) {
-              if (mappingKey.encryptionRequired)
+              if (mappingKey.encryptionRequired) {
+                let indicatorname: any;
+                if(mappingKey.returnKeyName(mappingKey.keyPath.node) == 'msg')
+                indicatorname  = mappingKey.returnKeyName(mappingKey.keyPath.parent)
+                else
+                indicatorname = mappingKey.returnKeyName(mappingKey.keyPath.node)
                 newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
-                  name: `${indicator.name}_${mappingKey.returnKeyName(mappingKey.keyPath.node)}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
+                  name: `${indicator.name}_${indicatorname}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
                   type: `EncryptedMsgs<${num}>`,
                 }));
+              }
             };
           } else {
             newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
@@ -231,11 +237,20 @@ const visitor = {
       if (indicators.msgSenderParam) {
         node._newASTPointer.parameters.parameters.unshift(
           buildNode('VariableDeclaration', {
-            name: 'msg',
+            name: 'msgSender',
             declarationType: 'parameter',
             type: 'field',
           }),
         ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
+      }
+      if (indicators.msgValueParam) {
+        node._newASTPointer.parameters.parameters.unshift(
+          buildNode('VariableDeclaration', {
+            name: 'msgValue',
+            declarationType: 'parameter',
+            type: 'field',
+          }),
+        ); // insert a msgValue parameter, because we've found msg.value in the body of this function.
       }
     },
   },
@@ -560,7 +575,8 @@ const visitor = {
           ? referencedIndicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value','Value')
               .replace('.', 'dot')
           : referencedIndicator.name;
 
@@ -819,6 +835,9 @@ let interactsWithSecret = false ;
 
       if (path.isMsgSender()) {
         newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+      } else if (path.isMsgValue()) {
+        newNode = buildNode('MsgValue');
         state.skipSubNodes = true;
       } else {
         newNode = buildNode('MemberAccess', { memberName: node.memberName, isStruct: path.isStruct(node)});
