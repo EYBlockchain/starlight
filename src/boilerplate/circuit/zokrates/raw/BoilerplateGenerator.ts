@@ -463,6 +463,7 @@ class BoilerplateGenerator {
        return [];
     },
   };
+
 }
 
 export default BoilerplateGenerator;

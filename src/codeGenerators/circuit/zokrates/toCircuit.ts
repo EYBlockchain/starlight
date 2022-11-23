@@ -149,6 +149,8 @@ function codeGenerator(node: any) {
        return ``;
       }
     }
+    case 'JoinCommitmentFunctionDefinition' :
+    return `${CircuitBP.uniqueify(node.body.statements.flatMap(codeGenerator)).join('\n')}`;
     case 'Return':
       return  ` ` ;
 

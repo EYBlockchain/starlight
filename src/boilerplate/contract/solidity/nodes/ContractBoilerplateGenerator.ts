@@ -71,7 +71,7 @@ class ContractBoilerplateGenerator {
       const { scope } = this;
       let isjoinCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(scope.bindings)){
-       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+       if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct )
           isjoinCommitmentsFunction?.push('true');
       }
       const {
@@ -103,7 +103,7 @@ class ContractBoilerplateGenerator {
       } = this.scope;
       let isjoinCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(this.scope.bindings)){
-       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+       if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct)
           isjoinCommitmentsFunction?.push('true');
       }
       let parameterList: any[];

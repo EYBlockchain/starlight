@@ -260,7 +260,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         CircuitArguments,
         circuitImport,
       };
-
     }
     case 'InternalFunctionBoilerplate':{
       const { name, internalFunctionInteractsWithSecret = false,circuitImport = false,structImport = false, structName} = fields;
