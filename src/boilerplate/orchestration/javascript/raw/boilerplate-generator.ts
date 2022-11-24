@@ -131,12 +131,15 @@ class BoilerplateGenerator {
               \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
               \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
 
-              \nlet [commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+              \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
                 publicKey.hex(32),
                 ${stateName}_newCommitmentValue.integer,
                 ${stateName}_preimage,
                 true,
               );
+
+              \nlet ${stateName}_witness_0;
+              \nlet ${stateName}_witness_1;
 
               const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
               const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
