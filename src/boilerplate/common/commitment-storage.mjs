@@ -101,7 +101,7 @@ export async function markNullified(commitmentHash, secretKey = null) {
   }
 
 
-export function getInputCommitments(
+  export function getInputCommitments(
 	publicKey,
 	value,
 	commitments,
@@ -112,35 +112,12 @@ export function getInputCommitments(
 		(entry) => entry.preimage.publicKey === publicKey && !entry.isNullified
 	);
 	if (isStruct) {
-		let possibleCommitmentsProp = [];
-		value.forEach((propValue, i) => {
-			possibleCommitments.sort(
-				(commitA, commitB) =>
-					parseInt(Object.values(commitB.preimage.value)[i], 10) -
-					parseInt(Object.values(commitA.preimage.value)[i], 10)
-			);
-			if (
-				parseInt(Object.values(possibleCommitments[0].preimage.value)[i], 10) +
-					parseInt(Object.values(possibleCommitments[1].preimage.value)[i], 10) >=
-				parseInt(propValue, 10)
-			) {
-				possibleCommitmentsProp.push([
-					possibleCommitments[0],
-					possibleCommitments[1],
-				]);
-			}
-		});
-		const possibleCommitmentsSet = [
-			...new Set(
-				possibleCommitmentsProp
-					.flat(Infinity)
-					.filter(
-						(item, index) =>
-							possibleCommitmentsProp.flat(Infinity).indexOf(item) !== index
-					)
-			),
-		];
-		if (possibleCommitmentsSet.length >= 2) return possibleCommitmentsSet;
+
+		let possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
+		if (
+			possibleCommitmentsProp.length > 0
+		)
+			return [true, possibleCommitmentsProp[0][0], possibleCommitmentsProp[0][1]];
 		return null;
 	}
 	possibleCommitments.sort(
@@ -161,6 +138,56 @@ export function getInputCommitments(
 		return [false, possibleCommitments[0], possibleCommitments[1]];
 	return null;
 }
+
+function getStructInputCommitments(
+	value,
+	possibleCommitments
+) {
+	if (possibleCommitments.length < 2) {
+		logger.warn('Enough Commitments dont exists to use.' )
+		return null;
+	}
+	let possibleCommitmentsProp = [];
+	value.forEach((propValue, i) => {
+		let possibleCommitmentsTemp = [];
+		possibleCommitments.sort(
+			(commitA, commitB) =>
+				parseInt(Object.values(commitB.preimage.value)[i], 10) -
+				parseInt(Object.values(commitA.preimage.value)[i], 10)
+		);
+		if (!possibleCommitmentsProp.length) {
+			if (
+				parseInt(Object.values(possibleCommitments[0].preimage.value)[i], 10) +
+					parseInt(Object.values(possibleCommitments[1].preimage.value)[i], 10) >=
+				parseInt(propValue, 10)
+			) {
+				possibleCommitmentsProp.push([
+					possibleCommitments[0],
+					possibleCommitments[1],
+				]);
+			} else {
+				possibleCommitments.splice(0,2);
+				possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
+			}
+		} else {
+			possibleCommitments.forEach((possibleCommit) => {
+				if (possibleCommitmentsProp.includes(possibleCommit)) possibleCommitmentsTemp.push(possibleCommit);
+			});
+			if (
+				possibleCommitmentsTemp.length > 1 && 
+					parseInt(Object.values(possibleCommitmentsTemp[0].preimage.value)[i], 10) +
+						parseInt(Object.values(possibleCommitmentsTemp[1].preimage.value)[i], 10) <
+					parseInt(propValue, 10)
+				) {
+					possibleCommitments.splice(0,2);
+					possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
+			}
+		}
+	});
+	return possibleCommitmentsProp;
+}
+
+
 export async function joinCommitments(
 	contractName,
 	statename,
