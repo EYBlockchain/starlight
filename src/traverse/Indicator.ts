@@ -14,6 +14,7 @@ export class ContractDefinitionIndicator {
   oldCommitmentAccessRequired: boolean;
   nullifiersRequired: boolean;
   newCommitmentsRequired: boolean;
+  encryptionRequired?: boolean;
   initialisationRequired?: boolean;
   containsAccessedOnlyState?: boolean;
   constructor() {
@@ -528,12 +529,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.owner ??= this.binding.owner;
     this.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
     this.parentIndicator.onChainKeyRegistry ??= this.binding.onChainKeyRegistry;
-
     const functionType = this.scope.path.node.kind;
-     if (functionType === 'constructor') {
-         this.onChainKeyRegistry = false;
-         this.parentIndicator.onChainKeyRegistry = false;
-     }
+    if (functionType === 'constructor') {
+        this.onChainKeyRegistry = false;
+        this.parentIndicator.onChainKeyRegistry = false;
+    }
     if (this.isMapping) {
       this.mappingOwnershipType = this.owner?.mappingOwnershipType;
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
@@ -746,6 +746,21 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
     }
+  }
+
+  updateEncryption() {
+    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned) return;
+    if (this.isMapping) {
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
+        mappingKey.updateEncryption()
+      }
+      return;
+    }
+    if (this.isNullified) return;
+    this.encryptionRequired = true;
+    this.parentIndicator.encryptionRequired = true;
+    this.parentIndicator.parentIndicator.encryptionRequired = true;
   }
 
   updateNewCommitmentsRequired() {

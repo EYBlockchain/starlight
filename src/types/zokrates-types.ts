@@ -222,7 +222,8 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         initialValue,
       };
     }
-    case 'MsgSender': {
+    case 'MsgSender':
+    case 'MsgValue': {
       return {
         nodeType,
       };
@@ -259,7 +260,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         CircuitArguments,
         circuitImport,
       };
-
     }
     case 'InternalFunctionBoilerplate':{
       const { name, internalFunctionInteractsWithSecret = false,circuitImport = false,structImport = false, structName} = fields;

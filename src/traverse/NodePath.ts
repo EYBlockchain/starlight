@@ -735,6 +735,21 @@ export default class NodePath {
     );
   }
 
+    /**
+   * Checks whether a node represents `msg.value`
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+     isMsgValue(node: any = this.node): boolean {
+      return (
+        node.nodeType === 'MemberAccess' &&
+        node.memberName === 'value' &&
+        node.typeDescriptions.typeString === 'uint256' &&
+        this.isMsg(node.expression)
+      );
+    }
+  
+
   /**
    * Checks whether a node represents the special solidity type `msg` (e.g. used in `msg.sender`)
    * @param {node} node (optional - defaults to this.node)
@@ -828,7 +843,7 @@ export default class NodePath {
     if (node.nodeType !== 'IndexAccess')
       return this.getAncestorOfType('IndexAccess').getMappingKeyIdentifier();
     const { indexExpression } = node;
-    const keyNode = this.isMsgSender(indexExpression)
+    const keyNode = (this.isMsgSender(indexExpression) || this.isMsgValue(indexExpression))
       ? indexExpression?.expression
       : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
     return keyNode;

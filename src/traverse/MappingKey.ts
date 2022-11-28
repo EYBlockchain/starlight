@@ -72,8 +72,11 @@ export default class MappingKey {
   mappingOwnershipType?: string;
   onChainKeyRegistry?: boolean;
   owner: any = null; // object of objects, indexed by node id.
+  encryptionRequired?: boolean;
 
   returnKeyName(keyNode: any) {
+    if (this.keyPath.isMsgSender(keyNode)) return 'msgSender';
+    if (this.keyPath.isMsgValue(keyNode)) return 'msgValue';
     if (this.keyPath.isMsg(keyNode)) return 'msg';
     switch (keyNode.nodeType) {
       case 'VariableDeclaration':
@@ -171,6 +174,33 @@ export default class MappingKey {
     }
     this.owner = ownerNode;
     this.isOwned = true;
+  }
+
+  updateEncryption() {
+    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned || this.isNullified) return;
+    switch (this.mappingOwnershipType) {
+      case 'key':
+        // owner here is the keypath
+        if (this.name.includes('[msg.sender]')) return;
+        this.encryptionRequired = true;
+        break;
+      case 'value':
+      default:
+        if ((this.owner.node?.name || this.owner.name).includes('msg')) return;
+        this.encryptionRequired = true;
+        break;
+    }
+    if (this.encryptionRequired) {
+      this.container.encryptionRequired = true;
+      if (!this.isChild) {
+        this.container.parentIndicator.encryptionRequired = true;
+        this.container.parentIndicator.parentIndicator.encryptionRequired = true;
+      } else {
+        this.container.container.parentIndicator.encryptionRequired = true;
+        this.container.container.parentIndicator.encryptionRequired = true;
+      }
+
+    }
   }
 
   updateIncrementation(path: NodePath, state: any) {

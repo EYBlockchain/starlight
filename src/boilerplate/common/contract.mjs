@@ -1,15 +1,14 @@
 import fs from 'fs';
 import config from 'config';
-import GN from 'general-number';
+import pkg from 'general-number';
 import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 import { generateProof } from './zokrates.mjs';
-import poseidonHash from './poseidon.mjs';
-
+import { scalarMult, compressStarlightKey, poseidonHash } from './number-theory.mjs';
 
 const web3 = Web3.connection();
-const { generalise } = GN;
+const { generalise, GN } = pkg;
 const db = '/app/orchestration/common/db/preimage.json';
 const keyDb = '/app/orchestration/common/db/key.json';
 
@@ -112,9 +111,19 @@ export async function registerKey(
   contractName,
   registerWithContract,
 ) {
-  const secretKey = generalise(_secretKey);
-  const BN128_GROUP_ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-  const publicKey = generalise(BigInt(utils.shaHash(secretKey.hex(32))) % BN128_GROUP_ORDER);
+  let secretKey = generalise(_secretKey);
+  let publicKeyPoint = generalise(
+    scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
+  );
+  let publicKey = compressStarlightKey(publicKeyPoint);
+  while (publicKey === null) {
+    logger.warn(`your secret key created a large public key - resetting`);
+    secretKey = generalise(utils.randomHex(31));
+    publicKeyPoint = generalise(
+      scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
+    );
+    publicKey = compressStarlightKey(publicKeyPoint);
+  }
   if (registerWithContract) {
     const instance = await getContractInstance(contractName);
     await instance.methods.registerZKPPublicKey(publicKey.integer).send({
@@ -131,52 +140,122 @@ export async function registerKey(
   return publicKey;
 }
 
+function getStructInputCommitments(
+	value,
+	possibleCommitments
+) {
+	let possibleCommitmentsProp = [];
+	value.forEach((propValue, i) => {
+		let possibleCommitmentsTemp = [];
+		possibleCommitments.sort(
+			(preimageA, preimageB) =>
+				parseInt(Object.values(preimageB[1].value)[0], 10) -
+				parseInt(Object.values(preimageA[1].value)[0], 10)
+		);
+		if(possibleCommitmentsProp.length === 0){
+			if (
+					parseInt(Object.values(possibleCommitments[0][1].value)[i], 10) +
+						parseInt(Object.values(possibleCommitments[1][1].value)[i], 10) >
+					parseInt(propValue, 10)
+				) {
+					possibleCommitmentsProp.push([
+						possibleCommitments[0][0],
+						possibleCommitments[1][0],
+					]);
+				}
+		}
+		else {
+			possibleCommitmentsProp.forEach((commitment) => {
+				commitment.forEach((item) => {
+				 possibleCommitments.forEach((possibleCommit) => {
+					 if(item === possibleCommit[0]){
+						possibleCommitmentsTemp.push(possibleCommit)
+					 }
+				  });
+				})
+			})
+			if (
+					parseInt(Object.values(possibleCommitmentsTemp[0][1].value)[i], 10) +
+						parseInt(Object.values(possibleCommitmentsTemp[1][1].value)[i], 10) <
+					parseInt(propValue, 10)
+				) {
+					possibleCommitments.splice(0,2);
+				  possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
+			 }
+       else {
+         logger.warn('Enough Commitments dont exists to use.' )
+         return null;
+       }
+		}
+});
+return possibleCommitmentsProp;
+}
+
+// this fn is useful for checking decrypted values match some existing commitment
+// expecting search term in the form { key: value }
+export function searchPartitionedCommitments(commitmentSet, searchTerm) {
+  // for a mapping, we have commitments stored by:
+  // stateName.mappingKeyName.commitmentHash
+  let allCommitments = [];
+  const stateNames = Object.keys(commitmentSet);
+  stateNames.forEach((stateName) => {
+    if (Object.entries(commitmentSet[stateName])[0][1].salt) {
+      // isMapping = false;
+      allCommitments = allCommitments.concat(Object.values(commitmentSet[stateName]));
+    } else {
+      Object.keys(commitmentSet[stateName]).forEach(mappingKey => {
+        allCommitments = allCommitments.concat(
+          Object.values(commitmentSet[stateName][mappingKey]),
+        );
+      });
+    }
+  });
+  const [key, value] = Object.entries(searchTerm)[0];
+  let foundValue = false;
+  allCommitments.forEach(commitment => {
+    if (commitment[key] === generalise(value).integer) {
+			foundValue = true;
+		}
+  });
+  return foundValue;
+}
+
 export function getInputCommitments(publicKey, value, commitments, isStruct = false) {
   const possibleCommitments = Object.entries(commitments).filter(
     entry => entry[1].publicKey === publicKey && !entry[1].isNullified,
   );
   if (isStruct) {
-    let possibleCommitmentsProp = [];
-    value.forEach((propValue, i) => {
-      possibleCommitments.sort(
-        (preimageA, preimageB) =>
-          parseInt(Object.values(preimageB[1].value)[i], 10) - parseInt(Object.values(preimageA[1].value)[i], 10),
-      );
-      if (
-        parseInt(Object.values(possibleCommitments[0][1].value)[i], 10) +
-        parseInt(Object.values(possibleCommitments[1][1].value)[i], 10) >=
-        parseInt(propValue, 10)
-      ) {
-        possibleCommitmentsProp.push([possibleCommitments[0][0], possibleCommitments[1][0]])
-      }
-    });
-    const possibleCommitmentsSet = [...new Set(possibleCommitmentsProp.flat(Infinity).filter((item, index) => possibleCommitmentsProp.flat(Infinity).indexOf(item) !== index))]
-    if (possibleCommitmentsSet.length >= 2) return possibleCommitmentsSet;
-    return null
-  }
+		let possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
+		if (
+			possibleCommitmentsProp.length > 0
+		)
+			return [possibleCommitmentsProp[0][0], possibleCommitmentsProp[0][1]];
+		return null;
+	}
   possibleCommitments.sort(
     (preimageA, preimageB) =>
       parseInt(preimageB[1].value, 10) - parseInt(preimageA[1].value, 10),
   );
   var commitmentsSum = 0;
+  console.log('Commitment Sum:', commitmentsSum);
 	for (var i = 0; i < possibleCommitments.length; i++) {
 	  for (var j = 0 ;  j < possibleCommitments.length; j++){
 		 if(possibleCommitments[i][j] && possibleCommitments[i][j].value)
 		 commitmentsSum = commitmentsSum + parseInt(possibleCommitments[i][j].value, 10);
 	  }
 	}
+  console.log('Commitment Sum:', commitmentsSum);
   if (
     parseInt(possibleCommitments[0][1].value, 10) +
-      parseInt(possibleCommitments[1][1].value, 10) >=
+      parseInt(possibleCommitments[1][1].value, 10) >
     parseInt(value, 10)
   ) {
     return [true, possibleCommitments[0][0], possibleCommitments[1][0]];
-  }
-  else if(commitmentsSum >= parseInt(value, 10))
+  } else if(commitmentsSum >=   parseInt(value, 10))
 	 return  [false, possibleCommitments[0][0], possibleCommitments[1][0]];
   return null;
 }
-  export async function joinCommitments(contractName, statename, secretKey, publicKey, stateVarId, commitments, commitmentsID, witnesses, instance){
+  export async function joinCommitments(contractName, statename, secretKey, publicKey, stateVarId, commitments, commitmentsID, witnesses, instance, isStruct = false, structProperties = []){
 
   logger.warn('Existing Commitments are not appropriate and we need to call Join Commitment Circuit. It will generate proof to join commitments, this will require an on-chain verification');
   const oldCommitment_0 = commitmentsID[0];
@@ -232,19 +311,48 @@ export function getInputCommitments(publicKey, value, commitments, isStruct = fa
 
 	const newCommitment_newSalt = generalise(utils.randomHex(32));
 
-	let newCommitment_value =
-		parseInt(oldCommitment_0_prev.integer, 10) +
-		parseInt(oldCommitment_1_prev.integer, 10);
+  let newCommitment_value = [];
+  let oldCommitment_0_value = [];
+  let oldCommitment_1_value = [];
+  let newCommitment;
 
-	newCommitment_value = generalise(newCommitment_value);
+  if(structProperties){
+    Object.keys(oldCommitment_0_prev).forEach(
+				(p, i) => oldCommitment_0_value[i] = parseInt(oldCommitment_0_prev[p].integer, 10));
 
-	let newCommitment = poseidonHash([
-			BigInt(oldCommitment_stateVarId),
-			BigInt(newCommitment_value.hex(32)),
-			BigInt(publicKey.hex(32)),
-			BigInt(newCommitment_newSalt.hex(32))
-  ],
-	);
+    Object.keys(oldCommitment_1_prev).forEach(
+				(p, i) => oldCommitment_1_value[i] = parseInt(oldCommitment_1_prev[p].integer, 10));
+
+    Object.keys(oldCommitment_0_prev).forEach(
+				(p, i) =>
+				newCommitment_value[i] = parseInt(oldCommitment_0_prev[p].integer, 10) +
+					parseInt(oldCommitment_1_prev[p].integer, 10)
+		  );
+    newCommitment_value = generalise(newCommitment_value).all;
+
+     newCommitment = poseidonHash([
+  		BigInt(oldCommitment_stateVarId),
+  		...newCommitment_value.hex(32).map((v) => BigInt(v)),
+  		BigInt(publicKey.hex(32)),
+  		BigInt(newCommitment_newSalt.hex(32)),
+  	]);
+  } else{
+
+    oldCommitment_0_value = parseInt(oldCommitment_0_prev.integer, 10) ;
+    oldCommitment_1_value = parseInt(oldCommitment_1_prev.integer, 10) ;
+
+    newCommitment_value = parseInt(oldCommitment_0_prev.integer, 10) +
+      parseInt(oldCommitment_1_prev.integer, 10);
+
+  	newCommitment_value = generalise(newCommitment_value);
+
+     newCommitment = poseidonHash([
+  			BigInt(oldCommitment_stateVarId),
+  			BigInt(newCommitment_value.hex(32)),
+  			BigInt(publicKey.hex(32)),
+  			BigInt(newCommitment_newSalt.hex(32))
+    ]);
+  }
 
 	newCommitment = generalise(newCommitment.hex(32)); // truncate
 
@@ -263,13 +371,13 @@ const allInputs = [
 fromID,
 stateVarID,
 isMapping,
-secretKey.integer,
-secretKey.integer,
+secretKey.limbs(32, 8),
+secretKey.limbs(32, 8),
 oldCommitment_0_nullifier.integer,
 oldCommitment_1_nullifier.integer,
-oldCommitment_0_prev.integer,
+oldCommitment_0_value,
 oldCommitment_0_prevSalt.integer,
-oldCommitment_1_prev.integer,
+oldCommitment_1_value,
 oldCommitment_1_prevSalt.integer,
 oldCommitment_root.integer,
 oldCommitment_0_index.integer,
@@ -280,7 +388,6 @@ publicKey.integer,
 newCommitment_newSalt.integer,
 newCommitment.integer,
 ].flat(Infinity);
-
 
 const res = await generateProof( "joinCommitments", allInputs);
 const proof = generalise(Object.values(res.proof).flat(Infinity))
@@ -295,8 +402,7 @@ const tx = await instance.methods
   oldCommitment_root.integer,
   [newCommitment.integer],
   proof
-)
-.send({
+).send({
   from: config.web3.options.defaultAccount,
   gas: config.web3.options.defaultGas,
 });
@@ -312,7 +418,6 @@ const tx = await instance.methods
 
       Object.keys(preimage).forEach((key) => {
     		if (key === statename) {
-
     			preimage[key][oldCommitment_0].isNullified = true;
     			preimage[key][oldCommitment_1].isNullified = true;
     			preimage[key][newCommitment.hex(32)] = {

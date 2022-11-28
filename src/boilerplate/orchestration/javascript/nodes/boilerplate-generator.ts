@@ -141,6 +141,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         initialisationRequired: indicator.initialisationRequired,
+        encryptionRequired: indicator.encryptionRequired,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
           : null,
@@ -164,6 +165,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        encryptionRequired: indicator.encryptionRequired,
         nullifierRequired: indicator.isNullified,
       };
     }
@@ -302,12 +304,14 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         name,
         parameters = buildNode('ParameterList', fields),
         decrementsSecretState = false,
+        encryptionRequired = false,
       } = fields;
       return {
         nodeType,
         name,
         parameters,
         decrementsSecretState,
+        encryptionRequired,
       };
     }
     default:

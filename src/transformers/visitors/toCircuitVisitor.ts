@@ -39,7 +39,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   ) {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
-      name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+      name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
     if (thisPath.containerName === 'indexExpression')
       name = binding.getMappingKeyName(thisPath);
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
@@ -168,23 +168,46 @@ const visitor = {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
+
       const joinCommitmentsNode = buildNode('File', {
        fileName: `joinCommitments`,
         fileId: node.id,
-        nodes: [],
+        nodes: [ ],
       });
 
       // check for joinCommitments
       for(const [, indicator ] of Object.entries(indicators)){
-        if(
-          (indicator instanceof StateVariableIndicator)
+        if((indicator instanceof StateVariableIndicator)
           && indicator.isPartitioned
-          && indicator.isNullified
-          && !indicator.isStruct) {
-            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
+          && indicator.isNullified && !indicator.isStruct) {
+            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName)){
               parent._newASTPointer.push(joinCommitmentsNode);
-         }
+        }
+        if(indicator instanceof StateVariableIndicator && indicator.encryptionRequired) {
+          const num = indicator.isStruct ? indicators.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
+          if (indicator.isMapping && indicator.mappingKeys) {
+            for(const [, mappingKey ] of Object.entries(indicator.mappingKeys)) {
+              if (mappingKey.encryptionRequired) {
+                let indicatorname: any;
+                if(mappingKey.returnKeyName(mappingKey.keyPath.node) == 'msg')
+                indicatorname  = mappingKey.returnKeyName(mappingKey.keyPath.parent)
+                else
+                indicatorname = mappingKey.returnKeyName(mappingKey.keyPath.node)
+                newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+                  name: `${indicator.name}_${indicatorname}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
+                  type: `EncryptedMsgs<${num}>`,
+                }));
+              }
+            };
+          } else {
+            newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+              name: indicator.name,
+              type: `EncryptedMsgs<${num}>`,
+            }));
+          }
+        }
       }
+    }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
@@ -213,11 +236,20 @@ const visitor = {
       if (indicators.msgSenderParam) {
         node._newASTPointer.parameters.parameters.unshift(
           buildNode('VariableDeclaration', {
-            name: 'msg',
+            name: 'msgSender',
             declarationType: 'parameter',
             type: 'field',
           }),
         ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
+      }
+      if (indicators.msgValueParam) {
+        node._newASTPointer.parameters.parameters.unshift(
+          buildNode('VariableDeclaration', {
+            name: 'msgValue',
+            declarationType: 'parameter',
+            type: 'field',
+          }),
+        ); // insert a msgValue parameter, because we've found msg.value in the body of this function.
       }
     },
   },
@@ -542,7 +574,8 @@ const visitor = {
           ? referencedIndicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value','Value')
               .replace('.', 'dot')
           : referencedIndicator.name;
 
@@ -648,11 +681,11 @@ let interactsWithSecret = false ;
         interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
 
         // check for internal function call if the parameter passed in the function call interacts with secret or not
-        if(refPath.parentPath.node.kind === 'functionCall' && refPath.parentPath.node.expression.name != 'eventFunction'){
+        if(refPath.parentPath.isInternalFunctionCall()){
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
              let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
-             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
+             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key]?.interactsWithSecret
             }
           })
         }
@@ -678,9 +711,9 @@ let interactsWithSecret = false ;
 
 
       if (path.isStruct(node)) {
-        const structNode = addStructDefinition(path);
-        newNode.typeName.name = structNode.name;
-        newNode.typeName.members = structNode.members;
+        state.structNode = addStructDefinition(path);
+        newNode.typeName.name = state.structNode.name;
+        newNode.typeName.members = state.structNode.members;
       }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
@@ -801,6 +834,9 @@ let interactsWithSecret = false ;
 
       if (path.isMsgSender()) {
         newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+      } else if (path.isMsgValue()) {
+        newNode = buildNode('MsgValue');
         state.skipSubNodes = true;
       } else {
         newNode = buildNode('MemberAccess', { memberName: node.memberName, isStruct: path.isStruct(node)});
