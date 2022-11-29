@@ -51,6 +51,20 @@ export default {
     }
   },
 
+  IndexAccess: {
+    exit(path: NodePath) {
+      const { node } = path;
+      const { indexExpression, baseExpression } = node;
+      if (node.containsSecret && node.containsPublic) {
+        const mappingBinding = path.getReferencedBinding(baseExpression);
+        const keyBinding = path.getReferencedBinding(indexExpression);
+        if (keyBinding instanceof VariableBinding && keyBinding.isSecret
+          && mappingBinding instanceof VariableBinding && !mappingBinding.isSecret)
+          throw new ZKPError(`Accessing a public mapping ${mappingBinding.name} with a secret value ${keyBinding.name} is not supported - there is no way to hide the secret value when it's used in a public call`, path.node);
+      }
+    }
+  },
+
   EventDefinition: {
     exit(path: NodePath) {
       const { parameters } = path.node;
