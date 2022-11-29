@@ -76,6 +76,12 @@ export default {
           `We can't currently handle conditions which are singular variables - instead of if(a) try something like if(a == true). This is because the compiler must store the 'LHS' (a) and 'RHS' (true) value of the condition in case either are modified throughout the function.`,
           node.condition
         );
+
+      if([node.falseBody?.nodeType, node.trueBody.nodeType].includes('IfStatement'))
+        throw new TODOError(
+          `We can't currently handle else-if statements. Try a new if statement with one condition instead of an else-if. This is because ZoKrates can't easily handle multiple computational branches.`,
+          node.trueBody.nodeType === 'IfStatement' ? node.trueBody : node.falseBody
+        );
     },
   },
 };

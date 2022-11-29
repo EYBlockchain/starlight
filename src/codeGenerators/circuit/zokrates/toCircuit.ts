@@ -183,10 +183,11 @@ function codeGenerator(node: any) {
       let trueStatements: any = ``;
       let falseStatements: any= ``;
       let initialStatements: any= ``;
-      initialStatements+= `
-        // if statements start , copies over left expression variable to temporary variable
-        ${node.condition.leftExpression.typeName?.name && node.condition.leftExpression.typeName?.name !== 'uint256' ? node.condition.leftExpression.typeName.name : 'field'} ${codeGenerator(node.condition.leftExpression)}_temp = ${codeGenerator(node.condition.leftExpression)}`;
-      node.condition.leftExpression.name+= '_temp';
+      // we use our list of condition vars to init temp variables
+      node.conditionVars.forEach(elt => {
+        initialStatements += `
+        ${elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field'} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
+      });
       for (let i =0; i<node.trueBody.length; i++) {
         trueStatements+= `
         ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${codeGenerator(node.trueBody[i].expression.leftHandSide)} fi`
@@ -206,10 +207,10 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.arguments)}`;
 
     case 'MsgSender':
-      return 'msgSender';
+      return node.name || 'msgSender';
 
       case 'MsgValue':
-        return 'msgValue';
+        return node.name || 'msgValue';
 
     case 'Assert':
       // only happens if we have a single bool identifier which is a struct property
