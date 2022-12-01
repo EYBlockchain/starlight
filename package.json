@@ -22,6 +22,10 @@
     "registry": "https://npm.pkg.github.com"
   },
   "files": ["./built/**/*", "./bin/*"],
+  "release": {
+    "branches": ["master", {"name": "miranda/npm", "prerelease": true}]
+  }
+},
   "keywords": [
     "private contract",
     "zapp",
