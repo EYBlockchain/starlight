@@ -1,5 +1,5 @@
 {
-  "name": "starlight",
+  "name": "@eyblockchain/starlight",
   "version": "0.0.1",
   "description": "Create a zApp from Solidity",
   "main": "bin/index.mjs",
@@ -18,6 +18,10 @@
     "type": "git",
     "url": "git+https://github.com/EYBlockchain/starlight.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": ["./built/**/*", "./bin/*"],
   "keywords": [
     "private contract",
     "zapp",
