@@ -24,8 +24,7 @@
   "files": ["./built/**/*", "./bin/*"],
   "release": {
     "branches": ["master", {"name": "miranda/npm", "prerelease": true}]
-  }
-},
+  },
   "keywords": [
     "private contract",
     "zapp",
