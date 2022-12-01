@@ -23,7 +23,7 @@
   },
   "files": ["./built/**/*", "./bin/*"],
   "release": {
-    "branches": ["master", {"name": "miranda/npm", "prerelease": true}]
+    "branches": ["master", {"name": "miranda/npm", "prerelease": "beta"}]
   },
   "keywords": [
     "private contract",
