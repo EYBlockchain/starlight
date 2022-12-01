@@ -13,7 +13,8 @@ jobs:
         with:
           node-version: '14.17.0'
       - run: |
-          ./bin/start
+          npm install
+          tsc
 
       - uses: codfish/semantic-release-action@master
         id: semantic
