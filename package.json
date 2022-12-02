@@ -24,7 +24,10 @@
   "files": [
     "./built/**/*",
     "./bin/mkdirs.mjs",
-    "./index.mjs"
+    "./index.mjs",
+    "./src/boilerplate/common/**/*",
+    "./contracts/**/*",
+    "./circuits/**/*"
   ],
   "release": {
     "branches": [
