@@ -9,7 +9,7 @@ import { FilingError } from './built/error/errors.js';
 // This function is used to export into the published npm package
 // (it's basically a replacement for ./bin/index that npm understands)
 // locally, always use the command line zappify as defined in package.json
-export const zappify = (input, _zappName = input, output = './zapps', modify = false) => {
+export const zappify = (input, _zappName, output = './zapps', modify = false) => {
 
   const inputFilePath = input;
   const modifyAST = modify;
