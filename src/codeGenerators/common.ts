@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import {fileURLToPath} from 'url';
 
 export interface localFile {
   filepath: string,
@@ -49,7 +50,7 @@ export const collectImportFiles = (
   let localFilePaths: string[];
   switch (context) {
     case 'circuit': {
-      contextDirPath ??= './circuits';
+      contextDirPath ??= path.resolve(fileURLToPath(import.meta.url), '../../../circuits/');
       localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
       let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
       importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
@@ -69,7 +70,7 @@ export const collectImportFiles = (
       break;
     }
     case 'contract': {
-      contextDirPath ??=  './contracts';
+      contextDirPath ??= path.resolve(fileURLToPath(import.meta.url), '../../../contracts/');
       localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
         let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
         importFilePath += path.extname(importFilePath) === '.sol' ? '' : '.sol'; // ensure file extension.
@@ -79,7 +80,7 @@ export const collectImportFiles = (
       break;
     }
     case 'orchestration': {
-      contextDirPath ??= './src/boilerplate/';
+      contextDirPath ??= path.resolve(fileURLToPath(import.meta.url), './../../../src/boilerplate/');
       localFilePaths = ImportStatementList.reduce((acc, line) => {
         const importFilePath = line.match(/'(.*?)'/g)[0].replace(/'/g, ''); // get text between quotes; i.e. the import filepaths
         acc.push(importFilePath);
@@ -101,10 +102,11 @@ export const collectImportFiles = (
     if (!exists) continue;
     const f = fs.readFileSync(relPath, 'utf8');
     const n = path.basename(absPath, path.extname(absPath));
+    const shortRelPath = path.relative(path.resolve(fileURLToPath(import.meta.url), '../../../'), absPath);
     const writePath = context === 'orchestration' ? path.join(
-          'orchestration',
-          path.relative('./src/boilerplate', relPath),
-        ) : relPath;
+      'orchestration',
+      path.relative('./src/boilerplate', shortRelPath)
+      ) : shortRelPath;
     if (context === 'contract') {
       // if import is an interface, we need to deploy contract e.g. IERC20 -> deploy ERC20
       if (
@@ -115,7 +117,7 @@ export const collectImportFiles = (
         // if we import an interface, we must find the original contract
         // we assume that any interface begins with I (substring(1)) and the remaining chars are the original contract name
         const newLocalPath = p.replace(n, n.substring(1));
-        const newPath = relPath.replace(n, n.substring(1));
+        const newPath = shortRelPath.replace(n, n.substring(1));
         const check = fs.existsSync(newPath);
         if (check) {
           localFilePaths.push(newLocalPath);

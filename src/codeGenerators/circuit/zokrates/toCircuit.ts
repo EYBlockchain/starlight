@@ -1,6 +1,7 @@
 /* eslint-disable import/no-cycle, no-nested-ternary */
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { collectImportFiles } from '../../common.js'
 import CircuitBP from '../../../boilerplate/circuit/zokrates/raw/BoilerplateGenerator.js';
 import NodePath from '../../../traverse/NodePath.js'
@@ -20,7 +21,7 @@ function codeGenerator(node: any) {
         file,
       };
       if (!file && node.fileName === `joinCommitments`) {
-        thisFile.file = fs.readFileSync('./circuits/common/joinCommitments.zok', 'utf8');
+        thisFile.file = fs.readFileSync(path.resolve(fileURLToPath(import.meta.url), '../../../../../circuits/common/joinCommitments.zok'), 'utf8');
       }
       const importedFiles = collectImportFiles(thisFile.file, 'circuit');
       return [thisFile, ...importedFiles];
