@@ -2,7 +2,7 @@
   "name": "@eyblockchain/starlight",
   "version": "0.0.1",
   "description": "Create a zApp from Solidity",
-  "main": "built/index.js",
+  "main": "./index.mjs",
   "scripts": {
     "write-vk": "node /app/write-vk.mjs -i assign",
     "test": "mocha",
@@ -21,9 +21,18 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "files": ["./built/**/*"],
+  "files": [
+    "./built/**/*",
+    "./index.mjs"
+  ],
   "release": {
-    "branches": ["master", {"name": "miranda/npm", "prerelease": "beta"}]
+    "branches": [
+      "master",
+      {
+        "name": "miranda/npm",
+        "prerelease": "beta"
+      }
+    ]
   },
   "keywords": [
     "private contract",
