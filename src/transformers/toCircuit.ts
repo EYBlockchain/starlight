@@ -7,39 +7,6 @@ import visitor from './visitors/toCircuitVisitor.js';
 import codeGenerator from '../codeGenerators/circuit/zokrates/toCircuit.js';
 import { transformation1 } from './visitors/common.js';
 
-// function poseidonLibraryChooser(fileObj:any ) {
-//  let  poseidonFieldCount = 0;
-//   var lines = fileObj.file.split('\n');
-//   for(var line = 0; line < lines.length; line++) {
-//     if(lines[line].includes('poseidon(')) {
-//       console.log(lines[line]);
-//       poseidonFieldCount = 0;
-//       for(var i = line+1; i<lines.length ; i++) {
-//         console.log(lines[i]);
-//         if(lines[i].includes(',')) {
-//           poseidonFieldCount++;
-//         }
-//         else
-//           break;
-//         }
-//     }
-//     if(poseidonFieldCount >4)
-//       break;
-//   }
-//     if(poseidonFieldCount <5) {
-//       console.log('adding small poseidon');
-//       console.log(poseidonFieldCount);
-//     var lines = fileObj.file.split('\n');
-//     for(var line = 0; line < lines.length; line++) {
-//       if(lines[line].includes('./common/hashes/poseidon/poseidon.zok')) {
-//         lines[line] = 'from "hashes/poseidon/poseidon.zok" import main as poseidon';
-//       }
-//     }
-//     fileObj.file = lines.join('\n');
-//   }
-//   return fileObj;
-// }
-// MON 5.12 WHY TF BIG FILE EVERY TIME
 // A transformer function which will accept an ast.
 export default function toCircuit(ast: any, options: any) {
   // transpile to a circuit AST:
