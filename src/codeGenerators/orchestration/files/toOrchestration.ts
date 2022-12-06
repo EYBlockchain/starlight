@@ -24,6 +24,7 @@ const editableCommitmentCommonFilesBoilerplate = () => {
  * @returns - a suitable function input of that type
  */
 const testInputsByType = (solidityType: any) => {
+  console.log(solidityType);
   switch (solidityType.name) {
     case 'bool':
       return `true`;
@@ -71,6 +72,7 @@ const prepareIntegrationTest = (node: any) => {
     // the user may not have enough commitments to do so
     let removeSecondCall = false;
     let removeMerkleTreeTest = false;
+    console.log(fn.parameters.parameters);
     const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
     if (fn.decrementsSecretState) {
       removeSecondCall = true;

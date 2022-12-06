@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "test": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
-    "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'"
+    "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
+    "start": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp -p 3000:3000 'node orchestration/api.mjs'"
   },
   "keywords": [
     "private contract",
@@ -22,6 +23,7 @@
     "@truffle/contract": "^4.2.21",
     "axios": "^0.19.2",
     "config": "^3.3.1",
+    "express":"4.18.2",
     "enquirer": "^2.3.6",
     "general-number": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
