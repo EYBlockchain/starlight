@@ -24,7 +24,6 @@ const editableCommitmentCommonFilesBoilerplate = () => {
  * @returns - a suitable function input of that type
  */
 const testInputsByType = (solidityType: any) => {
-  console.log(solidityType);
   switch (solidityType.name) {
     case 'bool':
       return `true`;
@@ -57,6 +56,7 @@ const prepareIntegrationTest = (node: any) => {
   // import generic test skeleton
   const genericTestFile: any = Orchestrationbp.integrationTestBoilerplate;
   // replace references to contract and functions with ours
+  console.log(genericTestFile);
   let outputTestFile = genericTestFile.preStatements().replace(
     /CONTRACT_NAME/g,
     node.contractName,
@@ -124,6 +124,80 @@ const prepareIntegrationTest = (node: any) => {
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
   outputTestFile = `${preprefix}\n${outputTestFile}\n });\n`;
   return outputTestFile;
+};
+
+const prepareIntegrationApiServices = (node: any) => {
+  // import generic test skeleton
+  const genericApiServiceFile: any = Orchestrationbp.integrationTestBoilerplate;
+  // replace references to contract and functions with ours
+  console.log(genericApiServiceFile);
+  let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
+    /CONTRACT_NAME/g,
+    node.contractName,
+  );
+
+  const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+
+  relevantFunctions.forEach((fn: any) => {
+    let fnboilerplate = genericApiServiceFile.postStatements()
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name);
+    // we remove the second call to the blockchain if we are decrementing
+    // the user may not have enough commitments to do so
+    let removeSecondCall = false;
+    let removeMerkleTreeTest = false;
+    console.log(fn.parameters.parameters);
+    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
+    if (fn.decrementsSecretState) {
+      removeSecondCall = true;
+    }
+    if (!fn.newCommitmentsRequired) {
+      removeMerkleTreeTest = true;
+    }
+    // replace the signature with test inputs
+    fnboilerplate = fnboilerplate.replace(
+      /FUNCTION_SIG_1/g,
+      paramTypes.map(testInputsByType).join(', '),
+    );
+    fnboilerplate = fnboilerplate.replace(
+      /FUNCTION_SIG_2/g,
+      paramTypes.map(testInputsByType).join(', '),
+    );
+    // remove second call
+    if (removeSecondCall) {
+      // regex: matches everything after `describe('Second Call'`
+      const toRemove = fnboilerplate.match(
+        /describe\('Second Call'?[\s\S]*/g,
+      )[0];
+      fnboilerplate = fnboilerplate.replace(toRemove, `\n});`);
+    }
+
+    // test encryption
+    if (fn.encryptionRequired) {
+      const indexToInsert = fnboilerplate.split(`it('should update`);
+      fnboilerplate = indexToInsert[0] + '\n' + genericApiServiceFile.encryption() + '\n' + `it('should update`+ indexToInsert[1];
+    }
+
+    // remove merkle tree test
+    if (removeMerkleTreeTest) {
+      // regex: matches everything between 'it('should update the merkle tree'' and the first '});'
+      const toRemove = fnboilerplate.match(
+        /it\('should update the merkle tree'?[\s\S]*?}\);/g,
+      )[0];
+      fnboilerplate = fnboilerplate.replace(toRemove, `\n`);
+    }
+    // replace function imports at top of file
+    const fnimport = genericApiServiceFile.import().replace(
+      /FUNCTION_NAME/g,
+      fn.name,
+    );
+    // for each function, add the new imports and boilerplate to existing test
+    outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
+  });
+  // add linting and config
+  const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n });\n`;
+  return outputApiServiceFile;
 };
 
 /**
@@ -334,6 +408,10 @@ export default function fileGenerator(node: any) {
     case 'IntegrationTestBoilerplate': {
       const test = prepareIntegrationTest(node);
       return test;
+    }
+    case 'IntegrationApiServicesBoilerplate': {
+      const api_services = prepareIntegrationApiServices(node);
+      return api_services;
     }
     default:
       throw new TypeError(`I dont recognise this type: ${node.nodeType}`);

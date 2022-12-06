@@ -23,17 +23,7 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 
-export async function assign(){
-
-	try {
-		await web3.connect();
-	} catch (err) {
-		throw new Error(err);
-}
-
-}
-
-export async function FUNCTION_NAME (req, res, next){
+export async function service_FUNCTION_NAME (req, res, next){
   try {
     await web3.connect();
     await new Promise((resolve) => setTimeout(() => resolve(), 3000));
@@ -41,9 +31,9 @@ export async function FUNCTION_NAME (req, res, next){
     throw new Error(err);
   }
 	try {
-    await startEventFilter("AssignShield");
+    await startEventFilter('CONTRACT_NAME');
     const value = req.query.value;
-    const { tx } = await add(value);
+    const { tx } = await FUNCTION_NAME(value);
     // prints the tx
     console.log(tx);
     res.send(tx);

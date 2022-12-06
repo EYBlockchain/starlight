@@ -299,6 +299,21 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractImports,
       };
     }
+    case 'IntegrationApiServicesBoilerplate': {
+      const {
+        contractName,
+        functions = [],
+        constructorParams = [],
+        contractImports = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        functions,
+        constructorParams,
+        contractImports,
+      };
+    }
     case 'IntegrationTestFunction': {
       const {
         name,

@@ -206,9 +206,21 @@ const visitor = {
         });
         node._newASTPointer.push(newNode);
       }
-      const newNode = buildNode('SetupCommonFilesBoilerplate', {
+
+      let newNode = buildNode('SetupCommonFilesBoilerplate', {
         contractName,
         contractImports: state.contractImports,
+      });
+      node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'api_services',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('IntegrationApiServicesBoilerplate', {
+            contractName,
+            contractImports: state.contractImports,
+          }),
+        ],
       });
       node._newASTPointer.push(newNode);
       if (scope.indicators.newCommitmentsRequired) {
@@ -343,7 +355,7 @@ const visitor = {
 
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
-          path 
+          path
         );
 
         if (state.msgSenderParam) {
