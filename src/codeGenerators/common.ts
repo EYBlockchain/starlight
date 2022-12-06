@@ -7,35 +7,6 @@ export interface localFile {
   file: string,
 }
 
-function poseidonLibraryChooser(fileObj:any ) {
-  let  poseidonFieldCount = 0;
-   var lines = fileObj.split('\n');
-   for(var line = 0; line < lines.length; line++) {
-     if(lines[line].includes('poseidon(')) {
-       poseidonFieldCount = 0;
-       for(var i = line+1; i<lines.length ; i++) {
-         if(lines[i].includes(',')) {
-           poseidonFieldCount++;
-         }
-         else
-           break;
-        }
-     }
-     if(poseidonFieldCount >4) break;
-   }
-     if(poseidonFieldCount <5) {
-     var lines = fileObj.split('\n');
-     for(var line = 0; line < lines.length; line++) {
-       if(lines[line].includes('./common/hashes/poseidon/poseidon.zok')) {
-         lines[line] = 'from "hashes/poseidon/poseidon.zok" import main as poseidon';
-       }
-     }
-     fileObj = lines.join('\n');
-   }
-   return fileObj;
- }
-
-
 /**
  * @param file - a stringified file
  * @param contextDirPath - the import statements of the `file` will be
@@ -50,9 +21,6 @@ export const collectImportFiles = (
   contextDirPath?: string,
   fileName: string = '',
 ) => {
-  if (context === 'circuit' && file.includes('poseidon')) {
-    file = poseidonLibraryChooser(file);;
-  }
   const lines = file.split('\n');
   let ImportStatementList: string[];
 

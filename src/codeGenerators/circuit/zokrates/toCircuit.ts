@@ -8,6 +8,35 @@ import NodePath from '../../../traverse/NodePath.js'
 import {traversePathsFast} from '../../../traverse/traverse.js'
 const Circuitbp = new CircuitBP();
 
+function poseidonLibraryChooser(fileObj: string) {
+  if (!fileObj.includes('poseidon')) return fileObj;
+  let poseidonFieldCount = 0;
+   var lines = fileObj.split('\n');
+   for(var line = 0; line < lines.length; line++) {
+     if(lines[line].includes('poseidon(')) {
+       poseidonFieldCount = 0;
+       for(var i = line+1; i<lines.length ; i++) {
+         if(lines[i].includes(',')) {
+           poseidonFieldCount++;
+         }
+         else
+           break;
+        }
+     }
+     if(poseidonFieldCount >4) break;
+   }
+     if(poseidonFieldCount <5) {
+     var lines = fileObj.split('\n');
+     for(var line = 0; line < lines.length; line++) {
+       if(lines[line].includes('./common/hashes/poseidon/poseidon.zok')) {
+         lines[line] = 'from "hashes/poseidon/poseidon.zok" import main as poseidon';
+       }
+     }
+     fileObj = lines.join('\n');
+   }
+   return fileObj;
+ }
+
 function codeGenerator(node: any) {
   switch (node.nodeType) {
     case 'Folder':
@@ -18,7 +47,7 @@ function codeGenerator(node: any) {
       const file = node.nodes.map(codeGenerator).join('\n\n');
       const thisFile = {
         filepath,
-        file,
+        file: poseidonLibraryChooser(file),
       };
       if (!file && node.fileName === `joinCommitments`) {
         thisFile.file = fs.readFileSync(path.resolve(fileURLToPath(import.meta.url), '../../../../../circuits/common/joinCommitments.zok'), 'utf8');
