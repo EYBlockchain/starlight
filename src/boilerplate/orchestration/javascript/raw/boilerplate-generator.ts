@@ -607,7 +607,7 @@ integrationApiRoutesBoilerplate = {
   },
   preStatements(): string{
     return ` import express from 'express';\n
-      const router  = express.Router();`
+    \nconst router  = express.Router();`
 },
 postStatements(): string {
   return `// eslint-disable-next-line func-names \n ${

@@ -4,6 +4,3 @@ const router  = express.Router();
 
 //router.get('/database', serviceController.getAllCommitment);
 router.post('/FUNCTION_NAME', service_FUNCTION_NAME);
-
-
-export default router;

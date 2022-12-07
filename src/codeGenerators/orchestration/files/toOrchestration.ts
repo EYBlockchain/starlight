@@ -171,8 +171,12 @@ const prepareIntegrationApiServices = (node: any) => {
 };
 const prepareIntegrationApiRoutes = (node: any) => {
   // import generic test skeleton
+  let outputApiRoutesFile =``;
+  let fnimport =``;
+  let outputApiRoutesimport=``;
+  let outputApiRoutesboilerplate =``;
   const genericApiRoutesFile: any = Orchestrationbp.integrationApiRoutesBoilerplate;
-  let outputApiRoutesFile;
+
   // replace references to contract and functions with ours
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
 
@@ -181,13 +185,18 @@ const prepareIntegrationApiRoutes = (node: any) => {
       .replace(/FUNCTION_NAME/g, fn.name);
 
     // replace function imports at top of file
-    const fnimport = genericApiRoutesFile.import().replace(
+     fnimport = genericApiRoutesFile.import().replace(
       /FUNCTION_NAME/g,
       fn.name,
     );
+
     // for each function, add the new imports and boilerplate to existing test
-    outputApiRoutesFile = `${fnimport}\n${outputApiRoutesFile}\n${fnboilerplate}`;
+    outputApiRoutesimport = `${outputApiRoutesimport}\n${fnimport}\n`;
+    outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
   });
+  const fnprestatement = genericApiRoutesFile.preStatements();
+  const postfix = `export default router;`;
+  outputApiRoutesFile = `${outputApiRoutesimport}\n${fnprestatement}\n${outputApiRoutesboilerplate}\n ${postfix}`;
   // add linting and config
   return outputApiRoutesFile;
 };

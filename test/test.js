@@ -139,7 +139,7 @@ describe("Code Gen testing", function () {
         countorchestrationFiles++;
       }
       const result = checkCodeGen(options,'orchestration');
-      assert.strictEqual(result, countorchestrationFiles );
+      assert.strictEqual(result, countorchestrationFiles+1 );
     });
   });
 });
