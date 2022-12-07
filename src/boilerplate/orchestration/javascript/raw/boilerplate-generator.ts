@@ -6,7 +6,7 @@ import fs from 'fs';
 
 const testReadPath = './src/boilerplate/common/generic-test.mjs';
 const apiServiceReadPath = './src/boilerplate/common/services/generic-api_services.mjs';
-const apiRoutesReadPath = './src/boilerplate/common/Routes/generic-api_routes.mjs';
+const apiRoutesReadPath = './src/boilerplate/common/routes/generic-api_routes.mjs';
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
     const { bpSection, bpType, ...otherParams } = node;
