@@ -142,18 +142,8 @@ const prepareIntegrationApiServices = (node: any) => {
     let fnboilerplate = genericApiServiceFile.postStatements()
       .replace(/CONTRACT_NAME/g, node.contractName)
       .replace(/FUNCTION_NAME/g, fn.name);
-    // we remove the second call to the blockchain if we are decrementing
-    // the user may not have enough commitments to do so
-    let removeSecondCall = false;
-    let removeMerkleTreeTest = false;
+
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
-    console.log(paramName);
-    if (fn.decrementsSecretState) {
-      removeSecondCall = true;
-    }
-    if (!fn.newCommitmentsRequired) {
-      removeMerkleTreeTest = true;
-    }
     // replace the signature with test inputs
     let fnParam = []
     paramName.forEach((element,index) => {
@@ -166,15 +156,6 @@ const prepareIntegrationApiServices = (node: any) => {
       paramName,
     );
 
-
-    // remove merkle tree test
-    if (removeMerkleTreeTest) {
-      // regex: matches everything between 'it('should update the merkle tree'' and the first '});'
-      const toRemove = fnboilerplate.match(
-        /it\('should update the merkle tree'?[\s\S]*?}\);/g,
-      )[0];
-      fnboilerplate = fnboilerplate.replace(toRemove, `\n`);
-    }
     // replace function imports at top of file
     const fnimport = genericApiServiceFile.import().replace(
       /FUNCTION_NAME/g,
