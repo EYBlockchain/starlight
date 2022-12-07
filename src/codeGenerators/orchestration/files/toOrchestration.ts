@@ -155,7 +155,6 @@ const prepareIntegrationApiServices = (node: any) => {
       removeMerkleTreeTest = true;
     }
     // replace the signature with test inputs
-    console.log(fnboilerplate.match( /const FUNCTION_SIG/g,)[0]);
     let fnParam = []
     paramName.forEach((element,index) => {
       fnParam.push( `const ${element} = req.query.${element} ;\n`)
@@ -188,6 +187,28 @@ const prepareIntegrationApiServices = (node: any) => {
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
   outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n \n`;
   return outputApiServiceFile;
+};
+const prepareIntegrationApiRoutes = (node: any) => {
+  // import generic test skeleton
+  const genericApiRoutesFile: any = Orchestrationbp.integrationApiRoutesBoilerplate;
+  let outputApiRoutesFile;
+  // replace references to contract and functions with ours
+  const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+
+  relevantFunctions.forEach((fn: any) => {
+    let fnboilerplate = genericApiRoutesFile.postStatements()
+      .replace(/FUNCTION_NAME/g, fn.name);
+
+    // replace function imports at top of file
+    const fnimport = genericApiRoutesFile.import().replace(
+      /FUNCTION_NAME/g,
+      fn.name,
+    );
+    // for each function, add the new imports and boilerplate to existing test
+    outputApiRoutesFile = `${fnimport}\n${outputApiRoutesFile}\n${fnboilerplate}`;
+  });
+  // add linting and config
+  return outputApiRoutesFile;
 };
 
 /**
@@ -402,6 +423,10 @@ export default function fileGenerator(node: any) {
     case 'IntegrationApiServicesBoilerplate': {
       const api_services = prepareIntegrationApiServices(node);
       return api_services;
+    }
+    case 'IntegrationApiRoutesBoilerplate': {
+      const api_routes = prepareIntegrationApiRoutes(node);
+      return api_routes;
     }
     default:
       throw new TypeError(`I dont recognise this type: ${node.nodeType}`);

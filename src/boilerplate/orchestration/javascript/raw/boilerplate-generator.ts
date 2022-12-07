@@ -6,7 +6,7 @@ import fs from 'fs';
 
 const testReadPath = './src/boilerplate/common/generic-test.mjs';
 const apiServiceReadPath = './src/boilerplate/common/services/generic-api_services.mjs';
-console.log(fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]);
+const apiRoutesReadPath = './src/boilerplate/common/Routes/generic-api_routes.mjs';
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
     const { bpSection, bpType, ...otherParams } = node;
@@ -600,6 +600,21 @@ postStatements(): string {
 },
 
 };
+integrationApiRoutesBoilerplate = {
+  import(): string {
+    return  `import {service_FUNCTION_NAME} from "./api_services.mjs";\n
+    `
+  },
+  preStatements(): string{
+    return ` import express from 'express';\n
+      const router  = express.Router();`
+},
+postStatements(): string {
+  return `// eslint-disable-next-line func-names \n ${
+      fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)[0]}`
+},
+
+};
 zappFilesBoilerplate = () => {
   return [
     {
@@ -655,6 +670,11 @@ zappFilesBoilerplate = () => {
     {
       readPath: 'src/boilerplate/common/truffle-config.js',
       writePath: './truffle-config.js',
+      generic: true,
+    },
+    {
+      readPath: 'src/boilerplate/common/api.mjs',
+      writePath: './orchestration/api.mjs',
       generic: true,
     },
 ];

@@ -1,13 +1,13 @@
 /* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */
 import config from "config";
 import assert from "assert";
-import FUNCTION_NAME from '../FUNCTION_NAME.mjs';
-import { startEventFilter, getSiblingPath } from "../common/timber.mjs";
+import FUNCTION_NAME from './FUNCTION_NAME.mjs';
+import { startEventFilter, getSiblingPath } from "./common/timber.mjs";
 import fs from "fs";
-import logger from "../common/logger.mjs";
-import { decrypt } from "../common/number-theory.mjs";
-import { searchPartitionedCommitments } from "../common/contract.mjs";
-import web3 from "../common/web3.mjs";
+import logger from "./common/logger.mjs";
+import { decrypt } from "./common/number-theory.mjs";
+import { searchPartitionedCommitments } from "./common/contract.mjs";
+import web3 from "./common/web3.mjs";
 
 /**
       Welcome to your zApp's integration test!

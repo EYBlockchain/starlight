@@ -223,6 +223,17 @@ const visitor = {
         ],
       });
       node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'api_routes',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('IntegrationApiRoutesBoilerplate', {
+            contractName,
+            contractImports: state.contractImports,
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
       if (scope.indicators.newCommitmentsRequired) {
         const newNode = buildNode('EditableCommitmentCommonFilesBoilerplate');
         node._newASTPointer.push(newNode);
@@ -294,6 +305,14 @@ const visitor = {
         if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
           file.nodes[0].functions.push(
             buildNode('IntegrationApiServiceFunction', {
+              name: fnName,
+              parameters: [],
+            }),
+          );
+        }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiRoutesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiRoutesFunction', {
               name: fnName,
               parameters: [],
             }),
