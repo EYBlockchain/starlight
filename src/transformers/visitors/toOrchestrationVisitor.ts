@@ -291,6 +291,14 @@ const visitor = {
               }),
             );
           }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiServiceFunction', {
+              name: fnName,
+              parameters: [],
+            }),
+          );
+        }
         }
       } else {
         state.skipSubNodes = true;
@@ -331,10 +339,16 @@ const visitor = {
       }
 
       let thisIntegrationTestFunction: any = {};
+      let thisIntegrationApiServiceFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           for (const fn of file.nodes[0].functions) {
             if (fn.name === node.fileName) thisIntegrationTestFunction = fn;
+          }
+        }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          for (const fn of file.nodes[0].functions) {
+            if (fn.name === node.fileName) thisIntegrationApiServiceFunction = fn;
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
@@ -346,6 +360,12 @@ const visitor = {
       thisIntegrationTestFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
       thisIntegrationTestFunction.encryptionRequired = functionIndicator.encryptionRequired;
+
+    // Adding parameter nodes to each of the function in api_services file
+      thisIntegrationApiServiceFunction.parameters = node._newASTPointer.parameters;
+      thisIntegrationApiServiceFunction.newCommitmentsRequired =
+        functionIndicator.newCommitmentsRequired;
+      thisIntegrationApiServiceFunction.encryptionRequired = functionIndicator.encryptionRequired;
 
       if (
         ((functionIndicator.newCommitmentsRequired ||

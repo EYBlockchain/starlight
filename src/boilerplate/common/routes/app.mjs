@@ -3,7 +3,7 @@ import { addservice, removeservice} from "../services/api.mjs";
 const router  = express.Router();
 
 //router.get('/database', serviceController.getAllCommitment);
-router.post('/add', addservice);
-router.post('/remove', removeservice);
+router.post('/FUNCTION_NAME', service_FUNCTION_NAME);
+
 
 export default router;

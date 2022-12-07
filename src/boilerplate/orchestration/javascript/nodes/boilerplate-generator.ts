@@ -329,6 +329,19 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         encryptionRequired,
       };
     }
+    case 'IntegrationApiServiceFunction': {
+      const {
+        name,
+        parameters = buildNode('ParameterList', fields),
+        decrementsSecretState = false,
+      } = fields;
+      return {
+        nodeType,
+        name,
+        parameters,
+        decrementsSecretState,
+      };
+    }
     default:
       throw new TypeError(nodeType);
   }

@@ -5,6 +5,8 @@
 import fs from 'fs';
 
 const testReadPath = './src/boilerplate/common/generic-test.mjs';
+const apiServiceReadPath = './src/boilerplate/common/services/generic-api_services.mjs';
+console.log(fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]);
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
     const { bpSection, bpType, ...otherParams } = node;
@@ -560,6 +562,41 @@ postStatements(): string {
   return `// eslint-disable-next-line func-names \n ${
       fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g)[0]
     }`
+},
+
+};
+integrationApiServicesBoilerplate = {
+  import(): string {
+    return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
+    `
+  },
+  preStatements(): string{
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { searchPartitionedCommitments } from "./common/contract.mjs";\nimport web3 from './common/web3.mjs';\n\n
+        /**
+      NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
+      minus() cannot be called before an initial add().
+      NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. */
+
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      let leafIndex;
+      let encryption = {};
+      // eslint-disable-next-line func-names
+
+      export async function CONTRACT_NAME(){
+
+      	try {
+      		await web3.connect();
+      	} catch (err) {
+      		throw new Error(err);
+      }
+      }`
+
+
+
+},
+postStatements(): string {
+  return `// eslint-disable-next-line func-names \n ${
+      fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]}`
 },
 
 };

@@ -32,8 +32,8 @@ export async function service_FUNCTION_NAME (req, res, next){
   }
 	try {
     await startEventFilter('CONTRACT_NAME');
-    const value = req.query.value;
-    const { tx } = await FUNCTION_NAME(value);
+    const FUNCTION_SIG;
+    const { tx } = await FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
     res.send(tx);

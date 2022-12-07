@@ -23,6 +23,9 @@ const editableCommitmentCommonFilesBoilerplate = () => {
  * @param type - a solidity type
  * @returns - a suitable function input of that type
  */
+
+const apiServiceInputs = [];
+
 const testInputsByType = (solidityType: any) => {
   switch (solidityType.name) {
     case 'bool':
@@ -56,7 +59,6 @@ const prepareIntegrationTest = (node: any) => {
   // import generic test skeleton
   const genericTestFile: any = Orchestrationbp.integrationTestBoilerplate;
   // replace references to contract and functions with ours
-  console.log(genericTestFile);
   let outputTestFile = genericTestFile.preStatements().replace(
     /CONTRACT_NAME/g,
     node.contractName,
@@ -72,7 +74,6 @@ const prepareIntegrationTest = (node: any) => {
     // the user may not have enough commitments to do so
     let removeSecondCall = false;
     let removeMerkleTreeTest = false;
-    console.log(fn.parameters.parameters);
     const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
     if (fn.decrementsSecretState) {
       removeSecondCall = true;
@@ -128,9 +129,8 @@ const prepareIntegrationTest = (node: any) => {
 
 const prepareIntegrationApiServices = (node: any) => {
   // import generic test skeleton
-  const genericApiServiceFile: any = Orchestrationbp.integrationTestBoilerplate;
+  const genericApiServiceFile: any = Orchestrationbp.integrationApiServicesBoilerplate;
   // replace references to contract and functions with ours
-  console.log(genericApiServiceFile);
   let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
     /CONTRACT_NAME/g,
     node.contractName,
@@ -146,8 +146,8 @@ const prepareIntegrationApiServices = (node: any) => {
     // the user may not have enough commitments to do so
     let removeSecondCall = false;
     let removeMerkleTreeTest = false;
-    console.log(fn.parameters.parameters);
-    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
+    const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
+    console.log(paramName);
     if (fn.decrementsSecretState) {
       removeSecondCall = true;
     }
@@ -155,28 +155,18 @@ const prepareIntegrationApiServices = (node: any) => {
       removeMerkleTreeTest = true;
     }
     // replace the signature with test inputs
+    console.log(fnboilerplate.match( /const FUNCTION_SIG/g,)[0]);
+    let fnParam = []
+    paramName.forEach((element,index) => {
+      fnParam.push( `const ${element} = req.query.${element} ;\n`)
+    });
+    fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
+    fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
     fnboilerplate = fnboilerplate.replace(
-      /FUNCTION_SIG_1/g,
-      paramTypes.map(testInputsByType).join(', '),
+      /FUNCTION_SIG/g,
+      paramName,
     );
-    fnboilerplate = fnboilerplate.replace(
-      /FUNCTION_SIG_2/g,
-      paramTypes.map(testInputsByType).join(', '),
-    );
-    // remove second call
-    if (removeSecondCall) {
-      // regex: matches everything after `describe('Second Call'`
-      const toRemove = fnboilerplate.match(
-        /describe\('Second Call'?[\s\S]*/g,
-      )[0];
-      fnboilerplate = fnboilerplate.replace(toRemove, `\n});`);
-    }
 
-    // test encryption
-    if (fn.encryptionRequired) {
-      const indexToInsert = fnboilerplate.split(`it('should update`);
-      fnboilerplate = indexToInsert[0] + '\n' + genericApiServiceFile.encryption() + '\n' + `it('should update`+ indexToInsert[1];
-    }
 
     // remove merkle tree test
     if (removeMerkleTreeTest) {
@@ -196,7 +186,7 @@ const prepareIntegrationApiServices = (node: any) => {
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
-  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n });\n`;
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n \n`;
   return outputApiServiceFile;
 };
 
