@@ -142,13 +142,27 @@ const prepareIntegrationApiServices = (node: any) => {
     let fnboilerplate = genericApiServiceFile.postStatements()
       .replace(/CONTRACT_NAME/g, node.contractName)
       .replace(/FUNCTION_NAME/g, fn.name);
-
+let fnParam =[];
+let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
+    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
+    paramTypes.forEach(type => {
+      paramName.forEach(element =>{
+        if(type.isStruct){
+         structparams = `{ ${type.properties.map(p => `${p.name}: req.body.${element}.${p.name}`)}}`
+         fnParam.push( `const ${element} = ${structparams} ;\n`)
+        }
+        else{
+          paramName.forEach((element,index) => {
+            fnParam.push( `const ${element} = req.body.${element} ;\n`)
+          });
+        }
+
+      })
+    })
+
+
     // replace the signature with test inputs
-    let fnParam = []
-    paramName.forEach((element,index) => {
-      fnParam.push( `const ${element} = req.query.${element} ;\n`)
-    });
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
     fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
     fnboilerplate = fnboilerplate.replace(
