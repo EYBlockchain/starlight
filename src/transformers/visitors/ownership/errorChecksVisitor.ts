@@ -32,6 +32,13 @@ export default {
   IfStatement: {
     exit(path: NodePath) {
       const { trueBody, falseBody, condition } = path.node;
+
+      if([falseBody?.nodeType, trueBody.nodeType].includes('IfStatement') && (falseBody.containsSecret))
+        throw new TODOError(
+          `We can't currently handle else-if statements. Try a new if statement with one condition instead of an else-if. This is because ZoKrates can't easily handle multiple computational branches.`,
+          trueBody.nodeType === 'IfStatement' ? trueBody : falseBody
+        );
+
       if ((trueBody.containsSecret && trueBody.containsPublic) || !!falseBody && ((falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic))) {
         throw new TODOError(`This if statement contains edited secret and public states - we currently can't edit both in the same statement. Consider separating into public and secret methods.`, path.node);
       }
