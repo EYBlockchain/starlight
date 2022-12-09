@@ -67,6 +67,12 @@ module.exports = {
       transactionBlockTimeout: 50,
       transactionConfirmationBlocks: 15,
       transactionPollingTimeout: 480,
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 5,
+        onTimeout: false
+    }
       // transactionSigner: new CustomTransactionSigner()
     },
   },

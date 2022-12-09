@@ -47,6 +47,15 @@ module.exports = {
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
     },
+    matic: {
+      networkCheckTimeout: 10000,
+      provider: () => new HDWalletProvider(mnemonic, `wss://rpc-mumbai.maticvigil.com/ws/v1/8bbba62057863e829094f78ba8d5b79bccb33e8b`),
+      network_id: 80001,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      port: 8545,
+      skipDryRun: true
+    },
     // localhost: {
     //   host: 'localhost', // Localhost (default: none)
     //   port: 8545, // Standard Ethereum port (default: none)

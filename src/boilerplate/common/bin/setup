@@ -1,5 +1,21 @@
 #!/bin/sh
-set -e
+while getopts "n:a:" arg; do
+  case $arg in
+    n)
+      network=$OPTARG
+      echo networkvalue $OPTARG 
+      ;;
+    a)
+      accounts=$OPTARG
+      echo accountvalue $OPTARG
+      ;;
+  esac
+done
+perl -i -pe "s/accounts/$accounts/g" config/default.js
+if [ $network == 'polygon' ]
+then
+perl -i -pe 's,\$\{process.env.BLOCKCHAIN_HOST\}:\$\{process.env.BLOCKCHAIN_PORT\},wss:\/\/rpc-mumbai.maticvigil.com\/ws\/v1\/8bbba62057863e829094f78ba8d5b79bccb33e8b,g' config/default.js
+fi
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -13,11 +29,11 @@ sleep 5
 
 printf "\n${GREEN}*** Running setup for your ZApp... ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml run zapp node /app/orchestration/common/zkp-setup.mjs -i ''
+docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/orchestration/common/zkp-setup.mjs -i ''
 
 printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml run zapp node /app/write-vk.mjs -i ''
+docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/write-vk.mjs -i ''
 
 CONSTRUCTOR_CALL
 

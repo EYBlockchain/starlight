@@ -12,4 +12,4 @@ COPY migrations migrations
 COPY truffle-config.js truffle-config.js
 RUN chmod +x entrypoint.sh
 RUN npm ci
-ENTRYPOINT ["./entrypoint.sh", "-n" , "ganache"]
+ENTRYPOINT ["./entrypoint.sh", "-n" , "polygon"]
