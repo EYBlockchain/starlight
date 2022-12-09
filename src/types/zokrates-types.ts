@@ -229,10 +229,11 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'Identifier': {
-      const { name } = fields;
+      const { name, type = '' } = fields;
       return {
         nodeType,
         name,
+        typeName: type ? buildNode('ElementaryTypeName', { name: type }) : null,
       };
     }
     case 'Literal': {

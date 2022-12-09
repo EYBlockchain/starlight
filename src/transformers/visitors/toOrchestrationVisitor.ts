@@ -1023,22 +1023,22 @@ const visitor = {
       const { node, scope } = path;
       const { leftHandSide: lhs } = node.expression;
       const indicator = scope.getReferencedIndicator(lhs, true);
+      const name = indicator?.isMapping
+        ? indicator.name
+            .replace('[', '_')
+            .replace(']', '')
+             .replace('.sender', 'Sender')
+             .replace('.value', 'Value')
+            .replace('.', 'dot')
+        : indicator?.name || lhs?.name;
       // reset
       delete state.interactsWithSecret;
       if (node._newASTPointer?.incrementsSecretState) {
         const increments = collectIncrements(indicator).incrementsString;
         path.node._newASTPointer.increments = increments;
       } else if (indicator?.isWhole && node._newASTPointer) {
-        const name = indicator.isMapping
-          ? indicator.name
-              .replace('[', '_')
-              .replace(']', '')
-              .replace('.sender', 'Sender')
-              .replace('.value', 'Value')
-              .replace('.', 'dot')
-          : indicator.name;
         // we add a general number statement after each whole state edit
-        if (node._newASTPointer.interactsWithSecret)  path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
+        if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
           buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name }),
               operator: '=',
@@ -1049,18 +1049,17 @@ const visitor = {
       }
 
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
-       path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
-      if(indicator){
-         path.getAncestorOfType('ForStatement').node._newASTPointer.body.statements.push(
-          buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name: indicator.name }),
+        path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
+        if(indicator){
+          path.getAncestorOfType('Block').node._newASTPointer.push(
+            buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', { name }),
               operator: '=',
-              rightHandSide: buildNode('Identifier', {  name: indicator.name, subType: 'generalNumber' })
-            }
-          )
-        );
+              rightHandSide: buildNode('Identifier', {  name, subType: 'generalNumber'})
+            })
+          );
+        }
       }
-}
     },
   },
 

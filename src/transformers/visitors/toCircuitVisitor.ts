@@ -775,10 +775,12 @@ let interactsWithSecret = false ;
 
       const newNode = buildNode(
         node.nodeType,
-        { name },
+        { name, type: node.typeDescriptions?.typeString },
       );
       if (path.isStruct(node)) addStructDefinition(path);
-      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      if (path.getAncestorOfType('IfStatement')) node._newASTPointer = newNode;
+      // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      // UNLESS we must add and rename if conditionals 
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
@@ -794,6 +796,53 @@ let interactsWithSecret = false ;
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
+
+    exit(path: NodePath) {
+      // a visitor to collect all identifiers in an if condition
+      // we use this list later to init temp variables
+      const findConditionIdentifiers = (thisPath: NodePath, state: any) => {
+        if (!thisPath.scope.getReferencedIndicator(thisPath.node)?.isModified) return;
+        if (!thisPath.getAncestorContainedWithin('condition')) return;
+        if (thisPath.getAncestorContainedWithin('baseExpression') || (
+          thisPath.getAncestorOfType('MemberAccess') && thisPath.containerName === 'expression'
+        )) return;
+        // depending on the type in the condition, we rename it to `name_temp`
+        // and store the original in state.list to init later
+        switch (thisPath.node.nodeType) {
+          case 'Identifier':
+            if (!thisPath.getAncestorOfType('IndexAccess')) {
+              state.list.push(cloneDeep(thisPath.node._newASTPointer));
+              thisPath.node._newASTPointer.name += '_temp';
+            } else {
+              thisPath.parent._newASTPointer.indexExpression.name += '_temp';
+            }
+            break;
+          case 'IndexAccess':
+            thisPath.node._newASTPointer.typeName ??= thisPath.node._newASTPointer.baseExpression.typeName;
+            if (thisPath.isMsg(thisPath.getMappingKeyIdentifier())) {
+              state.list.push(cloneDeep(thisPath.node._newASTPointer));
+              thisPath.node._newASTPointer.indexExpression.name = thisPath.node._newASTPointer.indexExpression.nodeType.replace('M', 'm') + `_temp`;
+              state.skipSubNodes = true;
+              break;
+            }
+            state.list.push(cloneDeep(thisPath.node._newASTPointer));
+            break;
+          case 'MemberAccess':
+            if (!thisPath.getAncestorOfType('IndexAccess')) state.list.push(cloneDeep(thisPath.node._newASTPointer));
+            if (thisPath.isMsgSender() || thisPath.isMsgValue()) {
+              thisPath.node._newASTPointer.name = thisPath.isMsgSender() ? `msgSender_temp` : `msgValue_temp`;
+              break;
+            }
+            thisPath.node._newASTPointer.memberName += '_temp';
+            break;
+          default:
+            break;
+        }
+      };
+      let identifiersInCond = { skipSubNodes: false, list: [] };
+      path.traversePathsFast(findConditionIdentifiers, identifiersInCond);
+      path.node._newASTPointer.conditionVars = identifiersInCond.list;
+    }
   },
 
   ForStatement: {

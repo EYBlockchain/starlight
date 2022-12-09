@@ -111,7 +111,6 @@ class FunctionBoilerplateGenerator {
       if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true});
       if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
 
-
       if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
       }
