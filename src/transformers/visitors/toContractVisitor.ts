@@ -410,7 +410,7 @@ export default {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('Block');
-      node._newASTPointer = newNode.statements;
+      node._newASTPointer = newNode;
       parent._newASTPointer.body = newNode;
     },
   },
@@ -437,7 +437,7 @@ export default {
   IfStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      if (path.scope.containsSecret) {
+      if (node.containsSecret) {
         path.traversePathsFast(findCustomInputsVisitor, state);
         state.skipSubNodes=true;
         return;
@@ -448,21 +448,27 @@ export default {
         falseBody: node.falseBody
       });
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
   ForStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      if (path.scope.containsSecret) {
+      if (node.containsSecret) {
         path.traversePathsFast(findCustomInputsVisitor, state);
         state.skipSubNodes=true;
         return;
       }
-      const newNode = buildNode(node.nodeType);
+      const newNode = buildNode(node.nodeType , {
+        nodeType: node.nodeType,
+        condition: node.condition,
+        initializationExpression: node.initializationExpression,
+        loopExpression: node.loopExpression,
+        body: node.body,
+      });
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -487,7 +493,7 @@ export default {
 
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -544,10 +550,9 @@ export default {
   ExpressionStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-
       const newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -569,7 +574,7 @@ EmitStatement: {
       const { node, parent } = path;
       const newNode = buildNode('EmitStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
   },
 },
 

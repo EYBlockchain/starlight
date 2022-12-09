@@ -38,13 +38,15 @@ export default {
       if (condition.containsSecret && ( (!!falseBody && falseBody.containsPublic) || trueBody.containsPublic)) {
         throw new TODOError(`This if statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
       }
+      if(trueBody.containsSecret) {
       for (var i=0; i<trueBody.statements.length; i++) {
-        if((trueBody.statements[i].nodeType !== 'ExpressionStatement' || trueBody.statements[i].expression.nodeType !== 'Assignment') && trueBody.containsSecret)
+        if((trueBody.statements[i].nodeType !== 'ExpressionStatement' || trueBody.statements[i].expression.nodeType !== 'Assignment'))
         throw new TODOError(`This if statement expression contains a non assignment operation , which currently isn't supported`, path.node);
       }
-      if(falseBody) {
+    }
+      if(falseBody && falseBody.containsSecret) {
       for(var i=0; i< falseBody.statements.length; i++) {
-        if(( falseBody.statements[i].nodeType !== 'ExpressionStatement'  || falseBody.statements[i].expression.nodeType !== 'Assignment') && falseBody.containsSecret)
+        if(( falseBody.statements[i].nodeType !== 'ExpressionStatement'  || falseBody.statements[i].expression.nodeType !== 'Assignment'))
         throw new TODOError(`This if statement contains a non assignment operation , which currently isn't supported`, path.node);
         }
       }
