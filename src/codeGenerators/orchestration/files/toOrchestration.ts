@@ -153,13 +153,13 @@ let structparams;
          fnParam.push( `const ${element} = ${structparams} ;\n`)
         }
         else{
-          paramName.forEach((element,index) => {
             fnParam.push( `const ${element} = req.body.${element} ;\n`)
-          });
         }
 
       })
     })
+    // remove any duplicates from fnction parameters
+    fnParam = [...new Set(fnParam)];
 
 
     // replace the signature with test inputs
