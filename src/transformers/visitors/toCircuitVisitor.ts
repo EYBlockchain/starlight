@@ -22,10 +22,16 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   let { name } = thisPath.isMsg(node) ? node : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
-  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
-  const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  let isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
+  let isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  //Check if for-if statements are both together.
+  if(thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement') &&  thisPath.getAncestorOfType('ForStatement')){
+    //Currently We only support if statements inside a for loop no the other way around, so getting the public inputs according to inner if statemnet
+    if((thisPath.getAncestorOfType('IfStatement')).getAncestorOfType('ForStatement'))
+    isForCondition = isCondition;
+  }
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
@@ -444,6 +450,9 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const { expression } = node;
+      console.log('node');
+      console.log(node);
+
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
@@ -451,14 +460,21 @@ const visitor = {
       if((scope.getReferencedNode(expression.expression))?.containsSecret)
       node.containsSecret = 'true';
     }
-      const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+      if(path.getAncestorOfType('ForStatement') && expression.containsPublic ){
+        childOfSecret = false;
+      }
       const thisState = { interactsWithSecretInScope: false };
 
       path.traverseNodesFast(n => {
-        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret)
+        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret){
           thisState.interactsWithSecretInScope = true;
+        }
+
       }, thisState);
+console.log(childOfSecret);
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
+        console.log('skip node');
         state.skipSubNodes = true;
         return;
       }
@@ -749,8 +765,12 @@ let interactsWithSecret = false ;
   },
 
   IfStatement: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      let isIfStatementSecret;
+      if(node.falseBody?.containsSecret && node.trueBody?.containsSecret && !node.condition?.containsPublic)
+        isIfStatementSecret = true;
+      if(isIfStatementSecret) {
       const newNode = buildNode(node.nodeType, {
         condition: {},
         trueBody: [],
@@ -758,19 +778,30 @@ let interactsWithSecret = false ;
       });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+    }
+    else{
+      state.skipSubNodes = true;
+      return ;
+    }
     },
   },
 
   ForStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      node.body.statements.forEach(element => {
+        if(element.containsPublic){
+          state.skipSubelementNodes = true;
+        }
+      });
     if(!path?.containsSecret){
     state.skipSubNodes = true;
-    return ;
-  }
+  } if(!state.skipSubNodes){
       const newNode = buildNode(node.nodeType);
+      console.log(newNode);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+    }
     },
   },
 
