@@ -56,7 +56,10 @@ function codeGenerator(node: any) {
 
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
+        if(node.isPrivate === true && node.typeName.name !== 'bool')
           returnType.push(node.typeName.name);
+        if(node.typeName.name === 'bool')
+        returnType.push(node.typeName.name);
       });
       if(returnStatement.length === 0){
         returnStatement.push('true');

@@ -33,10 +33,10 @@ export async function service_FUNCTION_NAME (req, res, next){
 	try {
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
-    const { tx } = await FUNCTION_NAME(FUNCTION_SIG);
+    const { tx ,  _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
-    res.send('The Transaction is Complete \n',_RESPONSE_);
+    res.send({tx, _RESPONSE_});
     // reassigns leafIndex to the index of the first commitment added by this function
     if (tx.events.NewLeaves) {
       leafIndex = tx.events.NewLeaves.returnValues[0];

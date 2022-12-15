@@ -169,12 +169,9 @@ const prepareIntegrationApiServices = (node: any) => {
       else if(param !== 'true')
        returnParams.push(param+'_newCommitment');
        else
-       returnParams.push(param)
+       returnParams.push('bool');
     });
   }
-  console.log(returnParams);
-   console.log(fnParam);
-
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
     fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
