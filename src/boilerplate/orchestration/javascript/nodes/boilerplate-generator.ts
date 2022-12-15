@@ -346,12 +346,14 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
       const {
         name,
         parameters = buildNode('ParameterList', fields),
-        decrementsSecretState = false,
+        returnParameters =  buildNode('ParameterList', fields),
+        decrementsSecretState = [],
       } = fields;
       return {
         nodeType,
         name,
         parameters,
+        returnParameters,
         decrementsSecretState,
       };
     }

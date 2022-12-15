@@ -307,6 +307,7 @@ const visitor = {
             buildNode('IntegrationApiServiceFunction', {
               name: fnName,
               parameters: [],
+              returnParameters:[],
             }),
           );
         }
@@ -385,7 +386,8 @@ const visitor = {
       thisIntegrationApiServiceFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
       thisIntegrationApiServiceFunction.encryptionRequired = functionIndicator.encryptionRequired;
-
+    // Adding Return ParameterList to api_services file
+    thisIntegrationApiServiceFunction.returnParameters = node._newASTPointer.returnParameters;
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
@@ -533,6 +535,7 @@ const visitor = {
               node._newASTPointer.decrementedSecretStates.push(name);
               node._newASTPointer.decrementsSecretState = true;
               thisIntegrationTestFunction.decrementsSecretState = true;
+              thisIntegrationApiServiceFunction.decrementsSecretState.push(name);
             }
 
             const modifiedStateVariableNode = buildNode('VariableDeclaration', {

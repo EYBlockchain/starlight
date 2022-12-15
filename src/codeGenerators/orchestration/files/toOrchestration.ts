@@ -135,15 +135,14 @@ const prepareIntegrationApiServices = (node: any) => {
     /CONTRACT_NAME/g,
     node.contractName,
   );
-
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
 
   relevantFunctions.forEach((fn: any) => {
-    let fnboilerplate = genericApiServiceFile.postStatements()
-      .replace(/CONTRACT_NAME/g, node.contractName)
-      .replace(/FUNCTION_NAME/g, fn.name);
-let fnParam =[];
-let structparams;
+  let fnboilerplate = genericApiServiceFile.postStatements()
+    .replace(/CONTRACT_NAME/g, node.contractName)
+    .replace(/FUNCTION_NAME/g, fn.name);
+  let fnParam =[];
+  let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
     const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
     paramTypes.forEach(type => {
@@ -160,7 +159,21 @@ let structparams;
     })
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
-
+    // Adding Return parameters
+    let returnParams =[];
+    let returnParamsName = fn.returnParameters.parameters.map((obj: any) => obj.name);
+    if(returnParamsName.length > 0){
+    returnParamsName.forEach(param => {
+      if(fn.decrementsSecretState.includes(param))
+         returnParams.push(param+'_2_newCommitment');
+      else if(param !== 'true')
+       returnParams.push(param+'_newCommitment');
+       else
+       returnParams.push(param)
+    });
+  }
+  console.log(returnParams);
+   console.log(fnParam);
 
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
@@ -170,6 +183,8 @@ let structparams;
       paramName,
     );
 
+    fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
+
     // replace function imports at top of file
     const fnimport = genericApiServiceFile.import().replace(
       /FUNCTION_NAME/g,
@@ -177,6 +192,7 @@ let structparams;
     );
     // for each function, add the new imports and boilerplate to existing test
     outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
+
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
