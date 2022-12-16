@@ -762,22 +762,19 @@ let interactsWithSecret = false ;
   IfStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      let isIfStatementSecret;
-      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic)
-        isIfStatementSecret = true;
-      if(isIfStatementSecret) {
-      const newNode = buildNode(node.nodeType, {
-        condition: {},
-        trueBody: [],
-        falseBody: []
-      });
-      node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
-    }
-    else{
-      state.skipSubNodes = true;
-      return ;
-    }
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic){
+        const newNode = buildNode(node.nodeType, {
+          condition: {},
+          trueBody: [],
+          falseBody: []
+        });
+        node._newASTPointer = newNode;
+        parent._newASTPointer.push(newNode);
+      }
+      else{
+        state.skipSubNodes = true;
+        return ;
+      }
     },
   },
 
