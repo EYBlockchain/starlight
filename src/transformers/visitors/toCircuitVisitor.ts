@@ -450,9 +450,6 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const { expression } = node;
-      console.log('node');
-      console.log(node);
-
       // TODO: make sure isDecremented / isIncremented are also ascribed to UnaryOperation node (not just Assignment nodes).
       // TODO: what other expressions are there?
       // NOTE: THIS IS A TEMP BODGE - we need non-secrets when they interact with secrets later, add a check for local vars
@@ -472,9 +469,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         }
 
       }, thisState);
-console.log(childOfSecret);
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
-        console.log('skip node');
         state.skipSubNodes = true;
         return;
       }
@@ -798,7 +793,6 @@ let interactsWithSecret = false ;
     state.skipSubNodes = true;
   } if(!state.skipSubNodes){
       const newNode = buildNode(node.nodeType);
-      console.log(newNode);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     }

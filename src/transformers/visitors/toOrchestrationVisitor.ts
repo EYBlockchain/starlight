@@ -342,7 +342,7 @@ const visitor = {
 
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
-          path 
+          path
         );
 
         if (state.msgSenderParam) {
@@ -393,6 +393,7 @@ const visitor = {
           if (!incrementsArray) incrementsArray = null;
 
           if (accessedOnly || (stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired)) {
+            if(stateVarIndicator.isSecret ||  stateVarIndicator.node.interactsWithSecret)
             newNodes.initialisePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('InitialisePreimage', {
@@ -402,7 +403,6 @@ const visitor = {
               id,
             });
           }
-
           if (accessedOnly || secretModified)
             newNodes.readPreimageNode.privateStates[name] = buildPrivateStateNode(
               'ReadPreimage',
@@ -1109,7 +1109,8 @@ const visitor = {
         declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
 
-      // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST.
+      // if it's not declaration of a state variable, it's (probably) declaration of a new function parameter. We _do_ want to add this to the newAST if its secret or interact with secrets.
+      // if(!node.stateVariable && (!node.isSecret || node.interactsWithSecret))
       const newNode = buildNode(node.nodeType, {
         name: node.name,
         isSecret: node.isSecret || false,

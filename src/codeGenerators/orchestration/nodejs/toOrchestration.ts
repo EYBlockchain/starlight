@@ -41,6 +41,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
   switch (node.nodeType) {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
+      node.inputParameters = node.inputParameters.filter(para => para !== undefined);
       let returnIsSecret: string[] = [];
       const decStates = node.decrementedSecretStates;
       if(node.returnParameters.parameters) {
@@ -70,8 +71,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'ParameterList':
       return node.parameters.map((paramnode: any) => paramnode.name);
 
+
     case 'VariableDeclaration': {
+      if(node.isSecret || node.interactsWithSecret)
       return node.name;
+      return;
     }
 
     case 'VariableDeclarationStatement': {

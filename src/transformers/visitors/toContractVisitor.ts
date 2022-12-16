@@ -457,6 +457,18 @@ export default {
       const { node, parent } = path;
       if (node.containsSecret) {
         path.traversePathsFast(findCustomInputsVisitor, state);
+        if(node.containsPublic){
+          const newNode = buildNode(node.nodeType , {
+            nodeType: node.nodeType,
+            condition: node.condition,
+            initializationExpression: node.initializationExpression,
+            loopExpression: node.loopExpression,
+            body: node.body,
+          });
+          node._newASTPointer = newNode;
+          parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+          return;
+        }
         state.skipSubNodes=true;
         return;
       }
