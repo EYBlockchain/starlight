@@ -763,7 +763,7 @@ let interactsWithSecret = false ;
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       let isIfStatementSecret;
-      if(node.falseBody?.containsSecret && node.trueBody?.containsSecret && !node.condition?.containsPublic)
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic)
         isIfStatementSecret = true;
       if(isIfStatementSecret) {
       const newNode = buildNode(node.nodeType, {
