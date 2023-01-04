@@ -60,6 +60,7 @@ export async function service_FUNCTION_NAME (req, res, next){
     await sleep(10);
   } catch (err) {
     logger.error(err);
+    res.send({ errors: [err.message] })
     process.exit(1);
   }
 }
