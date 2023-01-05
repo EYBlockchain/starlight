@@ -56,14 +56,14 @@ jobs:
         with:
           find: "ghcr.io/eyblockchain/zokrates-worker-m1:v1.1"
           replace: "ghcr.io/eyblockchain/zokrates-worker-m1:v0.1"
-          include: "**docker-compose.zapp.yml"
+          include: "**docker-compose.ganache.yml"
 
       - name: set up zapp
         run: |
           cd temp-zapps/Assign-public-admin
           npm i
-          docker-compose -f docker-compose.zapp.yml build
-          docker-compose -f docker-compose.zapp.yml up -d zokrates
+          docker-compose -f docker-compose.ganache.yml build
+          docker-compose -f docker-compose.ganache.yml up -d zokrates
 
       - name: generate zapp keys
         run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/setup && ./bin/setup

@@ -240,13 +240,13 @@ const prepareSetupScript = (file: localFile, node: any) => {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, ``);
     return;
   } else if (!node.constructorParams[0]) {
-    constructorCall += `docker-compose -f docker-compose.zapp.yml run zapp node -e 'import("/app/orchestration/cnstrctr.mjs").then(file => file.default())'`
+    constructorCall += `docker-compose -f docker-compose.ganache.yml run zapp node -e 'import("/app/orchestration/cnstrctr.mjs").then(file => file.default())'`
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
     return;
   }
   constructorCall += `read -p "Please enter your constructor parameters separated by commas:" inputs
 
-  docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
+  docker-compose -f docker-compose.ganache.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
 
   file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
 }

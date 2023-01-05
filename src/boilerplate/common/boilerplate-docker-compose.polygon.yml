@@ -51,6 +51,7 @@ services:
       - ./config/:/app/config
       - ./.secret/:/app/.secret
       - ./circuits/:/app/circuits:delegated
+      - ./contracts/:/app/contracts/
       - ./proving-files/:/app/output:delegated
       - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs
       - ./orchestration/common/db/:/app/orchestration/common/db:delegated
