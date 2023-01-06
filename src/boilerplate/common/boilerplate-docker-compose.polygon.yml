@@ -60,13 +60,15 @@ services:
       - zapp_network
 
   timber:
-    image: eyblockchain/timber:v3.0.3
+    build: 
+      context: https://github.com/EYBlockchain/timber.git#starlight/testnet:merkle-tree
+      dockerfile: Dockerfile
     restart: on-failure
     depends_on:
       - timber-mongo
     volumes:
       - ./config/:/app/config
-      - ./.secret/:/app/.secret
+      #- ./.secret/:/app/.secret
       - ./contracts/:/app/contracts:consistent
       - ./build/:/app/build:consistent
     ports:
