@@ -43,6 +43,10 @@ program
   .option(
     '-m, --modify <modify>',
     'Ovewrite the file from truezapps folder',
+  )
+  .option(
+    '-s, --secret <secret>',
+    'Path to secret metamask mnemonic',
   );
 
 program.parse(process.argv);
@@ -52,6 +56,7 @@ logger.level = opts.verbose ? 'verbose' : opts.logLevel || logger.level;
 
 const inputFilePath = opts.input;
 const modifyAST = opts.modify;
+const secretMnemonicPath = opts.secret;
 const inputFileName = path.parse(inputFilePath).name;
 // commander converts 'zapp-name' to 'zappName'
 const zappName = opts.zappName || inputFileName;
@@ -73,10 +78,11 @@ const options = {
   contractsDirPath,
   orchestrationDirPath,
   modifyAST,
+  secretMnemonicPath,
 };
 
 const validateOptions = ({
-  inputFilePath,
+  inputFilePath,secretMnemonicPath
 }) => {
   if (!fs.existsSync(inputFilePath))
     throw new FilingError(`inputFilePath "${inputFilePath}" does not exist.`);
@@ -87,6 +93,15 @@ const validateOptions = ({
     } else {
       throw new FilingError(`Invalid input file extension. Expected '.zol' (a 'zappable' solidity file). Got '${path.parse(inputFilePath).ext}'.`);
     }
+    if(secretMnemonicPath) {
+    if (!fs.existsSync(secretMnemonicPath))
+    throw new FilingError(`secretMnemonicPath "${secretMnemonicPath}" does not exist.`);
+    fs.copyFile(secretMnemonicPath, "src/.secret", (err) => {
+      if (err) {
+        console.log("Error Found:", err);
+      }
+    });
+  }
     fs.rmSync(parseDirPath, { recursive: true, force: true });
     fs.rmSync(circuitsDirPath, { recursive: true, force: true });
     fs.rmSync(contractsDirPath, { recursive: true, force: true });

@@ -536,7 +536,7 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/.secret',
+      readPath: 'src/.secret',
       writePath: './.secret',
       generic: true,
     },
