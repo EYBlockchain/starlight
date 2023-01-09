@@ -459,7 +459,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       node.returnParameters.forEach( (param, index) => {
 
        if(param === 'true')
-        rtnparams?.push(` ${param}:  ${param}`);
+        rtnparams?.push('bool: bool');
        else if(param?.includes('Commitment'))
         rtnparams?.push( ` ${param} : ${param}.integer  `);
        else
@@ -476,6 +476,16 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
           statements: lines,
         };
+      if(rtnparams.includes('bool: bool')) {
+        return {
+          signature: [
+            `\nexport default async function ${node.name}(${params} ${states}) {`,
+            `\n const bool = true; \n return  { tx , ${rtnparams} };
+          \n}`,
+          ],
+          statements: lines,
+        };
+      }
 
       return {
         signature: [

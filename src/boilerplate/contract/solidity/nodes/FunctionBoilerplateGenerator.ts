@@ -104,7 +104,6 @@ class FunctionBoilerplateGenerator {
       const params = path.getFunctionParameters();
       const publicParams = params?.filter((p: any) => (!p.isSecret && p.interactsWithSecret)).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
-
       const indicators = this.customFunction.getIndicators.bind(this)();
 
       // special check for msgSender and msgValue param. If msgsender is found, prepend a msgSender uint256 param to the contact's function.
@@ -114,7 +113,6 @@ class FunctionBoilerplateGenerator {
       if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
       }
-
       return {
         ...(publicParams?.length && { customInputs: publicParams }),
         functionName,

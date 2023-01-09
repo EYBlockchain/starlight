@@ -5,6 +5,8 @@
 import fs from 'fs';
 
 const testReadPath = './src/boilerplate/common/generic-test.mjs';
+const apiServiceReadPath = './src/boilerplate/common/services/generic-api_services.mjs';
+const apiRoutesReadPath = './src/boilerplate/common/routes/generic-api_routes.mjs';
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
     const { bpSection, bpType, ...otherParams } = node;
@@ -160,13 +162,13 @@ class BoilerplateGenerator {
             ).${mappingName}${mappingKey};
             \n const ${stateName}_newCommitmentValue = generalise(${increment});
             // First check if required commitments exist or not
-            \n let commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+            \n let ${stateName}_commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
             \nlet ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
             \nlet ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
             \n let ${stateName}_witness_0 ;
             \n let ${stateName}_witness_1 ;
 
-                      while( commitmentFlag === false) {
+                      while( ${stateName}_commitmentFlag === false) {
                 \n  ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment).integer);
                 \n  ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment).integer);
 
@@ -178,7 +180,7 @@ class BoilerplateGenerator {
                   }),
                 ).${mappingName}${mappingKey};
 
-                commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
+                ${stateName}_commitmentFlag = getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[0];
                 \n ${stateName}_0_oldCommitment = _${stateName}_0_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[1] : generalise(_${stateName}_0_oldCommitment).hex(32);
                 \n ${stateName}_1_oldCommitment = _${stateName}_1_oldCommitment === 0 ? getInputCommitments(publicKey.integer, ${stateName}_newCommitmentValue.integer, ${stateName}_preimage)[2] : generalise(_${stateName}_1_oldCommitment).hex(32);
 
@@ -564,6 +566,56 @@ postStatements(): string {
 },
 
 };
+integrationApiServicesBoilerplate = {
+  import(): string {
+    return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
+    `
+  },
+  preStatements(): string{
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { searchPartitionedCommitments } from "./common/contract.mjs";\nimport web3 from './common/web3.mjs';\n\n
+        /**
+      NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
+      minus() cannot be called before an initial add().
+      NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. */
+
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      let leafIndex;
+      let encryption = {};
+      // eslint-disable-next-line func-names
+
+      export async function CONTRACT_NAME(){
+
+      	try {
+      		await web3.connect();
+      	} catch (err) {
+      		throw new Error(err);
+      }
+      }`
+
+
+
+},
+postStatements(): string {
+  return `// eslint-disable-next-line func-names \n ${
+      fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]}`
+},
+
+};
+integrationApiRoutesBoilerplate = {
+  import(): string {
+    return  `import {service_FUNCTION_NAME} from "./api_services.mjs";\n
+    `
+  },
+  preStatements(): string{
+    return ` import express from 'express';\n
+    \nconst router  = express.Router();`
+},
+postStatements(): string {
+  return `// eslint-disable-next-line func-names \n ${
+      fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)[0]}`
+},
+
+};
 zappFilesBoilerplate = () => {
   return [
     {
@@ -619,6 +671,11 @@ zappFilesBoilerplate = () => {
     {
       readPath: 'src/boilerplate/common/truffle-config.js',
       writePath: './truffle-config.js',
+      generic: true,
+    },
+    {
+      readPath: 'src/boilerplate/common/api.mjs',
+      writePath: './orchestration/api.mjs',
       generic: true,
     },
 ];

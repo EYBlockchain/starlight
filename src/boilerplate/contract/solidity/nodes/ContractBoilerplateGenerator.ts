@@ -118,7 +118,7 @@ class ContractBoilerplateGenerator {
           delete parameterList[ paramtype ];
         }
         const newList = [];
-        params.forEach(circuitParamNode => {
+        params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
               if (circuitParamNode.isNullified) {

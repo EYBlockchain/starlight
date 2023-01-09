@@ -217,6 +217,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'IntegrationTestBoilerplate':
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
+    case 'IntegrationApiServicesBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
+    case 'IntegrationApiRoutesBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
     case 'InitialisePreimage':
     case 'InitialiseKeys':
     case 'ReadPreimage':

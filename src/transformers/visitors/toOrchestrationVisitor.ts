@@ -214,9 +214,32 @@ const visitor = {
         });
         node._newASTPointer.push(newNode);
       }
-      const newNode = buildNode('SetupCommonFilesBoilerplate', {
+
+      let newNode = buildNode('SetupCommonFilesBoilerplate', {
         contractName,
         contractImports: state.contractImports,
+      });
+      node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'api_services',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('IntegrationApiServicesBoilerplate', {
+            contractName,
+            contractImports: state.contractImports,
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'api_routes',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('IntegrationApiRoutesBoilerplate', {
+            contractName,
+            contractImports: state.contractImports,
+          }),
+        ],
       });
       node._newASTPointer.push(newNode);
       if (scope.indicators.newCommitmentsRequired) {
@@ -287,6 +310,23 @@ const visitor = {
               }),
             );
           }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiServiceFunction', {
+              name: fnName,
+              parameters: [],
+              returnParameters:[],
+            }),
+          );
+        }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiRoutesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiRoutesFunction', {
+              name: fnName,
+              parameters: [],
+            }),
+          );
+        }
         }
       } else {
         state.skipSubNodes = true;
@@ -329,10 +369,16 @@ const visitor = {
       }
 
       let thisIntegrationTestFunction: any = {};
+      let thisIntegrationApiServiceFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           for (const fn of file.nodes[0].functions) {
             if (fn.name === node.fileName) thisIntegrationTestFunction = fn;
+          }
+        }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          for (const fn of file.nodes[0].functions) {
+            if (fn.name === node.fileName) thisIntegrationApiServiceFunction = fn;
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
@@ -345,6 +391,13 @@ const visitor = {
         functionIndicator.newCommitmentsRequired;
       thisIntegrationTestFunction.encryptionRequired = functionIndicator.encryptionRequired;
 
+    // Adding parameter nodes to each of the function in api_services file
+      thisIntegrationApiServiceFunction.parameters = node._newASTPointer.parameters;
+      thisIntegrationApiServiceFunction.newCommitmentsRequired =
+        functionIndicator.newCommitmentsRequired;
+      thisIntegrationApiServiceFunction.encryptionRequired = functionIndicator.encryptionRequired;
+    // Adding Return ParameterList to api_services file
+    thisIntegrationApiServiceFunction.returnParameters = node._newASTPointer.returnParameters;
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
@@ -353,7 +406,7 @@ const visitor = {
 
         const newNodes = initialiseOrchestrationBoilerplateNodes(
           functionIndicator,
-          path 
+          path
         );
 
         if (state.msgSenderParam) {
@@ -496,6 +549,7 @@ const visitor = {
               node._newASTPointer.decrementedSecretStates.push(name);
               node._newASTPointer.decrementsSecretState = true;
               thisIntegrationTestFunction.decrementsSecretState = true;
+              thisIntegrationApiServiceFunction.decrementsSecretState.push(name);
             }
 
             const modifiedStateVariableNode = buildNode('VariableDeclaration', {

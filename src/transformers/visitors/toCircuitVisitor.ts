@@ -368,6 +368,7 @@ const visitor = {
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+
       if (node.stateVariable) {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
@@ -691,16 +692,18 @@ let interactsWithSecret = false ;
         }
       });
 
+//We need to add return return parameters as well
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
-        if(!interactsWithSecret) {
+        if(!interactsWithSecret && path.parentPath.key !== 'returnParameters') {
         state.skipSubNodes = true;
         return;
 }
+
       //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
