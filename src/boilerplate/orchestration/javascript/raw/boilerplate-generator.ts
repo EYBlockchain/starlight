@@ -457,6 +457,8 @@ sendTransaction = {
           return [`
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
+            name: '${mappingName}',
+            mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
             preimage: {
               \tstateVarId: generalise(${stateName}_stateVarId),
               \tvalue: ${value},
@@ -473,6 +475,8 @@ sendTransaction = {
             \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));
             \nawait storeCommitment({
               hash: ${stateName}_2_newCommitment,
+              name: '${mappingName}',
+              mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
               preimage: {
                 \tstateVarId: generalise(${stateName}_stateVarId),
                 \tvalue: ${value},
@@ -493,6 +497,8 @@ sendTransaction = {
                 \nif (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32));
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
+                  name: '${mappingName}',
+                  mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
                   preimage: {
                     \tstateVarId: generalise(${stateName}_stateVarId),
                     \tvalue: ${value},
@@ -578,11 +584,10 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { searchPartitionedCommitments } from "./common/contract.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
-      minus() cannot be called before an initial add().
-      NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. */
+      minus() cannot be called before an initial add(). */
 
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       let leafIndex;
@@ -597,14 +602,38 @@ integrationApiServicesBoilerplate = {
       		throw new Error(err);
       }
       }`
+    },
+  postStatements(): string {
+    return `// eslint-disable-next-line func-names \n ${
+        fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]}`
+  },
 
+  commitments(): string {
+    return `
+      export async function service_allCommitments(req, res, next) {
+        try {
+          const commitments = await getAllCommitments();
+          res.send({ commitments });
+          await sleep(10);
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }
+      
+      export async function service_getCommitmentsByState(req, res, next) {
+        try {
+          const { name, mappingKey } = req.body;
+          const commitments = await getCommitmentsByState(name, mappingKey);
+          res.send({ commitments });
+          await sleep(10);
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }`;
+  }
 
-
-},
-postStatements(): string {
-  return `// eslint-disable-next-line func-names \n ${
-      fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]}`
-},
 
 };
 integrationApiRoutesBoilerplate = {
@@ -615,13 +644,22 @@ integrationApiRoutesBoilerplate = {
   preStatements(): string{
     return ` import express from 'express';\n
     \nconst router  = express.Router();`
-},
-postStatements(): string {
-  return `// eslint-disable-next-line func-names \n ${
-      fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)[0]}`
-},
-
+  },
+  postStatements(): string {
+    return `// eslint-disable-next-line func-names \n ${
+        fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)[0]}`
+  },
+  commitmentImports(): string {
+    return `import { service_allCommitments, service_getCommitmentsByState } from "./api_services.mjs";\n`;
+  },
+  commitmentRoutes(): string {
+    return `// commitment getter routes
+    router.get("/getAllCommitments", service_allCommitments);
+    router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    `;
+  }
 };
+
 zappFilesBoilerplate = () => {
   return [
     {

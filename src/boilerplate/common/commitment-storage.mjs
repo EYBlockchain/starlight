@@ -28,6 +28,8 @@ export async function storeCommitment(commitment) {
   preimage.value = generalise(commitment.preimage.value).all ? generalise(commitment.preimage.value).all.integer : generalise(commitment.preimage.value).integer;
   const data = {
     _id: commitment.hash.hex(32),
+	name: commitment.name,
+	mappingKey: commitment.mappingKey ? commitment.mappingKey : null,
 	secretKey: commitment.secretKey? commitment.secretKey.hex(32) : null,
     preimage,
     isNullified: commitment.isNullified,
@@ -57,6 +59,19 @@ export async function getCurrentWholeCommitment(id) {
 	  .findOne({ 'preimage.stateVarId': generalise(id).hex(32), isNullified: false });
 	return commitment;
   }
+
+// function to retrieve commitment with a specified stateName
+export async function getCommitmentsByState(name, mappingKey = null) {
+	const connection = await mongo.connection(MONGO_URL);
+	const db = connection.db(COMMITMENTS_DB);
+	const query = { 'name': name };
+	if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
+	const commitments = await db
+		.collection(COMMITMENTS_COLLECTION)
+		.find(query)
+		.toArray();
+	return commitments;
+}
 
 /**
  * @returns all the commitments existent in this database.

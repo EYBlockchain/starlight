@@ -563,7 +563,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     stateType: 'decrement',
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `[${stateName}_stateVarId_key.integer]`
+                      ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -578,7 +578,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     stateType: 'increment',
                     mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `[${stateName}_stateVarId_key.integer]`
+                      ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -595,7 +595,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 stateType: 'whole',
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
-                  ? `[${stateName}_stateVarId_key.integer]`
+                  ? `${stateName}_stateVarId_key.integer`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
