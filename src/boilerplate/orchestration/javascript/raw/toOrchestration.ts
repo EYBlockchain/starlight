@@ -563,7 +563,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     stateType: 'decrement',
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `[${stateName}_stateVarId_key.integer]`
+                      ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -572,22 +572,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 break;
               case false:
               default:
-                if (stateNode.mappingKey) {
-                  lines.push(`
-                  \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
-                  \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
-                } else {
-                  lines.push(`
-                  \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
-                }
-
                 lines.push(
                     Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
                     mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `[${stateName}_stateVarId_key.integer]`
+                      ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -598,21 +589,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             break;
           case false:
           default:
-            if (stateNode.mappingKey) {
-              lines.push(`
-              \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
-              \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
-            } else {
-              lines.push(`
-              \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
-            }
             lines.push(
                 Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
-                  ? `[${stateName}_stateVarId_key.integer]`
+                  ? `${stateName}_stateVarId_key.integer`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
@@ -622,17 +605,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.isConstructor) lines.push(`\nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`)
       return {
         statements: [
-          `\n// Write new commitment preimage to db: \n
-          \nlet preimage = {};`,
-          `\nif (fs.existsSync(db)) {
-            preimage = JSON.parse(
-                fs.readFileSync(db, 'utf-8', err => {
-                  console.log(err);
-                }),
-              );
-            }`,
+          `\n// Write new commitment preimage to db: \n`,
           lines.join('\n'),
-          `\nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
         ],
       };
 

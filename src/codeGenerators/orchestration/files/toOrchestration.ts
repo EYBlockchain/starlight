@@ -193,7 +193,7 @@ const prepareIntegrationApiServices = (node: any) => {
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
-  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n \n`;
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`;
   return outputApiServiceFile;
 };
 const prepareIntegrationApiRoutes = (node: any) => {
@@ -221,6 +221,9 @@ const prepareIntegrationApiRoutes = (node: any) => {
     outputApiRoutesimport = `${outputApiRoutesimport}\n${fnimport}\n`;
     outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
   });
+  // add getters for commitments
+  outputApiRoutesimport = `${outputApiRoutesimport}\n${genericApiRoutesFile.commitmentImports()}\n`;
+  outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${genericApiRoutesFile.commitmentRoutes()}\n`
   const fnprestatement = genericApiRoutesFile.preStatements();
   const postfix = `export default router;`;
   outputApiRoutesFile = `${outputApiRoutesimport}\n${fnprestatement}\n${outputApiRoutesboilerplate}\n ${postfix}`;

@@ -6,7 +6,7 @@ import { startEventFilter, getSiblingPath } from "./common/timber.mjs";
 import fs from "fs";
 import logger from "./common/logger.mjs";
 import { decrypt } from "./common/number-theory.mjs";
-import { searchPartitionedCommitments } from "./common/contract.mjs";
+import { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";
 import web3 from "./common/web3.mjs";
 
 /**

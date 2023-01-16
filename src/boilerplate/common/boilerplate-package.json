@@ -27,6 +27,7 @@
     "enquirer": "^2.3.6",
     "general-number": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
+    "mongodb": "^4.7.0",
     "solc": "0.8.0",
     "truffle": "5.1.65",
     "web3": "^1.2.11",
