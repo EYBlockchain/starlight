@@ -119,10 +119,12 @@ Run `zappify -i <./path/to/file>.zol` and get an entire standalone zApp in retur
 ---
 ## Install via npm
 
-Starlight is now available on github's npm package repository!
-To install, run:
+Starlight is now available on **github's npm package** repository!
+To install, you need to make sure that `npm` is looking in that registry, not the default `npmjs`:
 
-`npm i @eyblockchain/starlight`
+`npm config set @eyblockchain:registry https://npm.pkg.github.com` <-- this sets any `@eyblockchain` packages to be installed from the github registry
+
+`npm i @eyblockchain/starlight@<latest-version>`
 
 Then you can import the `zappify` command like so:
 
@@ -136,7 +138,7 @@ Then it works just as described in the below section [Run](#run).
 
 ### Troubleshooting
 
-Since we push the npm package to github's repository, you may need to specify the package location in your project's `.npmrc` file. Try adding something like:
+Since we push the npm package to github's repository, you may need to specify the package location in your project's `.npmrc` file and authenticate to github. Try adding something like:
 
 ```
 @eyblockchain:registry=https://npm.pkg.github.com
