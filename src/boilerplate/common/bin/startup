@@ -16,6 +16,6 @@ sleep 15
 
 docker-compose -f docker-compose.zapp.yml up -d timber
 
-sleep 5
+sleep 10
 
 docker-compose -f docker-compose.zapp.yml up -d zapp

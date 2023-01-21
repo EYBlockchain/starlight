@@ -426,7 +426,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // the main function
       if (node.name !== 'cnstrctr') lines.push(
         `\n\n// Initialisation of variables:
-        \nconst instance = await getContractInstance('${node.contractName}');`,
+        \nconst instance = await getContractInstance('${node.contractName}');
+        \nconst contractAddr = await getContractAddress('${node.contractName}');        `,
       );
       if (node.msgSenderParam)
         lines.push(`
@@ -476,11 +477,22 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
           statements: lines,
         };
+        if(rtnparams.length == 0) {
+          return {
+            signature: [
+              `\nexport default async function ${node.name}(${params} ${states}) {`,
+              `\n return  { tx, encEvent };
+            \n}`,
+            ],
+            statements: lines,
+          };
+        }
+
       if(rtnparams.includes('bool: bool')) {
         return {
           signature: [
             `\nexport default async function ${node.name}(${params} ${states}) {`,
-            `\n const bool = true; \n return  { tx , ${rtnparams} };
+            `\n const bool = true; \n return  { tx, encEvent,  ${rtnparams} };
           \n}`,
           ],
           statements: lines,
@@ -490,7 +502,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         signature: [
           `\nexport default async function ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx , ${rtnparams} };
+          `\nreturn  { tx, encEvent, ${rtnparams} };
         \n}`,
         ],
         statements: lines,
@@ -760,13 +772,33 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
-          \nconst tx = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof)
-          .send({
-              from: config.web3.options.defaultAccount,
-              gas: config.web3.options.defaultGas,
-              value: msgValue,
-            });\n`,
+          \nconst txData = await instance.methods
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          \n	let txParams = {
+            from: config.web3.options.defaultAccount,
+            to: contractAddr,
+            gas: config.web3.options.defaultGas,
+            gasPrice: config.web3.options.defaultGasPrice,
+            data: txData,
+            chainId: await web3.eth.net.getId(),
+            };
+            \n 	const key = config.web3.key;
+            \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
+            \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+            \n  let tx = await instance.getPastEvents("NewLeaves");
+            \n tx = tx[0];\n
+            let encEvent = '';
+            \n try {
+            \n  encEvent = await instance.getPastEvents("EncryptedData");
+            \n } catch (err) {
+            \n  console.log('No encrypted event');
+            \n}`,
+
+          // .send({
+          //     from: config.web3.options.defaultAccount,
+          //     gas: config.web3.options.defaultGas,
+          //     value: msgValue,
+          //   });\n`,
         ],
       };
     default:
