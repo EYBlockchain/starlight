@@ -107,13 +107,16 @@ const addPublicInput = (path: NodePath, state: any) => {
     if (path.isMapping(node)) {
       name = getIndexAccessName(node);
       node.name = name;
-      const indexExpressionNode = path.isMsgSender(node.indexExpression) ?
-      buildNode('MsgSender') :
-      buildNode(node.indexExpression.nodeType, {
+      let indexExpressionNode: any;
+      if(path.isMsgSender(node.indexExpression))
+      indexExpressionNode = buildNode('MsgSender');
+      else if(path.isMsgValue(node.indexExpression))
+      indexExpressionNode = buildNode('MsgValue');
+      else
+      indexExpressionNode = buildNode(node.indexExpression.nodeType, {
           name: node.indexExpression.name,
           value: node.indexExpression.value,
-          subType: node.indexExpression.typeDescriptions?.typeString,
-        });
+          subType: node.indexExpression.typeDescriptions?.typeString,});
       innerNode = buildNode('IndexAccess', {
           name,
           baseExpression: buildNode('Identifier', { name: node.baseExpression.name }),
@@ -175,7 +178,12 @@ const addPublicInput = (path: NodePath, state: any) => {
 
 const getIndexAccessName = (node: any) => {
   if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
-  if (node.nodeType == 'IndexAccess') return `${node.baseExpression.name}_${(NodePath.getPath(node).scope.getMappingKeyName(node)).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+  if (node.nodeType == 'IndexAccess') {
+    const mappingKeyName = NodePath.getPath(node).scope.getMappingKeyName(node);
+    if(mappingKeyName == 'msg')
+      return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${node.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+    return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+  }
   return null;
 }
 /**
@@ -206,9 +214,32 @@ const visitor = {
         });
         node._newASTPointer.push(newNode);
       }
-      const newNode = buildNode('SetupCommonFilesBoilerplate', {
+
+      let newNode = buildNode('SetupCommonFilesBoilerplate', {
         contractName,
         contractImports: state.contractImports,
+      });
+      node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'api_services',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('IntegrationApiServicesBoilerplate', {
+            contractName,
+            contractImports: state.contractImports,
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'api_routes',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('IntegrationApiRoutesBoilerplate', {
+            contractName,
+            contractImports: state.contractImports,
+          }),
+        ],
       });
       node._newASTPointer.push(newNode);
       if (scope.indicators.newCommitmentsRequired) {
@@ -279,6 +310,23 @@ const visitor = {
               }),
             );
           }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiServiceFunction', {
+              name: fnName,
+              parameters: [],
+              returnParameters:[],
+            }),
+          );
+        }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiRoutesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiRoutesFunction', {
+              name: fnName,
+              parameters: [],
+            }),
+          );
+        }
         }
       } else {
         state.skipSubNodes = true;
@@ -302,7 +350,9 @@ const visitor = {
     exit(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       state.msgSenderParam ??= scope.indicators.msgSenderParam;
+      state.msgValueParam ??= scope.indicators.msgValueParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
+      node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
 
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
@@ -319,10 +369,16 @@ const visitor = {
       }
 
       let thisIntegrationTestFunction: any = {};
+      let thisIntegrationApiServiceFunction: any = {};
       for (const file of parent._newASTPointer) {
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           for (const fn of file.nodes[0].functions) {
             if (fn.name === node.fileName) thisIntegrationTestFunction = fn;
+          }
+        }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          for (const fn of file.nodes[0].functions) {
+            if (fn.name === node.fileName) thisIntegrationApiServiceFunction = fn;
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
@@ -333,7 +389,15 @@ const visitor = {
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
       thisIntegrationTestFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
+      thisIntegrationTestFunction.encryptionRequired = functionIndicator.encryptionRequired;
 
+    // Adding parameter nodes to each of the function in api_services file
+      thisIntegrationApiServiceFunction.parameters = node._newASTPointer.parameters;
+      thisIntegrationApiServiceFunction.newCommitmentsRequired =
+        functionIndicator.newCommitmentsRequired;
+      thisIntegrationApiServiceFunction.encryptionRequired = functionIndicator.encryptionRequired;
+    // Adding Return ParameterList to api_services file
+    thisIntegrationApiServiceFunction.returnParameters = node._newASTPointer.returnParameters;
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
@@ -348,6 +412,10 @@ const visitor = {
         if (state.msgSenderParam) {
           newNodes.generateProofNode.parameters.push(`msgSender`);
           delete state.msgSenderParam; // reset
+        }
+        if (state.msgValueParam) {
+          newNodes.generateProofNode.parameters.push(`msgValue`);
+          delete state.msgValueParam; // reset
         }
 
         const allIndicators = [];
@@ -481,6 +549,7 @@ const visitor = {
               node._newASTPointer.decrementedSecretStates.push(name);
               node._newASTPointer.decrementsSecretState = true;
               thisIntegrationTestFunction.decrementsSecretState = true;
+              thisIntegrationApiServiceFunction.decrementsSecretState.push(name);
             }
 
             const modifiedStateVariableNode = buildNode('VariableDeclaration', {
@@ -898,7 +967,8 @@ const visitor = {
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value', 'Value')
               .replace('.', 'dot')
           : indicator.name;
 
@@ -923,7 +993,6 @@ const visitor = {
           (firstInstanceOfNewName && indicator.interactsWithSecret) ||
           (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) ||
           (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole);
-
 
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
@@ -955,7 +1024,6 @@ const visitor = {
             ],
             interactsWithSecret: true,
           });
-
           if (indicator.isStruct) newNode.declarations[0].isStruct = true;
 
           if (accessedBeforeModification || path.isInSubScope()) {
@@ -1009,19 +1077,20 @@ const visitor = {
       const { node, scope } = path;
       const { leftHandSide: lhs } = node.expression;
       const indicator = scope.getReferencedIndicator(lhs, true);
+      const name = indicator?.isMapping
+        ? indicator.name
+            .replace('[', '_')
+            .replace(']', '')
+             .replace('.sender', 'Sender')
+             .replace('.value', 'Value')
+            .replace('.', 'dot')
+        : indicator?.name || lhs?.name;
       // reset
       delete state.interactsWithSecret;
       if (node._newASTPointer?.incrementsSecretState) {
         const increments = collectIncrements(indicator).incrementsString;
         path.node._newASTPointer.increments = increments;
       } else if (indicator?.isWhole && node._newASTPointer) {
-        const name = indicator.isMapping
-          ? indicator.name
-              .replace('[', '_')
-              .replace(']', '')
-              .replace('.sender', '')
-              .replace('.', 'dot')
-          : indicator.name;
         // we add a general number statement after each whole state edit
         if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition').node._newASTPointer.body.statements.push(
           buildNode('Assignment', {
@@ -1034,18 +1103,17 @@ const visitor = {
       }
 
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
-       path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
-      if(indicator){
-         path.getAncestorOfType('ForStatement').node._newASTPointer.body.statements.push(
-          buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name: indicator.name }),
+        path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
+        if(indicator){
+          path.getAncestorOfType('Block').node._newASTPointer.push(
+            buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', { name }),
               operator: '=',
-              rightHandSide: buildNode('Identifier', {  name: indicator.name, subType: 'generalNumber' })
-            }
-          )
-        );
+              rightHandSide: buildNode('Identifier', {  name, subType: 'generalNumber'})
+            })
+          );
+        }
       }
-}
     },
   },
 
@@ -1225,6 +1293,11 @@ const visitor = {
       const { node, parent } = path;
       if (path.isMsgSender()) {
         const newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+        parent._newASTPointer[path.containerName] = newNode;
+        return;
+      } else if (path.isMsgValue()) {
+        const newNode = buildNode('MsgValue');
         state.skipSubNodes = true;
         parent._newASTPointer[path.containerName] = newNode;
         return;

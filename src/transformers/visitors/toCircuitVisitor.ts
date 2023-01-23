@@ -45,7 +45,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   ) {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
-      name = name.replace('[', '_').replace(']', '').replace('.sender', '');
+      name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
     if (thisPath.containerName === 'indexExpression')
       name = binding.getMappingKeyName(thisPath);
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
@@ -60,6 +60,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 };
 
 const addStructDefinition = (path: NodePath) => {
+  const { node, parent, scope } = path;
+  const { indicators } = scope;
   const structDef = path.getStructDeclaration(path.node);
   const structNode = buildNode('StructDefinition', {
     name: structDef.name,
@@ -172,23 +174,46 @@ const visitor = {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
+
       const joinCommitmentsNode = buildNode('File', {
        fileName: `joinCommitments`,
         fileId: node.id,
-        nodes: [],
+        nodes: [ ],
       });
 
       // check for joinCommitments
       for(const [, indicator ] of Object.entries(indicators)){
-        if(
-          (indicator instanceof StateVariableIndicator)
+        if((indicator instanceof StateVariableIndicator)
           && indicator.isPartitioned
-          && indicator.isNullified
-          && !indicator.isStruct) {
-            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName))
+          && indicator.isNullified && !indicator.isStruct) {
+            if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName)){
               parent._newASTPointer.push(joinCommitmentsNode);
-         }
+        }
+        if(indicator instanceof StateVariableIndicator && indicator.encryptionRequired) {
+          const num = indicator.isStruct ? indicators.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
+          if (indicator.isMapping && indicator.mappingKeys) {
+            for(const [, mappingKey ] of Object.entries(indicator.mappingKeys)) {
+              if (mappingKey.encryptionRequired) {
+                let indicatorname: any;
+                if(mappingKey.returnKeyName(mappingKey.keyPath.node) == 'msg')
+                indicatorname  = mappingKey.returnKeyName(mappingKey.keyPath.parent)
+                else
+                indicatorname = mappingKey.returnKeyName(mappingKey.keyPath.node)
+                newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+                  name: `${indicator.name}_${indicatorname}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
+                  type: `EncryptedMsgs<${num}>`,
+                }));
+              }
+            };
+          } else {
+            newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+              name: indicator.name,
+              type: `EncryptedMsgs<${num}>`,
+            }));
+          }
+        }
       }
+    }
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
@@ -217,11 +242,20 @@ const visitor = {
       if (indicators.msgSenderParam) {
         node._newASTPointer.parameters.parameters.unshift(
           buildNode('VariableDeclaration', {
-            name: 'msg',
+            name: 'msgSender',
             declarationType: 'parameter',
             type: 'field',
           }),
         ); // insert a msgSender parameter, because we've found msg.sender in the body of this function.
+      }
+      if (indicators.msgValueParam) {
+        node._newASTPointer.parameters.parameters.unshift(
+          buildNode('VariableDeclaration', {
+            name: 'msgValue',
+            declarationType: 'parameter',
+            type: 'field',
+          }),
+        ); // insert a msgValue parameter, because we've found msg.value in the body of this function.
       }
     },
   },
@@ -340,6 +374,7 @@ const visitor = {
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+
       if (node.stateVariable) {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
@@ -551,7 +586,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
           ? referencedIndicator.name
               .replace('[', '_')
               .replace(']', '')
-              .replace('.sender', '')
+              .replace('.sender', 'Sender')
+              .replace('.value','Value')
               .replace('.', 'dot')
           : referencedIndicator.name;
 
@@ -657,26 +693,28 @@ let interactsWithSecret = false ;
         interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
 
         // check for internal function call if the parameter passed in the function call interacts with secret or not
-        if(refPath.parentPath.node.kind === 'functionCall' && refPath.parentPath.node.expression.name != 'eventFunction'){
+        if(refPath.parentPath.isInternalFunctionCall()){
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
              let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
-             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key].interactsWithSecret
+             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key]?.interactsWithSecret
             }
           })
         }
       });
 
+//We need to add return return parameters as well
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
-        if(!interactsWithSecret) {
+        if(!interactsWithSecret && path.parentPath.key !== 'returnParameters') {
         state.skipSubNodes = true;
         return;
 }
+
       //If it's not declaration of a state variable, it's either a function parameter or a local stack variable declaration. We _do_ want to add this to the newAST.
       const newNode = buildNode('VariableDeclaration', {
         name: node.name,
@@ -687,9 +725,9 @@ let interactsWithSecret = false ;
 
 
       if (path.isStruct(node)) {
-        const structNode = addStructDefinition(path);
-        newNode.typeName.name = structNode.name;
-        newNode.typeName.members = structNode.members;
+        state.structNode = addStructDefinition(path);
+        newNode.typeName.name = state.structNode.name;
+        newNode.typeName.members = state.structNode.members;
       }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
@@ -751,10 +789,12 @@ let interactsWithSecret = false ;
 
       const newNode = buildNode(
         node.nodeType,
-        { name },
+        { name, type: node.typeDescriptions?.typeString },
       );
       if (path.isStruct(node)) addStructDefinition(path);
-      // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      if (path.getAncestorOfType('IfStatement')) node._newASTPointer = newNode;
+      // no pointer needed, because this is a leaf, so we won't be recursing any further.
+      // UNLESS we must add and rename if conditionals 
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
@@ -776,6 +816,53 @@ let interactsWithSecret = false ;
         return ;
       }
     },
+
+    exit(path: NodePath) {
+      // a visitor to collect all identifiers in an if condition
+      // we use this list later to init temp variables
+      const findConditionIdentifiers = (thisPath: NodePath, state: any) => {
+        if (!thisPath.scope.getReferencedIndicator(thisPath.node)?.isModified) return;
+        if (!thisPath.getAncestorContainedWithin('condition')) return;
+        if (thisPath.getAncestorContainedWithin('baseExpression') || (
+          thisPath.getAncestorOfType('MemberAccess') && thisPath.containerName === 'expression'
+        )) return;
+        // depending on the type in the condition, we rename it to `name_temp`
+        // and store the original in state.list to init later
+        switch (thisPath.node.nodeType) {
+          case 'Identifier':
+            if (!thisPath.getAncestorOfType('IndexAccess')) {
+              state.list.push(cloneDeep(thisPath.node._newASTPointer));
+              thisPath.node._newASTPointer.name += '_temp';
+            } else {
+              thisPath.parent._newASTPointer.indexExpression.name += '_temp';
+            }
+            break;
+          case 'IndexAccess':
+            thisPath.node._newASTPointer.typeName ??= thisPath.node._newASTPointer.baseExpression.typeName;
+            if (thisPath.isMsg(thisPath.getMappingKeyIdentifier())) {
+              state.list.push(cloneDeep(thisPath.node._newASTPointer));
+              thisPath.node._newASTPointer.indexExpression.name = thisPath.node._newASTPointer.indexExpression.nodeType.replace('M', 'm') + `_temp`;
+              state.skipSubNodes = true;
+              break;
+            }
+            state.list.push(cloneDeep(thisPath.node._newASTPointer));
+            break;
+          case 'MemberAccess':
+            if (!thisPath.getAncestorOfType('IndexAccess')) state.list.push(cloneDeep(thisPath.node._newASTPointer));
+            if (thisPath.isMsgSender() || thisPath.isMsgValue()) {
+              thisPath.node._newASTPointer.name = thisPath.isMsgSender() ? `msgSender_temp` : `msgValue_temp`;
+              break;
+            }
+            thisPath.node._newASTPointer.memberName += '_temp';
+            break;
+          default:
+            break;
+        }
+      };
+      let identifiersInCond = { skipSubNodes: false, list: [] };
+      path.traversePathsFast(findConditionIdentifiers, identifiersInCond);
+      path.node._newASTPointer.conditionVars = identifiersInCond.list;
+    }
   },
 
   ForStatement: {
@@ -821,6 +908,9 @@ let interactsWithSecret = false ;
 
       if (path.isMsgSender()) {
         newNode = buildNode('MsgSender');
+        state.skipSubNodes = true;
+      } else if (path.isMsgValue()) {
+        newNode = buildNode('MsgValue');
         state.skipSubNodes = true;
       } else {
         newNode = buildNode('MemberAccess', { memberName: node.memberName, isStruct: path.isStruct(node)});
@@ -884,14 +974,26 @@ let interactsWithSecret = false ;
         state.skipSubNodes = true;
       }
       if(path.isInternalFunctionCall()) {
+
     const args = node.arguments;
+    state.isAddStructDefinition = true;
+    path.getAncestorOfType('FunctionDefinition').node.parameters.parameters.some(para => {
+      for (const arg of args) {
+        if((arg.typeDescriptions.typeIdentifier === para.typeDescriptions.typeIdentifier)
+         && arg.typeDescriptions.typeIdentifier.includes('_struct') && para.typeDescriptions.typeIdentifier.includes('_struct'))
+          state.isAddStructDefinition = false}})
+
+
+
     let isCircuit = false;
     state.newStateArray ??= {};
     const name = node.expression.name;
     state.newStateArray[name] ??= [];
     for (const arg of args) {
-      if(arg.expression?.typeDescriptions.typeIdentifier.includes('_struct'))
-        state.newStateArray[name] =  args.map(arg => ({name: arg.expression.name, memberName: arg.memberName} ));
+      if(arg.typeDescriptions.typeIdentifier.includes('_struct')){
+        state.newStateArray[name] =  args.map(arg => ({name: arg.name, memberName: arg.memberName} ));
+        state.structName = (arg.typeDescriptions.typeString.split(' '))[1].split('.')[1];
+      }
       else
        state.newStateArray[name] =  args.map(arg => ({name: arg.name}));
       }
@@ -908,7 +1010,7 @@ let interactsWithSecret = false ;
       const internalfnDefIndicators = functionReferncedNode.scope.indicators;
       const startNodePath = path.getAncestorOfType('ContractDefinition')
       startNodePath.node.nodes.forEach(node => {
-        if(node.nodeType === 'VariableDeclaration'){
+        if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
           if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
             if(callingfnDefIndicators[node.id]) {
              if(callingfnDefIndicators[node.id].isModified) {
@@ -934,6 +1036,7 @@ let interactsWithSecret = false ;
      else
        state.circuitImport.push('false');
 
+
      const newNode = buildNode('InternalFunctionCall', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
@@ -944,6 +1047,8 @@ let interactsWithSecret = false ;
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        circuitImport: isCircuit,
+       structImport: !state.isAddStructDefinition,
+       structName: state.structName,
       });
       node._newASTPointer = newNode ;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);

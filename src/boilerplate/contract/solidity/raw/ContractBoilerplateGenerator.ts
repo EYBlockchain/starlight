@@ -24,6 +24,7 @@ class ContractBoilerplateGenerator {
       nullifiersRequired,
       newCommitmentsRequired,
       containsAccessedOnlyState,
+      encryptionRequired,
       //isInternalFunctionCall add it
     }): string[] {
       // prettier-ignore
@@ -37,6 +38,9 @@ class ContractBoilerplateGenerator {
 
         `
           mapping(uint256 => uint256[]) public vks; // indexed to by an enum uint(FunctionNames)`,
+
+        ...(encryptionRequired ? [`
+          event EncryptedData(uint256[] cipherText, uint256[2] ephPublicKey);`] : []),
 
         ...nullifiersRequired ? [`
           mapping(uint256 => uint256) public nullifiers;`] : [],
@@ -57,6 +61,8 @@ class ContractBoilerplateGenerator {
               ...(containsAccessedOnlyState ? [`uint[] checkNullifiers;`] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
               ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
+              ...(encryptionRequired ? [`uint[][] cipherText;`] : []),
+              ...(encryptionRequired ? [`uint[2][] encKeys;`] : []),
               `uint[] customInputs;`, // TODO: consider whether we need to identify when / when not to include this.
             ].join('\n\t\t\t\t\t\t')}
           }`,
@@ -94,6 +100,7 @@ class ContractBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
+      encryptionRequired,
       circuitParams,
       constructorContainsSecret,
       isjoinCommitmentsFunction,
@@ -132,8 +139,25 @@ class ContractBoilerplateGenerator {
         }
       }
         else if(type  === 'returnParameters') {
-            verifyInput.push( `
-            inputs[k++] = ${input};`);
+          switch (input) {
+            case 'encryption':
+              verifyInput.push( `
+            for (uint j; j < _inputs.cipherText[${counter.encryption}].length; j++) {
+              inputs[k++] = _inputs.cipherText[${counter.encryption}][j];
+            }`);
+              verifyInput.push( `
+            inputs[k++] = _inputs.encKeys[${counter.encryption}][0];`);
+              verifyInput.push( `
+            inputs[k++] = _inputs.encKeys[${counter.encryption}][1];`);
+              counter.encryption++
+              break;
+            default:
+              verifyInput.push( `
+                inputs[k++] = ${input};`
+              );
+              break;
+          }
+
         }
       }
       // prettier-ignore
@@ -169,6 +193,13 @@ class ContractBoilerplateGenerator {
         ...(commitmentRoot ? [`
           require(commitmentRoots[_inputs.commitmentRoot] == _inputs.commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
 
+        ...(encryptionRequired ? [`
+          uint encInputsLen = 0;
+
+          for (uint i; i < _inputs.cipherText.length; i++) {
+            encInputsLen += _inputs.cipherText[i].length + 2;
+          }`] : []),
+
           `
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
@@ -176,6 +207,7 @@ class ContractBoilerplateGenerator {
             ...(checkNullifiers ? ['checkNullifiers.length'] : []),
             ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
+            ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,
 
       ];
@@ -188,6 +220,7 @@ class ContractBoilerplateGenerator {
             newNullifiers: 0,
             checkNullifiers: 0,
             newCommitments: 0,
+            encryption: 0,
           };
 
           _inputs.map(i => verifyInputsMap(type, i, counter));
@@ -228,8 +261,6 @@ class ContractBoilerplateGenerator {
        joinCommitmentsInputs.push(
         `
            function joinCommitments(uint256[] calldata newNullifiers, uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
-
-            bytes4 sig = bytes4(keccak256("joinCommitments(uint256[],uint256,uint256[],uint256[])"));
 
             Inputs memory inputs;
 

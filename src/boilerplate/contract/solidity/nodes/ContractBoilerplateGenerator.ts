@@ -71,11 +71,11 @@ class ContractBoilerplateGenerator {
       const { scope } = this;
       let isjoinCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(scope.bindings)){
-       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+       if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct )
           isjoinCommitmentsFunction?.push('true');
       }
       const {
-        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
+        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = scope;
 
       const fnDefBindings = scope.filterBindings(
@@ -88,7 +88,8 @@ class ContractBoilerplateGenerator {
         nullifiersRequired,
         oldCommitmentAccessRequired,
         newCommitmentsRequired,
-        containsAccessedOnlyState
+        containsAccessedOnlyState,
+        encryptionRequired
       };
     },
 
@@ -98,26 +99,26 @@ class ContractBoilerplateGenerator {
 
     verify(circuitParams: Object ) {
       const {
-        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState },
+        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = this.scope;
       let isjoinCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(this.scope.bindings)){
-       if((binding instanceof VariableBinding) && binding.isUnknown && !binding.isStruct )
+       if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct)
           isjoinCommitmentsFunction?.push('true');
       }
-      const returnpara = {};
       let parameterList: any[];
       let paramtype: string;
       let params : any[];
       let functionName: string;
       for ([functionName, parameterList] of Object.entries(circuitParams)) {
         for ([paramtype, params] of Object.entries(parameterList)){
+          const returnpara = {};
         if(paramtype  === 'returnParameters'){
           returnpara[ paramtype ] = params;
           delete parameterList[ paramtype ];
         }
         const newList = [];
-        params.forEach(circuitParamNode => {
+        params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
               if (circuitParamNode.isNullified) {
@@ -132,6 +133,10 @@ class ContractBoilerplateGenerator {
               break;
             case 'oldCommitmentExistence':
               if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
+              break;
+            case 'encryption':
+              returnpara['returnParameters'] ??= [];
+              returnpara['returnParameters'].push(circuitParamNode.bpType);
               break;
             case undefined: {
               if (
@@ -151,16 +156,15 @@ class ContractBoilerplateGenerator {
               break;
           }
         });
-          parameterList[ paramtype ] = newList;
-          parameterList = {...parameterList, ...returnpara};
-
+        parameterList[ paramtype ] = newList;
+        parameterList = {...parameterList, ...returnpara};
       }
 
      circuitParams[ functionName ] = parameterList;
 
     }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};
     },
 
   };

@@ -36,7 +36,13 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
   for (const inc of stateVarIndicator.increments) {
-    if (inc.nodeType === 'IndexAccess') inc.name ??= `${inc.baseExpression.name}_${NodePath.getPath(inc).scope.getMappingKeyName(inc)}`;
+    if (inc.nodeType === 'IndexAccess') {
+      const mappingKeyName = NodePath.getPath(inc).scope.getMappingKeyName(inc);
+      if(mappingKeyName == 'msg')
+      inc.name??= `${inc.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${inc.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+      else
+      inc.name??= `${inc.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+    }
     if (inc.nodeType === 'MemberAccess') inc.name ??= `${inc.expression.name}.${inc.memberName}`;
     if (!inc.name) inc.name = inc.value;
 
@@ -54,7 +60,14 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     }
   }
   for (const dec of stateVarIndicator.decrements) {
-    if (dec.nodeType === 'IndexAccess') dec.name ??= `${dec.baseExpression.name}_${NodePath.getPath(dec).scope.getMappingKeyName(dec)}`;
+    if (dec.nodeType === 'IndexAccess') {
+      const mappingKeyName = NodePath.getPath(dec).scope.getMappingKeyName(dec);
+      if(mappingKeyName == 'msg')
+      dec.name??= `${dec.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${dec.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+      else
+      dec.name??= `${dec.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+      //  dec.name ??= `${dec.baseExpression.name}_${NodePath.getPath(dec).scope.getMappingKeyName(dec)}`;
+    }
     if (dec.nodeType === 'MemberAccess') dec.name ??= `${dec.expression.name}.${dec.memberName}`;
     if (!dec.name) dec.name = dec.value;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
@@ -87,6 +100,7 @@ class BoilerplateGenerator {
   isAccessed?: boolean;
   initialisationRequired?: boolean;
   newCommitmentsRequired?: boolean;
+  encryptionRequired?: boolean;
   isMapping: boolean;
   isStruct: boolean;
   structProperties?: string[];
@@ -130,6 +144,7 @@ class BoilerplateGenerator {
       isMapping,
       isStruct,
       initialisationRequired,
+      encryptionRequired,
       // burnedOnly,
     } = indicators;
     Object.assign(this, {
@@ -143,6 +158,7 @@ class BoilerplateGenerator {
       isMapping,
       isStruct,
       initialisationRequired,
+      encryptionRequired,
       thisIndicator: indicators, // used for gathering increments of mappings and/or structs
       // burnedOnly,
     });
@@ -151,9 +167,11 @@ class BoilerplateGenerator {
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
     if (indicators.isMapping) {
-      for (const [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
+      for (let [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
         mappingKeyIndicator.isMapping = true;
         this.assignIndicators(mappingKeyIndicator);
+        if(mappingKeyName == 'msg')
+        mappingKeyName = mappingKeyName+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
         this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
         if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName = this.mappingKeyName.replace('.', 'dot');
 
@@ -264,7 +282,7 @@ class BoilerplateGenerator {
       }
       if (this.isNullified && ['newCommitment', 'mapping'].includes(bpType)) {
         this._addBP(bpType, { name: `${name}_${j + 2}`, ...extraParams });
-      } else if (['newCommitment', 'mapping'].includes(bpType)) {
+      } else if (['newCommitment', 'mapping', 'encryption'].includes(bpType)) {
         this._addBP(bpType, { name: `${name}_${j}`, ...extraParams });
       }
     },
@@ -285,6 +303,9 @@ class BoilerplateGenerator {
     }
     if (this.newCommitmentsRequired && !this.burnedOnly) {
       addBP('newCommitment');
+    }
+    if (this.encryptionRequired) {
+      addBP('encryption');
     }
   }
 
@@ -329,6 +350,8 @@ class BoilerplateGenerator {
   oldCommitmentExistence = () => ({});
 
   newCommitment = () => ({});
+
+  encryption = () => ({});
 
   mapping = (bpSection) => ({
     mappingName: this.mappingName,

@@ -13,6 +13,7 @@ import { traversePathsFast } from '../../traverse/traverse.js';
 // 6 - GenerateProof - all - per function
 // 7 - SendTransaction - all - per function
 // 8 - WritePreimage - all - per state
+
 export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator, path: NodePath) => {
   const { node, parent } = path;
   const newNodes: any = {};
@@ -26,7 +27,7 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
   newNodes.readPreimageNode = buildNode('ReadPreimage', {
     contractName,
   });
-  if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState) {
+  if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret) {
     newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
       contractName,
     });

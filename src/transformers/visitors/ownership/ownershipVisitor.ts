@@ -53,7 +53,9 @@ export default {
       if (
         requirement.nodeType === 'BinaryOperation' &&
         (path.isMsgSender(requirement.leftExpression) ||
-          path.isMsgSender(requirement.rightExpression))
+          path.isMsgSender(requirement.rightExpression) || 
+          path.isMsgValue(requirement.leftExpression) ||
+          path.isMsgValue(requirement.rightExpression))
       ) {
         // Here: either the lhs or rhs of require statement is msg.sender
         const functionDefScope = scope.getAncestorOfScopeType(
@@ -61,7 +63,7 @@ export default {
         );
         const { operator } = requirement;
 
-        const msgComparisonNode = path.isMsgSender(requirement.leftExpression)
+        const msgComparisonNode = (path.isMsgSender(requirement.leftExpression) || path.isMsgValue(requirement.leftExpression))
           ? requirement.rightExpression
           : requirement.leftExpression;
         const addressBinding = scope.getReferencedBinding(msgComparisonNode);

@@ -32,6 +32,13 @@ export default {
   IfStatement: {
     exit(path: NodePath) {
       const { trueBody, falseBody, condition } = path.node;
+
+      if([falseBody?.nodeType, trueBody.nodeType].includes('IfStatement') && (falseBody.containsSecret))
+        throw new TODOError(
+          `We can't currently handle else-if statements. Try a new if statement with one condition instead of an else-if. This is because ZoKrates can't easily handle multiple computational branches.`,
+          trueBody.nodeType === 'IfStatement' ? trueBody : falseBody
+        );
+
       if ((trueBody.containsSecret && trueBody.containsPublic) || !!falseBody && ((falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic))) {
         throw new TODOError(`This if statement contains edited secret and public states - we currently can't edit both in the same statement. Consider separating into public and secret methods.`, path.node);
       }
@@ -49,6 +56,20 @@ export default {
         if(( falseBody.statements[i].nodeType !== 'ExpressionStatement'  || falseBody.statements[i].expression.nodeType !== 'Assignment'))
         throw new TODOError(`This if statement contains a non assignment operation , which currently isn't supported`, path.node);
         }
+      }
+    }
+  },
+
+  IndexAccess: {
+    exit(path: NodePath) {
+      const { node } = path;
+      const { indexExpression, baseExpression } = node;
+      if (node.containsSecret && node.containsPublic) {
+        const mappingBinding = path.getReferencedBinding(baseExpression);
+        const keyBinding = path.getReferencedBinding(indexExpression);
+        if (keyBinding instanceof VariableBinding && keyBinding.isSecret
+          && mappingBinding instanceof VariableBinding && !mappingBinding.isSecret)
+          throw new ZKPError(`Accessing a public mapping ${mappingBinding.name} with a secret value ${keyBinding.name} is not supported - there is no way to hide the secret value when it's used in a public call`, path.node);
       }
     }
   },
@@ -91,6 +112,7 @@ export default {
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();
+        indicator.updateEncryption();
         if (indicator.isStruct) {
           let found = { whole: false, partitioned: false };
           for (const [, structProperty] of Object.entries(indicator.structProperties)) {

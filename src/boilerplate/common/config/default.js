@@ -15,6 +15,37 @@ module.exports = {
   POLLING_FREQUENCY: 6000, // milliseconds
   FILTER_GENESIS_BLOCK_NUMBER: 0, // blockNumber
 
+  BN128_GROUP_ORDER: BigInt(
+    '21888242871839275222246405745257275088548364400416034343698204186575808495617',
+  ),
+  BN128_PRIME_FIELD: BigInt(
+    '21888242871839275222246405745257275088696311157297823662689037894645226208583',
+  ),
+  // the various parameters needed to describe the Babyjubjub curve
+  // BABYJUBJUB
+  // Montgomery EC form is y^2 = x^3 + Ax^2 + Bx
+  // Montgomery EC form of BabyJubJub is y^2 = x^3 + 168698x^2 + x
+  // A = 168698 and B = 1
+  BABYJUBJUB: {
+    JUBJUBA: BigInt(168700),
+    JUBJUBD: BigInt(168696),
+    INFINITY: [BigInt(0), BigInt(1)],
+    GENERATOR: [
+      BigInt(
+        '16540640123574156134436876038791482806971768689494387082833631921987005038935',
+      ),
+      BigInt(
+        '20819045374670962167435360035096875258406992893633759881276124905556507972311',
+      ),
+    ],
+    JUBJUBE: BigInt(
+      '21888242871839275222246405745257275088614511777268538073601725287587578984328',
+    ),
+    JUBJUBC: BigInt(8),
+    MONTA: BigInt(168698),
+    MONTB: BigInt(1),
+  },
+
   tolerances: {
     LAG_BEHIND_CURRENT_BLOCK: 5, // add warnings for use of tree data which lags further behind the current block (e.g. due to anonymity concerns)
   },
@@ -47,6 +78,9 @@ module.exports = {
     admin: 'admin',
     adminPassword: 'admin',
   },
+  MONGO_URL: 'mongodb://admin:admin@zapp-mongo:27017',
+  COMMITMENTS_DB: process.env.MONGO_NAME,
+  COMMITMENTS_COLLECTION: 'commitments',
   isLoggerEnabled: true,
   // web3:
   deployer: {

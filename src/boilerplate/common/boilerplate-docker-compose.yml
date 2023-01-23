@@ -2,6 +2,8 @@ version: '3.5'
 
 services:
   zapp:
+    ports:
+      - '3000:3000'
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,6 +11,7 @@ services:
       - zokrates
       - timber
       - ganache
+      - zapp-mongo
     volumes:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
@@ -24,6 +27,11 @@ services:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
       LOG_LEVEL: info
+      MONGO_HOST: mongodb://zapp-mongo
+      MONGO_PORT: 27019
+      MONGO_NAME: zapp_db
+      MONGO_USERNAME: admin
+      MONGO_PASSWORD: admin
     networks:
       - zapp_network
 
@@ -83,9 +91,24 @@ services:
     networks:
       - zapp_network
 
+    #The database storing commitments
+  zapp-mongo:
+    build:
+      context: .
+      dockerfile: Dockerfile.mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=zapp_db
+    volumes:
+      - zapp-commitment-volume:/data/db
+    networks:
+      - zapp_network
+
+  
   ganache:
-    image: trufflesuite/ganache-cli:latest
-    command: ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=100000000 --deterministic
+    image: trufflesuite/ganache:v7.4.4
+    command: --accounts=10 --gasLimit=100000000 --deterministic
     ports:
       - '8545:8545'
     networks:
@@ -111,6 +134,7 @@ services:
 
 volumes:
   timber-mongo-volume: {}
+  zapp-commitment-volume: {}
 
 networks:
   zapp_network:

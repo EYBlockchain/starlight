@@ -149,18 +149,18 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return `(${node.components.map(codeGenerator).join(` `)})`;
       return ` `;
 
-    case 'IfStatement': {
-      if(node.falseBody.length)
-      return `if (${codeGenerator(node.condition)}) {
-          ${node.trueBody.flatMap(codeGenerator).join('\n')}
-        } else {
-          ${node.falseBody.flatMap(codeGenerator).join('\n')}
-        }`
-        else
+      case 'IfStatement': {
+        if(node.falseBody.length)
         return `if (${codeGenerator(node.condition)}) {
             ${node.trueBody.flatMap(codeGenerator).join('\n')}
+          } else {
+            ${node.falseBody.flatMap(codeGenerator).join('\n')}
           }`
-      }
+          else
+          return `if (${codeGenerator(node.condition)}) {
+              ${node.trueBody.flatMap(codeGenerator).join('\n')}
+            }`
+        }
 
       case 'ForStatement': {
         if(node.interactsWithSecret) {
@@ -177,12 +177,14 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return '';
       }
 
-
     case 'MsgSender':
       // if we need to convert an owner's address to a zkp PK, it will not appear here
       // below is when we need to extract the eth address to use as a param
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
+
+    case 'MsgValue':
+        return `msgValue`;
 
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
@@ -217,6 +219,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'EditableCommitmentCommonFilesBoilerplate':
     case 'SetupCommonFilesBoilerplate':
     case 'IntegrationTestBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
+    case 'IntegrationApiServicesBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
+    case 'IntegrationApiRoutesBoilerplate':
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
     case 'InitialisePreimage':
