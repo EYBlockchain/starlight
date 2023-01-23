@@ -791,16 +791,20 @@ const visitor = {
           if(node.expression.nodeType === 'TupleExpression'){
            node.expression.components.forEach(component => {
              if(component.name){
-              returnName?.push(component.name);
-            }
-             else
-             returnName?.push(component.value);
+               returnName?.push(component.name);
+            }else if(component.nodeType === 'IndexAccess'){
+               returnName?.push(getIndexAccessName(component));
+             } else
+               returnName?.push(component.value);
            });
-         } else{
+         } else if(node.expression.nodeType === 'IndexAccess'){
+            returnName?.push(getIndexAccessName(node.expression));
+         } 
+         else{
            if(node.expression.name)
-            returnName?.push(node.expression.name);
+             returnName?.push(node.expression.name);
            else
-           returnName?.push(node.expression.value);
+             returnName?.push(node.expression.value);
         }
         }
 
@@ -1197,7 +1201,7 @@ const visitor = {
   },
 
   Return: {
-     enter(path: NodePath) {
+     enter(path: NodePath, state: any) {
        const { node, parent } = path;
        const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
        node._newASTPointer = newNode;
