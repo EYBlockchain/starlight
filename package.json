@@ -34,7 +34,7 @@
     "branches": [
       "master",
       {
-        "name": "beta",
+        "name": "miranda/npm",
         "prerelease": "beta"
       }
     ]
