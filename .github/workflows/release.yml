@@ -2,7 +2,7 @@ name: Publish starlight npm package
 
 on:
   push:
-    branches: [master, beta, miranda/npm]
+    branches: [master, miranda/npm]
 
 jobs:
   release:
