@@ -27,6 +27,7 @@
     "./index.mjs",
     "./src/boilerplate/common/**/*",
     "./contracts/**/*",
+    "./config/**/*",
     "./circuits/**/*"
   ],
   "release": {
@@ -65,15 +66,16 @@
     "chai": "^4.3.6",
     "commander": "^7.0.0",
     "config": "^3.3.7",
-    "express":"4.18.2",
     "crypto-js": "^4.1.1",
     "eslint": "^7.26.0",
+    "express": "4.18.2",
     "figlet": "^1.5.0",
     "fs-extra": "^10.0.1",
     "general-number": "^1.0.1",
     "json-diff": "^0.7.2",
     "json-diff-ts": "^1.2.4",
     "lodash.clonedeep": "^4.5.0",
+    "prettier": "^2.2.1",
     "solc": "^0.8.0",
     "typescript": "^4.2.3",
     "winston": "^3.3.3",
@@ -93,8 +95,7 @@
     "@types/prettier": "^2.4.4",
     "eslint": "^7.26.0",
     "eslint-config-codfish": "^9.0.2",
-    "mocha": "^8.2.1",
-    "prettier": "^2.2.1"
+    "mocha": "^8.2.1"
   },
   "babel": {
     "presets": [
