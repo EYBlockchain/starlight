@@ -721,7 +721,7 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/api.mjs',
+      readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
       generic: true,
     },
