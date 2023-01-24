@@ -320,23 +320,47 @@ const visitor = {
       parent.body.statements.forEach( node => {
         if(node.nodeType === 'Return'){
           for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
-            if(node.expression.nodeType === 'TupleExpression'){
-            node.expression.components.forEach(component => {
-              if((component.nodeType === 'IndexAccess' && id == component.indexExpression.referencedDeclaration )|| id == component.referencedDeclaration) {
-                if ((bindings instanceof VariableBinding)) {
-                  if(item.name.includes(bindings.node.name))
-               item.isPrivate = bindings.isSecret
-                }
+            switch(node.expression.nodeType) {
+              case 'TupleExpression' : {
+                node.expression.components.forEach(component => {
+                  if((component.nodeType === 'IndexAccess' && id == component.indexExpression?.referencedDeclaration )||(component.nodeType === 'MemberAccess' && id == component.expression?.referencedDeclaration )|| id == component.referencedDeclaration) {
+                    if ((bindings instanceof VariableBinding)) {
+                      if(item.name.includes(bindings.node.name))
+                   item.isPrivate = bindings.isSecret
+                    }
+                  }
+                })
+                break;
               }
-            })
-          } else {
-            if( id == node.expression.referencedDeclaration || (node.expression.nodeType === 'IndexAccess' && id == node.expression.indexExpression.referencedDeclaration)) {
-              if ((bindings instanceof VariableBinding)){
-               if(item.name.includes(bindings.node.name))
-               item.isPrivate = bindings.isSecret
+              case 'IndexAccess':{
+                console.log(node);
+                if(id == node.expression.indexExpression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                     item.isPrivate = bindings.isSecret
+                  }
+                } 
+                break ;
               }
+              case 'MemberAccess':{
+                if(id == node.expression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                      item.isPrivate = bindings.isSecret
+                  }
+                } 
+                break;
+              }  
+              default: {
+                if( id == node.expression.referencedDeclaration){
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name == bindings.node.name)
+                    item.isPrivate = bindings.isSecret
+                   }
+                } 
+                break ;
+              } 
             }
-           }
           }
         }
       })

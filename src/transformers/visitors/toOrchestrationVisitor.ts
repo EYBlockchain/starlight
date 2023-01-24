@@ -8,7 +8,7 @@ import buildNode from '../../types/orchestration-types.js';
 import { buildPrivateStateNode } from '../../boilerplate/orchestration/javascript/nodes/boilerplate-generator.js';
 import explode from './explode.js';
 import internalCallVisitor from './orchestrationInternalFunctionCallVisitor.js';
-import { interactsWithSecretVisitor, parentnewASTPointer, initialiseOrchestrationBoilerplateNodes } from './common.js';
+import { interactsWithSecretVisitor, parentnewASTPointer, initialiseOrchestrationBoilerplateNodes, getIndexAccessName } from './common.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
@@ -174,17 +174,6 @@ const addPublicInput = (path: NodePath, state: any) => {
   }
 
     if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) addPublicInput(NodePath.getPath(node.indexExpression), state);
-}
-
-const getIndexAccessName = (node: any) => {
-  if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
-  if (node.nodeType == 'IndexAccess') {
-    const mappingKeyName = NodePath.getPath(node).scope.getMappingKeyName(node);
-    if(mappingKeyName == 'msg')
-      return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${node.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
-    return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
-  }
-  return null;
 }
 /**
  * @desc:
@@ -788,37 +777,40 @@ const visitor = {
     } else if(path.key === 'returnParameters'){
        parent.body.statements.forEach(node => {
         if(node.nodeType === 'Return') {
-          if(node.expression.nodeType === 'TupleExpression'){
-           node.expression.components.forEach(component => {
-             if(component.name){
-               returnName?.push(component.name);
-            }else if(component.nodeType === 'IndexAccess'){
-               returnName?.push(getIndexAccessName(component));
-             } else
-               returnName?.push(component.value);
-           });
-         } else if(node.expression.nodeType === 'IndexAccess'){
-            returnName?.push(getIndexAccessName(node.expression));
-         } 
-         else{
-           if(node.expression.name)
+          switch(node.expression.nodeType) { 
+            case 'TupleExpression' : {
+              node.expression.components.forEach(component => {
+                if(component.name)
+                  returnName?.push(component.name);
+                else if(component.nodeType === 'IndexAccess' ||component.nodeType === 'MemberAccess' )
+                  returnName?.push(getIndexAccessName(component));
+                else
+                  returnName?.push(component.value);
+              });
+              break;
+            }
+            
+            case 'MemberAccess':
+            case 'IndexAccess': 
+              returnName?.push(getIndexAccessName(node.expression))
+              break;
+            default : 
+            if(node.expression.name)
              returnName?.push(node.expression.name);
            else
-             returnName?.push(node.expression.value);
-        }
-        }
-
-      });
-
-    node.parameters.forEach((node, index) => {
-    if(node.nodeType === 'VariableDeclaration'){
-    node.name = returnName[index];
-  }
-    });
+             returnName?.push(node.expression.value); 
+            break;   
+          }
+          }
+        });
+        node.parameters.forEach((node, index) => {
+          if(node.nodeType === 'VariableDeclaration')
+          node.name = returnName[index];
+        });
+    }
     const newNode = buildNode('ParameterList');
     node._newASTPointer = newNode.parameters;
     parent._newASTPointer[path.containerName] = newNode;
-    }
   },
   exit(path: NodePath, state: any){
     const { node, parent, scope } = path;
@@ -827,23 +819,42 @@ const visitor = {
       parent.body.statements.forEach( node => {
         if(node.nodeType === 'Return'){
           for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
-            if(node.expression.nodeType === 'TupleExpression'){
-            node.expression.components.forEach(component => {
-              if(id == component.referencedDeclaration) {
-                if ((bindings instanceof VariableBinding)) {
-                  if(component.name === item.name)
-                  item.isSecret = bindings.isSecret
-                }
-              }
-            })
-          } else {
-            if( id == node.expression.referencedDeclaration) {
-              if ((bindings instanceof VariableBinding)){
-               if(node.name === item.name)
-               item.isSecret = bindings.isSecret
-              }
+            switch(node.expression.nodeType) {
+              case 'TupleExpression' : 
+                node.expression.components.forEach(component => {
+                  if((component.nodeType === 'IndexAccess' && id == component.indexExpression?.referencedDeclaration )||(component.nodeType === 'MemberAccess' && id == component.expression?.referencedDeclaration )|| id == component.referencedDeclaration) {
+                    if ((bindings instanceof VariableBinding)) {
+                      if(item.name.includes(bindings.node.name))
+                       item.isSecret = bindings.isSecret
+                    }
+                  }
+                })
+              break;
+              case 'IndexAccess':
+                if(id == node.expression.indexExpression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                     item.isSecret = bindings.isSecret
+                  }
+                } 
+              break ;
+              case 'MemberAccess':
+                if(id == node.expression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                      item.isSecret = bindings.isSecret
+                  }
+                } 
+              break; 
+              default: 
+                if( id == node.expression.referencedDeclaration){
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name == bindings.node.name)
+                     item.isSecret = bindings.isSecret
+                   }
+                } 
+                break ;
             }
-           }
           }
         }
       })
