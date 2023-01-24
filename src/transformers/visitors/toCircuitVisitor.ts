@@ -9,7 +9,7 @@ import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator} from '../../traverse/Indicator.js';
-import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
+import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer, getIndexAccessName } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -288,11 +288,14 @@ const visitor = {
            node.expression.components.forEach(component => {
              if(component.name){
               returnName?.push(component.name);
-            }
-             else
+            }else if(component.nodeType === 'IndexAccess'){
+              returnName?.push(getIndexAccessName(component));
+            }else
              returnName?.push(component.value);
            });
-         } else{
+         } else if(node.expression.nodeType === 'IndexAccess'){
+          returnName?.push(getIndexAccessName(node.expression));
+       } else{
           if(node.expression.name)
            returnName?.push(node.expression.name);
           else
@@ -319,17 +322,17 @@ const visitor = {
           for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
             if(node.expression.nodeType === 'TupleExpression'){
             node.expression.components.forEach(component => {
-              if(id == component.referencedDeclaration) {
+              if((component.nodeType === 'IndexAccess' && id == component.indexExpression.referencedDeclaration )|| id == component.referencedDeclaration) {
                 if ((bindings instanceof VariableBinding)) {
-                  if(component.name === item.name)
-                  item.isPrivate = bindings.isSecret
+                  if(item.name.includes(bindings.node.name))
+               item.isPrivate = bindings.isSecret
                 }
               }
             })
           } else {
-            if( id == node.expression.referencedDeclaration) {
+            if( id == node.expression.referencedDeclaration || (node.expression.nodeType === 'IndexAccess' && id == node.expression.indexExpression.referencedDeclaration)) {
               if ((bindings instanceof VariableBinding)){
-               if(node.name === item.name)
+               if(item.name.includes(bindings.node.name))
                item.isPrivate = bindings.isSecret
               }
             }
