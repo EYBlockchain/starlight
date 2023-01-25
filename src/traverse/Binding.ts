@@ -165,6 +165,7 @@ export class VariableBinding extends Binding {
   isBurned?: boolean;
   reinitialisable?: boolean;
   initialisedInConstructor?: boolean;
+  encryptionRequired?: boolean;
 
   isWholeReason?: {}[];
   isPartitionedReason?: {}[];
@@ -296,11 +297,13 @@ export class VariableBinding extends Binding {
         if (
           binOpNode.operator !== '==' &&
           !thisPath.isMsgSender(binOpNode.leftExpression) &&
-          !thisPath.isMsgSender(binOpNode.rightExpression)
+          !thisPath.isMsgSender(binOpNode.rightExpression) &&
+          !thisPath.isMsgValue(binOpNode.leftExpression) &&
+          !thisPath.isMsgValue(binOpNode.rightExpression)
         )
           throw new Error(`The new msg.sender ownership code didn't work!`);
         // extracting this particular msg.sender node to maintain node.src
-        const thisMsgSenderNode = thisPath.isMsgSender(binOpNode.leftExpression)
+        const thisMsgSenderNode = (thisPath.isMsgSender(binOpNode.leftExpression) || thisPath.isMsgValue(binOpNode.leftExpression))
           ? binOpNode.leftExpression
           : binOpNode.rightExpression;
         this.updateOwnership(thisMsgSenderNode, 'value');
@@ -530,7 +533,7 @@ export class VariableBinding extends Binding {
         msgSenderEverywhereMappingKey ??= true;
       } else if (
         this.isMapping &&
-        path.isMsgSender(path.getCorrespondingRhsNode())
+        (path.isMsgSender(path.getCorrespondingRhsNode()) || path.isMsgValue(path.getCorrespondingRhsNode()))
       ) {
         msgSenderEverywhereMappingValue ??= true;
       } else {

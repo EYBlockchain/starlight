@@ -223,16 +223,18 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         initialValue,
       };
     }
-    case 'MsgSender': {
+    case 'MsgSender':
+    case 'MsgValue': {
       return {
         nodeType,
       };
     }
     case 'Identifier': {
-      const { name } = fields;
+      const { name, type = '' } = fields;
       return {
         nodeType,
         name,
+        typeName: type ? buildNode('ElementaryTypeName', { name: type }) : null,
       };
     }
     case 'Literal': {
@@ -260,7 +262,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         CircuitArguments,
         circuitImport,
       };
-
     }
     case 'InternalFunctionBoilerplate':{
       const { name, internalFunctionInteractsWithSecret = false,circuitImport = false,structImport = false, structName} = fields;

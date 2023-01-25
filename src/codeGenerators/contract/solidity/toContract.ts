@@ -232,9 +232,7 @@ function codeGenerator(node: any) {
           return `if (${initialStatements}) {
           ${trueStatements} 
         }`;
-
       }
-
     case 'ForStatement': {
       const initializationExpression = codeGenerator(node.initializationExpression);
       const condition = codeGenerator(node.condition);
@@ -264,6 +262,9 @@ function codeGenerator(node: any) {
 
     case 'MsgSender':
       return 'msg.sender';
+
+      case 'MsgValue':
+        return 'msg.value';
 
     case 'MemberAccess': {
       const expression = codeGenerator(node.expression);

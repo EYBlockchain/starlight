@@ -36,14 +36,18 @@ class FunctionBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
+      encryptionRequired,
       isConstructor
     }): string[] {
+      if (isConstructor && encryptionRequired) throw new Error(`There shouldn't be any secret states that require sharing encrypted data in the constructor.`)
       const visibility = isConstructor ? 'memory' : 'calldata';
       return [
         ...(newNullifiers ? [`uint256[] ${visibility} newNullifiers`] : []),
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
         ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
         ...(checkNullifiers ? [`uint256[] ${visibility} checkNullifiers`] : []),
+        ...(encryptionRequired ? [`uint256[][] calldata cipherText`] : []),
+        ...(encryptionRequired ? [`uint256[2][] calldata ephPubKeys`] : []),
         ...(newCommitments || newNullifiers ? [`uint256[] ${visibility} proof`] : []),
       ];
     },
@@ -56,17 +60,21 @@ class FunctionBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
+      encryptionRequired,
       isConstructor
     }): string[] {
       // prettier-ignore
+
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
       ...(newNullifiers ? [`uint256[]`] : []),
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),
+      ...(encryptionRequired ? [`uint256[][]`] : []),
+      ...(encryptionRequired ? [`uint256[2][]`] : []),
       `uint256[]`,
-    ];
+    ].filter(para => para !== undefined); // Added for return parameter 
 
       customInputs?.forEach((input, i) => {
         if (input.structName) customInputs[i] = input.properties;
@@ -99,10 +107,24 @@ class FunctionBoilerplateGenerator {
 
         ...(newCommitments ? [`
           inputs.newCommitments = newCommitments;`] : []),
+
+        ...(encryptionRequired ? [`
+          inputs.cipherText = cipherText;`] : []),
+
+        ...(encryptionRequired ? [`
+          inputs.encKeys = ephPubKeys;`] : []),
         `
           ${msgSigCheck.join('\n')}`,
         `
           verify(proof, uint(FunctionNames.${functionName}), inputs);`,
+
+        ...(encryptionRequired ? [`
+          for (uint j; j < cipherText.length; j++) {
+            // this seems silly (it is) but its the only way to get the event to emit properly
+            uint256[2] memory ephKeyToEmit = ephPubKeys[j];
+            uint256[] memory cipherToEmit = cipherText[j];
+            emit EncryptedData(cipherToEmit, ephKeyToEmit);
+          }`] : []),
       ];
     },
   };

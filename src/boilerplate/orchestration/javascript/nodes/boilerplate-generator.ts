@@ -141,6 +141,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         initialisationRequired: indicator.initialisationRequired,
+        encryptionRequired: indicator.encryptionRequired,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
           : null,
@@ -164,6 +165,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        encryptionRequired: indicator.encryptionRequired,
         nullifierRequired: indicator.isNullified,
       };
     }
@@ -297,17 +299,71 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractImports,
       };
     }
+    case 'IntegrationApiServicesBoilerplate': {
+      const {
+        contractName,
+        functions = [],
+        constructorParams = [],
+        contractImports = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        functions,
+        constructorParams,
+        contractImports,
+      };
+    }
+    case 'IntegrationApiRoutesBoilerplate': {
+      const {
+        contractName,
+        functions = [],
+        contractImports = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        functions,
+        contractImports,
+      };
+    }
     case 'IntegrationTestFunction': {
       const {
         name,
         parameters = buildNode('ParameterList', fields),
         decrementsSecretState = false,
+        encryptionRequired = false,
       } = fields;
       return {
         nodeType,
         name,
         parameters,
         decrementsSecretState,
+        encryptionRequired,
+      };
+    }
+    case 'IntegrationApiServiceFunction': {
+      const {
+        name,
+        parameters = buildNode('ParameterList', fields),
+        returnParameters =  buildNode('ParameterList', fields),
+        decrementsSecretState = [],
+      } = fields;
+      return {
+        nodeType,
+        name,
+        parameters,
+        returnParameters,
+        decrementsSecretState,
+      };
+    }
+    case 'IntegrationApiRoutesFunction': {
+      const {
+        name,
+      } = fields;
+      return {
+        nodeType,
+        name,
       };
     }
     default:

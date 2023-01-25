@@ -60,14 +60,22 @@ export default {
     },
   },
 
-  // WhileStatement: {
-  //   enter(node: any) {
-  //     console.log(' while node ' , node.body.statements);
-  //     if(node.interactsWithSecret)
-  //     throw new ZKPError(
-  //       'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
-  //       node,
-  //     );
-  //   },
-  // },
+  WhileStatement: {
+    enter(node: any) {
+      throw new ZKPError(
+        'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
+        node,
+      );
+    },
+  },
+
+  IfStatement: {
+    enter(node: any) {
+      if (['Identifier', 'Literal'].includes(node.condition.nodeType))
+        throw new TODOError(
+          `We can't currently handle conditions which are singular variables - instead of if(a) try something like if(a == true). This is because the compiler must store the 'LHS' (a) and 'RHS' (true) value of the condition in case either are modified throughout the function.`,
+          node.condition
+        );
+    },
+  },
 };

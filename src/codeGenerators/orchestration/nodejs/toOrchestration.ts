@@ -184,6 +184,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (options?.contractCall) return `msgSender.hex(20)`;
       return `msgSender.integer`;
 
+    case 'MsgValue':
+        return `msgValue`;
+
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;
 
@@ -217,6 +220,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'EditableCommitmentCommonFilesBoilerplate':
     case 'SetupCommonFilesBoilerplate':
     case 'IntegrationTestBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
+    case 'IntegrationApiServicesBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
+    case 'IntegrationApiRoutesBoilerplate':
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
     case 'InitialisePreimage':

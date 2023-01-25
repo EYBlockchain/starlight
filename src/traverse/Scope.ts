@@ -244,13 +244,13 @@ export class Scope {
 
         // msg.sender might not be a 'top level' argument of the require statement - perhaps it's nested within some more complex expression. We look for it in order to throw an 'unsupported' error. TODO: figure out how to infer restrictions in this case.
         const findMsgSenderVisitor = (path: NodePath, state: any) => {
-          state.found ||= path.isMsgSender();
+          state.found ||= (path.isMsgSender() || path.isMsgValue());
         };
         let subState = {found: false};
         path.traversePathsFast(findMsgSenderVisitor, subState);
         if (subState.found)
           throw new Error(
-            `msg.sender is nested deep within a require statement. That's currently unsupported, as it's tricky to infer ownership from this.`,
+            `msg.sender or msg.value is nested deep within a require statement. That's currently unsupported, as it's tricky to infer ownership from this.`,
           );
 
         break;
@@ -654,7 +654,7 @@ export class Scope {
 
     const { path } = this;
     const { indexExpression } = indexAccessNode;
-    const keyNode = path.isMsgSender(indexExpression)
+    const keyNode = (path.isMsgSender(indexExpression) || path.isMsgValue(indexExpression))
       ? indexExpression?.expression
       : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
     return keyNode;

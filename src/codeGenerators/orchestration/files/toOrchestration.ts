@@ -23,6 +23,9 @@ const editableCommitmentCommonFilesBoilerplate = () => {
  * @param type - a solidity type
  * @returns - a suitable function input of that type
  */
+
+const apiServiceInputs = [];
+
 const testInputsByType = (solidityType: any) => {
   switch (solidityType.name) {
     case 'bool':
@@ -96,6 +99,12 @@ const prepareIntegrationTest = (node: any) => {
       fnboilerplate = fnboilerplate.replace(toRemove, `\n});`);
     }
 
+    // test encryption
+    if (fn.encryptionRequired) {
+      const indexToInsert = fnboilerplate.split(`it('should update`);
+      fnboilerplate = indexToInsert[0] + '\n' + genericTestFile.encryption() + '\n' + `it('should update`+ indexToInsert[1];
+    }
+
     // remove merkle tree test
     if (removeMerkleTreeTest) {
       // regex: matches everything between 'it('should update the merkle tree'' and the first '});'
@@ -113,9 +122,113 @@ const prepareIntegrationTest = (node: any) => {
     outputTestFile = `${fnimport}\n${outputTestFile}\n${fnboilerplate}`;
   });
   // add linting and config
-  const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\n`;
+  const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
   outputTestFile = `${preprefix}\n${outputTestFile}\n });\n`;
   return outputTestFile;
+};
+
+const prepareIntegrationApiServices = (node: any) => {
+  // import generic test skeleton
+  const genericApiServiceFile: any = Orchestrationbp.integrationApiServicesBoilerplate;
+  // replace references to contract and functions with ours
+  let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
+    /CONTRACT_NAME/g,
+    node.contractName,
+  );
+  const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+
+  relevantFunctions.forEach((fn: any) => {
+  let fnboilerplate = genericApiServiceFile.postStatements()
+    .replace(/CONTRACT_NAME/g, node.contractName)
+    .replace(/FUNCTION_NAME/g, fn.name);
+  let fnParam =[];
+  let structparams;
+    const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
+    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
+    paramTypes.forEach(type => {
+      paramName.forEach(element =>{
+        if(type.isStruct){
+         structparams = `{ ${type.properties.map(p => `${p.name}: req.body.${element}.${p.name}`)}}`
+         fnParam.push( `const ${element} = ${structparams} ;\n`)
+        }
+        else{
+            fnParam.push( `const ${element} = req.body.${element} ;\n`)
+        }
+
+      })
+    })
+    // remove any duplicates from fnction parameters
+    fnParam = [...new Set(fnParam)];
+    // Adding Return parameters
+    let returnParams =[];
+    let returnParamsName = fn.returnParameters.parameters.map((obj: any) => obj.name);
+    if(returnParamsName.length > 0){
+    returnParamsName.forEach(param => {
+      if(fn.decrementsSecretState.includes(param))
+         returnParams.push(param+'_2_newCommitment');
+      else if(param !== 'true')
+       returnParams.push(param+'_newCommitment');
+       else
+       returnParams.push('bool');
+    });
+  }
+    // replace the signature with test inputs
+    fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
+    fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
+    fnboilerplate = fnboilerplate.replace(
+      /FUNCTION_SIG/g,
+      paramName,
+    );
+
+    fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
+
+    // replace function imports at top of file
+    const fnimport = genericApiServiceFile.import().replace(
+      /FUNCTION_NAME/g,
+      fn.name,
+    );
+    // for each function, add the new imports and boilerplate to existing test
+    outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
+
+  });
+  // add linting and config
+  const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`;
+  return outputApiServiceFile;
+};
+const prepareIntegrationApiRoutes = (node: any) => {
+  // import generic test skeleton
+  let outputApiRoutesFile =``;
+  let fnimport =``;
+  let outputApiRoutesimport=``;
+  let outputApiRoutesboilerplate =``;
+  const genericApiRoutesFile: any = Orchestrationbp.integrationApiRoutesBoilerplate;
+
+  // replace references to contract and functions with ours
+  const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+
+  relevantFunctions.forEach((fn: any) => {
+    let fnboilerplate = genericApiRoutesFile.postStatements()
+      .replace(/FUNCTION_NAME/g, fn.name);
+
+    // replace function imports at top of file
+     fnimport = genericApiRoutesFile.import().replace(
+      /FUNCTION_NAME/g,
+      fn.name,
+    );
+
+    // for each function, add the new imports and boilerplate to existing test
+    outputApiRoutesimport = `${outputApiRoutesimport}\n${fnimport}\n`;
+    outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
+  });
+  // add getters for commitments
+  outputApiRoutesimport = `${outputApiRoutesimport}\n${genericApiRoutesFile.commitmentImports()}\n`;
+  outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${genericApiRoutesFile.commitmentRoutes()}\n`
+  const fnprestatement = genericApiRoutesFile.preStatements();
+  const postfix = `export default router;`;
+  outputApiRoutesFile = `${outputApiRoutesimport}\n${fnprestatement}\n${outputApiRoutesboilerplate}\n ${postfix}`;
+  // add linting and config
+  return outputApiRoutesFile;
 };
 
 /**
@@ -326,6 +439,14 @@ export default function fileGenerator(node: any) {
     case 'IntegrationTestBoilerplate': {
       const test = prepareIntegrationTest(node);
       return test;
+    }
+    case 'IntegrationApiServicesBoilerplate': {
+      const api_services = prepareIntegrationApiServices(node);
+      return api_services;
+    }
+    case 'IntegrationApiRoutesBoilerplate': {
+      const api_routes = prepareIntegrationApiRoutes(node);
+      return api_routes;
     }
     default:
       throw new TypeError(`I dont recognise this type: ${node.nodeType}`);
