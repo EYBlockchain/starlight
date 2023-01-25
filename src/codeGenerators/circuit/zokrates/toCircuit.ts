@@ -189,6 +189,10 @@ function codeGenerator(node: any) {
       let falseStatements: any= ``;
       let initialStatements: any= ``;
       if(node.isRevert) {
+        if(node.condition.rightExpression.nodeType == 'Identifier')
+        node.condition.rightExpression.name = node.condition.rightExpression.name.replace('_temp','');
+        if(node.condition.leftExpression.nodeType == 'Identifier')
+        node.condition.leftExpression.name = node.condition.leftExpression.name.replace('_temp','');
       initialStatements+= `
       assert(${codeGenerator(node.condition)})`;
       return initialStatements;
