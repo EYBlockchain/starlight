@@ -803,36 +803,10 @@ let interactsWithSecret = false ;
   IfStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall' && node.trueBody.statements[0].expression.expression.name === 'revert')
-      {
-        const newNode = buildNode(node.nodeType, {
-          condition: {},
-          trueBody: [],
-          falseBody: [],
-          isRevert : true
-        });
-        node._newASTPointer = newNode;
-        parent._newASTPointer.push(newNode);
-        return;
-      }
       const newNode = buildNode(node.nodeType, {
         condition: {},
         trueBody: [],
-        falseBody: [],
-        isRevert : node.isrevert
-      });
-      node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
-    },
-  },
-
-  Conditional: {
-    enter(path: NodePath) {
-      const { node, parent } = path;
-      const newNode = buildNode(node.nodeType, {
-        condition: {},
-        falseExpression: [],
-        trueExpression: []
+        falseBody: []
       });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
@@ -884,6 +858,19 @@ let interactsWithSecret = false ;
       path.traversePathsFast(findConditionIdentifiers, identifiersInCond);
       path.node._newASTPointer.conditionVars = identifiersInCond.list;
     }
+  },
+
+  Conditional: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        falseExpression: [],
+        trueExpression: []
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
   },
 
   ForStatement: {

@@ -583,7 +583,7 @@ WhileStatement: {
       const { node, parent } = path;
       const newNode = buildNode('WhileStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
   },
 },
 
@@ -592,7 +592,7 @@ DoWhileStatement: {
       const { node, parent } = path;
       const newNode = buildNode('DoWhileStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
   },
 },
 

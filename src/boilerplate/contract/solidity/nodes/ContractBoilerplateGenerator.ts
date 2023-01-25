@@ -74,7 +74,7 @@ class ContractBoilerplateGenerator {
        if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct )
           isjoinCommitmentsFunction?.push('true');
       }
-      const {
+      let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = scope;
 
@@ -102,7 +102,7 @@ class ContractBoilerplateGenerator {
     registerZKPPublicKey() {},
 
     verify(circuitParams: Object ) {
-      const {
+      let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = this.scope;
       let isjoinCommitmentsFunction : string[]=[];

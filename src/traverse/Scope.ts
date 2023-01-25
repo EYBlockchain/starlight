@@ -285,6 +285,9 @@ export class Scope {
       case 'ForStatement':
       case 'Break':
       case 'Continue':
+      case 'Conditional':
+      case 'WhileStatement':
+      case 'DoWhileStatement':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an
