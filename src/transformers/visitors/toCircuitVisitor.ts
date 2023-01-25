@@ -765,7 +765,7 @@ let interactsWithSecret = false ;
   IfStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-      if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')
+      if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall' && node.trueBody.statements[0].expression.expression.name === 'revert')
       {
         const newNode = buildNode(node.nodeType, {
           condition: {},
