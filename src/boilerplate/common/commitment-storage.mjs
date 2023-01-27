@@ -344,7 +344,7 @@ export async function joinCommitments(
 
 	let tx = await instance.getPastEvents("allEvents");
 
-	tx = tx[0];	
+	tx = tx[0];
 
 	await markNullified(generalise(commitments[0]._id), secretKey.hex(32));
 	await markNullified(generalise(commitments[1]._id), secretKey.hex(32));
@@ -353,7 +353,7 @@ export async function joinCommitments(
 		name: statename,
 		mappingKey: fromID,
 		preimage: {
-			stateVarId: generalise(stateVarID),
+			stateVarId: generalise(oldCommitment_stateVarId),
 			value: newCommitment_value,
 			salt: newCommitment_newSalt,
 			publicKey: publicKey,
