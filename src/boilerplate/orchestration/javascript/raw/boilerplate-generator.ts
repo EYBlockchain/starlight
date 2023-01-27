@@ -166,7 +166,7 @@ class BoilerplateGenerator {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
 
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 

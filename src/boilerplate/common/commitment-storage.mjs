@@ -350,6 +350,8 @@ export async function joinCommitments(
 	await markNullified(generalise(commitments[1]._id), secretKey.hex(32));
 	await storeCommitment({
 		hash: newCommitment,
+		name: statename,
+		mappingKey: fromID,
 		preimage: {
 			stateVarId: generalise(stateVarID),
 			value: newCommitment_value,
