@@ -5,7 +5,7 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-while getopts "n:a:m:k:r:" arg; do
+while getopts "n:a:m:k:r:s:" arg; do
   case $arg in
     n)
       network=$OPTARG
@@ -27,6 +27,10 @@ while getopts "n:a:m:k:r:" arg; do
       rpc=$OPTARG
       echo rpcvalue $OPTARG
       ;;
+    s)
+      setup=$OPTARG
+      echo setup $OPTARG
+      ;;
   esac
 done
 
@@ -38,7 +42,7 @@ cp bin/default_startup bin/startup
 
 perl -i -pe "s,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,docker-compose.zapp.yml,g" package.json
 
-if [[ $network == 'polygon' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]]
+if [[ $network == 'mumbai' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]]
 then
 perl -i -pe "s,DEFAULT_ACCOUNT: '',DEFAULT_ACCOUNT: \'$account\',g" docker-compose.zapp.override.yml
 perl -i -pe "s,DEFAULT_ACCOUNT_MNEMONIC: '',DEFAULT_ACCOUNT_MNEMONIC: \'$mnemonic\',g" docker-compose.zapp.override.yml
@@ -48,10 +52,10 @@ perl -i -pe "s,docker-compose.zapp.yml,docker-compose.zapp.yml -f docker-compose
 perl -i -pe "s,docker-compose -f docker-compose.zapp.yml up -d ganache, ## up ganache service for ganache,g" bin/startup
 fi
 
-if [[ $network == 'polygon' ]]
+if [[ $network == 'mumbai' ]]
 then
 perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss:\/\/rpc-mumbai.maticvigil.com\/ws\/v1\/$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,polygon,g" entrypoint.sh
+perl -i -pe "s,development_ganache,mumbai,g" entrypoint.sh
 perl -i -pe "s,while,##while,g" entrypoint.sh
 perl -i -pe "s,10,60,g" bin/startup
 fi
@@ -73,6 +77,12 @@ perl -i -pe "s,while,##while,g" entrypoint.sh
 perl -i -pe "s,10,500,g" bin/startup
 fi
 
+if [ ! -d "proving-files" ]; then
+  $setup='y'
+fi
+
+if [[ $setup == 'y' ]]
+then
 printf "\n${GREEN}*** Starting the zokrates container ***${NC}\n"
 
 docker-compose -f docker-compose.zapp.yml up -d zokrates
@@ -89,4 +99,5 @@ docker-compose -f docker-compose.zapp.yml run zapp node /app/write-vk.mjs -i ''
 
 CONSTRUCTOR_CALL
 
+fi
 printf "\n${GREEN}*** Finished! ***${NC}\n"

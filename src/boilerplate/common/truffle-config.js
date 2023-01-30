@@ -50,7 +50,7 @@ module.exports = {
       network_id: 1337, // Any network (default: none)
       gas: 10000000,
     },
-    polygon: {
+    mumbai: {
       networkCheckTimeout: 10000,
       provider: () => new HDWalletProvider(mnemonic, rpcUrl),
       network_id: 80001,
