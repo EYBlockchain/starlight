@@ -78,7 +78,7 @@ perl -i -pe "s,10,500,g" bin/startup
 fi
 
 if [ ! -d "proving-files" ]; then
-  $setup='y'
+  setup='y'
 fi
 
 if [[ $setup == 'y' ]]
