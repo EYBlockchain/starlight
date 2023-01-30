@@ -81,7 +81,7 @@ if [ ! -d "proving-files" ]; then
   setup='y'
 fi
 
-if [[ $setup == 'y' ]]
+if [[ ! $setup == 'n' ]]
 then
 printf "\n${GREEN}*** Starting the zokrates container ***${NC}\n"
 
