@@ -827,7 +827,7 @@ const visitor = {
                       if(item.name.includes(bindings.node.name))
                        item.isSecret = bindings.isSecret
                     }
-                  }
+                  } 
                 })
               break;
               case 'IndexAccess':

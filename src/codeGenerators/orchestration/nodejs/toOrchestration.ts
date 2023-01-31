@@ -48,9 +48,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
       node.returnParameters.parameters.forEach( node => {
          returnIsSecret.push(node.isSecret);
        })
+       console.log(returnIsSecret);
      }
-      node.returnParameters =
-        node.returnParameters.parameters.map((paramnode: any) => paramnode.name) || [];
+        node.returnParameters = node.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+        console.log(node.returnParameters);
         node.returnParameters.forEach( (param, index) => {
           if(decStates) {
            if(decStates?.includes(param)){
