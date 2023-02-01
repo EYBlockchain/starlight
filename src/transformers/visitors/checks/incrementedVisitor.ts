@@ -6,8 +6,8 @@ import { TODOError, SyntaxUsageError } from '../../../error/errors.js';
 import NodePath from '../../../traverse/NodePath.js';
 
 interface IncrementationRecord {
-  incremented: boolean;
-  decremented: boolean;
+  incremented: boolean | null;
+  decremented: boolean | null;
 }
 
 // when we have an a++ and needs its increment to equal the node rep. 1
@@ -23,7 +23,7 @@ const literalOneNode = {
 
 const collectIncrements = (increments: any, incrementedIdentifier: any) => {
   const { operands, precedingOperator } = increments;
-  const newIncrements = [];
+  const newIncrements: any[] = [];
   for (const [index, operand] of operands.entries()) {
     operand.precedingOperator = precedingOperator[index];
     if (
@@ -49,6 +49,7 @@ const markParentIncrementation = (
     ? incrementedIdentifier.baseExpression
     : incrementedIdentifier;
   const parent = path.getAncestorOfType('ExpressionStatement');
+  if (!parent) throw new Error(`No parent of node ${path.node.name} found`);
   parent.isIncremented = isIncremented;
   parent.isDecremented = isDecremented;
   parent.incrementedDeclaration = incrementedIdentifier.referencedDeclaration;
@@ -133,7 +134,8 @@ const binOpToIncrements = (path: NodePath, state: any) => {
   if (
     precedingOperator.length > 2 &&
     precedingOperator.includes('+') &&
-    precedingOperator.includes('-')
+    precedingOperator.includes('-') &&
+    parentExpressionStatement
   )
     mixedOperatorsWarning(parentExpressionStatement);
 
@@ -178,7 +180,7 @@ export default {
       if (logger.level === 'debug') backtrace.getSourceCode(node.src);
       logger.debug(`statement is incremented? ${isIncremented}`);
       if (isIncremented && !isDecremented) {
-        const incs = [];
+        const incs: string[] = [];
         state.increments.forEach((increment: any) =>
           incs.push(increment.name || increment.value || increment.nodeType),
         );
@@ -186,7 +188,7 @@ export default {
       }
       logger.debug(`statement is decremented? ${isDecremented}`);
       if (isDecremented) {
-        const decs = [];
+        const decs: string[] = [];
         state.decrements.forEach((decrement: any) =>
           decs.push(decrement.name || decrement.value || decrement.nodeType),
         );
@@ -234,11 +236,12 @@ export default {
       if (!state.unmarkedIncrementation) return;
       const { node, scope } = path;
       const { operator, leftHandSide, rightHandSide } = node;
-      const lhsSecret = !!scope.getReferencedBinding(leftHandSide).isSecret;
+      const lhsSecret = !!scope.getReferencedBinding(leftHandSide)?.isSecret;
 
       if (['bool', 'address'].includes(leftHandSide.typeDescriptions.typeString)) {
         markParentIncrementation(path, state, false, false, leftHandSide);
-        scope.getReferencedBinding(leftHandSide).isWhole = true;
+        const lhsBinding = scope.getReferencedBinding(leftHandSide)
+        if (lhsBinding) lhsBinding.isWhole = true;
         return;
       }
       // a += something, -= something
@@ -299,7 +302,7 @@ export default {
       if (!state.unmarkedIncrementation) return;
       const { node, scope } = path;
       const { subExpression, operator } = node;
-      const lhsSecret = !!scope.getReferencedBinding(subExpression).isSecret;
+      const lhsSecret = !!scope.getReferencedBinding(subExpression)?.isSecret;
       // a++
       if (lhsSecret && operator.includes('+')) {
         literalOneNode.precedingOperator = '+';
@@ -342,11 +345,14 @@ export default {
       if (!binOpToIncrements(path, state)?.operands) return;
       if (['bool', 'address'].includes(lhsNode.typeDescriptions?.typeString)) {
         markParentIncrementation(path, state, false, false, lhsNode);
-        path.scope.getReferencedBinding(lhsNode).isWhole = true;
+        const lhsBinding = path.scope.getReferencedBinding(lhsNode);
+        if (lhsBinding) lhsBinding.isWhole = true;
         return;
       }
 
-      const { operands, precedingOperator } = binOpToIncrements(path, state);
+      const { operands, precedingOperator } = binOpToIncrements(path, state) || {};
+
+      if (!operands || !precedingOperator) return;
 
       // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a = b + 2a)
       let discoveredLHS = 0;
@@ -417,14 +423,14 @@ export default {
             precedingOperator[0] === '+'
           )
             isIncremented.decremented = false;
-          markParentIncrementation(
-            path,
-            state,
-            isIncremented.incremented,
-            isIncremented.decremented,
-            lhsNode.baseExpression || lhsNode,
-            { operands, precedingOperator },
-          );
+            markParentIncrementation(
+              path,
+              state,
+              isIncremented.incremented,
+              false,
+              lhsNode.baseExpression || lhsNode,
+              { operands, precedingOperator },
+            );
         } else if (
           discoveredLHS === 0 &&
           isIncremented.incremented &&
@@ -463,7 +469,8 @@ export default {
       declaration.members.forEach((member: any) => {
         if (['bool', 'address'].includes(member.typeDescriptions.typeString)) {
           // TODO remove this when adding mixed whole/partitioned structs
-          scope.getReferencedBinding(node).isWhole = true;
+          const binding = scope.getReferencedBinding(node);
+          if (binding) binding.isWhole = true;
           return;
         }
       });

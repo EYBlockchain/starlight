@@ -116,7 +116,7 @@ function codeGenerator(node: any) {
       const slicedParamList = paramList.map(p =>
         p.replace('public ', '').replace('private ', ''),
       );
-      const linesToDelete = []; // we'll collect duplicate params here
+      const linesToDelete: string[] = []; // we'll collect duplicate params here
       for (let i = 0; i < paramList.length; i++) {
         for (let j = i + 1; j < slicedParamList.length; j++) {
           if (slicedParamList[i] === slicedParamList[j]) {

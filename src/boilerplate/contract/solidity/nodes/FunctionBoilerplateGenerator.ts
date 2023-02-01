@@ -19,7 +19,7 @@ class FunctionBoilerplateGenerator {
   }
 
   getBoilerplate = (section: string, extraParams?: any) => {
-    const bp = [];
+    const bp: any[] = [];
     const categories = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {

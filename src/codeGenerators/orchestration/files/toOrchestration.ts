@@ -142,7 +142,7 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnboilerplate = genericApiServiceFile.postStatements()
     .replace(/CONTRACT_NAME/g, node.contractName)
     .replace(/FUNCTION_NAME/g, fn.name);
-  let fnParam =[];
+  let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
     const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
@@ -161,7 +161,7 @@ const prepareIntegrationApiServices = (node: any) => {
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
-    let returnParams =[];
+    let returnParams: string[] = [];
     let returnParamsName = fn.returnParameters.parameters.map((obj: any) => obj.name);
     if(returnParamsName.length > 0){
     returnParamsName.forEach(param => {
@@ -254,7 +254,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   let constructorParamsIncludesAddr = false;
   let customProofImport = ``;
   let customProofInputs = ``;
-  const constructorAddrParams = [];
+  const constructorAddrParams: string[] = [];
   // we check weter we must pass in an address to the constructor
   node.constructorParams?.forEach((arg: any) => {
     if (arg.typeName.name === 'address') {
