@@ -390,6 +390,7 @@ export class Scope {
    */
   getReferencedIndicator(referencingNode: any, mappingKeyIndicatorOnly: boolean = false): StateVariableIndicator | MappingKey | null {
     const { path } = this;
+    if (!referencingNode) return null;
     const indicator = this.getIndicatorById(
       path.getReferencedDeclarationId(referencingNode) || referencingNode.id
     );

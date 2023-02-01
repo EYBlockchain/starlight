@@ -466,7 +466,7 @@ export default {
       const { node, scope } = path;
       if (!path.isStruct() || path.getAncestorOfType('StructDefinition')) return;
       const declaration = path.getStructDeclaration();
-      declaration.members.forEach((member: any) => {
+      declaration?.members.forEach((member: any) => {
         if (['bool', 'address'].includes(member.typeDescriptions.typeString)) {
           // TODO remove this when adding mixed whole/partitioned structs
           const binding = scope.getReferencedBinding(node);

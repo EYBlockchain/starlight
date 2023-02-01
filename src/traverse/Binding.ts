@@ -469,7 +469,7 @@ export class VariableBinding extends Binding {
           [...this.isWholeReason, ...this.isPartitionedReason],
         );
       else throw new SyntaxUsageError(
-        `State cannot be whole and partitioned. The following reasons conflict.`,
+        `State ${this.name} cannot be whole and partitioned`,
         this.node,
         []
       )
