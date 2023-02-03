@@ -453,7 +453,7 @@ sendTransaction = {
       let value;
       switch (stateType) {
         case 'increment':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue[${i}]`)} }` : `${stateName}_newCommitmentValue`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
           return [`
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
@@ -469,7 +469,7 @@ sendTransaction = {
             isNullified: false,
           });`];
         case 'decrement':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change[${i}]`)} }` : `${stateName}_change`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
             \nawait markNullified(generalise(${stateName}_0_oldCommitment._id), secretKey.hex(32));
             \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));

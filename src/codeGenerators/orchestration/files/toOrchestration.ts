@@ -138,25 +138,26 @@ const prepareIntegrationApiServices = (node: any) => {
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
 
   relevantFunctions.forEach((fn: any) => {
-  let fnboilerplate = genericApiServiceFile.postStatements()
-    .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name);
-  let fnParam =[];
-  let structparams;
+    let fnboilerplate = genericApiServiceFile.postStatements()
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name);
+    let fnParam =[];
+    let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
-    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
-    paramTypes.forEach(type => {
-      paramName.forEach(element =>{
-        if(type.isStruct){
-         structparams = `{ ${type.properties.map(p => `${p.name}: req.body.${element}.${p.name}`)}}`
-         fnParam.push( `const ${element} = ${structparams} ;\n`)
-        }
-        else{
-            fnParam.push( `const ${element} = req.body.${element} ;\n`)
-        }
+    fn.parameters.parameters.forEach(p => {
+      if (p.typeName.isStruct) {
+        structparams = `{ ${p.typeName.properties.map(prop => `${prop.name}: req.body.${p.name}.${prop.name}`)}}`;
+        fnParam.push( `const ${p.name} = ${structparams} ;\n`);
+      } else {
+        fnParam.push( `const { ${p.name} } = req.body;\n`);
+      }
+    });
 
-      })
-    })
+    fn.parameters.modifiedStateVariables.forEach(m => {
+      fnParam.push(`const ${m.name}_newOwnerPublicKey = req.body.${m.name}_newOwnerPublicKey || 0;\n`);
+      paramName.push(`${m.name}_newOwnerPublicKey`);
+    });
+
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
