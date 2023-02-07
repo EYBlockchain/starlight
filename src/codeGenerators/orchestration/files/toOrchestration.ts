@@ -1,6 +1,7 @@
 /* eslint-disable import/no-cycle, no-param-reassign */
 import fs from 'fs';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import { collectImportFiles, localFile } from '../../common.js'
 import OrchestrationBP from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
 import codeGenerator from '../nodejs/toOrchestration.js';
@@ -412,7 +413,8 @@ export default function fileGenerator(node: any) {
         'orchestration',
       );
 
-      const startupScript = { filepath: 'bin/setup', file: fs.readFileSync('src/boilerplate/common/bin/setup', 'utf8')};
+      const readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
+      const startupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(startupScript);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>

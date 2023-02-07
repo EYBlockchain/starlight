@@ -630,7 +630,7 @@ export class VariableBinding extends Binding {
       logger.debug(
         `Found a statement which burns the secret state and allows it to be reinitialised. If this line isn't meant to do that, check why you are setting the address to 0.`,
       );
-      if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
+      if (logger.level === 'debug') backtrace.getSourceCode(node.src);
       this.isBurned = true;
       // TODO more useful indicators here
     }

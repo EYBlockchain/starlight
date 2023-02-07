@@ -4,6 +4,7 @@
     "allowJs": true,
     "target": "es6",
     "moduleResolution": "node",
+    "module": "es2020",
     "esModuleInterop": true,
     "baseUrl": ".",
     "skipLibCheck": true,

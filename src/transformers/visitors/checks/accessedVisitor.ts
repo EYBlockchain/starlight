@@ -142,7 +142,7 @@ export default {
         // end of error checking
         // ------
         logger.debug(`Found an accessed secret state ${node.name}`);
-        if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
+        if (logger.level === 'debug') backtrace.getSourceCode(node.src);
         scope.getReferencedBinding(node)?.updateAccessed(path);
         const indicator = scope.getReferencedIndicator(node);
         if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
