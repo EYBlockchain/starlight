@@ -1,0 +1,20 @@
+#!/bin/sh
+while getopts "z:" arg; do
+  case $arg in
+    z)
+      zapp=$OPTARG
+      ;;
+  esac
+done
+cd zapps/$zapp
+npm install
+chmod +x ./bin/setup && chmod +x ./bin/startup
+npm run apitest
+sleep 20
+
+
+
+
+
+
+

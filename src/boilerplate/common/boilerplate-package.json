@@ -4,7 +4,8 @@
   "scripts": {
     "test": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
     "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
-    "start": "./bin/startup && docker-compose -f docker-compose.zapp.yml run -p 3000:3000 zapp node orchestration/api.mjs"
+    "start": "./bin/startup && docker-compose -f docker-compose.zapp.yml run -p 3000:3000 zapp node orchestration/api.mjs",
+    "apitest": "./bin/setup && ./bin/startup && docker-compose -f docker-compose.zapp.yml run -d -p 3000:3000 zapp node orchestration/api.mjs"
   },
   "keywords": [
     "private contract",
