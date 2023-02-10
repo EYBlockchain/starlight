@@ -39,10 +39,10 @@ class BoilerplateGenerator {
 
         bool ${x}_oldCommitment_owner_publicKey_sign = edwardsCompress(${x}_oldCommitment_owner_publicKey_point)[0]
 
-        bool[254] ${x}_yBits = field_to_bool_256(${x}_oldCommitment_owner_publicKey_point[1])[2..256]
-        ${x}_yBits[0] = ${x}_oldCommitment_owner_publicKey_sign
+        bool[254] ${x}_oldCommitment_yBits = field_to_bool_256(${x}_oldCommitment_owner_publicKey_point[1])[2..256]
+        ${x}_oldCommitment_yBits[0] = ${x}_oldCommitment_owner_publicKey_sign
 
-        field ${x}_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_yBits])`,
+        field ${x}_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_oldCommitment_yBits])`,
       ];
     },
   };
@@ -337,10 +337,10 @@ class BoilerplateGenerator {
         // calculate ${x}_newCommitment_owner_publicKey from its point
         bool ${x}_newCommitment_owner_publicKey_sign = edwardsCompress(${x}_newCommitment_owner_publicKey_point)[0]
 
-        bool[254] ${x}_yBits = field_to_bool_256(${x}_newCommitment_owner_publicKey_point[1])[2..256]
-        ${x}_yBits[0] = ${x}_newCommitment_owner_publicKey_sign
+        bool[254] ${x}_newCommitment_yBits = field_to_bool_256(${x}_newCommitment_owner_publicKey_point[1])[2..256]
+        ${x}_newCommitment_yBits[0] = ${x}_newCommitment_owner_publicKey_sign
 
-        field ${x}_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_yBits])`,
+        field ${x}_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_newCommitment_yBits])`,
       ];
     },
 

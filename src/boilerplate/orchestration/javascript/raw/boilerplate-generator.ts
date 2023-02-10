@@ -424,9 +424,13 @@ class BoilerplateGenerator {
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
-                      \t${stateName}_newOwnerPublicKey.integer,
+                      ${encryptionRequired ? `` : `\t${stateName}_newOwnerPublicKey.integer,`}
                       \t${stateName}_newSalt.integer,
-                      \t${stateName}_newCommitment.integer`];
+                      \t${stateName}_newCommitment.integer
+                      ${encryptionRequired ? `,
+                        \tgeneralise(utils.randomHex(31)).integer,
+                        \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
+                          decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}`];
         }
       }
     }

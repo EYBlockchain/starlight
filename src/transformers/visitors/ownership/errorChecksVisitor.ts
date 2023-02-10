@@ -101,7 +101,7 @@ export default {
   },
 
   FunctionDefinition: {
-    exit(path: NodePath) {
+    exit(path: NodePath, state: any) {
       const { scope } = path;
       if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
       if (path.node.containsSecret && (path.node.kind === 'fallback' || path.node.kind === 'receive'))
@@ -112,7 +112,7 @@ export default {
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();
-        indicator.updateEncryption();
+        indicator.updateEncryption(state.options);
         if (indicator.isStruct) {
           let found = { whole: false, partitioned: false };
           for (const [, structProperty] of Object.entries(indicator.structProperties)) {

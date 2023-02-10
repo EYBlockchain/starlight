@@ -176,8 +176,9 @@ export default class MappingKey {
     this.isOwned = true;
   }
 
-  updateEncryption() {
-    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned || this.isNullified) return;
+  updateEncryption(options?: any) {
+    if (!this.newCommitmentsRequired) return;
+    if (!options?.encAllStates && (!this.isPartitioned || !this.isOwned)) return;
     switch (this.mappingOwnershipType) {
       case 'key':
         // owner here is the keypath
@@ -186,7 +187,7 @@ export default class MappingKey {
         break;
       case 'value':
       default:
-        if ((this.owner.node?.name || this.owner.name).includes('msg')) return;
+        if ((this.owner?.node?.name || this.owner?.name)?.includes('msg')) return;
         this.encryptionRequired = true;
         break;
     }

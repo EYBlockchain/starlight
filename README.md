@@ -141,6 +141,7 @@ This runs `tsc` and `npm i -g ./` which will create a symlink to your node.js bi
 | `--output <./custom/output/dir/>`  | `-o`  | Specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.  |
 | `--zapp-name <customZappName>` | `-z`  | Otherwise files get output to a folder with name matching that of the input file.  |
 | `--log-level <debug>`  | -  | Specify a Winston log level type.  |
+| `--enc`  | `-e`  | Add secret state encryption events for every new commitment.  |
 | `--help`  | `-h`  | CLI help.  |
 
 

@@ -748,16 +748,17 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     }
   }
 
-  updateEncryption() {
-    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned) return;
+  updateEncryption(options?: any) {
+    if (!this.newCommitmentsRequired) return;
+    if (!options?.encAllStates && (!this.isPartitioned || !this.isOwned)) return;
     if (this.isMapping) {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
       for (const [, mappingKey] of mappingKeys) {
-        mappingKey.updateEncryption()
+        mappingKey.updateEncryption(options)
       }
       return;
     }
-    if (this.isNullified) return;
+    if (this.isBurned) return;
     this.encryptionRequired = true;
     this.parentIndicator.encryptionRequired = true;
     this.parentIndicator.parentIndicator.encryptionRequired = true;
