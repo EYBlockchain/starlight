@@ -6,7 +6,7 @@ while getopts "z:" arg; do
       ;;
   esac
 done
-cd zapps/$zapp
+cd temp-zapps/$zapp
 npm install
 chmod +x ./bin/setup && chmod +x ./bin/startup
 npm run apitest
