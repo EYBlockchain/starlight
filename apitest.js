@@ -3,7 +3,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import shell from 'shelljs'
-import logger from "../built/utils/logger.js";
+import logger from "./built/utils/logger.js";
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
