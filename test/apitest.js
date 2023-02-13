@@ -80,7 +80,7 @@ if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
 }
 
 await new Promise(resolve => setTimeout(resolve, 5000));
-if (shell.exec('./apiactions -z InternalFunctionCallTest1').code !== 0) {
+if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
   shell.echo('InternalFunctionCallTest1 failed');
   shell.exit(1);
 }

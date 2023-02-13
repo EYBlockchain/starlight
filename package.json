@@ -9,8 +9,7 @@
     "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs",
     "test-prelim-lite": "mocha --require @babel/register ./test/prelim-traversals/index.mjs",
     "format": "prettier --write \"**/*.{json,css,scss,md}\"",
-    "lint": "eslint .",
-    "apitest": "npx mocha --exit --timeout 50000 --require @babel/register test/apitest.js"
+    "lint": "eslint ."
   },
   "bin": {
     "zappify": "bin/index.mjs"
