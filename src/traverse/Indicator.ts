@@ -750,6 +750,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   updateEncryption(options?: any) {
     if (!this.newCommitmentsRequired) return;
+    if (this.isPartitioned && this.isDecremented && !this.isIncremented) return;
     if (!options?.encAllStates && (!this.isPartitioned || !this.isOwned)) return;
     if (this.isMapping) {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
