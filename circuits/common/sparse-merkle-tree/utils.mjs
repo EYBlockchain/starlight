@@ -1,5 +1,4 @@
 import createKeccakHash from 'keccak';
-import utils from '../merkle-tree/utils.mjs';
 
 const defineProducts = fields =>
   fields.reduce(
