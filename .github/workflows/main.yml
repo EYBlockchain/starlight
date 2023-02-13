@@ -48,7 +48,7 @@ jobs:
 
       - name: run zappify
         run: |
-          npm ci
+          npm ci && ./bin/start
           zappify -i test/contracts/Assign.zol -o temp-zapps
           zappify -i test/contracts/If-Statement.zol -o temp-zapps
           zappify -i test/contracts/internalFunctionCallTest1.zol -o temp-zapps
