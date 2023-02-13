@@ -3,10 +3,13 @@
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const testReadPath = './src/boilerplate/common/generic-test.mjs';
-const apiServiceReadPath = './src/boilerplate/common/services/generic-api_services.mjs';
-const apiRoutesReadPath = './src/boilerplate/common/routes/generic-api_routes.mjs';
+const testReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/generic-test.mjs');
+const pathPrefix = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/');
+const apiServiceReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/services/generic-api_services.mjs');
+const apiRoutesReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/routes/generic-api_routes.mjs');
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
     const { bpSection, bpType, ...otherParams } = node;
@@ -665,82 +668,82 @@ integrationApiRoutesBoilerplate = {
 zappFilesBoilerplate = () => {
   return [
     {
-      readPath: 'src/boilerplate/common/bin/startup',
+      readPath: pathPrefix + '/bin/startup',
       writePath: '/bin/startup',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/bin/startup',
+      readPath: pathPrefix + '/bin/startup',
       writePath: '/bin/default_startup',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/config/default.js',
+      readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
       generic: false,
     },
     {
-      readPath: 'src/boilerplate/common/migrations/1_initial_migration.js',
+      readPath: pathPrefix + '/migrations/1_initial_migration.js',
       writePath: 'migrations/1_initial_migration.js',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-package.json',
+      readPath: pathPrefix + '/boilerplate-package.json',
       writePath: './package.json',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-docker-compose.yml',
+      readPath: pathPrefix + '/boilerplate-docker-compose.yml',
       writePath: './docker-compose.zapp.yml',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Docker-compose.zapp.override.yml',
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
       writePath: './docker-compose.zapp.override.yml',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Docker-compose.zapp.override.yml',
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
       writePath: './docker-compose.zapp.override.default.yml',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Dockerfile',
+      readPath: pathPrefix + '/boilerplate-Dockerfile',
       writePath: './Dockerfile',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Dockerfile.deployer',
+      readPath: pathPrefix + '/boilerplate-Dockerfile.deployer',
       writePath: './Dockerfile.deployer',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Dockerfile.mongo',
+      readPath: pathPrefix + '/boilerplate-Dockerfile.mongo',
       writePath: './Dockerfile.mongo',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/setup-admin-user.js',
+      readPath: pathPrefix + '/setup-admin-user.js',
       writePath: './setup-admin-user.js',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/entrypoint.sh',
+      readPath: pathPrefix + '/entrypoint.sh',
       writePath: './entrypoint.sh',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/entrypoint.sh',
+      readPath: pathPrefix + '/entrypoint.sh',
       writePath: './entrypoint_default.sh',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/truffle-config.js',
+      readPath: pathPrefix + '/truffle-config.js',
       writePath: './truffle-config.js',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/api.mjs',
+      readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
       generic: true,
     },

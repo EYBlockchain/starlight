@@ -175,7 +175,7 @@ export default {
       expressionNode.isDecremented = isDecremented;
 
       // print if in debug mode
-      if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
+      if (logger.level === 'debug') backtrace.getSourceCode(node.src);
       logger.debug(`statement is incremented? ${isIncremented}`);
       if (isIncremented && !isDecremented) {
         const incs = [];
