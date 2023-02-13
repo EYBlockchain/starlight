@@ -177,8 +177,11 @@ export default class MappingKey {
   }
 
   updateEncryption(options?: any) {
-    if (!this.newCommitmentsRequired) return;
-    if (this.isPartitioned && this.isDecremented && !this.isIncremented) return;
+       // no new commitments => nothing to encrypt
+       if (!this.newCommitmentsRequired) return;
+       // decremented only => no new commitments to encrypt
+       if (this.isPartitioned && this.isDecremented && this.nullificationCount === this.referenceCount) return;
+       // whole state only if opted in
     if (!options?.encAllStates && (!this.isPartitioned || !this.isOwned)) return;
     switch (this.mappingOwnershipType) {
       case 'key':
