@@ -71,11 +71,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
    
     
     
-    case 'VariableDeclaration': {
-      if(node.isSecret || node.interactsWithSecret)
+    case 'VariableDeclaration': 
       return node.name;
-      return;
-    }
+     
 
     case 'VariableDeclarationStatement': {
       if (!node.interactsWithSecret)
