@@ -69,12 +69,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'ParameterList':
       return node.parameters.map((paramnode: any) => paramnode.name);
    
-    
-    
     case 'VariableDeclaration': 
       return node.name;
      
-
     case 'VariableDeclarationStatement': {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
