@@ -284,6 +284,25 @@ All the above use Docker in the background. If you'd like to see the Docker logg
 
 **NB: rerunning `npm test` will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down -v --remove-orphans` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
 
+#### Deploy on public testnets
+
+Apart from local ganache instance, Starlight output zapps can be now be deployed in Sepolia, Goerli and Polygon Mumbai as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Mumbai is provided via [maticvigil](https://rpc.maticvigil.com/).
+
+The configuration can be done during `./bin/setup` phase in the following way.
+
+`./bin/setup -n network -a account -k privatekey -m "12 letter mnemonic" -r APIKey`
+
+##### CLI options
+
+| option  | description  |
+|:--|:--|
+| `-n`  | Network : Specify testnet you want to connect to. possible options: `mumbai/ sepolia/ goerli`  |
+| `-a`  | Ethereum address |
+| `-k`  | Private key of above ethereum address |
+| `-m` -  | 12 letter mnemonic passphrase  |
+| `-r`  | API key or APPID of endpoint |
+| `-s`  | Zkp setup flag , Default to yes . If you had already created zkp keys before and just want to configure deployment infrastructure, pass `-s n`  |
+
 #### circuit
 
 `cd ./path/to/myCircuit.zok`
