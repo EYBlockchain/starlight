@@ -43,6 +43,11 @@ if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
   shell.exit(1);
 }
 
+if (shell.exec('docker rm apiservice').code !== 0) {
+  shell.echo('docker stop failed');
+  shell.exit(1);
+}
+
 await new Promise(resolve => setTimeout(resolve, 5000));
 
 if (shell.exec('./apiactions -z If-Statement').code !== 0) {
@@ -75,6 +80,11 @@ res[9] = await chai
 .send({ name: 'z'});
 
 if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+  shell.echo('docker stop failed');
+  shell.exit(1);
+}
+
+if (shell.exec('docker rm apiservice').code !== 0) {
   shell.echo('docker stop failed');
   shell.exit(1);
 }
@@ -114,6 +124,11 @@ if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
       .get('/getAllCommitments');
 
       if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+        shell.echo('docker stop failed');
+        shell.exit(1);
+      }
+
+      if (shell.exec('docker rm apiservice').code !== 0) {
         shell.echo('docker stop failed');
         shell.exit(1);
       }
