@@ -173,7 +173,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
           let initializationExpression = `${codeGenerator(node.initializationExpression).trim()}`;
           let condition = `${codeGenerator(node.condition, { condition: true })};`;
           let loopExpression = ` ${node.loopExpression.expression.rightHandSide.subExpression.name} ${node.loopExpression.expression.rightHandSide.operator}`;
-          return `for( let ${initializationExpression} ${condition} ${loopExpression}) {
+          return `for( ${node.initializationExpression.nodeType === 'VariableDeclarationStatement' ? `` : `let`} ${initializationExpression} ${condition} ${loopExpression}) {
           ${codeGenerator(node.body)}
         }`
         }

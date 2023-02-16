@@ -131,6 +131,15 @@ export default {
         throw new TODOError(`This For statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
       }
 
+      const miniIncrementationVisitor = (thisNode: any) => {
+        if (thisNode.nodeType !== 'Identifier') return;
+        const binding = path.scope?.getReferencedBinding(thisNode);
+        if (binding?.isPartitioned && NodePath.getPath(thisNode).isModification())
+          throw new TODOError(`This For statement increments or decrements a partitioned state, which is not currently supported in a loop.`, thisNode);
+      }
+
+      traverseNodesFast(body, miniIncrementationVisitor);
+
     }
   },
 
