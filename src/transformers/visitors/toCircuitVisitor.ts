@@ -28,7 +28,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   //Check if for-if statements are both together.
   if(thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement') &&  thisPath.getAncestorOfType('ForStatement')){
-    //Currently We only support if statements inside a for loop no the other way around, so getting the public inputs according to inner if statemnet
+    //Currently We only support if statements inside a for loop no the other way around, so getting the public inputs according to inner if statement
     if((thisPath.getAncestorOfType('IfStatement')).getAncestorOfType('ForStatement'))
     isForCondition = isCondition;
   }
@@ -841,6 +841,10 @@ let interactsWithSecret = false ;
   IfStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      let isIfStatementSecret;
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic)
+        isIfStatementSecret = true;
+      if(isIfStatementSecret) {
       if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')
       {
         const newNode = buildNode(node.nodeType, {
@@ -861,8 +865,11 @@ let interactsWithSecret = false ;
       });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+    } else {
+      state.skipSubNodes = true;
+      return ;
+    }
     },
-    
     exit(path: NodePath) {
       // a visitor to collect all identifiers in an if condition
       // we use this list later to init temp variables
