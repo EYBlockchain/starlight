@@ -96,8 +96,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `\nlet ${node.declarations[0].name} = generalise(${codeGenerator(
           node.initialValue,
         )});`;
-      if (!node.initialValue.operator) // local var dec
+      if (!node.initialValue.operator) {
+        if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
+        // local var dec
         return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
+      } 
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
@@ -154,6 +157,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
           return `if (${codeGenerator(node.condition)}) {
               ${node.trueBody.flatMap(codeGenerator).join('\n')}
             }`
+        }
+
+        case 'Conditional': {
+            return ` ${codeGenerator(node.condition)} ?
+            ${node.trueExpression.flatMap(codeGenerator).join('\n')} : ${node.falseExpression.flatMap(codeGenerator).join('\n')}`
         }
 
       case 'ForStatement': {

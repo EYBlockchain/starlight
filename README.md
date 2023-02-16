@@ -27,6 +27,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the t
 
 ## Warnings
 
+This code is not owned by EY and EY provides no warranty and disclaims any and all liability for use of this code. Users must conduct their own diligence with respect to use for their purposes and any and all usage is on an as-is basis and at your own risk.
+
 **Note that this is an experimental prototype which is still under development. Not all Solidity syntax is currently supported. [Here](./doc/STATUS.md) is guide to current functionality.**  
 
 **This code has not yet completed a security review and therefore we strongly recommend that you do not use it in production. We take no responsibility for any loss you may incur through the use of this code.**
@@ -43,10 +45,12 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the t
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Quick User Guide](#quick-user-guide)
-- [Install](#install)
+- [Install via npm](#install-via-npm)
+  - [Troubleshooting](#troubleshooting)
+- [Install via clone](#install-via-clone)
 - [Run](#run)
   - [CLI options](#cli-options)
-- [Troubleshooting](#troubleshooting)
+- [Troubleshooting](#troubleshooting-1)
   - [Installation](#installation)
   - [Compilation](#compilation)
 - [Developer](#developer)
@@ -115,9 +119,38 @@ Run `zappify -i <./path/to/file>.zol` and get an entire standalone zApp in retur
 
 
 ---
-## Install
+## Install via npm
 
-Whilst the package is in early development, it isn't hosted on npm. To install:
+Starlight is now available on **github's npm package** repository!
+To install, you need to make sure that `npm` is looking in that registry, not the default `npmjs`:
+
+`npm config set @eyblockchain:registry https://npm.pkg.github.com` <-- this sets any `@eyblockchain` packages to be installed from the github registry
+
+`npm i @eyblockchain/starlight@<latest-version>`
+
+Then you can import the `zappify` command like so:
+
+`import { zappify } from "@eyblockchain/starlight";`
+
+The only required input for `zappify` is the file path of the `.zol` file you'd like to compile, e.g. `zappify('./contracts/myContract.zol')`. You can optionally add a specific zApp name and the output directory:
+
+`zappify('./contracts/myContract.zol', 'myzApp', './test_zApps')`
+
+Then it works just as described in the below section [Run](#run).
+
+### Troubleshooting
+
+Since we push the npm package to github's repository, you may need to specify the package location in your project's `.npmrc` file and authenticate to github. Try adding something like:
+
+```
+@eyblockchain:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=<your_github_token>
+```
+
+...and re-run the install command, or manually add `"@eyblockchain/starlight"` to your `package.json`.
+## Install via clone
+
+To install via github:
 
 Clone the repo.
 
@@ -150,7 +183,7 @@ This runs `tsc` and `npm i -g ./` which will create a symlink to your node.js bi
 
 ### Installation
 
-If the `zappify` command isn't working, try the [Install](#install) steps again. You might need to try `npm i --force -g ./`.
+If the `zappify` command isn't working, try the [Install](#install-via-clone) steps again. You might need to try `npm i --force -g ./`.
 
 In very rare cases, you might need to navigate to your node.js innards and delete zappify from the `bin` and `lib/node_modules`.
 To find where your npm lib is, type `npm` and it will tell you the path.
