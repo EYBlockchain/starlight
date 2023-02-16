@@ -843,10 +843,9 @@ let interactsWithSecret = false ;
       const { node, parent } = path;
       if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')
       {
-        if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic){
         const newNode = buildNode(node.nodeType, {
-            condition: {},
-            trueBody: [],
+          condition: {},
+          trueBody: [],
           falseBody: [],
           isRevert : true
         });
@@ -857,18 +856,13 @@ let interactsWithSecret = false ;
       const newNode = buildNode(node.nodeType, {
         condition: {},
         trueBody: [],
-          falseBody: [],
+        falseBody: [],
         isRevert : node.isrevert
-        });
-        node._newASTPointer = newNode;
-        parent._newASTPointer.push(newNode);
-      }
-      else{
-        state.skipSubNodes = true;
-        return ;
-      }
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
     },
-
+    
     exit(path: NodePath) {
       // a visitor to collect all identifiers in an if condition
       // we use this list later to init temp variables
