@@ -58,6 +58,9 @@ export class Binding {
       case 'EmitStatement':
       case 'Break':
       case 'Continue':
+      case 'Conditional':
+      case 'WhileStatement':
+      case 'DoWhileStatement':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);
