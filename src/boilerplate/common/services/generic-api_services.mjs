@@ -33,28 +33,28 @@ export async function service_FUNCTION_NAME (req, res, next){
 	try {
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
-    const { tx ,  _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
+    const { tx , encEvent, _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
-    res.send({tx, _RESPONSE_});
+    res.send({tx, encEvent, _RESPONSE_});
     // reassigns leafIndex to the index of the first commitment added by this function
-    if (tx.events.NewLeaves) {
-      leafIndex = tx.events.NewLeaves.returnValues[0];
+    if (tx.event) {
+      leafIndex = tx.returnValues[0];
       // prints the new leaves (commitments) added by this function call
       console.log(`Merkle tree event returnValues:`);
-      console.log(tx.events.NewLeaves.returnValues);
+      console.log(tx.returnValues);
     }
-    if (tx.events.EncryptedData) {
-      if (tx.events.EncryptedData.length) {
-        encryption.msgs = tx.events.EncryptedData[0].returnValues[0];
-        encryption.key = tx.events.EncryptedData[0].returnValues[1];
+    if (encEvent.event) {
+      if (encEvent.event.EncryptedData.length) {
+        encryption.msgs = encEvent.event.EncryptedData[0].returnValues[0];
+        encryption.key = encEvent.event.EncryptedData[0].returnValues[1];
         console.log("EncryptedMsgs:");
-        console.log(tx.events.EncryptedData[0].returnValues[0]);
+        console.log(encEvent.event.EncryptedData[0].returnValues[0]);
       } else {
-        encryption.msgs = tx.events.EncryptedData.returnValues[0];
-        encryption.key = tx.events.EncryptedData.returnValues[1];
+        encryption.msgs = encEvent.event.EncryptedData.returnValues[0];
+        encryption.key = encEvent.event.EncryptedData.returnValues[1];
         console.log("EncryptedMsgs:");
-        console.log(tx.events.EncryptedData.returnValues);
+        console.log(encEvent.event.EncryptedData.returnValues);
       }
     }
     await sleep(10);
