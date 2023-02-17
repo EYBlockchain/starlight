@@ -202,7 +202,6 @@ function getStructInputCommitments(
 	return possibleCommitmentsProp;
 }
 
-
 export async function joinCommitments(
 	contractName,
 	statename,
@@ -211,19 +210,16 @@ export async function joinCommitments(
 	stateVarId,
 	commitments,
 	witnesses,
-	instance
+	instance,
+	contractAddr,
+	web3,
 ) {
 	logger.warn(
 		"Existing Commitments are not appropriate and we need to call Join Commitment Circuit. It will generate proof to join commitments, this will require an on-chain verification"
 	);
 
-
-	const oldCommitment_0_prevSalt = generalise(
-		commitments[0].preimage.salt
-	);
-	const oldCommitment_1_prevSalt = generalise(
-		commitments[1].preimage.salt
-	);
+	const oldCommitment_0_prevSalt = generalise(commitments[0].preimage.salt);
+	const oldCommitment_1_prevSalt = generalise(commitments[1].preimage.salt);
 	const oldCommitment_0_prev = generalise(commitments[0].preimage.value);
 	const oldCommitment_1_prev = generalise(commitments[1].preimage.value);
 
@@ -323,19 +319,33 @@ export async function joinCommitments(
 
 	// Send transaction to the blockchain:
 
-	const tx = await instance.methods
+	const txData = await instance.methods
 		.joinCommitments(
 			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
 			oldCommitment_root.integer,
 			[newCommitment.integer],
 			proof
-		)
-		.send({
-			from: config.web3.options.defaultAccount,
-			gas: config.web3.options.defaultGas,
-		});
+		).encodeABI();
 
-	
+	let txParams = {
+			from: config.web3.options.defaultAccount,
+			to: contractAddr,
+			gas: config.web3.options.defaultGas,
+			gasPrice: config.web3.options.defaultGasPrice,
+			data: txData,
+			chainId: await web3.eth.net.getId(),
+		};
+
+	const key = config.web3.key;
+
+	const signed = await web3.eth.accounts.signTransaction(txParams, key);
+
+	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+	let tx = await instance.getPastEvents("allEvents");
+
+	tx = tx[0];	
+
 	await markNullified(generalise(commitments[0]._id), secretKey.hex(32));
 	await markNullified(generalise(commitments[1]._id), secretKey.hex(32));
 	await storeCommitment({
@@ -352,3 +362,4 @@ export async function joinCommitments(
 
 	return { tx };
 }
+

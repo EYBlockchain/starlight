@@ -10,7 +10,8 @@ contract BucketsOfBalls {
         unknown buckets[bucketId] += amountDeposit;
     }
 
-    function transfer(secret uint256 fromBucketId, secret uint256 numberOfBalls) public {
+    function transfer(secret uint256 fromBucketId, secret uint256 numberOfBalls) public returns ( bool, uint256) {
         buckets[fromBucketId] -= numberOfBalls;
+        return (true, buckets[fromBucketId]);
     }
 }

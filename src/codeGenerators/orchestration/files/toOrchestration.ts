@@ -162,7 +162,7 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams: string[] = [];
-    let returnParamsName = fn.returnParameters.parameters.map((obj: any) => obj.name);
+    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
     if(returnParamsName.length > 0){
     returnParamsName.forEach(param => {
       if(fn.decrementsSecretState.includes(param))
@@ -320,6 +320,17 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
           }
         });
       }
+    });
+  } else if(constructorParamsIncludesAddr) {
+    // for each address in the shield contract constructor...
+    constructorAddrParams.forEach(name => {
+      // we have an address input which is likely not a another contract
+      // we just replace it with the default address
+      customImports += `const ${name} = '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'; \n`;
+      logger.warn(
+        `Looks like you are using a constructor with a public address ${name}. This will be set to the default ganache test address.
+        If you'd like to change it, edit the variable in migrations/2_shield.js in the output zApp.`
+      );
     });
   }
   if (node.functionNames.includes('cnstrctr')) {

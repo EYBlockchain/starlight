@@ -180,7 +180,7 @@ export class Scope {
         // 1) Update the binding this Identifier node is referencing:
 
         // ignore special Identifiers; there are no bindings/indicators for these.
-        if (path.isMsg() || path.isRequireStatement() || path.isThis()) break;
+        if (path.isMsg() || path.isRequireStatement() || path.isRevertStatement() || path.isThis()) break;
 
         // `Identifier` nodes _refer_ to already-declared variables. We grab the binding for that referenced variable:
         const referencedBinding = this.getReferencedBinding(node);
@@ -285,6 +285,9 @@ export class Scope {
       case 'ForStatement':
       case 'Break':
       case 'Continue':
+      case 'Conditional':
+      case 'WhileStatement':
+      case 'DoWhileStatement':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an

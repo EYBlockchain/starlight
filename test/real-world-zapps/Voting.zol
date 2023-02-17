@@ -17,7 +17,6 @@ contract Voting {
 
     function vote(secret uint256 proposalId) public {
       require(hasVoted[msg.sender] == false); // this is a secret test
-      require(proposals[proposalId] != bytes32(0));
       unknown proposalVotes[proposalId] += 1;
       hasVoted[msg.sender] = true;
     }
@@ -33,6 +32,7 @@ contract Voting {
     }
 
     function strikeVote(secret uint256 proposalId) public {
+      // NB - current implmentation requires at least two votes for proposalId before 1 can be struck
       require(msg.sender == admin);
       proposalVotes[proposalId] -= 1;
     }
