@@ -162,7 +162,7 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams =[];
-    let returnParamsName = fn.returnParameters.parameters.map((obj: any) => obj.name);
+    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
     if(returnParamsName.length > 0){
     returnParamsName.forEach(param => {
       if(fn.decrementsSecretState.includes(param))

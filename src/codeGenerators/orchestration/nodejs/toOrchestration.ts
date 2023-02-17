@@ -41,6 +41,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
   switch (node.nodeType) {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
+      node.inputParameters = node.inputParameters.filter(para => para !== undefined);
       let returnIsSecret: string[] = [];
       const decStates = node.decrementedSecretStates;
       if(node.returnParameters.parameters) {
@@ -48,8 +49,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
          returnIsSecret.push(node.isSecret);
        })
      }
-      node.returnParameters =
-        node.returnParameters.parameters.map(codeGenerator) || [];
+        node.returnParameters = node.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
         node.returnParameters.forEach( (param, index) => {
           if(decStates) {
            if(decStates?.includes(param)){
@@ -58,22 +58,20 @@ export default function codeGenerator(node: any, options: any = {}): any {
         } else if(returnIsSecret[index])
             node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
         })
-
-      const fn = OrchestrationCodeBoilerPlate(node);
-      const statements = codeGenerator(node.body);
-      fn.statements.push(statements);
-      return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
-        fn.signature[1]
+        const fn = OrchestrationCodeBoilerPlate(node);
+        const statements = codeGenerator(node.body);
+        fn.statements.push(statements);
+        return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
+          fn.signature[1]
       }`;
-  }
+    }
 
     case 'ParameterList':
       return node.parameters.map((paramnode: any) => paramnode.name);
-
-    case 'VariableDeclaration': {
+   
+    case 'VariableDeclaration': 
       return node.name;
-    }
-
+     
     case 'VariableDeclarationStatement': {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
@@ -216,8 +214,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'MemberAccess':
       if (options?.lhs) return `${node.name}.${node.memberName}`;
       return codeGenerator({ nodeType: 'Identifier', name: `${node.name}.${node.memberName}`, subType: node.subType });
-
-
+  
     case 'Folder':
     case 'File':
     case 'EditableCommitmentCommonFilesBoilerplate':
