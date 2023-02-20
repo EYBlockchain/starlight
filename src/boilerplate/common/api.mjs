@@ -9,7 +9,7 @@ app.use('/', router); //to use the routes
 
 function gracefulshutdown() {
     console.log("Shutting down");
-    app.close(() => {
+    listener.close(() => {
         console.log("HTTP server closed.");      
         process.exit(0); 
     });
