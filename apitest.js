@@ -118,20 +118,16 @@ if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
         shell.exit(1);
       }
 
-    for (let i=10; i<res.length;i++) {
-    logger.info(" results " , res[i].body);
-    }
-
     describe('Assign Zapp', () => {
       it('tests APIs are working', async () => {
-        expect(res[0].body.tx.status).to.equal(true);
-        expect(res[1].body.tx.status).to.equal(true);
-        expect(res[2].body.tx.status).to.equal(true);
+        expect(res[0].body.tx.event).to.equal('NewLeaves');
+        expect(res[1].body.tx.event).to.equal('NewLeaves');
+        expect(res[2].body.tx.event).to.equal('NewLeaves');
       });
       it('MinLeaf Index check', async () => {
-        expect(parseInt(res[0].body.tx.events.NewLeaves.returnValues.minLeafIndex)).to.equal(0);
-        expect(parseInt(res[1].body.tx.events.NewLeaves.returnValues.minLeafIndex)).to.equal(1);
-        expect(parseInt(res[2].body.tx.events.NewLeaves.returnValues.minLeafIndex)).to.equal(2);
+        expect(parseInt(res[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+        expect(parseInt(res[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+        expect(parseInt(res[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
       });
       it('Check commitments', async () => {
         expect(res[3].body.commitments.length).to.equal(3);
@@ -145,13 +141,13 @@ if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
 
     describe('If-Statement Zapp', () => {
       it('tests APIs are working', async () => {
-        expect(res[5].body.tx.status).to.equal(true);
-        expect(res[6].body.tx.status).to.equal(true);
+        expect(res[5].body.tx.event).to.equal('NewLeaves');
+        expect(res[6].body.tx.event).to.equal('NewLeaves');
       });
       it('test MappingKey response', async () => {
-        expect(res[8].body.commitments.length).to.equal(2);
-        expect(res[8].body.commitments[0].isNullified).to.equal(true);
-        expect(res[8].body.commitments[1].isNullified).to.equal(false);
+        expect(res[7].body.commitments.length).to.equal(2);
+        expect(res[7].body.commitments[0].isNullified).to.equal(true);
+        expect(res[7].body.commitments[1].isNullified).to.equal(false);
       });
       it('test stateVarId ', async () => {
         expect(res[9].body.commitments[0].preimage.stateVarId).to.equal(res[9].body.commitments[1].preimage.stateVarId);
@@ -162,10 +158,10 @@ if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
 
     describe('InternalFunctionCallTest2 Zapp', () => {
       it('tests APIs are working', async () => {
-        expect(res[10].body.tx.status).to.equal(true);
-        expect(res[11].body.tx.status).to.equal(true);
-        expect(res[13].body.tx.status).to.equal(true);
-        expect(res[14].body.tx.status).to.equal(true);
+        expect(res[10].body.tx.event).to.equal('NewLeaves');
+        expect(res[11].body.tx.event).to.equal('NewLeaves');
+        expect(res[13].body.tx.event).to.equal('NewLeaves');
+        expect(res[14].body.tx.event).to.equal('NewLeaves');
       });
       it('Check value after internal function call intialize', async () => {
         expect(res[12].body.commitments[0].isNullified).to.equal(true);
