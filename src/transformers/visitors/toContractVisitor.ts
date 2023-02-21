@@ -42,7 +42,8 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
-    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.name))+']', typeName: {name: 'uint256'}});
+   if(thisState.variableName.includes(indicator.node.name))
+   thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}});
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -421,7 +422,6 @@ export default {
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
        state.returnpara[state.functionName].returnParameters = state.customInputs.map(n => n.name);
-
        const newNode = buildNode(
        node.nodeType,
        { value: node.expression.value });
@@ -457,6 +457,18 @@ export default {
       const { node, parent } = path;
       if (node.containsSecret) {
         path.traversePathsFast(findCustomInputsVisitor, state);
+        if(node.containsPublic){
+          const newNode = buildNode(node.nodeType , {
+            nodeType: node.nodeType,
+            condition: node.condition,
+            initializationExpression: node.initializationExpression,
+            loopExpression: node.loopExpression,
+            body: node.body,
+          });
+          node._newASTPointer = newNode;
+          parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+          return;
+        }
         state.skipSubNodes=true;
         return;
       }
@@ -573,6 +585,24 @@ EmitStatement: {
   enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('EmitStatement');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+  },
+},
+
+WhileStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('WhileStatement');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+  },
+},
+
+DoWhileStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('DoWhileStatement');
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
   },
@@ -782,7 +812,7 @@ EmitStatement: {
       let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
-      if (path.isRequireStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
+      if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
         const subState = { interactsWithSecret: false };
         path.traversePathsFast(interactsWithSecretVisitor, subState);

@@ -4,7 +4,6 @@ import logger from './common/logger.mjs';
 import web3 from './common/web3.mjs';
 
 
-
 // 'sleep' just creates a delay, ensuring the tests don't overlap
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // initialises leafIndex so we can use it to test the merkle tree is working across tests
@@ -37,27 +36,27 @@ describe('FUNCTION_NAME', async function () {
         await startEventFilter('CONTRACT_NAME');
         // this calls your function! It returns the tx from the shield contract
         // you can replace the values below - numbers are randomly generated
-        const { tx } = await FUNCTION_NAME(FUNCTION_SIG_1);
+        const { tx , encEvent } = await FUNCTION_NAME(FUNCTION_SIG_1);
         // prints the tx
         console.log(tx);
         // reassigns leafIndex to the index of the first commitment added by this function
-        if (tx.events.NewLeaves) {
-          leafIndex = tx.events.NewLeaves.returnValues[0];
+        if (tx.event) {
+          leafIndex = tx.returnValues[0];
           // prints the new leaves (commitments) added by this function call
           console.log(`Merkle tree event returnValues:`);
-          console.log(tx.events.NewLeaves.returnValues);
+          console.log(tx.returnValues[0]);
         }
-        if (tx.events.EncryptedData) {
-          if (tx.events.EncryptedData.length) {
-            encryption.msgs = tx.events.EncryptedData[0].returnValues[0];
-            encryption.key = tx.events.EncryptedData[0].returnValues[1];
+        if (encEvent.event) {
+          if (encEvent.event.EncryptedData.length) {
+            encryption.msgs = encEvent.event.EncryptedData[0].returnValues[0];
+            encryption.key = encEvent.event.EncryptedData[0].returnValues[1];
             console.log("EncryptedMsgs:");
-            console.log(tx.events.EncryptedData[0].returnValues[0]);
+            console.log(encEvent.event.EncryptedData[0].returnValues[0]);
           } else {
-            encryption.msgs = tx.events.EncryptedData.returnValues[0];
-            encryption.key = tx.events.EncryptedData.returnValues[1];
+            encryption.msgs = encEvent.event.EncryptedData.returnValues[0];
+            encryption.key = encEvent.event.EncryptedData.returnValues[1];
             console.log("EncryptedMsgs:");
-            console.log(tx.events.EncryptedData.returnValues);
+            console.log(tencEvent.event.EncryptedData.returnValues);
           }
         }
         await sleep(10);
@@ -85,9 +84,9 @@ describe('FUNCTION_NAME', async function () {
       try {
         // this calls your function a second time for incremental cases
         const { tx } = await FUNCTION_NAME(FUNCTION_SIG_2);
-        if (tx.events.NewLeaves) {
+        if (tx.event) {
           console.log(`Merkle tree event returnValues:`);
-          console.log(tx.events.NewLeaves.returnValues);
+          console.log(tx.returnValues[0]);
         }
       } catch (err) {
         logger.error(err);

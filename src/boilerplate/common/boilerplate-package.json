@@ -22,6 +22,7 @@
   "dependencies": {
     "@babel/register": "^7.11.5",
     "@truffle/contract": "^4.2.21",
+    "@truffle/hdwallet-provider": "^1.4.0",
     "axios": "^0.19.2",
     "config": "^3.3.1",
     "express":"4.18.2",

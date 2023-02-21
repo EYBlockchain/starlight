@@ -1,0 +1,22 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract MyContract {
+
+    secret uint256 private a;
+    secret address private admin;
+
+
+    constructor() {
+      admin = msg.sender;
+    }
+
+    function setAdmin(secret address newAdmin) public {
+      if(msg.sender == admin) {
+      revert(" revert ");
+      }
+      admin = newAdmin;
+      a+= 1;
+    }
+}

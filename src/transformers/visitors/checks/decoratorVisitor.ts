@@ -41,6 +41,7 @@ export default {
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
       if (path.isExportedSymbol()) return; // the node represents an external contract name
       if (path.isRequireStatement()) return;
+      if (path.isRevertStatement()) return;
       if(path.isEventDefinition()) return;
       const varDec = scope.getReferencedBinding(node);
 

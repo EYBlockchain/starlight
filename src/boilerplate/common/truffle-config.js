@@ -18,11 +18,13 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
+const rpcUrl = process.env.RPC_URL;
+const mnemonic = process.env.DEFAULT_ACCOUNT_MNEMONIC;
 
 module.exports = {
   /**
@@ -45,8 +47,35 @@ module.exports = {
     development_ganache: {
       host: 'ganache', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
-      network_id: '*', // Any network (default: none)
+      network_id: 1337, // Any network (default: none)
       gas: 10000000,
+    },
+    mumbai: {
+      networkCheckTimeout: 10000,
+      provider: () => new HDWalletProvider(mnemonic, rpcUrl),
+      network_id: 80001,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      port: 8545,
+      skipDryRun: true
+    },
+    sepolia: {
+      provider: () => new HDWalletProvider(mnemonic, rpcUrl),
+      network_id: 11155111,
+      gas:8500000,
+      gasPrice:20000000000,
+      confirmations: 2,
+      timeoutBlocks:200,
+      skipDryRun: true
+    },
+    goerli: {
+      provider: () => new HDWalletProvider(mnemonic, rpcUrl),
+      network_id: 5,
+      gas:8500000,
+      gasPrice:20000000000,
+      confirmations: 2,
+      timeoutBlocks:200,
+      skipDryRun: true
     },
     // localhost: {
     //   host: 'localhost', // Localhost (default: none)

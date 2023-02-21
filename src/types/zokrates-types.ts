@@ -167,12 +167,22 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'IfStatement': {
-      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
+      const { condition = {} , trueBody= {} , falseBody= {}  , isRevert = false} = fields;
       return {
         nodeType,
         condition,
         trueBody,
         falseBody,
+        isRevert,
+      };
+    }
+    case 'Conditional': {
+      const { condition = {} , trueExpression= {} , falseExpression= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueExpression,
+        falseExpression,
       };
     }
     case 'ForStatement': {
@@ -193,15 +203,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         arguments: args,
         expression,
       };
-    }
-    case 'IfStatement': {
-      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
-      return {
-        nodeType,
-        condition,
-        trueBody,
-        falseBody,
-      }
     }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
