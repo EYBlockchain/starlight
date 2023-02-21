@@ -65,4 +65,7 @@ jobs:
 
       - name: disp logs on failure
         if: failure()
-        run: docker logs assign-public-admin_zokrates_1
+        run: | 
+          docker logs assign_zokrates_1
+          docker logs if-statement_zokrates_1
+          docker logs internalFunctionCallTest1_zokrates_1

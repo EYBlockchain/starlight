@@ -894,6 +894,26 @@ export default class NodePath {
     }
   }
 
+    /**
+   * Checks whether a node is a Solidity `revert` statement.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+     isRevertStatement(node: any = this.node): boolean {
+      switch (node.nodeType) {
+        case 'ExpressionStatement':
+          return this.isRevertStatement(node.expression);
+        case 'FunctionCall':
+          return node.expression.name === 'revert';
+        case 'Identifier':
+          return (
+            node.name === 'revert' && node.referencedDeclaration > 4294967200
+          );
+        default:
+          return false;
+      }
+    }
+
   /**
    * Checks whether a node is of a struct type.
    * @param {node} node (optional - defaults to this.node)
