@@ -7,6 +7,7 @@ import { VariableBinding } from './Binding.js';
 import logger from '../utils/logger.js';
 import backtrace from '../error/backtrace.js';
 import { SyntaxUsageError } from '../error/errors.js';
+import { structWarnings } from '../transformers/visitors/ownership/errorChecksVisitor.js';
 
 
 export class ContractDefinitionIndicator {
@@ -714,9 +715,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
           mappingKey.prelimTraversalErrorChecks();
         } else {
           mappingKey.node = this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
-          logger.warn(
-             `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
-           );
+          structWarnings.push(name.concat(' in ').concat(this.scope.scopeName));
         }
       }
     }

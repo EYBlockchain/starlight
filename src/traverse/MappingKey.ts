@@ -4,6 +4,7 @@ import { StateVariableIndicator } from './Indicator.js';
 import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError } from '../error/errors.js';
 import backtrace from '../error/backtrace.js';
+import { structWarnings } from '../transformers/visitors/ownership/errorChecksVisitor.js';
 
 /**
  * If a Binding/StateVarIndicator represents a mapping, it will contain a MappingKey class.
@@ -312,10 +313,8 @@ export default class MappingKey {
        if (this.structProperties[name] instanceof MappingKey) {
         this.structProperties[name].prelimTraversalErrorChecks();
        } else {
-         logger.warn(
-            `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.keyPath.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
-          );
-       }
+        structWarnings.push(name.concat(' in ').concat(this.keyPath.scope.scopeName));
+      }
      }
    }
   }

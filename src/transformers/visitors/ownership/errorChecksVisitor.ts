@@ -7,6 +7,8 @@ import NodePath from '../../../traverse/NodePath.js';
 import { traverseNodesFast } from '../../../traverse/traverse.js';
 import { ZKPError, TODOError, SyntaxError } from '../../../error/errors.js';
 import { KeyObject } from 'crypto';
+import logger from '../../../utils/logger.js';
+export let structWarnings = [];
 
 
 /**
@@ -169,6 +171,9 @@ export default {
       for (const [, binding] of Object.entries(scope.bindings)) {
         if (!(binding instanceof VariableBinding)) continue;
         binding.prelimTraversalErrorChecks();
+      }
+      if(structWarnings.length>0) {
+      logger.warn( ' The following struct properties may cause unconstrained variable errors in the circuit ' , Array.from(new Set(structWarnings)));
       }
       // if no errors, we then check everything is nullifiable
       for (const [, binding] of Object.entries(scope.bindings)) {
