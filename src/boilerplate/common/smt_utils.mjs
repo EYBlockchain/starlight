@@ -1,4 +1,5 @@
 import createKeccakHash from 'keccak';
+//import utils from '../merkle-tree/utils.mjs';
 
 const defineProducts = fields =>
   fields.reduce(
@@ -74,12 +75,7 @@ export const keccak256Hash = item => {
   return h;
 };
 
-export const keccakConcatHash = (v1, v2) => {
-  const preimage1 = utils.strip0x(v1);
-  const preimage2 = utils.strip0x(v2);
-  const h = keccak256Hash(`${preimage1}${preimage2}`);
-  return h;
-};
+
 
 export function strip0x(hex) {
   if (typeof hex === 'undefined') return '';

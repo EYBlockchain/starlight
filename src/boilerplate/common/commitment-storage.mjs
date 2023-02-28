@@ -9,10 +9,37 @@ import logger from './logger.mjs';
 import utils from "zkp-utils";
 import { poseidonHash } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-
+import {
+	SumType,
+	reduceTree,
+	toBinArray,
+	poseidenConcatHash
+  } from './smt_utils.mjs';
+  import { hlt } from './hash-lookup.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
+
+const TRUNC_LENGTH = 32; // Just for testing so we don't make more than 32 deep smt trees.
+// structure for SMT
+const Branch = (leftTree, rightTree) => ({
+  tag: 'branch',
+  left: leftTree,
+  right: rightTree,
+});
+const Leaf = val => ({
+  tag: 'leaf',
+  val: val,
+});
+
+const SMT = SumType([Branch, Leaf], () => {
+  throw new TypeError('Invalid data structure provided');
+});
+
+let smt_tree = SMT(hlt[0]);
+
+// Gets the hash of a smt_tree (or subtree)
+export const getHash = tree => reduceTree(poseidenConcatHash, tree);
 
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment) {
@@ -93,7 +120,44 @@ export async function updateCommitment(commitment, updates) {
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
-// function to mark a commitment as nullified for a mongo db
+// This is a helper function to insertLeaf in smt that calls the recursion
+function _insertLeaf(val, tree, binArr){
+	if (binArr.length > 0) {
+	  switch (tree.tag) {
+		case 'branch': // Recursively enter developed subtree
+		  return binArr[0] === '0'
+			? Branch(_insertLeaf(val, tree.left, binArr.slice(1)), tree.right)
+			: Branch(tree.left, _insertLeaf(val, tree.right, binArr.slice(1)));
+  
+			case 'leaf': // Open undeveloped subtree
+			return binArr[0] === '0'
+			  ? Branch(
+				  _insertLeaf(val, Leaf(hlt[TRUNC_LENGTH - (binArr.length - 1)]), binArr.slice(1)),
+				  Leaf(hlt[TRUNC_LENGTH - (binArr.length - 1)]),
+				)
+			  : Branch(
+				  Leaf(hlt[TRUNC_LENGTH - (binArr.length - 1)]),
+				  _insertLeaf(val, Leaf(hlt[TRUNC_LENGTH - (binArr.length - 1)]), binArr.slice(1)),
+				);
+	
+  
+		default: {
+		  return tree;
+		}
+	  }
+	} else return Leaf(val);
+  };
+  
+  // This inserts a value into the smt as a leaf
+  async function insertLeaf(val, tree) {
+	const binArr = toBinArray(new GN(val, 'hex')).slice(0, TRUNC_LENGTH);
+	const padBinArr = Array(TRUNC_LENGTH - binArr.length)
+	  .fill('0')
+	  .concat(...binArr);
+	return _insertLeaf(val, tree, padBinArr);
+  };
+
+// function to mark a commitment as nullified for a mongo db and update the nullifier tree
 export async function markNullified(commitmentHash, secretKey = null) {
     const connection = await mongo.connection(MONGO_URL);
 	const db = connection.db(COMMITMENTS_DB);
@@ -112,6 +176,9 @@ export async function markNullified(commitmentHash, secretKey = null) {
 		nullifier: generalise(nullifier).hex(32),
       },
     };
+	// adding this nullifier to the sparse merkle tree
+    smt_tree = insertLeaf(generalise(nullifier).hex(32), smt_tree);
+
     return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
   }
 
@@ -352,3 +419,112 @@ export async function joinCommitments(
 
 	return { tx };
 }
+
+// This is a helper function for getNullifierMembershipWitness
+const _getNullifierMembershipWitness = (binArr, element, tree, acc) => {
+	switch (tree.tag) {
+	  case 'branch':
+		return binArr[0] === '0'
+		  ? _getNullifierMembershipWitness(
+			  binArr.slice(1),
+			  element,
+			  tree.left,
+			  [{ dir: 'right', hash: getHash(tree.right) }].concat(acc),
+			)
+		  : _getNullifierMembershipWitness(
+			  binArr.slice(1),
+			  element,
+			  tree.right,
+			  [{ dir: 'left', hash: getHash(tree.left) }].concat(acc),
+			);
+			case 'leaf': {
+				if(binArr.length > 0) {
+				  while(binArr.length > 0){
+					binArr[0] ?
+					acc = [{ dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) : [{ dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) ;
+					binArr = binArr.slice(1);
+				  }
+				  return {isMember : false, path: acc};
+				}
+				else {
+				return tree.val !== element 
+				  ? {
+					  isMember: false,
+					  path: binArr
+						.map((bit, idx) => {
+						  return bit === '0'
+							? { dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }
+							: { dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] };
+						})
+						.reverse()
+						.concat(acc),
+					}
+				  : { isMember: true, path: acc };
+				}
+			  }
+	  default:
+		return tree;
+	}
+  };
+
+  // This is a helper function for checkMembership
+const _checkMembership = (binArr, element, tree, acc) => {
+	switch (tree.tag) {
+	  case 'branch':
+		return binArr[0] === '0'
+		  ? _checkMembership(
+			  binArr.slice(1),
+			  element,
+			  tree.left,
+			  [{ dir: 'right', hash: getHash(tree.right) }].concat(acc),
+			)
+		  : _checkMembership(
+			  binArr.slice(1),
+			  element,
+			  tree.right,
+			  [{ dir: 'left', hash: getHash(tree.left) }].concat(acc),
+			);
+	  case 'leaf': {
+		if(binArr.length > 0) {
+		  while(binArr.length > 0){
+			binArr[0] ?
+			acc = [{ dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) : [{ dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) ;
+			binArr = binArr.slice(1);
+		  }
+		  return {isMember : false, path: acc};
+		}
+		else {
+		return tree.val !== element 
+		  ? {
+			  isMember: false,
+			  path: binArr
+				.map((bit, idx) => {
+				  return bit === '0'
+					? { dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }
+					: { dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] };
+				})
+				.reverse()
+				.concat(acc),
+			}
+		  : { isMember: true, path: acc };
+		}
+	  }
+	  default:
+		return tree;
+	}
+  };
+  
+
+export async function getnullifierMembershipWitness(nullifier) {
+
+	const binArr = toBinArray(new GN(nullifier)).slice(0, TRUNC_LENGTH);
+	const padBinArr = Array(TRUNC_LENGTH - binArr.length)
+	  .fill('0')
+	  .concat(...binArr);
+	const  membershipPath = _getnullifierMembershipWitness(padBinArr, nullifier, smt_tree, []);
+    const root = getHash(smt_tree);
+	const witness = {path : membershipPath.path, root: root}
+	return witness;
+
+}
+
