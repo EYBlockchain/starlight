@@ -52,6 +52,7 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof`,
       ];
     },
 
@@ -59,6 +60,9 @@ class BoilerplateGenerator {
       return [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field ${x}_oldCommitment_nullifier`,
+        `public field nullifierRoot,`,
+        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath,`
+
       ];
     },
 
@@ -86,8 +90,23 @@ class BoilerplateGenerator {
 
         assert(\\
         field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
-        )`
+        )
+        // ${x}_oldCommitment_nullifier : non-existence check
+        
+        assert(\\
+          checkproof(\\
+            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
+            ${x}_oldCommitment_nullifier,\\
+            nullifierRoot,\\
+            zeroElement\\
+           )\
+          )
+        
+        `
+
+        
         ,
+
       ];
 
       if (this.initialisationRequired && this.isWhole) {
