@@ -288,11 +288,11 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     if (path.isModification()) {
       this.addModifyingPath(path);
     }
-    if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
-      this.addStructProperty(path).updateProperties(path);
-    } else if (this.isMapping) {
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).updateProperties(path);
-    }
+    } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
+      this.addStructProperty(path).updateProperties(path);
+    } 
   }
 
   updateProperties(path: NodePath) {
@@ -473,7 +473,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   // A StateVariableIndicator will be updated if (some time after its creation) we encounter an AST node which refers to this state variable.
   // E.g. if we encounter an Identifier node.
   update(path: NodePath) {
-    if (this.isMapping) {
+    if (this.isMapping && (path.getAncestorOfType('IndexAccess'))) {
       this.addMappingKey(path).updateProperties(path);
     } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);

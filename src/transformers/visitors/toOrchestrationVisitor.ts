@@ -1246,7 +1246,8 @@ const visitor = {
         });
         newNode.isStruct = true;
       }
-      parent._newASTPointer[path.containerName] = newNode;
+
+      if (parent._newASTPointer) parent._newASTPointer[path.containerName] = newNode;
       state.skipSubNodes = true; // the subnodes are ElementaryTypeNames
     },
 

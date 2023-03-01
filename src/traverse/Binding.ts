@@ -256,7 +256,7 @@ export class VariableBinding extends Binding {
   // A binding will be updated if (some time after its creation) we encounter an AST node which refers to this binding's variable.
   // E.g. if we encounter an Identifier node.
   update(path: NodePath) {
-    if (this.isMapping) {
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).updateProperties(path);
     } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);

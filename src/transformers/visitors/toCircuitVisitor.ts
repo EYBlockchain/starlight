@@ -915,6 +915,9 @@ const visitor = {
       const { node, parent , parentPath } = path;
       const { value } = node;
 
+      // skip require msg warnings
+      if (path.getAncestorOfType('FunctionCall')?.node.requireStatementPrivate && node.kind === 'string') return;
+
       if (node.kind !== 'number' && node.kind !== 'bool' && !path.getAncestorOfType('Return'))
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,

@@ -117,15 +117,15 @@ export default {
       let idInLoopExpression = [];
       traverseNodesFast(loopExpression, miniIdVisitor, idInLoopExpression);
 
-      const miniMappingVisitor = (thisNode: any) => {
-        if (thisNode.nodeType !== 'IndexAccess') return;
-        const key = path.getMappingKeyIdentifier(thisNode);
-        if (!key.referencedDeclaration) return;
-        if (idInLoopExpression.includes(key.referencedDeclaration))
-        throw new ZKPError(`The mapping ${thisNode.baseExpression.name} is being accessed by the loop expression ${key.name}, which means we are editing as many secret states as there are loop iterations. This is not currently supported due to the computation involved.`, thisNode);
-      };
+      // const miniMappingVisitor = (thisNode: any) => {
+      //   if (thisNode.nodeType !== 'IndexAccess') return;
+      //   const key = path.getMappingKeyIdentifier(thisNode);
+      //   if (!key.referencedDeclaration) return;
+      //   if (idInLoopExpression.includes(key.referencedDeclaration))
+      //   throw new ZKPError(`The mapping ${thisNode.baseExpression.name} is being accessed by the loop expression ${key.name}, which means we are editing as many secret states as there are loop iterations. This is not currently supported due to the computation involved.`, thisNode);
+      // };
 
-      traverseNodesFast(body, miniMappingVisitor);
+      // traverseNodesFast(body, miniMappingVisitor);
       
       if ((condition.containsSecret || initializationExpression.containsSecret || loopExpression.containsSecret) && body.containsPublic) {
         throw new TODOError(`This For statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);

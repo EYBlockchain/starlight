@@ -974,6 +974,30 @@ export default class NodePath {
     return memberAccNode && memberAccNode.node.baseExpression?.typeDescriptions?.typeIdentifier.includes('array');
   }
 
+   /**
+  * Checks whether a node is of an array type.
+  * @param {node} node (optional - defaults to this.node)
+  * @returns {Boolean}
+  */
+  isConstantArray(node: any = this.node): boolean {
+    if (!this.isArray(node)) return false;
+    let arrLen;
+    switch (node.nodeType) {
+      case 'IndexAccess':
+        arrLen = node.baseExpression.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        break;
+      case 'Identifier':
+      default:
+        arrLen = node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        break;
+    }
+    for (const match of arrLen) {
+      // tries to convert to a number
+      if (+match) return true;
+    }
+    return false;
+  }
+
   /**
    * Checks whether a node is a VariableDeclaration of a Mapping.
    * @param {node} node (optional - defaults to this.node)
@@ -1036,7 +1060,7 @@ export default class NodePath {
         id = referencingNode.referencedDeclaration;
         break;
       case 'IndexAccess':
-        id = referencingNode.baseExpression.referencedDeclaration;
+        id = referencingNode.baseExpression.referencedDeclaration || this.getReferencedDeclarationId(referencingNode.baseExpression);
         break;
       case 'MemberAccess':
         id = referencingNode.expression.referencedDeclaration || this.getReferencedDeclarationId(referencingNode.expression);

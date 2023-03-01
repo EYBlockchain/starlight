@@ -426,12 +426,18 @@ export class Scope {
         : indicator;
     }
 
+    if (path.isConstantArray(referencingNode) && !NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')) return indicator;
+
+
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
     const indexAccessNode =
       referencingNode.nodeType === 'IndexAccess'
         ? referencingNode
         : NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')
             .node;
+
+    if (!indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)] && indexAccessNode.baseExpression.nodeType === 'IndexAccess')
+      return this.getReferencedIndicator(indexAccessNode.baseExpression, mappingKeyIndicatorOnly);
 
     return mappingKeyIndicatorOnly
       ? indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)]
@@ -673,14 +679,13 @@ export class Scope {
     if (identifierNode.nodeType === 'MemberAccess') return identifierNode.memberName;
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
-    if (refPaths && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
-
+    if (refPaths && thisIndex && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
     let { name } = identifierNode;
-
+    
     // we find the next indexExpression after this identifier
-    for (let i = thisIndex; i < refPaths?.length; i++) {
-      if (refPaths[i].key !== 'indexExpression') continue;
-      if (refPaths[thisIndex].isModification() && !forceNotModification) {
+    for (let i = thisIndex || 0; i < (refPaths?.length || 0); i++) {
+      if (refPaths?.[i]?.key !== 'indexExpression' || !thisIndex) continue;
+      if (refPaths[thisIndex]?.isModification() && !forceNotModification) {
         name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess'));
         break;
         // if this identifier is not a modification, we need the previous indexExpression
