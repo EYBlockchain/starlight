@@ -22,8 +22,7 @@ endfor
 
 field recreatedRoot = accValue
  
-assert (recreatedRoot != root)
-
+ 
 accValue = zeroElement
 
 for u32 i in 0..32 do

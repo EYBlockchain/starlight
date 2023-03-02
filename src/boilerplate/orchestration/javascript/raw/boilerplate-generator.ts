@@ -264,7 +264,16 @@ class BoilerplateGenerator {
             let ${stateName}_0_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_0_prevSalt.hex(32))],);
             let ${stateName}_1_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_1_prevSalt.hex(32))],);
             ${stateName}_0_nullifier = generalise(${stateName}_0_nullifier.hex(32)); // truncate
-            ${stateName}_1_nullifier = generalise(${stateName}_1_nullifier.hex(32)); // truncate`];
+            ${stateName}_1_nullifier = generalise(${stateName}_1_nullifier.hex(32)); // truncate
+            // Non-membership witness for Nullifier
+            const ${stateName}_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_0_nullifier);
+            const ${stateName}_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_1_nullifier);
+
+            const ${stateName}_nullifierRoot = generalise(${stateName}_0_nullifier_NonMembership_witness.root);
+            const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_1_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_0_nullifier_index = ${stateName}_0_nullifier_NonMembership_witness.binArr;
+            const ${stateName}_1_nullifier_index = ${stateName}_1_nullifier_NonMembership_witness.binArr;`];
         case 'whole':
           return [`
             let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
@@ -320,7 +329,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified } from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness, } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
@@ -371,11 +380,16 @@ class BoilerplateGenerator {
               \t${stateName}_0_prevSalt.integer,
               ${prev(1)},
               \t${stateName}_1_prevSalt.integer,
-              ${rootRequired ? `\t${stateName}_root.integer,` : ``}
+              \t${rootRequired ? `\t${stateName}_root.integer,` : ``}
+              ${stateName}_nullifierRoot.integer,
               \t${stateName}_0_index.integer,
               \t${stateName}_0_path.integer,
               \t${stateName}_1_index.integer,
               \t${stateName}_1_path.integer,
+              \t${stateName}_0_nullifier_path.integer,
+              \t${stateName}_0_nullifier_index,
+              \t${stateName}_1_nullifier_path.integer,
+              \t${stateName}_0_nullifier_index,
               \t${stateName}_newOwnerPublicKey.integer,
               \t${stateName}_2_newSalt.integer,
               \t${stateName}_2_newCommitment.integer`];

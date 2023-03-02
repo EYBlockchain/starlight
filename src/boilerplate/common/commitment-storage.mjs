@@ -468,7 +468,7 @@ const _getNullifierMembershipWitness = (binArr, element, tree, acc) => {
   };
 
   // This is a helper function for checkMembership
-const _checkMembership = (binArr, element, tree, acc) => {
+const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 	switch (tree.tag) {
 	  case 'branch':
 		return binArr[0] === '0'
@@ -523,7 +523,7 @@ export async function getnullifierMembershipWitness(nullifier) {
 	  .concat(...binArr);
 	const  membershipPath = _getnullifierMembershipWitness(padBinArr, nullifier, smt_tree, []);
     const root = getHash(smt_tree);
-	const witness = {path : membershipPath.path, root: root}
+	const witness = {path : membershipPath.path, root: root, binArr: padBinArr}
 	return witness;
 
 }
