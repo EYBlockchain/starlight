@@ -9,13 +9,8 @@ import logger from './logger.mjs';
 import utils from "zkp-utils";
 import { poseidonHash } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-import {
-	SumType,
-	reduceTree,
-	toBinArray,
-	poseidenConcatHash
-  } from './smt_utils.mjs';
-  import { hlt } from './hash-lookup.mjs';
+import { SumType, reduceTree, toBinArray, poseidenConcatHash } from './smt_utils.mjs';
+import { hlt } from './hash-lookup.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
