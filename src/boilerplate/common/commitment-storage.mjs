@@ -9,7 +9,7 @@ import logger from './logger.mjs';
 import utils from "zkp-utils";
 import { poseidonHash } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-import { SumType, reduceTree, toBinArray, poseidenConcatHash } from './smt_utils.mjs';
+import { SumType, reduceTree, toBinArray, poseidonConcatHash } from './smt_utils.mjs';
 import { hlt } from './hash-lookup.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
@@ -34,7 +34,7 @@ const SMT = SumType([Branch, Leaf], () => {
 let smt_tree = SMT(hlt[0]);
 
 // Gets the hash of a smt_tree (or subtree)
-export const getHash = tree => reduceTree(poseidenConcatHash, tree);
+export const getHash = tree => reduceTree(poseidonConcatHash, tree);
 
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment) {
@@ -427,52 +427,6 @@ export async function joinCommitments(
 	return { tx };
 }
 
-// This is a helper function for getNullifierMembershipWitness
-const _getNullifierMembershipWitness = (binArr, element, tree, acc) => {
-	switch (tree.tag) {
-	  case 'branch':
-		return binArr[0] === '0'
-		  ? _getNullifierMembershipWitness(
-			  binArr.slice(1),
-			  element,
-			  tree.left,
-			  [{ dir: 'right', hash: getHash(tree.right) }].concat(acc),
-			)
-		  : _getNullifierMembershipWitness(
-			  binArr.slice(1),
-			  element,
-			  tree.right,
-			  [{ dir: 'left', hash: getHash(tree.left) }].concat(acc),
-			);
-			case 'leaf': {
-				if(binArr.length > 0) {
-				  while(binArr.length > 0){
-					binArr[0] ?
-					acc = [{ dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) : [{ dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) ;
-					binArr = binArr.slice(1);
-				  }
-				  return {isMember : false, path: acc};
-				}
-				else {
-				return tree.val !== element 
-				  ? {
-					  isMember: false,
-					  path: binArr
-						.map((bit, idx) => {
-						  return bit === '0'
-							? { dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }
-							: { dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] };
-						})
-						.reverse()
-						.concat(acc),
-					}
-				  : { isMember: true, path: acc };
-				}
-			  }
-	  default:
-		return tree;
-	}
-  };
 
  // This is a helper function for checkMembership
 const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {

@@ -1,5 +1,4 @@
-import createKeccakHash from 'keccak';
-//import utils from '../merkle-tree/utils.mjs';
+import { poseidonHash } from "./number-theory.mjs";
 
 const defineProducts = fields =>
   fields.reduce(
@@ -62,31 +61,14 @@ export const reduceTree = (f, tree) => {
   }
 };
 
-// export const compose = (...functions) => args => functions.reduceRight((arg, fn) => fn(arg), args);
-export const compose = f => g => x => f(g(x));
-export const pipe = (...fns) => x => fns.reduce((v, f) => f(v), x);
-export const blackbird = compose(compose)(compose);
-
-export const keccak256Hash = item => {
-  const preimage = utils.strip0x(item);
-  const h = `0x${createKeccakHash('keccak256')
-    .update(preimage, 'hex')
-    .digest('hex')}`;
-  return h;
-};
-
-
-
-export function strip0x(hex) {
-  if (typeof hex === 'undefined') return '';
-  if (typeof hex === 'string' && hex.indexOf('0x') === 0) {
-    return hex.slice(2).toString();
-  }
-  return hex.toString();
-}
 
 export const toBinArray = gnHex => {
   return BigInt(gnHex.hex(32))
     .toString(2)
     .split('');
+};
+
+export const poseidonConcatHash = (v1, v2) => {
+  const h = poseidonHash([BigInt(v1), BigInt(v2)])._hex;
+  return h;
 };
