@@ -9,7 +9,7 @@ import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator} from '../../traverse/Indicator.js';
-import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
+import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer, getIndexAccessName } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -22,10 +22,16 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   let { name } = thisPath.isMsg(node) ? node : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
-  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
-  const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  let isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
+  let isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  //Check if for-if statements are both together.
+  if(thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement') &&  thisPath.getAncestorOfType('ForStatement')){
+    //Currently We only support if statements inside a for loop no the other way around, so getting the public inputs according to inner if statement
+    if((thisPath.getAncestorOfType('IfStatement')).getAncestorOfType('ForStatement'))
+    isForCondition = isCondition;
+  }
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
@@ -294,11 +300,14 @@ const visitor = {
            node.expression.components.forEach(component => {
              if(component.name){
               returnName?.push(component.name);
-            }
-             else
+            }else if(component.nodeType === 'IndexAccess'){
+              returnName?.push(getIndexAccessName(component));
+            }else
              returnName?.push(component.value);
            });
-         } else{
+         } else if(node.expression.nodeType === 'IndexAccess'){
+          returnName?.push(getIndexAccessName(node.expression));
+       } else{
           if(node.expression.name)
            returnName?.push(node.expression.name);
           else
@@ -323,23 +332,47 @@ const visitor = {
       parent.body.statements.forEach( node => {
         if(node.nodeType === 'Return'){
           for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
-            if(node.expression.nodeType === 'TupleExpression'){
-            node.expression.components.forEach(component => {
-              if(id == component.referencedDeclaration) {
-                if ((bindings instanceof VariableBinding)) {
-                  if(component.name === item.name)
-                  item.isPrivate = bindings.isSecret
-                }
+            switch(node.expression.nodeType) {
+              case 'TupleExpression' : {
+                node.expression.components.forEach(component => {
+                  if((component.nodeType === 'IndexAccess' && id == component.indexExpression?.referencedDeclaration )||(component.nodeType === 'MemberAccess' && id == component.expression?.referencedDeclaration )|| id == component.referencedDeclaration) {
+                    if ((bindings instanceof VariableBinding)) {
+                      if(item.name.includes(bindings.node.name))
+                   item.isPrivate = bindings.isSecret
+                    }
+                  }
+                })
+                break;
               }
-            })
-          } else {
-            if( id == node.expression.referencedDeclaration) {
-              if ((bindings instanceof VariableBinding)){
-               if(node.name === item.name)
-               item.isPrivate = bindings.isSecret
+              case 'IndexAccess':{
+                console.log(node);
+                if(id == node.expression.indexExpression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                     item.isPrivate = bindings.isSecret
+                  }
+                } 
+                break ;
               }
+              case 'MemberAccess':{
+                if(id == node.expression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                      item.isPrivate = bindings.isSecret
+                  }
+                } 
+                break;
+              }  
+              default: {
+                if( id == node.expression.referencedDeclaration){
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name == bindings.node.name)
+                    item.isPrivate = bindings.isSecret
+                   }
+                } 
+                break ;
+              } 
             }
-           }
           }
         }
       })
@@ -506,12 +539,17 @@ const visitor = {
       if((scope.getReferencedNode(expression.expression))?.containsSecret)
       node.containsSecret = 'true';
     }
-      const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+      if(path.getAncestorOfType('ForStatement') && expression.containsPublic ){
+        childOfSecret = false;
+      }
       const thisState = { interactsWithSecretInScope: false };
 
       path.traverseNodesFast(n => {
-        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret)
+        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret){
           thisState.interactsWithSecretInScope = true;
+        }
+
       }, thisState);
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
         state.skipSubNodes = true;
@@ -812,8 +850,12 @@ const visitor = {
   },
 
   IfStatement: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      let isIfStatementSecret;
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic)
+        isIfStatementSecret = true;
+      if(isIfStatementSecret) {
       if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')
       {
         const newNode = buildNode(node.nodeType, {
@@ -834,8 +876,11 @@ const visitor = {
       });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+    } else {
+      state.skipSubNodes = true;
+      return ;
+    }
     },
-
     exit(path: NodePath) {
       // a visitor to collect all identifiers in an if condition
       // we use this list later to init temp variables
@@ -900,13 +945,18 @@ const visitor = {
   ForStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      node.body.statements.forEach(element => {
+        if(element.containsPublic){
+          state.skipSubelementNodes = true;
+        }
+      });
     if(!path?.containsSecret){
     state.skipSubNodes = true;
-    return ;
-  }
+  } if(!state.skipSubNodes){
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+    }
     },
   },
 

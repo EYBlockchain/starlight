@@ -134,10 +134,19 @@ export async function registerKey(
 	}
 	if (registerWithContract) {
 		const instance = await getContractInstance(contractName);
-		await instance.methods.registerZKPPublicKey(publicKey.integer).send({
+		const contractAddr = await getContractAddress(contractName); 
+		const txData = await instance.methods.registerZKPPublicKey(publicKey.integer).encodeABI();	
+		let txParams = {
 			from: config.web3.options.defaultAccount,
+			to: contractAddr,
 			gas: config.web3.options.defaultGas,
-		});
+			gasPrice: config.web3.options.defaultGasPrice,
+			data: txData,
+			chainId: await web3.eth.net.getId(),
+		};
+		const key = config.web3.key;
+		const signed = await web3.eth.accounts.signTransaction(txParams, key);
+		const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 	}
 	const keyJson = {
 		secretKey: secretKey.integer,

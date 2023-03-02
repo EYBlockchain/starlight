@@ -169,7 +169,7 @@ class BoilerplateGenerator {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
 
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
@@ -322,14 +322,16 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, registerKey } from './common/contract.mjs';`,
+        `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
+        `\nimport Web3 from './common/web3.mjs';`,
         `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
+        `const web3 = Web3.connection();`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -671,6 +673,11 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
+      readPath: pathPrefix + '/bin/startup',
+      writePath: '/bin/default_startup',
+      generic: true,
+    },
+    {
       readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
       generic: false,
@@ -688,6 +695,16 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/boilerplate-docker-compose.yml',
       writePath: './docker-compose.zapp.yml',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
+      writePath: './docker-compose.zapp.override.yml',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
+      writePath: './docker-compose.zapp.override.default.yml',
       generic: true,
     },
     {
@@ -713,6 +730,11 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/entrypoint.sh',
       writePath: './entrypoint.sh',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/entrypoint.sh',
+      writePath: './entrypoint_default.sh',
       generic: true,
     },
     {
