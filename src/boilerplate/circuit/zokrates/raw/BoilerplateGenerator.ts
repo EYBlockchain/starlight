@@ -99,7 +99,7 @@ class BoilerplateGenerator {
             ${x}_nullifier_nonmembershipWitness_siblingPath,\\
             ${x}_oldCommitment_nullifier,\\
             nullifierRoot,\\
-            zeroElement\\
+            ${x}_nullifier_index\\
            )\
           )
         `,
