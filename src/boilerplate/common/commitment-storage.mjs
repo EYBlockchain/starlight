@@ -474,7 +474,7 @@ const _getNullifierMembershipWitness = (binArr, element, tree, acc) => {
 	}
   };
 
-  // This is a helper function for checkMembership
+ // This is a helper function for checkMembership
 const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 	switch (tree.tag) {
 	  case 'branch':
@@ -483,19 +483,19 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 			  binArr.slice(1),
 			  element,
 			  tree.left,
-			  [{ dir: 'right', hash: getHash(tree.right) }].concat(acc),
+			  [getHash(tree.right) ].concat(acc),
 			)
 		  : _checkMembership(
 			  binArr.slice(1),
 			  element,
 			  tree.right,
-			  [{ dir: 'left', hash: getHash(tree.left) }].concat(acc),
+			  [getHash(tree.left)].concat(acc),
 			);
 	  case 'leaf': {
 		if(binArr.length > 0) {
 		  while(binArr.length > 0){
 			binArr[0] ?
-			acc = [{ dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) : [{ dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }].concat(acc) ;
+			acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc) : [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc) ;
 			binArr = binArr.slice(1);
 		  }
 		  return {isMember : false, path: acc};
@@ -507,8 +507,8 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 			  path: binArr
 				.map((bit, idx) => {
 				  return bit === '0'
-					? { dir: 'right', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] }
-					: { dir: 'left', hash: hlt[TRUNC_LENGTH - (binArr.length - 1)] };
+					?  [hlt[TRUNC_LENGTH - (binArr.length - 1)]]
+					: [hlt[TRUNC_LENGTH - (binArr.length - 1)]];
 				})
 				.reverse()
 				.concat(acc),
@@ -522,9 +522,9 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
   };
   
 
-export async function getnullifierMembershipWitness(nullifier) {
+export function getnullifierMembershipWitness(nullifier) {
 
-	const binArr = toBinArray(new GN(nullifier)).slice(0, TRUNC_LENGTH);
+	const binArr = toBinArray(generalise(nullifier)).slice(0, TRUNC_LENGTH);
 	const padBinArr = Array(TRUNC_LENGTH - binArr.length)
 	  .fill('0')
 	  .concat(...binArr);
@@ -534,4 +534,3 @@ export async function getnullifierMembershipWitness(nullifier) {
 	return witness;
 
 }
-
