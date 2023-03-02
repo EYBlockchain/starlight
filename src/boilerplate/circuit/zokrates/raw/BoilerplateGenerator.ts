@@ -60,9 +60,9 @@ class BoilerplateGenerator {
       return [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field ${x}_oldCommitment_nullifier`,
-        `public field nullifierRoot,`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath,`
-        `private bool[32] ${x}_nullifier_index,`
+        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
+        `private bool[32] ${x}_nullifier_index`,
+        `public field nullifierRoot`,
 
       ];
     },

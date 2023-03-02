@@ -22,7 +22,7 @@ field recreatedRoot = accValue
  
 assert (recreatedRoot != root)
 
-accValue = 0 \\ checking against zero element
+accValue = 0 // checking against zero element
 
 for u32 i in 0..32 do
   u32 j = i // iterator for the siblingPath
