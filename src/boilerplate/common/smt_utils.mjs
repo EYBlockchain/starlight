@@ -1,4 +1,4 @@
-import { poseidonHash } from "./number-theory.mjs";
+import { poseidonHash } from './number-theory.mjs';
 
 const defineProducts = fields =>
   fields.reduce(

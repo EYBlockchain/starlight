@@ -42,7 +42,7 @@ class FunctionBoilerplateGenerator {
       if (isConstructor && encryptionRequired) throw new Error(`There shouldn't be any secret states that require sharing encrypted data in the constructor.`)
       const visibility = isConstructor ? 'memory' : 'calldata';
       return [
-        ...(newNullifiers ? [`uint256[] ${visibility} newNullifiers`] : []),
+        ...(newNullifiers ? [`uint256 nullifierRoot, uint256[] ${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
         ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
         ...(checkNullifiers ? [`uint256[] ${visibility} checkNullifiers`] : []),
@@ -67,7 +67,7 @@ class FunctionBoilerplateGenerator {
 
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
-      ...(newNullifiers ? [`uint256[]`] : []),
+      ...(newNullifiers ? [`uint256, uint256[]`] : []), // nullifier Root and nullifiers
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),
@@ -97,7 +97,10 @@ class FunctionBoilerplateGenerator {
           : []),
 
         ...(newNullifiers ? [`
-          inputs.newNullifiers = newNullifiers;`] : []),
+          inputs.nullifierRoot = nullifierRoot;
+          
+          inputs.newNullifiers = newNullifiers;
+           `] : []),
 
         ...(checkNullifiers ? [`
           inputs.checkNullifiers = checkNullifiers;`] : []),

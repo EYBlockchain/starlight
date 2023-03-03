@@ -12,7 +12,7 @@ contract Assign {
     add(value); // no  oldCommitmentAccessRequired but the contract does for function remove
   }
   function add(secret uint256 value) public {
-    known a = a + 2 * value;
+    unknown a = a + 2 * value;
   }
 
 

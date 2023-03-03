@@ -57,7 +57,9 @@ class ContractBoilerplateGenerator {
         `
           struct Inputs {
             ${[
-              ...(nullifiersRequired ? [`uint[] newNullifiers;`] : []),
+              ...(nullifiersRequired ? [`uint nullifierRoot; 
+                  uint[] newNullifiers;
+                  `] : []),
               ...(containsAccessedOnlyState ? [`uint[] checkNullifiers;`] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
               ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
@@ -116,9 +118,13 @@ class ContractBoilerplateGenerator {
       const verifyInputsMap = (type: string, input: string, counter: any) => {
         if(type  === 'parameters'){
         switch (input) {
-          case 'nullifier':
+          case 'nullifier':  // nuliifier Root and nullifers exists together
+            verifyInput.push( `
+            inputs[k++] = _inputs.nullifierRoot;`); 
+
             verifyInput.push( `
             inputs[k++] = newNullifiers[${counter.newNullifiers++}];`);
+            
             break;
           case 'checkNullifier':
             verifyInput.push(`
@@ -205,7 +211,7 @@ class ContractBoilerplateGenerator {
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
             ...(checkNullifiers ? ['checkNullifiers.length'] : []),
-            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 2 : 0)'] : []), // newNullifiers , nullifierRoot and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,
@@ -260,12 +266,14 @@ class ContractBoilerplateGenerator {
 
        joinCommitmentsInputs.push(
         `
-           function joinCommitments(uint256[] calldata newNullifiers, uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
+           function joinCommitments(uint nullifierRoot, uint256[] calldata newNullifiers,  uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
 
             Inputs memory inputs;
 
             inputs.customInputs = new uint[](1);
             inputs.customInputs[0] = 1;
+
+            inputs.nullifierRoot = nullifierRoot;
 
             inputs.newNullifiers = newNullifiers;
 
@@ -280,6 +288,7 @@ class ContractBoilerplateGenerator {
          if (functionId == uint(FunctionNames.joinCommitments)) {
            uint k = 0;
 
+           inputs[k++] = _inputs.nullifierRoot;
            inputs[k++] = newNullifiers[0];
            inputs[k++] = newNullifiers[1];
            inputs[k++] = _inputs.commitmentRoot;

@@ -59,10 +59,11 @@ class BoilerplateGenerator {
     parameters({ name: x }): string[] {
       return [
         `private field ${x}_oldCommitment_owner_secretKey`,
+        `public field nullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
         `private bool[32] ${x}_nullifier_index`,
-        `public field nullifierRoot`,
+       
 
       ];
     },

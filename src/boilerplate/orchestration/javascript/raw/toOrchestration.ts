@@ -77,7 +77,7 @@ export const sendTransactionBoilerplate = (node: any) => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            output[1].push(`${privateStateName}_root.integer`);
+            output[1].push(`${privateStateName}_root.integer, ${privateStateName}_nullifierRoot.integer`);
             output[0].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
@@ -753,14 +753,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       }
       params[0] = sendTransactionBoilerplate(node);
       // params[0] = arr of nullifiers
-      // params[1] = root(s)
+      // params[1] = arr of root(s)(commitment and nullifier Root)
       // params[2] = arr of commitments
-      if (params[0][1][0]) params[0][1] = `${params[0][1][0]},`; // root - single input
-      if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
-      if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
-      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array
-      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
-      if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
+      if (params[0][1][1]) params[0][0] = `${params[0][1][1]},`; // nullifierRoot - array
+      if (params[0][1][0]) params[0][2] = `${params[0][1][0]},`; // commitmentRoot - array 
+      if (params[0][0][0]) params[0][1] = `[${params[0][0]}],`; // nullifiers - array
+      if (params[0][2][0]) params[0][3] = `[${params[0][2]}],`; // commitments - array
+      if (params[0][3][0]) params[0][4] = `[${params[0][3]}],`; // accessed nullifiers - array
+      if (params[0][4][0]) params[0][5] = `[${params[0][4]}],`; // cipherText - array of arrays
+      if (params[0][5][0]) params[0][6] = `[${params[0][5]}],`; // cipherText - array of arrays
 
       if (node.functionName === 'cnstrctr') return {
         statements: [

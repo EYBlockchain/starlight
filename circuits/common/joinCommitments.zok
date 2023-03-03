@@ -18,10 +18,10 @@ def main(\
 	private bool isMapping,\
 	private field oldCommitment_0_owner_secretKey_field,\
 	private field oldCommitment_1_owner_secretKey_field,\
+  public field nullifierRoot,\
 	public field oldCommitment_0_nullifier,\
   public field oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
   private bool[32] oldCommitment_0_nullifier_index,\
-	public field nullifierRoot,\
 	public field oldCommitment_1_nullifier,\
   private field[32] oldCommitment_1_nullifier_nonmembershipWitness_siblingPath,\
 	private bool[32] oldCommitment_1_nullifier_index,\

@@ -379,10 +379,10 @@ class BoilerplateGenerator {
               ${parameters.join('\n')}${stateVarIds.join('\n')}
               \tsecretKey.integer,
               \tsecretKey.integer,
+              \t${stateName}_nullifierRoot.integer,
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
               \t${stateName}_0_nullifier_index,
-              \t${stateName}_nullifierRoot.integer,
               \t${stateName}_1_nullifier.integer,
               \t${stateName}_1_nullifier_path.integer,
               \t${stateName}_1_nullifier_index,
