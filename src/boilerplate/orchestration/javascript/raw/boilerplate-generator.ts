@@ -276,11 +276,18 @@ class BoilerplateGenerator {
             const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
             const ${stateName}_1_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
             const ${stateName}_0_nullifier_index = ${stateName}_0_nullifier_NonMembership_witness.binArr;
-            const ${stateName}_1_nullifier_index = ${stateName}_1_nullifier_NonMembership_witness.binArr;`];
+            const ${stateName}_1_nullifier_index = ${stateName}_1_nullifier_NonMembership_witness.binArr; // TODO : calculate in circuit`];
         case 'whole':
           return [`
             let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
-            \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate`];
+            \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
+
+            // Non-membership witness for Nullifier
+            const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
+
+            const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
+            const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_nullifier_index = ${stateName}_nullifier_NonMembership_witness.binArr; // TODO : calculate in circuit`];
         default:
           throw new TypeError(stateType);
       }
@@ -331,7 +338,7 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, registerKey } from './common/contract.mjs';`,
+        `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness, } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
@@ -413,7 +420,10 @@ class BoilerplateGenerator {
                   return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.integer,
+                      \t${stateName}_nullifierRoot.integer,
                       \t${stateName}_nullifier.integer,
+                      \t${stateName}_nullifier_path.integer,
+                      \t${stateName}_nullifier_index,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
@@ -426,7 +436,10 @@ class BoilerplateGenerator {
                       return [`
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.integer,
+                          \t${stateName}_nullifierRoot.integer,
                           \t${stateName}_nullifier.integer,
+                          \t${stateName}_nullifier_path.integer,
+                          \t${stateName}_nullifier_index,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}
@@ -436,7 +449,10 @@ class BoilerplateGenerator {
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
+                      \t${stateName}_nullifierRoot.integer,
                       \t${stateName}_nullifier.integer,
+                      \t${stateName}_nullifier_path.integer,
+                      \t${stateName}_nullifier_index,,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}

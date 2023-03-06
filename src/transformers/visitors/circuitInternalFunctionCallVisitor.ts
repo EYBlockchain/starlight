@@ -71,6 +71,7 @@ const internalCallVisitor = {
                  };
                  case 'nullification' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
+                  internalFncParameters.push(`nullifierRoot`);
                   internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
                   break;
                  };

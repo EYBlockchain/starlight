@@ -63,12 +63,14 @@ export const sendTransactionBoilerplate = (node: any) => {
   output[3] = [];
   output[4] = [];
   output[5] = [];
-  // output[0] = arr of nullifiers
-  // output[1] = root(s)
-  // output[2] = arr of commitments
-  // output[3] = arr of nullifiers to check, not add (for accessed states)
-  // output[4] = arr of cipherText
-  // output[5] = arr of enc keys
+  output[6] = [];
+  // output[0] = nullifier root(s)
+  // output[1] = arr of nullifiers
+  // output[2] = commitments root(s)
+  // output[3] = arr of commitments
+  // output[4] = arr of nullifiers to check, not add (for accessed states)
+  // output[5] = arr of cipherText
+  // output[6] = arr of enc keys
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(privateStates)) {
@@ -77,19 +79,20 @@ export const sendTransactionBoilerplate = (node: any) => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            output[1].push(`${privateStateName}_root.integer, ${privateStateName}_nullifierRoot.integer`);
-            output[0].push(
+            output[2].push(`${privateStateName}_root.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`);
+            output[1].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
-            output[2].push(`${privateStateName}_2_newCommitment.integer`);
+            output[3].push(`${privateStateName}_2_newCommitment.integer`);
             break;
           case false:
           default:
             // increment
-            output[2].push(`${privateStateName}_newCommitment.integer`);
+            output[3].push(`${privateStateName}_newCommitment.integer`);
             if (stateNode.encryptionRequired) {
-              output[4].push(`${privateStateName}_cipherText`);
-              output[5].push(`${privateStateName}_encKey`);
+              output[5].push(`${privateStateName}_cipherText`);
+              output[6].push(`${privateStateName}_encKey`);
             }
             break;
         }
@@ -98,15 +101,16 @@ export const sendTransactionBoilerplate = (node: any) => {
       default:
         // whole
         if (!stateNode.reinitialisedOnly)
-          output[1].push(`${privateStateName}_root.integer`);
+          output[2].push(`${privateStateName}_root.integer`);
         if (stateNode.accessedOnly) {
           output[3].push(`${privateStateName}_nullifier.integer`);
         } else {
           if (!stateNode.reinitialisedOnly) {
-            output[0].push(`${privateStateName}_nullifier.integer`);
+            output[1].push(`${privateStateName}_nullifier.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`);
           }
           if (!stateNode.burnedOnly)
-            output[2].push(`${privateStateName}_newCommitment.integer`);
+            output[3].push(`${privateStateName}_newCommitment.integer`);
         }
 
         break;
@@ -752,16 +756,18 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         lines[lines.length - 1] += `, `;
       }
       params[0] = sendTransactionBoilerplate(node);
-      // params[0] = arr of nullifiers
-      // params[1] = arr of root(s)(commitment and nullifier Root)
-      // params[2] = arr of commitments
-      if (params[0][1][1]) params[0][0] = `${params[0][1][1]},`; // nullifierRoot - array
-      if (params[0][1][0]) params[0][2] = `${params[0][1][0]},`; // commitmentRoot - array 
-      if (params[0][0][0]) params[0][1] = `[${params[0][0]}],`; // nullifiers - array
-      if (params[0][2][0]) params[0][3] = `[${params[0][2]}],`; // commitments - array
-      if (params[0][3][0]) params[0][4] = `[${params[0][3]}],`; // accessed nullifiers - array
-      if (params[0][4][0]) params[0][5] = `[${params[0][4]}],`; // cipherText - array of arrays
-      if (params[0][5][0]) params[0][6] = `[${params[0][5]}],`; // cipherText - array of arrays
+      // params[0] = arr of nullifier root(s)
+      // params[1] = arr of commitment root(s)
+      // params[2] =  arr of nullifiers 
+      // params[3] = arr of commitments
+      
+      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},`; // nullifierRoot - array 
+      if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
+      if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
+      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
+      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // accessed nullifiers - array
+      if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
+      if (params[0][6][0]) params[0][6] = `[${params[0][6]}],`; // cipherText - array of arrays
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
@@ -769,6 +775,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nconst tx = { proofInput: [${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
+
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
