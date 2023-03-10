@@ -99,7 +99,7 @@ const internalCallVisitor = {
                   break;
                  };
                 case 'newCommitment' : {
-                  internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
+                  state.isEncrypted ? ' ': internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
                   internalFncParameters.push(`${node.name}_newCommitment_salt`) ;
                   internalFncParameters.push(`${node.name}_newCommitment_commitment`);
                   break;
@@ -108,7 +108,6 @@ const internalCallVisitor = {
                   internalFncParameters.push(`${node.mappingKeyName}`);
                  break;
                 case 'encryption' :
-                  state.isEncrypted = true ;
                   internalFncParameters.push(`${node.name}_newCommitment_ephSecretKey`);
                   internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey_point`);
                }

@@ -74,9 +74,10 @@ class FunctionBoilerplateGenerator {
       const { indicators } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
 
+
+
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, encryptionRequired } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
-
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
     },
 
@@ -105,12 +106,20 @@ class FunctionBoilerplateGenerator {
       const publicParams = params?.filter((p: any) => (!p.isSecret && p.interactsWithSecret)).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
       const indicators = this.customFunction.getIndicators.bind(this)();
+  
 
       // special check for msgSender and msgValue param. If msgsender is found, prepend a msgSender uint256 param to the contact's function.
       if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true});
       if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
+      let internalFunctionEncryptionRequired = false;
+      path.node._newASTPointer.body.statements.forEach((node) => {
+        if(node.expression.nodeType === 'InternalFunctionCall')
+        if(node.expression.parameters.includes('cipherText') ) 
+        internalFunctionEncryptionRequired = true 
+      })
 
-      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired) {
+
+      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
       }
       return {

@@ -990,6 +990,7 @@ let interactsWithSecret = false ;
       const callingfnDefIndicators = callingfnDefPath.scope.indicators;
       const functionReferncedNode = scope.getReferencedPath(node.expression);
       const internalfnDefIndicators = functionReferncedNode.scope.indicators;
+      state.isEncrypted = internalfnDefIndicators.encryptionRequired;
       const startNodePath = path.getAncestorOfType('ContractDefinition')
       startNodePath.node.nodes.forEach(node => {
         if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
@@ -1032,7 +1033,7 @@ let interactsWithSecret = false ;
        circuitImport: isCircuit,
        structImport: !state.isAddStructDefinition,
        structName: state.structName,
-       isEncrypted: internalfnDefIndicators.encryptionRequired,
+       isEncrypted: state.isEncrypted,
       });
       node._newASTPointer = newNode ;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);

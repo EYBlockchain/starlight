@@ -150,12 +150,12 @@ function codeGenerator(node: any) {
       if(node.CircuitReturn.length){
        node.CircuitReturn.forEach((para) =>{
         if(para.typeName.name == 'EncryptedMsgs<3>')
-         returnPara = `  EncryptedMsgs<3> ${para.name}_0_cipherText =`;
-        
+         returnPara = `  EncryptedMsgs<3> ${para.name}_0_cipherText = `;
        })
+       return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')})`
       }
-      if(node.CircuitArguments.length)
-       return `${returnPara} assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+      else if(node.CircuitArguments.length)
+       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
       else
        return ``;
       }
