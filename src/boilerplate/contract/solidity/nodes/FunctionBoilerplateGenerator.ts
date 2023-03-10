@@ -112,8 +112,8 @@ class FunctionBoilerplateGenerator {
       if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true});
       if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
       let internalFunctionEncryptionRequired = false;
-      path.node._newASTPointer.body.statements.forEach((node) => {
-        if(node.expression.nodeType === 'InternalFunctionCall')
+      path.node._newASTPointer.body.statements?.forEach((node) => {
+        if(node.expression?.nodeType === 'InternalFunctionCall')
         if(node.expression.parameters.includes('cipherText') ) 
         internalFunctionEncryptionRequired = true 
       })
