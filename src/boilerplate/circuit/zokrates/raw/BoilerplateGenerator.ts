@@ -453,14 +453,15 @@ class BoilerplateGenerator {
     },
   };
   internalFunctionCall = {
-    importStatements( { name: x , circuitImport, structImport, structName: structName} ): string[] {
-      if(circuitImport && !structImport)
-        return [`from "./${x}.zok" import main as ${x} `];
-      else if(circuitImport && structImport)
-        return [
-          `from "./${x}.zok" import main as ${x} `,
-          `from "./${x}.zok" import ${structName} as ${structName} `];
-       return [];
+    importStatements( { name: x , circuitImport, structImport, structName: structName, isEncrypted} ): string[] {
+      let internalFncImports = [];
+      if(circuitImport)
+      internalFncImports.push(`from "./${x}.zok" import main as ${x} `);
+      if( structImport)
+      internalFncImports.push(`from "./${x}.zok" import ${structName} as ${structName} `);
+      if(isEncrypted)
+      internalFncImports.push(`from "./common/encryption/kem-dem.zok" import EncryptedMsgs as EncryptedMsgs `);
+      return internalFncImports;
     },
   };
 

@@ -1023,6 +1023,7 @@ let interactsWithSecret = false ;
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        CircuitArguments: [],
+       CircuitReturn:[],
        circuitImport: isCircuit,
      });
      const fnNode = buildNode('InternalFunctionBoilerplate', {
@@ -1031,6 +1032,7 @@ let interactsWithSecret = false ;
        circuitImport: isCircuit,
        structImport: !state.isAddStructDefinition,
        structName: state.structName,
+       isEncrypted: internalfnDefIndicators.encryptionRequired,
       });
       node._newASTPointer = newNode ;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);

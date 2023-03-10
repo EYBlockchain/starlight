@@ -146,8 +146,16 @@ function codeGenerator(node: any) {
     }
     case 'InternalFunctionCall': {
      if(node.internalFunctionInteractsWithSecret) {
+      let returnPara  = ' ';
+      if(node.CircuitReturn.length){
+       node.CircuitReturn.forEach((para) =>{
+        if(para.typeName.name == 'EncryptedMsgs<3>')
+         returnPara = `  EncryptedMsgs<3> ${para.name}_0_cipherText =`;
+        
+       })
+      }
       if(node.CircuitArguments.length)
-       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+       return `${returnPara} assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
       else
        return ``;
       }
