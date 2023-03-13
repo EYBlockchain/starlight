@@ -124,6 +124,7 @@ export const generateProofBoilerplate = (node: any) => {
   const enc = [];
   const cipherTextLength = [];
   let containsRoot = false;
+  let containsNullifierRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
   let stateNode: any;
@@ -177,12 +178,14 @@ export const generateProofBoilerplate = (node: any) => {
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            nullifierRootRequired: !containsNullifierRoot,
             initialisationRequired: stateNode.initialisationRequired,
             encryptionRequired: false,
             rootRequired: !containsRoot,
             parameters,
           })
         );
+        if(stateNode.nullifierRequired) containsNullifierRoot = true;
         if (!stateNode.reinitialisedOnly) containsRoot = true;
         break;
 
@@ -210,6 +213,7 @@ export const generateProofBoilerplate = (node: any) => {
                 structProperties: stateNode.structProperties,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                nullifierRootRequired: !containsNullifierRoot,
                 initialisationRequired: false,
                 encryptionRequired: false,
                 rootRequired: !containsRoot,
@@ -217,6 +221,7 @@ export const generateProofBoilerplate = (node: any) => {
                 parameters,
               })
             );
+            containsNullifierRoot = true;
             containsRoot = true;
             break;
           case false:
@@ -239,6 +244,7 @@ export const generateProofBoilerplate = (node: any) => {
                 structProperties: stateNode.structProperties,
                 reinitialisedOnly: false,
                 burnedOnly: false,
+                nullifierRootRequired: false,
                 initialisationRequired: false,
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: false,

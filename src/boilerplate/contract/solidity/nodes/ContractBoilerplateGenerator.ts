@@ -77,7 +77,7 @@ class ContractBoilerplateGenerator {
       let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = scope;
-
+      const nullifierRootRequired = nullifiersRequired;
       const fnDefBindings = scope.filterBindings(
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
@@ -89,6 +89,7 @@ class ContractBoilerplateGenerator {
       }
       return {
         functionNames,
+        nullifierRootRequired,
         nullifiersRequired,
         oldCommitmentAccessRequired,
         newCommitmentsRequired,
@@ -105,6 +106,7 @@ class ContractBoilerplateGenerator {
       let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = this.scope;
+      const nullifierRootRequired = nullifiersRequired;
       let isjoinCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(this.scope.bindings)){
        if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct)
@@ -126,6 +128,7 @@ class ContractBoilerplateGenerator {
           switch (circuitParamNode.bpType) {
             case 'nullification':
               if (circuitParamNode.isNullified) {
+                if (!newList.includes('nullifierRoot')) newList.push('nullifierRoot');
                 newList.push('nullifier');
               } else {
                 // we use a nullification node for accessed, not nullified, states
@@ -168,7 +171,7 @@ class ContractBoilerplateGenerator {
 
     }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};
+      return { nullifierRootRequired,nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};
     },
 
   };

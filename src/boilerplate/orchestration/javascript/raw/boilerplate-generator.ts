@@ -360,6 +360,7 @@ class BoilerplateGenerator {
       reinitialisedOnly,
       burnedOnly,
       accessedOnly,
+      nullifierRootRequired,
       initialisationRequired,
       encryptionRequired,
       rootRequired,
@@ -386,7 +387,7 @@ class BoilerplateGenerator {
               ${parameters.join('\n')}${stateVarIds.join('\n')}
               \tsecretKey.integer,
               \tsecretKey.integer,
-              \t${stateName}_nullifierRoot.integer,
+              ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
               \t${stateName}_0_nullifier_index,
@@ -420,7 +421,7 @@ class BoilerplateGenerator {
                   return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.integer,
-                      \t${stateName}_nullifierRoot.integer,
+                      ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
                       \t${stateName}_nullifier_index,
@@ -436,7 +437,7 @@ class BoilerplateGenerator {
                       return [`
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.integer,
-                          \t${stateName}_nullifierRoot.integer,
+                          ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                           \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
                           \t${stateName}_nullifier_index,
@@ -449,10 +450,10 @@ class BoilerplateGenerator {
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
-                      \t${stateName}_nullifierRoot.integer,
+                      ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
-                      \t${stateName}_nullifier_index,,
+                      \t${stateName}_nullifier_index,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}

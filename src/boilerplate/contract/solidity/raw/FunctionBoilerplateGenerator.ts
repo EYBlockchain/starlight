@@ -56,6 +56,7 @@ class FunctionBoilerplateGenerator {
     postStatements({
       functionName,
       customInputs, // array of custom input names
+      nullifierRootRequired : nullifierRootRequired,
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
@@ -67,7 +68,8 @@ class FunctionBoilerplateGenerator {
 
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
-      ...(newNullifiers ? [`uint256, uint256[]`] : []), // nullifier Root and nullifiers
+      ...(nullifierRootRequired ? [`uint256`] : []),
+      ...(newNullifiers ? [` uint256[]`] : []), 
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),
@@ -96,9 +98,10 @@ class FunctionBoilerplateGenerator {
           }).join('\n')}`]
           : []),
 
+          ...(nullifierRootRequired ? [`
+          inputs.nullifierRoot = nullifierRoot; `] : []),
+
         ...(newNullifiers ? [`
-          inputs.nullifierRoot = nullifierRoot;
-          
           inputs.newNullifiers = newNullifiers;
            `] : []),
 

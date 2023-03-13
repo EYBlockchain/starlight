@@ -323,6 +323,24 @@ export async function joinCommitments(
 	oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
 	oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32)); // truncate
 
+	// Non-membership witness for Nullifier
+	const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
+		oldCommitment_0_nullifier
+	);
+	const oldCommitment_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(
+		oldCommitment_1_nullifier
+	);
+
+	const oldCommitment_nullifierRoot = generalise(oldCommitment_0_nullifier_NonMembership_witness.root);
+	const oldCommitment_0_nullifier_path = generalise(
+		oldCommitment_0_nullifier_NonMembership_witness.path
+	).all;
+	const oldCommitment_1_nullifier_path = generalise(
+		oldCommitment_0_nullifier_NonMembership_witness.path
+	).all;
+	const oldCommitment_0_nullifier_index = oldCommitment_0_nullifier_NonMembership_witness.binArr;
+	const oldCommitment_1_nullifier_index = oldCommitment_1_nullifier_NonMembership_witness.binArr; // TODO : calculate in circuit
+
 	// Calculate commitment(s):
 
 	const newCommitment_newSalt = generalise(utils.randomHex(31));
@@ -358,8 +376,14 @@ export async function joinCommitments(
 		isMapping,
 		secretKey.integer,
 		secretKey.integer,
+
+		oldCommitment_nullifierRoot.integer,
 		oldCommitment_0_nullifier.integer,
+		oldCommitment_0_nullifier_path.integer,
+		oldCommitment_0_nullifier_index,
 		oldCommitment_1_nullifier.integer,
+		oldCommitment_1_nullifier_path.integer,
+		oldCommitment_1_nullifier_index,
 		oldCommitment_0_prev.integer,
 		oldCommitment_0_prevSalt.integer,
 		oldCommitment_1_prev.integer,

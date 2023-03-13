@@ -99,6 +99,7 @@ class ContractBoilerplateGenerator {
 
     verify({
       oldCommitmentAccessRequired: commitmentRoot,
+      nullifierRootRequired: nullifierRootRequired,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
       containsAccessedOnlyState: checkNullifiers,
@@ -118,13 +119,13 @@ class ContractBoilerplateGenerator {
       const verifyInputsMap = (type: string, input: string, counter: any) => {
         if(type  === 'parameters'){
         switch (input) {
-          case 'nullifier':  // nuliifier Root and nullifers exists together
+          case 'nullifierRoot':  
             verifyInput.push( `
             inputs[k++] = _inputs.nullifierRoot;`); 
-
+            break;
+          case 'nullifier':  
             verifyInput.push( `
-            inputs[k++] = newNullifiers[${counter.newNullifiers++}];`);
-            
+            inputs[k++] = newNullifiers[${counter.newNullifiers++}];`); 
             break;
           case 'checkNullifier':
             verifyInput.push(`
