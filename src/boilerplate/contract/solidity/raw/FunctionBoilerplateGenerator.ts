@@ -69,7 +69,7 @@ class FunctionBoilerplateGenerator {
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
       ...(nullifierRootRequired ? [`uint256`] : []),
-      ...(newNullifiers ? [` uint256[]`] : []), 
+      ...(newNullifiers ? [`uint256[]`] : []), 
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
       ...(checkNullifiers ? [`uint256[]`] : []),

@@ -144,8 +144,8 @@ function _insertLeaf(val, tree, binArr){
   };
   
   // This inserts a value into the smt as a leaf
-  async function insertLeaf(val, tree) {
-	const binArr = toBinArray(new GN(val, 'hex')).slice(0, TRUNC_LENGTH);
+  function insertLeaf(val, tree) {
+	const binArr = toBinArray(generalise(val)).slice(0, TRUNC_LENGTH);
 	const padBinArr = Array(TRUNC_LENGTH - binArr.length)
 	  .fill('0')
 	  .concat(...binArr);
@@ -457,13 +457,13 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 	switch (tree.tag) {
 	  case 'branch':
 		return binArr[0] === '0'
-		  ? _checkMembership(
+		  ? _getnullifierMembershipWitness(
 			  binArr.slice(1),
 			  element,
 			  tree.left,
 			  [getHash(tree.right) ].concat(acc),
 			)
-		  : _checkMembership(
+		  : _getnullifierMembershipWitness(
 			  binArr.slice(1),
 			  element,
 			  tree.right,

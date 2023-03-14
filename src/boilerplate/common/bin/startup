@@ -12,7 +12,7 @@ sleep 5
 
 docker-compose -f docker-compose.zapp.yml up -d deployer
 
-sleep 15
+sleep 25
 
 docker-compose -f docker-compose.zapp.yml up -d timber
 
