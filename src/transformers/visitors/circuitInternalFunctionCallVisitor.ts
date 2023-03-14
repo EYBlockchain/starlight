@@ -73,6 +73,8 @@ const internalCallVisitor = {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
                   internalFncParameters.push(`nullifierRoot`);
                   internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
+                  internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_siblingPath`);
+                  internalFncParameters.push(`${node.name}_nullifier_index`);
                   break;
                  };
                  case 'oldCommitmentPreimage' : {
