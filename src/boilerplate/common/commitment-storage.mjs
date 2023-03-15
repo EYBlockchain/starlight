@@ -469,31 +469,21 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 			  tree.right,
 			  [getHash(tree.left)].concat(acc),
 			);
-	  case 'leaf': {
-		if(binArr.length > 0) {
-		  while(binArr.length > 0){
-			binArr[0] ?
-			acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc) : [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc) ;
-			binArr = binArr.slice(1);
-		  }
-		  return {isMember : false, path: acc};
-		}
-		else {
-		return tree.val !== element 
-		  ? {
-			  isMember: false,
-			  path: binArr
-				.map((bit, idx) => {
-				  return bit === '0'
-					?  [hlt[TRUNC_LENGTH - (binArr.length - 1)]]
-					: [hlt[TRUNC_LENGTH - (binArr.length - 1)]];
-				})
-				.reverse()
-				.concat(acc),
+			case "leaf": {
+				if (binArr.length > 0) {
+					while (binArr.length > 0) {
+						binArr[0] === "0"
+							? (acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc))
+							: (acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc));
+						binArr = binArr.slice(1);
+					}
+					return { isMember: false, path: acc };
+				} else {
+					return tree.val !== element
+						? { isMember: false, path: acc }
+						: { isMember: true, path: acc };
+				}
 			}
-		  : { isMember: true, path: acc };
-		}
-	  }
 	  default:
 		return tree;
 	}
