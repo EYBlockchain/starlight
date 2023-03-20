@@ -100,7 +100,6 @@ def main(\
 
         // Nullify oldCommitment_1:
 
-
         field oldCommitment_1_nullifier_check_field = poseidon([\
           oldCommitment_1_stateVarId_field,\
           oldCommitment_1_owner_secretKey_field,\

@@ -145,10 +145,10 @@ function _insertLeaf(val, tree, binArr){
   
   // This inserts a value into the smt as a leaf
   function insertLeaf(val, tree) {
-	const binArr = toBinArray(generalise(val)).slice(0, TRUNC_LENGTH);
-	const padBinArr = Array(TRUNC_LENGTH - binArr.length)
-	  .fill('0')
-	  .concat(...binArr);
+	const binArr = toBinArray(generalise(val))
+	const padBinArr = Array(254 - binArr.length)
+		.fill("0")
+		.concat(...binArr).slice(0, TRUNC_LENGTH);
 	return _insertLeaf(val, tree, padBinArr);
   };
 
@@ -336,11 +336,9 @@ export async function joinCommitments(
 		oldCommitment_0_nullifier_NonMembership_witness.path
 	).all;
 	const oldCommitment_1_nullifier_path = generalise(
-		oldCommitment_0_nullifier_NonMembership_witness.path
+		oldCommitment_1_nullifier_NonMembership_witness.path
 	).all;
-	const oldCommitment_0_nullifier_index = oldCommitment_0_nullifier_NonMembership_witness.binArr;
-	const oldCommitment_1_nullifier_index = oldCommitment_1_nullifier_NonMembership_witness.binArr; // TODO : calculate in circuit
-
+	
 	// Calculate commitment(s):
 
 	const newCommitment_newSalt = generalise(utils.randomHex(31));
@@ -492,13 +490,13 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 
 export function getnullifierMembershipWitness(nullifier) {
 
-	const binArr = toBinArray(generalise(nullifier)).slice(0, TRUNC_LENGTH);
-	const padBinArr = Array(TRUNC_LENGTH - binArr.length)
-	  .fill('0')
-	  .concat(...binArr);
+	const binArr = toBinArray(generalise(nullifier))
+	const padBinArr = Array(254 - binArr.length)
+		.fill("0")
+		.concat(...binArr).slice(0, TRUNC_LENGTH);
 	const  membershipPath = _getnullifierMembershipWitness(padBinArr, nullifier, smt_tree, []);
     const root = getHash(smt_tree);
-	const witness = {path : membershipPath.path, root: root, binArr: padBinArr}
+	const witness = {path : membershipPath.path, root: root}
 	return witness;
 
 }
