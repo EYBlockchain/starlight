@@ -275,8 +275,7 @@ class BoilerplateGenerator {
             const ${stateName}_nullifierRoot = generalise(${stateName}_0_nullifier_NonMembership_witness.root);
             const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
             const ${stateName}_1_nullifier_path = generalise(${stateName}_1_nullifier_NonMembership_witness.path).all;
-            const ${stateName}_0_nullifier_index = ${stateName}_0_nullifier_NonMembership_witness.binArr;
-            const ${stateName}_1_nullifier_index = ${stateName}_1_nullifier_NonMembership_witness.binArr; // TODO : calculate in circuit`];
+            `];
         case 'whole':
           return [`
             let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
@@ -287,7 +286,7 @@ class BoilerplateGenerator {
 
             const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
             const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
-            const ${stateName}_nullifier_index = ${stateName}_nullifier_NonMembership_witness.binArr; // TODO : calculate in circuit`];
+          `];
         default:
           throw new TypeError(stateType);
       }
@@ -390,10 +389,8 @@ class BoilerplateGenerator {
               ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
-              \t${stateName}_0_nullifier_index,
               \t${stateName}_1_nullifier.integer,
               \t${stateName}_1_nullifier_path.integer,
-              \t${stateName}_1_nullifier_index,
               ${prev(0)},
               \t${stateName}_0_prevSalt.integer,
               ${prev(1)},
@@ -424,7 +421,6 @@ class BoilerplateGenerator {
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
-                      \t${stateName}_nullifier_index,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
@@ -440,7 +436,6 @@ class BoilerplateGenerator {
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                           \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
-                          \t${stateName}_nullifier_index,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}
@@ -453,7 +448,6 @@ class BoilerplateGenerator {
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
-                      \t${stateName}_nullifier_index,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}

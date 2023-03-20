@@ -21,10 +21,8 @@ def main(\
   public field nullifierRoot,\
 	public field oldCommitment_0_nullifier,\
   public field[32] oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
-  private bool[32] oldCommitment_0_nullifier_index,\
 	public field oldCommitment_1_nullifier,\
   private field[32] oldCommitment_1_nullifier_nonmembershipWitness_siblingPath,\
-	private bool[32] oldCommitment_1_nullifier_index,\
 	private field oldCommitment_0_value,\
 	private field oldCommitment_0_salt_field,\
 	private field oldCommitment_1_value,\
@@ -93,11 +91,9 @@ def main(\
         )
        
        assert(\
-          checkproof(\
+          nullifierRoot == checkproof(\
             oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
-            oldCommitment_0_nullifier,\
-            nullifierRoot,\
-            oldCommitment_0_nullifier_index\
+            oldCommitment_0_nullifier\
            )          )
         
 
@@ -116,11 +112,9 @@ def main(\
         )
 
         assert(\
-          checkproof(\
+         nullifierRoot ==  checkproof(\
             oldCommitment_1_nullifier_nonmembershipWitness_siblingPath,\
-            oldCommitment_1_nullifier,\
-            nullifierRoot,\
-            oldCommitment_1_nullifier_index\
+            oldCommitment_1_nullifier\
            )          )
         
 

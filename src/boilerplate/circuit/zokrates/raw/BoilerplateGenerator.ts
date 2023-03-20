@@ -62,7 +62,6 @@ class BoilerplateGenerator {
         `public field nullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
-        `private bool[32] ${x}_nullifier_index`,
        
 
       ];
@@ -96,11 +95,9 @@ class BoilerplateGenerator {
         // ${x}_oldCommitment_nullifier : non-existence check
         
         assert(\\
-          checkproof(\\
+          nullifierRoot == checkproof(\\
             ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier,\\
-            nullifierRoot,\\
-            ${x}_nullifier_index\\
+            ${x}_oldCommitment_nullifier\\
            )\
           )
         `,
