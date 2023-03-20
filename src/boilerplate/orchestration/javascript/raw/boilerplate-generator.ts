@@ -274,7 +274,7 @@ class BoilerplateGenerator {
 
             const ${stateName}_nullifierRoot = generalise(${stateName}_0_nullifier_NonMembership_witness.root);
             const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
-            const ${stateName}_1_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_1_nullifier_path = generalise(${stateName}_1_nullifier_NonMembership_witness.path).all;
             const ${stateName}_0_nullifier_index = ${stateName}_0_nullifier_NonMembership_witness.binArr;
             const ${stateName}_1_nullifier_index = ${stateName}_1_nullifier_NonMembership_witness.binArr; // TODO : calculate in circuit`];
         case 'whole':
