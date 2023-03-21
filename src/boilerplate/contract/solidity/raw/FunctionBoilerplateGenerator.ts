@@ -45,7 +45,6 @@ class FunctionBoilerplateGenerator {
         ...(newNullifiers ? [`uint256 nullifierRoot, uint256[] ${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
         ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
-        ...(checkNullifiers ? [`uint256[] ${visibility} checkNullifiers`] : []),
         ...(encryptionRequired ? [`uint256[][] calldata cipherText`] : []),
         ...(encryptionRequired ? [`uint256[2][] calldata ephPubKeys`] : []),
         ...(newCommitments || newNullifiers ? [`uint256[] ${visibility} proof`] : []),
@@ -60,7 +59,6 @@ class FunctionBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
-      containsAccessedOnlyState: checkNullifiers,
       encryptionRequired,
       isConstructor
     }): string[] {
@@ -72,7 +70,6 @@ class FunctionBoilerplateGenerator {
       ...(newNullifiers ? [`uint256[]`] : []), 
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
-      ...(checkNullifiers ? [`uint256[]`] : []),
       ...(encryptionRequired ? [`uint256[][]`] : []),
       ...(encryptionRequired ? [`uint256[2][]`] : []),
       `uint256[]`,
@@ -104,9 +101,6 @@ class FunctionBoilerplateGenerator {
         ...(newNullifiers ? [`
           inputs.newNullifiers = newNullifiers;
            `] : []),
-
-        ...(checkNullifiers ? [`
-          inputs.checkNullifiers = checkNullifiers;`] : []),
 
         ...(commitmentRoot ? [`
           inputs.commitmentRoot = commitmentRoot;`] : []),

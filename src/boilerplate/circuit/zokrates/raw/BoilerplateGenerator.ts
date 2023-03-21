@@ -56,15 +56,17 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x }): string[] {
-      return [
+    parameters({ name: x, isAccessed }): string[] {
+      const para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field nullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
-       
+      ]
+       if(isAccessed) 
+       para.splice(2,1);
 
-      ];
+      return para;
     },
 
     preStatements({ name: x, id, isMapping }): string[] {
@@ -77,7 +79,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x }): string[] {
+    postStatements({ name: x , isAccessed }): string[] {
       // default nullification lines (for partitioned & whole states)
       const lines = [
         `
@@ -103,6 +105,28 @@ class BoilerplateGenerator {
         `,
       ];
 
+      if(isAccessed) 
+       { return [
+        `
+        // Create the Nullifier for the accessed state ${x}, no need to nullify it:
+
+        field ${x}_oldCommitment_nullifier  = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_oldCommitment_owner_secretKey,\\
+          ${x}_oldCommitment_salt\\
+        ])
+
+        // ${x}_oldCommitment_nullifier : non-existence check
+        
+        assert(\\
+          nullifierRoot == checkproof(\\
+            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
+            ${x}_oldCommitment_nullifier\\
+           )\
+          )
+        `,
+      ];
+}
       if (this.initialisationRequired && this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [

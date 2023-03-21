@@ -434,7 +434,6 @@ class BoilerplateGenerator {
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.integer,
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                          \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
