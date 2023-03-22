@@ -142,27 +142,28 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnboilerplate = genericApiServiceFile.postStatements()
     .replace(/CONTRACT_NAME/g, node.contractName)
     .replace(/FUNCTION_NAME/g, fn.name);
-  let fnParam =[];
+  let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
-    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
-    paramTypes.forEach(type => {
-      paramName.forEach(element =>{
-        if(type.isStruct){
-         structparams = `{ ${type.properties.map(p => `${p.name}: req.body.${element}.${p.name}`)}}`
-         fnParam.push( `const ${element} = ${structparams} ;\n`)
-        }
-        else{
-            fnParam.push( `const ${element} = req.body.${element} ;\n`)
-        }
+    fn.parameters.parameters.forEach(p => {
+      if (p.typeName.isStruct) {
+        structparams = `{ ${p.typeName.properties.map(prop => `${prop.name}: req.body.${p.name}.${prop.name}`)}}`;
+        fnParam.push( `const ${p.name} = ${structparams} ;\n`);
+      } else {
+        fnParam.push( `const { ${p.name} } = req.body;\n`);
+      }
+    });
 
-      })
-    })
+    fn.parameters.modifiedStateVariables.forEach(m => {
+      fnParam.push(`const ${m.name}_newOwnerPublicKey = req.body.${m.name}_newOwnerPublicKey || 0;\n`);
+      paramName.push(`${m.name}_newOwnerPublicKey`);
+    });
+
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
-    let returnParams =[];
-    let returnParamsName = fn.returnParameters.parameters.map((obj: any) => obj.name);
+    let returnParams: string[] = [];
+    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
     if(returnParamsName.length > 0){
     returnParamsName.forEach(param => {
       if(fn.decrementsSecretState.includes(param))
@@ -254,7 +255,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   let constructorParamsIncludesAddr = false;
   let customProofImport = ``;
   let customProofInputs = ``;
-  const constructorAddrParams = [];
+  const constructorAddrParams: string[] = [];
   // we check weter we must pass in an address to the constructor
   node.constructorParams?.forEach((arg: any) => {
     if (arg.typeName.name === 'address') {

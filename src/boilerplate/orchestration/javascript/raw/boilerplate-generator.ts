@@ -102,7 +102,7 @@ class BoilerplateGenerator {
       accessedOnly,
       stateVarIds
     }): string[] {
-        const stateVarId = [];
+        const stateVarId: string[] = [];
       if(stateVarIds.length > 1){
         stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
         stateVarId.push(`${stateName}_stateVarId_key`);
@@ -169,7 +169,7 @@ class BoilerplateGenerator {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
 
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
@@ -322,14 +322,16 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, registerKey } from './common/contract.mjs';`,
+        `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
+        `\nimport Web3 from './common/web3.mjs';`,
         `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
+        `const web3 = Web3.connection();`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -427,14 +429,19 @@ class BoilerplateGenerator {
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
-                      \t${stateName}_newOwnerPublicKey.integer,
+                      ${encryptionRequired ? `` : `\t${stateName}_newOwnerPublicKey.integer,`}
                       \t${stateName}_newSalt.integer,
-                      \t${stateName}_newCommitment.integer`];
-        }
+                      \t${stateName}_newCommitment.integer
+                      ${encryptionRequired ? `,
+                        \tgeneralise(utils.randomHex(31)).integer,
+                        \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
+                          decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}`];
+                  }
+              }
       }
     }
-  }
-},
+    return []; // here to stop ts complaining
+  },
 };
 
 sendTransaction = {
@@ -456,7 +463,7 @@ sendTransaction = {
       let value;
       switch (stateType) {
         case 'increment':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue[${i}]`)} }` : `${stateName}_newCommitmentValue`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
           return [`
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
@@ -472,7 +479,7 @@ sendTransaction = {
             isNullified: false,
           });`];
         case 'decrement':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change[${i}]`)} }` : `${stateName}_change`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
             \nawait markNullified(generalise(${stateName}_0_oldCommitment._id), secretKey.hex(32));
             \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));
@@ -576,7 +583,7 @@ integrationTestBoilerplate = {
 },
 postStatements(): string {
   return `// eslint-disable-next-line func-names \n ${
-      fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g)[0]
+      (fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g) || [])[0]
     }`
 },
 
@@ -608,7 +615,7 @@ integrationApiServicesBoilerplate = {
     },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${
-        fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]}`
+        (fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`
   },
 
   commitments(): string {
@@ -650,7 +657,7 @@ integrationApiRoutesBoilerplate = {
   },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${
-        fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)[0]}`
+        (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
     return `import { service_allCommitments, service_getCommitmentsByState } from "./api_services.mjs";\n`;
@@ -671,6 +678,11 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
+      readPath: pathPrefix + '/bin/startup',
+      writePath: '/bin/default_startup',
+      generic: true,
+    },
+    {
       readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
       generic: false,
@@ -688,6 +700,16 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/boilerplate-docker-compose.yml',
       writePath: './docker-compose.zapp.yml',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
+      writePath: './docker-compose.zapp.override.yml',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
+      writePath: './docker-compose.zapp.override.default.yml',
       generic: true,
     },
     {
@@ -713,6 +735,11 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/entrypoint.sh',
       writePath: './entrypoint.sh',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/entrypoint.sh',
+      writePath: './entrypoint_default.sh',
       generic: true,
     },
     {

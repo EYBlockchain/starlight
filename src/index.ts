@@ -23,7 +23,7 @@ const zappify = (options: any) => {
 
   let path = checks(zolAST);
 
-  path = ownership(path);
+  path = ownership(path, options);
 
   options.circuitAST = toCircuit(zolAST, options);
 

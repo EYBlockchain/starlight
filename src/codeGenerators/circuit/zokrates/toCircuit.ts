@@ -73,8 +73,10 @@ function codeGenerator(node: any) {
         node.returnParameters.parameters.forEach((node) => {
           if (node.typeName.name === 'bool')
             returnStatement.push(`${node.name}`);
+          else if (node.typeName.name.includes('EncryptedMsgs') && node.isPartitioned)
+            returnStatement.push( `${node.name}_0_cipherText`);
           else if (node.typeName.name.includes('EncryptedMsgs'))
-            returnStatement.push( `${node.name}_0_cipherText`); // TODO test always 0
+            returnStatement.push( `${node.name}_cipherText`);
           else if (node.isPrivate === true){
               returnName.forEach( (name, index) => {
                 if(name.includes(node.name))
@@ -86,10 +88,8 @@ function codeGenerator(node: any) {
 
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
-        if(node.isPrivate === true && node.typeName.name !== 'bool')
+        if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
-        if(node.typeName.name === 'bool')
-        returnType.push(node.typeName.name);
       });
       if(returnStatement.length === 0){
         returnStatement.push('true');
@@ -116,7 +116,7 @@ function codeGenerator(node: any) {
       const slicedParamList = paramList.map(p =>
         p.replace('public ', '').replace('private ', ''),
       );
-      const linesToDelete = []; // we'll collect duplicate params here
+      const linesToDelete: string[] = []; // we'll collect duplicate params here
       for (let i = 0; i < paramList.length; i++) {
         for (let j = i + 1; j < slicedParamList.length; j++) {
           if (slicedParamList[i] === slicedParamList[j]) {

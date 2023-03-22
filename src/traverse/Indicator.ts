@@ -236,7 +236,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     if (path.isInType('VariableDeclarationStatement')) {
       this.initialValue = path.getAncestorOfType(
         'VariableDeclarationStatement',
-      ).node.initialValue;
+      )?.node.initialValue;
     }
 
     this.isParam = path.isInType('ParameterList');
@@ -392,13 +392,13 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   constructor(path: NodePath) {
     super(path.scope);
     const referencedBinding = path.getReferencedBinding();
-    const referencedId = referencedBinding.id;
-    const referencedName = referencedBinding.name;
+    const referencedId = referencedBinding?.id;
+    const referencedName = referencedBinding?.name;
 
     if (!(referencedBinding instanceof VariableBinding)) throw new TypeError(`Variable indicator for ${referencedName} cannot find a variable binding`);
 
-    this.id = referencedId;
-    this.name = referencedName;
+    this.id = referencedId || path.node.id;
+    this.name = referencedName || path.node.name;
     this.binding = referencedBinding;
     this.scope = path.scope;
     this.node = path.node;
@@ -425,8 +425,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     }
     if (path.isStruct()) {
       this.isStruct = true;
-      this.structProperties = {};
       path.getStructDeclaration()?.members.forEach((member: any) => {
+        this.structProperties ??= {}; 
         this.structProperties[member.name] = {};
       });
     }
@@ -449,6 +449,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     const keyName = this.binding.getMappingKeyName(referencingPath);
 
     // add this mappingKey if it hasn't yet been added:
+    this.mappingKeys ??= {};
     const mappingKeyExists = !!this.mappingKeys[keyName];
     if (!mappingKeyExists)
       this.mappingKeys[keyName] = new MappingKey(this, keyPath);
@@ -464,6 +465,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     const keyNode = referencingPath.getStructPropertyNode();
     const keyPath = keyNode.id === referencingPath.node.id ? referencingPath : referencingPath.getAncestorOfType('MemberAccess');
     if (!keyPath) throw new Error('No keyPath found in pathCache');
+    this.structProperties ??= {};
     if (!(this.structProperties[keyNode.memberName] instanceof MappingKey))
       this.structProperties[keyNode.memberName] = new MappingKey(this, keyPath, true);
 
@@ -536,14 +538,14 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     }
     if (this.isMapping) {
       this.mappingOwnershipType = this.owner?.mappingOwnershipType;
-      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
       for (const [, mappingKey] of mappingKeys) {
         mappingKey.updateFromBinding();
       }
     }
 
     if (this.isStruct) {
-      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+      const structProperties: [string, MappingKey][] = Object.entries(this.structProperties ? this.structProperties : {});
       for (const [, mappingKey] of structProperties) {
         // we may have empty struct properties if they are never edited
         if (mappingKey instanceof MappingKey) mappingKey.updateFromBinding();
@@ -629,10 +631,10 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.increments ??= [];
     this.decrements ??= [];
     state.increments.forEach((inc: any) => {
-      this.increments.push(inc);
+      this.increments?.push(inc);
     });
     state.decrements.forEach((dec: any) => {
-      this.decrements.push(dec);
+      this.decrements?.push(dec);
     });
     if (this.isMapping) {
       this.addMappingKey(state.incrementedPath).updateIncrementation(
@@ -662,7 +664,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if (!this.modifyingPaths.some(p => p.node.id === path.node.id)) {
       this.modifyingPaths.push(path);
 
-      if (path.getAncestorOfType('FunctionDefinition').node.kind === 'constructor') {
+      if (path.getAncestorOfType('FunctionDefinition')?.node.kind === 'constructor') {
         this.binding.initialisedInConstructor = true;
         this.initialisationRequired = true; // we need the dummy nullifier in the constructor
         if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
@@ -702,12 +704,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   prelimTraversalErrorChecks() {
     if (!this.isSecret) return;
     if (this.isMapping) {
-      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
       for (const [, mappingKey] of mappingKeys) {
         mappingKey.prelimTraversalErrorChecks();
       }
     } else if (this.isStruct) {
-      const structProperties = Object.entries(this.structProperties);
+      const structProperties = Object.entries(this.structProperties ? this.structProperties: {});
       for (const [name, mappingKey] of structProperties) {
         // we may have empty struct properties if they are never edited
         if (mappingKey instanceof MappingKey) {
@@ -739,25 +741,39 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       );
     }
     // error: conflicting whole/partitioned state
-    if (this.isWhole && this.isPartitioned) {
+    if (this.isWholeReason && this.isPartitionedReason)
       throw new SyntaxUsageError(
         `State cannot be whole and partitioned. The following reasons conflict.`,
         this.node,
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
-    }
+    else if (this.isWhole && this.isPartitioned) throw new SyntaxUsageError(
+      `State ${this.name} cannot be whole and partitioned`,
+      this.node,
+      []
+    )
   }
 
-  updateEncryption() {
-    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned) return;
+  updateEncryption(options?: any) {
+    // no new commitments => nothing to encrypt
+    if (!this.newCommitmentsRequired) return;
+    // decremented only => no new commitments to encrypt
+    if (this.isPartitioned && this.isDecremented && this.nullificationCount === this.referenceCount) return;
+    // find whether enc for this scope only has been opted in
+    let encThisState: boolean = false;
+    this.modifyingPaths.forEach(p => {
+      if (p.getAncestorOfType('ExpressionStatement')?.node.forceEncrypt) encThisState = true;
+    })
+    // whole state only if opted in
+    if ((!options?.encAllStates && !encThisState) && (!this.isPartitioned || !this.isOwned)) return;
     if (this.isMapping) {
-      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
       for (const [, mappingKey] of mappingKeys) {
-        mappingKey.updateEncryption()
+        mappingKey.updateEncryption(options)
       }
       return;
     }
-    if (this.isNullified) return;
+    if (this.isBurned) return;
     this.encryptionRequired = true;
     this.parentIndicator.encryptionRequired = true;
     this.parentIndicator.parentIndicator.encryptionRequired = true;
@@ -769,13 +785,13 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       this.parentIndicator.newCommitmentsRequired = true;
       this.newCommitmentsRequired = true;
       if (this.isMapping) {
-        const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys);
+        const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
         for (const [, mappingKey] of mappingKeys) {
           mappingKey.newCommitmentsRequired = true;
         }
       }
       if (this.isStruct) {
-        const structProperties: [string, MappingKey][] = Object.entries(this.structProperties);
+        const structProperties: [string, MappingKey][] = Object.entries(this.structProperties ? this.structProperties : {});
         for (const [, mappingKey] of structProperties) {
           mappingKey.newCommitmentsRequired = true;
         }
