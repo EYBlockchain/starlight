@@ -102,7 +102,6 @@ class ContractBoilerplateGenerator {
       nullifierRootRequired: nullifierRootRequired,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
-      containsAccessedOnlyState: checkNullifiers,
       encryptionRequired,
       circuitParams,
       constructorContainsSecret,
@@ -126,10 +125,6 @@ class ContractBoilerplateGenerator {
           case 'nullifier':  
             verifyInput.push( `
             inputs[k++] = newNullifiers[${counter.newNullifiers++}];`); 
-            break;
-          case 'checkNullifier':
-            verifyInput.push(`
-            inputs[k++] = checkNullifiers[${counter.checkNullifiers++}];`);
             break;
           case 'newCommitment':
             verifyInput.push(`
@@ -175,8 +170,6 @@ class ContractBoilerplateGenerator {
         ...(newNullifiers ? [`
           uint[] memory newNullifiers = _inputs.newNullifiers;`] : []),
 
-        ...(checkNullifiers ? [`
-          uint[] memory checkNullifiers = _inputs.checkNullifiers;`] : []),
         // removed to prevent stack too deep err - converted commitmentRoot to _inputs.commitmentRoot below
         // ...(commitmentRoot ? [`
         //   uint commitmentRoot = _inputs.commitmentRoot;`] : []),
@@ -190,12 +183,6 @@ class ContractBoilerplateGenerator {
       			require(nullifiers[n] == 0, "Nullifier already exists");
       			nullifiers[n] = n;
       		}`] : []),
-
-        ...(checkNullifiers ? [`
-          for (uint i; i < checkNullifiers.length; i++) {
-            uint n = checkNullifiers[i];
-            require(nullifiers[n] == 0, "Nullifier already exists");
-          }`] : []),
 
         ...(commitmentRoot ? [`
           require(commitmentRoots[_inputs.commitmentRoot] == _inputs.commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
@@ -211,7 +198,6 @@ class ContractBoilerplateGenerator {
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
-            ...(checkNullifiers ? ['checkNullifiers.length'] : []),
             ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 2 : 0)'] : []), // newNullifiers , nullifierRoot and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
@@ -225,7 +211,6 @@ class ContractBoilerplateGenerator {
           const counter = {
             customInputs: 0,
             newNullifiers: 0,
-            checkNullifiers: 0,
             newCommitments: 0,
             encryption: 0,
           };

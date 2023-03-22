@@ -56,14 +56,14 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, isAccessed }): string[] {
+    parameters({ name: x, isAccessed, isNullified }): string[] {
       const para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field nullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
       ]
-       if(isAccessed) 
+      if(isAccessed && !isNullified) 
        para.splice(2,1);
 
       return para;
@@ -79,7 +79,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x , isAccessed }): string[] {
+    postStatements({ name: x , isAccessed, isNullified}): string[] {
       // default nullification lines (for partitioned & whole states)
       const lines = [
         `
@@ -105,7 +105,7 @@ class BoilerplateGenerator {
         `,
       ];
 
-      if(isAccessed) 
+      if(isAccessed && !isNullified) 
        { return [
         `
         // Create the Nullifier for the accessed state ${x}, no need to nullify it:
