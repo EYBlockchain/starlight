@@ -429,11 +429,15 @@ class BoilerplateGenerator {
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
-                      \t${stateName}_newOwnerPublicKey.integer,
+                      ${encryptionRequired ? `` : `\t${stateName}_newOwnerPublicKey.integer,`}
                       \t${stateName}_newSalt.integer,
-                      \t${stateName}_newCommitment.integer`];
-          }
-        }
+                      \t${stateName}_newCommitment.integer
+                      ${encryptionRequired ? `,
+                        \tgeneralise(utils.randomHex(31)).integer,
+                        \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
+                          decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}`];
+                  }
+              }
       }
     }
     return []; // here to stop ts complaining
@@ -459,7 +463,7 @@ sendTransaction = {
       let value;
       switch (stateType) {
         case 'increment':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue[${i}]`)} }` : `${stateName}_newCommitmentValue`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
           return [`
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
@@ -475,7 +479,7 @@ sendTransaction = {
             isNullified: false,
           });`];
         case 'decrement':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change[${i}]`)} }` : `${stateName}_change`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
             \nawait markNullified(generalise(${stateName}_0_oldCommitment._id), secretKey.hex(32));
             \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));

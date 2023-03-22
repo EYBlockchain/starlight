@@ -54,6 +54,24 @@ export default {
     },
   },
 
+  ExpressionStatement: {
+    enter(node: any, state: any) {
+      // for each decorator we have to re-add...
+      for (const toRedecorate of state) {
+        // skip if the decorator is not secret (can't be a variable dec) or if its already been added
+        if (toRedecorate.added || toRedecorate.decorator !== 'encrypt') continue;
+        // extract the char number
+        const srcStart = node.src.split(':')[0];
+        // if it matches the one we removed, add it back to the AST
+        if (toRedecorate.charStart === Number(srcStart)) {
+          toRedecorate.added = true;
+          node.forceEncrypt = true;
+          return;
+        }
+      }
+    },
+  },
+
   Identifier: {
     enter(node: any, state: any) {
       // see varDec for comments

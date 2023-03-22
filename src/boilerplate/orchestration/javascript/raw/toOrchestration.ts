@@ -107,6 +107,10 @@ export const sendTransactionBoilerplate = (node: any) => {
           }
           if (!stateNode.burnedOnly)
             output[2].push(`${privateStateName}_newCommitment.integer`);
+          if (stateNode.encryptionRequired) {
+            output[4].push(`${privateStateName}_cipherText`);
+            output[5].push(`${privateStateName}_encKey`);
+          }
         }
 
         break;
@@ -174,7 +178,7 @@ export const generateProofBoilerplate = (node: any) => {
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
             initialisationRequired: stateNode.initialisationRequired,
-            encryptionRequired: false,
+            encryptionRequired: stateNode.encryptionRequired,
             rootRequired: !containsRoot,
             parameters,
           })
@@ -207,7 +211,7 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 initialisationRequired: false,
-                encryptionRequired: false,
+                encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
                 parameters,

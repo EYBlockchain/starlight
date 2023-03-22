@@ -176,8 +176,18 @@ export default class MappingKey {
     this.isOwned = true;
   }
 
-  updateEncryption() {
-    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned || this.isNullified) return;
+  updateEncryption(options?: any) {
+    // no new commitments => nothing to encrypt
+    if (!this.newCommitmentsRequired) return;
+    // decremented only => no new commitments to encrypt
+    if (this.isPartitioned && this.isDecremented && this.nullificationCount === this.referenceCount) return;
+    // find whether enc for this scope only has been opted in
+    let encThisState: boolean = false;
+    this.modifyingPaths.forEach(p => {
+      if (p.getAncestorOfType('ExpressionStatement')?.node.forceEncrypt) encThisState = true;
+    })
+    // whole state only if opted in
+    if ((!options?.encAllStates && !encThisState)  && (!this.isPartitioned || !this.isOwned)) return;
     switch (this.mappingOwnershipType) {
       case 'key':
         // owner here is the keypath
@@ -186,7 +196,7 @@ export default class MappingKey {
         break;
       case 'value':
       default:
-        if ((this.owner.node?.name || this.owner.name).includes('msg')) return;
+        if ((this.owner?.node?.name || this.owner?.name)?.includes('msg')) return;
         this.encryptionRequired = true;
         break;
     }
