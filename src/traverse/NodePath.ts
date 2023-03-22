@@ -991,6 +991,7 @@ export default class NodePath {
         arrLen = node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
         break;
     }
+    if (!arrLen) return false;
     for (const match of arrLen) {
       // tries to convert to a number
       if (+match) return true;

@@ -134,7 +134,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       }
       return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
         node.operator
-      } ${codeGenerator(node.rightHandSide)}`;
+      } ${codeGenerator(node.rightHandSide, { rhs: true })}`;
 
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${
@@ -192,8 +192,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return `${codeGenerator(node.arguments)}`;
 
     case 'UnaryOperation':
+      if (options?.rhs) return `generalise(parseInt(${node.subExpression.name}.integer, 10) ${node.operator.includes('+') ? `+ 1` : `- 1`})`;
       // ++ or -- on a parseInt() does not work
       return `generalise(${node.subExpression.name}.integer${node.operator})`;
+      // return `generalise(parseInt(${node.subExpression.name}.integer, 10) ${node.operator.includes('+') ? ``})`;
 
     case 'Literal':
       return node.value;

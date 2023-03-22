@@ -426,21 +426,20 @@ export class Scope {
         : indicator;
     }
 
-    if (path.isConstantArray(referencingNode) && !NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')) return indicator;
+    if ((path.isConstantArray(referencingNode) || referencingNode.memberName === 'length') && !NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')) return indicator;
 
 
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
-    const indexAccessNode =
-      referencingNode.nodeType === 'IndexAccess'
-        ? referencingNode
-        : NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')
-            .node;
+    const indexAccessPath = referencingNode.nodeType === 'IndexAccess'
+    ? NodePath.getPath(referencingNode)
+    : NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess');
+    const indexAccessNode = indexAccessPath.node;
 
-    if (!indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)] && indexAccessNode.baseExpression.nodeType === 'IndexAccess')
+    if (!indicator.mappingKeys[this.getMappingKeyName(indexAccessPath)] && indexAccessNode.baseExpression.nodeType === 'IndexAccess')
       return this.getReferencedIndicator(indexAccessNode.baseExpression, mappingKeyIndicatorOnly);
 
     return mappingKeyIndicatorOnly
-      ? indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)]
+      ? indicator.mappingKeys[this.getMappingKeyName(indexAccessPath)]
       : indicator;
   }
 

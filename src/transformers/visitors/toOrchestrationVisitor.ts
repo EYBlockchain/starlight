@@ -1105,12 +1105,7 @@ const visitor = {
       const { leftHandSide: lhs } = node.expression;
       const indicator = scope.getReferencedIndicator(lhs, true);
       const name = indicator?.isMapping
-        ? indicator.name
-            .replace('[', '_')
-            .replace(']', '')
-             .replace('.sender', 'Sender')
-             .replace('.value', 'Value')
-            .replace('.', 'dot')
+        ? getIndexAccessName(lhs)
         : indicator?.name || lhs?.name;
       // reset
       delete state.interactsWithSecret;

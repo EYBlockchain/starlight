@@ -324,7 +324,7 @@ export default {
         );
 
       if (path.scope.containsSecret)
-        postStatements.push(
+        postStatements.unshift(
           ...buildNode('FunctionBoilerplate', {
             bpSection: 'postStatements',
             scope,
@@ -564,12 +564,26 @@ export default {
       const { node, parent } = path;
       const newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
-      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      // We check whether this statement edits a public state which we need in the circuit
+      // If so, we need the edit to go AFTER verification
+      let moveToPost: boolean = false;
+      path.traversePathsFast(p => {
+        // console.log(p.node)
+        // console.log(p.isModification())
+        if (p.isModification() &&
+          p.getReferencedNode().stateVariable &&
+          !p.getReferencedBinding().isSecret &&
+          p.scope.getReferencedIndicator(p.node)?.interactsWithSecret) {
+            moveToPost = true;
+        }
+      }, {});
+      // the 'statements' check is to ensure we are in a block nodetype
+      parentnewASTPointer(parent, path, newNode, moveToPost && path.containerName === 'statements' ? parent._newASTPointer.postStatements : parent._newASTPointer[path.containerName]);
     },
   },
 
   EventDefinition: {
-    enter(path: NodePath , state:any) {
+    enter(path: NodePath, state:any) {
         const { node, parent } = path;
         state.functionName = path.getUniqueFunctionName()
         const newNode = buildNode('EventDefinition', {

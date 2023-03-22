@@ -140,6 +140,9 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isPartitioned: indicator.isPartitioned,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
+        originalMappingKeyName: indicator.isMapping && indicator.referencedKeyName !== id[1]
+        ? indicator.referencedKeyName
+        : null,
         initialisationRequired: indicator.initialisationRequired,
         encryptionRequired: indicator.encryptionRequired,
         owner: indicator.isOwned
