@@ -65,7 +65,7 @@ function codeGenerator(node: any) {
 
     case 'FunctionDefinition': {
       // prettier-ignore
-      let functionType: string;
+      let functionType: string = ``;
       switch (node.kind)
       {
         case 'fallback':

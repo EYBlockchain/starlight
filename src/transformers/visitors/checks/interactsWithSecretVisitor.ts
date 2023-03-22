@@ -57,13 +57,13 @@ export default {
       const expressionPath =
         path.getAncestorOfType('ExpressionStatement') ||
         path.getAncestorOfType('VariableDeclarationStatement');
-      if (scope.getReferencedBinding(node).isSecret) {
+      if (scope.getReferencedBinding(node)?.isSecret) {
         path.markContainsSecret();
         if (expressionPath)
           expressionPath.traversePathsFast(markSubtreeInteractsWithSecret, {
             secretPath: path,
           });
-      } else if (scope.getReferencedBinding(node).stateVariable) {
+      } else if (scope.getReferencedBinding(node)?.stateVariable) {
         path.markContainsPublic();
         if (expressionPath)
           expressionPath.traversePathsFast(markSubtreeInteractsWithPublic, {

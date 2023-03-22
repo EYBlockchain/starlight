@@ -3,7 +3,7 @@ import CircuitBP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerato
 import { StateVariableIndicator } from '../traverse/Indicator.js';
 
 const generateBoilerplate = ({ indicators, bpSection }) => {
-  const bpArray = [];
+  const bpArray: string[] = [];
   // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
   for (const indicatorObj of Object.values(indicators)) {
     if (!(indicatorObj instanceof StateVariableIndicator) || !indicatorObj.isSecret) continue; // eslint-disable-line no-continue

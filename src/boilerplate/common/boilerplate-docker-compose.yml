@@ -1,6 +1,22 @@
 version: '3.5'
 
 services:
+  zapp-setup:
+    ports:
+      - '3000:3000'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - zokrates
+    volumes:
+      - ./circuits/:/app/circuits:delegated
+      - ./proving-files/:/app/output:delegated
+      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs # "
+      - ./orchestration/:/app/orchestration:delegated
+      - ./config/:/app/config:delegated
+    networks:
+      - zapp_network
   zapp:
     ports:
       - '3000:3000'
@@ -18,8 +34,6 @@ services:
       - ./migrations/:/app/migrations/
       - ./truffle-config.js:/app/truffle-config.js
       - ./circuits/:/app/circuits:delegated
-      - ./proving-files/:/app/output:delegated # temporary solution to write-vk issue
-      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs # "
       - ./orchestration/:/app/orchestration:delegated
       - ./test/:/app/test:delegated
       - ./config/:/app/config:delegated
