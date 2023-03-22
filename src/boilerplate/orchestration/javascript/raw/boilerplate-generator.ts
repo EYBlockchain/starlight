@@ -436,7 +436,8 @@ class BoilerplateGenerator {
                         \tgeneralise(utils.randomHex(31)).integer,
                         \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
                           decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}`];
-        }
+                  }
+              }
       }
     }
     return []; // here to stop ts complaining
