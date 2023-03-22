@@ -45,7 +45,7 @@ export default {
       if(path.isEventDefinition()) return;
       const varDec = scope.getReferencedBinding(node);
 
-      if (!varDec.stateVariable) return;
+      if (!varDec || !varDec.stateVariable) return;
 
       // node is decorated
       if (!varDec.isSecret && node.isUnknown) {

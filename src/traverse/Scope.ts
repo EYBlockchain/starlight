@@ -350,7 +350,7 @@ export class Scope {
    * Get the first @return {Scope || null} matching the given scopeType, in which the input `scope` is contained (including the input scope itself in the search).
    */
   getAncestorOfScopeType(scopeType: string): Scope {
-    return this.findAncestor((scope: Scope) => scope.scopeType === scopeType);
+    return this.findAncestor((scope: Scope) => scope.scopeType === scopeType) || this;
   }
 
   /**
@@ -393,8 +393,9 @@ export class Scope {
    */
   getReferencedIndicator(referencingNode: any, mappingKeyIndicatorOnly: boolean = false): StateVariableIndicator | MappingKey | null {
     const { path } = this;
+    if (!referencingNode) return null;
     const indicator = this.getIndicatorById(
-      path.getReferencedDeclarationId(referencingNode),
+      path.getReferencedDeclarationId(referencingNode) || referencingNode.id
     );
 
     if (!path.isMapping(referencingNode) && !path.isArray(referencingNode) && !path.isStruct(referencingNode)) return indicator;
@@ -449,7 +450,7 @@ export class Scope {
   /**
    * @returns {Node || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.
    */
-  getReferencedPath(referencingNode: any): NodePath {
+  getReferencedPath(referencingNode: any): NodePath | null {
     const binding = this.getReferencedBinding(referencingNode);
     return binding?.path || null;
   }
@@ -673,13 +674,13 @@ export class Scope {
     if (identifierNode.nodeType === 'MemberAccess') return identifierNode.memberName;
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
-    if (refPaths && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
+    if (refPaths && thisIndex && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
 
     let { name } = identifierNode;
 
     // we find the next indexExpression after this identifier
-    for (let i = thisIndex; i < refPaths?.length; i++) {
-      if (refPaths[i].key !== 'indexExpression') continue;
+    for (let i = thisIndex || 0; i < (refPaths?.length || 0); i++) {
+      if (refPaths?.[i].key !== 'indexExpression' || !thisIndex) continue;
       if (refPaths[thisIndex].isModification() && !forceNotModification) {
         name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess'));
         break;
@@ -701,7 +702,7 @@ export class Scope {
    * @param {Object} - the mapping's index access node.
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
-  getMappingKeyName(indexAccessNode: any): string | null {
+  getMappingKeyName(indexAccessNode: any): string {
     let indexAccessPath: NodePath;
     if (indexAccessNode instanceof NodePath) {
       indexAccessPath = indexAccessNode;

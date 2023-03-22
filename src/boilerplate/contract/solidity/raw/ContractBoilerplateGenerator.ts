@@ -221,20 +221,21 @@ class ContractBoilerplateGenerator {
       const verifyInputs: string[] = [];
       const joinCommitmentsInputs: string[] = [];
       for (let [name, _params] of Object.entries(circuitParams)) {
-        for (let [type, _inputs] of Object.entries(_params)) {
-          const counter = {
-            customInputs: 0,
-            newNullifiers: 0,
-            checkNullifiers: 0,
-            newCommitments: 0,
-            encryption: 0,
-          };
+        if (_params) 
+          for (let [type, _inputs] of Object.entries(_params)) {
+            const counter = {
+              customInputs: 0,
+              newNullifiers: 0,
+              checkNullifiers: 0,
+              newCommitments: 0,
+              encryption: 0,
+            };
 
-          _inputs.map(i => verifyInputsMap(type, i, counter));
+            _inputs.map(i => verifyInputsMap(type, i, counter));
 
-        }
+          }
 
-        if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
+        if(_params && !(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
 
         verifyInputs.push(`
           if (functionId == uint(FunctionNames.${name})) {

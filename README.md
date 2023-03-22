@@ -68,8 +68,8 @@ This code is not owned by EY and EY provides no warranty and disclaims any and a
 ## Requirements
 
 To run the `zappify` command:
-- Node.js v15 or higher.  
-  (Known issues with v13).
+- Node.js v15 or higher - v16 reccomended.  
+  (Known issues with v13 and v18).
 
 To run the resulting zApp:
 - Node.js v15 or higher.  
@@ -272,7 +272,9 @@ Run trusted setups on all circuit files:
 
 `./bin/setup` <-- this can take quite a while!
 
-Finally, run a test, which executes the function privately, using some test parameters:
+After this command, you're ready to use the zApp. You can either run a Starlight-generated test, or call the included APIs for each function.
+
+For the compiled test see below:
 
 `npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
 
@@ -283,6 +285,29 @@ It's impossible for a transpiler to tell which order functions must be called in
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
 **NB: rerunning `npm test` will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down -v --remove-orphans` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
+
+For using APIs:
+
+`npm start` <-- this starts up the `express` app and exposes the APIs
+
+Each route corresponds to a function in your original contract. Using the `Assign.zol` example above, the output zApp would have an endpoint for `add` and `remove`. By default, requests can be POSTed to `http://localhost:3000/<function-name>` in JSON format. Each variable should be named like the original parameter. For example, if you wanted to call `add` with the value 10, send:
+
+```
+{
+  value: 10
+}
+```
+to `http://localhost:3000/add`. This would (privately) increase the value of secret state `a` by 10, and return the shield contract's transaction.
+
+To access your secret data locally, you can look at all the commitments you have by sending a GET request to `http://localhost:3000/getAllCommitments`.
+
+You can also filter these commitments by variable name. Using the example above, if you wanted to see all commitments you have representing the variable `a`, send:
+```
+{
+    "name": "a"
+}
+```
+as a GET request to `http://localhost:3000/getCommitmentsByVariableName`.
 
 #### Deploy on public testnets
 

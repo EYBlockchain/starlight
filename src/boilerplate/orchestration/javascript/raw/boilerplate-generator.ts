@@ -102,7 +102,7 @@ class BoilerplateGenerator {
       accessedOnly,
       stateVarIds
     }): string[] {
-        const stateVarId = [];
+        const stateVarId: string[] = [];
       if(stateVarIds.length > 1){
         stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
         stateVarId.push(`${stateName}_stateVarId_key`);
@@ -457,11 +457,12 @@ class BoilerplateGenerator {
                       \t${stateName}_newOwnerPublicKey.integer,
                       \t${stateName}_newSalt.integer,
                       \t${stateName}_newCommitment.integer`];
+          }
         }
       }
     }
-  }
-},
+    return []; // here to stop ts complaining
+  },
 };
 
 sendTransaction = {
@@ -603,7 +604,7 @@ integrationTestBoilerplate = {
 },
 postStatements(): string {
   return `// eslint-disable-next-line func-names \n ${
-      fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g)[0]
+      (fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g) || [])[0]
     }`
 },
 
@@ -635,7 +636,7 @@ integrationApiServicesBoilerplate = {
     },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${
-        fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]}`
+        (fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`
   },
 
   commitments(): string {
@@ -677,7 +678,7 @@ integrationApiRoutesBoilerplate = {
   },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${
-        fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)[0]}`
+        (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
     return `import { service_allCommitments, service_getCommitmentsByState } from "./api_services.mjs";\n`;
