@@ -1,1 +1,3 @@
 build/*
+zapps/**/*
+node_modules/**/*

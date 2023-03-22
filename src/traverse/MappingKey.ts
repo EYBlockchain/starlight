@@ -144,10 +144,10 @@ export default class MappingKey {
     this.isStruct = true;
     this.structProperties ??= {};
     const memberAccPath = referencingPath.findAncestor(p => p.node.nodeType === 'MemberAccess' && !p.isMsgSender());
-    if (!(this.structProperties[memberAccPath.node.memberName] instanceof MappingKey))
-      this.structProperties[memberAccPath.node.memberName] = new MappingKey(this, memberAccPath, true);
-    this.structProperties[memberAccPath.node.memberName].isChild = true;
-    return this.structProperties[memberAccPath.node.memberName];
+    if (!(this.structProperties[memberAccPath?.node.memberName] instanceof MappingKey) && memberAccPath)
+      this.structProperties[memberAccPath?.node.memberName] = new MappingKey(this, memberAccPath, true);
+    this.structProperties[memberAccPath?.node.memberName].isChild = true;
+    return this.structProperties[memberAccPath?.node.memberName];
   }
 
   updateProperties(path: NodePath) {
@@ -297,11 +297,17 @@ export default class MappingKey {
     }
     // error: conflicting whole/partitioned state
     if (this.isWhole && this.isPartitioned) {
+      if (this.isWholeReason && this.isPartitionedReason)
       throw new SyntaxUsageError(
         `State cannot be whole and partitioned. The following reasons conflict.`,
         this.node,
         [...this.isWholeReason, ...this.isPartitionedReason],
       );
+      else throw new SyntaxUsageError(
+        `State  ${this.name} cannot be whole and partitioned`,
+        this.node,
+        []
+      )
     }
 
     if (this.isStruct && this.structProperties) {

@@ -17,7 +17,7 @@ class ContractBoilerplateGenerator {
   }
 
   getBoilerplate = (section: string, extraParams?: any) => {
-    const bp = [];
+    const bp: any[] = [];
     const categories: string[] = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {
@@ -121,7 +121,7 @@ class ContractBoilerplateGenerator {
           returnpara[ paramtype ] = params;
           delete parameterList[ paramtype ];
         }
-        const newList = [];
+        const newList: string[] = [];
         params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':

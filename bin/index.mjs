@@ -76,7 +76,7 @@ const options = {
 };
 
 const validateOptions = ({
-  inputFilePath,
+  inputFilePath // eslint-disable-line no-shadow
 }) => {
   if (!fs.existsSync(inputFilePath))
     throw new FilingError(`inputFilePath "${inputFilePath}" does not exist.`);
