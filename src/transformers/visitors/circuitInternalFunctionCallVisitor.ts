@@ -58,7 +58,7 @@ const internalCallVisitor = {
              })
 
 // Collect the internal call ParameterList
-            let internalFncParameters = [];
+            let internalFncParameters: string[] = [];
             state.newParameterList.forEach(node => {
               if(node.nodeType === 'VariableDeclaration'){
                 internalFncParameters.push(node.name);

@@ -275,7 +275,7 @@ class BoilerplateGenerator {
     postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       const y = isWhole ? x : newCommitmentValue;
-      const lines = [];
+      const lines: string[] = [];
       if (!isWhole && isNullified) {
         // decrement
         const i = parseInt(x.slice(-1), 10);

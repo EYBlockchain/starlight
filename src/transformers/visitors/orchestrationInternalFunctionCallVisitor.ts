@@ -391,11 +391,11 @@ FunctionCall: {
       state.internalFncName.push(node.expression.name);
      if(internalFunctionInteractsWithSecret === true) {
        const callingfnDefPath = path.getFunctionDefinition();
-       const callingfnDefIndicators = callingfnDefPath.scope.indicators;
+       const callingfnDefIndicators = callingfnDefPath?.scope.indicators;
        const functionReferncedNode = scope.getReferencedPath(node.expression);
-       const internalfnDefIndicators = functionReferncedNode.scope.indicators;
+       const internalfnDefIndicators = functionReferncedNode?.scope.indicators;
        const startNodePath = path.getAncestorOfType('ContractDefinition')
-       startNodePath.node.nodes.forEach(node => {
+       startNodePath?.node.nodes.forEach(node => {
          if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
            if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
              if(callingfnDefIndicators[node.id]) {
@@ -448,7 +448,7 @@ FunctionCall: {
     }
      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
      state.callingFncName ??= [];
-     state.callingFncName.push({name: fnDefNode.node.name, parent: path.parentPath.parentPath.parent.nodeType});
+     state.callingFncName.push({name: fnDefNode?.node.name, parent: path.parentPath.parentPath.parent.nodeType});
     }
   },
 },

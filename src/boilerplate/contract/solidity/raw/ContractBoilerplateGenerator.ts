@@ -215,11 +215,11 @@ class ContractBoilerplateGenerator {
             encryption: 0,
           };
 
-          _inputs.map(i => verifyInputsMap(type, i, counter));
+            _inputs.map(i => verifyInputsMap(type, i, counter));
 
-        }
+          }
 
-        if(!(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
+        if(_params && !(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
 
         verifyInputs.push(`
           if (functionId == uint(FunctionNames.${name})) {

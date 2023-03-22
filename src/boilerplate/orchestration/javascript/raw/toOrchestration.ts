@@ -5,7 +5,7 @@ import OrchestrationBP from './boilerplate-generator.js';
 
 const stateVariableIds = (node: any) => {
   const {privateStateName, stateNode} = node;
-  const stateVarIds = [];
+  const stateVarIds: string[] = [];
   // state variable ids
   // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
   if (!stateNode.stateVarId[1]) {
@@ -56,7 +56,7 @@ const stateVariableIds = (node: any) => {
 const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
-  const output = [];
+  const output: string[][] = [];
   output[0] = [];
   output[1] = [];
   output[2] = [];
@@ -115,9 +115,9 @@ export const sendTransactionBoilerplate = (node: any) => {
 };
 
 export const generateProofBoilerplate = (node: any) => {
-  const output = [];
-  const enc = [];
-  const cipherTextLength = [];
+  const output: (string[] | string)[] = [];
+  const enc: any[][] = [];
+  const cipherTextLength: number[] = [];
   let containsRoot = false;
   let containsNullifierRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
@@ -132,7 +132,7 @@ export const generateProofBoilerplate = (node: any) => {
       enc[1] ??= [];
       enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
     }
-    const parameters = [];
+    const parameters: string[] = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
     const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
@@ -268,13 +268,13 @@ export const generateProofBoilerplate = (node: any) => {
 };
 
 export const preimageBoilerPlate = (node: any) => {
-  const output = [];
+  const output: string[][] = [];
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(node.privateStates)) {
     const stateVarIds = stateVariableIds({ privateStateName, stateNode });
-    const initialiseParams = [];
-    const preimageParams = [];
+    const initialiseParams: string[] = [];
+    const preimageParams:string[] = [];
     if (stateNode.accessedOnly) {
       output.push(
         Orchestrationbp.readPreimage.postStatements({
@@ -416,10 +416,10 @@ export const preimageBoilerPlate = (node: any) => {
  */
 
 export const OrchestrationCodeBoilerPlate: any = (node: any) => {
-  const lines = [];
-  const params = [];
-  const states = [];
-  const rtnparams = [];
+  const lines: any[] = [];
+  const params:any[] = [];
+  const states: string[] = [];
+  const rtnparams: string[] = [];
   let stateName: string;
   let stateNode: any;
 
