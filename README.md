@@ -27,6 +27,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the t
 
 ## Warnings
 
+This code is not owned by EY and EY provides no warranty and disclaims any and all liability for use of this code. Users must conduct their own diligence with respect to use for their purposes and any and all usage is on an as-is basis and at your own risk.
+
 **Note that this is an experimental prototype which is still under development. Not all Solidity syntax is currently supported. [Here](./doc/STATUS.md) is guide to current functionality.**  
 
 **This code has not yet completed a security review and therefore we strongly recommend that you do not use it in production. We take no responsibility for any loss you may incur through the use of this code.**
@@ -43,10 +45,12 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the t
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Quick User Guide](#quick-user-guide)
-- [Install](#install)
+- [Install via npm](#install-via-npm)
+  - [Troubleshooting](#troubleshooting)
+- [Install via clone](#install-via-clone)
 - [Run](#run)
   - [CLI options](#cli-options)
-- [Troubleshooting](#troubleshooting)
+- [Troubleshooting](#troubleshooting-1)
   - [Installation](#installation)
   - [Compilation](#compilation)
 - [Developer](#developer)
@@ -64,8 +68,8 @@ See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the t
 ## Requirements
 
 To run the `zappify` command:
-- Node.js v15 or higher.  
-  (Known issues with v13).
+- Node.js v15 or higher - v16 reccomended.  
+  (Known issues with v13 and v18).
 
 To run the resulting zApp:
 - Node.js v15 or higher.  
@@ -115,9 +119,38 @@ Run `zappify -i <./path/to/file>.zol` and get an entire standalone zApp in retur
 
 
 ---
-## Install
+## Install via npm
 
-Whilst the package is in early development, it isn't hosted on npm. To install:
+Starlight is now available on **github's npm package** repository!
+To install, you need to make sure that `npm` is looking in that registry, not the default `npmjs`:
+
+`npm config set @eyblockchain:registry https://npm.pkg.github.com` <-- this sets any `@eyblockchain` packages to be installed from the github registry
+
+`npm i @eyblockchain/starlight@<latest-version>`
+
+Then you can import the `zappify` command like so:
+
+`import { zappify } from "@eyblockchain/starlight";`
+
+The only required input for `zappify` is the file path of the `.zol` file you'd like to compile, e.g. `zappify('./contracts/myContract.zol')`. You can optionally add a specific zApp name and the output directory:
+
+`zappify('./contracts/myContract.zol', 'myzApp', './test_zApps')`
+
+Then it works just as described in the below section [Run](#run).
+
+### Troubleshooting
+
+Since we push the npm package to github's repository, you may need to specify the package location in your project's `.npmrc` file and authenticate to github. Try adding something like:
+
+```
+@eyblockchain:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=<your_github_token>
+```
+
+...and re-run the install command, or manually add `"@eyblockchain/starlight"` to your `package.json`.
+## Install via clone
+
+To install via github:
 
 Clone the repo.
 
@@ -167,7 +200,7 @@ Partitioned states which are incremented and have an owner which is clearly diff
 
 ### Installation
 
-If the `zappify` command isn't working, try the [Install](#install) steps again. You might need to try `npm i --force -g ./`.
+If the `zappify` command isn't working, try the [Install](#install-via-clone) steps again. You might need to try `npm i --force -g ./`.
 
 In very rare cases, you might need to navigate to your node.js innards and delete zappify from the `bin` and `lib/node_modules`.
 To find where your npm lib is, type `npm` and it will tell you the path.
@@ -256,7 +289,9 @@ Run trusted setups on all circuit files:
 
 `./bin/setup` <-- this can take quite a while!
 
-Finally, run a test, which executes the function privately, using some test parameters:
+After this command, you're ready to use the zApp. You can either run a Starlight-generated test, or call the included APIs for each function.
+
+For the compiled test see below:
 
 `npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
 
@@ -267,6 +302,48 @@ It's impossible for a transpiler to tell which order functions must be called in
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
 **NB: rerunning `npm test` will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down -v --remove-orphans` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
+
+For using APIs:
+
+`npm start` <-- this starts up the `express` app and exposes the APIs
+
+Each route corresponds to a function in your original contract. Using the `Assign.zol` example above, the output zApp would have an endpoint for `add` and `remove`. By default, requests can be POSTed to `http://localhost:3000/<function-name>` in JSON format. Each variable should be named like the original parameter. For example, if you wanted to call `add` with the value 10, send:
+
+```
+{
+  value: 10
+}
+```
+to `http://localhost:3000/add`. This would (privately) increase the value of secret state `a` by 10, and return the shield contract's transaction.
+
+To access your secret data locally, you can look at all the commitments you have by sending a GET request to `http://localhost:3000/getAllCommitments`.
+
+You can also filter these commitments by variable name. Using the example above, if you wanted to see all commitments you have representing the variable `a`, send:
+```
+{
+    "name": "a"
+}
+```
+as a GET request to `http://localhost:3000/getCommitmentsByVariableName`.
+
+#### Deploy on public testnets
+
+Apart from local ganache instance, Starlight output zapps can be now be deployed in Sepolia, Goerli and Polygon Mumbai as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Mumbai is provided via [maticvigil](https://rpc.maticvigil.com/).
+
+The configuration can be done during `./bin/setup` phase in the following way.
+
+`./bin/setup -n network -a account -k privatekey -m "12 letter mnemonic" -r APIKey`
+
+##### CLI options
+
+| option  | description  |
+|:--|:--|
+| `-n`  | Network : Specify testnet you want to connect to. possible options: `mumbai/ sepolia/ goerli`  |
+| `-a`  | Ethereum address |
+| `-k`  | Private key of above ethereum address |
+| `-m` -  | 12 letter mnemonic passphrase  |
+| `-r`  | API key or APPID of endpoint |
+| `-s`  | Zkp setup flag , Default to yes . If you had already created zkp keys before and just want to configure deployment infrastructure, pass `-s n`  |
 
 #### circuit
 

@@ -46,8 +46,7 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
       - This is because each state has its own commitment, including states of struct types, so we cannot mix a partitioned and whole state in the same commitment.
       - The commitment hides an array of all property values.
     - Events:
-      - Public events are being worked on, however secret events will not be added since they compromise privacy.
-      - One way to preserve privacy is to emit encrypted versions of secret states to the owner, which is a separate goal.
+      - Public events are supported, however secret events will not be added since they compromise privacy.
 
 ## Unsupported Solidity
 
@@ -62,6 +61,5 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
 
 - Assembly:
   - Inline assembly is often used in Solidity to save gas and/or perform complex operations. Copying over entirely public assembly to the output contract wouldn't be too difficult, whereas compiling assembly to Zokrates and possibly nodejs would be.
-- Sharing secret data:
 - Re-initialising whole secret states:
   - See the [writeup](./WRITEUP.md) sections on these for more details.

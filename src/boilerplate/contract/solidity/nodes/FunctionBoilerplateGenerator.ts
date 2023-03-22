@@ -19,7 +19,7 @@ class FunctionBoilerplateGenerator {
   }
 
   getBoilerplate = (section: string, extraParams?: any) => {
-    const bp = [];
+    const bp: any[] = [];
     const categories = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {
@@ -96,9 +96,9 @@ class FunctionBoilerplateGenerator {
           const names = structDef.members.map((mem: any) => {
             return { name: `${node.name}.${mem.name}`, type: mem.typeName.name };
           });
-          return { structName: structDef.name, properties: names };
+          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node) };
         }
-        return { name: node.name, type: node.typeName.name };
+        return { name: node.name, type: node.typeName.name, isParam: path.isFunctionParameter(node) };
       }
 
       const params = path.getFunctionParameters();

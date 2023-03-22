@@ -26,6 +26,7 @@ export default function toOrchestration(ast: any, options: any) {
     nullifiersRequired: true,
     circuitAST:options.circuitAST
   };
+ 
   logger.debug('Transforming the .zol AST to a .mjs AST...');
   const newAST = transformation1('orchestration' , ast, state , visitor);
   const newASTFilePath = pathjs.join(
@@ -37,7 +38,6 @@ export default function toOrchestration(ast: any, options: any) {
   // generate the new node files from the newly created orchestration AST:
   logger.verbose('Generating files from the .mjs AST...');
   const nodeFileData = codeGenerator(newAST);
-
   // save the new node files to the output dir:
   logger.verbose(
     `Saving .mjs files to the zApp output directory ${options.orchestrationDirPath}...`,
@@ -54,6 +54,7 @@ export default function toOrchestration(ast: any, options: any) {
     }) : fileObj.file;
     fs.writeFileSync(filepath, prettyFile);
   }
+   
 
   // extract contractName
   const contractNode = ast.node.nodes.filter(

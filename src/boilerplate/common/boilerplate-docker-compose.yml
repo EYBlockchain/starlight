@@ -1,6 +1,22 @@
 version: '3.5'
 
 services:
+  zapp-setup:
+    ports:
+      - '3000:3000'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - zokrates
+    volumes:
+      - ./circuits/:/app/circuits:delegated
+      - ./proving-files/:/app/output:delegated
+      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs # "
+      - ./orchestration/:/app/orchestration:delegated
+      - ./config/:/app/config:delegated
+    networks:
+      - zapp_network
   zapp:
     ports:
       - '3000:3000'
@@ -18,14 +34,15 @@ services:
       - ./migrations/:/app/migrations/
       - ./truffle-config.js:/app/truffle-config.js
       - ./circuits/:/app/circuits:delegated
-      - ./proving-files/:/app/output:delegated # temporary solution to write-vk issue
-      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs # "
       - ./orchestration/:/app/orchestration:delegated
       - ./test/:/app/test:delegated
       - ./config/:/app/config:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
+      RPC_URL: ws://ganache:8545
+      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
+      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
       LOG_LEVEL: info
       MONGO_HOST: mongodb://zapp-mongo
       MONGO_PORT: 27019
@@ -51,7 +68,9 @@ services:
       - zapp_network
 
   timber:
-    image: eyblockchain/timber:v3.0.3
+    build: 
+      context: https://github.com/EYBlockchain/timber.git#starlight/testnet:merkle-tree
+      dockerfile: Dockerfile
     restart: on-failure
     depends_on:
       - timber-mongo
@@ -68,6 +87,9 @@ services:
       UNIQUE_LEAVES: 'true'
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
+      RPC_URL: ws://ganache:8545
+      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
+      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
       CONTRACT_LOCATION: 'default'
       MONGO_HOST: mongodb://timber-mongo
       MONGO_PORT: 27017
@@ -108,7 +130,7 @@ services:
   
   ganache:
     image: trufflesuite/ganache:v7.4.4
-    command: --accounts=10 --gasLimit=100000000 --deterministic
+    command: --accounts=10 --gasLimit=100000000 --deterministic -i 1337
     ports:
       - '8545:8545'
     networks:
@@ -129,6 +151,9 @@ services:
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
+      RPC_URL: ws://ganache:8545
+      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
+      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
     networks:
       - zapp_network
 

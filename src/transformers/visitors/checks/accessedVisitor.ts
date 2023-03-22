@@ -46,6 +46,7 @@ export default {
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
       if (path.isExportedSymbol()) return; // the node represents an external contract name
       if (path.isRequireStatement()) return; // a require statement
+      if (path.isRevertStatement()) return;
 
       // setup - we get the left and right ancestors for error checking before anything else
       const referencedBinding = scope.getReferencedBinding(node);
@@ -66,7 +67,7 @@ export default {
         if (
           rightAncestor &&
           lhsBinding?.isSecret &&
-          referencedBinding.path.isFunctionParameterDeclaration()
+          referencedBinding?.path.isFunctionParameterDeclaration()
         ) {
           // ...param which is used to assign a secret state
           logger.warn(
@@ -142,7 +143,7 @@ export default {
         // end of error checking
         // ------
         logger.debug(`Found an accessed secret state ${node.name}`);
-        if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
+        if (logger.level === 'debug') backtrace.getSourceCode(node.src);
         scope.getReferencedBinding(node)?.updateAccessed(path);
         const indicator = scope.getReferencedIndicator(node);
         if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);

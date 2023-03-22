@@ -65,7 +65,7 @@ function codeGenerator(node: any) {
 
     case 'FunctionDefinition': {
       // prettier-ignore
-      let functionType: string;
+      let functionType: string = ``;
       switch (node.kind)
       {
         case 'fallback':
@@ -187,7 +187,7 @@ function codeGenerator(node: any) {
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);
       const args = node.arguments.map(codeGenerator);
-      const semicolon = expression === 'require' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
+      const semicolon = expression === 'require' || expression === 'revert' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
 
     }
@@ -232,9 +232,7 @@ function codeGenerator(node: any) {
           return `if (${initialStatements}) {
           ${trueStatements} 
         }`;
-
       }
-
     case 'ForStatement': {
       const initializationExpression = codeGenerator(node.initializationExpression);
       const condition = codeGenerator(node.condition);
@@ -245,6 +243,16 @@ function codeGenerator(node: any) {
               ${body}
                   }`
                 }
+
+    case 'WhileStatement':
+      return `while(${codeGenerator(node.condition)}) {
+        ${codeGenerator(node.body)}
+      }`
+
+      case 'DoWhileStatement':
+        return ` do { 
+          ${codeGenerator(node.body)}
+        } while(${codeGenerator(node.condition)});`
 
     case 'ElementaryTypeNameExpression':
       return codeGenerator(node.typeName);

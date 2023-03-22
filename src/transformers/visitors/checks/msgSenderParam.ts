@@ -25,7 +25,7 @@ const visitor = {
       expressionPath ??= path.getAncestorOfType('BinaryOperation');
 
       const fnDefPath = path.getFunctionDefinition();
-      const fnDefIndicators = fnDefPath.scope.indicators;
+      const fnDefIndicators = fnDefPath?.scope.indicators;
 
 
       // either a) msg.sender is a value we need for a secret or
