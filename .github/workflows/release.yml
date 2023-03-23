@@ -1,0 +1,25 @@
+name: Publish starlight npm package
+
+on:
+  push:
+    branches: [master, beta]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14.17.0'
+      - run: |
+          npm install
+          tsc
+
+      - uses: codfish/semantic-release-action@master
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: echo ${{ steps.semantic.outputs.release-version }}

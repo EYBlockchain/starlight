@@ -10,7 +10,7 @@ import MappingKey from '../../../../traverse/MappingKey.js';
 // (for collecting zokrates inputs
 const collectIncrements = (bpg: BoilerplateGenerator) => {
   const stateVarIndicator = bpg.thisIndicator || bpg.indicators;
-  const incrementsArray = [];
+  const incrementsArray: any[] = [];
   let incrementsString = '';
 
   if (stateVarIndicator.isStruct && (
@@ -19,7 +19,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     )
   ) {
     let structIncs = { incrementsArray: {}, incrementsString: {}};
-    for (const sp of bpg.structProperties) {
+    for (const sp of bpg.structProperties || []) {
       if (stateVarIndicator.structProperties[sp] instanceof MappingKey) {
         bpg.thisIndicator = stateVarIndicator.structProperties[sp];
         structIncs.incrementsArray[sp] = collectIncrements(bpg).incrementsArray;
@@ -166,7 +166,7 @@ class BoilerplateGenerator {
 
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
-    if (indicators.isMapping) {
+    if (indicators.isMapping && indicators.mappingKeys) {
       for (let [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
         mappingKeyIndicator.isMapping = true;
         this.assignIndicators(mappingKeyIndicator);

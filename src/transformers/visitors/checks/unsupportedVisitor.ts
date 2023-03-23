@@ -68,4 +68,14 @@ export default {
       );
     },
   },
+
+  IfStatement: {
+    enter(node: any) {
+      if (['Identifier', 'Literal'].includes(node.condition.nodeType))
+        throw new TODOError(
+          `We can't currently handle conditions which are singular variables - instead of if(a) try something like if(a == true). This is because the compiler must store the 'LHS' (a) and 'RHS' (true) value of the condition in case either are modified throughout the function.`,
+          node.condition
+        );
+    },
+  },
 };

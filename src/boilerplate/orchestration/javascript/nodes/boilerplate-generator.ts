@@ -299,6 +299,34 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractImports,
       };
     }
+    case 'IntegrationApiServicesBoilerplate': {
+      const {
+        contractName,
+        functions = [],
+        constructorParams = [],
+        contractImports = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        functions,
+        constructorParams,
+        contractImports,
+      };
+    }
+    case 'IntegrationApiRoutesBoilerplate': {
+      const {
+        contractName,
+        functions = [],
+        contractImports = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        functions,
+        contractImports,
+      };
+    }
     case 'IntegrationTestFunction': {
       const {
         name,
@@ -312,6 +340,30 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
         decrementsSecretState,
         encryptionRequired,
+      };
+    }
+    case 'IntegrationApiServiceFunction': {
+      const {
+        name,
+        parameters = buildNode('ParameterList', fields),
+        returnParameters =  buildNode('ParameterList', fields),
+        decrementsSecretState = [],
+      } = fields;
+      return {
+        nodeType,
+        name,
+        parameters,
+        returnParameters,
+        decrementsSecretState,
+      };
+    }
+    case 'IntegrationApiRoutesFunction': {
+      const {
+        name,
+      } = fields;
+      return {
+        nodeType,
+        name,
       };
     }
     default:

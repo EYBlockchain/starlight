@@ -19,7 +19,7 @@ class FunctionBoilerplateGenerator {
   }
 
   getBoilerplate = (section: string, extraParams?: any) => {
-    const bp = [];
+    const bp: any[] = [];
     const categories = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {
@@ -96,26 +96,23 @@ class FunctionBoilerplateGenerator {
           const names = structDef.members.map((mem: any) => {
             return { name: `${node.name}.${mem.name}`, type: mem.typeName.name };
           });
-          return { structName: structDef.name, properties: names };
+          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node) };
         }
-        return { name: node.name, type: node.typeName.name };
+        return { name: node.name, type: node.typeName.name, isParam: path.isFunctionParameter(node) };
       }
 
       const params = path.getFunctionParameters();
       const publicParams = params?.filter((p: any) => (!p.isSecret && p.interactsWithSecret)).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
-
       const indicators = this.customFunction.getIndicators.bind(this)();
 
       // special check for msgSender and msgValue param. If msgsender is found, prepend a msgSender uint256 param to the contact's function.
       if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true});
       if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
 
-
       if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
       }
-
       return {
         ...(publicParams?.length && { customInputs: publicParams }),
         functionName,

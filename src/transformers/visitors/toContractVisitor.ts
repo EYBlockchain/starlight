@@ -8,6 +8,7 @@ import NodePath from '../../traverse/NodePath.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, parentnewASTPointer, internalFunctionCallVisitor } from './common.js';
+import { param } from 'express/lib/request.js';
 
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
@@ -42,7 +43,8 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
-    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.name))+']', typeName: {name: 'uint256'}});
+   if(thisState.variableName.includes(indicator.node.name))
+    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}});
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -51,15 +53,15 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   // secret state vars are input via commitment values
   if (
     binding instanceof VariableBinding &&
-    (indicator.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
+    (indicator?.interactsWithSecret || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret &&
     // if the node is the indexExpression, we dont need its value in the circuit
     !(thisPath.containerName === 'indexExpression'&& !(thisPath.parentPath.isSecret|| thisPath.parent.containsSecret))
   ) {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
-    if (!thisState.customInputs.some((input: any) => input.name === indicator.name))
-      thisState.customInputs.push({name: indicator.name, typeName: {name: type} });
+    if (!thisState.customInputs.some((input: any) => input.name === indicator?.name))
+      thisState.customInputs.push({name: indicator?.name, typeName: {name: type} });
   }
 };
 
@@ -154,15 +156,15 @@ export default {
           const { node, parent, scope } = path;
           const sourceUnitNodes = parent._newASTPointer[0].nodes;
           const contractNodes = node._newASTPointer;
-          let parameterList : {};
+          let parameterList: any = {};
           let functionName: string;
-          let returnParameterList = {};
+          let returnParameterList: any = {};
           let returnfunctionName: string;
           for ([functionName, parameterList] of Object.entries(state.circuitParams)) {
             if(state.returnpara){
              for ([returnfunctionName, returnParameterList] of Object.entries(state.returnpara)){
                if(functionName === returnfunctionName ){
-                 parameterList = {... parameterList, ... returnParameterList};
+                 parameterList = parameterList && returnParameterList ? {... parameterList, ... returnParameterList} : parameterList;
                  state.circuitParams[ functionName ] = parameterList;
                 }
               }
@@ -410,7 +412,7 @@ export default {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode('Block');
-      node._newASTPointer = newNode.statements;
+      node._newASTPointer = newNode;
       parent._newASTPointer.body = newNode;
     },
   },
@@ -421,7 +423,6 @@ export default {
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
        state.returnpara[state.functionName].returnParameters = state.customInputs.map(n => n.name);
-
        const newNode = buildNode(
        node.nodeType,
        { value: node.expression.value });
@@ -437,7 +438,7 @@ export default {
   IfStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      if (path.scope.containsSecret) {
+      if (node.containsSecret) {
         path.traversePathsFast(findCustomInputsVisitor, state);
         state.skipSubNodes=true;
         return;
@@ -448,21 +449,39 @@ export default {
         falseBody: node.falseBody
       });
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
   ForStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-      if (path.scope.containsSecret) {
+      if (node.containsSecret) {
         path.traversePathsFast(findCustomInputsVisitor, state);
+        if(node.containsPublic){
+          const newNode = buildNode(node.nodeType , {
+            nodeType: node.nodeType,
+            condition: node.condition,
+            initializationExpression: node.initializationExpression,
+            loopExpression: node.loopExpression,
+            body: node.body,
+          });
+          node._newASTPointer = newNode;
+          parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+          return;
+        }
         state.skipSubNodes=true;
         return;
       }
-      const newNode = buildNode(node.nodeType);
+      const newNode = buildNode(node.nodeType , {
+        nodeType: node.nodeType,
+        condition: node.condition,
+        initializationExpression: node.initializationExpression,
+        loopExpression: node.loopExpression,
+        body: node.body,
+      });
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -487,7 +506,7 @@ export default {
 
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -544,10 +563,9 @@ export default {
   ExpressionStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
-
       const newNode = buildNode('ExpressionStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
   },
 
@@ -569,7 +587,25 @@ EmitStatement: {
       const { node, parent } = path;
       const newNode = buildNode('EmitStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+  },
+},
+
+WhileStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('WhileStatement');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+  },
+},
+
+DoWhileStatement: {
+  enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('DoWhileStatement');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
   },
 },
 
@@ -582,7 +618,7 @@ EmitStatement: {
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
         );
 
-      let declarationType: string;
+      let declarationType: string = ``;
       // TODO: `memery` declarations and `returnParameter` declarations
       if (node.stateVariable) {
         declarationType = 'state'; // not really needed, since we already have 'stateVariable'
@@ -605,8 +641,8 @@ EmitStatement: {
         if(refPath.parentPath.isInternalFunctionCall()){
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
-              let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression)?.scope.bindings)[index]);
-              interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key]?.interactsWithSecret
+              let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression)?.scope.bindings || {})[index]);
+              interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression)?.scope.indicators[key]?.interactsWithSecret
             }
           })
         }
@@ -777,7 +813,7 @@ EmitStatement: {
       let newNode: any;
 
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
-      if (path.isRequireStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
+      if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
         const subState = { interactsWithSecret: false };
         path.traversePathsFast(interactsWithSecretVisitor, subState);
@@ -835,10 +871,10 @@ EmitStatement: {
          state.internalFncName ??= [];
          state.internalFncName.push(node.expression.name);
          const functionReferncedNode = scope.getReferencedPath(node.expression);
-         const internalfnDefIndicators = functionReferncedNode.scope.indicators;
+         const internalfnDefIndicators = functionReferncedNode?.scope.indicators;
          const fnDefNode = path.getAncestorOfType('FunctionDefinition');
          state.callingFncName ??= [];
-         state.callingFncName.push(fnDefNode.node.name);
+         state.callingFncName.push(fnDefNode?.node.name);
          state.fnParameters = [];
          const args = node.arguments.map(arg =>  arg.name)
          state.pubparams.forEach(index => {
@@ -868,7 +904,7 @@ EmitStatement: {
         state.internalFncName.push(node.expression.name);
         const fnDefNode = path.getAncestorOfType('FunctionDefinition');
         state.callingFncName ??= [];
-        state.callingFncName.push(fnDefNode.node.name);
+        state.callingFncName.push(fnDefNode?.node.name);
         newNode = buildNode('InternalFunctionCall', {
         name: node.expression.name,
         internalFunctionInteractsWithSecret: state.internalFunctionInteractsWithSecret,

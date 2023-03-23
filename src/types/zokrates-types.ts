@@ -3,7 +3,7 @@ import CircuitBP from '../boilerplate/circuit/zokrates/nodes/BoilerplateGenerato
 import { StateVariableIndicator } from '../traverse/Indicator.js';
 
 const generateBoilerplate = ({ indicators, bpSection }) => {
-  const bpArray = [];
+  const bpArray: string[] = [];
   // FIXME: this might be the problem. We're cycling through by stateVar then by section, when in fact maybe the _class_ should manage the spitting out nodes, first by section, then by stateVar.
   for (const indicatorObj of Object.values(indicators)) {
     if (!(indicatorObj instanceof StateVariableIndicator) || !indicatorObj.isSecret) continue; // eslint-disable-line no-continue
@@ -167,12 +167,22 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'IfStatement': {
-      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
+      const { condition = {} , trueBody= {} , falseBody= {}  , isRevert = false} = fields;
       return {
         nodeType,
         condition,
         trueBody,
         falseBody,
+        isRevert,
+      };
+    }
+    case 'Conditional': {
+      const { condition = {} , trueExpression= {} , falseExpression= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueExpression,
+        falseExpression,
       };
     }
     case 'ForStatement': {
@@ -193,15 +203,6 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         arguments: args,
         expression,
       };
-    }
-    case 'IfStatement': {
-      const { condition = {} , trueBody= {} , falseBody= {} } = fields;
-      return {
-        nodeType,
-        condition,
-        trueBody,
-        falseBody,
-      }
     }
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
@@ -229,10 +230,11 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'Identifier': {
-      const { name } = fields;
+      const { name, type = '' } = fields;
       return {
         nodeType,
         name,
+        typeName: type ? buildNode('ElementaryTypeName', { name: type }) : null,
       };
     }
     case 'Literal': {

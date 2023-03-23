@@ -5,7 +5,7 @@ import OrchestrationBP from './boilerplate-generator.js';
 
 const stateVariableIds = (node: any) => {
   const {privateStateName, stateNode} = node;
-  const stateVarIds = [];
+  const stateVarIds: string[] = [];
   // state variable ids
   // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
   if (!stateNode.stateVarId[1]) {
@@ -56,7 +56,7 @@ const stateVariableIds = (node: any) => {
 const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
-  const output = [];
+  const output: string[][] = [];
   output[0] = [];
   output[1] = [];
   output[2] = [];
@@ -107,6 +107,10 @@ export const sendTransactionBoilerplate = (node: any) => {
           }
           if (!stateNode.burnedOnly)
             output[2].push(`${privateStateName}_newCommitment.integer`);
+          if (stateNode.encryptionRequired) {
+            output[4].push(`${privateStateName}_cipherText`);
+            output[5].push(`${privateStateName}_encKey`);
+          }
         }
 
         break;
@@ -116,9 +120,9 @@ export const sendTransactionBoilerplate = (node: any) => {
 };
 
 export const generateProofBoilerplate = (node: any) => {
-  const output = [];
-  const enc = [];
-  const cipherTextLength = [];
+  const output: (string[] | string)[] = [];
+  const enc: any[][] = [];
+  const cipherTextLength: number[] = [];
   let containsRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
@@ -132,7 +136,7 @@ export const generateProofBoilerplate = (node: any) => {
       enc[1] ??= [];
       enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
     }
-    const parameters = [];
+    const parameters: string[] = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
     const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
@@ -174,7 +178,7 @@ export const generateProofBoilerplate = (node: any) => {
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
             initialisationRequired: stateNode.initialisationRequired,
-            encryptionRequired: false,
+            encryptionRequired: stateNode.encryptionRequired,
             rootRequired: !containsRoot,
             parameters,
           })
@@ -207,7 +211,7 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 initialisationRequired: false,
-                encryptionRequired: false,
+                encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
                 parameters,
@@ -263,13 +267,13 @@ export const generateProofBoilerplate = (node: any) => {
 };
 
 export const preimageBoilerPlate = (node: any) => {
-  const output = [];
+  const output: string[][] = [];
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(node.privateStates)) {
     const stateVarIds = stateVariableIds({ privateStateName, stateNode });
-    const initialiseParams = [];
-    const preimageParams = [];
+    const initialiseParams: string[] = [];
+    const preimageParams:string[] = [];
     if (stateNode.accessedOnly) {
       output.push(
         Orchestrationbp.readPreimage.postStatements({
@@ -411,10 +415,10 @@ export const preimageBoilerPlate = (node: any) => {
  */
 
 export const OrchestrationCodeBoilerPlate: any = (node: any) => {
-  const lines = [];
-  const params = [];
-  const states = [];
-  const rtnparams = [];
+  const lines: any[] = [];
+  const params:any[] = [];
+  const states: string[] = [];
+  const rtnparams: string[] = [];
   let stateName: string;
   let stateNode: any;
 
@@ -426,7 +430,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // the main function
       if (node.name !== 'cnstrctr') lines.push(
         `\n\n// Initialisation of variables:
-        \nconst instance = await getContractInstance('${node.contractName}');`,
+        \nconst instance = await getContractInstance('${node.contractName}');
+        \nconst contractAddr = await getContractAddress('${node.contractName}');        `,
       );
       if (node.msgSenderParam)
         lines.push(`
@@ -457,9 +462,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       }
 
       node.returnParameters.forEach( (param, index) => {
-
        if(param === 'true')
-        rtnparams?.push(` ${param}:  ${param}`);
+        rtnparams?.push('bool: bool');
        else if(param?.includes('Commitment'))
         rtnparams?.push( ` ${param} : ${param}.integer  `);
        else
@@ -476,11 +480,32 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
           statements: lines,
         };
+        if(rtnparams.length == 0) {
+          return {
+            signature: [
+              `\nexport default async function ${node.name}(${params} ${states}) {`,
+              `\n return  { tx, encEvent };
+            \n}`,
+            ],
+            statements: lines,
+          };
+        }
+
+      if(rtnparams.includes('bool: bool')) {
+        return {
+          signature: [
+            `\nexport default async function ${node.name}(${params} ${states}) {`,
+            `\n const bool = true; \n return  { tx, encEvent,  ${rtnparams} };
+          \n}`,
+          ],
+          statements: lines,
+        };
+      }
 
       return {
         signature: [
           `\nexport default async function ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx , ${rtnparams} };
+          `\nreturn  { tx, encEvent, ${rtnparams} };
         \n}`,
         ],
         statements: lines,
@@ -553,7 +578,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     stateType: 'decrement',
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `[${stateName}_stateVarId_key.integer]`
+                      ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -562,22 +587,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 break;
               case false:
               default:
-                if (stateNode.mappingKey) {
-                  lines.push(`
-                  \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
-                  \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
-                } else {
-                  lines.push(`
-                  \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
-                }
-
                 lines.push(
                     Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
                     mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `[${stateName}_stateVarId_key.integer]`
+                      ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -588,21 +604,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             break;
           case false:
           default:
-            if (stateNode.mappingKey) {
-              lines.push(`
-              \nif (!preimage.${stateNode.mappingName}) preimage.${stateNode.mappingName} = {};
-              \nif (!preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer]) preimage.${stateNode.mappingName}[${stateName}_stateVarId_key.integer] = {};`);
-            } else {
-              lines.push(`
-              \nif (!preimage.${stateName}) preimage.${stateName} = {};`);
-            }
             lines.push(
                 Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
-                  ? `[${stateName}_stateVarId_key.integer]`
+                  ? `${stateName}_stateVarId_key.integer`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
@@ -612,17 +620,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.isConstructor) lines.push(`\nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`)
       return {
         statements: [
-          `\n// Write new commitment preimage to db: \n
-          \nlet preimage = {};`,
-          `\nif (fs.existsSync(db)) {
-            preimage = JSON.parse(
-                fs.readFileSync(db, 'utf-8', err => {
-                  console.log(err);
-                }),
-              );
-            }`,
+          `\n// Write new commitment preimage to db: \n`,
           lines.join('\n'),
-          `\nfs.writeFileSync(db, JSON.stringify(preimage, null, 4));`,
         ],
       };
 
@@ -776,13 +775,33 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
-          \nconst tx = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof)
-          .send({
-              from: config.web3.options.defaultAccount,
-              gas: config.web3.options.defaultGas,
-              value: msgValue,
-            });\n`,
+          \nconst txData = await instance.methods
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          \n	let txParams = {
+            from: config.web3.options.defaultAccount,
+            to: contractAddr,
+            gas: config.web3.options.defaultGas,
+            gasPrice: config.web3.options.defaultGasPrice,
+            data: txData,
+            chainId: await web3.eth.net.getId(),
+            };
+            \n 	const key = config.web3.key;
+            \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
+            \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+            \n  let tx = await instance.getPastEvents("NewLeaves");
+            \n tx = tx[0];\n
+            let encEvent = '';
+            \n try {
+            \n  encEvent = await instance.getPastEvents("EncryptedData");
+            \n } catch (err) {
+            \n  console.log('No encrypted event');
+            \n}`,
+
+          // .send({
+          //     from: config.web3.options.defaultAccount,
+          //     gas: config.web3.options.defaultGas,
+          //     value: msgValue,
+          //   });\n`,
         ],
       };
     default:

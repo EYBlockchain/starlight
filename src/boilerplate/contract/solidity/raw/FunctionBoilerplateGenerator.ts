@@ -64,8 +64,9 @@ class FunctionBoilerplateGenerator {
       isConstructor
     }): string[] {
       // prettier-ignore
+
       let parameter = [
-      ...(customInputs ? customInputs.filter(input => !input.dummy).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
+      ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
       ...(newNullifiers ? [`uint256[]`] : []),
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
@@ -73,7 +74,7 @@ class FunctionBoilerplateGenerator {
       ...(encryptionRequired ? [`uint256[][]`] : []),
       ...(encryptionRequired ? [`uint256[2][]`] : []),
       `uint256[]`,
-    ];
+    ].filter(para => para !== undefined); // Added for return parameter 
 
       customInputs?.forEach((input, i) => {
         if (input.structName) customInputs[i] = input.properties;

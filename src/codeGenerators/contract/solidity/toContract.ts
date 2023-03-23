@@ -65,7 +65,7 @@ function codeGenerator(node: any) {
 
     case 'FunctionDefinition': {
       // prettier-ignore
-      let functionType: string;
+      let functionType: string = ``;
       switch (node.kind)
       {
         case 'fallback':
@@ -102,6 +102,8 @@ function codeGenerator(node: any) {
     case 'VariableDeclaration': {
       if (node.isSecret) return '';
       let { typeString } = node.typeDescriptions;
+      if (!node.declarationType && !!node._newASTPointer?.declarationType)
+      node.declarationType = node._newASTPointer.declarationType;
       // we crop 'struct ContractName.structname' to just 'structname'
       if (typeString.includes('struct ')) typeString = typeString.substring(typeString.indexOf(".") + 1);
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
@@ -126,7 +128,9 @@ function codeGenerator(node: any) {
     case 'VariableDeclarationStatement': {
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
-      const initialValue = codeGenerator(node.initialValue);
+      let initialValue;
+       if(node.initialValue)
+       initialValue = codeGenerator(node.initialValue);
       if (!initialValue || initialValue === '') return `${declarations};`;
       return `
           ${declarations} = ${initialValue};`;
@@ -146,6 +150,11 @@ function codeGenerator(node: any) {
 
       return ` `;
 
+    case 'Break': 
+      return `break;`;
+
+    case 'Continue':
+      return 'continue;';
 
     case 'Assignment':
       return `${codeGenerator(node.leftHandSide)} ${
@@ -178,7 +187,7 @@ function codeGenerator(node: any) {
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);
       const args = node.arguments.map(codeGenerator);
-      const semicolon = expression === 'require' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
+      const semicolon = expression === 'require' || expression === 'revert' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
       return `${expression}(${args.join(', ')})${semicolon}`;
 
     }
@@ -195,15 +204,55 @@ function codeGenerator(node: any) {
 
 
     case 'IfStatement':
-      return `if (${codeGenerator(node.condition)})
-          ${codeGenerator(node.trueBody.statements[0].expression)}
+      {
+        let trueStatements: any = ``;
+        let falseStatements: any= ``;
+        let initialStatements: any= codeGenerator(node.condition);
+        for (let i =0; i<node.trueBody.statements.length; i++) {
+          trueStatements+= `
+          ${codeGenerator(node.trueBody.statements[i])}`
+        }
+        if(node.falseBody.statements) {
+        for (let j =0; j<node.falseBody.statements.length; j++) {
+          falseStatements+= `
+          ${codeGenerator(node.falseBody.statements[j])}`
+          }
+        }
+        if(node.falseBody.condition) {
+          falseStatements+= `${codeGenerator(node.falseBody)}`;
+        }
+        if(falseStatements!==``)
+        return `if (${initialStatements}) {
+          ${trueStatements}
+        }
+          else {
+          ${falseStatements} 
+          }`;
           else
-          ${codeGenerator(node.falseBody.statements[0].expression)}`;
+          return `if (${initialStatements}) {
+          ${trueStatements} 
+        }`;
+      }
+    case 'ForStatement': {
+      const initializationExpression = codeGenerator(node.initializationExpression);
+      const condition = codeGenerator(node.condition);
+      const loopExpression = codeGenerator(node.loopExpression).replaceAll(";", "");
+      const body = codeGenerator(node.body);
 
-    case 'ForStatement':
-            return `for (${codeGenerator(node.initializationExpression)}; ${codeGenerator(node.condition)}; ${codeGenerator(node.loopExpression)}) {
-              ${codeGenerator(node.body)}
+            return `for (${initializationExpression} ${condition}; ${loopExpression}) {
+              ${body}
                   }`
+                }
+
+    case 'WhileStatement':
+      return `while(${codeGenerator(node.condition)}) {
+        ${codeGenerator(node.body)}
+      }`
+
+      case 'DoWhileStatement':
+        return ` do { 
+          ${codeGenerator(node.body)}
+        } while(${codeGenerator(node.condition)});`
 
     case 'ElementaryTypeNameExpression':
       return codeGenerator(node.typeName);

@@ -4,7 +4,9 @@
 import { VariableBinding } from '../../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../../traverse/Indicator.js';
 import NodePath from '../../../traverse/NodePath.js';
+import { traverseNodesFast } from '../../../traverse/traverse.js';
 import { ZKPError, TODOError, SyntaxError } from '../../../error/errors.js';
+import { KeyObject } from 'crypto';
 
 
 /**
@@ -32,21 +34,44 @@ export default {
   IfStatement: {
     exit(path: NodePath) {
       const { trueBody, falseBody, condition } = path.node;
+
+      if([falseBody?.nodeType, trueBody.nodeType].includes('IfStatement') && (falseBody.containsSecret))
+        throw new TODOError(
+          `We can't currently handle else-if statements. Try a new if statement with one condition instead of an else-if. This is because ZoKrates can't easily handle multiple computational branches.`,
+          trueBody.nodeType === 'IfStatement' ? trueBody : falseBody
+        );
+
       if ((trueBody.containsSecret && trueBody.containsPublic) || !!falseBody && ((falseBody.containsSecret && falseBody.containsPublic) || (falseBody.containsSecret && trueBody.containsPublic) || (trueBody.containsSecret && falseBody.containsPublic))) {
         throw new TODOError(`This if statement contains edited secret and public states - we currently can't edit both in the same statement. Consider separating into public and secret methods.`, path.node);
       }
       if (condition.containsSecret && ( (!!falseBody && falseBody.containsPublic) || trueBody.containsPublic)) {
         throw new TODOError(`This if statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
       }
+      if(trueBody.containsSecret) {
       for (var i=0; i<trueBody.statements.length; i++) {
-        if((trueBody.statements[i].nodeType !== 'ExpressionStatement' || trueBody.statements[i].expression.nodeType !== 'Assignment') && trueBody.containsSecret)
+        if((trueBody.statements[i].nodeType !== 'ExpressionStatement' || trueBody.statements[i].expression.nodeType !== 'Assignment'))
         throw new TODOError(`This if statement expression contains a non assignment operation , which currently isn't supported`, path.node);
       }
-      if(falseBody) {
+    }
+      if(falseBody && falseBody.containsSecret) {
       for(var i=0; i< falseBody.statements.length; i++) {
-        if(( falseBody.statements[i].nodeType !== 'ExpressionStatement'  || falseBody.statements[i].expression.nodeType !== 'Assignment') && falseBody.containsSecret)
+        if(( falseBody.statements[i].nodeType !== 'ExpressionStatement'  || falseBody.statements[i].expression.nodeType !== 'Assignment'))
         throw new TODOError(`This if statement contains a non assignment operation , which currently isn't supported`, path.node);
         }
+      }
+    }
+  },
+
+  IndexAccess: {
+    exit(path: NodePath) {
+      const { node } = path;
+      const { indexExpression, baseExpression } = node;
+      if (node.containsSecret && node.containsPublic) {
+        const mappingBinding = path.getReferencedBinding(baseExpression);
+        const keyBinding = path.getReferencedBinding(indexExpression);
+        if (keyBinding instanceof VariableBinding && keyBinding.isSecret
+          && mappingBinding instanceof VariableBinding && !mappingBinding.isSecret)
+          throw new ZKPError(`Accessing a public mapping ${mappingBinding.name} with a secret value ${keyBinding.name} is not supported - there is no way to hide the secret value when it's used in a public call`, path.node);
       }
     }
   },
@@ -68,17 +93,49 @@ export default {
     }
   },
 
+  WhileStatement: {
+    exit(path: NodePath) {
+      if(path.node.containsSecret)
+      throw new TODOError(`WhileStatement contains secret states , which isn't supported.`, path.node);
+    }
+  },
+
+  DoWhileStatement: {
+    exit(path: NodePath) {
+      if(path.node.containsSecret)
+      throw new TODOError(`DoWhileStatement contains secret states , which isn't supported.`, path.node);
+    }
+  },
+
   ForStatement: {
     exit(path: NodePath) {
       const { initializationExpression, loopExpression, condition, body } = path.node;
+      const miniIdVisitor = (thisNode: any, thisState: any) => {
+        if (thisNode.nodeType === 'Identifier') thisState.push(thisNode.referencedDeclaration);
+      };
+
+      let idInLoopExpression = [];
+      traverseNodesFast(loopExpression, miniIdVisitor, idInLoopExpression);
+
+      const miniMappingVisitor = (thisNode: any) => {
+        if (thisNode.nodeType !== 'IndexAccess') return;
+        const key = path.getMappingKeyIdentifier(thisNode);
+        if (!key.referencedDeclaration) return;
+        if (idInLoopExpression.includes(key.referencedDeclaration))
+        throw new ZKPError(`The mapping ${thisNode.baseExpression.name} is being accessed by the loop expression ${key.name}, which means we are editing as many secret states as there are loop iterations. This is not currently supported due to the computation involved.`, thisNode);
+      };
+
+      traverseNodesFast(body, miniMappingVisitor);
+      
       if ((condition.containsSecret || initializationExpression.containsSecret || loopExpression.containsSecret) && body.containsPublic) {
         throw new TODOError(`This For statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
       }
+
     }
   },
 
   FunctionDefinition: {
-    exit(path: NodePath) {
+    exit(path: NodePath, state: any) {
       const { scope } = path;
       if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
       if (path.node.containsSecret && (path.node.kind === 'fallback' || path.node.kind === 'receive'))
@@ -89,7 +146,7 @@ export default {
         indicator.prelimTraversalErrorChecks();
         indicator.updateFromBinding();
         indicator.updateNewCommitmentsRequired();
-        indicator.updateEncryption();
+        indicator.updateEncryption(state.options);
         if (indicator.isStruct) {
           let found = { whole: false, partitioned: false };
           for (const [, structProperty] of Object.entries(indicator.structProperties)) {
