@@ -1,6 +1,7 @@
 /* eslint-disable import/no-cycle, no-param-reassign */
 import fs from 'fs';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import { collectImportFiles, localFile } from '../../common.js'
 import OrchestrationBP from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
 import codeGenerator from '../nodejs/toOrchestration.js';
@@ -138,11 +139,11 @@ const prepareIntegrationApiServices = (node: any) => {
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
 
   relevantFunctions.forEach((fn: any) => {
-    let fnboilerplate = genericApiServiceFile.postStatements()
-      .replace(/CONTRACT_NAME/g, node.contractName)
-      .replace(/FUNCTION_NAME/g, fn.name);
-    let fnParam =[];
-    let structparams;
+  let fnboilerplate = genericApiServiceFile.postStatements()
+    .replace(/CONTRACT_NAME/g, node.contractName)
+    .replace(/FUNCTION_NAME/g, fn.name);
+  let fnParam: string[] = [];
+  let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
     fn.parameters.parameters.forEach(p => {
       if (p.typeName.isStruct) {
@@ -161,8 +162,8 @@ const prepareIntegrationApiServices = (node: any) => {
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
-    let returnParams =[];
-    let returnParamsName = fn.returnParameters.parameters.map((obj: any) => obj.name);
+    let returnParams: string[] = [];
+    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
     if(returnParamsName.length > 0){
     returnParamsName.forEach(param => {
       if(fn.decrementsSecretState.includes(param))
@@ -254,7 +255,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   let constructorParamsIncludesAddr = false;
   let customProofImport = ``;
   let customProofInputs = ``;
-  const constructorAddrParams = [];
+  const constructorAddrParams: string[] = [];
   // we check weter we must pass in an address to the constructor
   node.constructorParams?.forEach((arg: any) => {
     if (arg.typeName.name === 'address') {
@@ -320,6 +321,17 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
           }
         });
       }
+    });
+  } else if(constructorParamsIncludesAddr) {
+    // for each address in the shield contract constructor...
+    constructorAddrParams.forEach(name => {
+      // we have an address input which is likely not a another contract
+      // we just replace it with the default address
+      customImports += `const ${name} = '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'; \n`;
+      logger.warn(
+        `Looks like you are using a constructor with a public address ${name}. This will be set to the default ganache test address.
+        If you'd like to change it, edit the variable in migrations/2_shield.js in the output zApp.`
+      );
     });
   }
   if (node.functionNames.includes('cnstrctr')) {
@@ -413,7 +425,8 @@ export default function fileGenerator(node: any) {
         'orchestration',
       );
 
-      const startupScript = { filepath: 'bin/setup', file: fs.readFileSync('src/boilerplate/common/bin/setup', 'utf8')};
+      const readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
+      const startupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(startupScript);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>

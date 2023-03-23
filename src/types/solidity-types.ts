@@ -12,6 +12,8 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['baseName'];
     case 'FunctionDefinition':
       return ['parameters', 'returnParameters', 'body'];
+    case 'Conditional':
+      return ['condition', 'trueExpression', 'falseExpression'];
     case 'ParameterList':
       return ['parameters'];
       case 'EventDefinition':
@@ -20,6 +22,10 @@ export function getVisitableKeys(nodeType: string): string[] {
       return ['parameters'];
     case 'IfStatement':
       return ['condition', 'trueBody' , 'falseBody'];
+    case 'WhileStatement':
+      return ['condition', 'body'];
+      case 'DoWhileStatement':
+        return ['condition', 'body'];
     case 'ForStatement':
         return ['condition', 'initializationExpression', 'loopExpression' , 'body'];
     case 'Block':
@@ -371,6 +377,17 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         falseBody,
       };
     }
+
+    case 'Conditional': {
+      const { condition = {} , trueExpression= {} , falseExpression= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        trueExpression,
+        falseExpression,
+      };
+    }
+
     case 'ForStatement': {
       const { condition = {} ,initializationExpression = {} ,loopExpression = {}, body= {} } = fields;
       return {
@@ -379,8 +396,27 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         initializationExpression,
         loopExpression,
         body,
-      }
+      };
     }
+
+    case 'WhileStatement': {
+      const { condition = {} , body= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        body,
+      };
+    }
+
+    case 'DoWhileStatement': {
+      const { condition = {} , body= {} } = fields;
+      return {
+        nodeType,
+        condition,
+        body,
+      };
+    }
+
     case 'TypeConversion': {
       const { type, expression = {}, args = {} } = fields;
       return {

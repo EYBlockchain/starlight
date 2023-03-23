@@ -9,7 +9,7 @@ import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator} from '../../traverse/Indicator.js';
-import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer } from './common.js';
+import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer, getIndexAccessName } from './common.js';
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -22,10 +22,16 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
 
   let { name } = thisPath.isMsg(node) ? node : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
-  const isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
-  const isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  let isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
+  let isForCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!thisPath.getAncestorContainedWithin('initializationExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
   const isLoopExpression = !!thisPath.getAncestorContainedWithin('loopExpression') && thisPath.getAncestorOfType('ForStatement')?.containsSecret;
+  //Check if for-if statements are both together.
+  if(thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement') &&  thisPath.getAncestorOfType('ForStatement')){
+    //Currently We only support if statements inside a for loop no the other way around, so getting the public inputs according to inner if statement
+    if((thisPath.getAncestorOfType('IfStatement')).getAncestorOfType('ForStatement'))
+    isForCondition = isCondition;
+  }
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
   // secret state vars are input via commitment values
@@ -43,8 +49,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     if (thisPath.containerName === 'indexExpression')
       name = binding.getMappingKeyName(thisPath);
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
-    parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess').node.indexExpression.referencedDeclaration : binding.id;
-    const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition').node;
+    parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
+    const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
     const params = fnDefNode._newASTPointer.parameters.parameters;
     if (!params.some(n => n.id === parameterNode.id))
       params.push(parameterNode);
@@ -66,7 +72,7 @@ const addStructDefinition = (path: NodePath) => {
     }),
   });
   const thisFnPath = path.getAncestorOfType('FunctionDefinition');
-  const thisFile = thisFnPath.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath.getUniqueFunctionName());
+  const thisFile = thisFnPath?.parent._newASTPointer.find((file: any) => file.fileName === thisFnPath?.getUniqueFunctionName());
   if (!thisFile.nodes.some(n => n.nodeType === 'StructDefinition' && n.name === structNode.name))
   // add struct def after imports, before fndef
     thisFile.nodes.splice(1, 0, structNode);
@@ -270,6 +276,18 @@ const visitor = {
     }
   },
 
+  WhileStatement: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
+  DoWhileStatement: {
+    enter(path: NodePath, state: any) {
+      state.skipSubNodes = true;
+    }
+  },
+
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
@@ -286,11 +304,14 @@ const visitor = {
            node.expression.components.forEach(component => {
              if(component.name){
               returnName?.push(component.name);
-            }
-             else
+            }else if(component.nodeType === 'IndexAccess'){
+              returnName?.push(getIndexAccessName(component));
+            }else
              returnName?.push(component.value);
            });
-         } else{
+         } else if(node.expression.nodeType === 'IndexAccess'){
+          returnName?.push(getIndexAccessName(node.expression));
+       } else{
           if(node.expression.name)
            returnName?.push(node.expression.name);
           else
@@ -315,23 +336,47 @@ const visitor = {
       parent.body.statements.forEach( node => {
         if(node.nodeType === 'Return'){
           for(const [ id , bindings ] of Object.entries(scope.referencedBindings)){
-            if(node.expression.nodeType === 'TupleExpression'){
-            node.expression.components.forEach(component => {
-              if(id == component.referencedDeclaration) {
-                if ((bindings instanceof VariableBinding)) {
-                  if(component.name === item.name)
-                  item.isPrivate = bindings.isSecret
-                }
+            switch(node.expression.nodeType) {
+              case 'TupleExpression' : {
+                node.expression.components.forEach(component => {
+                  if((component.nodeType === 'IndexAccess' && id == component.indexExpression?.referencedDeclaration )||(component.nodeType === 'MemberAccess' && id == component.expression?.referencedDeclaration )|| id == component.referencedDeclaration) {
+                    if ((bindings instanceof VariableBinding)) {
+                      if(item.name.includes(bindings.node.name))
+                   item.isPrivate = bindings.isSecret
+                    }
+                  }
+                })
+                break;
               }
-            })
-          } else {
-            if( id == node.expression.referencedDeclaration) {
-              if ((bindings instanceof VariableBinding)){
-               if(node.name === item.name)
-               item.isPrivate = bindings.isSecret
+              case 'IndexAccess':{
+                console.log(node);
+                if(id == node.expression.indexExpression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                     item.isPrivate = bindings.isSecret
+                  }
+                } 
+                break ;
               }
+              case 'MemberAccess':{
+                if(id == node.expression.referencedDeclaration) {
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name.includes(bindings.node.name))
+                      item.isPrivate = bindings.isSecret
+                  }
+                } 
+                break;
+              }  
+              default: {
+                if( id == node.expression.referencedDeclaration){
+                  if ((bindings instanceof VariableBinding)){
+                    if(item.name == bindings.node.name)
+                    item.isPrivate = bindings.isSecret
+                   }
+                } 
+                break ;
+              } 
             }
-           }
           }
         }
       })
@@ -378,7 +423,7 @@ const visitor = {
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
         );
       }
-      let declarationType: string;
+      let declarationType: string = ``;
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
@@ -386,7 +431,7 @@ const visitor = {
       if (
         declarationType === 'localStack' &&
         !node.isSecret &&
-        !scope.getReferencedIndicator(node).interactsWithSecret
+        !scope.getReferencedIndicator(node)?.interactsWithSecret
       ) {
         // we don't want to add non secret local vars
 
@@ -490,12 +535,17 @@ const visitor = {
       if((scope.getReferencedNode(expression.expression))?.containsSecret)
       node.containsSecret = 'true';
     }
-      const childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+      if(path.getAncestorOfType('ForStatement') && expression.containsPublic ){
+        childOfSecret = false;
+      }
       const thisState = { interactsWithSecretInScope: false };
 
       path.traverseNodesFast(n => {
-        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret)
+        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret){
           thisState.interactsWithSecretInScope = true;
+        }
+
       }, thisState);
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
         state.skipSubNodes = true;
@@ -511,7 +561,7 @@ const visitor = {
             const { leftHandSide: lhs, rightHandSide: rhs } = expression;
             const lhsIndicator = scope.getReferencedIndicator(lhs);
 
-            if (!lhsIndicator.isPartitioned) break;
+            if (!lhsIndicator?.isPartitioned) break;
 
             const rhsPath = NodePath.getPath(rhs);
             // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
@@ -575,26 +625,26 @@ const visitor = {
         if (!lhs) lhs = node.expression.subExpression;
         const referencedIndicator = scope.getReferencedIndicator(lhs, true);
 
-        const name = referencedIndicator.isMapping
+        const name = referencedIndicator?.isMapping
           ? referencedIndicator.name
               .replace('[', '_')
               .replace(']', '')
               .replace('.sender', 'Sender')
               .replace('.value','Value')
               .replace('.', 'dot')
-          : referencedIndicator.name;
+          : referencedIndicator?.name;
 
-        if (referencedIndicator.isMapping && lhs.baseExpression) {
+        if (referencedIndicator?.isMapping && lhs.baseExpression) {
           lhs = lhs.baseExpression;
         } else if (lhs.nodeType === 'MemberAccess') {
           lhs = lhs.expression;
           if (lhs.baseExpression) lhs = lhs.baseExpression;
         }
         // collect all index names
-        const names = referencedIndicator.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
+        const names = referencedIndicator?.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
 
         // check whether this is the first instance of a new index name
-        const firstInstanceOfNewName = names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
+        const firstInstanceOfNewName = names && names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
         if (referencedIndicator instanceof StateVariableIndicator &&
           (firstInstanceOfNewName || (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
             lhs.id === referencedIndicator.referencingPaths[0].parent.id)) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
@@ -659,7 +709,7 @@ const visitor = {
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
         );
 
-      let declarationType: string;
+      let declarationType: string = ``;
       // TODO: `memery` declarations and `returnParameter` declarations
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
@@ -668,7 +718,7 @@ const visitor = {
       if (
         declarationType === 'localStack' &&
         !node.isSecret &&
-        !scope.getReferencedIndicator(node).interactsWithSecret
+        !scope.getReferencedIndicator(node)?.interactsWithSecret
       ) {
         // we don't want to add non secret local vars
         node._newASTPointer = parent._newASTPointer;
@@ -689,8 +739,8 @@ let interactsWithSecret = false ;
         if(refPath.parentPath.isInternalFunctionCall()){
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
-             let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.bindings)[index]);
-             interactsWithSecret ||= refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression).scope.indicators[key]?.interactsWithSecret
+             let key = (Object.keys((refPath.getReferencedPath(refPath.parentPath.node?.expression) || refPath.parentPath).scope.bindings)[index]);
+             interactsWithSecret ||= refPath.getReferencedPath(refPath.parentPath.node?.expression)?.scope.indicators[key]?.interactsWithSecret
             }
           })
         }
@@ -793,17 +843,37 @@ let interactsWithSecret = false ;
   },
 
   IfStatement: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      let isIfStatementSecret;
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic)
+        isIfStatementSecret = true;
+      if(isIfStatementSecret) {
+      if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')
+      {
+        const newNode = buildNode(node.nodeType, {
+          condition: {},
+          trueBody: [],
+          falseBody: [],
+          isRevert : true
+        });
+        node._newASTPointer = newNode;
+        parent._newASTPointer.push(newNode);
+        return;
+      }
       const newNode = buildNode(node.nodeType, {
         condition: {},
         trueBody: [],
-        falseBody: []
+        falseBody: [],
+        isRevert : node.isrevert
       });
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+    } else {
+      state.skipSubNodes = true;
+      return ;
+    }
     },
-
     exit(path: NodePath) {
       // a visitor to collect all identifiers in an if condition
       // we use this list later to init temp variables
@@ -852,16 +922,34 @@ let interactsWithSecret = false ;
     }
   },
 
+  Conditional: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode(node.nodeType, {
+        condition: {},
+        falseExpression: [],
+        trueExpression: []
+      });
+      node._newASTPointer = newNode;
+      parent._newASTPointer.push(newNode);
+    },
+  },
+
   ForStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
+      node.body.statements.forEach(element => {
+        if(element.containsPublic){
+          state.skipSubelementNodes = true;
+        }
+      });
     if(!path?.containsSecret){
     state.skipSubNodes = true;
-    return ;
-  }
+  } if(!state.skipSubNodes){
       const newNode = buildNode(node.nodeType);
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
+    }
     },
   },
 
@@ -959,7 +1047,7 @@ let interactsWithSecret = false ;
 
     const args = node.arguments;
     state.isAddStructDefinition = true;
-    path.getAncestorOfType('FunctionDefinition').node.parameters.parameters.some(para => {
+    path.getAncestorOfType('FunctionDefinition')?.node.parameters.parameters.some(para => {
       for (const arg of args) {
         if((arg.typeDescriptions.typeIdentifier === para.typeDescriptions.typeIdentifier)
          && arg.typeDescriptions.typeIdentifier.includes('_struct') && para.typeDescriptions.typeIdentifier.includes('_struct'))
@@ -987,12 +1075,12 @@ let interactsWithSecret = false ;
      state.internalFncName.push(node.expression.name);
      if(internalFunctionInteractsWithSecret === true){
       const callingfnDefPath = path.getFunctionDefinition();
-      const callingfnDefIndicators = callingfnDefPath.scope.indicators;
+      const callingfnDefIndicators = callingfnDefPath?.scope.indicators;
       const functionReferncedNode = scope.getReferencedPath(node.expression);
-      const internalfnDefIndicators = functionReferncedNode.scope.indicators;
+      const internalfnDefIndicators = functionReferncedNode?.scope.indicators;
       state.isEncrypted = internalfnDefIndicators.encryptionRequired;
       const startNodePath = path.getAncestorOfType('ContractDefinition')
-      startNodePath.node.nodes.forEach(node => {
+      startNodePath?.node.nodes.forEach(node => {
         if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
           if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
             if(callingfnDefIndicators[node.id]) {
@@ -1039,8 +1127,8 @@ let interactsWithSecret = false ;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
        state.callingFncName ??= [];
-       state.callingFncName.push({name: fnDefNode.node.name, parent: path.parentPath.parentPath.parent.nodeType});
-       fnDefNode.parent._newASTPointer.forEach(file => {
+       state.callingFncName.push({name: fnDefNode?.node.name, parent: path.parentPath.parentPath.parent.nodeType});
+       fnDefNode?.parent._newASTPointer.forEach(file => {
          if (file.fileName === fnDefNode.node.name) {
            file.nodes.forEach(childNode => {
              if (childNode.nodeType === 'ImportStatementList')

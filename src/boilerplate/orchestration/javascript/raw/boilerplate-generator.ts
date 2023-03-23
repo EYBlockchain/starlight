@@ -3,10 +3,13 @@
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const testReadPath = './src/boilerplate/common/generic-test.mjs';
-const apiServiceReadPath = './src/boilerplate/common/services/generic-api_services.mjs';
-const apiRoutesReadPath = './src/boilerplate/common/routes/generic-api_routes.mjs';
+const testReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/generic-test.mjs');
+const pathPrefix = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/');
+const apiServiceReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/services/generic-api_services.mjs');
+const apiRoutesReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/routes/generic-api_routes.mjs');
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
     const { bpSection, bpType, ...otherParams } = node;
@@ -99,7 +102,7 @@ class BoilerplateGenerator {
       accessedOnly,
       stateVarIds
     }): string[] {
-        const stateVarId = [];
+        const stateVarId: string[] = [];
       if(stateVarIds.length > 1){
         stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
         stateVarId.push(`${stateName}_stateVarId_key`);
@@ -166,7 +169,7 @@ class BoilerplateGenerator {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}${mappingKey}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
 
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
@@ -319,14 +322,16 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, registerKey } from './common/contract.mjs';`,
+        `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
+        `\nimport Web3 from './common/web3.mjs';`,
         `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
+        `const web3 = Web3.connection();`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -431,11 +436,12 @@ class BoilerplateGenerator {
                         \tgeneralise(utils.randomHex(31)).integer,
                         \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
                           decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}`];
-        }
+                  }
+              }
       }
     }
-  }
-},
+    return []; // here to stop ts complaining
+  },
 };
 
 sendTransaction = {
@@ -577,7 +583,7 @@ integrationTestBoilerplate = {
 },
 postStatements(): string {
   return `// eslint-disable-next-line func-names \n ${
-      fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g)[0]
+      (fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g) || [])[0]
     }`
 },
 
@@ -609,7 +615,7 @@ integrationApiServicesBoilerplate = {
     },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${
-        fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)[0]}`
+        (fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`
   },
 
   commitments(): string {
@@ -651,7 +657,7 @@ integrationApiRoutesBoilerplate = {
   },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${
-        fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)[0]}`
+        (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
     return `import { service_allCommitments, service_getCommitmentsByState } from "./api_services.mjs";\n`;
@@ -667,62 +673,82 @@ integrationApiRoutesBoilerplate = {
 zappFilesBoilerplate = () => {
   return [
     {
-      readPath: 'src/boilerplate/common/bin/startup',
+      readPath: pathPrefix + '/bin/startup',
       writePath: '/bin/startup',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/config/default.js',
+      readPath: pathPrefix + '/bin/startup',
+      writePath: '/bin/default_startup',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
       generic: false,
     },
     {
-      readPath: 'src/boilerplate/common/migrations/1_initial_migration.js',
+      readPath: pathPrefix + '/migrations/1_initial_migration.js',
       writePath: 'migrations/1_initial_migration.js',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-package.json',
+      readPath: pathPrefix + '/boilerplate-package.json',
       writePath: './package.json',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-docker-compose.yml',
+      readPath: pathPrefix + '/boilerplate-docker-compose.yml',
       writePath: './docker-compose.zapp.yml',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Dockerfile',
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
+      writePath: './docker-compose.zapp.override.yml',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
+      writePath: './docker-compose.zapp.override.default.yml',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/boilerplate-Dockerfile',
       writePath: './Dockerfile',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Dockerfile.deployer',
+      readPath: pathPrefix + '/boilerplate-Dockerfile.deployer',
       writePath: './Dockerfile.deployer',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/boilerplate-Dockerfile.mongo',
+      readPath: pathPrefix + '/boilerplate-Dockerfile.mongo',
       writePath: './Dockerfile.mongo',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/setup-admin-user.js',
+      readPath: pathPrefix + '/setup-admin-user.js',
       writePath: './setup-admin-user.js',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/entrypoint.sh',
+      readPath: pathPrefix + '/entrypoint.sh',
       writePath: './entrypoint.sh',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/truffle-config.js',
+      readPath: pathPrefix + '/entrypoint.sh',
+      writePath: './entrypoint_default.sh',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/truffle-config.js',
       writePath: './truffle-config.js',
       generic: true,
     },
     {
-      readPath: 'src/boilerplate/common/api.mjs',
+      readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
       generic: true,
     },

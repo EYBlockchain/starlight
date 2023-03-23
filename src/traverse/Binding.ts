@@ -58,6 +58,9 @@ export class Binding {
       case 'EmitStatement':
       case 'Break':
       case 'Continue':
+      case 'Conditional':
+      case 'WhileStatement':
+      case 'DoWhileStatement':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);
@@ -208,7 +211,7 @@ export class VariableBinding extends Binding {
    * @returns {String} - the name under which the mapping[key]'s indicator is stored
    */
   getMappingKeyName(path: NodePath): string {
-    return path.scope.getMappingKeyName(path);
+    return path.scope.getMappingKeyName(path) || ``;
   }
 
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
@@ -462,11 +465,17 @@ export class VariableBinding extends Binding {
     }
     // error: conflicting whole/partitioned state
     if (this.isWhole && this.isPartitioned) {
-      throw new SyntaxUsageError(
-        `State cannot be whole and partitioned. The following reasons conflict.`,
+      if (this.isWholeReason && this.isPartitionedReason)
+        throw new SyntaxUsageError(
+          `State cannot be whole and partitioned. The following reasons conflict.`,
+          this.node,
+          [...this.isWholeReason, ...this.isPartitionedReason],
+        );
+      else throw new SyntaxUsageError(
+        `State ${this.name} cannot be whole and partitioned`,
         this.node,
-        [...this.isWholeReason, ...this.isPartitionedReason],
-      );
+        []
+      )
     }
   }
 
@@ -511,8 +520,8 @@ export class VariableBinding extends Binding {
    */
   inferOwnership() {
     if (this.kind !== 'VariableDeclaration') return;
-    let msgSenderEverywhereMappingKey: boolean;
-    let msgSenderEverywhereMappingValue: boolean;
+    let msgSenderEverywhereMappingKey: boolean = false;
+    let msgSenderEverywhereMappingValue: boolean = false;
     this.nullifyingPaths.forEach(path => {
       const functionDefScope = path.scope.getAncestorOfScopeType(
         'FunctionDefinition',
@@ -576,7 +585,7 @@ export class VariableBinding extends Binding {
             const burnPath = mappingKey.keyPath.getAncestorOfType(
               'ExpressionStatement',
             );
-            burnPath.isBurnStatement = true;
+            if (burnPath) burnPath.isBurnStatement = true;
             // TODO call updateBurnStatement in indicator
           }
         }
@@ -613,8 +622,10 @@ export class VariableBinding extends Binding {
         // we have found an owner set to hardcoded 0
         this.ownerSetToZeroWarning(assignmentNode);
         if (this.reinitialisable) {
-          path.getAncestorOfType('ExpressionStatement').isBurnStatement = true;
-          path.scope.getReferencedIndicator(path.node).addBurningPath(path);
+          const exp = path.getAncestorOfType('ExpressionStatement');
+          if (exp) exp.isBurnStatement = true;
+          const ind = path.scope.getReferencedIndicator(path.node);
+          if (ind) ind.addBurningPath(path);
         }
       }
     }
@@ -630,7 +641,7 @@ export class VariableBinding extends Binding {
       logger.debug(
         `Found a statement which burns the secret state and allows it to be reinitialised. If this line isn't meant to do that, check why you are setting the address to 0.`,
       );
-      if (config.get('log_level') === 'debug') backtrace.getSourceCode(node.src);
+      if (logger.level === 'debug') backtrace.getSourceCode(node.src);
       this.isBurned = true;
       // TODO more useful indicators here
     }

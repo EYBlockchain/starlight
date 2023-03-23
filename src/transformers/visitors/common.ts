@@ -55,20 +55,31 @@ export const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) =
     thisState.interactsWithSecret = true;
 };
 
+export const getIndexAccessName = (node: any) => {
+  if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
+  if (node.nodeType == 'IndexAccess') {
+    const mappingKeyName = NodePath.getPath(node).scope.getMappingKeyName(node);
+    if(mappingKeyName == 'msg')
+      return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${node.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
+    return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;
+  }
+  return null;
+}
+
 export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) => {
   const { node, scope } = thisPath;
    const args = node.arguments;
    let parametercheck = true ;
-   let isSecretArray : string[];
-   let oldStateArray : string[];
+   let isSecretArray : string[] = [];
+   let oldStateArray : string[] = [];
    for (const arg of args) {
      if (arg.nodeType !== 'Identifier' && !arg.expression.typeDescriptions.typeIdentifier.includes('_struct')) continue;
-     isSecretArray = args.map(arg => scope.getReferencedBinding(arg).isSecret);
+     isSecretArray = args.map(arg => scope.getReferencedBinding(arg)?.isSecret);
  }
  if(node.expression.nodeType === 'Identifier') {
   const functionReferncedNode = scope.getReferencedPath(node.expression);
-  const params = functionReferncedNode.node.parameters.parameters;
-  thisPath.scope.indicators.internalFunctionoldCommitmentAccessRequired = functionReferncedNode.scope.indicators.oldCommitmentAccessRequired;
+  const params = functionReferncedNode?.node.parameters.parameters;
+  thisPath.scope.indicators.internalFunctionoldCommitmentAccessRequired = functionReferncedNode?.scope.indicators.oldCommitmentAccessRequired;
   if((params.length !== 0) && (params.some(node => (node.isSecret || node._newASTPointer?.interactsWithSecret))))
   {
     thisState.internalFunctionInteractsWithSecret = true;

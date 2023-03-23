@@ -91,16 +91,23 @@ module.exports = {
   web3: {
     host: process.env.BLOCKCHAIN_HOST,
     port: process.env.BLOCKCHAIN_PORT,
-    url: `${process.env.BLOCKCHAIN_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+    // url: `${process.env.BLOCKCHAIN_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+    url: process.env.RPC_URL,
+    rpcUrl: process.env.RPC_URL,
+    defaultAccountMnemonic: process.env.DEFAULT_ACCOUNT_MNEMONIC,
+    key: process.env.KEY,
 
     options: {
-      defaultAccount: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1',
-      defaultBlock: '0', // e.g. the genesis block our blockchain
-      defaultGas: 90000000,
+      // defaultAccount: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1',
+      defaultAccount: process.env.DEFAULT_ACCOUNT,
+      defaultGas: 5221975,
       defaultGasPrice: 20000000000,
-      transactionBlockTimeout: 50,
-      transactionConfirmationBlocks: 15,
-      transactionPollingTimeout: 480,
+      // defaultBlock: '0', // e.g. the genesis block our blockchain
+      // defaultGas: 90000000,
+      // defaultGasPrice: 20000000000,
+      // transactionBlockTimeout: 50,
+      // transactionConfirmationBlocks: 15,
+      // transactionPollingTimeout: 480,
       // transactionSigner: new CustomTransactionSigner()
     },
   },
