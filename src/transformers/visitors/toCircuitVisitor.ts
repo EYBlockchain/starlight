@@ -726,7 +726,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if (
         declarationType === 'localStack' &&
         !node.isSecret &&
-        !scope.getReferencedIndicator(node).?interactsWithSecret &&
+        !scope.getReferencedIndicator(node)?.interactsWithSecret &&
         !path.getAncestorContainedWithin('initializationExpression')
       ) {
         // we don't want to add non secret local vars
