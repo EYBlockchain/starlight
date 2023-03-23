@@ -50,8 +50,8 @@ jobs:
         run: |
           npm ci && ./bin/start
           zappify -i test/contracts/User-Friendly-tests/Assign.zol -o temp-zapps
-          zappify -i test/contracts/If-Statement.zol -o temp-zapps
-          zappify -i test/contracts/internalFunctionCallTest1.zol -o temp-zapps
+          zappify -i test/contracts/User-Friendly-tests/If-Statement.zol -o temp-zapps
+          zappify -i test/contracts/User-Friendly-tests/internalFunctionCallTest1.zol -o temp-zapps
 
       - name: replace zokrates image for actions test
         uses: jacobtomlinson/gha-find-replace@v2
