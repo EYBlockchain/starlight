@@ -49,7 +49,9 @@ jobs:
       - name: run zappify
         run: |
           npm ci && ./bin/start
-          zappify -i test/contracts/Assign-public-admin.zol -o temp-zapps
+          zappify -i test/contracts/Assign.zol -o temp-zapps
+          zappify -i test/contracts/If-Statement.zol -o temp-zapps
+          zappify -i test/contracts/internalFunctionCallTest1.zol -o temp-zapps
 
       - name: replace zokrates image for actions test
         uses: jacobtomlinson/gha-find-replace@v2
@@ -57,20 +59,13 @@ jobs:
           find: "ghcr.io/eyblockchain/zokrates-worker-m1:v1.1"
           replace: "ghcr.io/eyblockchain/zokrates-worker-m1:v0.1"
           include: "**docker-compose.zapp.yml"
-
-      - name: set up zapp
-        run: |
-          cd temp-zapps/Assign-public-admin
-          npm i
-          docker-compose -f docker-compose.zapp.yml build
-          docker-compose -f docker-compose.zapp.yml up -d zokrates
-
-      - name: generate zapp keys
-        run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/setup && ./bin/setup
-
-      - name: run zapp npm test
-        run: cd temp-zapps/Assign-public-admin && chmod +x ./bin/startup && npm test
+       
+      - name: run zapp npm apitest
+        run: npx mocha --exit --timeout 50000 --require @babel/register apitest.js
 
       - name: disp logs on failure
         if: failure()
-        run: docker logs assign-public-admin_zokrates_1
+        run: | 
+          docker logs assign_zokrates_1
+          docker logs if-statement_zokrates_1
+          docker logs internalFunctionCallTest1_zokrates_1
