@@ -188,32 +188,36 @@ const visitor = {
           && indicator.isNullified && !indicator.isStruct) {
             if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName)){
               parent._newASTPointer.push(joinCommitmentsNode);
+            }
         }
         if(indicator instanceof StateVariableIndicator && indicator.encryptionRequired) {
-          const num = indicator.isStruct ? indicators.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
+          const num = indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.length + 2 : 3;
+          let encMsgsNode;
           if (indicator.isMapping && indicator.mappingKeys) {
             for(const [, mappingKey ] of Object.entries(indicator.mappingKeys)) {
               if (mappingKey.encryptionRequired) {
                 let indicatorname: any;
                 if(mappingKey.returnKeyName(mappingKey.keyPath.node) == 'msg')
-                indicatorname  = mappingKey.returnKeyName(mappingKey.keyPath.parent)
+                  indicatorname  = mappingKey.returnKeyName(mappingKey.keyPath.parent)
                 else
-                indicatorname = mappingKey.returnKeyName(mappingKey.keyPath.node)
-                newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+                  indicatorname = mappingKey.returnKeyName(mappingKey.keyPath.node)
+                encMsgsNode = buildNode('VariableDeclaration', {
                   name: `${indicator.name}_${indicatorname}`.replaceAll('.', 'dot').replace('[', '_').replace(']', ''),
                   type: `EncryptedMsgs<${num}>`,
-                }));
+                });
               }
             };
           } else {
-            newFunctionDefinitionNode.returnParameters.parameters.push(buildNode('VariableDeclaration', {
+            encMsgsNode = buildNode('VariableDeclaration', {
               name: indicator.name,
               type: `EncryptedMsgs<${num}>`,
-            }));
+            }); 
           }
+          encMsgsNode.isPartitioned = indicator.isPartitioned;
+          newFunctionDefinitionNode.returnParameters.parameters.push(encMsgsNode);
         }
       }
-    }
+    
 
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
