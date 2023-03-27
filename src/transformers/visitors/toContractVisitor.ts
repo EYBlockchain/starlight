@@ -612,6 +612,11 @@ DoWhileStatement: {
   VariableDeclaration: {
     enter(path: NodePath, state : any) {
       const { node, parent, scope } = path;
+      
+      if(node.typeName.name === 'uint')
+      throw new Error(
+        `SyntaxError: VariableDeclarations is uint, please specify the size (from 8 to 256 bits, in steps of 8) of declared variable ${node.name}.`,
+      );
 
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
