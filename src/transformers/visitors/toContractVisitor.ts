@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
-// import logger from '../../utils/logger.mjs';
+ import logger from '../../utils/logger.js';
 import cloneDeep from 'lodash.clonedeep';
 import { buildNode } from '../../types/solidity-types.js';
 import { traverseNodesFast } from '../../traverse/traverse.js';
@@ -614,10 +614,10 @@ DoWhileStatement: {
       const { node, parent, scope } = path;
       
       if(node.typeName.name === 'uint')
-      throw new Error(
+      logger.warn(
         `VariableDeclarations is uint, please specify the size (from 8 to 256 bits, in steps of 8) of declared variable ${node.name}.`,
       );
-
+//
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
