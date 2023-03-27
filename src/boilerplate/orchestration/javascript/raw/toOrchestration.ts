@@ -790,6 +790,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
             \n  let tx = await instance.getPastEvents("NewLeaves");
             \n tx = tx[0];\n
+            \n if (!tx) {
+              throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
+            } \n
             let encEvent = '';
             \n try {
             \n  encEvent = await instance.getPastEvents("EncryptedData");
