@@ -57,6 +57,7 @@ This code is not owned by EY and EY provides no warranty and disclaims any and a
   - [Testing](#testing)
     - [full zapp](#full-zapp)
     - [circuit](#circuit)
+  - [Zokrates worker](#zokrates-worker)
   - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
@@ -352,6 +353,10 @@ The configuration can be done during `./bin/setup` phase in the following way.
 `docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
 
 `./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
+
+### Zokrates Worker
+
+Starlight uses containerised zokrates from [zokrates-worker-starlight](https://github.com/EYBlockchain/starlight/pkgs/container/zokrates-worker-starlight) which is built from repo [zokrates-worker](https://github.com/EYBlockchain/zokrates-worker/tree/hari/starlight).
 
 ### Contributing
 
