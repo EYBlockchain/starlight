@@ -381,7 +381,7 @@ class BoilerplateGenerator {
     ? [this.thisIndicator.container.referencedKeyName, this.thisIndicator.referencedKeyName]
     : bpSection === 'parameters'
       ? this.mappingKeyName.split('.')[0]
-      : this.mappingKeyName.replace('.', 'dot'),
+      : bpSection === 'postStatements' ? this.mappingKeyName : this.mappingKeyName.replace('.', 'dot'),
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
