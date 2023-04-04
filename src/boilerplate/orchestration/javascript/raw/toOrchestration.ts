@@ -2,47 +2,44 @@
 
 import OrchestrationBP from './boilerplate-generator.js';
 
-
+let msgSenderAdded = false;
 const stateVariableIds = (node: any) => {
-  const {privateStateName, stateNode} = node;
+  const { privateStateName, stateNode } = node;
   const stateVarIds: string[] = [];
   // state variable ids
   // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
   if (!stateNode.stateVarId[1]) {
     stateVarIds.push(
-      `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
+      `\nconst ${ privateStateName }_stateVarId = generalise(${ stateNode.stateVarId }).hex(32);`,
     );
   } else {
     // if is a mapping...
     stateVarIds.push(
-      `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
+      `\nlet ${ privateStateName }_stateVarId = ${ stateNode.stateVarId[0] };`,
     );
-    // ... and the mapping key is not msg.sender, but is a parameter
-    if (
-      privateStateName.includes(stateNode.stateVarId[1].replaceAll('.', 'dot')) &&
-      stateNode.stateVarId[1] !== 'msg'
-    ) {
-      if (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0') {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = generalise(${stateNode.stateVarId[1]});`,
-        );
-      } else {
-        stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
-        );
+
+    let innerArgs: string[] = [];
+    stateNode.stateVarId.forEach((id, index) => {
+      if (index !== 0) {
+        innerArgs.push(`${ +id || id === '0' ? `${ id }` : `${ id }.hex(32)` }`);
       }
-    }
+    });
     // ... and the mapping key is msg, and the caller of the fn has the msg key
     if (
-      stateNode.stateVarId[1] === 'msg' &&
-      privateStateName.includes('msg')
+      stateNode.stateVarId.includes('msg') &&
+      privateStateName.includes('msg') && !msgSenderAdded
     ) {
       stateVarIds.push(
-        `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
+        `\nconst msgSender = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
       );
+      const index = stateNode.stateVarId.indexOf('msg');
+      stateNode.stateVarId[index] = `msgSender`;
     }
     stateVarIds.push(
-      `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+      `\n${ privateStateName }_stateVarId = poseidonHash([
+        BigInt(${ privateStateName }_stateVarId),
+        ${ innerArgs.map(a => `BigInt(${ a })`) }
+      ]).hex(32);`,
     );
   }
   return stateVarIds;
@@ -77,19 +74,19 @@ export const sendTransactionBoilerplate = (node: any) => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            output[1].push(`${privateStateName}_root.integer`);
+            output[1].push(`${ privateStateName }_root.integer`);
             output[0].push(
-              `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
+              `${ privateStateName }_0_nullifier.integer, ${ privateStateName }_1_nullifier.integer`,
             );
-            output[2].push(`${privateStateName}_2_newCommitment.integer`);
+            output[2].push(`${ privateStateName }_2_newCommitment.integer`);
             break;
           case false:
           default:
             // increment
-            output[2].push(`${privateStateName}_newCommitment.integer`);
+            output[2].push(`${ privateStateName }_newCommitment.integer`);
             if (stateNode.encryptionRequired) {
-              output[4].push(`${privateStateName}_cipherText`);
-              output[5].push(`${privateStateName}_encKey`);
+              output[4].push(`${ privateStateName }_cipherText`);
+              output[5].push(`${ privateStateName }_encKey`);
             }
             break;
         }
@@ -98,15 +95,15 @@ export const sendTransactionBoilerplate = (node: any) => {
       default:
         // whole
         if (!stateNode.reinitialisedOnly)
-          output[1].push(`${privateStateName}_root.integer`);
+          output[1].push(`${ privateStateName }_root.integer`);
         if (stateNode.accessedOnly) {
-          output[3].push(`${privateStateName}_nullifier.integer`);
+          output[3].push(`${ privateStateName }_nullifier.integer`);
         } else {
           if (!stateNode.reinitialisedOnly) {
-            output[0].push(`${privateStateName}_nullifier.integer`);
+            output[0].push(`${ privateStateName }_nullifier.integer`);
           }
           if (!stateNode.burnedOnly)
-            output[2].push(`${privateStateName}_newCommitment.integer`);
+            output[2].push(`${ privateStateName }_newCommitment.integer`);
         }
 
         break;
@@ -128,36 +125,45 @@ export const generateProofBoilerplate = (node: any) => {
     if (stateNode.encryptionRequired) {
       stateNode.structProperties ? cipherTextLength.push(stateNode.structProperties.length + 2) : cipherTextLength.push(3);
       enc[0] ??= [];
-      enc[0].push(`const ${stateName}_cipherText = res.inputs.slice(START_SLICE, END_SLICE).map(e => generalise(e).integer);`);
+      enc[0].push(`const ${ stateName }_cipherText = res.inputs.slice(START_SLICE, END_SLICE).map(e => generalise(e).integer);`);
       enc[1] ??= [];
-      enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
+      enc[1].push(`const ${ stateName }_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
     }
-    const parameters: string[] = [];
-    // we include the state variable key (mapping key) if its not a param (we include params separately)
-    const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
-    const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
 
-    const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
-    const stateVarIdLines =
-      stateNode.isMapping && !node.parameters.includes(stateNode.originalMappingKeyName || stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
-        ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
-        : [];
+    let stateVarIdLines: string[] = [];
+    const parameters: string[] = [];
+
+    if (stateNode.stateVarId[0]) stateNode.stateVarId.forEach((svid, index) => {
+      if (index !== 0) {
+        // we include the state variable key (mapping key) if its not a param (we include params separately)
+        const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('msgSender.integer')) && svid.includes('msg');
+        const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('msgValue.integer')) && svid.includes('msg');
+        const constantMappingKey = stateNode.isMapping && (+svid || svid === '0');
+        if (!node.parameters.includes(stateNode.originalMappingKeyName[index - 1] || svid)
+          && !msgSenderParamAndMappingKey
+          && !msgValueParamAndMappingKey
+          && !constantMappingKey
+        ) {
+          stateVarIdLines.push(`\n\t\t\t\t\t\t\t\t${ stateNode.originalMappingKeyName[index - 1] }.integer,`);
+        }
+      }
+    });
     // we add any extra params the circuit needs
     node.parameters
       .filter(
         (para: string) =>
           !privateStateNames.includes(para) && (
-          !output.join().includes(`${para}.integer`) && !output.join().includes('msgValue')),
+            !output.join().includes(`${ para }.integer`) && !output.join().includes('msgValue')),
       )
       ?.forEach((param: string) => {
         if (param == 'msgSender') {
-          parameters.unshift(`\t${param}.integer,`);
-        } 
+          parameters.unshift(`\t${ param }.integer,`);
+        }
         else if (param == 'msgValue') {
-          parameters.unshift(`\t${param},`);
+          parameters.unshift(`\t${ param },`);
         }
         else {
-          parameters.push(`\t${param}.integer,`);
+          parameters.push(`\t${ param }.integer,`);
         }
 
       });
@@ -191,12 +197,12 @@ export const generateProofBoilerplate = (node: any) => {
             stateNode.increment.forEach((inc: any) => {
               // +inc.name tries to convert into a number -  we don't want to add constants here
               if (
-                !output.join().includes(`\t${inc.name}.integer`) &&
-                !parameters.includes(`\t${inc.name}.integer,`) &&
+                !output.join().includes(`\t${ inc.name }.integer`) &&
+                !parameters.includes(`\t${ inc.name }.integer,`) &&
                 !privateStateNames.includes(inc.name) && !inc.accessed &&
                 !+inc.name
               )
-                output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
+                output.push(`\n\t\t\t\t\t\t\t\t${ inc.name }.integer`);
             });
             output.push(
               Orchestrationbp.generateProof.parameters({
@@ -221,14 +227,14 @@ export const generateProofBoilerplate = (node: any) => {
             if (stateNode.structProperties) stateNode.increment = Object.values(stateNode.increment).flat(Infinity);
             stateNode.increment.forEach((inc: any) => {
               if (
-                !output.join().includes(`\t${inc.name}.integer`) &&
-                !parameters.includes(`\t${inc.name}.integer,`) && !inc.accessed &&
+                !output.join().includes(`\t${ inc.name }.integer`) &&
+                !parameters.includes(`\t${ inc.name }.integer,`) && !inc.accessed &&
                 !+inc.name
               )
-                output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
+                output.push(`\n\t\t\t\t\t\t\t\t${ inc.name }.integer`);
             });
             output.push(
-              Orchestrationbp.generateProof.parameters( {
+              Orchestrationbp.generateProof.parameters({
                 stateName,
                 stateType: 'increment',
                 stateVarIds: stateVarIdLines,
@@ -248,7 +254,7 @@ export const generateProofBoilerplate = (node: any) => {
   }
   // we now want to go backwards and calculate where our cipherText is
   let start = 0;
-  for (let i = cipherTextLength.length -1; i >= 0; i--) {
+  for (let i = cipherTextLength.length - 1; i >= 0; i--) {
     // extract enc key
     enc[1][i] = start === 0 ? enc[1][i].replace('END_SLICE', '') : enc[1][i].replace('END_SLICE', ', ' + start);
     enc[1][i] = enc[1][i].replace('START_SLICE', start - 2);
@@ -269,11 +275,11 @@ export const preimageBoilerPlate = (node: any) => {
   for ([privateStateName, stateNode] of Object.entries(node.privateStates)) {
     const stateVarIds = stateVariableIds({ privateStateName, stateNode });
     const initialiseParams: string[] = [];
-    const preimageParams:string[] = [];
+    const preimageParams: string[] = [];
     if (stateNode.accessedOnly) {
       output.push(
         Orchestrationbp.readPreimage.postStatements({
-          stateName:privateStateName,
+          stateName: privateStateName,
           contractName: node.contractName,
           stateType: 'whole',
           mappingName: null,
@@ -290,45 +296,45 @@ export const preimageBoilerPlate = (node: any) => {
       continue;
     }
 
-    initialiseParams.push(`\nlet ${privateStateName}_prev = generalise(0);`);
-    preimageParams.push(`\t${privateStateName}: 0,`);
+    initialiseParams.push(`\nlet ${ privateStateName }_prev = generalise(0);`);
+    preimageParams.push(`\t${ privateStateName }: 0,`);
 
     // ownership (PK in commitment)
     const newOwner = stateNode.isOwned ? stateNode.owner : null;
     let newOwnerStatment: string;
     switch (newOwner) {
       case null:
-        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+        newOwnerStatment = `_${ privateStateName }_newOwnerPublicKey === 0 ? publicKey : ${ privateStateName }_newOwnerPublicKey;`;
         break;
       case 'msg':
         if (privateStateName.includes('msg')) {
           newOwnerStatment = `publicKey;`;
         } else if (stateNode.mappingOwnershipType === 'key') {
           // the stateVarId[1] is the mapping key
-          newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
+          newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${ stateNode.stateVarId[1] }.hex(20)).call()); // address should be registered`;
         } else if (stateNode.mappingOwnershipType === 'value') {
           // TODO test below
           // if the private state is an address (as here) its still in eth form - we need to convert
-          newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
-          \nif (${privateStateName}_newOwnerPublicKey === 0) {
+          newOwnerStatment = `await instance.methods.zkpPublicKeys(${ privateStateName }.hex(20)).call();
+          \nif (${ privateStateName }_newOwnerPublicKey === 0) {
             console.log('WARNING: Public key for given eth address not found - reverting to your public key');
-            ${privateStateName}_newOwnerPublicKey = publicKey;
+            ${ privateStateName }_newOwnerPublicKey = publicKey;
           }
-          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
+          \n${ privateStateName }_newOwnerPublicKey = generalise(${ privateStateName }_newOwnerPublicKey);`;
         } else {
-          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+          newOwnerStatment = `_${ privateStateName }_newOwnerPublicKey === 0 ? publicKey : ${ privateStateName }_newOwnerPublicKey;`;
         }
         break;
       default:
         // TODO - this is the case where the owner is an admin (state var)
         // we have to let the user submit the key and check it in the contract
         if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
-          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(await instance.methods.${newOwner}().call()).call()) : ${privateStateName}_newOwnerPublicKey;`;
+          newOwnerStatment = `_${ privateStateName }_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(await instance.methods.${ newOwner }().call()).call()) : ${ privateStateName }_newOwnerPublicKey;`;
         } else if (stateNode.ownerIsParam && newOwner) {
-          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
+          newOwnerStatment = `_${ privateStateName }_newOwnerPublicKey === 0 ? ${ newOwner } : ${ privateStateName }_newOwnerPublicKey;`;
         } else {
           // is secret - we just use the users to avoid revealing the secret owner
-          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`
+          newOwnerStatment = `_${ privateStateName }_newOwnerPublicKey === 0 ? publicKey : ${ privateStateName }_newOwnerPublicKey;`
 
           // BELOW reveals the secret owner as we check the public key in the contract
           // `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(${newOwner}.hex(20)).call()) : ${privateStateName}_newOwnerPublicKey;`
@@ -367,7 +373,7 @@ export const preimageBoilerPlate = (node: any) => {
                 stateType: 'decrement',
                 mappingName: stateNode.mappingName || privateStateName,
                 mappingKey: stateNode.mappingKey
-                  ? `[${privateStateName}_stateVarId_key.integer]`
+                  ? `[${ privateStateName }_stateVarId_key.integer]`
                   : ``,
                 increment: stateNode.increment,
                 structProperties: stateNode.structProperties,
@@ -383,7 +389,7 @@ export const preimageBoilerPlate = (node: any) => {
           default:
             // increment
             output.push(
-            Orchestrationbp.readPreimage.postStatements({
+              Orchestrationbp.readPreimage.postStatements({
                 stateName: privateStateName,
                 contractName: node.contractName,
                 stateType: 'increment',
@@ -412,7 +418,7 @@ export const preimageBoilerPlate = (node: any) => {
 
 export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const lines: any[] = [];
-  const params:any[] = [];
+  const params: any[] = [];
   const states: string[] = [];
   const rtnparams: string[] = [];
   let stateName: string;
@@ -420,78 +426,83 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
   switch (node.nodeType) {
     case 'Imports':
-      return { statements:  Orchestrationbp.generateProof.import() }
+      return { statements: Orchestrationbp.generateProof.import() }
 
     case 'FunctionDefinition':
       // the main function
+      // reset for each new fn
+      msgSenderAdded = false;
       if (node.name !== 'cnstrctr') lines.push(
         `\n\n// Initialisation of variables:
-        \nconst instance = await getContractInstance('${node.contractName}');
-        \nconst contractAddr = await getContractAddress('${node.contractName}');        `,
+        \nconst instance = await getContractInstance('${ node.contractName }');
+        \nconst contractAddr = await getContractAddress('${ node.contractName }');        `,
       );
-      if (node.msgSenderParam)
+      if (node.msgSenderParam) {
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
+        msgSenderAdded = true;
+      }
+
       if (node.msgValueParam)
         lines.push(`
               \nconst msgValue = 1;`);
-              else
-              lines.push(`
-              \nconst msgValue = 0;`);  
+      // else
+      // lines.push(`
+      // \nconst msgValue = 0;`);  
       node.inputParameters.forEach((param: string) => {
-        lines.push(`\nconst ${param} = generalise(_${param});`);
-        params.push(`_${param}`);
+        lines.push(`\nconst ${ param } = generalise(_${ param });`);
+        params.push(`_${ param }`);
       });
 
       node.parameters.modifiedStateVariables.forEach((param: any) => {
-        states.push(`_${param.name}_newOwnerPublicKey = 0`);
+        states.push(`_${ param.name }_newOwnerPublicKey = 0`);
         lines.push(
-          `\nlet ${param.name}_newOwnerPublicKey = generalise(_${param.name}_newOwnerPublicKey);`,
+          `\nlet ${ param.name }_newOwnerPublicKey = generalise(_${ param.name }_newOwnerPublicKey);`,
         );
       });
 
       if (node.decrementsSecretState) {
         node.decrementedSecretStates.forEach((decrementedState: string) => {
-          states.push(` _${decrementedState}_0_oldCommitment = 0`);
-          states.push(` _${decrementedState}_1_oldCommitment = 0`);
+          states.push(` _${ decrementedState }_0_oldCommitment = 0`);
+          states.push(` _${ decrementedState }_1_oldCommitment = 0`);
         });
       }
 
-      node.returnParameters.forEach( (param, index) => {
-       if(param === 'true')
-        rtnparams?.push('bool: bool');
-       else if(param?.includes('Commitment'))
-        rtnparams?.push( ` ${param} : ${param}.integer  `);
-       else
-        rtnparams.push(`   ${param} :${param}.integer`);
-     });
+      node.returnParameters.forEach((param, index) => {
+        if (param === 'true')
+          rtnparams?.push('bool: bool');
+        else if (param?.includes('Commitment'))
+          rtnparams?.push(` ${ param } : ${ param }.integer  `);
+        else
+          rtnparams.push(`   ${ param } :${ param }.integer`);
+      });
       if (params) params[params.length - 1] += `,`;
 
       if (node.name === 'cnstrctr')
         return {
           signature: [
-            `\nexport default async function ${node.name}(${params} ${states}) {`,
+            `\nexport default async function ${ node.name }(${ params } ${ states }) {`,
             `\nprocess.exit(0);
           \n}`,
           ],
           statements: lines,
         };
-        if(rtnparams.length == 0) {
-          return {
-            signature: [
-              `\nexport default async function ${node.name}(${params} ${states}) {`,
-              `\n return  { tx, encEvent };
-            \n}`,
-            ],
-            statements: lines,
-          };
-        }
-
-      if(rtnparams.includes('bool: bool')) {
+      if (rtnparams.length == 0) {
         return {
           signature: [
-            `\nexport default async function ${node.name}(${params} ${states}) {`,
-            `\n const bool = true; \n return  { tx, encEvent,  ${rtnparams} };
+            `\nexport default async function ${ node.name }(${ params } ${ states }) {`,
+            `\n return  { tx, encEvent };
+            \n}`,
+          ],
+          statements: lines,
+        };
+      }
+
+      if (rtnparams.includes('bool: bool')) {
+        return {
+          signature: [
+            `\nexport default async function ${ node.name }(${ params } ${ states }) {`,
+            `\n const bool = true; \n return  { tx, encEvent,  ${ rtnparams } };
           \n}`,
           ],
           statements: lines,
@@ -500,8 +511,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
       return {
         signature: [
-          `\nexport default async function ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx, encEvent, ${rtnparams} };
+          `\nexport default async function ${ node.name }(${ params } ${ states }) {`,
+          `\nreturn  { tx, encEvent, ${ rtnparams } };
         \n}`,
         ],
         statements: lines,
@@ -513,7 +524,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         switch (stateNode.mappingKey) {
           case 'msg':
             // msg.sender => key is _newOwnerPublicKey
-            mappingKey = `[${stateName}_stateVarId_key.integer]`;
+            mappingKey = `[${ stateName }_stateVarId_key.integer]`;
             break;
           case null:
           case undefined:
@@ -523,17 +534,17 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           default:
             if (+stateNode.mappingKey || stateNode.mappingKey === '0') {
               // we have a constant number
-              mappingKey = `[${stateNode.mappingKey}]`;
+              mappingKey = `[${ stateNode.mappingKey }]`;
             } else {
               // any other => a param or accessed var
-              mappingKey = `[${stateNode.mappingKey}.integer]`;
+              mappingKey = `[${ stateNode.mappingKey }.integer]`;
             }
         }
         lines.push(
-          Orchestrationbp.initialisePreimage.preStatements( {
+          Orchestrationbp.initialisePreimage.preStatements({
             stateName,
             accessedOnly: stateNode.accessedOnly,
-            stateVarIds: stateVariableIds({ privateStateName: stateName, stateNode}),
+            stateVarIds: stateVariableIds({ privateStateName: stateName, stateNode }),
             mappingKey,
             mappingName: stateNode.mappingName || stateName,
             structProperties: stateNode.structProperties
@@ -548,9 +559,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       states[0] = node.onChainKeyRegistry ? `true` : `false`;
       return {
         statements: [
-          `${Orchestrationbp.initialiseKeys.postStatements(
-           node.contractName,
-           states[0],
+          `${ Orchestrationbp.initialiseKeys.postStatements(
+            node.contractName,
+            states[0],
           ) }`,
         ],
       };
@@ -558,7 +569,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
     case 'ReadPreimage':
       lines[0] = preimageBoilerPlate(node);
       return {
-        statements: [`${params.join('\n')}`, lines[0].join('\n')],
+        statements: [`${ params.join('\n') }`, lines[0].join('\n')],
       };
 
     case 'WritePreimage':
@@ -574,7 +585,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     stateType: 'decrement',
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `${stateName}_stateVarId_key.integer`
+                      ? `${ stateName }_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -584,12 +595,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               case false:
               default:
                 lines.push(
-                    Orchestrationbp.writePreimage.postStatements({
+                  Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
-                    mappingName:stateNode.mappingName || stateName,
+                    mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
-                      ? `${stateName}_stateVarId_key.integer`
+                      ? `${ stateName }_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
@@ -601,12 +612,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           case false:
           default:
             lines.push(
-                Orchestrationbp.writePreimage.postStatements({
+              Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
-                  ? `${stateName}_stateVarId_key.integer`
+                  ? `${ stateName }_stateVarId_key.integer`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
@@ -625,11 +636,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if (node.isConstructor) {
           lines.push([`
-            const ${stateName}_index = generalise(0);
-            const ${stateName}_root = generalise(0);
-            const ${stateName}_path = generalise(new Array(32).fill(0)).all;\n
+            const ${ stateName }_index = generalise(0);
+            const ${ stateName }_root = generalise(0);
+            const ${ stateName }_path = generalise(new Array(32).fill(0)).all;\n
             `]);
-            continue;
+          continue;
         }
         if (stateNode.isPartitioned) {
           lines.push(
@@ -689,8 +700,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           case undefined:
           case false:
             lines.push(
-              Orchestrationbp.calculateCommitment.postStatements( {
+              Orchestrationbp.calculateCommitment.postStatements({
                 stateName,
+                newCommitmentValue: stateNode.newCommitmentValue,
                 stateType: 'whole',
                 structProperties: stateNode.structProperties,
               }));
@@ -702,8 +714,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               case true:
                 // decrement
                 lines.push(
-                  Orchestrationbp.calculateCommitment.postStatements( {
+                  Orchestrationbp.calculateCommitment.postStatements({
                     stateName,
+                    newCommitmentValue: null,
                     stateType: 'decrement',
                     structProperties: stateNode.structProperties,
                   }));
@@ -713,8 +726,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               default:
                 // increment
                 lines.push(
-                  Orchestrationbp.calculateCommitment.postStatements( {
+                  Orchestrationbp.calculateCommitment.postStatements({
                     stateName,
+                    newCommitmentValue: null,
                     stateType: 'increment',
                     structProperties: stateNode.structProperties,
                   }));
@@ -727,17 +741,17 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'GenerateProof':
-      [ lines[0], params[0] ] = generateProofBoilerplate(node);
+      [lines[0], params[0]] = generateProofBoilerplate(node);
       return {
         statements: [
           `\n\n// Call Zokrates to generate the proof:
           \nconst allInputs = [`,
-          `${lines[0]}`,
-          `\nconst res = await generateProof('${node.circuitName}', allInputs);`,
+          `${ lines[0] }`,
+          `\nconst res = await generateProof('${ node.circuitName }', allInputs);`,
           `\nconst proof = generalise(Object.values(res.proof).flat(Infinity))
           .map(coeff => coeff.integer)
           .flat(Infinity);`,
-          `${params[0].flat(Infinity).join('\n')}`
+          `${ params[0].flat(Infinity).join('\n') }`
         ],
       };
 
@@ -745,9 +759,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
-            lines.push(`[${input.properties.map(p => `${input.name}.${p}.integer`).join(',')}]`)
+            lines.push(`[${ input.properties.map(p => `${ input.name }.${ p }.integer`).join(',') }]`)
           } else
-            lines.push(`${input}.integer`);
+            lines.push(`${ input }.integer`);
         });
         lines[lines.length - 1] += `, `;
       }
@@ -755,24 +769,24 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[0] = arr of nullifiers
       // params[1] = root(s)
       // params[2] = arr of commitments
-      if (params[0][1][0]) params[0][1] = `${params[0][1][0]},`; // root - single input
-      if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
-      if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
-      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array
-      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
-      if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
+      if (params[0][1][0]) params[0][1] = `${ params[0][1][0] },`; // root - single input
+      if (params[0][0][0]) params[0][0] = `[${ params[0][0] }],`; // nullifiers - array
+      if (params[0][2][0]) params[0][2] = `[${ params[0][2] }],`; // commitments - array
+      if (params[0][3][0]) params[0][3] = `[${ params[0][3] }],`; // accessed nullifiers - array
+      if (params[0][4][0]) params[0][4] = `[${ params[0][4] }],`; // cipherText - array of arrays
+      if (params[0][5][0]) params[0][5] = `[${ params[0][5] }],`; // cipherText - array of arrays
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [${ params[0][0] } ${ params[0][1] } ${ params[0][2] } ${ params[0][3] } proof], ${ node.publicInputs?.map(input => `${ input }: ${ input }.integer,`) }};`
         ]
       }
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          .${ node.functionName }(${ lines }${ params[0][0] } ${ params[0][1] } ${ params[0][2] } ${ params[0][3] } ${ params[0][4] } ${ params[0][5] } proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,

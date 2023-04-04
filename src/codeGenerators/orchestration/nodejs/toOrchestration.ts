@@ -76,7 +76,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue?.nodeType === 'Assignment') {
-        if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
+        if (node.declarations[0].isAccessed && node.declarations[0].isSecret && node.declarations[0].declarationType === 'state') {
           return `${getAccessedValue(
             node.declarations[0].name,
           )}\n${codeGenerator(node.initialValue)};`;

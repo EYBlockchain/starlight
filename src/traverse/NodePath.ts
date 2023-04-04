@@ -834,6 +834,38 @@ export default class NodePath {
     return this.isMappingDeclaration(node) || this.isMappingIdentifier(node);
   }
 
+    /**
+   * Checks whether a node is a nested mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isNestedMapping(node: any = this.node): boolean {
+    
+    const path = NodePath.getPath(node) || this;
+    if (!this.isMapping(node) && !path.getAncestorOfType('IndexAccess')) return false;
+    /** Nested mappings look like:
+    baseExpression: {
+      baseExpression: {
+        name: 'parent',
+      },
+      indexExpression: {
+        name: 'innerKey',
+      },
+      nodeType: 'IndexAccess',
+    },
+    indexExpression: {
+      name: 'outerKey',
+    }
+    for parent[innerKey][outerKey]
+    */
+   if (node.nodeType !== 'IndexAccess' && path.getAncestorOfType('IndexAccess')) {
+    return path.getAncestorOfType('IndexAccess').isNestedMapping();
+   }
+    if (node.baseExpression?.nodeType === 'IndexAccess') return true;
+    if (path.parentPath.getAncestorOfType('IndexAccess')) return true;
+    return false;
+  }
+
   /**
    * A mapping's key will contain an Identifier node pointing to a previously-declared variable.
    * @param {Object} - the mapping's index access node.
@@ -1034,7 +1066,7 @@ export default class NodePath {
         return (
           !(this.queryAncestors(path => path.containerName === 'indexExpression')) && !this.getAncestorOfType('FunctionCall') &&
           !this.getAncestorContainedWithin('initialValue') &&
-          this.getLhsAncestor(true) && !(this.queryAncestors(path => path.containerName === 'condition') ||  this.queryAncestors(path => path.containerName === 'initializationExpression') ||  this.queryAncestors(path => path.containerName === 'loopExpression'))
+          !this.getAncestorContainedWithin('rightHandSide') && this.getLhsAncestor(true) && !(this.queryAncestors(path => path.containerName === 'condition') ||  this.queryAncestors(path => path.containerName === 'initializationExpression') ||  this.queryAncestors(path => path.containerName === 'loopExpression'))
         );
       default:
         return false;

@@ -97,8 +97,11 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
     }
     case 'CalculateCommitment': {
       const { id, increment, privateStateName, indicator = {} } = fields;
+      const lastModifiedNodeName = indicator.modifyingPaths[0].scope.getIdentifierMappingKeyName(indicator.modifyingPaths[indicator.modifyingPaths.length - 1].node);
+      const newCommitmentValue = indicator.isWhole && lastModifiedNodeName !== indicator.node.name ? lastModifiedNodeName : null;
       return {
         privateStateName,
+        newCommitmentValue,
         stateVarId: id,
         increment,
         isWhole: indicator.isWhole,
@@ -126,6 +129,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         indicator = {},
       } = fields;
       const structProperties = !indicator.isStruct ? null : indicator.isAccessed ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : Object.keys(indicator.structProperties);
+      const originalMappingKeyName = id[2] ? [ indicator.container.referencedKeyName, indicator.referencedKeyName] : id[1] ? [ indicator.referencedKeyName ] : [];
       return {
         privateStateName,
         stateVarId: id,
@@ -140,8 +144,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isPartitioned: indicator.isPartitioned,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
-        originalMappingKeyName: indicator.isMapping && indicator.referencedKeyName !== id[1]
-        ? indicator.referencedKeyName
+        originalMappingKeyName: indicator.isMapping
+        ? originalMappingKeyName
         : null,
         initialisationRequired: indicator.initialisationRequired,
         encryptionRequired: indicator.encryptionRequired,

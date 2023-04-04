@@ -280,7 +280,7 @@ class BoilerplateGenerator {
 
   calculateCommitment = {
 
-    postStatements({ stateName, stateType, structProperties }): string[] {
+    postStatements({ stateName, newCommitmentValue, stateType, structProperties }): string[] {
       // once per state
       switch (stateType) {
         case 'increment':
@@ -301,9 +301,10 @@ class BoilerplateGenerator {
             \nlet ${stateName}_2_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_change.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_change.hex(32))`}, BigInt(publicKey.hex(32)), BigInt(${stateName}_2_newSalt.hex(32))],);
             \n${stateName}_2_newCommitment = generalise(${stateName}_2_newCommitment.hex(32)); // truncate`];
         case 'whole':
-          const value = structProperties ? structProperties.map(p => `BigInt(${stateName}.${p}.hex(32))`) :` BigInt(${stateName}.hex(32))`;
+          const name = newCommitmentValue || stateName;
+          const value = structProperties ? structProperties.map(p => `BigInt(${name}.${p}.hex(32))`) :` BigInt(${name}.hex(32))`;
           return [`
-            \n ${structProperties ? structProperties.map(p => `\n${stateName}.${p} = ${stateName}.${p} ? ${stateName}.${p} : ${stateName}_prev.${p};`).join('') : ''}
+            \n ${structProperties ? structProperties.map(p => `\n${name}.${p} = ${name}.${p} ? ${name}.${p} : ${stateName}_prev.${p};`).join('') : ''}
             \nconst ${stateName}_newSalt = generalise(utils.randomHex(31));
             \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${value}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
             \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];

@@ -164,35 +164,47 @@ class BoilerplateGenerator {
     });
   }
 
+  prepareMappingBoilerplate(mappingKeyName: string, mappingKeyIndicator: MappingKey) {
+    mappingKeyIndicator.isMapping = true;
+    this.assignIndicators(mappingKeyIndicator);
+    if(mappingKeyName == 'msg')
+      mappingKeyName = mappingKeyName+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
+    this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
+    if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName = this.mappingKeyName.replace('.', 'dot');
+
+    if (mappingKeyIndicator.keyPath.isStruct() && !(mappingKeyIndicator.keyPath.node.nodeType === 'Identifier' && !mappingKeyIndicator.keyPath.node.typeDescriptions.typeString.includes('struct ')))
+      this.mappingKeyTypeName = mappingKeyIndicator.keyPath.getStructDeclaration().name;
+
+    if (!mappingKeyIndicator.keyPath.isMsg() &&
+    (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret || mappingKeyIndicator.keyPath.node.accessedSecretState))
+      this.mappingKeyTypeName = 'local';
+    
+    this.mappingName = this.indicators.name;
+    this.name = //this.name.replaceAll('.', 'dot').replaceAll('[', '_').replaceAll(']', '');
+    `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replaceAll('[', '_').replaceAll(']', '');
+
+    if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
+      this.typeName = this.indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+      this.structProperties = this.indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name)
+    } else if (mappingKeyIndicator.referencingPaths[0]?.node.typeDescriptions.typeString.includes('struct ')) {
+      // somewhat janky way to include referenced structs not separated by property
+      this.typeName = mappingKeyIndicator.referencingPaths[0]?.getStructDeclaration()?.name;
+    }
+    this.generateBoilerplate();
+  }
+
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
     if (indicators.isMapping && indicators.mappingKeys) {
       for (let [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
         mappingKeyIndicator.isMapping = true;
-        this.assignIndicators(mappingKeyIndicator);
-        if(mappingKeyName == 'msg')
-        mappingKeyName = mappingKeyName+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
-        this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
-        if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName = this.mappingKeyName.replace('.', 'dot');
-
-        if (mappingKeyIndicator.keyPath.isStruct() && !(mappingKeyIndicator.keyPath.node.nodeType === 'Identifier' && !mappingKeyIndicator.keyPath.node.typeDescriptions.typeString.includes('struct ')))
-          this.mappingKeyTypeName = mappingKeyIndicator.keyPath.getStructDeclaration().name;
-
-        if (!mappingKeyIndicator.keyPath.isMsg() &&
-        (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
-          this.mappingKeyTypeName = 'local';
-
-        this.mappingName = this.indicators.name;
-        this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
-
-        if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
-          this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
-          this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name)
-        } else if (mappingKeyIndicator.referencingPaths[0]?.node.typeDescriptions.typeString.includes('struct ')) {
-          // somewhat janky way to include referenced structs not separated by property
-          this.typeName = mappingKeyIndicator.referencingPaths[0]?.getStructDeclaration()?.name;
+        if (mappingKeyIndicator.mappingKeys) {
+          for (let [outerMappingKeyName, outerMappingKeyIndicator] of Object.entries(mappingKeyIndicator.mappingKeys)) {
+            this.prepareMappingBoilerplate(mappingKeyName + '_' + outerMappingKeyName, outerMappingKeyIndicator);
+          }
+        } else {
+          this.prepareMappingBoilerplate(mappingKeyName, mappingKeyIndicator);
         }
-        this.generateBoilerplate();
       }
     } else {
       if (indicators instanceof StateVariableIndicator && indicators.structProperties) {
@@ -205,7 +217,14 @@ class BoilerplateGenerator {
   }
 
   refresh(mappingKeyName: string) {
-    const mappingKeyIndicator = this.indicators.mappingKeys[mappingKeyName];
+    let mappingKeyIndicator = this.indicators.mappingKeys[mappingKeyName];
+    if (mappingKeyName.includes(`/`)) {
+      // nested mapping
+      mappingKeyName.split(`/`).forEach(name => {
+        if (name) mappingKeyIndicator = mappingKeyIndicator ? mappingKeyIndicator.mappingKeys[name] : this.indicators.mappingKeys[name]; 
+      });
+      mappingKeyName = mappingKeyName.replace(`/`, `_`);
+    }
     this.assignIndicators(mappingKeyIndicator);
     this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
     if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName.replace('.', 'dot');
@@ -235,8 +254,11 @@ class BoilerplateGenerator {
   }
 
   _addBP = (bpType: string, extraParams?: any) => {
+    const lastModifiedNodeName = this.thisIndicator.isModified ? this.thisIndicator.modifyingPaths[0].scope.getIdentifierMappingKeyName(this.thisIndicator.modifyingPaths[this.thisIndicator.modifyingPaths.length - 1].node) : this.thisIndicator.node.name;
     if (this.isPartitioned) {
       this.newCommitmentValue = collectIncrements(this).incrementsString;
+    } else if (lastModifiedNodeName !== this.thisIndicator.node.name) {
+      this.newCommitmentValue = lastModifiedNodeName;
     }
     this.bpSections.forEach(bpSection => {
       this[bpSection] = this[bpSection]
@@ -355,7 +377,11 @@ class BoilerplateGenerator {
 
   mapping = (bpSection) => ({
     mappingName: this.mappingName,
-    mappingKeyName: bpSection === 'postStatements' ? this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
+    mappingKeyName: this.thisIndicator?.keyPath?.isNestedMapping()
+    ? [this.thisIndicator.container.referencedKeyName, this.thisIndicator.referencedKeyName]
+    : bpSection === 'parameters'
+      ? this.mappingKeyName.split('.')[0]
+      : this.mappingKeyName.replace('.', 'dot'),
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */

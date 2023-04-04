@@ -1,5 +1,5 @@
 import NodePath from './NodePath.js';
-import { Binding } from './Binding.js';
+import { Binding, VariableBinding } from './Binding.js';
 import { StateVariableIndicator } from './Indicator.js';
 import logger from '../utils/logger.js';
 import { SyntaxUsageError, ZKPError } from '../error/errors.js';
@@ -53,6 +53,7 @@ export default class MappingKey {
   isParent?: boolean;
   isChild?: boolean;
   structProperties?: {[key: string]: any};
+  mappingKeys?: {[key: string]: MappingKey};
 
   isKnown?:boolean;
   isUnknown?:boolean;
@@ -139,6 +140,35 @@ export default class MappingKey {
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
   }
 
+  addMappingKey(referencingPath: NodePath): MappingKey {
+    // we assume that if we're here we have a nested mapping
+    // input is the index of the inner mapping
+    const parentMap = referencingPath.getAncestorOfType('IndexAccess')?.parentPath.getAncestorOfType('IndexAccess');
+    if (!parentMap) throw new Error('No nested mapping - we have for some reason assumed there was a nested mapping, but havent found it');
+    const keyNode = parentMap.getMappingKeyIdentifier();
+    const keyPath = NodePath.getPath(keyNode);
+    if (!keyPath) throw new Error('No keyPath found in pathCache');
+
+    if (!['Identifier', 'MemberAccess', 'Literal'].includes(keyNode.nodeType)) {
+      throw new Error(
+        `A mapping key of nodeType '${keyNode.nodeType}' isn't supported yet. We've only written the code for keys of nodeType Identifier'`,
+      );
+    }
+
+    // naming of the key within mappingKeys:
+    const keyName = parentMap.scope.getMappingKeyName(parentMap);
+
+    // add this mappingKey if it hasn't yet been added:
+    this.mappingKeys ??= {};
+    const mappingKeyExists = !!this.mappingKeys[keyName];
+    if (!mappingKeyExists)
+      this.mappingKeys[keyName] = new MappingKey(this, keyPath);
+
+    this.mappingKeys[keyName].isChild = true;
+
+    return this.mappingKeys[keyName];
+  }
+
   addStructProperty(referencingPath: NodePath): MappingKey {
     this.isParent = true;
     this.isStruct = true;
@@ -151,10 +181,14 @@ export default class MappingKey {
   }
 
   updateProperties(path: NodePath) {
+    const parentMap = path.getAncestorOfType('IndexAccess')?.parentPath.getAncestorOfType('IndexAccess');
     if (this.isMapping && this.node.typeDescriptions.typeString.includes('struct ') && !this.isChild && path.getAncestorOfType('MemberAccess')) {
 
       // in mapping[key].property, the node for .property is actually a parent value, so we need to make sure this isnt already a child of a mappingKey
       this.addStructProperty(path).updateProperties(path);
+    } else if (this.isMapping && !this.isChild && parentMap) {
+      // we have a nested mapping
+      this.addMappingKey(path).updateProperties(path);
     }
     this.addReferencingPath(path);
     this.isUnknown ??= path.node.isUnknown;
@@ -178,6 +212,13 @@ export default class MappingKey {
 
   updateEncryption() {
     if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned || this.isNullified) return;
+    if (this.mappingKeys) {
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
+      for (const [, mappingKey] of mappingKeys) {
+        mappingKey.updateEncryption()
+      }
+      return;
+    }
     switch (this.mappingOwnershipType) {
       case 'key':
         // owner here is the keypath
@@ -239,6 +280,13 @@ export default class MappingKey {
     state.decrements.forEach((dec: any) => {
       this.decrements.push(dec);
     });
+
+    if (this.mappingKeys) {
+      this.addMappingKey(state.incrementedPath).updateIncrementation(
+        path,
+        state,
+      );
+    }
   }
 
   // TODO: move into commonFunctions (because it's the same function as included in the Binding class)
@@ -261,11 +309,13 @@ export default class MappingKey {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
+    if (this.mappingKeys) this.addMappingKey(path).addNullifyingPath(path);
   }
 
   addBurningPath(path: NodePath) {
     this.isBurned = true;
     this.burningPaths.push(path);
+    if (this.mappingKeys) this.addMappingKey(path).addBurningPath(path);
   }
 
   addSecretInteractingPath(path: NodePath) {
@@ -334,7 +384,11 @@ export default class MappingKey {
 
   updateFromBinding() {
     // it's possible we dont know in this fn scope whether a state is whole/owned or not, but the binding (contract scope) will
-    const container = this.container instanceof Binding ? this.container : this.container.binding;
+    // const container = this.container instanceof Binding ? this.container : this.container.binding;
+    let { container } = this;
+    while (!(container instanceof VariableBinding)) {
+      container = container.container || container.binding;
+    }
     this.isWhole ??= container.isWhole;
     this.isWholeReason = this.isWhole
       ? container.isWholeReason
@@ -347,5 +401,11 @@ export default class MappingKey {
     this.owner ??= container.owner;
     this.mappingOwnershipType = this.owner?.mappingOwnershipType;
     this.onChainKeyRegistry ??= container.onChainKeyRegistry;
+    if (this.mappingKeys) {
+      const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
+      for (const [, mappingKey] of mappingKeys) {
+        mappingKey.updateFromBinding();
+      }
+    }
   }
 }

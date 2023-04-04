@@ -365,10 +365,15 @@ export class VariableBinding extends Binding {
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
 
-    if (this.isMapping) {
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).isAccessed = true;
       this.addMappingKey(path).accessedPaths ??= [];
       this.addMappingKey(path).accessedPaths.push(path);
+      if (this.addMappingKey(path).mappingKeys) {
+        this.addMappingKey(path).addMappingKey(path).isAccessed = true;
+        this.addMappingKey(path).addMappingKey(path).accessedPaths ??= [];
+        this.addMappingKey(path).addMappingKey(path).accessedPaths.push(path);
+      }
     }
 
     if (this.isStruct && path.getAncestorOfType('MemberAccess')) {

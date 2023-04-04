@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 import NodePath from '../../traverse/NodePath.js';
-import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
+import { StateVariableIndicator, FunctionDefinitionIndicator, LocalVariableIndicator } from '../../traverse/Indicator.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import MappingKey from '../../traverse/MappingKey.js';
 import cloneDeep from 'lodash.clonedeep';
@@ -156,8 +156,13 @@ const addPublicInput = (path: NodePath, state: any) => {
         if (expNode) {
           expNode.interactsWithSecret = true;
           const moveExpNode = cloneDeep(expNode);
-          delete statements[statements.indexOf(expNode)];
+          const i = statements.indexOf(expNode);
+          delete statements[i];
           fnDefNode.node._newASTPointer.body.preStatements.push(moveExpNode);
+          const nextNode = cloneDeep(statements[i + 1]);
+          if (nextNode?.nodeType === 'Assignment' && nextNode.leftHandSide.name === nextNode.rightHandSide.name && nextNode.rightHandSide.subType === 'generalNumber') {
+            fnDefNode.node._newASTPointer.body.preStatements.push(nextNode);
+          }
         }
       }
     });
@@ -417,7 +422,15 @@ const visitor = {
             for (const [, mappingKey] of Object.entries(
               stateVarIndicator.mappingKeys || {}
             )) {
-              allIndicators.push(mappingKey);
+              if (mappingKey.mappingKeys) {
+                for (const [, innerMappingKey] of Object.entries(
+                  mappingKey.mappingKeys || {}
+                )) {
+                  allIndicators.push(innerMappingKey);
+                }
+              } else {
+                allIndicators.push(mappingKey);
+              }
             }
           } else if (stateVarIndicator instanceof StateVariableIndicator) {
             allIndicators.push(stateVarIndicator);
@@ -435,14 +448,21 @@ const visitor = {
               stateVarIndicator.container?.isAccessed && !stateVarIndicator.container?.isModified;
             secretModified =
               stateVarIndicator.container?.isSecret && stateVarIndicator.container?.isModified;
-            id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node) || ``];
 
-            name = (accessedOnly ?
-              getIndexAccessName(stateVarIndicator.accessedPaths[stateVarIndicator.accessedPaths.length -1]?.getAncestorOfType('IndexAccess')?.node) :
-              stateVarIndicator.container?.isModified ?
-                getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess')?.node) :
-                getIndexAccessName(stateVarIndicator.referencingPaths[stateVarIndicator.referencingPaths.length -1].getAncestorOfType('IndexAccess')?.node))
-              || '';
+            if (stateVarIndicator.container instanceof MappingKey && stateVarIndicator.isChild && !stateVarIndicator.container.isParent) {
+              // probably a better way to discover that we have a nested mapping, but it will do for now
+              id = [id,  stateVarIndicator.container.referencedKeyName, stateVarIndicator.referencedKeyName];
+              name = getIndexAccessName(stateVarIndicator.referencingPaths[stateVarIndicator.referencingPaths.length -1].getAncestorOfType('IndexAccess')?.parentPath.getAncestorOfType('IndexAccess')?.node) || ``;
+            } else {
+              id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node) || ``];
+
+              name = (accessedOnly ?
+                getIndexAccessName(stateVarIndicator.accessedPaths[stateVarIndicator.accessedPaths.length -1]?.getAncestorOfType('IndexAccess')?.node) :
+                stateVarIndicator.container?.isModified ?
+                  getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess')?.node) :
+                  getIndexAccessName(stateVarIndicator.referencingPaths[stateVarIndicator.referencingPaths.length -1].getAncestorOfType('IndexAccess')?.node))
+                || '';
+            }
           }
 
           let { incrementsArray, incrementsString } = isIncremented
@@ -451,8 +471,9 @@ const visitor = {
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
-          if (accessedOnly || (stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired)) {
-            if(stateVarIndicator.isSecret ||  stateVarIndicator.node.interactsWithSecret)
+          if (accessedOnly || (stateVarIndicator.isWhole && functionIndicator.oldCommitmentAccessRequired) && stateVarIndicator.isSecret) {
+
+
             newNodes.initialisePreimageNode.privateStates[
               name
             ] = buildPrivateStateNode('InitialisePreimage', {
@@ -630,34 +651,57 @@ const visitor = {
           newNodes.InitialiseKeysNode,
         );
 
-        // OR they are local variable declarations we need for initialising preimage...
+        // OR they are local variable declarations/ accessed secret states we need for initialising preimage...
 
         let localVariableDeclarations: any[] = [];
         newFunctionDefinitionNode.body.statements.forEach((n, index) => {
-          if (n.nodeType === 'VariableDeclarationStatement' && n.declarations[0].declarationType === 'localStack')
+          if (n.nodeType === 'VariableDeclarationStatement'
+            && (n.declarations[0].declarationType === 'localStack'
+              || n.declarations[0].isSecret && n.declarations[0].isAccessed))
             localVariableDeclarations.push({node: cloneDeep(n), index});
         });
-
+        let toSplice = earliestPublicAccessIndex + 2;
         if (localVariableDeclarations[0]) {
           localVariableDeclarations.forEach(n => {
             const localIndicator = scope.indicators[n.node.declarations[0].id];
             const indexExpressionPath = localIndicator.referencingPaths.find(p =>
               p.getAncestorContainedWithin('indexExpression') && p.getAncestorOfType('IndexAccess')?.node.containsSecret
             );
-            if (indexExpressionPath) {
+            if (indexExpressionPath && !indexExpressionPath.isNestedMapping()) {
               // we have found a local variable which is used as an indexExpression, so we need it before we get the mapping value
               // NB if there are multiple, we have just found the first one
               const varDecComesAfter = scope.getReferencedIndicator(
                 NodePath.getPath(localIndicator.node)?.getCorrespondingRhsNode(), true
               );
-              if (!varDecComesAfter) {
+              if (!varDecComesAfter || (varDecComesAfter instanceof LocalVariableIndicator && varDecComesAfter.isParam)) {
                 // here, we don't need to worry about defining anything first, so we push this local var to the top
                 newFunctionDefinitionNode.body.preStatements.splice(
-                  earliestPublicAccessIndex + 2,
+                  toSplice,
                   0,
                   n.node,
                 );
-              } else {
+                toSplice += 1;
+                if (localIndicator.isSecret && n.node.declarations[0].declarationType === 'state') {
+                  // we shift up the init preimage node if this accessed state is secret
+                  const name = n.node.declarations[0].name;
+                  const initPIndex = newFunctionDefinitionNode.body.preStatements.findIndex(
+                    (nd: any) =>
+                    nd.nodeType === 'InitialisePreimage' &&
+                    nd.privateStates[name]
+                  );
+                  const newInitPreimageNode = { nodeType: 'InitialisePreimage', privateStates: {}};
+                  newInitPreimageNode.privateStates[name] = cloneDeep(
+                    newFunctionDefinitionNode.body.preStatements[initPIndex].privateStates[name]
+                  );
+                  delete newFunctionDefinitionNode.body.preStatements[initPIndex].privateStates[name];
+                  newFunctionDefinitionNode.body.preStatements.splice(
+                    earliestPublicAccessIndex + 2,
+                    0,
+                    newInitPreimageNode,
+                  );
+                  toSplice +=1;
+                }
+              } else if (n.node.declarations[0].declarationType !== 'state') {
                 // now we have to split initPreimage
                 const varDecComesBefore = scope.getReferencedIndicator(
                   indexExpressionPath.getAncestorOfType('IndexAccess').node.baseExpression, true
@@ -708,7 +752,15 @@ const visitor = {
                   0,
                   newInitPreimageNode2,
                 );
-
+              }
+              const nextNode = cloneDeep(newFunctionDefinitionNode.body.statements[n.index + 1]);
+              if (nextNode?.nodeType === 'Assignment' && nextNode.leftHandSide.name === nextNode.rightHandSide.name && nextNode.rightHandSide.subType === 'generalNumber') {
+                newFunctionDefinitionNode.body.preStatements.splice(
+                  toSplice,
+                  0,
+                  nextNode,
+                );
+                toSplice += 1;
               }
               delete newFunctionDefinitionNode.body.statements[n.index];
             }
@@ -982,8 +1034,12 @@ const visitor = {
       path.traversePathsFast(interactsWithSecretVisitor, newState);
       const { interactsWithSecret } = newState;
 
-      let indicator;
-      let name;
+      const fnDefNode = path.getAncestorOfType('FunctionDefinition')?.node;
+      let indicator: any;
+      let name: string = ``;
+      let firstInstanceOfNewName: boolean = false;
+      let thisName: string = ``;
+      let accessedBeforeModification: boolean = false;
       // we mark this to grab anything we need from the db / contract
       state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
@@ -992,7 +1048,7 @@ const visitor = {
         if (!lhs) lhs = node.expression.subExpression;
        indicator = scope.getReferencedIndicator(lhs, true);
 
-        const name = indicator.isMapping
+        name = indicator.isMapping
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
@@ -1013,9 +1069,9 @@ const visitor = {
 
         // collect all index names
         const names = indicator.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
-
+        thisName = scope.getIdentifierMappingKeyName(lhs);
         // check whether this is the first instance of a new index name
-        const firstInstanceOfNewName = names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
+        firstInstanceOfNewName = names.findIndex(n => n.name === thisName) === names.length - 1;
 
         // check whether this should be a VariableDeclaration
         const firstEdit =
@@ -1038,7 +1094,7 @@ const visitor = {
           });
 
           // we still need to initialise accessed states if they were accessed _before_ this modification
-          const accessedBeforeModification = indicator.isAccessed && indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
+          accessedBeforeModification = indicator.isAccessed && indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
 
           if (accessedBeforeModification || path.isInSubScope()) accessed = true;
 
@@ -1049,6 +1105,7 @@ const visitor = {
                 name: indicator.isStruct && !indicator.isMapping ? lhs.name : name,
                 isAccessed: accessed,
                 isSecret: indicator.isSecret,
+                oldASTId: indicator.id,
               }),
             ],
             interactsWithSecret: true,
@@ -1058,9 +1115,12 @@ const visitor = {
           if (accessedBeforeModification || path.isInSubScope()) {
             // we need to initialise an accessed state
             // or declare it outside of this subscope e.g. if statement
-            const fnDefNode = path.getAncestorOfType('FunctionDefinition')?.node;
-            delete newNode.initialValue;
-            fnDefNode._newASTPointer.body.statements.unshift(newNode);
+            if (!fnDefNode._newASTPointer.body.statements.find(n => n?.nodeType === newNode.nodeType && n.declarations[0]?.name === newNode.declarations[0].name)) {
+              // prevent duplicates
+              delete newNode.initialValue;
+              fnDefNode._newASTPointer.body.statements.unshift(newNode);
+            }
+
           } else {
             node._newASTPointer = newNode;
             parent._newASTPointer.push(newNode);
@@ -1086,10 +1146,30 @@ const visitor = {
         }
       }
       if (node.expression.expression?.name !== 'require') {
-        const newNode = buildNode(node.nodeType, {
-          interactsWithSecret: interactsWithSecret || indicator?.interactsWithSecret,
-          oldASTId: node.id,
-        });
+        let newNode;
+        if (!fnDefNode._newASTPointer.body.statements.find(
+            n => n.nodeType === 'VariableDeclarationStatement' && (n.declarations[0]?.name === thisName || name?.split('.')[0].length > thisName?.split('.')[0].length ? n.id === node.id : false)
+          ) && firstInstanceOfNewName) {
+          newNode = buildNode('VariableDeclarationStatement', {
+            oldASTId: node.id,
+            declarations: [
+              buildNode('VariableDeclaration', {
+                name: indicator.isStruct && !indicator.isMapping ? thisName : name,
+                isSecret: indicator.isSecret,
+                declarationType: 'local',
+                isAccessed: accessedBeforeModification,
+                oldASTId: indicator.id,
+              }),
+            ],
+            interactsWithSecret: true,
+          });
+          if (indicator.isStruct) newNode.declarations[0].isStruct = true;
+        } else {
+          newNode = buildNode(node.nodeType, {
+            interactsWithSecret: interactsWithSecret || indicator?.interactsWithSecret,
+            oldASTId: node.id,
+          });
+        }  
 
         node._newASTPointer = newNode;
         if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
@@ -1106,24 +1186,26 @@ const visitor = {
       const { node, scope } = path;
       const { leftHandSide: lhs } = node.expression;
       const indicator = scope.getReferencedIndicator(lhs, true);
-      const name = indicator?.isMapping
+      if (!lhs) return;
+      const name = indicator?.isMapping // wrong?
         ? getIndexAccessName(lhs)
-        : indicator?.name || lhs?.name;
+        : scope.getIdentifierMappingKeyName(lhs) || indicator?.name || lhs?.name;
       // reset
       delete state.interactsWithSecret;
       if (node._newASTPointer?.incrementsSecretState && indicator) {
         const increments = collectIncrements(indicator).incrementsString;
         path.node._newASTPointer.increments = increments;
       } else if (indicator?.isWhole && node._newASTPointer) {
+       
         // we add a general number statement after each whole state edit
-        if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition')?.node._newASTPointer.body.statements.push(
-          buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name }),
-              operator: '=',
-              rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
-            }
-          )
-        );
+        const newNode = buildNode('Assignment', {
+          leftHandSide: buildNode('Identifier', { name }),
+          operator: '=',
+          rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
+        });
+        newNode.interactsWithSecret = node._newASTPointer.interactsWithSecret;
+        if (node._newASTPointer.interactsWithSecret)
+          path.getAncestorOfType('FunctionDefinition')?.node._newASTPointer.body.statements.push(newNode);
       }
 
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {

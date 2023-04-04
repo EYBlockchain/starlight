@@ -573,6 +573,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       this.addMappingKey(path).isAccessed = true;
       this.addMappingKey(path).accessedPaths ??= [];
       this.addMappingKey(path).accessedPaths.push(path);
+      if (this.addMappingKey(path).mappingKeys) {
+        this.addMappingKey(path).addMappingKey(path).isAccessed = true;
+        this.addMappingKey(path).addMappingKey(path).accessedPaths ??= [];
+        this.addMappingKey(path).addMappingKey(path).accessedPaths.push(path);
+      }
     }
 
     if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
@@ -778,6 +783,12 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
         const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
         for (const [, mappingKey] of mappingKeys) {
           mappingKey.newCommitmentsRequired = true;
+          if (mappingKey.mappingKeys) {
+            const innerMappingKeys: [string, MappingKey][] = Object.entries(mappingKey.mappingKeys);
+            for (const [, innerMappingKey] of innerMappingKeys) {
+              innerMappingKey.newCommitmentsRequired = true;
+            }
+          }
         }
       }
       if (this.isStruct) {

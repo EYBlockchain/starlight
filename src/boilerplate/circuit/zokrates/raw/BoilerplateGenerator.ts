@@ -237,7 +237,7 @@ class BoilerplateGenerator {
 
     postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-      const y = isWhole ? x : newCommitmentValue;
+      const y = isWhole && !newCommitmentValue ? x : newCommitmentValue;
       const lines: string[] = [];
       if (!isWhole && isNullified) {
         // decrement
@@ -375,12 +375,13 @@ class BoilerplateGenerator {
   mapping = {
     importStatements(): string[] {
       return [
-        `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
       ];
     },
 
     parameters({ mappingKeyName: k, mappingKeyTypeName: t }): string[] {
       if (t === 'local') return [];
+      if (Array.isArray(k)) return k.map(name => `private ${t ? t : 'field'} ${name}`);
       return [
         `private ${t ? t : 'field'} ${k}`, // must be a field, in case we need to do arithmetic on it.
       ];
@@ -398,7 +399,7 @@ class BoilerplateGenerator {
       // const x = `${m}_${k}`;
       return [
         `
-        field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
+        field ${x}_stateVarId_field = poseidon([${m}_mappingId, ${k}])`,
       ];
     },
   };

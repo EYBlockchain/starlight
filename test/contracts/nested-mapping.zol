@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Nesting {
+
+    secret mapping(uint256 => uint256[]) public parent;
+
+    function deposit(secret uint256 child, secret uint256 index, uint256 amountDeposit) public {
+        unknown parent[child][index] += amountDeposit;
+        
+    }
+
+    function transfer(secret uint256 child, secret uint256 recipient, secret uint256 index, secret uint256 amount) public {
+        parent[child][index] -= amount;
+        unknown parent[recipient][0] += amount;
+
+    }
+}

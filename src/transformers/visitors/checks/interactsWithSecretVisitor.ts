@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign, no-unused-vars */
+import { ZKPError } from '../../../error/errors.js';
 import NodePath from '../../../traverse/NodePath.js';
 
 
@@ -71,5 +72,17 @@ export default {
           });
       }
     },
+  },
+
+  MemberAccess: {
+    exit(path: NodePath) {
+      const { node } = path;
+      const { expression, memberName } = node;
+      if (memberName === 'length' && (path.containsSecret || path.scope.getReferencedIndicator(expression)?.interactsWithSecret)) {
+        throw new ZKPError(`We can't loop a dynamic number of times when secret states are involved due to the fixed constraint system required.
+        If the .length here is constant, please use the constant value instead.`, node);
+      }
+
+    }
   },
 };
