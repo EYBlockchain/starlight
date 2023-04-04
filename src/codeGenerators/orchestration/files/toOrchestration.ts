@@ -145,19 +145,20 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
-    const paramTypes = fn.parameters.parameters.map((obj: any) => obj.typeName);
-    paramTypes.forEach(type => {
-      paramName.forEach(element =>{
-        if(type.isStruct){
-         structparams = `{ ${type.properties.map(p => `${p.name}: req.body.${element}.${p.name}`)}}`
-         fnParam.push( `const ${element} = ${structparams} ;\n`)
-        }
-        else{
-            fnParam.push( `const ${element} = req.body.${element} ;\n`)
-        }
+    fn.parameters.parameters.forEach(p => {
+      if (p.typeName.isStruct) {
+        structparams = `{ ${p.typeName.properties.map(prop => `${prop.name}: req.body.${p.name}.${prop.name}`)}}`;
+        fnParam.push( `const ${p.name} = ${structparams} ;\n`);
+      } else {
+        fnParam.push( `const { ${p.name} } = req.body;\n`);
+      }
+    });
 
-      })
-    })
+    fn.parameters.modifiedStateVariables.forEach(m => {
+      fnParam.push(`const ${m.name}_newOwnerPublicKey = req.body.${m.name}_newOwnerPublicKey || 0;\n`);
+      paramName.push(`${m.name}_newOwnerPublicKey`);
+    });
+
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
@@ -326,9 +327,9 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     constructorAddrParams.forEach(name => {
       // we have an address input which is likely not a another contract
       // we just replace it with the default address
-      customImports += `const ${name} = '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'; \n`;
+      customImports += `const ${name} = process.env.DEFAULT_ACCOUNT; \n`;
       logger.warn(
-        `Looks like you are using a constructor with a public address ${name}. This will be set to the default ganache test address.
+        `Looks like you are using a constructor with a public address ${name}. This will be set to the default account address.
         If you'd like to change it, edit the variable in migrations/2_shield.js in the output zApp.`
       );
     });

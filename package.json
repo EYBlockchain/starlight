@@ -75,6 +75,7 @@
     "json-diff": "^0.7.2",
     "json-diff-ts": "^1.2.4",
     "lodash.clonedeep": "^4.5.0",
+    "shelljs": "^0.8.5",
     "prettier": "^2.2.1",
     "solc": "^0.8.0",
     "typescript": "^4.2.3",
@@ -95,6 +96,8 @@
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.19",
     "@types/prettier": "^2.4.4",
+    "chai-as-promised": "^7.1.1",
+    "chai-http": "^4.3.0",
     "eslint": "^7.26.0",
     "eslint-config-codfish": "^9.0.2",
     "mocha": "^8.2.1"
