@@ -61,8 +61,7 @@ jobs:
           include: "**docker-compose.zapp.yml"
        
       - name: run zapp npm apitest
-        env: 
-        ACTIONS_TEST: 'true'
+        env: ACTIONS_TEST: 'true'
         run: npx mocha --exit --timeout 50000 --require @babel/register apitest.js
 
 
