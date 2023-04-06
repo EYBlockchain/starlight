@@ -11,7 +11,7 @@ functionNames.forEach(name => {
   const vkJson = JSON.parse(
     fs.readFileSync(`/app/orchestration/common/db/${name}_vk.key`, 'utf-8'),
   );
-  const vk = Object.values(vkJson).flat(Infinity);
+  const vk = Object.values(vkJson).slice(2).flat(Infinity);
   vkInput.push(vk);
 });
 
