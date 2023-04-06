@@ -7,11 +7,14 @@ CUSTOM_PROOF_IMPORT
 const CONTRACT_NAME = artifacts.require("CONTRACT_NAME");
 const functionNames = [FUNCTION_NAMES];
 const vkInput = [];
+let vk = [];
 functionNames.forEach(name => {
   const vkJson = JSON.parse(
     fs.readFileSync(`/app/orchestration/common/db/${name}_vk.key`, 'utf-8'),
   );
-  const vk = Object.values(vkJson).slice(2).flat(Infinity);
+  if (process.env.ACTIONS_TEST)  vk = Object.values(vkJson).flat(Infinity); 
+  else
+   vk = Object.values(vkJson).slice(2).flat(Infinity);
   vkInput.push(vk);
 });
 
