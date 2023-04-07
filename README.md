@@ -68,7 +68,7 @@ This code is not owned by EY and EY provides no warranty and disclaims any and a
 ## Requirements
 
 To run the `zappify` command:
-- Node.js v15 or higher - v16 reccomended.  
+- Node.js v15 or higher - v16 recommended.  
   (Known issues with v13 and v18).
 
 To run the resulting zApp:
@@ -328,7 +328,7 @@ as a GET request to `http://localhost:3000/getCommitmentsByVariableName`.
 
 #### Deploy on public testnets
 
-Apart from local ganache instance, Starlight output zapps can be now be deployed in Sepolia, Goerli and Polygon Mumbai as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Mumbai is provided via [maticvigil](https://rpc.maticvigil.com/).
+Apart from local ganache instance, Starlight output zapps can now be deployed in Sepolia, Goerli and Polygon Mumbai as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Mumbai is provided via [maticvigil](https://rpc.maticvigil.com/).
 
 The configuration can be done during `./bin/setup` phase in the following way.
 
