@@ -1121,7 +1121,7 @@ const visitor = {
               fnDefNode._newASTPointer.body.statements.unshift(newNode);
             }
 
-          } else {
+          } else if (!node.expression.incrementedDeclaration){
             node._newASTPointer = newNode;
             parent._newASTPointer.push(newNode);
             return;
