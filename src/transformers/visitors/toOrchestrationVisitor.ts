@@ -1121,7 +1121,7 @@ const visitor = {
               fnDefNode._newASTPointer.body.statements.unshift(newNode);
             }
 
-          } else if (!node.expression.incrementedDeclaration){
+          } else if (!node.expression.incrementedDeclaration || !indicator.isPartitioned){
             node._newASTPointer = newNode;
             parent._newASTPointer.push(newNode);
             return;
