@@ -49,7 +49,7 @@ export const generateProof = async (functionName, inputs) => {
  */
 export const generateKeys = async circuitFileName => {
   const filepath = `${circuitFileName}`;
-  // logger.info('Generating Keys for Circuit: ', circuitFileName);
+   //logger.info('Generating Keys for Circuit: ', circuitFileName);
   try {
     const axiosConfig = {
       method: 'post',

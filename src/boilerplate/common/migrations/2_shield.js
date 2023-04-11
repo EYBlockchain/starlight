@@ -12,9 +12,11 @@ functionNames.forEach(name => {
   const vkJson = JSON.parse(
     fs.readFileSync(`/app/orchestration/common/db/${name}_vk.key`, 'utf-8'),
   );
-  if(process.env.ACTIONS_TEST === true)  vk = Object.values(vkJson).flat(Infinity); 
-  else
-   vk = Object.values(vkJson).slice(2).flat(Infinity);
+  if (vkJson.scheme) {
+    vk = Object.values(vkJson).slice(2).flat(Infinity);
+  } else {
+    vk = Object.values(vkJson).flat(Infinity);
+  }  
   vkInput.push(vk);
 });
 
