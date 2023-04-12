@@ -144,6 +144,9 @@ export default class MappingKey {
     // we assume that if we're here we have a nested mapping
     // input is the index of the inner mapping
     const parentMap = referencingPath.getAncestorOfType('IndexAccess')?.parentPath.getAncestorOfType('IndexAccess');
+    const isConstantArray = referencingPath.getAncestorOfType('IndexAccess')?.isConstantArray();
+
+    if (isConstantArray && !parentMap) throw new Error('WIP');
     if (!parentMap) throw new Error('No nested mapping - we have for some reason assumed there was a nested mapping, but havent found it');
     const keyNode = parentMap.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
@@ -319,7 +322,7 @@ export default class MappingKey {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
-    if (this.mappingKeys) this.addMappingKey(path).addNullifyingPath(path);
+    if (this.mappingKeys && !path.isArrayOverwrite()) this.addMappingKey(path).addNullifyingPath(path);
   }
 
   addBurningPath(path: NodePath) {

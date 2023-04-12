@@ -1033,17 +1033,34 @@ export default class NodePath {
   }
 
   /**
-   * Checks whether a node is a VariableDeclaration of a Mapping.
+   * Checks whether a node is a VariableDeclaration of an Array.
    * @param {node} node (optional - defaults to this.node)
    * @returns {Boolean}
    */
   isArrayDeclaration(node: any = this.node): boolean {
     if (
       node.nodeType === 'VariableDeclaration' &&
-      node.typeName.nodeType === 'ArrayTypeName'
+      (node.typeName.nodeType === 'ArrayTypeName' ||
+      node.typeName.valueType?.nodeType === 'ArrayTypeName')
     )
       return true;
     return false;
+  }
+
+  /**
+   * Checks whether a node is overwriting an entire array.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isArrayOverwrite(): boolean {
+    const node = this.node;
+    if (node.nodeType !== 'Assignment') {
+      console.log(node);
+      const assgnPath = this.getAncestorOfType('Assignment');
+      if (assgnPath) return assgnPath.isArrayOverwrite();
+      else return false;
+    }
+    return this.isArray(node.leftHandSide) && this.isConstantArray(node.rightHandSide) && node.rightHandSide.nodeType === 'Identifier';
   }
 
   /**
@@ -1094,10 +1111,10 @@ export default class NodePath {
         id = referencingNode.referencedDeclaration;
         break;
       case 'IndexAccess':
-        id = referencingNode.baseExpression.referencedDeclaration || this.getReferencedDeclarationId(referencingNode.baseExpression);
+        id = this.getReferencedDeclarationId(referencingNode.baseExpression) || referencingNode.baseExpression.referencedDeclaration;
         break;
       case 'MemberAccess':
-        id = referencingNode.expression.referencedDeclaration || this.getReferencedDeclarationId(referencingNode.expression);
+        id = this.getReferencedDeclarationId(referencingNode.expression) ||referencingNode.expression.referencedDeclaration;
         break;
       default:
         // No other nodeTypes have been encountered which include a referencedDeclaration

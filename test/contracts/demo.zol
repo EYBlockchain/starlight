@@ -5,17 +5,17 @@ contract PriceTierDemo {
         address private  contractOwner;
 
         struct Invoice {
-            uint256 sku;
-            uint256 quantity;
-            uint256 subTotal;
+            uint256[3] sku;
+            uint256[3] quantity;
+            uint256[3] subTotal;
             bool isPaid;
         }
 
        
 
         struct PriceTierItem {
-            uint256 minQuantity;
-            uint256 price;
+            uint256[3] minQuantity;
+            uint256[3] price;
         }
 
         
@@ -25,30 +25,22 @@ contract PriceTierDemo {
             address buyer;
         }
 
-        secret mapping (uint256 => PriceTierItem[3]) private assetPriceTiers;
-
-       
-
+        secret mapping (uint256 => PriceTierItem) private assetPriceTiers;
         secret mapping (uint256 => uint256) private orderedQuantities;
-
-       
-
-
         mapping(address => address) private buyers;
-
         address private seller;
 
         
 
         struct PurchaseOrder {
-            uint256 sku;
-            uint256 quantity;
-            uint256 subTotal;
+            uint256[3] sku;
+            uint256[3] quantity;
         }
 
        
 
-        secret mapping (uint256 => PurchaseOrder[3]) private purchaseOrder; 
+        secret mapping (uint256 => PurchaseOrder) private purchaseOrders; 
+        secret mapping (uint256 => Invoice) private invoices; 
 
        
 
@@ -70,7 +62,7 @@ contract PriceTierDemo {
         
     
 
-        function addPriceTierItem(secret uint256 sku, secret PriceTierItem[3] calldata _priceTierItem) public onlySeller {
+        function addPriceTierItem(secret uint256 sku, secret PriceTierItem calldata _priceTierItem) public onlySeller {
                 assetPriceTiers[sku] = _priceTierItem;
             }
 
@@ -87,28 +79,21 @@ contract PriceTierDemo {
 
 
 
-        function raisePO(secret PurchaseOrder[3] calldata order, secret uint256 purchaseOrderId) public onlyBuyer { 
-            // Only Buyer can raise PO and owner is the seller
-             for (uint256 index = 0; index < 3; index++) {
-                require(order[index].quantity > 0, "Quantity should be greater than zero");
-                uint256 sku = order[index].sku;
-                secret PriceTierItem memory tier = assetPriceTiers[sku][index];
-                require(tier.price != 0, "Price tier does not exists in the contract");
-                purchaseOrder[purchaseOrderId][index] = order[index];
-            }
+        function raisePO(secret PurchaseOrder calldata order, secret uint256 purchaseOrderId) public onlyBuyer { 
+            purchaseOrders[purchaseOrderId] = order;
         }
         
 
-        function raiseInvoice(secret Invoice[3] calldata invoice, secret uint256 purchaseOrderId) public onlySeller { 
+        function raiseInvoice(secret Invoice calldata invoice, secret uint256 purchaseOrderId) public onlySeller { 
             // Seller raise Invoice
+            secret PurchaseOrder memory po = purchaseOrders[purchaseOrderId];
             for (uint256 index = 0; index < 3; index++) {
-                uint256 sku = invoice[index].sku;
-                secret PurchaseOrder memory po = purchaseOrder[purchaseOrderId][index];
-                require(po.quantity != 0 && po.subTotal != 0 , "Either purchase order Id or sku is incorrect");
-                require(po.quantity == invoice[index].quantity, "Invoice quantity does not match with PO");
-                require(po.subTotal == invoice[index].subTotal, "Invoice subTotal does not match with PO");
-                orderedQuantities[sku] += invoice[index].quantity;
+                uint256 sku = invoice.sku[index];
+                require(po.quantity[index] == invoice.quantity[index], "Invoice quantity does not match with PO");
+                require(po.sku[index] == sku, "Invoice sku does not match with PO");
+                orderedQuantities[sku] += invoice.quantity[index];
             }
+            invoices[purchaseOrderId] = invoice;
         }
 
         
