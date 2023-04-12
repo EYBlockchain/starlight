@@ -1,0 +1,116 @@
+// SPDX-License-Identifier: CC0
+pragma solidity ^0.8.0;
+contract PriceTierDemo {
+
+        address private  contractOwner;
+
+        struct Invoice {
+            uint256 sku;
+            uint256 quantity;
+            uint256 subTotal;
+            bool isPaid;
+        }
+
+       
+
+        struct PriceTierItem {
+            uint256 minQuantity;
+            uint256 price;
+        }
+
+        
+
+
+        struct Buyer{
+            address buyer;
+        }
+
+        secret mapping (uint256 => PriceTierItem[3]) private assetPriceTiers;
+
+       
+
+        secret mapping (uint256 => uint256) private orderedQuantities;
+
+       
+
+
+        mapping(address => address) private buyers;
+
+        address private seller;
+
+        
+
+        struct PurchaseOrder {
+            uint256 sku;
+            uint256 quantity;
+            uint256 subTotal;
+        }
+
+       
+
+        secret mapping (uint256 => PurchaseOrder[3]) private purchaseOrder; 
+
+       
+
+        modifier onlyBuyer() {
+            require(buyers[msg.sender] == msg.sender, "Caller is unauthorised, it must be a buyer");
+            _;
+        }
+
+        modifier onlySeller() {
+            require(msg.sender == seller, "Caller is unauthorised, it must be a seller");
+            _;
+        }
+
+        
+        constructor() {
+            contractOwner = msg.sender;
+        }
+
+        
+    
+
+        function addPriceTierItem(secret uint256 sku, secret PriceTierItem[3] calldata _priceTierItem) public onlySeller {
+                assetPriceTiers[sku] = _priceTierItem;
+            }
+
+        function addSeller(address _seller) public onlySeller {
+            seller = _seller;
+        }
+        
+        function addBuyers(address _buyers) public onlySeller {
+            buyers[_buyers] = _buyers;
+        }
+
+        
+
+
+
+
+        function raisePO(secret PurchaseOrder[3] calldata order, secret uint256 purchaseOrderId) public onlyBuyer { 
+            // Only Buyer can raise PO and owner is the seller
+             for (uint256 index = 0; index < 3; index++) {
+                require(order[index].quantity > 0, "Quantity should be greater than zero");
+                uint256 sku = order[index].sku;
+                secret PriceTierItem memory tier = assetPriceTiers[sku][index];
+                require(tier.price != 0, "Price tier does not exists in the contract");
+                purchaseOrder[purchaseOrderId][index] = order[index];
+            }
+        }
+        
+
+        function raiseInvoice(secret Invoice[3] calldata invoice, secret uint256 purchaseOrderId) public onlySeller { 
+            // Seller raise Invoice
+            for (uint256 index = 0; index < 3; index++) {
+                uint256 sku = invoice[index].sku;
+                secret PurchaseOrder memory po = purchaseOrder[purchaseOrderId][index];
+                require(po.quantity != 0 && po.subTotal != 0 , "Either purchase order Id or sku is incorrect");
+                require(po.quantity == invoice[index].quantity, "Invoice quantity does not match with PO");
+                require(po.subTotal == invoice[index].subTotal, "Invoice subTotal does not match with PO");
+                orderedQuantities[sku] += invoice[index].quantity;
+            }
+        }
+
+        
+       
+}
