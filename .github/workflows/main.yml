@@ -27,7 +27,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: compile and test
         run: |
-          npm i npm@7
+          npm i npm@9.6.6
           tsc
           npm test
 
