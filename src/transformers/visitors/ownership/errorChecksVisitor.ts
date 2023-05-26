@@ -7,6 +7,8 @@ import NodePath from '../../../traverse/NodePath.js';
 import { traverseNodesFast } from '../../../traverse/traverse.js';
 import { ZKPError, TODOError, SyntaxError } from '../../../error/errors.js';
 import { KeyObject } from 'crypto';
+import logger from '../../../utils/logger.js';
+export let structWarnings = [];
 
 
 /**
@@ -131,6 +133,15 @@ export default {
         throw new TODOError(`This For statement edits a public state based on a secret condition, which currently isn't supported.`, path.node);
       }
 
+      const miniIncrementationVisitor = (thisNode: any) => {
+        if (thisNode.nodeType !== 'Identifier') return;
+        const binding = path.scope?.getReferencedBinding(thisNode);
+        if (binding?.isPartitioned && NodePath.getPath(thisNode).isModification())
+          throw new TODOError(`This For statement increments or decrements a partitioned state, which is not currently supported in a loop.`, thisNode);
+      }
+
+      traverseNodesFast(body, miniIncrementationVisitor);
+
     }
   },
 
@@ -169,6 +180,9 @@ export default {
       for (const [, binding] of Object.entries(scope.bindings)) {
         if (!(binding instanceof VariableBinding)) continue;
         binding.prelimTraversalErrorChecks();
+      }
+      if(structWarnings.length>0) {
+      logger.warn( ' The following struct properties may cause unconstrained variable errors in the circuit ' , Array.from(new Set(structWarnings)));
       }
       // if no errors, we then check everything is nullifiable
       for (const [, binding] of Object.entries(scope.bindings)) {

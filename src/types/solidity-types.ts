@@ -27,7 +27,7 @@ export function getVisitableKeys(nodeType: string): string[] {
       case 'DoWhileStatement':
         return ['condition', 'body'];
     case 'ForStatement':
-        return ['condition', 'initializationExpression', 'loopExpression' , 'body'];
+        return ['initializationExpression', 'condition', 'loopExpression' , 'body'];
     case 'Block':
       return ['statements'];
     case 'VariableDeclarationStatement':

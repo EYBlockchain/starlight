@@ -327,9 +327,9 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     constructorAddrParams.forEach(name => {
       // we have an address input which is likely not a another contract
       // we just replace it with the default address
-      customImports += `const ${name} = '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'; \n`;
+      customImports += `const ${name} = process.env.DEFAULT_ACCOUNT; \n`;
       logger.warn(
-        `Looks like you are using a constructor with a public address ${name}. This will be set to the default ganache test address.
+        `Looks like you are using a constructor with a public address ${name}. This will be set to the default account address.
         If you'd like to change it, edit the variable in migrations/2_shield.js in the output zApp.`
       );
     });
