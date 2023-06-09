@@ -90,7 +90,7 @@ function codeGenerator(node: any) {
           }
         });
       }
-      returnStatement.push(nullifierRoot[0]);
+      if(nullifierRoot.length === 1) returnStatement.push(nullifierRoot[0]);
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
