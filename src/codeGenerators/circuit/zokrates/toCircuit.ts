@@ -67,7 +67,7 @@ function codeGenerator(node: any) {
       let returnStatement : string[] = [];
       let returnName : string[] = [];
       node.body.statements.forEach(item => {
-        if(item.expression?.nodeType === 'InternalFunctionCall' && item.expression.CircuitArguments.includes('nullifierRoot') && !nullifierRoot.includes('latestNullifierRoot')) {
+        if(item.expression?.nodeType === 'InternalFunctionCall' && item.expression?.CircuitArguments?.includes('nullifierRoot') && !nullifierRoot.includes('latestNullifierRoot')) {
           nullifierRoot.push(`latestNullifierRoot`)
         }
       })
@@ -81,6 +81,7 @@ function codeGenerator(node: any) {
             if(nullifierRoot.length >1)  nullifierRoot.pop();
           }        
         });
+
         node.returnParameters.parameters.forEach((node) => {
           if (node.typeName.name === 'bool')
             returnStatement.push(`${node.name}`);
