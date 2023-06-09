@@ -81,7 +81,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           case true:
             // decrement
             output[2].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot[0]`);
             output[1].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
@@ -108,7 +108,7 @@ export const sendTransactionBoilerplate = (node: any) => {
         } else {
           if (!stateNode.reinitialisedOnly) {
             output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot[0]`);
           }
           if (!stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
