@@ -67,7 +67,7 @@ function codeGenerator(node: any) {
       let returnStatement : string[] = [];
       let returnName : string[] = [];
       node.body.statements.forEach(item => {
-        if(item.expression?.nodeType === 'InternalFunctionCall' && !nullifierRoot.includes('latestNullifierRoot')) {
+        if(item.expression?.nodeType === 'InternalFunctionCall' && item.expression.CircuitArguments.includes('nullifierRoot') && !nullifierRoot.includes('latestNullifierRoot')) {
           nullifierRoot.push(`latestNullifierRoot`)
         }
       })
