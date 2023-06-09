@@ -32,6 +32,7 @@ const SMT = SumType([Branch, Leaf], () => {
 });
 
 let smt_tree = SMT(hlt[0]);
+let temp_smt_tree = SMT(hlt[0]); // for temporary updates before proof generation
 
 // Gets the hash of a smt_tree (or subtree)
 export const getHash = tree => reduceTree(poseidonConcatHash, tree);
@@ -171,8 +172,8 @@ export async function markNullified(commitmentHash, secretKey = null) {
 		nullifier: generalise(nullifier).hex(32),
       },
     };
-	// adding this nullifier to the sparse merkle tree
-    smt_tree = insertLeaf(generalise(nullifier).hex(32), smt_tree);
+	// updating the original tree
+	smt_tree = temp_smt_tree;
 
     return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
   }
@@ -338,6 +339,24 @@ export async function joinCommitments(
 	const oldCommitment_1_nullifier_path = generalise(
 		oldCommitment_1_nullifier_NonMembership_witness.path
 	).all;
+
+
+	await temporaryUpdateNullifier(a_0_nullifier);
+	await temporaryUpdateNullifier(a_1_nullifier);
+
+	const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
+		oldCommitment_0_nullifier
+	);
+	const oldCommitment_1_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
+		oldCommitment_1_nullifier
+	);
+
+	const oldCommitment_0_nullifier_newpath = generalise(
+		oldCommitment_0_updated_nullifier_NonMembership_witness.path
+	).all;
+	const oldCommitment_1_nullifier_newpath = generalise(
+		oldCommitment_1_updated_nullifier_NonMembership_witness.path
+	).all;
 	
 	// Calculate commitment(s):
 
@@ -378,10 +397,10 @@ export async function joinCommitments(
 		oldCommitment_nullifierRoot.integer,
 		oldCommitment_0_nullifier.integer,
 		oldCommitment_0_nullifier_path.integer,
-		oldCommitment_0_nullifier_index,
+		oldCommitment_0_nullifier_newpath.integer,
 		oldCommitment_1_nullifier.integer,
 		oldCommitment_1_nullifier_path.integer,
-		oldCommitment_1_nullifier_index,
+		oldCommitment_1_nullifier_newpath.integer,
 		oldCommitment_0_prev.integer,
 		oldCommitment_0_prevSalt.integer,
 		oldCommitment_1_prev.integer,
@@ -400,11 +419,15 @@ export async function joinCommitments(
 	const proof = generalise(Object.values(res.proof).flat(Infinity))
 		.map((coeff) => coeff.integer)
 		.flat(Infinity);
-
+    const latestNullifierRoot = res.inputs
+	.slice(-1)
+	.map((e) => generalise(e).integer);
 	// Send transaction to the blockchain:
 
 	const txData = await instance.methods
 		.joinCommitments(
+			oldCommitment_nullifierRoot.integer,
+			latestNullifierRoot[0],
 			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
 			oldCommitment_root.integer,
 			[newCommitment.integer],
@@ -500,3 +523,27 @@ export function getnullifierMembershipWitness(nullifier) {
 	return witness;
 
 }
+
+export async function temporaryUpdateNullifier(nullifier){
+	
+	temp_smt_tree = insertLeaf(generalise(nullifier).hex(32), temp_smt_tree);
+	
+}
+
+export function getupdatedNullifierPaths(nullifier){
+	const binArr = toBinArray(generalise(nullifier));
+	const padBinArr = Array(254 - binArr.length)
+		.fill("0")
+		.concat(...binArr)
+		.slice(0, TRUNC_LENGTH);
+	const membershipPath = _getnullifierMembershipWitness(
+		padBinArr,
+		nullifier,
+		temp_smt_tree,
+		[]
+	);
+	const root = getHash(temp_smt_tree);
+	const witness = { path: membershipPath.path, root: root };
+	return witness;
+}
+

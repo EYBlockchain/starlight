@@ -64,11 +64,16 @@ function codeGenerator(node: any) {
       let returnType : any[] = [];
       const body = codeGenerator(node.body);
       let returnStatement : string[] = [];
+      let nullifierRoot : string[] = [];
       let returnName : string[] = [];
       if(node.returnParameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')
-          returnName.push(param.name);
+           returnName.push(param.name);
+          if(param.bpType === 'nullification'){
+            nullifierRoot.push(`${param.name}_latestNullifierRoot`)
+            if(nullifierRoot.length >1)  nullifierRoot.pop();
+          }        
         });
         node.returnParameters.parameters.forEach((node) => {
           if (node.typeName.name === 'bool')
@@ -91,10 +96,12 @@ function codeGenerator(node: any) {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
       });
+
       if(returnStatement.length === 0){
         returnStatement.push('true');
         returnType.push('bool') ;
       }
+      if(nullifierRoot.length === 1) returnType.push('field') ;
 
       return `${functionSignature}(${returnType}):
 

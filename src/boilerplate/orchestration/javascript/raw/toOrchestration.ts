@@ -64,6 +64,7 @@ export const sendTransactionBoilerplate = (node: any) => {
   output[4] = [];
   output[5] = [];
   output[6] = [];
+  
   // output[0] = nullifier root(s)
   // output[1] = arr of nullifiers
   // output[2] = commitments root(s)
@@ -80,7 +81,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           case true:
             // decrement
             output[2].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot.integer`);
             output[1].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
@@ -107,7 +108,7 @@ export const sendTransactionBoilerplate = (node: any) => {
         } else {
           if (!stateNode.reinitialisedOnly) {
             output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot.integer`);
           }
           if (!stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
@@ -126,6 +127,7 @@ export const sendTransactionBoilerplate = (node: any) => {
 export const generateProofBoilerplate = (node: any) => {
   const output: (string[] | string)[] = [];
   const enc: any[][] = [];
+  const latestnullifierRoot: any[] = [];
   const cipherTextLength: number[] = [];
   let containsRoot = false;
   let containsNullifierRoot = false;
@@ -140,6 +142,9 @@ export const generateProofBoilerplate = (node: any) => {
       enc[0].push(`const ${stateName}_cipherText = res.inputs.slice(START_SLICE, END_SLICE).map(e => generalise(e).integer);`);
       enc[1] ??= [];
       enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
+    }
+    if(stateNode.nullifierRequired){
+      latestnullifierRoot.push(`const latestNullifierRoot = res.inputs.slice(-1).map(e => generalise(e).integer);`)
     }
     const parameters: string[] = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
@@ -270,10 +275,12 @@ export const generateProofBoilerplate = (node: any) => {
     enc[0][i] = enc[0][i].replace('END_SLICE', start - 2);
     start -= cipherTextLength[i] + 2;
     enc[0][i] = enc[0][i].replace('START_SLICE', start);
-
   }
+  
+   // extract the nullifier Root
+
   output.push(`\n].flat(Infinity);`);
-  return [output, enc];
+  return [output, [enc,latestnullifierRoot[0]]];
 };
 
 export const preimageBoilerPlate = (node: any) => {
@@ -770,8 +777,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-      
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},`; // nullifierRoot - array 
+
+      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
       if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
       if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
@@ -782,7 +789,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
 

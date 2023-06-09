@@ -59,6 +59,7 @@ class ContractBoilerplateGenerator {
           struct Inputs {
             ${[
               ...(nullifiersRequired ? [`uint nullifierRoot; 
+                  uint latestNullifierRoot; 
                   uint[] newNullifiers;
                   `] : []),
               ...(containsAccessedOnlyState ? [`uint[] checkNullifiers;`] : []),
@@ -118,12 +119,13 @@ class ContractBoilerplateGenerator {
         `;
       let verifyInput: string[] = [];
       const verifyInputsMap = (type: string, input: string, counter: any) => {
+        
         if(type  === 'parameters'){
         switch (input) {
           case 'nullifierRoot':  
             verifyInput.push( `
             inputs[k++] = _inputs.nullifierRoot;`); 
-            break;
+            break; 
           case 'nullifier':  
             verifyInput.push( `
             inputs[k++] = newNullifiers[${counter.newNullifiers++}];`); 
@@ -158,6 +160,11 @@ class ContractBoilerplateGenerator {
               verifyInput.push( `
             inputs[k++] = _inputs.encKeys[${counter.encryption}][1];`);
               counter.encryption++
+              break;
+              case 'nullification': 
+              verifyInput.push( `
+          inputs[k++] = _inputs.latestNullifierRoot;`); 
+          break;  
               break;
             default:
               verifyInput.push( `
@@ -213,7 +220,7 @@ class ContractBoilerplateGenerator {
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
             ...(checkNullifiers ? ['checkNullifiers.length'] : []),
-            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 2 : 0)'] : []), // newNullifiers , nullifierRoot and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoot and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,
@@ -266,7 +273,7 @@ class ContractBoilerplateGenerator {
 
        ...(newNullifiers) ? [`
        if (newNullifiers.length > 0) {
-        latestnullifierRoot = _inputs.nullifierRoot;
+        latestnullifierRoot = _inputs.latestNullifierRoot;
       }`] : [] 
       ];
 
@@ -274,12 +281,9 @@ class ContractBoilerplateGenerator {
 
        joinCommitmentsInputs.push(
         `
-           function joinCommitments(uint nullifierRoot, uint256[] calldata newNullifiers,  uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
+           function joinCommitments(uint256 nullifierRoot, uint256 latestNullifierRoot, uint256[] calldata newNullifiers,  uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
 
             Inputs memory inputs;
-
-            inputs.customInputs = new uint[](1);
-            inputs.customInputs[0] = 1;
 
             inputs.nullifierRoot = nullifierRoot;
 
@@ -288,6 +292,8 @@ class ContractBoilerplateGenerator {
             inputs.commitmentRoot = commitmentRoot;
 
             inputs.newCommitments = newCommitments;
+
+            inputs.latestNullifierRoot = latestNullifierRoot;
 
             verify(proof, uint(FunctionNames.joinCommitments), inputs);
         }`)
@@ -301,7 +307,8 @@ class ContractBoilerplateGenerator {
            inputs[k++] = newNullifiers[1];
            inputs[k++] = _inputs.commitmentRoot;
            inputs[k++] = newCommitments[0];
-                inputs[k++] = 1;
+           inputs[k++] = _inputs.latestNullifierRoot;
+                
          }`)
 
        }

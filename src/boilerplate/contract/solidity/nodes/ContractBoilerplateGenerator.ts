@@ -129,7 +129,13 @@ class ContractBoilerplateGenerator {
             case 'nullification':
               if (circuitParamNode.isNullified) {
                 if (!newList.includes('nullifierRoot')) newList.push('nullifierRoot');
+                if (!newList.includes('latestNullifierRoot')) {
+                  newList.push('latestNullifierRoot'); 
+                  returnpara['returnParameters'] ??= [];
+                  returnpara['returnParameters'].push(circuitParamNode.bpType);}
                 newList.push('nullifier');
+
+                
               } else {
                 // we use a nullification node for accessed, not nullified, states
                 newList.push('checkNullifier')
