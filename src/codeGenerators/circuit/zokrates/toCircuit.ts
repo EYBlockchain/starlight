@@ -90,13 +90,13 @@ function codeGenerator(node: any) {
           }
         });
       }
-
+      returnStatement.push(nullifierRoot[0]);
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
       });
-
+ 
       if(returnStatement.length === 0){
         returnStatement.push('true');
         returnType.push('bool') ;
