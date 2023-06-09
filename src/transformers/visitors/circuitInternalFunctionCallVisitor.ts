@@ -59,6 +59,7 @@ const internalCallVisitor = {
 
 // Collect the internal call ParameterList
             let internalFncParameters: string[] = [];
+            let internalFncReturnParams: string[] = [];
             state.newParameterList.forEach(node => {
               if(node.nodeType === 'VariableDeclaration'){
                 internalFncParameters.push(node.name);
@@ -72,9 +73,9 @@ const internalCallVisitor = {
                  case 'nullification' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
                   internalFncParameters.push(`nullifierRoot`);
-                  internalFncParameters.push(`latestNullifierRoot`);
                   internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
                   internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_siblingPath`);
+                  internalFncReturnParams.push(`latestNullifierRoot`);
                   break;
                  };
                  case 'oldCommitmentPreimage' : {
@@ -109,6 +110,13 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
+
+             internalFncReturnParams.forEach(param => {
+              if (!state.circuitReturn?.includes(param)) {
+                state.circuitReturn ??= [];
+                state.circuitReturn.push(param);
+               }
+             }); 
 
             node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index].name){

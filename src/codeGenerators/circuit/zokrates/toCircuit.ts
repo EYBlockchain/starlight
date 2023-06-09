@@ -36,6 +36,7 @@ function poseidonLibraryChooser(fileObj: string) {
    }
    return fileObj;
  }
+ let nullifierRoot : string[] = [];
 
 function codeGenerator(node: any) {
   switch (node.nodeType) {
@@ -64,8 +65,13 @@ function codeGenerator(node: any) {
       let returnType : any[] = [];
       const body = codeGenerator(node.body);
       let returnStatement : string[] = [];
-      let nullifierRoot : string[] = [];
       let returnName : string[] = [];
+      node.body.statements.forEach(item => {
+        if(item.expression?.nodeType === 'InternalFunctionCall' && !nullifierRoot.includes('latestNullifierRoot')) {
+          nullifierRoot.push(`latestNullifierRoot`)
+        }
+      })
+
       if(node.returnParameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')
@@ -90,7 +96,7 @@ function codeGenerator(node: any) {
           }
         });
       }
-      if(nullifierRoot.length === 1) returnStatement.push(nullifierRoot[0]);
+      nullifierRoot.includes('latestNullifierRoot')? returnStatement.push(nullifierRoot[1]) : returnStatement.push(nullifierRoot[0]);
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
@@ -183,8 +189,12 @@ function codeGenerator(node: any) {
     }
     case 'InternalFunctionCall': {
      if(node.internalFunctionInteractsWithSecret) {
-      if(node.CircuitArguments.length)
-       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+      if(node.CircuitArguments.length){
+        if(node.CircuitArguments.includes('nullifierRoot'))
+         return ` field latestNullifierRoot = ${node.name}(${(node.CircuitArguments).join(',\\\n \t')}) ` ;
+      return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ; 
+      }
+       
       else
        return ``;
       }
