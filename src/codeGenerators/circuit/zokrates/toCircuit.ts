@@ -36,7 +36,7 @@ function poseidonLibraryChooser(fileObj: string) {
    }
    return fileObj;
  }
- let nullifierRoot : string[] = [];
+ 
 
 function codeGenerator(node: any) {
   switch (node.nodeType) {
@@ -66,9 +66,10 @@ function codeGenerator(node: any) {
       const body = codeGenerator(node.body);
       let returnStatement : string[] = [];
       let returnName : string[] = [];
+      let nullifierRoot : string[] = [];
       node.body.statements.forEach(item => {
-        if(item.expression?.nodeType === 'InternalFunctionCall' && item.expression?.CircuitArguments?.includes('nullifierRoot') && !nullifierRoot.includes('latestNullifierRoot')) {
-          nullifierRoot.push(`latestNullifierRoot`)
+        if(item.expression && item.expression?.nodeType === 'InternalFunctionCall' && item.expression?.CircuitArguments?.includes('nullifierRoot')) {
+          nullifierRoot.push(`internalFncRoot`)
         }
       })
 
@@ -78,7 +79,6 @@ function codeGenerator(node: any) {
            returnName.push(param.name);
           if(param.bpType === 'nullification'){
             nullifierRoot.push(`${param.name}_latestNullifierRoot`)
-            if(nullifierRoot.length >1)  nullifierRoot.pop();
           }        
         });
 
@@ -97,7 +97,9 @@ function codeGenerator(node: any) {
           }
         });
       }
-      nullifierRoot.includes('latestNullifierRoot')? returnStatement.push(nullifierRoot[1]) : returnStatement.push(nullifierRoot[0]);
+
+      nullifierRoot.includes('internalFncRoot')? returnStatement.push('latestNullifierRoot') : returnStatement.push(nullifierRoot[0]);
+
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
@@ -108,7 +110,7 @@ function codeGenerator(node: any) {
         returnStatement.push('true');
         returnType.push('bool') ;
       }
-      if(nullifierRoot.length === 1) returnType.push('field') ;
+      if(nullifierRoot.length) returnType.push('field') ;
 
       return `${functionSignature}(${returnType}):
 
