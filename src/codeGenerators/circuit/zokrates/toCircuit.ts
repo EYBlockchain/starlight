@@ -112,7 +112,7 @@ function codeGenerator(node: any) {
       }
       if(nullifierRoot.length) returnType.push('field') ;
       
-      nullifierRoot.includes('internalFncRoot') ? body = ` \n field latestNullfierRoot = 0 \n ${body}` : body;
+      nullifierRoot.includes('internalFncRoot') ? body = ` \n field latestNullifierRoot = 0 \n ${body}` : body;
 
       return `${functionSignature}(${returnType}):
 
