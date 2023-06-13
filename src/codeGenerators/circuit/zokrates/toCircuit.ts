@@ -98,8 +98,8 @@ function codeGenerator(node: any) {
         });
       }
 
-      nullifierRoot.includes('internalFncRoot')? returnStatement.push('latestNullifierRoot') : returnStatement.push(nullifierRoot[0]);
-
+      
+      nullifierRoot.includes('internalFncRoot')? returnStatement.push('latestNullifierRoot') : nullifierRoot.length ?  returnStatement.push(nullifierRoot[0]) : ' ';
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))

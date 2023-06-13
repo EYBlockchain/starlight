@@ -119,7 +119,7 @@ class ContractBoilerplateGenerator {
         `;
       let verifyInput: string[] = [];
       const verifyInputsMap = (type: string, input: string, counter: any) => {
-        
+  
         if(type  === 'parameters'){
         switch (input) {
           case 'nullifierRoot':  
@@ -152,23 +152,22 @@ class ContractBoilerplateGenerator {
           switch (input) {
             case 'encryption':
               verifyInput.push( `
-            for (uint j; j < _inputs.cipherText[${counter.encryption}].length; j++) {
+              for (uint j; j < _inputs.cipherText[${counter.encryption}].length; j++) {
               inputs[k++] = _inputs.cipherText[${counter.encryption}][j];
             }`);
               verifyInput.push( `
-            inputs[k++] = _inputs.encKeys[${counter.encryption}][0];`);
+              inputs[k++] = _inputs.encKeys[${counter.encryption}][0];`);
               verifyInput.push( `
-            inputs[k++] = _inputs.encKeys[${counter.encryption}][1];`);
+              inputs[k++] = _inputs.encKeys[${counter.encryption}][1];`);
               counter.encryption++
               break;
-              case 'nullification': 
+              case 'latestNullifierRoot': 
               verifyInput.push( `
-          inputs[k++] = _inputs.latestNullifierRoot;`); 
+              inputs[k++] = _inputs.latestNullifierRoot;`); 
           break;  
-              break;
             default:
               verifyInput.push( `
-                inputs[k++] = ${input};`
+              inputs[k++] = ${input};`
               );
               break;
           }
@@ -242,7 +241,7 @@ class ContractBoilerplateGenerator {
             _inputs.map(i => verifyInputsMap(type, i, counter));
 
           }
-
+          
         if(_params && !(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`  \n  \t\t\t\t\t\t \t inputs[k++] = 1;`)
 
         verifyInputs.push(`
