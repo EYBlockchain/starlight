@@ -170,7 +170,6 @@ class ContractBoilerplateGenerator {
         returnpara.returnParameters.length ? parameterList = {...parameterList, ...returnpara} : parameterList;      
       }
      circuitParams[ functionName ] = parameterList;
-
     }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
       return { nullifierRootRequired,nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};

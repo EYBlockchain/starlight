@@ -63,7 +63,7 @@ function codeGenerator(node: any) {
     case 'FunctionDefinition': {
       let functionSignature : any;
       let returnType : any[] = [];
-      const body = codeGenerator(node.body);
+      let body = codeGenerator(node.body);
       let returnStatement : string[] = [];
       let returnName : string[] = [];
       let nullifierRoot : string[] = [];
@@ -111,6 +111,8 @@ function codeGenerator(node: any) {
         returnType.push('bool') ;
       }
       if(nullifierRoot.length) returnType.push('field') ;
+      
+      nullifierRoot.includes('internalFncRoot') ? body = ` \n field latestNullfierRoot = 0 \n ${body}` : body;
 
       return `${functionSignature}(${returnType}):
 
@@ -194,10 +196,9 @@ function codeGenerator(node: any) {
      if(node.internalFunctionInteractsWithSecret) {
       if(node.CircuitArguments.length){
         if(node.CircuitArguments.includes('nullifierRoot'))
-         return ` field latestNullifierRoot = ${node.name}(${(node.CircuitArguments).join(',\\\n \t')}) ` ;
+         return ` latestNullifierRoot = ${node.name}(${(node.CircuitArguments).join(',\\\n \t')}) ` ;
       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ; 
-      }
-       
+      }   
       else
        return ``;
       }

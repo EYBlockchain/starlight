@@ -441,6 +441,7 @@ class BoilerplateGenerator {
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
+                      \t${stateName}_nullifier_updatedpath.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
@@ -456,6 +457,7 @@ class BoilerplateGenerator {
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                           \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
+                          \t${stateName}_nullifier_updatedpath.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}
@@ -468,6 +470,7 @@ class BoilerplateGenerator {
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
+                      \t${stateName}_nullifier_updatedpath.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
