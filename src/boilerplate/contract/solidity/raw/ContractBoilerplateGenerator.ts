@@ -190,12 +190,6 @@ class ContractBoilerplateGenerator {
         ...(newCommitments ? [`
           uint[] memory newCommitments = _inputs.newCommitments;`] : []),
 
-        ...(checkNullifiers ? [`
-          for (uint i; i < checkNullifiers.length; i++) {
-            uint n = checkNullifiers[i];
-            require(nullifiers[n] == 0, "Nullifier already exists");
-          }`] : []),
-
         ...(commitmentRoot ? [`
           require(commitmentRoots[_inputs.commitmentRoot] == _inputs.commitmentRoot, "Input commitmentRoot does not exist.");`] : []),
 
