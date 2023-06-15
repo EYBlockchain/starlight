@@ -43,7 +43,6 @@ class ContractBoilerplateGenerator {
           event EncryptedData(uint256[] cipherText, uint256[2] ephPublicKey);`] : []),
 
         ...nullifiersRequired ? [`
-          mapping(uint256 => uint256) public nullifiers;
           uint256 public latestnullifierRoot;`] : [],
 
         ...(oldCommitmentAccessRequired ? [`
@@ -190,13 +189,6 @@ class ContractBoilerplateGenerator {
 
         ...(newCommitments ? [`
           uint[] memory newCommitments = _inputs.newCommitments;`] : []),
-
-        ...(newNullifiers ? [`
-          for (uint i; i < newNullifiers.length; i++) {
-      			uint n = newNullifiers[i];
-      			require(nullifiers[n] == 0, "Nullifier already exists");
-      			nullifiers[n] = n;
-      		}`] : []),
 
         ...(checkNullifiers ? [`
           for (uint i; i < checkNullifiers.length; i++) {

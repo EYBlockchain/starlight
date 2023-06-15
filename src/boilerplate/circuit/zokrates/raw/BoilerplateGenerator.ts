@@ -79,7 +79,7 @@ class BoilerplateGenerator {
 
     postStatements({ name: x }): string[] {
       // default nullification lines (for partitioned & whole states)
-      const lines = [
+      let lines = [
         `
         // Nullify ${x}:
 
@@ -99,15 +99,19 @@ class BoilerplateGenerator {
             ${x}_nullifier_nonmembershipWitness_siblingPath,\\
             ${x}_oldCommitment_nullifier\\
            )\
-          )
-
-        field ${x}_latestNullifierRoot = checkUpdatedPath(\\
-          ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-          ${x}_oldCommitment_nullifier\\
-          ) \ 
-
+)
         `,
       ];
+
+
+      x.slice(-1) === "1" ? lines.push(`assert(\\ ${x.slice(0, -1) + '0'}_latestNullifierRoot = checkUpdatedPath(\\
+        ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
+        ${x}_oldCommitment_nullifier\\
+       ) \ 
+       ) `) : lines.push(`field ${x}_latestNullifierRoot = checkUpdatedPath(\\
+        ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
+        ${x}_oldCommitment_nullifier\\
+        ) \ `) 
 
       if (this.initialisationRequired && this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
