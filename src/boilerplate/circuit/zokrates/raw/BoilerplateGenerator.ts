@@ -104,10 +104,10 @@ class BoilerplateGenerator {
       ];
 
 
-      x.slice(-1) === "1" ? lines.push(`assert( ${x.slice(0, -1) + '0'}_latestNullifierRoot = checkUpdatedPath(\\
+      x.slice(-1) === "1" ? lines.push(`assert( ${x.slice(0, -1) + '0'}_latestNullifierRoot == checkUpdatedPath(\\
         ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
         ${x}_oldCommitment_nullifier\\
-       ) ) `) : lines.push(`field ${x}_latestNullifierRoot == checkUpdatedPath(\\
+       ) ) `) : lines.push(`field ${x}_latestNullifierRoot = checkUpdatedPath(\\
         ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
         ${x}_oldCommitment_nullifier\\
         ) \ `) 
