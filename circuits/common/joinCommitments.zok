@@ -122,8 +122,8 @@ def main(\
             oldCommitment_1_nullifier\
            )          )
         
-        field oldCommitment_1_latestNullifierRoot = checkUpdatedPath(oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
-         oldCommitment_1_nullifier)  
+        assert( oldCommitment_0_latestNullifierRoot = checkUpdatedPath(oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
+         oldCommitment_1_nullifier)  )
 
         // oldCommitment_0_commitment: preimage check
 
