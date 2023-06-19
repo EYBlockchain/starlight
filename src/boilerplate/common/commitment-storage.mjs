@@ -357,7 +357,7 @@ export async function joinCommitments(
 	const oldCommitment_1_nullifier_newpath = generalise(
 		oldCommitment_1_updated_nullifier_NonMembership_witness.path
 	).all;
-	
+	const oldCommitment_newNullifierRoot = generalise(oldCommitment_0_updated_nullifier_NonMembership_witness.root);
 	// Calculate commitment(s):
 
 	const newCommitment_newSalt = generalise(utils.randomHex(31));
@@ -395,6 +395,7 @@ export async function joinCommitments(
 		secretKey.integer,
 
 		oldCommitment_nullifierRoot.integer,
+		oldCommitment_newNullifierRoot.integer,
 		oldCommitment_0_nullifier.integer,
 		oldCommitment_0_nullifier_path.integer,
 		oldCommitment_0_nullifier_newpath.integer,
@@ -419,15 +420,12 @@ export async function joinCommitments(
 	const proof = generalise(Object.values(res.proof).flat(Infinity))
 		.map((coeff) => coeff.integer)
 		.flat(Infinity);
-    const latestNullifierRoot = res.inputs
-	.slice(-1)
-	.map((e) => generalise(e).integer);
 	// Send transaction to the blockchain:
 
 	const txData = await instance.methods
 		.joinCommitments(
 			oldCommitment_nullifierRoot.integer,
-			latestNullifierRoot[0],
+			oldCommitment_newNullifierRoot.integer,
 			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
 			oldCommitment_root.integer,
 			[newCommitment.integer],

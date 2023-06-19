@@ -118,10 +118,10 @@ class ContractBoilerplateGenerator {
       let functionName: string;
       
       for ([functionName, parameterList] of Object.entries(circuitParams)) {
-        const returnpara = { 'returnParameters' : []};
         for ([paramtype, params] of Object.entries(parameterList)){
+        const returnpara = {};
         if(paramtype  === 'returnParameters'){
-          returnpara.returnParameters = params.concat(returnpara.returnParameters);
+          returnpara[ paramtype ] = params;
           delete parameterList[ paramtype ];
         }
         const newList: string[] = [];
@@ -129,9 +129,8 @@ class ContractBoilerplateGenerator {
           switch (circuitParamNode.bpType) {
             case 'nullification':
               if (circuitParamNode.isNullified) {
-                if (!newList.includes('nullifierRoot')) {
+                if (!newList.includes('nullifierRoot')) 
                   newList.push('nullifierRoot')
-                  returnpara.returnParameters.push('latestNullifierRoot');}
                 newList.push('nullifier');
  
               } else {
@@ -146,7 +145,8 @@ class ContractBoilerplateGenerator {
               if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
               break;
             case 'encryption':
-              returnpara.returnParameters.push(circuitParamNode.bpType);
+              returnpara['returnParameters'] ??= [];
+              returnpara['returnParameters'].push(circuitParamNode.bpType);
               break;
             case undefined: {
               if (
@@ -167,7 +167,7 @@ class ContractBoilerplateGenerator {
           }
         });
         parameterList[ paramtype ] = newList;
-        returnpara.returnParameters.length ? parameterList = {...parameterList, ...returnpara} : parameterList;      
+        parameterList = {...parameterList, ...returnpara};    
       }
      circuitParams[ functionName ] = parameterList;
     }

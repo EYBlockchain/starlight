@@ -61,6 +61,7 @@ class BoilerplateGenerator {
       return [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field nullifierRoot`,
+        `public field newNullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_newsiblingPath`,
@@ -100,19 +101,16 @@ class BoilerplateGenerator {
             ${x}_oldCommitment_nullifier\\
            )\
 )
+
+          assert(\\
+            newNullifierRoot == checkUpdatedPath(\\
+              ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
+              ${x}_oldCommitment_nullifier\\
+            )\
+            )
         `,
       ];
-      x.slice(-1) === "1" ?  x.includes('index') ? lines.push(`assert( ${x.slice(0, -1)}latestNullifierRoot == checkUpdatedPath(\\
-        ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-        ${x}_oldCommitment_nullifier\\
-       ) ) `) : lines.push(`assert( ${x.slice(0, -1) + '0'}_latestNullifierRoot == checkUpdatedPath(\\
-        ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-        ${x}_oldCommitment_nullifier\\
-       ) ) `) : lines.push(`field ${x}_latestNullifierRoot = checkUpdatedPath(\\
-        ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-        ${x}_oldCommitment_nullifier\\
-        ) \ `) 
-
+      
       if (this.initialisationRequired && this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [

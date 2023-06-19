@@ -20,6 +20,7 @@ def main(\
 	private field oldCommitment_0_owner_secretKey_field,\
 	private field oldCommitment_1_owner_secretKey_field,\
   public field nullifierRoot,\
+  public field newNullifierRoot,\
 	public field oldCommitment_0_nullifier,\
   public field[32] oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
   private field[32] oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
@@ -38,7 +39,7 @@ def main(\
 	private field newCommitment_owner_publicKey_field,\
 	private field newCommitment_salt_field,\
 	public field newCommitment_commitment\
-) -> (field) :
+) -> (bool) :
 
 // check if state is mapping or not
 
@@ -99,8 +100,9 @@ def main(\
             oldCommitment_0_nullifier\
            )          )
 
-        field oldCommitment_0_latestNullifierRoot = checkUpdatedPath(oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
-         oldCommitment_0_nullifier)    
+        assert( newNullifierRoot == checkUpdatedPath(oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
+         oldCommitment_0_nullifier)  )
+  
         
 
 
@@ -122,7 +124,7 @@ def main(\
             oldCommitment_1_nullifier\
            )          )
         
-        assert( oldCommitment_0_latestNullifierRoot == checkUpdatedPath(oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
+        assert( newNullifierRoot == checkUpdatedPath(oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
          oldCommitment_1_nullifier)  )
 
         // oldCommitment_0_commitment: preimage check
@@ -188,4 +190,4 @@ def main(\
           field_to_bool_256(newCommitment_commitment)[8..256] == field_to_bool_256(newCommitment_commitment_check_field)[8..256]\
         )
 
-        return oldCommitment_0_latestNullifierRoot
+        return true

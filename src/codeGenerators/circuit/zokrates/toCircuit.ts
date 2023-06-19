@@ -67,19 +67,10 @@ function codeGenerator(node: any) {
       let returnStatement : string[] = [];
       let returnName : string[] = [];
       let nullifierRoot : string[] = [];
-      node.body.statements.forEach(item => {
-        if(item.expression && item.expression?.nodeType === 'InternalFunctionCall' && item.expression?.CircuitArguments?.includes('nullifierRoot')) {
-          nullifierRoot.push(`internalFncRoot`)
-        }
-      })
-
       if(node.returnParameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')
-           returnName.push(param.name);
-          if(param.bpType === 'nullification'){
-            nullifierRoot.push(`${param.name}_latestNullifierRoot`)
-          }        
+           returnName.push(param.name);      
         });
 
         node.returnParameters.parameters.forEach((node) => {
@@ -98,8 +89,6 @@ function codeGenerator(node: any) {
         });
       }
 
-      
-      nullifierRoot.includes('internalFncRoot')? returnStatement.push('latestNullifierRoot') : nullifierRoot.length ?  returnStatement.push(nullifierRoot[0]) : ' ';
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
@@ -110,10 +99,7 @@ function codeGenerator(node: any) {
         returnStatement.push('true');
         returnType.push('bool') ;
       }
-      if(nullifierRoot.length) returnType.push('field') ;
       
-      nullifierRoot.includes('internalFncRoot') ? body = ` \n field latestNullifierRoot = 0 \n ${body}` : body;
-
       return `${functionSignature}(${returnType}):
 
         ${body}
@@ -195,8 +181,6 @@ function codeGenerator(node: any) {
     case 'InternalFunctionCall': {
      if(node.internalFunctionInteractsWithSecret) {
       if(node.CircuitArguments.length){
-        if(node.CircuitArguments.includes('nullifierRoot'))
-         return ` latestNullifierRoot = ${node.name}(${(node.CircuitArguments).join(',\\\n \t')}) ` ;
       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ; 
       }   
       else

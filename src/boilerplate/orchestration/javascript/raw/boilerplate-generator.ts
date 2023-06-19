@@ -284,7 +284,8 @@ class BoilerplateGenerator {
 
             const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
             const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
-
+ 
+            const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
             const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
             const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
             `];
@@ -304,6 +305,7 @@ class BoilerplateGenerator {
             await temporaryUpdateNullifier(${stateName}_nullifier);
             const ${stateName}_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_nullifier);
             const ${stateName}_nullifier_updatedpath = generalise(${stateName}_updated_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_newNullifierRoot = generalise(${stateName}_updated_nullifier_NonMembership_witness.root);
           `];
         default:
           throw new TypeError(stateType);
@@ -405,6 +407,7 @@ class BoilerplateGenerator {
               \tsecretKey.integer,
               \tsecretKey.integer,
               ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+              ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
               \t${stateName}_0_nullifier_updatedpath.integer,
@@ -439,6 +442,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
                       \t${stateName}_nullifier_updatedpath.integer,
@@ -455,6 +459,7 @@ class BoilerplateGenerator {
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.integer,
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+                          ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                           \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
                           \t${stateName}_nullifier_updatedpath.integer,
@@ -468,6 +473,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
                       \t${stateName}_nullifier_updatedpath.integer,

@@ -81,7 +81,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           case true:
             // decrement
             output[2].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot[0]`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`, `${privateStateName}_newNullifierRoot.integer`);
             output[1].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
@@ -108,7 +108,7 @@ export const sendTransactionBoilerplate = (node: any) => {
         } else {
           if (!stateNode.reinitialisedOnly) {
             output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`latestNullifierRoot[0]`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
           }
           if (!stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
@@ -142,9 +142,6 @@ export const generateProofBoilerplate = (node: any) => {
       enc[0].push(`const ${stateName}_cipherText = res.inputs.slice(START_SLICE, END_SLICE).map(e => generalise(e).integer);`);
       enc[1] ??= [];
       enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
-    }
-    if(stateNode.nullifierRequired){
-      latestnullifierRoot.push(`const latestNullifierRoot = res.inputs.slice(-1).map(e => generalise(e).integer);`)
     }
     const parameters: string[] = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
@@ -280,7 +277,7 @@ export const generateProofBoilerplate = (node: any) => {
    // extract the nullifier Root
 
   output.push(`\n].flat(Infinity);`);
-  return [output, [enc,latestnullifierRoot[0]]];
+  return [output, [enc]];
 };
 
 export const preimageBoilerPlate = (node: any) => {

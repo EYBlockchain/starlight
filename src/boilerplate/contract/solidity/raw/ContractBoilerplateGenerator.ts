@@ -124,6 +124,8 @@ class ContractBoilerplateGenerator {
           case 'nullifierRoot':  
             verifyInput.push( `
             inputs[k++] = _inputs.nullifierRoot;`); 
+            verifyInput.push( `
+            inputs[k++] = _inputs.latestNullifierRoot;`); 
             break; 
           case 'nullifier':  
             verifyInput.push( `
@@ -159,11 +161,7 @@ class ContractBoilerplateGenerator {
               verifyInput.push( `
               inputs[k++] = _inputs.encKeys[${counter.encryption}][1];`);
               counter.encryption++
-              break;
-              case 'latestNullifierRoot': 
-              verifyInput.push( `
-              inputs[k++] = _inputs.latestNullifierRoot;`); 
-          break;  
+              break; 
             default:
               verifyInput.push( `
               inputs[k++] = ${input};`
@@ -205,7 +203,7 @@ class ContractBoilerplateGenerator {
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
             ...(checkNullifiers ? ['checkNullifiers.length'] : []),
-            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoot and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoots(old and latest) and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,
@@ -270,15 +268,18 @@ class ContractBoilerplateGenerator {
 
             Inputs memory inputs;
 
+            inputs.customInputs = new uint[](1);
+        	  inputs.customInputs[0] = 1;
+
             inputs.nullifierRoot = nullifierRoot;
+
+            inputs.latestNullifierRoot = latestNullifierRoot;
 
             inputs.newNullifiers = newNullifiers;
 
             inputs.commitmentRoot = commitmentRoot;
 
             inputs.newCommitments = newCommitments;
-
-            inputs.latestNullifierRoot = latestNullifierRoot;
 
             verify(proof, uint(FunctionNames.joinCommitments), inputs);
         }`)
@@ -288,11 +289,12 @@ class ContractBoilerplateGenerator {
            uint k = 0;
 
            inputs[k++] = _inputs.nullifierRoot;
+           inputs[k++] = _inputs.latestNullifierRoot;
            inputs[k++] = newNullifiers[0];
            inputs[k++] = newNullifiers[1];
            inputs[k++] = _inputs.commitmentRoot;
            inputs[k++] = newCommitments[0];
-           inputs[k++] = _inputs.latestNullifierRoot;
+           inputs[k++] = 1;
                 
          }`)
 
