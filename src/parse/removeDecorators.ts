@@ -14,14 +14,14 @@ import { boolean } from 'yargs';
 // regex: matches decorators when standalone words
 // eg: for {unknown knownknown known1 123lknown known secretvalue} finds only 1 match for decorator 'known'
  //const decorators = [/(?<![\w])known(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])unknown(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])secret(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])reinitialisable(?![\w\@#\$%\^\&*\)\(+=._-])/g];
-const decorators = [/(?<![\w])known(?![\w])/g, /(?<![\w])unknown(?![\w])/g, /(?<![\w])secret(?![\w])/g, /(?<![\w])reinitialisable(?![\w])/g];
+const decorators = [/(?<![\w])known(?![\w])/g, /(?<![\w])unknown(?![\w])/g, /(?<![\w])secret(?![\w])/g, /(?<![\w])reinitialisable(?![\w])/g, /(?<![\w])encrypt(?![\w])/g];
 
 // keywords - throws an error if function name/ variable name/ contracts etc is a decorator.
 // eg:  function secret (...) is not allowed , permits functions secret12(...)
 
 let solKeywords = [/contract/,/function/,/struct/,/enum/,/bool/,/fixed/,/address/,/uint[0-9]{0,3}/,/int[0-9]{0,3}/];
 let solVisib = ['public', 'private', 'memory', 'storage', 'calldata'];
-let zolKeywords = [/secret[\W]/,/known[\W]/,/unknown[\W]/,/reinitialisable[\W]/];
+let zolKeywords = [/secret[\W]/,/known[\W]/,/unknown[\W]/,/reinitialisable[\W]/, /encrypt[\W]/];
 let keywords = solKeywords.flatMap(sk => zolKeywords.map(zk => new RegExp(sk.source +' '+ zk.source)));
 
 function tidy(_line: string): string {
@@ -198,7 +198,7 @@ function arrangeModifiers(substrings: any) {
 
         for (var j=0; j<i; j++) {
 
-          if (substrings[j].startsWith(modifierslist))  {
+          if (substrings[j].startsWith(modifierslist) && (modifierslist != 'modifier '))  {
 
             ParameterList = substrings[j].slice(
               substrings[j].indexOf('(') + 1,

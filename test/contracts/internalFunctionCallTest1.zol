@@ -6,14 +6,16 @@ contract Assign {
 
   secret uint256 private a;
 
-
-  function remove(secret uint256 value) public {
-    a -= value;
-    add(value); // no  oldCommitmentAccessRequired but the contract does for function remove
-  }
-  function add(secret uint256 value) public {
+function add(secret uint256 value) public {
     known a = a + 2 * value;
   }
+  
+  function remove(secret uint256 value) public {
+    add(value); // no  oldCommitmentAccessRequired but the contract does for function remove
+    a -= value;
+    
+  }
+  
 
 
 }

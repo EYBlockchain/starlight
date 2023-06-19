@@ -275,6 +275,19 @@ class BoilerplateGenerator {
             const ${stateName}_nullifierRoot = generalise(${stateName}_0_nullifier_NonMembership_witness.root);
             const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
             const ${stateName}_1_nullifier_path = generalise(${stateName}_1_nullifier_NonMembership_witness.path).all;
+
+            //Get the new temporary path for nullifier
+
+            await temporaryUpdateNullifier(${stateName}_0_nullifier);
+            await temporaryUpdateNullifier(${stateName}_1_nullifier);
+
+
+            const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
+            const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
+ 
+            const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
+            const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
             `];
         case 'whole':
           return [`
@@ -286,6 +299,13 @@ class BoilerplateGenerator {
 
             const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
             const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
+
+            //Get the new temporary path for nullifier
+
+            await temporaryUpdateNullifier(${stateName}_nullifier);
+            const ${stateName}_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_nullifier);
+            const ${stateName}_nullifier_updatedpath = generalise(${stateName}_updated_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_newNullifierRoot = generalise(${stateName}_updated_nullifier_NonMembership_witness.root);
           `];
         default:
           throw new TypeError(stateType);
@@ -338,7 +358,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness, } from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
@@ -387,10 +407,13 @@ class BoilerplateGenerator {
               \tsecretKey.integer,
               \tsecretKey.integer,
               ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+              ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
+              \t${stateName}_0_nullifier_updatedpath.integer,
               \t${stateName}_1_nullifier.integer,
               \t${stateName}_1_nullifier_path.integer,
+              \t${stateName}_1_nullifier_updatedpath.integer,
               ${prev(0)},
               \t${stateName}_0_prevSalt.integer,
               ${prev(1)},
@@ -419,8 +442,10 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
+                      \t${stateName}_nullifier_updatedpath.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
@@ -434,7 +459,10 @@ class BoilerplateGenerator {
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.integer,
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+                          ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
+                          \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
+                          \t${stateName}_nullifier_updatedpath.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}
@@ -445,19 +473,25 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
+                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
+                      \t${stateName}_nullifier_updatedpath.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
                       ${rootRequired ? `\t${stateName}_root.integer,` : ``}
                       \t${stateName}_index.integer,
                       \t${stateName}_path.integer,
-                      \t${stateName}_newOwnerPublicKey.integer,
+                      ${encryptionRequired ? `` : `\t${stateName}_newOwnerPublicKey.integer,`}
                       \t${stateName}_newSalt.integer,
-                      \t${stateName}_newCommitment.integer`];
-          }
-        }
+                      \t${stateName}_newCommitment.integer
+                      ${encryptionRequired ? `,
+                        \tgeneralise(utils.randomHex(31)).integer,
+                        \t[decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].integer,
+                          decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}`];
+                  }
+              }
       }
     }
     return []; // here to stop ts complaining
@@ -483,7 +517,7 @@ sendTransaction = {
       let value;
       switch (stateType) {
         case 'increment':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue[${i}]`)} }` : `${stateName}_newCommitmentValue`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
           return [`
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
@@ -499,7 +533,7 @@ sendTransaction = {
             isNullified: false,
           });`];
         case 'decrement':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change[${i}]`)} }` : `${stateName}_change`;
+          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
             \nawait markNullified(generalise(${stateName}_0_oldCommitment._id), secretKey.hex(32));
             \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));

@@ -78,7 +78,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           case true:
             // decrement
             output[2].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`, `${privateStateName}_newNullifierRoot.integer`);
             output[1].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
@@ -102,11 +102,14 @@ export const sendTransactionBoilerplate = (node: any) => {
           output[2].push(`${privateStateName}_root.integer`);
           if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
             output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
           }
           if (!stateNode.accessedOnly && !stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
-
+          if (stateNode.encryptionRequired) {
+            output[5].push(`${privateStateName}_cipherText`);
+            output[6].push(`${privateStateName}_encKey`);
+          }
 
         break;
     }
@@ -117,6 +120,7 @@ export const sendTransactionBoilerplate = (node: any) => {
 export const generateProofBoilerplate = (node: any) => {
   const output: (string[] | string)[] = [];
   const enc: any[][] = [];
+  const latestnullifierRoot: any[] = [];
   const cipherTextLength: number[] = [];
   let containsRoot = false;
   let containsNullifierRoot = false;
@@ -175,7 +179,7 @@ export const generateProofBoilerplate = (node: any) => {
             accessedOnly: stateNode.accessedOnly,
             nullifierRootRequired: !containsNullifierRoot,
             initialisationRequired: stateNode.initialisationRequired,
-            encryptionRequired: false,
+            encryptionRequired: stateNode.encryptionRequired,
             rootRequired: !containsRoot,
             parameters,
           })
@@ -210,7 +214,7 @@ export const generateProofBoilerplate = (node: any) => {
                 burnedOnly: false,
                 nullifierRootRequired: !containsNullifierRoot,
                 initialisationRequired: false,
-                encryptionRequired: false,
+                encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
                 parameters,
@@ -261,10 +265,12 @@ export const generateProofBoilerplate = (node: any) => {
     enc[0][i] = enc[0][i].replace('END_SLICE', start - 2);
     start -= cipherTextLength[i] + 2;
     enc[0][i] = enc[0][i].replace('START_SLICE', start);
-
   }
+  
+   // extract the nullifier Root
+
   output.push(`\n].flat(Infinity);`);
-  return [output, enc];
+  return [output, [enc]];
 };
 
 export const preimageBoilerPlate = (node: any) => {
@@ -761,8 +767,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-      
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},`; // nullifierRoot - array 
+
+      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
       if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
       if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
@@ -772,7 +778,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
 

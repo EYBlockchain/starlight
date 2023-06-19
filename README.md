@@ -174,8 +174,25 @@ This runs `tsc` and `npm i -g ./` which will create a symlink to your node.js bi
 | `--output <./custom/output/dir/>`  | `-o`  | Specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.  |
 | `--zapp-name <customZappName>` | `-z`  | Otherwise files get output to a folder with name matching that of the input file.  |
 | `--log-level <debug>`  | -  | Specify a Winston log level type.  |
+| `--enc`  | `-e`  | Add secret state encryption events for every new commitment*.  |
 | `--help`  | `-h`  | CLI help.  |
 
+*Note that encrypting and broadcasting secret state information to its owner is costly gas-wise, so switching it on with this option may give you `stack too deep` errors in the contract.
+
+An alternative is to use our `encrypt` syntax in front of the state edit you'd like to broadcast, like this:
+
+```solidity
+contract Assign {
+
+  secret uint256 private a; // <--- secret
+
+  function assign(secret uint256 value) public { // <--- secret
+    encrypt a = value; // <--- the new value of a will be encrypted and sent to a's owner
+  }
+}
+```
+
+Partitioned states which are incremented and have an owner which is clearly different from the function caller has encryption included by default.
 
 ---
 

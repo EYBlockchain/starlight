@@ -7,6 +7,7 @@ import { VariableBinding } from './Binding.js';
 import logger from '../utils/logger.js';
 import backtrace from '../error/backtrace.js';
 import { SyntaxUsageError } from '../error/errors.js';
+import { structWarnings } from '../transformers/visitors/ownership/errorChecksVisitor.js';
 
 
 export class ContractDefinitionIndicator {
@@ -716,9 +717,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
           mappingKey.prelimTraversalErrorChecks();
         } else {
           mappingKey.node = this.referencingPaths[0].getStructDeclaration(this.node).members.find(n => n.name === name);
-          logger.warn(
-             `Struct property ${name} of ${this.name} is not referenced/edited in this scope (${this.scope.scopeName}), this may cause unconstrained variable errors in the circuit.`,
-           );
+          structWarnings.push(name.concat(' in ').concat(this.scope.scopeName));
         }
       }
     }
@@ -754,16 +753,26 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     )
   }
 
-  updateEncryption() {
-    if (!this.newCommitmentsRequired || !this.isPartitioned || !this.isOwned) return;
+  updateEncryption(options?: any) {
+    // no new commitments => nothing to encrypt
+    if (!this.newCommitmentsRequired) return;
+    // decremented only => no new commitments to encrypt
+    if (this.isPartitioned && this.isDecremented && this.nullificationCount === this.referenceCount) return;
+    // find whether enc for this scope only has been opted in
+    let encThisState: boolean = false;
+    this.modifyingPaths.forEach(p => {
+      if (p.getAncestorOfType('ExpressionStatement')?.node.forceEncrypt) encThisState = true;
+    })
+    // whole state only if opted in
+    if ((!options?.encAllStates && !encThisState) && (!this.isPartitioned || !this.isOwned)) return;
     if (this.isMapping) {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
       for (const [, mappingKey] of mappingKeys) {
-        mappingKey.updateEncryption()
+        mappingKey.updateEncryption(options)
       }
       return;
     }
-    if (this.isNullified) return;
+    if (this.isBurned) return;
     this.encryptionRequired = true;
     this.parentIndicator.encryptionRequired = true;
     this.parentIndicator.parentIndicator.encryptionRequired = true;

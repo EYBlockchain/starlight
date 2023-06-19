@@ -39,10 +39,10 @@ class BoilerplateGenerator {
 
         bool ${x}_oldCommitment_owner_publicKey_sign = edwardsCompress(${x}_oldCommitment_owner_publicKey_point)[0]
 
-        bool[254] ${x}_yBits = field_to_bool_256(${x}_oldCommitment_owner_publicKey_point[1])[2..256]
-        ${x}_yBits[0] = ${x}_oldCommitment_owner_publicKey_sign
+        bool[254] ${x}_oldCommitment_yBits = field_to_bool_256(${x}_oldCommitment_owner_publicKey_point[1])[2..256]
+        ${x}_oldCommitment_yBits[0] = ${x}_oldCommitment_owner_publicKey_sign
 
-        field ${x}_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_yBits])`,
+        field ${x}_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_oldCommitment_yBits])`,
       ];
     },
   };
@@ -53,6 +53,7 @@ class BoilerplateGenerator {
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
         `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof`,
+        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath`,
       ];
     },
 
@@ -60,6 +61,7 @@ class BoilerplateGenerator {
       const para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field nullifierRoot`,
+        `public field newNullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
       ]
@@ -81,7 +83,7 @@ class BoilerplateGenerator {
 
     postStatements({ name: x , isAccessed, isNullified}): string[] {
       // default nullification lines (for partitioned & whole states)
-      const lines = [
+      let lines = [
         `
         // Nullify ${x}:
 
@@ -101,32 +103,17 @@ class BoilerplateGenerator {
             ${x}_nullifier_nonmembershipWitness_siblingPath,\\
             ${x}_oldCommitment_nullifier\\
            )\
-          )
+)
+
+          assert(\\
+            newNullifierRoot == checkUpdatedPath(\\
+              ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
+              ${x}_oldCommitment_nullifier\\
+            )\
+            )
         `,
       ];
 
-      if(isAccessed && !isNullified) 
-       { return [
-        `
-        // Create the Nullifier for the accessed state ${x}, no need to nullify it:
-
-        field ${x}_oldCommitment_nullifier  = poseidon([\\
-          ${x}_stateVarId_field,\\
-          ${x}_oldCommitment_owner_secretKey,\\
-          ${x}_oldCommitment_salt\\
-        ])
-
-        // ${x}_oldCommitment_nullifier : non-existence check
-        
-        assert(\\
-          nullifierRoot == checkproof(\\
-            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
-           )\
-          )
-        `,
-      ];
-}
       if (this.initialisationRequired && this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [
@@ -374,10 +361,10 @@ class BoilerplateGenerator {
         // calculate ${x}_newCommitment_owner_publicKey from its point
         bool ${x}_newCommitment_owner_publicKey_sign = edwardsCompress(${x}_newCommitment_owner_publicKey_point)[0]
 
-        bool[254] ${x}_yBits = field_to_bool_256(${x}_newCommitment_owner_publicKey_point[1])[2..256]
-        ${x}_yBits[0] = ${x}_newCommitment_owner_publicKey_sign
+        bool[254] ${x}_newCommitment_yBits = field_to_bool_256(${x}_newCommitment_owner_publicKey_point[1])[2..256]
+        ${x}_newCommitment_yBits[0] = ${x}_newCommitment_owner_publicKey_sign
 
-        field ${x}_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_yBits])`,
+        field ${x}_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_newCommitment_yBits])`,
       ];
     },
 

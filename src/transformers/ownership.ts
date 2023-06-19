@@ -8,10 +8,11 @@ import errorChecksVisitor from './visitors/ownership/errorChecksVisitor.js';
  * https://github.com/jamiebuilds/the-super-tiny-compiler
  */
 
-function transformation1(ast: any) {
+function transformation1(ast: any, options?: any) {
   const state = {
     stopTraversal: false,
     skipSubNodes: false,
+    options,
   };
 
   // We'll start by calling the traverser function with our ast and a visitor.
@@ -26,9 +27,9 @@ function transformation1(ast: any) {
 }
 
 // A transformer function which will accept an ast.
-export default function ownership(astPath: any) {
+export default function ownership(astPath: any, options?: any) {
   logger.verbose('Performing ownership checks on the zol AST...');
-  const updatedASTPath = transformation1(astPath);
+  const updatedASTPath = transformation1(astPath, options);
   logger.verbose('Owners assigned.');
   return updatedASTPath;
 }
