@@ -23,7 +23,6 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired,
       nullifiersRequired,
       newCommitmentsRequired,
-      containsAccessedOnlyState,
       encryptionRequired,
       //isInternalFunctionCall add it
     }): string[] {
@@ -61,7 +60,6 @@ class ContractBoilerplateGenerator {
                   uint latestNullifierRoot; 
                   uint[] newNullifiers;
                   `] : []),
-              ...(containsAccessedOnlyState ? [`uint[] checkNullifiers;`] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
               ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
               ...(encryptionRequired ? [`uint[][] cipherText;`] : []),

@@ -133,10 +133,7 @@ class ContractBoilerplateGenerator {
                   newList.push('nullifierRoot')
                 newList.push('nullifier');
  
-              } else {
-                // we use a nullification node for accessed, not nullified, states
-                newList.push('checkNullifier')
-              }
+              } 
               break;
             case 'newCommitment':
               newList.push(circuitParamNode.bpType);

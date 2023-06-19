@@ -58,15 +58,20 @@ class BoilerplateGenerator {
     },
 
     parameters({ name: x, isAccessed, isNullified }): string[] {
-      const para = [
+      let para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field nullifierRoot`,
         `public field newNullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
+        `private field[32] ${x}_nullifier_nonmembershipWitness_newsiblingPath`,
       ]
       if(isAccessed && !isNullified) 
-       para.splice(2,1);
+       para = [
+        `private field ${x}_oldCommitment_owner_secretKey`,
+        `public field nullifierRoot`,
+        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
+      ]
 
       return para;
     },
@@ -103,16 +108,19 @@ class BoilerplateGenerator {
             ${x}_nullifier_nonmembershipWitness_siblingPath,\\
             ${x}_oldCommitment_nullifier\\
            )\
-)
+       )
 
-          assert(\\
-            newNullifierRoot == checkUpdatedPath(\\
-              ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-              ${x}_oldCommitment_nullifier\\
-            )\
-            )
         `,
       ];
+// No need to check the updated path if there it is accessed only
+      if(!isAccessed && isNullified) 
+
+      lines.push(`assert(\\
+        newNullifierRoot == checkUpdatedPath(\\
+          ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
+          ${x}_oldCommitment_nullifier\\
+        )\
+        )`)
 
       if (this.initialisationRequired && this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
