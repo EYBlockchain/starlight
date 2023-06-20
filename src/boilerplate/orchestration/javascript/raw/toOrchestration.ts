@@ -678,6 +678,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           lines.push(
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
+              accessedOnly: stateNode.accessedOnly,
               stateType: 'partitioned',
             }));
 
@@ -685,6 +686,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           lines.push(
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
+              accessedOnly: stateNode.accessedOnly,
               stateType: 'whole',
             }));
         }

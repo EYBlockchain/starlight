@@ -259,9 +259,11 @@ class BoilerplateGenerator {
 
   calculateNullifier = {
 
-    postStatements({ stateName, stateType }): string[] {
+    postStatements({ stateName, accessedOnly, stateType }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
+      
       switch (stateType) {
+        
         case 'partitioned':
           return [`
             let ${stateName}_0_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_0_prevSalt.hex(32))],);
@@ -290,6 +292,17 @@ class BoilerplateGenerator {
             const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
             `];
         case 'whole':
+          if(accessedOnly)
+          return [`
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
+            \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
+
+            // Non-membership witness for Nullifier
+            const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
+
+            const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
+            const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
+          `];
           return [`
             let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
@@ -459,10 +472,7 @@ class BoilerplateGenerator {
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.integer,
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                          ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
-                          \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
-                          \t${stateName}_nullifier_updatedpath.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}
