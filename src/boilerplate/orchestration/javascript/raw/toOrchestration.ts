@@ -107,8 +107,8 @@ export const sendTransactionBoilerplate = (node: any) => {
           if (!stateNode.accessedOnly && !stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
           if (stateNode.encryptionRequired) {
-            output[5].push(`${privateStateName}_cipherText`);
-            output[6].push(`${privateStateName}_encKey`);
+            output[4].push(`${privateStateName}_cipherText`);
+            output[5].push(`${privateStateName}_encKey`);
           }
 
         break;
@@ -691,6 +691,45 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             }));
         }
       }
+
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        if (stateNode.isPartitioned) {
+          lines.push(
+            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'partitioned',
+            }));
+
+        } else {
+          lines.push(
+            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'whole',
+            }));
+        }
+      }
+
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        if (stateNode.isPartitioned) {
+          lines.push(
+            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'partitioned',
+            }));
+
+        } else {
+          lines.push(
+            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'whole',
+            }));
+        }
+      }
+
       return {
         statements: [`\n// Calculate nullifier(s): \n`, ...lines],
       };
@@ -789,7 +828,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} proof).encodeABI();
+          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,

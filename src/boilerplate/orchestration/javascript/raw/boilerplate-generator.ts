@@ -261,7 +261,6 @@ class BoilerplateGenerator {
 
     postStatements({ stateName, accessedOnly, stateType }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-      
       switch (stateType) {
         
         case 'partitioned':
@@ -277,19 +276,6 @@ class BoilerplateGenerator {
             const ${stateName}_nullifierRoot = generalise(${stateName}_0_nullifier_NonMembership_witness.root);
             const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
             const ${stateName}_1_nullifier_path = generalise(${stateName}_1_nullifier_NonMembership_witness.path).all;
-
-            //Get the new temporary path for nullifier
-
-            await temporaryUpdateNullifier(${stateName}_0_nullifier);
-            await temporaryUpdateNullifier(${stateName}_1_nullifier);
-
-
-            const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
-            const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
- 
-            const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
-            const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
-            const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
             `];
         case 'whole':
           if(accessedOnly)
@@ -312,14 +298,62 @@ class BoilerplateGenerator {
 
             const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
             const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
+          `];
+        default:
+          throw new TypeError(stateType);
+      }
+    },
+  };
 
-            //Get the new temporary path for nullifier
+  temporaryUpdatedNullifier = { 
+    postStatements({ stateName, accessedOnly, stateType }): string[] {
+      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
+      switch (stateType) {
+        
+        case 'partitioned':
+          return [`
+            
 
+            await temporaryUpdateNullifier(${stateName}_0_nullifier);
+            await temporaryUpdateNullifier(${stateName}_1_nullifier);
+            `];
+        case 'whole':
+          if(!accessedOnly)
+          return [`
             await temporaryUpdateNullifier(${stateName}_nullifier);
+          `];
+          return [` `]; 
+        default:
+          throw new TypeError(stateType);
+      }
+    },
+
+  };
+
+  calculateUpdateNullifierPath = {
+    postStatements({ stateName, accessedOnly, stateType }): string[] {
+      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
+      switch (stateType) {
+        
+        case 'partitioned':
+          return [`
+           // Get the new updated nullifier Paths
+            const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
+            const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
+ 
+            const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
+            const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
+            `];
+        case 'whole':
+          if(!accessedOnly)
+          return [`
+          // Get the new updated nullifier Paths 
             const ${stateName}_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_nullifier);
             const ${stateName}_nullifier_updatedpath = generalise(${stateName}_updated_nullifier_NonMembership_witness.path).all;
             const ${stateName}_newNullifierRoot = generalise(${stateName}_updated_nullifier_NonMembership_witness.root);
-          `];
+          `]; 
+         return [` `]; 
         default:
           throw new TypeError(stateType);
       }
