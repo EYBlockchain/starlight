@@ -63,15 +63,12 @@ export const sendTransactionBoilerplate = (node: any) => {
   output[3] = [];
   output[4] = [];
   output[5] = [];
-  output[6] = [];
-  
   // output[0] = nullifier root(s)
   // output[1] = arr of nullifiers
   // output[2] = commitments root(s)
   // output[3] = arr of commitments
-  // output[4] = arr of nullifiers to check, not add (for accessed states)
-  // output[5] = arr of cipherText
-  // output[6] = arr of enc keys
+  // output[4] = arr of cipherText
+  // output[5] = arr of enc keys
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(privateStates)) {
@@ -92,8 +89,8 @@ export const sendTransactionBoilerplate = (node: any) => {
             // increment
             output[3].push(`${privateStateName}_newCommitment.integer`);
             if (stateNode.encryptionRequired) {
-              output[5].push(`${privateStateName}_cipherText`);
-              output[6].push(`${privateStateName}_encKey`);
+              output[4].push(`${privateStateName}_cipherText`);
+              output[5].push(`${privateStateName}_encKey`);
             }
             break;
         }
@@ -103,20 +100,16 @@ export const sendTransactionBoilerplate = (node: any) => {
         // whole
         if (!stateNode.reinitialisedOnly)
           output[2].push(`${privateStateName}_root.integer`);
-        if (stateNode.accessedOnly) {
-          output[3].push(`${privateStateName}_nullifier.integer`);
-        } else {
-          if (!stateNode.reinitialisedOnly) {
+          if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
             output[1].push(`${privateStateName}_nullifier.integer`);
             output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
           }
-          if (!stateNode.burnedOnly)
+          if (!stateNode.accessedOnly && !stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
           if (stateNode.encryptionRequired) {
-            output[5].push(`${privateStateName}_cipherText`);
-            output[6].push(`${privateStateName}_encKey`);
+            output[4].push(`${privateStateName}_cipherText`);
+            output[5].push(`${privateStateName}_encKey`);
           }
-        }
 
         break;
     }
@@ -127,7 +120,6 @@ export const sendTransactionBoilerplate = (node: any) => {
 export const generateProofBoilerplate = (node: any) => {
   const output: (string[] | string)[] = [];
   const enc: any[][] = [];
-  const latestnullifierRoot: any[] = [];
   const cipherTextLength: number[] = [];
   let containsRoot = false;
   let containsNullifierRoot = false;
@@ -686,6 +678,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           lines.push(
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
+              accessedOnly: stateNode.accessedOnly,
               stateType: 'partitioned',
             }));
 
@@ -693,10 +686,50 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           lines.push(
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
+              accessedOnly: stateNode.accessedOnly,
               stateType: 'whole',
             }));
         }
       }
+
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        if (stateNode.isPartitioned) {
+          lines.push(
+            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'partitioned',
+            }));
+
+        } else {
+          lines.push(
+            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'whole',
+            }));
+        }
+      }
+
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        if (stateNode.isPartitioned) {
+          lines.push(
+            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'partitioned',
+            }));
+
+        } else {
+          lines.push(
+            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+              stateName,
+              accessedOnly: stateNode.accessedOnly,
+              stateType: 'whole',
+            }));
+        }
+      }
+
       return {
         statements: [`\n// Calculate nullifier(s): \n`, ...lines],
       };
@@ -774,14 +807,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
+      
 
       if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
       if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
       if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
-      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // accessed nullifiers - array
+      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
       if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
-      if (params[0][6][0]) params[0][6] = `[${params[0][6]}],`; // cipherText - array of arrays
+
 
       if (node.functionName === 'cnstrctr') return {
         statements: [

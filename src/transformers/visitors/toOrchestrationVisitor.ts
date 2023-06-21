@@ -488,6 +488,7 @@ const visitor = {
             newNodes.calculateNullifierNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateNullifier', {
+              accessedOnly,
               indicator: stateVarIndicator,
             });
           }
