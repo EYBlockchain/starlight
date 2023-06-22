@@ -326,6 +326,18 @@ You can also filter these commitments by variable name. Using the example above,
 ```
 as a GET request to `http://localhost:3000/getCommitmentsByVariableName`.
 
+#### Using secret states in the constructor
+
+Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Any user supplied inputs will be prompted for in the command line when running `./bin/setup`.
+
+Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
+
+If you would like to restart the zapp and redeploy the contract, always (with no running docker containers) run:
+
+`./bin/redeploy` <-- creates a new constructor proof and saves the commitment, then deploys the shield contract
+
+`npm run restart` <-- if you'd like to use the APIs, always **restart** rather than **start** since the latter clears your local dbs
+
 #### Deploy on public testnets
 
 Apart from local ganache instance, Starlight output zapps can be now be deployed in Sepolia, Goerli and Polygon Mumbai as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Mumbai is provided via [maticvigil](https://rpc.maticvigil.com/).
