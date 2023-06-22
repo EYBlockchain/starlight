@@ -259,9 +259,10 @@ class BoilerplateGenerator {
 
   calculateNullifier = {
 
-    postStatements({ stateName, stateType }): string[] {
+    postStatements({ stateName, accessedOnly, stateType }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       switch (stateType) {
+        
         case 'partitioned':
           return [`
             let ${stateName}_0_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_0_prevSalt.hex(32))],);
@@ -275,21 +276,9 @@ class BoilerplateGenerator {
             const ${stateName}_nullifierRoot = generalise(${stateName}_0_nullifier_NonMembership_witness.root);
             const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
             const ${stateName}_1_nullifier_path = generalise(${stateName}_1_nullifier_NonMembership_witness.path).all;
-
-            //Get the new temporary path for nullifier
-
-            await temporaryUpdateNullifier(${stateName}_0_nullifier);
-            await temporaryUpdateNullifier(${stateName}_1_nullifier);
-
-
-            const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
-            const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
- 
-            const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
-            const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
-            const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
             `];
         case 'whole':
+          if(accessedOnly)
           return [`
             let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
@@ -299,14 +288,72 @@ class BoilerplateGenerator {
 
             const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
             const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
+          `];
+          return [`
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
+            \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
 
-            //Get the new temporary path for nullifier
+            // Non-membership witness for Nullifier
+            const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
 
+            const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
+            const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
+          `];
+        default:
+          throw new TypeError(stateType);
+      }
+    },
+  };
+
+  temporaryUpdatedNullifier = { 
+    postStatements({ stateName, accessedOnly, stateType }): string[] {
+      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
+      switch (stateType) {
+        
+        case 'partitioned':
+          return [`
+            
+
+            await temporaryUpdateNullifier(${stateName}_0_nullifier);
+            await temporaryUpdateNullifier(${stateName}_1_nullifier);
+            `];
+        case 'whole':
+          if(!accessedOnly)
+          return [`
             await temporaryUpdateNullifier(${stateName}_nullifier);
+          `];
+          return [` `]; 
+        default:
+          throw new TypeError(stateType);
+      }
+    },
+
+  };
+
+  calculateUpdateNullifierPath = {
+    postStatements({ stateName, accessedOnly, stateType }): string[] {
+      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
+      switch (stateType) {
+        
+        case 'partitioned':
+          return [`
+           // Get the new updated nullifier Paths
+            const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
+            const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
+ 
+            const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
+            const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
+            const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
+            `];
+        case 'whole':
+          if(!accessedOnly)
+          return [`
+          // Get the new updated nullifier Paths 
             const ${stateName}_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_nullifier);
             const ${stateName}_nullifier_updatedpath = generalise(${stateName}_updated_nullifier_NonMembership_witness.path).all;
             const ${stateName}_newNullifierRoot = generalise(${stateName}_updated_nullifier_NonMembership_witness.root);
-          `];
+          `]; 
+         return [` `]; 
         default:
           throw new TypeError(stateType);
       }
@@ -459,10 +506,7 @@ class BoilerplateGenerator {
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
                           \tsecretKey.integer,
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                          ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
-                          \t${stateName}_nullifier.integer,
                           \t${stateName}_nullifier_path.integer,
-                          \t${stateName}_nullifier_updatedpath.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
                           ${rootRequired ? `\t${stateName}_root.integer,` : ``}

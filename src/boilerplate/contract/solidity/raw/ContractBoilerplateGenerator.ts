@@ -23,7 +23,6 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired,
       nullifiersRequired,
       newCommitmentsRequired,
-      containsAccessedOnlyState,
       encryptionRequired,
       //isInternalFunctionCall add it
     }): string[] {
@@ -61,7 +60,6 @@ class ContractBoilerplateGenerator {
                   uint latestNullifierRoot; 
                   uint[] newNullifiers;
                   `] : []),
-              ...(containsAccessedOnlyState ? [`uint[] checkNullifiers;`] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
               ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
               ...(encryptionRequired ? [`uint[][] cipherText;`] : []),
@@ -104,7 +102,6 @@ class ContractBoilerplateGenerator {
       nullifierRootRequired: nullifierRootRequired,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
-      containsAccessedOnlyState: checkNullifiers,
       encryptionRequired,
       circuitParams,
       constructorContainsSecret,
@@ -131,10 +128,6 @@ class ContractBoilerplateGenerator {
           case 'nullifier':  
             verifyInput.push( `
             inputs[k++] = newNullifiers[${counter.newNullifiers++}];`); 
-            break;
-          case 'checkNullifier':
-            verifyInput.push(`
-            inputs[k++] = checkNullifiers[${counter.checkNullifiers++}];`);
             break;
           case 'newCommitment':
             verifyInput.push(`
@@ -180,8 +173,6 @@ class ContractBoilerplateGenerator {
         ...(newNullifiers ? [`
           uint[] memory newNullifiers = _inputs.newNullifiers;`] : []),
 
-        ...(checkNullifiers ? [`
-          uint[] memory checkNullifiers = _inputs.checkNullifiers;`] : []),
         // removed to prevent stack too deep err - converted commitmentRoot to _inputs.commitmentRoot below
         // ...(commitmentRoot ? [`
         //   uint commitmentRoot = _inputs.commitmentRoot;`] : []),
@@ -203,7 +194,6 @@ class ContractBoilerplateGenerator {
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
-            ...(checkNullifiers ? ['checkNullifiers.length'] : []),
             ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoots(old and latest) and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
@@ -213,15 +203,13 @@ class ContractBoilerplateGenerator {
       const verifyInputs: string[] = [];
       const joinCommitmentsInputs: string[] = [];
       for (let [name, _params] of Object.entries(circuitParams)) {
-        if (_params) 
-          for (let [type, _inputs] of Object.entries(_params)) {
-            const counter = {
-              customInputs: 0,
-              newNullifiers: 0,
-              checkNullifiers: 0,
-              newCommitments: 0,
-              encryption: 0,
-            };
+        for (let [type, _inputs] of Object.entries(_params)) {
+          const counter = {
+            customInputs: 0,
+            newNullifiers: 0,
+            newCommitments: 0,
+            encryption: 0,
+          };
 
             _inputs.map(i => verifyInputsMap(type, i, counter));
 
