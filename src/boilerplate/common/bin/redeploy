@@ -1,0 +1,3 @@
+#!/bin/sh
+set -e
+CONSTRUCTOR_CALL && docker-compose -f docker-compose.zapp.yml up -d deployer
