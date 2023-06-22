@@ -98,7 +98,10 @@ class ContractBoilerplateGenerator {
       };
     },
 
-    constructor() {},
+    constructor() {
+      const {indicators: { nullifiersRequired }} = this.scope;
+      return { nullifiersRequired };
+    },
 
     registerZKPPublicKey() {},
 
