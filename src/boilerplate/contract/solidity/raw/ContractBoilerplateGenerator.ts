@@ -43,7 +43,7 @@ class ContractBoilerplateGenerator {
           event EncryptedData(uint256[] cipherText, uint256[2] ephPublicKey);`] : []),
 
         ...nullifiersRequired ? [`
-          uint256 public latestnullifierRoot;`] : [],
+          uint256 public newNullifierRoot;`] : [],
 
         ...(oldCommitmentAccessRequired ? [`
           mapping(uint256 => uint256) public commitmentRoots;`] : []),
@@ -84,6 +84,7 @@ class ContractBoilerplateGenerator {
       		for (uint i = 0; i < vk.length; i++) {
       			vks[i] = vk[i];
       		}
+          newNullifierRoot = Initial_NullifierRoot;
       	}`,
       ];
     },
@@ -256,7 +257,8 @@ class ContractBoilerplateGenerator {
 
        ...(newNullifiers) ? [`
        if (newNullifiers.length > 0) {
-        latestnullifierRoot = _inputs.latestNullifierRoot;
+        if(newNullifierRoot == _inputs.nullifierRoot)
+        newNullifierRoot = _inputs.latestNullifierRoot;
       }`] : [] 
       ];
 
