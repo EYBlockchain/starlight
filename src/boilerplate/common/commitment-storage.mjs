@@ -507,7 +507,11 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 		return tree;
 	}
   };
-  
+
+export async function updateNullifierTree() {
+	smt_tree = temp_smt_tree;
+}
+
 
 export function getnullifierMembershipWitness(nullifier) {
 
