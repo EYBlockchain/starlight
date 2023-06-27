@@ -60,8 +60,8 @@ class ContractBoilerplateGenerator {
           struct Inputs {
             ${[
               ...(nullifiersRequired ? [`uint nullifierRoot; 
-                  uint latestNullifierRoot; 
-                  uint[] newNullifiers;
+              uint latestNullifierRoot; 
+              uint[] newNullifiers;
                   `] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
               ...(newCommitmentsRequired ? [`uint[] newCommitments;`] : []),
@@ -85,8 +85,10 @@ class ContractBoilerplateGenerator {
       		for (uint i = 0; i < vk.length; i++) {
       			vks[i] = vk[i];
       		}`,
-          ...( nullifiersRequired ? [`newNullifierRoot = Initial_NullifierRoot;`] : []),        
-      	`}`,
+          ...( nullifiersRequired ? [`
+          newNullifierRoot = Initial_NullifierRoot;`] : []),        
+      	  `
+        }`,
       ];
     },
 
@@ -102,7 +104,6 @@ class ContractBoilerplateGenerator {
 
     verify({
       oldCommitmentAccessRequired: commitmentRoot,
-      nullifierRootRequired: nullifierRootRequired,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
       encryptionRequired,
@@ -232,6 +233,7 @@ class ContractBoilerplateGenerator {
           if (functionId == uint(FunctionNames.${name})) {
             uint k = 0;
             ${verifyInput.join('')}
+            
           }`)
           verifyInput =[];
       }
