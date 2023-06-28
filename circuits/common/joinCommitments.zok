@@ -10,6 +10,8 @@ from "./common/hashes/poseidon/poseidon.zok" import main as poseidon
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
 
 def main(\
 	private field fromId,\
@@ -17,8 +19,14 @@ def main(\
 	private bool isMapping,\
 	private field oldCommitment_0_owner_secretKey_field,\
 	private field oldCommitment_1_owner_secretKey_field,\
+  public field nullifierRoot,\
+  public field newNullifierRoot,\
 	public field oldCommitment_0_nullifier,\
+  public field[32] oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
+  private field[32] oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
 	public field oldCommitment_1_nullifier,\
+  private field[32] oldCommitment_1_nullifier_nonmembershipWitness_siblingPath,\
+  private field[32] oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
 	private field oldCommitment_0_value,\
 	private field oldCommitment_0_salt_field,\
 	private field oldCommitment_1_value,\
@@ -85,10 +93,20 @@ def main(\
         assert(\
         field_to_bool_256(oldCommitment_0_nullifier)[8..256] == field_to_bool_256(oldCommitment_0_nullifier_check_field)[8..256]\
         )
+       
+       assert(\
+          nullifierRoot == checkproof(\
+            oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
+            oldCommitment_0_nullifier\
+           )          )
+
+        assert( newNullifierRoot == checkUpdatedPath(oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
+         oldCommitment_0_nullifier)  )
+  
+        
 
 
         // Nullify oldCommitment_1:
-
 
         field oldCommitment_1_nullifier_check_field = poseidon([\
           oldCommitment_1_stateVarId_field,\
@@ -100,6 +118,14 @@ def main(\
         field_to_bool_256(oldCommitment_1_nullifier)[8..256] == field_to_bool_256(oldCommitment_1_nullifier_check_field)[8..256]\
         )
 
+        assert(\
+         nullifierRoot ==  checkproof(\
+            oldCommitment_1_nullifier_nonmembershipWitness_siblingPath,\
+            oldCommitment_1_nullifier\
+           )          )
+        
+        assert( newNullifierRoot == checkUpdatedPath(oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
+         oldCommitment_1_nullifier)  )
 
         // oldCommitment_0_commitment: preimage check
 
