@@ -6,7 +6,7 @@ contract BucketsOfBalls {
 
     secret mapping(uint256 => uint256) public buckets;
 
-    function deposit(secret uint256 bucketId, uint amountDeposit) public {
+    function deposit(secret uint256 bucketId, uint256 amountDeposit) public {
         unknown buckets[bucketId] += amountDeposit;
     }
 

@@ -71,7 +71,11 @@ const internalCallVisitor = {
                  };
                  case 'nullification' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
+                  internalFncParameters.push(`nullifierRoot`);
+                  internalFncParameters.push(`newNullifierRoot`);
                   internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
+                  internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_siblingPath`);
+                  internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_newsiblingPath`);
                   break;
                  };
                  case 'oldCommitmentPreimage' : {
@@ -106,7 +110,6 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
-
             node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index].name){
                 file.nodes.forEach(childNode => {

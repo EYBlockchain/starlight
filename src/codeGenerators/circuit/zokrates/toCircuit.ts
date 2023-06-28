@@ -36,6 +36,7 @@ function poseidonLibraryChooser(fileObj: string) {
    }
    return fileObj;
  }
+ 
 
 function codeGenerator(node: any) {
   switch (node.nodeType) {
@@ -62,14 +63,16 @@ function codeGenerator(node: any) {
     case 'FunctionDefinition': {
       let functionSignature : any;
       let returnType : any[] = [];
-      const body = codeGenerator(node.body);
+      let body = codeGenerator(node.body);
       let returnStatement : string[] = [];
       let returnName : string[] = [];
+      let nullifierRoot : string[] = [];
       if(node.returnParameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')
-          returnName.push(param.name);
+           returnName.push(param.name);      
         });
+
         node.returnParameters.parameters.forEach((node) => {
           if (node.typeName.name === 'bool')
             returnStatement.push(`${node.name}`);
@@ -91,11 +94,12 @@ function codeGenerator(node: any) {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
       });
+ 
       if(returnStatement.length === 0){
         returnStatement.push('true');
         returnType.push('bool') ;
       }
-
+      
       return `${functionSignature}(${returnType}):
 
         ${body}
@@ -176,8 +180,9 @@ function codeGenerator(node: any) {
     }
     case 'InternalFunctionCall': {
      if(node.internalFunctionInteractsWithSecret) {
-      if(node.CircuitArguments.length)
-       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+      if(node.CircuitArguments.length){
+      return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ; 
+      }   
       else
        return ``;
       }
@@ -246,9 +251,19 @@ function codeGenerator(node: any) {
         return `(${codeGenerator(node.condition)}) ? ${codeGenerator(node.trueExpression[0])} : ${codeGenerator(node.falseExpression[0])}`
 
       case 'ForStatement':
-        return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} do
-        ${codeGenerator(node.body)}
-        endfor`;
+        switch (node.initializationExpression.nodeType) {
+          case 'ExpressionStatement':
+            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} do
+            ${codeGenerator(node.body)}
+            endfor`;
+          case 'VariableDeclarationStatement':
+            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.initialValue)}..${node.condition.rightExpression.value} do
+            ${codeGenerator(node.body)}
+            endfor`;
+          default:
+            break;
+        }
+
 
     case 'TypeConversion':
       return `${codeGenerator(node.arguments)}`;

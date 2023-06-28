@@ -4,8 +4,8 @@
   "scripts": {
     "test": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
     "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
-    "start": "./bin/startup && docker-compose -f docker-compose.zapp.yml run -p 3000:3000 zapp node orchestration/api.mjs",
-    "apitest": "./bin/setup && ./bin/startup && docker-compose -f docker-compose.zapp.yml run -d -p 3000:3000 zapp node orchestration/api.mjs"
+    "start": "./bin/startup && docker-compose -f docker-compose.zapp.yml run --name apiservice -p 3000:3000 zapp node orchestration/api.mjs",
+    "apitest": "./bin/setup && ./bin/startup && docker-compose -f docker-compose.zapp.yml run --name apiservice -d -p 3000:3000 zapp node orchestration/api.mjs"
   },
   "keywords": [
     "private contract",
@@ -33,6 +33,7 @@
     "solc": "0.8.0",
     "truffle": "5.1.65",
     "web3": "1.8.2",
+    "typescript": "^4.9.5",
     "winston": "^3.3.3",
     "yargs": "^15.4.1",
     "zkp-utils": "^1.0.8"
