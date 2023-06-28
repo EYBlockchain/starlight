@@ -45,18 +45,11 @@ export async function service_FUNCTION_NAME (req, res, next){
       console.log(tx.returnValues);
     }
     if (encEvent.event) {
-      if (encEvent.event.EncryptedData.length) {
-        encryption.msgs = encEvent.event.EncryptedData[0].returnValues[0];
-        encryption.key = encEvent.event.EncryptedData[0].returnValues[1];
-        console.log("EncryptedMsgs:");
-        console.log(encEvent.event.EncryptedData[0].returnValues[0]);
-      } else {
-        encryption.msgs = encEvent.event.EncryptedData.returnValues[0];
-        encryption.key = encEvent.event.EncryptedData.returnValues[1];
-        console.log("EncryptedMsgs:");
-        console.log(encEvent.event.EncryptedData.returnValues);
-      }
-    }
+      encryption.msgs = encEvent[0].returnValues[0];
+      encryption.key = encEvent[0].returnValues[1];
+      console.log("EncryptedMsgs:");
+      console.log(encEvent[0].returnValues[0]);
+  }
     await sleep(10);
   } catch (err) {
     logger.error(err);

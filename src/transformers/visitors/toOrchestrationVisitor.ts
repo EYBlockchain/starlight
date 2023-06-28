@@ -488,6 +488,7 @@ const visitor = {
             newNodes.calculateNullifierNode.privateStates[
               name
             ] = buildPrivateStateNode('CalculateNullifier', {
+              accessedOnly,
               indicator: stateVarIndicator,
             });
           }
@@ -899,7 +900,7 @@ const visitor = {
       const newNode = buildNode(node.nodeType);
       newNode.id = node.id;
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
 
   },

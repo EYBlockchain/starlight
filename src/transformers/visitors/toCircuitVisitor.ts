@@ -431,7 +431,8 @@ const visitor = {
       if (
         declarationType === 'localStack' &&
         !node.isSecret &&
-        !scope.getReferencedIndicator(node)?.interactsWithSecret
+        !scope.getReferencedIndicator(node)?.interactsWithSecret &&
+        !path.getAncestorContainedWithin('initializationExpression')
       ) {
         // we don't want to add non secret local vars
 
@@ -442,7 +443,14 @@ const visitor = {
 
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
-      parent._newASTPointer.push(newNode);
+
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
     },
   },
 
@@ -718,14 +726,15 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if (
         declarationType === 'localStack' &&
         !node.isSecret &&
-        !scope.getReferencedIndicator(node)?.interactsWithSecret
+        !scope.getReferencedIndicator(node)?.interactsWithSecret &&
+        !path.getAncestorContainedWithin('initializationExpression')
       ) {
         // we don't want to add non secret local vars
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
         return;
       }
-let interactsWithSecret = false ;
+      let interactsWithSecret = false ;
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
         refPath.parentPath.traversePathsFast(
@@ -746,6 +755,8 @@ let interactsWithSecret = false ;
         }
       });
 
+      if (path.getAncestorContainedWithin('initializationExpression') && path.getAncestorOfType('ForStatement')?.containsSecret) interactsWithSecret ??= true;
+
 //We need to add return return parameters as well
 
       if (
@@ -753,7 +764,7 @@ let interactsWithSecret = false ;
         interactsWithSecret
       )
         parent._newASTPointer.interactsWithSecret = interactsWithSecret;
-        if(!interactsWithSecret && path.parentPath.key !== 'returnParameters') {
+      if(!interactsWithSecret && path.parentPath.key !== 'returnParameters') {
         state.skipSubNodes = true;
         return;
 }
