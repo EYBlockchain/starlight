@@ -26,4 +26,7 @@ contract Owner {
       function beta() private onlyOwner onlyUser {
     a+=2;
     }
+      function gamma() private {
+    a+=5;
+    }
 }

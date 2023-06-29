@@ -255,4 +255,7 @@ contract MerkleTree is MiMC {
         leafCount += numberOfLeaves; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
         return root; //the root of the tree
     }
+
+    // Intial Root for sparse merkle tree
+    uint256 public constant Initial_NullifierRoot = 21443572485391568159800782191812935835534334817699172242223315142338162256601;
 }
