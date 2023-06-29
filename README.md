@@ -353,6 +353,11 @@ The configuration can be done during `./bin/setup` phase in the following way.
 
 `./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
 
+### Zokrates Worker
+
+Starlight uses containerised zokrates from [zokrates-worker-starlight](https://github.com/EYBlockchain/starlight/pkgs/container/zokrates-worker-starlight). 
+Here we have use two zokrates container, zokrates -version:0.7.12 to compile the circuits and zokrates -version:0.8.1 to do the setup and generate-proof to improve the key and proof generation time.
+
 ### Contributing
 
 See [here](./CONTRIBUTIONS.md) for our contribution guidelines.
