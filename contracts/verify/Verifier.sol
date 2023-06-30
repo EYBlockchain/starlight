@@ -49,7 +49,7 @@ contract Verifier is Ownable {
   uint256 private r = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
   function validateInputs(uint256[] memory _inputs) public view {
-      for (uint i = 0; i < _inputs.length; i++) { // Should use pre increment instead of post to save gas
+      for (uint i = 0; i < _inputs.length; ++i) { 
           require(_inputs[i] < r, "Inputs must be less than r.");
       }
   }
@@ -92,7 +92,7 @@ contract Verifier is Ownable {
       require(vk.gamma_abc.length == _publicInputs.length + 1, "Length of inputs[] or vk.query is incorrect!");
 
       Pairing.G1Point memory sm_qpih;
-      for (uint i = 0; i < _publicInputs.length; i++) {
+      for (uint i = 0; i < _publicInputs.length; ++i) { 
         sm_qpih = Pairing.scalar_mul(vk.gamma_abc[i+1], _publicInputs[i]);
         vk_dot_inputs = Pairing.addition(
           vk_dot_inputs,
