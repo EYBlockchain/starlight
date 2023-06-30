@@ -49,7 +49,7 @@ contract Verifier is Ownable {
   uint256 private r = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
   function validateInputs(uint256[] memory _inputs) public view {
-      for (uint i = 0; i < _inputs.length; i++) {
+      for (uint i = 0; i < _inputs.length; i++) { // Should use pre increment instead of post to save gas
           require(_inputs[i] < r, "Inputs must be less than r.");
       }
   }
