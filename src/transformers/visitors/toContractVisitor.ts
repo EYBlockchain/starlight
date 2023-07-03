@@ -243,6 +243,8 @@ export default {
                        childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
                      if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
                        childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                      if(!childNode.encryptionRequired && node.encryptionRequired)
+                      childNode.encryptionRequired = node.encryptionRequired; 
                     })
                   })
                   node.parameters.parameters.forEach( childNode => {
@@ -254,6 +256,8 @@ export default {
                        childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
                       if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
                       childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                      if(!childNode.encryptionRequired && node.encryptionRequired)
+                      childNode.encryptionRequired = node.encryptionRequired; 
                     })
                   })
                 }
@@ -891,6 +895,8 @@ DoWhileStatement: {
                ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
                ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
                ...(internalfnDefIndicators.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+               ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
+               ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
                `proof`,
          ]
 
