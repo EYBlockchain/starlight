@@ -119,7 +119,7 @@ class ContractBoilerplateGenerator {
       	) private {
         `;
       let verifyInput: string[] = [];
-      
+  
       const verifyInputsMap = (type: string, input: string, counter: any) => {
   
         if(type  === 'parameters'){

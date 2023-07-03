@@ -57,6 +57,7 @@ This code is not owned by EY and EY provides no warranty and disclaims any and a
   - [Testing](#testing)
     - [full zapp](#full-zapp)
     - [circuit](#circuit)
+  - [Zokrates worker](#zokrates-worker)
   - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)

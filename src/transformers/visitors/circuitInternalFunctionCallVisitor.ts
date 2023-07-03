@@ -23,15 +23,16 @@ const internalCallVisitor = {
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
-                node._newASTPointer.forEach(file => {
-                  if(file.fileName === state.callingFncName[index].name){
-                    file.nodes.forEach(childNode => {
-                      if(childNode.nodeType === 'FunctionDefinition'){
-                        let callParameterList = cloneDeep(childNode.parameters.parameters);
-                       }
-                     })
-                   }
-                 })
+                state.newReturnParameterList = cloneDeep(childNode.returnParameters.parameters);
+                // node._newASTPointer.forEach(file => {
+                //   if(file.fileName === state.callingFncName[index].name){
+                //     file.nodes.forEach(childNode => {
+                //       if(childNode.nodeType === 'FunctionDefinition'){
+                //         let callParameterList = cloneDeep(childNode.parameters.parameters);
+                //        }
+                //      })
+                //    }
+                //  })
                  state.newParameterList.forEach((node, nodeIndex) => {
                   if(node.nodeType === 'Boilerplate') {
                     for(const [id, oldStateName] of  state.oldStateArray.entries()) {
@@ -54,6 +55,17 @@ const internalCallVisitor = {
                      }
                    }
                  })
+                 state.newReturnParameterList.forEach((node,nodeIndex) => {
+                  for(const [id, oldStateName] of state.oldStateArray.entries()) {
+                    if(oldStateName !== state.newStateArray[name][id].name)
+                    node.name = state.newStateArray[name][id].name;
+                 node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
+                 if(state.newStateArray[name][id].memberName)
+                    state.state.newReturnParameterList.splice(nodeIndex,1);
+                    else
+                    node.name = node.name.replace(oldStateName, state.newStateArray[name][id].name)
+                  }
+                 })
                }
              })
 
@@ -63,7 +75,6 @@ const internalCallVisitor = {
               if(node.nodeType === 'VariableDeclaration'){
                 internalFncParameters.push(node.name);
               }
-
              switch(node.bpType) {
                  case 'PoKoSK' :{
                    internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`)
@@ -92,7 +103,7 @@ const internalCallVisitor = {
                   break;
                  };
                 case 'newCommitment' : {
-                  internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
+                  state.isEncrypted ? ' ': internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey`) ;
                   internalFncParameters.push(`${node.name}_newCommitment_salt`) ;
                   internalFncParameters.push(`${node.name}_newCommitment_commitment`);
                   break;
@@ -100,6 +111,9 @@ const internalCallVisitor = {
                 case 'mapping' :
                   internalFncParameters.push(`${node.mappingKeyName}`);
                  break;
+                case 'encryption' :
+                  internalFncParameters.push(`${node.name}_newCommitment_ephSecretKey`);
+                  internalFncParameters.push(`${node.name}_newCommitment_owner_publicKey_point`);
                }
              })
 
@@ -119,12 +133,14 @@ const internalCallVisitor = {
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
+                    childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])]
                     if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition'){
                     childNode.body.statements.forEach(node => {
                       if(node.nodeType === 'ExpressionStatement') {
                         if(node.expression.nodeType === 'InternalFunctionCall' && node.expression.name === name){
                           node.expression.CircuitArguments = node.expression.CircuitArguments.concat(state.circuitArguments);
                           state.circuitArguments = [];
+                          node.expression.CircuitReturn = node.expression.CircuitReturn.concat(state.newReturnParameterList);
                          }
                        }
                      })
@@ -136,13 +152,12 @@ const internalCallVisitor = {
                                 if(kidNode.expression.nodeType === 'InternalFunctionCall' && kidNode.expression.name === name){
                                   kidNode.expression.CircuitArguments = kidNode.expression.CircuitArguments.concat(state.circuitArguments);
                                   state.circuitArguments = [];
+                                  kidNode.expression.CircuitReturn = kidNode.expression.CircuitReturn.concat(state.newReturnParameterList);
                                  }
                                }
                              })
                           }
                         })
-
-
                    }
                  }
                  })
