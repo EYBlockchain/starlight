@@ -61,10 +61,8 @@ class BoilerplateGenerator {
       let para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field nullifierRoot`,
-        `public field newNullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_newsiblingPath`,
         
       ]
       if(isAccessed && !isNullified) 
@@ -104,24 +102,10 @@ class BoilerplateGenerator {
         )
         // ${x}_oldCommitment_nullifier : non-existence check
         
-        assert(\\
-          nullifierRoot == checkproof(\\
-            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
-           )\
-       )
-
-       assert(\\
-        newNullifierRoot == checkUpdatedPath(\\
-          ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-          ${x}_oldCommitment_nullifier\\
-        )\
-        )
-
         `,
       ];
 
-      if(isAccessed && !isNullified) 
+      (isAccessed && !isNullified) ?
       lines = [
         `
         // Create the Nullifier  for ${x} and no need to nnullify it as its accessed only:
@@ -134,14 +118,23 @@ class BoilerplateGenerator {
 
         // ${x}_oldCommitment_nullifier : non-existence check
         
-        assert(\\
-          nullifierRoot == checkproof(\\
-            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
-           )\
-       )
+
+        nullifierRoot == checkproof(\\
+          ${x}_nullifier_nonmembershipWitness_siblingPath,\\
+          ${x}_oldCommitment_nullifier,\\
+          nullifierRoot,\\
+          true\\
+          )\  // true for isAccessed
         `,
-      ];
+      ] : lines.push(
+        `nullifierRoot == checkproof(\\
+          ${x}_nullifier_nonmembershipWitness_siblingPath,\\
+          ${x}_oldCommitment_nullifier,\\
+          nullifierRoot,\\
+          false\\ // false for isAccessed
+          )\    
+          `
+      );
 
      
       if (this.initialisationRequired && this.isWhole) {

@@ -2,7 +2,7 @@ from "hashes/poseidon/poseidon.zok" import main as poseidon
 from "../../concatenate/order-left-right-1x1.zok" import main as orderLeftRight
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 
-def main(field[32] siblingPath, field value) -> (field):
+def main(field[32] siblingPath, field value, field root, bool isAccessed) -> (field):
 
 
 field accValue = 0 // checking against zero element
@@ -20,16 +20,12 @@ for u32 i in 0..32 do
     ])
   endfor
 
-return accValue
+assert(root == accValue) 
 
+// Calculate the new Root
 
-def checkUpdatedPath(field[32] siblingPath, field value) -> (field):
-
-
-field accValue = value // checking against zero element
-field[2] preimage = [0, 0]
-bool[32] valueIndex = field_to_bool_256(value)[2..34]
-
+accValue = value // checking against zero element
+preimage = [0, 0]
 
 for u32 i in 0..32 do
   u32 j = i // iterator for the siblingPath
@@ -41,5 +37,6 @@ for u32 i in 0..32 do
     ])
   endfor
 
+accValue = if isAccessed == true root else accValue 
 
 return accValue

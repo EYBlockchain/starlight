@@ -78,7 +78,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           case true:
             // decrement
             output[2].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`, `${privateStateName}_newNullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`, `newNullifierRoot.integer`);
             output[1].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
@@ -102,7 +102,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           output[2].push(`${privateStateName}_root.integer`);
           if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
             output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`newNullifierRoot.integer`);
           }
           if (!stateNode.accessedOnly && !stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
@@ -120,6 +120,7 @@ export const sendTransactionBoilerplate = (node: any) => {
 export const generateProofBoilerplate = (node: any) => {
   const output: (string[] | string)[] = [];
   const enc: any[][] = [];
+  const latestNullifierRoot: any[] = [];
   const cipherTextLength: number[] = [];
   let containsRoot = false;
   let containsNullifierRoot = false;
@@ -135,6 +136,13 @@ export const generateProofBoilerplate = (node: any) => {
       enc[1] ??= [];
       enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
     }
+    // We read the latestNullifierRoot
+
+    if(stateNode.nullifierRequired) {
+      latestNullifierRoot.push(`const newNullifierRoot = res.input.slice(-1).map(e => generalised(e).integer)`)
+
+    }
+
     const parameters: string[] = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
     const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
@@ -269,7 +277,7 @@ export const generateProofBoilerplate = (node: any) => {
    // extract the nullifier Root
 
   output.push(`\n].flat(Infinity);`);
-  return [output, [enc]];
+  return [output, [enc], latestNullifierRoot];
 };
 
 export const preimageBoilerPlate = (node: any) => {
@@ -423,6 +431,7 @@ export const preimageBoilerPlate = (node: any) => {
 export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const lines: any[] = [];
   const params:any[] = [];
+  const latestNullifierRoot:any[] = [];
   const states: string[] = [];
   const rtnparams: string[] = [];
   let stateName: string;
@@ -692,43 +701,43 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         }
       }
 
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'partitioned',
-            }));
+      // for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+      //   if (stateNode.isPartitioned) {
+      //     lines.push(
+      //       Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+      //         stateName,
+      //         accessedOnly: stateNode.accessedOnly,
+      //         stateType: 'partitioned',
+      //       }));
 
-        } else {
-          lines.push(
-            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'whole',
-            }));
-        }
-      }
+      //   } else {
+      //     lines.push(
+      //       Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+      //         stateName,
+      //         accessedOnly: stateNode.accessedOnly,
+      //         stateType: 'whole',
+      //       }));
+      //   }
+      // }
 
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'partitioned',
-            }));
+      // for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+      //   if (stateNode.isPartitioned) {
+      //     lines.push(
+      //       Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+      //         stateName,
+      //         accessedOnly: stateNode.accessedOnly,
+      //         stateType: 'partitioned',
+      //       }));
 
-        } else {
-          lines.push(
-            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'whole',
-            }));
-        }
-      }
+      //   } else {
+      //     lines.push(
+      //       Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+      //         stateName,
+      //         accessedOnly: stateNode.accessedOnly,
+      //         stateType: 'whole',
+      //       }));
+      //   }
+      // }
 
       return {
         statements: [`\n// Calculate nullifier(s): \n`, ...lines],
@@ -778,7 +787,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'GenerateProof':
-      [ lines[0], params[0] ] = generateProofBoilerplate(node);
+      [ lines[0], params[0], latestNullifierRoot[0] ] = generateProofBoilerplate(node);
+
       return {
         statements: [
           `\n\n// Call Zokrates to generate the proof:
@@ -788,6 +798,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           `\nconst proof = generalise(Object.values(res.proof).flat(Infinity))
           .map(coeff => coeff.integer)
           .flat(Infinity);`,
+          `${latestNullifierRoot[0]}`,
           `${params[0].flat(Infinity).join('\n')}`
         ],
       };

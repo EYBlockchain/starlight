@@ -95,10 +95,17 @@ function codeGenerator(node: any) {
           returnType.push(node.typeName.name);
       });
  
+      if(codeGenerator(node.parameters).includes('nullifierRoot')){
+      returnStatement.push('nullifierRoot');
+      returnType.push('field') ;
+      }
+
       if(returnStatement.length === 0){
         returnStatement.push('true');
         returnType.push('bool') ;
       }
+      
+      
       
       return `${functionSignature}(${returnType}):
 
@@ -189,7 +196,7 @@ function codeGenerator(node: any) {
        return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')})`
       }
       else if(node.CircuitArguments.length)
-       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+       return ` nullifierRoot = (${(node.CircuitArguments).join(',\\\n \t')}) ` ;
       else
        return ``;
       }
