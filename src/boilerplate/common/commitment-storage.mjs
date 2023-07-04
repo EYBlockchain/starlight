@@ -519,8 +519,8 @@ export function getnullifierMembershipWitness(nullifier) {
 	const padBinArr = Array(254 - binArr.length)
 		.fill("0")
 		.concat(...binArr).slice(0, TRUNC_LENGTH);
-	const  membershipPath = _getnullifierMembershipWitness(padBinArr, nullifier, smt_tree, []);
-    const root = getHash(smt_tree);
+	const  membershipPath = _getnullifierMembershipWitness(padBinArr, nullifier, temp_smt_tree, []);
+    const root = getHash(temp_smt_tree);
 	const witness = {path : membershipPath.path, root: root}
 	return witness;
 
@@ -532,20 +532,4 @@ export async function temporaryUpdateNullifier(nullifier){
 	
 }
 
-export function getupdatedNullifierPaths(nullifier){
-	const binArr = toBinArray(generalise(nullifier));
-	const padBinArr = Array(254 - binArr.length)
-		.fill("0")
-		.concat(...binArr)
-		.slice(0, TRUNC_LENGTH);
-	const membershipPath = _getnullifierMembershipWitness(
-		padBinArr,
-		nullifier,
-		temp_smt_tree,
-		[]
-	);
-	const root = getHash(temp_smt_tree);
-	const witness = { path: membershipPath.path, root: root };
-	return witness;
-}
 

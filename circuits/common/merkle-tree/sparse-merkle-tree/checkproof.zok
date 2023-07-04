@@ -37,6 +37,6 @@ for u32 i in 0..32 do
     ])
   endfor
 
-accValue = if isAccessed == true root else accValue 
+accValue = if isAccessed == true then root else accValue fi
 
 return accValue

@@ -46,7 +46,7 @@ describe('FUNCTION_NAME', async function () {
           console.log(`Merkle tree event returnValues:`);
           console.log(tx.returnValues[0]);
         }
-        if (encEvent[0].event) {
+        if (encEvent && encEvent[0]?.event) {
             encryption.msgs = encEvent[0].returnValues[0];
             encryption.key = encEvent[0].returnValues[1];
             console.log("EncryptedMsgs:");

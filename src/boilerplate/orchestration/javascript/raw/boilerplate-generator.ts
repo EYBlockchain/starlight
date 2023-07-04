@@ -311,60 +311,7 @@ class BoilerplateGenerator {
     },
   };
 
-  // temporaryUpdatedNullifier = { 
-  //   postStatements({ stateName, accessedOnly, stateType }): string[] {
-  //     // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-  //     switch (stateType) {
-        
-  //       case 'partitioned':
-  //         return [`
-            
-
-  //           await temporaryUpdateNullifier(${stateName}_0_nullifier);
-  //           await temporaryUpdateNullifier(${stateName}_1_nullifier);
-  //           `];
-  //       case 'whole':
-  //         if(!accessedOnly)
-  //         return [`
-  //           await temporaryUpdateNullifier(${stateName}_nullifier);
-  //         `];
-  //         return [` `]; 
-  //       default:
-  //         throw new TypeError(stateType);
-  //     }
-  //   },
-
-  // };
-
-  // calculateUpdateNullifierPath = {
-  //   postStatements({ stateName, accessedOnly, stateType }): string[] {
-  //     // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-  //     switch (stateType) {
-        
-  //       case 'partitioned':
-  //         return [`
-  //          // Get the new updated nullifier Paths
-  //           const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
-  //           const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
- 
-  //           const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
-  //           const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
-  //           const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
-  //           `];
-  //       case 'whole':
-  //         if(!accessedOnly)
-  //         return [`
-  //         // Get the new updated nullifier Paths 
-  //           const ${stateName}_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_nullifier);
-  //           const ${stateName}_nullifier_updatedpath = generalise(${stateName}_updated_nullifier_NonMembership_witness.path).all;
-  //           const ${stateName}_newNullifierRoot = generalise(${stateName}_updated_nullifier_NonMembership_witness.root);
-  //         `]; 
-  //        return [` `]; 
-  //       default:
-  //         throw new TypeError(stateType);
-  //     }
-  //   },
-  // };
+  
 
   calculateCommitment = {
 
@@ -411,7 +358,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree } from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,

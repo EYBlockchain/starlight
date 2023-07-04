@@ -98,6 +98,7 @@ function codeGenerator(node: any) {
       if(codeGenerator(node.parameters).includes('nullifierRoot')){
       returnStatement.push('nullifierRoot');
       returnType.push('field') ;
+      body = ('bool isAccessed = false \n').concat(body)
       }
 
       if(returnStatement.length === 0){
@@ -196,7 +197,7 @@ function codeGenerator(node: any) {
        return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')})`
       }
       else if(node.CircuitArguments.length)
-       return ` nullifierRoot = (${(node.CircuitArguments).join(',\\\n \t')}) ` ;
+       return ` nullifierRoot = ${node.name} (${(node.CircuitArguments).join(',\\\n \t')}) ` ;
       else
        return ``;
       }

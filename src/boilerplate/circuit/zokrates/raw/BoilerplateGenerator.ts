@@ -53,7 +53,6 @@ class BoilerplateGenerator {
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
         `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof`,
-        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath`,
       ];
     },
 
@@ -117,21 +116,25 @@ class BoilerplateGenerator {
         ])
 
         // ${x}_oldCommitment_nullifier : non-existence check
-        
+               
+        isAccessed = true \\
 
-        nullifierRoot == checkproof(\\
+        nullifierRoot = checkproof(\\
           ${x}_nullifier_nonmembershipWitness_siblingPath,\\
           ${x}_oldCommitment_nullifier,\\
           nullifierRoot,\\
-          true\\
-          )\  // true for isAccessed
+          isAccessed\\
+          )\  
         `,
       ] : lines.push(
-        `nullifierRoot == checkproof(\\
+        `
+          isAccessed = false \\
+        
+          nullifierRoot = checkproof(\\
           ${x}_nullifier_nonmembershipWitness_siblingPath,\\
           ${x}_oldCommitment_nullifier,\\
           nullifierRoot,\\
-          false\\ // false for isAccessed
+          isAccessed\\
           )\    
           `
       );

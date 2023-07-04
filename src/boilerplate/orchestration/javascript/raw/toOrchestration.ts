@@ -78,7 +78,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           case true:
             // decrement
             output[2].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`, `newNullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`, `newNullifierRoot`);
             output[1].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
@@ -102,7 +102,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           output[2].push(`${privateStateName}_root.integer`);
           if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
             output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`newNullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifierRoot.integer`,`newNullifierRoot`);
           }
           if (!stateNode.accessedOnly && !stateNode.burnedOnly)
             output[3].push(`${privateStateName}_newCommitment.integer`);
@@ -138,8 +138,8 @@ export const generateProofBoilerplate = (node: any) => {
     }
     // We read the latestNullifierRoot
 
-    if(stateNode.nullifierRequired) {
-      latestNullifierRoot.push(`const newNullifierRoot = res.input.slice(-1).map(e => generalised(e).integer)`)
+    if(stateNode.nullifierRequired && latestNullifierRoot.length === 0) {
+      latestNullifierRoot.push(`const newNullifierRoot = res.inputs.slice(-1).map(e => generalise(e).integer)[0];`)
 
     }
 
@@ -701,43 +701,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         }
       }
 
-      // for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-      //   if (stateNode.isPartitioned) {
-      //     lines.push(
-      //       Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-      //         stateName,
-      //         accessedOnly: stateNode.accessedOnly,
-      //         stateType: 'partitioned',
-      //       }));
-
-      //   } else {
-      //     lines.push(
-      //       Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-      //         stateName,
-      //         accessedOnly: stateNode.accessedOnly,
-      //         stateType: 'whole',
-      //       }));
-      //   }
-      // }
-
-      // for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-      //   if (stateNode.isPartitioned) {
-      //     lines.push(
-      //       Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-      //         stateName,
-      //         accessedOnly: stateNode.accessedOnly,
-      //         stateType: 'partitioned',
-      //       }));
-
-      //   } else {
-      //     lines.push(
-      //       Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-      //         stateName,
-      //         accessedOnly: stateNode.accessedOnly,
-      //         stateType: 'whole',
-      //       }));
-      //   }
-      // }
 
       return {
         statements: [`\n// Calculate nullifier(s): \n`, ...lines],

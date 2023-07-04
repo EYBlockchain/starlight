@@ -119,8 +119,7 @@ class FunctionBoilerplateGenerator {
         internalFunctionEncryptionRequired = true 
       })
 
-
-      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired) {
+      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired && !indicators.nullifiersRequired) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true });
       }
       return {
