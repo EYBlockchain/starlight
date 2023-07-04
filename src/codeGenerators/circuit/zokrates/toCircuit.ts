@@ -196,8 +196,10 @@ function codeGenerator(node: any) {
        })
        return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')})`
       }
-      else if(node.CircuitArguments.length)
+      else if(node.CircuitArguments.length && node.CircuitArguments.includes('nullifierRoot'))
        return ` nullifierRoot = ${node.name} (${(node.CircuitArguments).join(',\\\n \t')}) ` ;
+      else if(node.CircuitArguments.length && !node.CircuitArguments.includes('nullifierRoot'))
+       return ` assert( ${node.name} (${(node.CircuitArguments).join(',\\\n \t')}) )` ; 
       else
        return ``;
       }
