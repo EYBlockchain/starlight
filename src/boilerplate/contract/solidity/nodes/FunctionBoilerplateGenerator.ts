@@ -98,20 +98,20 @@ class FunctionBoilerplateGenerator {
           const names = structDef.members.map((mem: any) => {
             return { name: `${node.name}.${mem.name}`, type: mem.typeName.name };
           });
-          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node) };
+          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node), inCircuit: node.interactsWithSecret};
         }
-        return { name: node.name, type: node.typeName.name, isParam: path.isFunctionParameter(node) };
+        return { name: node.name, type: node.typeName.name, isParam: path.isFunctionParameter(node), inCircuit: node.interactsWithSecret};
       }
 
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter((p: any) => (!p.isSecret && p.interactsWithSecret)).map((p: any) => customInputsMap(p)).concat(customInputs);
+      const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
       const indicators = this.customFunction.getIndicators.bind(this)();
   
 
       // special check for msgSender and msgValue param. If msgsender is found, prepend a msgSender uint256 param to the contact's function.
-      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true});
-      if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
+      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true, inCircuit: true });
+      if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true, inCircuit: true });
       let internalFunctionEncryptionRequired = false;
       path.node._newASTPointer.body.statements?.forEach((node) => {
         if(node.expression?.nodeType === 'InternalFunctionCall')
@@ -121,7 +121,7 @@ class FunctionBoilerplateGenerator {
 
 
       if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired) {
-        publicParams?.push({ name: 1, type: 'uint256', dummy: true });
+        publicParams?.push({ name: 1, type: 'uint256', dummy: true, inCircuit: true });
       }
       return {
         ...(publicParams?.length && { customInputs: publicParams }),

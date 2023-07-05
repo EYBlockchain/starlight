@@ -55,7 +55,6 @@ class FunctionBoilerplateGenerator {
     postStatements({
       functionName,
       customInputs, // array of custom input names
-      nullifierRootRequired : nullifierRootRequired,
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
@@ -66,8 +65,8 @@ class FunctionBoilerplateGenerator {
 
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
-      ...(nullifierRootRequired ? [`uint256`] : []),
-      ...(nullifierRootRequired ? [`uint256`] : []),
+      ...(newNullifiers ? [`uint256`] : []),
+      ...(newNullifiers ? [`uint256`] : []),
       ...(newNullifiers ? [`uint256[]`] : []), 
       ...(commitmentRoot ? [`uint256`] : []),
       ...(newCommitments ? [`uint256[]`] : []),
@@ -82,6 +81,7 @@ class FunctionBoilerplateGenerator {
 
       let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
 
+      customInputs = customInputs?.filter(p => p.inCircuit);
       return [
         `
           Inputs memory inputs;`,
@@ -96,10 +96,10 @@ class FunctionBoilerplateGenerator {
           }).join('\n')}`]
           : []),
 
-          ...(nullifierRootRequired ? [`
+          ...(newNullifiers ? [`
           inputs.nullifierRoot = nullifierRoot; `] : []),
 
-          ...(nullifierRootRequired ? [`
+          ...(newNullifiers ? [`
           inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
 
 
