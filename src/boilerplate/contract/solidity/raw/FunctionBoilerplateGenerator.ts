@@ -56,32 +56,35 @@ class FunctionBoilerplateGenerator {
       functionName,
       customInputs, // array of custom input names
       funcParams,
+      isinternalFunctionCall,
+      internalFncParams,
       nullifierRootRequired : nullifierRootRequired,
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
-      encryptionRequired,
-      isConstructor
+      encryptionRequired
     }): string[] {
       // prettier-ignore
 
       let parameter = [
       ...(funcParams ? funcParams.map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
-      ...(nullifierRootRequired ? [`uint256`] : []),
-      ...(nullifierRootRequired ? [`uint256`] : []),
-      ...(newNullifiers ? [`uint256[]`] : []), 
-      ...(commitmentRoot ? [`uint256`] : []),
-      ...(newCommitments ? [`uint256[]`] : []),
-      ...(encryptionRequired ? [`uint256[][]`] : []),
-      ...(encryptionRequired ? [`uint256[2][]`] : []),
+      ...((nullifierRootRequired || internalFncParams.includes('nullifierRoot')) ? [`uint256`] : []),
+      ...((nullifierRootRequired || internalFncParams.includes('nullifierRoot')) ? [`uint256`] : []),
+      ...((newNullifiers || internalFncParams.includes('newNullifiers'))? [`uint256[]`] : []), 
+      ...((commitmentRoot || internalFncParams.includes('commitmentRoot')) ? [`uint256`] : []),
+      ...((newCommitments || internalFncParams.includes('newCommitments')) ? [`uint256[]`] : []),
+      ...((encryptionRequired || internalFncParams.includes('cipherText')) ? [`uint256[][]`] : []),
+      ...((encryptionRequired || internalFncParams.includes('ephPubKeys')) ? [`uint256[2][]`] : []),
       `uint256[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
 
+   
       customInputs?.forEach((input, i) => {
         if (input.structName) customInputs[i] = input.properties;
       });
 
-      let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
+    
+      let msgSigCheck = ([...(!isinternalFunctionCall ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
 
       return [
         `
