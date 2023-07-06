@@ -88,11 +88,13 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'CalculateNullifier': {
-      const { increment, indicator = {} } = fields;
+      const { increment, accessedOnly = false, indicator = {} } = fields;
       return {
         increment,
+        accessedOnly,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
+        
       };
     }
     case 'CalculateCommitment': {

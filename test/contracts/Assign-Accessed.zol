@@ -6,13 +6,15 @@ contract Assign {
 
   secret uint256 private a;
   secret uint256 private b;
-  
-  function add(secret uint256 value) public {
-    encrypt unknown b += 2 * value;
+  function add(secret uint256 value1, secret uint256 value2) public {
+    known a += value1;
+   known b += value2;
   }
 
   function remove(secret uint256 value) public {
-      unknown a += value;
-     add(value);
+    if(a > b){
+      a -= value;
+    }
+     
   }
 }

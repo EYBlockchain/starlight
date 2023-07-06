@@ -46,18 +46,11 @@ describe('FUNCTION_NAME', async function () {
           console.log(`Merkle tree event returnValues:`);
           console.log(tx.returnValues[0]);
         }
-        if (encEvent.event) {
-          if (encEvent.event.EncryptedData.length) {
-            encryption.msgs = encEvent.event.EncryptedData[0].returnValues[0];
-            encryption.key = encEvent.event.EncryptedData[0].returnValues[1];
+        if (encEvent[0].event) {
+            encryption.msgs = encEvent[0].returnValues[0];
+            encryption.key = encEvent[0].returnValues[1];
             console.log("EncryptedMsgs:");
-            console.log(encEvent.event.EncryptedData[0].returnValues[0]);
-          } else {
-            encryption.msgs = encEvent.event.EncryptedData.returnValues[0];
-            encryption.key = encEvent.event.EncryptedData.returnValues[1];
-            console.log("EncryptedMsgs:");
-            console.log(tencEvent.event.EncryptedData.returnValues);
-          }
+            console.log(encEvent[0].returnValues[0]);
         }
         await sleep(10);
       } catch (err) {

@@ -198,7 +198,7 @@ function arrangeModifiers(substrings: any) {
 
         for (var j=0; j<i; j++) {
 
-          if (substrings[j].startsWith(modifierslist))  {
+          if (substrings[j].startsWith(modifierslist) && (modifierslist != 'modifier '))  {
 
             ParameterList = substrings[j].slice(
               substrings[j].indexOf('(') + 1,

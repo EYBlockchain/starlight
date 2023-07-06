@@ -52,14 +52,29 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof`,
+        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath`,
       ];
     },
 
-    parameters({ name: x }): string[] {
-      return [
+    parameters({ name: x, isAccessed, isNullified }): string[] {
+      let para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
+        `public field nullifierRoot`,
+        `public field newNullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
-      ];
+        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
+        `private field[32] ${x}_nullifier_nonmembershipWitness_newsiblingPath`,
+        
+      ]
+      if(isAccessed && !isNullified) 
+       para = [
+        `private field ${x}_oldCommitment_owner_secretKey`,
+        `public field nullifierRoot`,
+        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
+      ]
+
+      return para;
     },
 
     preStatements({ name: x, id, isMapping }): string[] {
@@ -72,9 +87,9 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x }): string[] {
+    postStatements({ name: x , isAccessed, isNullified}): string[] {
       // default nullification lines (for partitioned & whole states)
-      const lines = [
+      let lines = [
         `
         // Nullify ${x}:
 
@@ -86,10 +101,49 @@ class BoilerplateGenerator {
 
         assert(\\
         field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
-        )`
-        ,
+        )
+        // ${x}_oldCommitment_nullifier : non-existence check
+        
+        assert(\\
+          nullifierRoot == checkproof(\\
+            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
+            ${x}_oldCommitment_nullifier\\
+           )\
+       )
+
+       assert(\\
+        newNullifierRoot == checkUpdatedPath(\\
+          ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
+          ${x}_oldCommitment_nullifier\\
+        )\
+        )
+
+        `,
       ];
 
+      if(isAccessed && !isNullified) 
+      lines = [
+        `
+        // Create the Nullifier  for ${x} and no need to nnullify it as its accessed only:
+
+        field ${x}_oldCommitment_nullifier = poseidon([\\
+          ${x}_stateVarId_field,\\
+          ${x}_oldCommitment_owner_secretKey,\\
+          ${x}_oldCommitment_salt\\
+        ])
+
+        // ${x}_oldCommitment_nullifier : non-existence check
+        
+        assert(\\
+          nullifierRoot == checkproof(\\
+            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
+            ${x}_oldCommitment_nullifier\\
+           )\
+       )
+        `,
+      ];
+
+     
       if (this.initialisationRequired && this.isWhole) {
         // whole states also need to handle the case of a dummy nullifier
         const newLines = [
@@ -454,14 +508,15 @@ class BoilerplateGenerator {
     },
   };
   internalFunctionCall = {
-    importStatements( { name: x , circuitImport, structImport, structName: structName} ): string[] {
-      if(circuitImport && !structImport)
-        return [`from "./${x}.zok" import main as ${x} `];
-      else if(circuitImport && structImport)
-        return [
-          `from "./${x}.zok" import main as ${x} `,
-          `from "./${x}.zok" import ${structName} as ${structName} `];
-       return [];
+    importStatements( { name: x , circuitImport, structImport, structName: structName, isEncrypted} ): string[] {
+      let internalFncImports = [];
+      if(circuitImport)
+      internalFncImports.push(`from "./${x}.zok" import main as ${x} `);
+      if( structImport)
+      internalFncImports.push(`from "./${x}.zok" import ${structName} as ${structName} `);
+      if(isEncrypted)
+      internalFncImports.push(`from "./common/encryption/kem-dem.zok" import EncryptedMsgs as EncryptedMsgs `);
+      return internalFncImports;
     },
   };
 

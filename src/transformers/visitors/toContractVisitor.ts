@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow */
 
-// import logger from '../../utils/logger.mjs';
+ import logger from '../../utils/logger.js';
 import cloneDeep from 'lodash.clonedeep';
 import { buildNode } from '../../types/solidity-types.js';
 import { traverseNodesFast } from '../../traverse/traverse.js';
@@ -243,6 +243,8 @@ export default {
                        childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
                      if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
                        childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                      if(!childNode.encryptionRequired && node.encryptionRequired)
+                      childNode.encryptionRequired = node.encryptionRequired; 
                     })
                   })
                   node.parameters.parameters.forEach( childNode => {
@@ -254,6 +256,8 @@ export default {
                        childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
                       if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
                       childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                      if(!childNode.encryptionRequired && node.encryptionRequired)
+                      childNode.encryptionRequired = node.encryptionRequired; 
                     })
                   })
                 }
@@ -626,7 +630,12 @@ DoWhileStatement: {
   VariableDeclaration: {
     enter(path: NodePath, state : any) {
       const { node, parent, scope } = path;
-
+      
+      if(node.typeName.name === 'uint')
+      logger.warn(
+        `VariableDeclarations is uint, please specify the size (from 8 to 256 bits, in steps of 8) of declared variable ${node.name}.`,
+      );
+//
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
@@ -896,10 +905,12 @@ DoWhileStatement: {
            state.fnParameters.push(args[index]);
 
          });
-         const params = [...(internalfnDefIndicators.nullifiersRequired? [`newNullifiers`] : []),
+         const params = [...(internalfnDefIndicators.nullifiersRequired? [`nullifierRoot, latestNullifierRoot, newNullifiers`] : []),
                ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
                ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
                ...(internalfnDefIndicators.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+               ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
+               ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
                `proof`,
          ]
 

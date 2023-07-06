@@ -36,6 +36,7 @@ function poseidonLibraryChooser(fileObj: string) {
    }
    return fileObj;
  }
+ 
 
 function codeGenerator(node: any) {
   switch (node.nodeType) {
@@ -62,14 +63,16 @@ function codeGenerator(node: any) {
     case 'FunctionDefinition': {
       let functionSignature : any;
       let returnType : any[] = [];
-      const body = codeGenerator(node.body);
+      let body = codeGenerator(node.body);
       let returnStatement : string[] = [];
       let returnName : string[] = [];
+      let nullifierRoot : string[] = [];
       if(node.returnParameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')
-          returnName.push(param.name);
+           returnName.push(param.name);      
         });
+
         node.returnParameters.parameters.forEach((node) => {
           if (node.typeName.name === 'bool')
             returnStatement.push(`${node.name}`);
@@ -91,11 +94,12 @@ function codeGenerator(node: any) {
         if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
       });
+ 
       if(returnStatement.length === 0){
         returnStatement.push('true');
         returnType.push('bool') ;
       }
-
+      
       return `${functionSignature}(${returnType}):
 
         ${body}
@@ -176,7 +180,15 @@ function codeGenerator(node: any) {
     }
     case 'InternalFunctionCall': {
      if(node.internalFunctionInteractsWithSecret) {
-      if(node.CircuitArguments.length)
+      let returnPara  = ' ';
+      if(node.CircuitReturn.length){
+       node.CircuitReturn.forEach((para) =>{
+        if(para.typeName.name == 'EncryptedMsgs<3>')
+         returnPara = `  EncryptedMsgs<3> ${para.name}_0_cipherText = `;
+       })
+       return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')})`
+      }
+      else if(node.CircuitArguments.length)
        return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
       else
        return ``;
