@@ -231,6 +231,7 @@ export default {
             if(node.nodeType === 'FunctionDefinition' && node.kind === 'function'){
               state.internalFncName?.forEach( (name, index) => {
                 if(node.name === name) {
+                  node.msgSigRequired = true;
                  state.postStatements ??= [];
                  state.postStatements = cloneDeep(node.body.postStatements);
                 }
@@ -271,6 +272,7 @@ export default {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const isConstructor = node.kind === 'constructor';
+      state.msgSigRequired = false;
       if(node.kind === 'fallback' || node.kind === 'receive')
       {
         node.fileName = node.kind;
@@ -278,6 +280,7 @@ export default {
       }
       else
       state.functionName = path.getUniqueFunctionName();
+
       const newNode = buildNode('FunctionDefinition', {
         name: node.fileName || state.functionName,
         id: node.id,
@@ -285,6 +288,7 @@ export default {
         stateMutability: node.stateMutability === 'payable'? node.stateMutability : '',
         visibility: node.kind ==='function' ? 'public' : node.kind === 'constructor'? '': 'external',
         isConstructor,
+        msgSigRequired: state.msgSigRequired,
       });
 
       node._newASTPointer = newNode;
@@ -302,12 +306,13 @@ export default {
     exit(path: NodePath, state: any) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, scope } = path;
-
+  
       const newFunctionDefinitionNode = node._newASTPointer;
-
+ 
       // Let's populate the `parameters` and `body`:
       const { parameters } = newFunctionDefinitionNode.parameters;
       const { postStatements, preStatements } = newFunctionDefinitionNode.body;
+     
 
       // if contract is entirely public, we don't want zkp related boilerplate
       if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
@@ -334,9 +339,9 @@ export default {
             bpSection: 'postStatements',
             scope,
             customInputs: state.customInputs,
+           
           }),
         );
-
       delete state?.customInputs;
     },
   },
