@@ -66,7 +66,8 @@ class FunctionBoilerplateGenerator {
       // prettier-ignore
 
       let parameter = [
-      ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
+      ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
+        .map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.isConstantArray ? `${input.type}[${input.isConstantArray}]` : input.type) : []), // TODO arrays of structs/ structs of arrays
       ...(nullifierRootRequired ? [`uint256`] : []),
       ...(nullifierRootRequired ? [`uint256`] : []),
       ...(newNullifiers ? [`uint256[]`] : []), 
@@ -78,6 +79,17 @@ class FunctionBoilerplateGenerator {
     ].filter(para => para !== undefined); // Added for return parameter 
 
       customInputs?.forEach((input, i) => {
+        if (input.isConstantArray) {
+          const expanded = [];
+          for (let index = 0; index < +input.isConstantArray; index++) {
+            expanded[index] = {
+              name: `${input.name}[${index}]`,
+              type: input.type,
+              isParam: input.isParam,
+            }
+          }
+          customInputs[i] = expanded;
+        }
         if (input.structName) customInputs[i] = input.properties;
       });
 

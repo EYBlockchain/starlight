@@ -218,6 +218,7 @@ function codeGenerator(node: any) {
       return node.value;
 
     case 'IndexAccess':
+      if (node.isConstantArray) return `${codeGenerator(node.baseExpression)}[${codeGenerator(node.indexExpression).replace('.', 'dot')}]`;
       return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression).replace('.', 'dot')}`;
 
     case 'MemberAccess':

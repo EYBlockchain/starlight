@@ -975,6 +975,31 @@ export default class NodePath {
     return memberAccNode && memberAccNode.node.baseExpression?.typeDescriptions?.typeIdentifier.includes('array');
   }
 
+    /**
+  * Checks whether a node is of an array type.
+  * @param {node} node (optional - defaults to this.node)
+  * @returns {Boolean}
+  */
+  isConstantArray(node: any = this.node): boolean {
+    if (!this.isArray(node)) return false;
+    let arrLen;
+    switch (node.nodeType) {
+      case 'IndexAccess':
+        arrLen = node.baseExpression.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        break;
+      case 'Identifier':
+      default:
+        arrLen = node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        break;
+    }
+    if (!arrLen) return false;
+    for (const match of arrLen) {
+      // tries to convert to a number
+      if (+match) return true;
+    }
+    return false;
+  }
+
   /**
    * Checks whether a node is a VariableDeclaration of a Mapping.
    * @param {node} node (optional - defaults to this.node)
