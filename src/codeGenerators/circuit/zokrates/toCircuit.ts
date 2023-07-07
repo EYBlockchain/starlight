@@ -157,6 +157,7 @@ function codeGenerator(node: any) {
 
     case 'VariableDeclarationStatement': {
       const declarations = node.declarations.map(codeGenerator).join(', ');
+      if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)}`;
       const initialValue = codeGenerator(node.initialValue);
       return `${declarations} = ${initialValue}`;
     }

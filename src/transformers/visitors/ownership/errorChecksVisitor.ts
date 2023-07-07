@@ -121,6 +121,7 @@ export default {
 
       const miniMappingVisitor = (thisNode: any) => {
         if (thisNode.nodeType !== 'IndexAccess') return;
+        if (path.isLocalStackVariable(thisNode) || path.isFunctionParameter(thisNode)) return;
         const key = path.getMappingKeyIdentifier(thisNode);
         if (!key.referencedDeclaration) return;
         if (idInLoopExpression.includes(key.referencedDeclaration))

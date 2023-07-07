@@ -99,6 +99,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.initialValue.operator) {
         if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
         // local var dec
+        if (node.initialValue.nodeType === 'Literal' && !node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
         return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
       } 
       return `\nlet ${codeGenerator(node.initialValue)};`;
@@ -166,8 +167,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
       case 'ForStatement': {
         if(node.interactsWithSecret) {
-          node.initializationExpression.interactsWithSecret = true;
-          node.loopExpression.interactsWithSecret = true;
           let initializationExpression = `${codeGenerator(node.initializationExpression).trim()}`;
           let condition = `${codeGenerator(node.condition, { condition: true })};`;
           let loopExpression = ` ${node.loopExpression.expression.rightHandSide.subExpression.name} ${node.loopExpression.expression.rightHandSide.operator}`;

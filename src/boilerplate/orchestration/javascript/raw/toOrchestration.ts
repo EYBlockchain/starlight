@@ -56,13 +56,7 @@ const stateVariableIds = (node: any) => {
 const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
-  const output: string[][] = [];
-  output[0] = [];
-  output[1] = [];
-  output[2] = [];
-  output[3] = [];
-  output[4] = [];
-  output[5] = [];
+  const output: string[][] = [[],[],[],[],[],[]];
   // output[0] = nullifier root(s)
   // output[1] = arr of nullifiers
   // output[2] = commitments root(s)

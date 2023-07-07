@@ -1133,7 +1133,7 @@ const visitor = {
       }
 
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
-        (path.getAncestorOfType('ForStatement') || {}).node._newASTPointer.interactsWithSecret = true;
+        path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
         if(indicator){
           path.getAncestorOfType('Block')?.node._newASTPointer.push(
             buildNode('Assignment', {
@@ -1392,6 +1392,7 @@ const visitor = {
       const newNode = node._newASTPointer;
       if (newNode.body.statements.some(n => n.interactsWithSecret)) {
         newNode.initializationExpression.interactsWithSecret = true;
+        newNode.initializationExpression.isInitializationExpression = true;
         newNode.loopExpression.interactsWithSecret = true;
       }
     }
