@@ -1376,9 +1376,8 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
-      const newNode = buildNode(node.nodeType , {
-        interactsWithSecret: node.containsSecret
-      });
+      const newNode = buildNode(node.nodeType);
+      newNode.interactsWithSecret = true;
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
     },
