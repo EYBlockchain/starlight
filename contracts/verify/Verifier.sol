@@ -48,7 +48,7 @@ contract Verifier is Ownable {
 
   uint256 private r = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
-  function validateInputs(uint256[] memory _inputs) public view {
+  function validateInputs(uint256[] calldata _inputs) public view {
       for (uint i = 0; i < _inputs.length; ++i) { 
           require(_inputs[i] < r, "Inputs must be less than r.");
       }
@@ -63,7 +63,7 @@ contract Verifier is Ownable {
       }
   }
 
-  function verificationCalculation(uint256[] memory _proof, uint256[] memory _publicInputs, uint256[] memory _vk) public returns (uint) {
+  function verificationCalculation(uint256[] calldata _proof, uint256[] calldata _publicInputs, uint256[] calldata _vk) public returns (uint) {
 
     Proof_G16 memory proof;
     Pairing.G1Point memory vk_dot_inputs;
