@@ -64,7 +64,7 @@ class FunctionBoilerplateGenerator {
       // prettier-ignore
 
       let parameter = [
-      ...(customInputs ? customInputs.map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
+      ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
       ...(newNullifiers ? [`uint256`] : []),
       ...(newNullifiers ? [`uint256`] : []),
       ...(newNullifiers ? [`uint256[]`] : []), 
