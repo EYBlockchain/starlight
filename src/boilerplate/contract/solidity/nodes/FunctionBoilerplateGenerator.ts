@@ -71,15 +71,12 @@ class FunctionBoilerplateGenerator {
     },
 
     getIndicators() {
-      const { indicators } = this.scope;
+      const { indicators, msgSigRequired } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
-
-
 
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, encryptionRequired } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
-      const nullifierRootRequired = indicators.nullifiersRequired;
-      return { nullifierRootRequired,nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
     },
 
     parameters() {
@@ -91,38 +88,47 @@ class FunctionBoilerplateGenerator {
     postStatements(customInputs: any[] = []) {
       const { scope } = this;
       const { path } = scope;
+    
 
       const customInputsMap = (node: any) => {
         if (path.isStruct(node)) {
           const structDef = path.getStructDeclaration(node);
           const names = structDef.members.map((mem: any) => {
-            return { name: `${node.name}.${mem.name}`, type: mem.typeName.name || mem.typeName.baseType.name, isConstantArray: path.isConstantArray(mem) ? mem.typeName.length.value : false };
+            return { name: `${node.name}.${mem.name}`, type: mem.typeName.name || mem.typeName.baseType.name, isConstantArray: path.isConstantArray(mem) ? mem.typeName.length.value : false, inCircuit: node.interactsWithSecret };
           });
-          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false };
+          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false, inCircuit: node.interactsWithSecret };
         }
-        return { name: node.name, type: node.typeName.name || node.typeName.baseType.name, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false  };
+        return { name: node.name, type: node.typeName.name || node.typeName.baseType.name, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false, inCircuit: node.interactsWithSecret };
       }
 
       const params = path.getFunctionParameters();
-      const publicParams = params?.filter((p: any) => (!p.isSecret && p.interactsWithSecret)).map((p: any) => customInputsMap(p)).concat(customInputs);
+      
+      const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
       const indicators = this.customFunction.getIndicators.bind(this)();
+
   
 
       // special check for msgSender and msgValue param. If msgsender is found, prepend a msgSender uint256 param to the contact's function.
-      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true});
-      if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true});
+      if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true, inCircuit: true});
+      if (indicators.msgValueParam) publicParams.unshift({ name: 'msg.value', type:'uint256' , dummy: true,  inCircuit: true});
       let internalFunctionEncryptionRequired = false;
+
+
       path.node._newASTPointer.body.statements?.forEach((node) => {
-        if(node.expression?.nodeType === 'InternalFunctionCall')
-        if(node.expression.parameters.includes('cipherText') ) 
-        internalFunctionEncryptionRequired = true 
+        if(node.expression?.nodeType === 'InternalFunctionCall'){
+          if(node.expression.parameters.includes('cipherText') ) 
+           internalFunctionEncryptionRequired = true 
+
+        }
+        
       })
 
 
       if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired) {
-        publicParams?.push({ name: 1, type: 'uint256', dummy: true });
+        publicParams?.push({ name: 1, type: 'uint256', dummy: true , inCircuit: true });
       }
+
       return {
         ...(publicParams?.length && { customInputs: publicParams }),
         functionName,
