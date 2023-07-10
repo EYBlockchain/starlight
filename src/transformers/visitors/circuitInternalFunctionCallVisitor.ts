@@ -24,15 +24,7 @@ const internalCallVisitor = {
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
                 state.newReturnParameterList = cloneDeep(childNode.returnParameters.parameters);
-                // node._newASTPointer.forEach(file => {
-                //   if(file.fileName === state.callingFncName[index].name){
-                //     file.nodes.forEach(childNode => {
-                //       if(childNode.nodeType === 'FunctionDefinition'){
-                //         let callParameterList = cloneDeep(childNode.parameters.parameters);
-                //        }
-                //      })
-                //    }
-                //  })
+                
                  state.newParameterList.forEach((node, nodeIndex) => {
                   if(node.nodeType === 'Boilerplate') {
                     for(const [id, oldStateName] of  state.oldStateArray.entries()) {
@@ -47,11 +39,9 @@ const internalCallVisitor = {
                      for(const [id, oldStateName] of state.oldStateArray.entries()) {
                        if(oldStateName !== state.newStateArray[name][id].name)
                        node.name = state.newStateArray[name][id].name;
-                    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
-                    if(state.newStateArray[name][id].memberName)
+                       node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
+                       if(state.newStateArray[name][id].memberName)
                        state.newParameterList.splice(nodeIndex,1);
-                       else
-                       node.name = node.name.replace(oldStateName, state.newStateArray[name][id].name)
                      }
                    }
                  })
@@ -62,8 +52,6 @@ const internalCallVisitor = {
                  node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
                  if(state.newStateArray[name][id].memberName)
                     state.state.newReturnParameterList.splice(nodeIndex,1);
-                    else
-                    node.name = node.name.replace(oldStateName, state.newStateArray[name][id].name)
                   }
                  })
                }
@@ -122,6 +110,7 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
+
             node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index].name){
                 file.nodes.forEach(childNode => {
