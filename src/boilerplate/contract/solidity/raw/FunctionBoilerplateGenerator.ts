@@ -55,32 +55,35 @@ class FunctionBoilerplateGenerator {
     postStatements({
       functionName,
       customInputs, // array of custom input names
-      nullifierRootRequired : nullifierRootRequired,
+      isConstructor,
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
-      encryptionRequired,
-      isConstructor
+      encryptionRequired
     }): string[] {
       // prettier-ignore
 
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
-      ...(nullifierRootRequired ? [`uint256`] : []),
-      ...(nullifierRootRequired ? [`uint256`] : []),
+      ...(newNullifiers ? [`uint256`] : []),
+      ...(newNullifiers ? [`uint256`] : []),
       ...(newNullifiers ? [`uint256[]`] : []), 
-      ...(commitmentRoot ? [`uint256`] : []),
-      ...(newCommitments ? [`uint256[]`] : []),
-      ...(encryptionRequired ? [`uint256[][]`] : []),
+      ...(commitmentRoot  ? [`uint256`] : []),
+      ...(newCommitments  ? [`uint256[]`] : []),
+      ...(encryptionRequired  ? [`uint256[][]`] : []),
       ...(encryptionRequired ? [`uint256[2][]`] : []),
       `uint256[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
 
+   
       customInputs?.forEach((input, i) => {
         if (input.structName) customInputs[i] = input.properties;
       });
 
-      let msgSigCheck = ([...(isConstructor ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
+    
+      let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
+
+      customInputs = customInputs?.filter(p => p.inCircuit);
 
       return [
         `
@@ -96,10 +99,10 @@ class FunctionBoilerplateGenerator {
           }).join('\n')}`]
           : []),
 
-          ...(nullifierRootRequired ? [`
+          ...(newNullifiers ? [`
           inputs.nullifierRoot = nullifierRoot; `] : []),
 
-          ...(nullifierRootRequired ? [`
+          ...(newNullifiers ? [`
           inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
 
 
