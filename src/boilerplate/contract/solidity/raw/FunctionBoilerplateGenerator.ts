@@ -86,6 +86,7 @@ class FunctionBoilerplateGenerator {
               name: `${input.name}[${index}]`,
               type: input.type,
               isParam: input.isParam,
+              inCircuit: input.inCircuit,
             }
           }
           customInputs[i] = expanded;
