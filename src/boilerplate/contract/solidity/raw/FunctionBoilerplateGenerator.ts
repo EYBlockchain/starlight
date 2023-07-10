@@ -67,13 +67,13 @@ class FunctionBoilerplateGenerator {
 
       let parameter = [
       ...(funcParams ? funcParams.map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
-      ...((newNullifiers || internalFncParams.includes('nullifierRoot')) ? [`uint256`] : []),
-      ...((newNullifiers || internalFncParams.includes('nullifierRoot')) ? [`uint256`] : []),
-      ...((newNullifiers || internalFncParams.includes('newNullifiers'))? [`uint256[]`] : []), 
-      ...((commitmentRoot || internalFncParams.includes('commitmentRoot')) ? [`uint256`] : []),
-      ...((newCommitments || internalFncParams.includes('newCommitments')) ? [`uint256[]`] : []),
-      ...((encryptionRequired || internalFncParams.includes('cipherText')) ? [`uint256[][]`] : []),
-      ...((encryptionRequired || internalFncParams.includes('ephPubKeys')) ? [`uint256[2][]`] : []),
+      ...(newNullifiers ? [`uint256`] : []),
+      ...(newNullifiers ? [`uint256`] : []),
+      ...(newNullifiers ? [`uint256[]`] : []), 
+      ...(commitmentRoot  ? [`uint256`] : []),
+      ...(newCommitments  ? [`uint256[]`] : []),
+      ...(encryptionRequired  ? [`uint256[][]`] : []),
+      ...(encryptionRequired ? [`uint256[2][]`] : []),
       `uint256[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
 
