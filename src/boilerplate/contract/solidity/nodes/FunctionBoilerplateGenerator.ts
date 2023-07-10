@@ -103,7 +103,6 @@ class FunctionBoilerplateGenerator {
 
       const params = path.getFunctionParameters();
       
-      // const funcParams = params?.filter((p: any) => (!p.isSecret)).map((p: any) => customInputsMap(p)).concat(customInputs);
       const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
       const indicators = this.customFunction.getIndicators.bind(this)();
