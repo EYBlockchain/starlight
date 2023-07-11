@@ -35,7 +35,6 @@ class FunctionBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
-      containsAccessedOnlyState: checkNullifiers,
       encryptionRequired,
       isConstructor
     }): string[] {
@@ -62,7 +61,6 @@ class FunctionBoilerplateGenerator {
       encryptionRequired
     }): string[] {
       // prettier-ignore
-
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam).map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.type) : []),
       ...(newNullifiers ? [`uint256`] : []),
@@ -84,6 +82,10 @@ class FunctionBoilerplateGenerator {
       let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
 
       customInputs = customInputs?.filter(p => p.inCircuit);
+      
+      customInputs?.forEach((input, i) => {
+        if(input.name === 1 && input.type === 'uint256' && newNullifiers) customInputs.splice(i,1);
+      });
 
       return [
         `

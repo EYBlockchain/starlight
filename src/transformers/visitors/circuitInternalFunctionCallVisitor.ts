@@ -57,6 +57,7 @@ const internalCallVisitor = {
                }
              })
 
+
 // Collect the internal call ParameterList
             let internalFncParameters: string[] = [];
             state.newParameterList.forEach(node => {
