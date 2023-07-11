@@ -29,7 +29,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   //Check if for-if statements are both together.
   if(thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement') &&  thisPath.getAncestorOfType('ForStatement')){
     //Currently We only support if statements inside a for loop no the other way around, so getting the public inputs according to inner if statement
-    if((thisPath.getAncestorOfType('IfStatement')).getAncestorOfType('ForStatement'))
+    if((thisPath.getAncestorOfType('IfStatement'))?.getAncestorOfType('ForStatement'))
     isForCondition = isCondition;
   }
   // below: we have a public state variable we need as a public input to the circuit
@@ -576,15 +576,29 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
             const tempRHSPath = cloneDeep(rhsPath);
             const tempRHSParent = tempRHSPath.parent;
 
+            let mappingKeyName = ``;
+            if (path.isNestedMapping(lhs)) {
+              let topMapping = NodePath.getPath(lhs);
+              while (topMapping.parentPath.getAncestorOfType('IndexAccess')) {
+                topMapping = topMapping.parentPath.getAncestorOfType('IndexAccess');
+              }
+              
+              while (topMapping.node.baseExpression) {
+                mappingKeyName = scope.getMappingKeyName(topMapping.node) + `${mappingKeyName === `` ? `` : `/` + mappingKeyName}` ;
+                topMapping = NodePath.getPath(topMapping.node.baseExpression);
+              }
+            } else if (lhsIndicator.isMapping) {
+              mappingKeyName = scope.getMappingKeyName(lhs) ||
+              lhs.indexExpression?.name ||
+              lhs.indexExpression.expression.name;
+            }
             if (isDecremented) {
               newNode = buildNode('BoilerplateStatement', {
                 bpType: 'decrementation',
                 indicators: lhsIndicator,
                 subtrahendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName: scope.getMappingKeyName(lhs) ||
-                    lhs.indexExpression?.name ||
-                    lhs.indexExpression.expression.name,
+                  mappingKeyName
                 }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
@@ -596,9 +610,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
                 indicators: lhsIndicator,
                 addendId: rhs.id,
                 ...(lhsIndicator.isMapping && {
-                  mappingKeyName: scope.getMappingKeyName(lhs) ||
-                    lhs.indexExpression?.name ||
-                    lhs.indexExpression.expression.name,
+                  mappingKeyName 
                 }), // TODO: tidy this
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
@@ -968,6 +980,9 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;
       const { value } = node;
+
+      // skip require msg warnings
+      if (path.getAncestorOfType('FunctionCall')?.node.requireStatementPrivate && node.kind === 'string') return;
 
       if (node.kind !== 'number' && node.kind !== 'bool' && !path.getAncestorOfType('Return'))
         throw new Error(

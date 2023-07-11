@@ -427,15 +427,20 @@ export class Scope {
         : indicator;
     }
 
+    if ((path.isConstantArray(referencingNode) || referencingNode.memberName === 'length') && !NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')) return indicator;
+
+
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
-    const indexAccessNode =
-      referencingNode.nodeType === 'IndexAccess'
-        ? referencingNode
-        : NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')
-            .node;
+    const indexAccessPath = referencingNode.nodeType === 'IndexAccess'
+    ? NodePath.getPath(referencingNode)
+    : NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess');
+    const indexAccessNode = indexAccessPath.node;
+
+    if (!indicator.mappingKeys[this.getMappingKeyName(indexAccessPath)] && indexAccessNode.baseExpression.nodeType === 'IndexAccess')
+      return this.getReferencedIndicator(indexAccessNode.baseExpression, mappingKeyIndicatorOnly);
 
     return mappingKeyIndicatorOnly
-      ? indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)]
+      ? indicator.mappingKeys[this.getMappingKeyName(indexAccessPath)]
       : indicator;
   }
 
@@ -677,11 +682,11 @@ export class Scope {
     if (refPaths && thisIndex && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
 
     let { name } = identifierNode;
-
+    
     // we find the next indexExpression after this identifier
     for (let i = thisIndex || 0; i < (refPaths?.length || 0); i++) {
-      if (refPaths?.[i].key !== 'indexExpression' || !thisIndex) continue;
-      if (refPaths[thisIndex].isModification() && !forceNotModification) {
+      if (refPaths?.[i]?.key !== 'indexExpression' || !thisIndex) continue;
+      if (refPaths[thisIndex]?.isModification() && !forceNotModification) {
         name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess'));
         break;
         // if this identifier is not a modification, we need the previous indexExpression

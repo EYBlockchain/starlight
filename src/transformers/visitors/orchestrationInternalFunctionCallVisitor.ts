@@ -95,7 +95,7 @@ const internalCallVisitor = {
                     });
                    for(const [index, oldStateName] of  oldStateArray.entries()) {
                      node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
-                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[index]);
+                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide?.name?.replace(oldStateName,  state.newStateArray[index]);
                     }
                   }
                   if(node.nodeType === 'Assignment'){
