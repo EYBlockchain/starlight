@@ -68,7 +68,7 @@ contract MiMC
         uint256 r = in_k;
         uint256 localQ = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001;
         uint256 i;
-        for( i = 0; i < in_x.length; i++ )
+        for( i = 0; i < in_x.length; ++i )
         {
             r = (r + (in_x[i] % localQ) + MiMCp(in_x[i], r, in_seed, round_count)) % localQ;
         }
