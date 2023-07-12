@@ -57,6 +57,9 @@ module.exports = {
       confirmations: 2,
       timeoutBlocks: 200,
       port: 8545,
+      pollingInterval: 1800000,
+      disableConfirmationListener: true,
+      gas:8500000,     
       skipDryRun: true
     },
     sepolia: {
