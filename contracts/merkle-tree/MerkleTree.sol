@@ -46,8 +46,8 @@ contract MerkleTree is MiMC {
     /**
     These events are what the merkle-tree microservice's filters will listen for.
     */
-    event NewLeaf(uint leafIndex, uint leafValue, uint root);
-    event NewLeaves(uint minLeafIndex, uint[] leafValues, uint root);
+    event NewLeaf(uint indexed leafIndex, uint indexed leafValue, uint indexed root);
+    event NewLeaves(uint indexed minLeafIndex, uint[] leafValues, uint indexed root);
 
     // event Output(uint[] input, uint[] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
 
@@ -110,7 +110,7 @@ contract MerkleTree is MiMC {
         uint[] memory input = new uint[](2); //input of the hash fuction
         uint[] memory output = new uint[](1); // output of the hash function
 
-        for (uint level = 0; level < treeHeight_; ++level) {
+        for (uint level = 0; level < treeHeight_;) {
 
             if (level == slot) frontier[slot] = nodeValue;
 
@@ -134,6 +134,9 @@ contract MerkleTree is MiMC {
                 prevNodeIndex = nodeIndex;
                 nodeIndex = nodeIndex / 2; // move one row up the tree
                 // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+            }
+            unchecked {
+                ++level; // GAS OPT: we know this won't overflow
             }
         }
 
@@ -224,7 +227,7 @@ contract MerkleTree is MiMC {
         }
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint level = slot + 1; level <= treeHeight_; ++level) {
+        for (uint level = slot + 1; level <= treeHeight_;) {
 
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
@@ -247,7 +250,10 @@ contract MerkleTree is MiMC {
                 nodeIndex = nodeIndex / 2;  // the parentIndex, but will become the nodeIndex of the next level
                 // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
             }
-
+            
+            unchecked {
+                ++level;
+            }
         }
 
         root = nodeValue;
