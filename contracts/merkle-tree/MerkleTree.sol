@@ -51,9 +51,9 @@ contract MerkleTree is MiMC {
 
     // event Output(uint[] input, uint[] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
 
-    uint public zero = 0;
-    uint public treeHeight = 32; //
-    uint public treeWidth = 2 ** treeHeight;
+    uint public constant zero = 0;
+    uint public constant treeHeight = 32;
+    uint public constant treeWidth = uint64(2 ** treeHeight);
     uint public leafCount; // the number of leaves currently in the tree
 
     /**
@@ -85,7 +85,7 @@ contract MerkleTree is MiMC {
                 } else {
                     pow1 = pow2;
                     pow2 = pow2 << 1;
-                    exp1++;
+                    ++exp1;
                 }
             }
         }
@@ -97,19 +97,20 @@ contract MerkleTree is MiMC {
     @return root - the root of the merkle tree, after the insert.
     */
     function insertLeaf(uint leafValue) public returns (uint root) {
-
+        // Cache variables so they aren't continually read from storage
+        (uint treeHeight_, uint treeWidth_, uint leafCount_) = (treeHeight, treeWidth, leafCount);
         // check that space exists in the tree:
-        require(treeWidth > leafCount, "There is no space left in the tree.");
+        require(treeWidth_ > leafCount_, "There is no space left in the tree.");
 
-        uint slot = getFrontierSlot(leafCount);
-        uint nodeIndex = leafCount + treeWidth - 1;
+        uint slot = getFrontierSlot(leafCount_);
+        uint nodeIndex = leafCount_ + treeWidth_ - 1;
         uint prevNodeIndex;
         uint nodeValue = leafValue; // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
 
         uint[] memory input = new uint[](2); //input of the hash fuction
         uint[] memory output = new uint[](1); // output of the hash function
 
-        for (uint level = 0; level < treeHeight; level++) {
+        for (uint level = 0; level < treeHeight_; ++level) {
 
             if (level == slot) frontier[slot] = nodeValue;
 
@@ -139,9 +140,9 @@ contract MerkleTree is MiMC {
         root = nodeValue;
         root = uint(bytes32(root));
 
-        emit NewLeaf(leafCount, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
+        emit NewLeaf(leafCount_, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
 
-        leafCount++; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
+        ++leafCount; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
 
         return root; //the root of the tree
     }
@@ -152,15 +153,17 @@ contract MerkleTree is MiMC {
     @return root - the root of the merkle tree, after all the inserts.
     */
     function insertLeaves(uint[] memory leafValues) public returns (uint root) {
+        // read pertinent vars into memory from storage in one operation
+        (uint treeHeight_, uint treeWidth_, uint leafCount_) = (treeHeight, treeWidth, leafCount);
 
         uint numberOfLeaves = leafValues.length;
 
         // check that space exists in the tree:
-        require(treeWidth > leafCount, "There is no space left in the tree.");
-        if (numberOfLeaves > treeWidth - leafCount) {
-            uint numberOfExcessLeaves = numberOfLeaves - (treeWidth - leafCount);
+        require(treeWidth_ > leafCount_, "There is no space left in the tree.");
+        if (numberOfLeaves > treeWidth_ - leafCount_) {
+            uint numberOfExcessLeaves = numberOfLeaves - (treeWidth_ - leafCount_);
             // remove the excess leaves, because we only want to emit those we've added as an event:
-            for (uint xs = 0; xs < numberOfExcessLeaves; xs++) {
+            for (uint xs = 0; xs < numberOfExcessLeaves; ++xs) {
                 /*
                   CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
                   Credit: https://ethereum.stackexchange.com/a/51897/45916
@@ -170,7 +173,7 @@ contract MerkleTree is MiMC {
                   mstore(leafValues, sub(mload(leafValues), 1))
                 }
             }
-            numberOfLeaves = treeWidth - leafCount;
+            numberOfLeaves = treeWidth_ - leafCount_;
         }
 
         uint slot;
@@ -182,9 +185,9 @@ contract MerkleTree is MiMC {
         uint[] memory output = new uint[](1); // the output of the hash
 
         // consider each new leaf in turn, from left to right:
-        for (uint leafIndex = leafCount; leafIndex < leafCount + numberOfLeaves; leafIndex++) {
-            nodeValue = leafValues[leafIndex - leafCount];
-            nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
+        for (uint leafIndex = leafCount_; leafIndex < leafCount_ + numberOfLeaves; ++leafIndex) {
+            nodeValue = leafValues[leafIndex - leafCount_];
+            nodeIndex = leafIndex + treeWidth_ - 1; // convert the leafIndex to a nodeIndex
 
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
@@ -194,7 +197,7 @@ contract MerkleTree is MiMC {
             }
 
             // hash up to the level whose nodeValue we'll store in the frontier slot:
-            for (uint level = 1; level <= slot; level++) {
+            for (uint level = 1; level <= slot; ++level) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
                     input[0] = frontier[level - 1]; //replace with push?
@@ -221,7 +224,7 @@ contract MerkleTree is MiMC {
         }
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint level = slot + 1; level <= treeHeight; level++) {
+        for (uint level = slot + 1; level <= treeHeight_; ++level) {
 
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
@@ -250,9 +253,9 @@ contract MerkleTree is MiMC {
         root = nodeValue;
         root = uint(bytes32(root));
 
-        emit NewLeaves(leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
+        emit NewLeaves(leafCount_, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
 
-        leafCount += numberOfLeaves; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
+        leafCount += numberOfLeaves; // the incrementing of leafCount costs us 20k for the first leaf, and 5k thereafter
         return root; //the root of the tree
     }
 
