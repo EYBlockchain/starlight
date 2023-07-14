@@ -753,7 +753,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       let resetNullifierNode = [];
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
         if(stateNode.isPartitioned && !stateNode.accessedOnly && (resetNullifierNode.length === 0))
-        resetNullifierNode.push(' await resetTemproraryNullifierTree();')
+        resetNullifierNode.push(' await resetTemporaryNullifierTree();')
 
       }
       [ lines[0], params[0], latestNullifierRoot[0] ] = generateProofBoilerplate(node);

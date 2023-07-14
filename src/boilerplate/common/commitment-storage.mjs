@@ -370,6 +370,8 @@ export async function joinCommitments(
 	}
 
 	// Call Zokrates to generate the proof:
+await resetTemporaryNullifierTree();
+
 	const allInputs = [
 		fromID,
 		stateVarID,
@@ -496,7 +498,7 @@ async function updateNullifierTree(nullifier) {
 	temp_smt_tree = smt_tree;
 }
 
-export async function resetTemproraryNullifierTree() {
+export async function resetTemporaryNullifierTree() {
 	temp_smt_tree = smt_tree;
 }
 
