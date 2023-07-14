@@ -2,6 +2,7 @@ import FUNCTION_NAME from './FUNCTION_NAME.mjs';
 import { startEventFilter, getSiblingPath } from './common/timber.mjs';
 import logger from './common/logger.mjs';
 import web3 from './common/web3.mjs';
+import { resetTemporaryNullifierTree } from './common/commitment-storage.mjs';
 
 
 // 'sleep' just creates a delay, ensuring the tests don't overlap
@@ -54,6 +55,7 @@ describe('FUNCTION_NAME', async function () {
         }
         await sleep(10);
       } catch (err) {
+        await resetTemporaryNullifierTree();
         logger.error(err);
         process.exit(1);
       }
@@ -82,6 +84,7 @@ describe('FUNCTION_NAME', async function () {
           console.log(tx.returnValues[0]);
         }
       } catch (err) {
+        await resetTemporaryNullifierTree();
         logger.error(err);
         process.exit(1);
       }

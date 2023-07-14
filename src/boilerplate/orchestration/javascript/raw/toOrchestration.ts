@@ -750,20 +750,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'GenerateProof':
-      let resetNullifierNode = [];
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if(stateNode.nullifierRequired && !stateNode.accessedOnly && (resetNullifierNode.length === 0))
-        resetNullifierNode.push(' await resetTemporaryNullifierTree();')
-
-      }
       [ lines[0], params[0], latestNullifierRoot[0] ] = generateProofBoilerplate(node);
 
       return {
         statements: [
-          `\n\n// Reset the temproary updates to the nullifier Tree`,
-          `\n ${resetNullifierNode[0]}`,
-          `\n\n// Call Zokrates to generate the proof:`,
-         ` \nconst allInputs = [`,
+          `\n\n// Call Zokrates to generate the proof:
+           \nconst allInputs = [`,
           `${lines[0]}`,
           `\nconst res = await generateProof('${node.circuitName}', allInputs);`,
           `\nconst proof = generalise(Object.values(res.proof).flat(Infinity))
