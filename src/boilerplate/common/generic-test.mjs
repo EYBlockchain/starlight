@@ -2,7 +2,7 @@ import FUNCTION_NAME from './FUNCTION_NAME.mjs';
 import { startEventFilter, getSiblingPath } from './common/timber.mjs';
 import logger from './common/logger.mjs';
 import web3 from './common/web3.mjs';
-import { resetTemporaryNullifierTree } from './common/commitment-storage.mjs';
+
 
 
 // 'sleep' just creates a delay, ensuring the tests don't overlap
