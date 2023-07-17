@@ -173,7 +173,7 @@ export async function markNullified(commitmentHash, secretKey = null) {
       },
     };
 	// updating the original tree
-	await updateNullifierTree(nullifier);
+	await updateNullifierTree();
 
     return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
   }
@@ -493,9 +493,8 @@ const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
 	}
   };
 
-export async function updateNullifierTree(nullifier) {
-	smt_tree = insertLeaf(generalise(nullifier).hex(32), smt_tree);
-	temp_smt_tree = smt_tree;
+export async function updateNullifierTree() {
+	smt_tree = 	temp_smt_tree;
 }
 
 export async function resetTemporaryNullifierTree() {
