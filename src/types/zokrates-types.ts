@@ -252,7 +252,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'InternalFunctionCall': {
-      const { name, internalFunctionInteractsWithSecret = false, oldStateName = [], newStateName =[], CircuitArguments = [],circuitImport = false} = fields;
+      const { name, internalFunctionInteractsWithSecret = false, oldStateName = [], newStateName =[], CircuitArguments = [],CircuitReturn =[],circuitImport = false} = fields;
       return{
         nodeType,
         name,
@@ -260,11 +260,12 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         oldStateName,
         newStateName,
         CircuitArguments,
+        CircuitReturn,
         circuitImport,
       };
     }
     case 'InternalFunctionBoilerplate':{
-      const { name, internalFunctionInteractsWithSecret = false,circuitImport = false,structImport = false, structName} = fields;
+      const { name, internalFunctionInteractsWithSecret = false,circuitImport = false,structImport = false, structName, isEncrypted  = false} = fields;
       return{
         nodeType: 'Boilerplate',
         bpSection: 'importStatements',
@@ -274,6 +275,7 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         circuitImport,
         structImport,
         structName,
+        isEncrypted,
       };
 
     }

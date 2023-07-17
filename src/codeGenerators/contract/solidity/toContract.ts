@@ -8,6 +8,7 @@ import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoile
 const contractBP = new ContractBP();
 const functionBP = new FunctionBP();
 
+
 function codeGenerator(node: any) {
   // We'll break things down by the `type` of the `node`.
   switch (node.nodeType) {
@@ -80,10 +81,12 @@ function codeGenerator(node: any) {
           break;
 
       }
+
       const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} {`;
-      const body = codeGenerator(node.body);
-
-
+      let body = codeGenerator(node.body);
+      let msgSigCheck = body.slice(body.indexOf('bytes4 sig'), body.indexOf('verify') )
+      if(!node.msgSigRequired)
+        body = body.replace(msgSigCheck, ' ');
     return `
       ${functionSignature}
 
