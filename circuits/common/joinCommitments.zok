@@ -10,7 +10,7 @@ from "./common/hashes/poseidon/poseidon.zok" import main as poseidon
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
-from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as updateNullifierRoot
 
 def main(\
 	private field fromId,\
@@ -53,8 +53,6 @@ def main(\
 
         field oldCommitment_1 = oldCommitment_1_value
 
-        bool isAccessed = false
-
 
         // oldCommitment_0 - PoKoSK:
         // The correctness of this secret key will be constrained within the oldCommitment existence check.
@@ -93,11 +91,10 @@ def main(\
         )
        
 
-          nullifierRoot = checkproof(\
+          nullifierRoot = updateNullifierRoot(\
             oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
             oldCommitment_0_nullifier,\
-            nullifierRoot,\
-            isAccessed\
+            nullifierRoot\
            )          
 
        
@@ -114,11 +111,10 @@ def main(\
         )
 
  
-         nullifierRoot = checkproof(\
+         nullifierRoot = updateNullifierRoot(\
             oldCommitment_1_nullifier_nonmembershipWitness_siblingPath,\
             oldCommitment_1_nullifier,\
-            nullifierRoot,\
-            isAccessed\
+            nullifierRoot\
            )          
         
         
