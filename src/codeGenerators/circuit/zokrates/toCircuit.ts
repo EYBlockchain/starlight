@@ -98,7 +98,6 @@ function codeGenerator(node: any) {
       if(codeGenerator(node.parameters).includes('nullifierRoot')){
       returnStatement.push('nullifierRoot');
       returnType.push('field') ;
-      body = ('bool isAccessed = false \n').concat(body)
       }
 
       if(returnStatement.length === 0){

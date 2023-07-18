@@ -48,11 +48,18 @@ class BoilerplateGenerator {
   };
 
   nullification = {
-    importStatements(): string[] {
+    importStatements({ isAccessed, isNullified }): string[] {
+      if(isAccessed && !isNullified)
+        return [
+          `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
+          `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+          `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkRoot as checkNullifierRoot`,
+        ];
+
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
-        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof`,
+        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as updateNullifierRoot`,
       ];
     },
 
@@ -117,24 +124,20 @@ class BoilerplateGenerator {
 
         // ${x}_oldCommitment_nullifier : non-existence check
                
-        isAccessed = true \\
 
-        nullifierRoot = checkproof(\\
+        nullifierRoot = checkNullifierRoot(\\
           ${x}_nullifier_nonmembershipWitness_siblingPath,\\
           ${x}_oldCommitment_nullifier,\\
-          nullifierRoot,\\
-          isAccessed\\
+          nullifierRoot\\
           )\  
         `,
       ] : lines.push(
         `
-          isAccessed = false \\
         
-          nullifierRoot = checkproof(\\
+          nullifierRoot = updateNullifierRoot(\\
           ${x}_nullifier_nonmembershipWitness_siblingPath,\\
           ${x}_oldCommitment_nullifier,\\
-          nullifierRoot,\\
-          isAccessed\\
+          nullifierRoot\\
           )\    
           `
       );
