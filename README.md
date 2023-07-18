@@ -339,6 +339,8 @@ If you would like to restart the zapp and redeploy the contract, always (with no
 
 `npm run restart` <-- if you'd like to use the APIs, always **restart** rather than **start** since the latter clears your local dbs
 
+Then, if you previously had nullifiers, reinstate them in your local sparse merkle tree by sending a POST to `http://localhost:3000/reinstateNullifiers`.
+
 #### Deploy on public testnets
 
 Apart from local ganache instance, Starlight output zapps can be now be deployed in Sepolia, Goerli and Polygon Mumbai as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Mumbai is provided via [maticvigil](https://rpc.maticvigil.com/).

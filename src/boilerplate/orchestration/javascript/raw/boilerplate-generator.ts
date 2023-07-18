@@ -693,7 +693,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -740,7 +740,21 @@ integrationApiServicesBoilerplate = {
           logger.error(err);
           res.send({ errors: [err.message] });
         }
-      }`;
+      }
+      
+      export async function service_reinstateNullifiers(req, res, next) {
+        try {
+          await reinstateNullifiers();
+          res.send('Complete');
+          await sleep(10);
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }`
+      
+      
+      ;
   }
 
 
@@ -759,12 +773,14 @@ integrationApiRoutesBoilerplate = {
         (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
     router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    // nullifier route
+    router.post("/reinstateNullifiers", service_reinstateNullifiers);
     `;
   }
 };
@@ -850,6 +866,11 @@ zappFilesBoilerplate = () => {
       readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
       generic: true,
+    },
+    {
+      readPath: pathPrefix + '/commitment-storage.mjs',
+      writePath: './orchestration/common/commitment-storage.mjs',
+      generic: false,
     },
 ];
 }
