@@ -114,7 +114,7 @@ class BoilerplateGenerator {
       (isAccessed && !isNullified) ?
       lines = [
         `
-        // Create the Nullifier  for ${x} and no need to nnullify it as its accessed only:
+        // Create the Nullifier  for ${x} and no need to nullify it as its accessed only:
 
         field ${x}_oldCommitment_nullifier = poseidon([\\
           ${x}_stateVarId_field,\\

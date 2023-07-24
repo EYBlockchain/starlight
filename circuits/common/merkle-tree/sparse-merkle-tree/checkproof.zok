@@ -31,7 +31,7 @@ assert(root == checkRoot(siblingPath, value, root))
 
 // Calculate the new Root
 
-field accValue = value // checking against zero element
+field accValue = value // Inserting the element 
 field[2] preimage = [0, 0]
 bool[32] valueIndex = field_to_bool_256(value)[2..34]
 
