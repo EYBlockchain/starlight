@@ -291,7 +291,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     }
     if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
-    } else if (this.isMapping) {
+    } else if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).updateProperties(path);
     }
   }
@@ -476,7 +476,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   // A StateVariableIndicator will be updated if (some time after its creation) we encounter an AST node which refers to this state variable.
   // E.g. if we encounter an Identifier node.
   update(path: NodePath) {
-    if (this.isMapping) {
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).updateProperties(path);
     } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
@@ -570,7 +570,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.isWholeReason.push(reason);
     this.accessedPaths ??= [];
     this.accessedPaths.push(path);
-    if (this.isMapping) {
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).isAccessed = true;
       this.addMappingKey(path).accessedPaths ??= [];
       this.addMappingKey(path).accessedPaths.push(path);
@@ -668,11 +668,11 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       if (path.getAncestorOfType('FunctionDefinition')?.node.kind === 'constructor') {
         this.binding.initialisedInConstructor = true;
         this.initialisationRequired = true; // we need the dummy nullifier in the constructor
-        if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+        if (this.isMapping && path.getAncestorOfType('IndexAccess')) this.addMappingKey(path).initialisationRequired = true;
         if (this.isStruct) this.addStructProperty(path).initialisationRequired = true;
       } else if(!this.binding.initialisedInConstructor) {
         this.initialisationRequired = true;
-        if (this.isMapping) this.addMappingKey(path).initialisationRequired = true;
+        if (this.isMapping && path.getAncestorOfType('IndexAccess')) this.addMappingKey(path).initialisationRequired = true;
         if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).initialisationRequired = true;
       }
 
@@ -691,7 +691,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
     this.binding.addNullifyingPath(path);
-    if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) this.addMappingKey(path).addNullifyingPath(path);
     if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).addNullifyingPath(path);
   }
 

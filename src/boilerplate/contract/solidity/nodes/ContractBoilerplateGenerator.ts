@@ -154,6 +154,13 @@ class ContractBoilerplateGenerator {
                 if (circuitParamNode.typeName?.members) {
                   newList.push(...circuitParamNode.typeName.members.map(m => `${circuitParamNode.name}.${m.name}`));
                   break;
+                } else if (circuitParamNode.typeName?.name.includes(`[`)) {
+                  // TODO arrays of structs/structs of arrays/more robust soln
+                  const arrayLen = circuitParamNode.typeName?.name.match(/(?<=\[)(\d+)(?=\])/);
+                  for (let index = 0; index < +arrayLen[0]; index++) {
+                    newList.push(`${circuitParamNode.name}[${index}]`);
+                  }
+                  break;
                 } else newList.push(circuitParamNode.name);
               }
             }

@@ -56,13 +56,7 @@ const stateVariableIds = (node: any) => {
 const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
-  const output: string[][] = [];
-  output[0] = [];
-  output[1] = [];
-  output[2] = [];
-  output[3] = [];
-  output[4] = [];
-  output[5] = [];
+  const output: string[][] = [[],[],[],[],[],[]];
   // output[0] = nullifier root(s)
   // output[1] = arr of nullifiers
   // output[2] = commitments root(s)
@@ -770,9 +764,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
-            lines.push(`[${input.properties.map(p => `${input.name}.${p}.integer`).join(',')}]`)
-          } else
+            lines.push(`[${input.properties.map(p => `${input.name}${input.isConstantArray ? '.all' : ''}.${p}.integer`).join(',')}]`)
+          } else if (input.isConstantArray) {
+            lines.push(`${input.name}.all.integer`);
+          } else {
             lines.push(`${input}.integer`);
+          }           
         });
         lines[lines.length - 1] += `, `;
       }

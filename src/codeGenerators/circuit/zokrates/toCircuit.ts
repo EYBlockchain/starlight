@@ -164,6 +164,7 @@ function codeGenerator(node: any) {
 
     case 'VariableDeclarationStatement': {
       const declarations = node.declarations.map(codeGenerator).join(', ');
+      if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)}`;
       const initialValue = codeGenerator(node.initialValue);
       return `${declarations} = ${initialValue}`;
     }
@@ -226,6 +227,7 @@ function codeGenerator(node: any) {
       return node.value;
 
     case 'IndexAccess':
+      if (node.isConstantArray) return `${codeGenerator(node.baseExpression)}[${codeGenerator(node.indexExpression).replace('.', 'dot')}]`;
       return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression).replace('.', 'dot')}`;
 
     case 'MemberAccess':

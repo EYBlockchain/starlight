@@ -22,6 +22,12 @@ export default {
   VariableDeclaration: {
     enter(path: NodePath) {
       const { node, scope } = path;
+      if (path.isConstantArray() && node.stateVariable && node.isSecret) {
+        throw new TODOError(
+          `We can't currently handle secret arrays of constant length. If you want one editable state, try a struct, otherwise use a mapping or dynamic array.`,
+          node
+        );
+      }
       if (node.value && scope.scopeType === 'ContractDefinition') {
         if (!path.getSiblingNodes().some((sib: any) => sib.kind === 'constructor'))
           throw new SyntaxError(`Your variable ${node.name} is being initialised without any constructor - we can't create a commitment for this value without a circuit present. Consider moving this initial value to the constructor.`);
@@ -121,6 +127,7 @@ export default {
 
       const miniMappingVisitor = (thisNode: any) => {
         if (thisNode.nodeType !== 'IndexAccess') return;
+        if (path.isLocalStackVariable(thisNode) || path.isFunctionParameter(thisNode)) return;
         const key = path.getMappingKeyIdentifier(thisNode);
         if (!key.referencedDeclaration) return;
         if (idInLoopExpression.includes(key.referencedDeclaration))
@@ -184,6 +191,7 @@ export default {
       if(structWarnings.length>0) {
       logger.warn( ' The following struct properties may cause unconstrained variable errors in the circuit ' , Array.from(new Set(structWarnings)));
       }
+      structWarnings = [];
       // if no errors, we then check everything is nullifiable
       for (const [, binding] of Object.entries(scope.bindings)) {
         // TODO find contract level binding and call once

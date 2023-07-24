@@ -793,6 +793,23 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
 
   },
 
+  ArrayTypeName: {
+    enter(path: NodePath, state: any) {
+      const { node, parent } = path;
+      const newNode = buildNode('ElementaryTypeName', {
+        name: `${node.baseType.name === 'bool' ?  'bool' : 'field'}[${node.length.value}]`
+      });
+
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer)) {
+        parent._newASTPointer.push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }
+      state.skipSubNodes = true;
+    }
+  },
+
   ElementaryTypeNameExpression: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
@@ -1017,6 +1034,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
 
       const newNode = buildNode('IndexAccess');
+      if (path.isConstantArray(node) && (path.isLocalStackVariable(node) || path.isFunctionParameter(node))) newNode.isConstantArray = true;
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },

@@ -94,11 +94,11 @@ class FunctionBoilerplateGenerator {
         if (path.isStruct(node)) {
           const structDef = path.getStructDeclaration(node);
           const names = structDef.members.map((mem: any) => {
-            return { name: `${node.name}.${mem.name}`, type: mem.typeName.name };
+            return { name: `${node.name}.${mem.name}`, type: mem.typeName.name || mem.typeName.baseType.name, isConstantArray: path.isConstantArray(mem) ? mem.typeName.length.value : false, inCircuit: node.interactsWithSecret };
           });
-          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node), inCircuit: node.interactsWithSecret };
+          return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false, inCircuit: node.interactsWithSecret };
         }
-        return { name: node.name, type: node.typeName.name, isParam: path.isFunctionParameter(node), inCircuit: node.interactsWithSecret };
+        return { name: node.name, type: node.typeName.name || node.typeName.baseType.name, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false, inCircuit: node.interactsWithSecret };
       }
 
       const params = path.getFunctionParameters();

@@ -256,7 +256,7 @@ export class VariableBinding extends Binding {
   // A binding will be updated if (some time after its creation) we encounter an AST node which refers to this binding's variable.
   // E.g. if we encounter an Identifier node.
   update(path: NodePath) {
-    if (this.isMapping) {
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).updateProperties(path);
     } else if (this.isStruct && path.getAncestorOfType('MemberAccess')) {
       this.addStructProperty(path).updateProperties(path);
@@ -365,7 +365,7 @@ export class VariableBinding extends Binding {
     this.isWholeReason ??= [];
     this.isWholeReason.push(reason);
 
-    if (this.isMapping) {
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) {
       this.addMappingKey(path).isAccessed = true;
       this.addMappingKey(path).accessedPaths ??= [];
       this.addMappingKey(path).accessedPaths.push(path);
@@ -415,7 +415,7 @@ export class VariableBinding extends Binding {
     this.isNullified = true;
     ++this.nullificationCount;
     this.nullifyingPaths.push(path);
-    if (this.isMapping) this.addMappingKey(path).addNullifyingPath(path);
+    if (this.isMapping && path.getAncestorOfType('IndexAccess')) this.addMappingKey(path).addNullifyingPath(path);
     if (this.isStruct && path.getAncestorOfType('MemberAccess')) this.addStructProperty(path).addNullifyingPath(path);
   }
 
@@ -533,12 +533,12 @@ export class VariableBinding extends Binding {
       if (functionDefScope.callerRestriction === 'exclude') {
         this.updateBlacklist(functionDefScope.callerRestrictionNode);
       }
-      if (this.isMapping && this.addMappingKey(path).isMsgSender) {
+      if (this.isMapping && path.getAncestorOfType('IndexAccess') && this.addMappingKey(path).isMsgSender ) {
         // if its unassigned, we assign true
         // if its true, it remains true
         msgSenderEverywhereMappingKey ??= true;
       } else if (
-        this.isMapping &&
+        this.isMapping && path.getAncestorOfType('IndexAccess') &&
         (path.isMsgSender(path.getCorrespondingRhsNode()) || path.isMsgValue(path.getCorrespondingRhsNode()))
       ) {
         msgSenderEverywhereMappingValue ??= true;
