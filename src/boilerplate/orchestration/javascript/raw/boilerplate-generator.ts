@@ -274,9 +274,6 @@ class BoilerplateGenerator {
           return [`
             let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
-
-            // Non-membership witness for Nullifier
-            const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
           `];
         default:
           throw new TypeError(stateType);

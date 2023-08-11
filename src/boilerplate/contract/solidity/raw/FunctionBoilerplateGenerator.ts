@@ -24,8 +24,7 @@ class FunctionBoilerplateGenerator {
         `verifier = IVerifier(verifierAddress);
     		  for (uint i = 0; i < vk.length; i++) {
     			  vks[i] = vk[i];
-    		  }
-          newNullifierRoot = Initial_NullifierRoot;`,
+    		  }`,
       ];
     },
 
@@ -43,7 +42,7 @@ class FunctionBoilerplateGenerator {
       if (isConstructor && encryptionRequired) throw new Error(`There shouldn't be any secret states that require sharing encrypted data in the constructor.`)
       const visibility = isConstructor ? 'memory' : 'calldata';
       return [
-        ...(newNullifiers ? [`${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
+        ...(newNullifiers ? [`uint256[] ${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
         ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
         ...(checkNullifiers ? [`uint256[] ${visibility} checkNullifiers`] : []),
