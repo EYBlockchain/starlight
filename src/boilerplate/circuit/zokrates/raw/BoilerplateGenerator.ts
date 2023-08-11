@@ -52,28 +52,14 @@ class BoilerplateGenerator {
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
-        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof`,
-        `from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath`,
       ];
     },
 
     parameters({ name: x, isAccessed, isNullified }): string[] {
       let para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
-        `public field nullifierRoot`,
-        `public field newNullifierRoot`,
-        `public field ${x}_oldCommitment_nullifier`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_newsiblingPath`,
-        
+        `public field ${x}_oldCommitment_nullifier`,        
       ]
-      if(isAccessed && !isNullified) 
-       para = [
-        `private field ${x}_oldCommitment_owner_secretKey`,
-        `public field nullifierRoot`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
-      ]
-
       return para;
     },
 
@@ -104,42 +90,6 @@ class BoilerplateGenerator {
         )
         // ${x}_oldCommitment_nullifier : non-existence check
         
-        assert(\\
-          nullifierRoot == checkproof(\\
-            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
-           )\
-       )
-
-       assert(\\
-        newNullifierRoot == checkUpdatedPath(\\
-          ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-          ${x}_oldCommitment_nullifier\\
-        )\
-        )
-
-        `,
-      ];
-
-      if(isAccessed && !isNullified) 
-      lines = [
-        `
-        // Create the Nullifier  for ${x} and no need to nnullify it as its accessed only:
-
-        field ${x}_oldCommitment_nullifier = poseidon([\\
-          ${x}_stateVarId_field,\\
-          ${x}_oldCommitment_owner_secretKey,\\
-          ${x}_oldCommitment_salt\\
-        ])
-
-        // ${x}_oldCommitment_nullifier : non-existence check
-        
-        assert(\\
-          nullifierRoot == checkproof(\\
-            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
-           )\
-       )
         `,
       ];
 

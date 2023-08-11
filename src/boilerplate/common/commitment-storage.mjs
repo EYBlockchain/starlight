@@ -172,9 +172,7 @@ export async function markNullified(commitmentHash, secretKey = null) {
 		nullifier: generalise(nullifier).hex(32),
       },
     };
-	// updating the original tree
-	smt_tree = temp_smt_tree;
-
+	
     return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
   }
 
@@ -324,40 +322,6 @@ export async function joinCommitments(
 	oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
 	oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32)); // truncate
 
-	// Non-membership witness for Nullifier
-	const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-		oldCommitment_0_nullifier
-	);
-	const oldCommitment_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-		oldCommitment_1_nullifier
-	);
-
-	const oldCommitment_nullifierRoot = generalise(oldCommitment_0_nullifier_NonMembership_witness.root);
-	const oldCommitment_0_nullifier_path = generalise(
-		oldCommitment_0_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_1_nullifier_path = generalise(
-		oldCommitment_1_nullifier_NonMembership_witness.path
-	).all;
-
-
-	await temporaryUpdateNullifier(a_0_nullifier);
-	await temporaryUpdateNullifier(a_1_nullifier);
-
-	const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-		oldCommitment_0_nullifier
-	);
-	const oldCommitment_1_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-		oldCommitment_1_nullifier
-	);
-
-	const oldCommitment_0_nullifier_newpath = generalise(
-		oldCommitment_0_updated_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_1_nullifier_newpath = generalise(
-		oldCommitment_1_updated_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_newNullifierRoot = generalise(oldCommitment_0_updated_nullifier_NonMembership_witness.root);
 	// Calculate commitment(s):
 
 	const newCommitment_newSalt = generalise(utils.randomHex(31));
@@ -393,15 +357,8 @@ export async function joinCommitments(
 		isMapping,
 		secretKey.integer,
 		secretKey.integer,
-
-		oldCommitment_nullifierRoot.integer,
-		oldCommitment_newNullifierRoot.integer,
 		oldCommitment_0_nullifier.integer,
-		oldCommitment_0_nullifier_path.integer,
-		oldCommitment_0_nullifier_newpath.integer,
 		oldCommitment_1_nullifier.integer,
-		oldCommitment_1_nullifier_path.integer,
-		oldCommitment_1_nullifier_newpath.integer,
 		oldCommitment_0_prev.integer,
 		oldCommitment_0_prevSalt.integer,
 		oldCommitment_1_prev.integer,
@@ -424,8 +381,6 @@ export async function joinCommitments(
 
 	const txData = await instance.methods
 		.joinCommitments(
-			oldCommitment_nullifierRoot.integer,
-			oldCommitment_newNullifierRoot.integer,
 			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
 			oldCommitment_root.integer,
 			[newCommitment.integer],
@@ -450,9 +405,9 @@ export async function joinCommitments(
 	let tx = await instance.getPastEvents("allEvents");
 
 	tx = tx[0];
-
 	await markNullified(generalise(commitments[0]._id), secretKey.hex(32));
 	await markNullified(generalise(commitments[1]._id), secretKey.hex(32));
+
 	await storeCommitment({
 		hash: newCommitment,
 		name: statename,

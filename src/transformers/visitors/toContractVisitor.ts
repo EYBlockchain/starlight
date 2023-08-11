@@ -896,8 +896,7 @@ DoWhileStatement: {
            state.fnParameters.push(args[index]);
 
          });
-         const params = [...(internalfnDefIndicators.nullifiersRequired? [`nullifierRoot`] : []),
-               ...(internalfnDefIndicators.nullifiersRequired? [`latestNullifierRoot`] : []),
+         const params = [
                ...(internalfnDefIndicators.nullifiersRequired?  [`newNullifiers`] : []), 
                ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
                ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),

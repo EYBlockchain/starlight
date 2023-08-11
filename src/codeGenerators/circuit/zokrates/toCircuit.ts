@@ -66,7 +66,6 @@ function codeGenerator(node: any) {
       let body = codeGenerator(node.body);
       let returnStatement : string[] = [];
       let returnName : string[] = [];
-      let nullifierRoot : string[] = [];
       if(node.returnParameters) {
         node.parameters.parameters.forEach(param => {
           if(param.bpType === 'newCommitment')

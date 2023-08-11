@@ -66,9 +66,9 @@ const internalCallVisitor = {
                           break;
                           }
                           case 'ReadPreimage': {
-                            stateNode.increment = stateNode.increment.replace(oldStateName+'.', state.newStateArray[index]+'.')
+                            stateNode.increment = stateNode.increment?.replace(oldStateName+'.', state.newStateArray[index]+'.')
                             if(stateNode.mappingKey === oldStateName)
-                             stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[index])
+                             stateNode.mappingKey = stateNode.mappingKey?.replace(oldStateName, state.newStateArray[index])
                             if(stateNode.stateVarId[1] === oldStateName)
                              stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[index])
                             break;
