@@ -72,7 +72,7 @@ export const sendTransactionBoilerplate = (node: any) => {
           case true:
             // decrement
             output[1].push(`${privateStateName}_root.integer`);
-            output[1].push(
+            output[0].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
             output[2].push(`${privateStateName}_2_newCommitment.integer`);
@@ -759,6 +759,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[0] = arr of nullifiers
       // params[1] = root(s)
       // params[2] = arr of commitments
+      console.log(params[0]);
 
       if (params[0][1][0]) params[0][1] = `${params[0][1][0]},`; // root - single input
       if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array

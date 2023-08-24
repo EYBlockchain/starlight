@@ -82,7 +82,8 @@ class ContractBoilerplateGenerator {
       		verifier = IVerifier(verifierAddress);
       		for (uint i = 0; i < vk.length; i++) {
       			vks[i] = vk[i];
-      		}`
+      		}
+        }`
       ];
     },
 
