@@ -77,7 +77,6 @@ class FunctionBoilerplateGenerator {
       `uint256[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
 
-   
       customInputs?.forEach((input, i) => {
         if (input.isConstantArray) {
           const expanded = [];
