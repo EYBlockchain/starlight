@@ -12,6 +12,16 @@ import { traverseNodesFast } from '../../../traverse/traverse.js';
 
 
 export default {
+  VariableDeclaration: {
+    enter(node: any) {
+      if (node.name?.startsWith('_')) {
+        throw new TODOError(
+          `Variables can have any name which does not start with a number or underscore.`,
+          node,
+        );
+      }
+    },
+  },
   StructuredDocumentation: {
     enter(node: any) {
       throw new TODOError(`Solidity type ${node.nodeType}`, node);
