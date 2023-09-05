@@ -108,7 +108,7 @@ function codeGenerator(node: any) {
       if (!node.declarationType && !!node._newASTPointer?.declarationType)
       node.declarationType = node._newASTPointer.declarationType;
       // we crop 'struct ContractName.structname' to just 'structname'
-      if (typeString.includes('struct ')) typeString = typeString.substring(typeString.indexOf(".") + 1);
+      if (typeString.includes('struct ')) typeString = typeString.replace(/struct\s+\w+\./, '');
       typeString = typeString.replace('contract ', ''); // pesky userdefined type 'contract' keword needs to be removed in some cases.
       const constant = node.constant ? ' constant' : '';
       const visibility = node.visibility ? ` ${node.visibility}` : '';
