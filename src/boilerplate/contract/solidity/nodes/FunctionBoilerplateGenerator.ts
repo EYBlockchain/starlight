@@ -4,6 +4,7 @@
 /** Keep a cache of previously-generated boilerplate, indexed by `indicator` objects (there is 1 indicator object per stateVar, per function). */
 import Scope from '../../../../traverse/Scope.js';
 import NodePath from '../../../../traverse/NodePath.js';
+import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 
 const bpCache = new WeakMap();
 
@@ -18,12 +19,36 @@ class FunctionBoilerplateGenerator {
     bpCache.set(scope, this);
   }
 
-  getBoilerplate = (section: string, extraParams?: any) => {
+  getBoilerplate = (section: string, circuitParams:any , extraParams?: any) => {
     const bp: any[] = [];
+    const newList: string[] = [];
+    circuitParams?.forEach(circuitParamNode => {
+    switch (circuitParamNode.bpType) {
+      case 'nullification':
+        if (circuitParamNode.isNullified)
+          newList.push('nullifier');
+        if(circuitParamNode.isAccessed && !newList.includes('nullifierRoot')) 
+        newList.push('nullifierRoot')
+        break;
+      case 'newCommitment':
+        newList.push(circuitParamNode.bpType);
+        break;
+      case 'oldCommitmentExistence':
+        if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
+        break;
+      case 'encryption':
+      case undefined:
+      default:
+        break;
+    }
+  });
     const categories = this.categorySelector();
     categories.forEach(category => {
       if (this[category].sectionSelector.bind(this)().includes(section)) {
-        bp.push(this.generateNode(category, section, extraParams));
+        const bpnode = this.generateNode(category, section, extraParams);
+        if(!newList.includes('nullifier')) bpnode.nullifiersRequired = false;
+        if(!newList.includes('newCommitment')) bpnode.newCommitmentsRequired = false;
+        bp.push(bpnode);
       }
     });
     return bp;
@@ -73,7 +98,6 @@ class FunctionBoilerplateGenerator {
     getIndicators() {
       const { indicators } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
-
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, encryptionRequired } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
@@ -81,15 +105,18 @@ class FunctionBoilerplateGenerator {
 
     parameters() {
       const indicators = this.customFunction.getIndicators.bind(this)();
-      return { ...indicators };
+      const returnParam = [];
+      this.scope.path.node.returnParameters.parameters.forEach(returnPara => {
+        if(returnPara.typeName.name === 'bool')
+        returnParam.push('boolReturn');
+      })
+      return { returnParam, ...indicators };
     },
 
 // MIKE: you need to create a new msgSenderParam field of the Indicator class for the deposit function (by writing a new prelim traversal). Then using that indicator, you can pick up here.
     postStatements(customInputs: any[] = []) {
       const { scope } = this;
       const { path } = scope;
-    
-
       const customInputsMap = (node: any) => {
         if (path.isStruct(node)) {
           const structDef = path.getStructDeclaration(node);
@@ -102,12 +129,10 @@ class FunctionBoilerplateGenerator {
       }
 
       const params = path.getFunctionParameters();
-      
+
       const publicParams = params?.filter((p: any) => !p.isSecret).map((p: any) => customInputsMap(p)).concat(customInputs);
       const functionName = path.getUniqueFunctionName();
       const indicators = this.customFunction.getIndicators.bind(this)();
-
-  
 
       // special check for msgSender and msgValue param. If msgsender is found, prepend a msgSender uint256 param to the contact's function.
       if (indicators.msgSenderParam) publicParams.unshift({ name: 'msg.sender', type:'address' , dummy: true, inCircuit: true});
@@ -125,9 +150,15 @@ class FunctionBoilerplateGenerator {
       if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired ) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true , inCircuit: true });
       }
+      let returnParam = [];
+      path.node.returnParameters.parameters.forEach(returnPara => {
+        if(returnPara.typeName.name === 'bool')
+        returnParam.push('boolReturn');
+      })
 
       return {
         ...(publicParams?.length && { customInputs: publicParams }),
+        returnParam,
         functionName,
         ...indicators,
       };

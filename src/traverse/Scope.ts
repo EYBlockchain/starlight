@@ -785,7 +785,7 @@ export class Scope {
        const indicator = indicators[stateVarId];
 
        if (indicator?.isModified && indicator.binding?.isSecret) return true;
-
+       else if(indicator.binding?.isSecret && indicator.isAccessed) return true;
      }
     if (indicators instanceof FunctionDefinitionIndicator && indicators.internalFunctionModifiesSecretState) return true;
      return false;

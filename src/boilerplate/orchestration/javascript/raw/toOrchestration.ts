@@ -104,6 +104,7 @@ export const sendTransactionBoilerplate = (node: any) => {
             output[4].push(`${privateStateName}_cipherText`);
             output[5].push(`${privateStateName}_encKey`);
           }
+          if(stateNode.accessedOnly) output[0].push(`${privateStateName}_nullifierRoot.integer`,`newNullifierRoot`);
 
         break;
     }
@@ -114,6 +115,7 @@ export const sendTransactionBoilerplate = (node: any) => {
 export const generateProofBoilerplate = (node: any) => {
   const output: (string[] | string)[] = [];
   const enc: any[][] = [];
+  let returnPara:any = [];
   const latestNullifierRoot: any[] = [];
   const cipherTextLength: number[] = [];
   let containsRoot = false;
@@ -131,8 +133,7 @@ export const generateProofBoilerplate = (node: any) => {
       enc[1].push(`const ${stateName}_encKey = res.inputs.slice(START_SLICE END_SLICE).map(e => generalise(e).integer);`);
     }
     // We read the latestNullifierRoot
-
-    if(stateNode.nullifierRequired && latestNullifierRoot.length === 0) {
+    if((stateNode.nullifierRequired || stateNode.accessedOnly) && latestNullifierRoot.length === 0) {
       latestNullifierRoot.push(`const newNullifierRoot = res.inputs.slice(-1).map(e => generalise(e).integer)[0];`)
 
     }
@@ -269,9 +270,15 @@ export const generateProofBoilerplate = (node: any) => {
   }
   
    // extract the nullifier Root
+   if( node.returnParameters.length > 0) {
+    if(latestNullifierRoot.length > 0)
+     returnPara.push(`const customInputs = res.inputs.slice(${-(node.returnParameters.length + 1)}, ${-1}).map(e => generalise(e).integer);`);
+    else
+     returnPara.push(`const customInputs = res.inputs.slice(${-(node.returnParameters.length)}).map(e => generalise(e).integer)[0];`);
+  } 
 
   output.push(`\n].flat(Infinity);`);
-  return [output, [enc], latestNullifierRoot];
+  return [output, [enc], returnPara, latestNullifierRoot];
 };
 
 export const preimageBoilerPlate = (node: any) => {
@@ -425,6 +432,7 @@ export const preimageBoilerPlate = (node: any) => {
 export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const lines: any[] = [];
   const params:any[] = [];
+  const returnPara:any[] = [];
   const latestNullifierRoot:any[] = [];
   const states: string[] = [];
   const rtnparams: string[] = [];
@@ -469,14 +477,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
-
       node.returnParameters.forEach( (param, index) => {
        if(param === 'true')
         rtnparams?.push('bool: bool');
        else if(param?.includes('Commitment'))
         rtnparams?.push( ` ${param} : ${param}.integer  `);
        else
-        rtnparams.push(`   ${param} :${param}.integer`);
+        rtnparams.push(`   ${param} :${param}`);
      });
       if (params) params[params.length - 1] += `,`;
 
@@ -744,7 +751,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'GenerateProof':
-      [ lines[0], params[0], latestNullifierRoot[0] ] = generateProofBoilerplate(node);
+      [ lines[0], params[0], returnPara[0], latestNullifierRoot[0] ] = generateProofBoilerplate(node);
 
       return {
         statements: [
@@ -755,7 +762,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           `\nconst proof = generalise(Object.values(res.proof).flat(Infinity))
           .map(coeff => coeff.integer)
           .flat(Infinity);`,
-          `${latestNullifierRoot[0]}`,
+          `\n ${returnPara[0]}`,
+          `\n ${latestNullifierRoot[0]}`,
           `${params[0].flat(Infinity).join('\n')}`
         ],
       };
@@ -773,6 +781,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         });
         lines[lines.length - 1] += `, `;
       }
+      let returnParams = [];
+      node.returnParameters.forEach(element => {
+        if(element.typeName === 'bool')
+        returnPara.push(`customInputs,`);
+      });
       params[0] = sendTransactionBoilerplate(node);
       // params[0] = arr of nullifier root(s)
       // params[1] = arr of commitment root(s)
@@ -799,7 +812,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          .${node.functionName}(${lines} ${returnPara[0]? returnPara[0]: ' '} ${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,
@@ -811,12 +824,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n 	const key = config.web3.key;
             \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
             \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-            \n  let tx = await instance.getPastEvents("NewLeaves");
-            \n tx = tx[0];\n
+            \n  let tx = await instance.getPastEvents("NewLeaves"); `,
+            ...(params[0][3].length > 1? `
+            tx = tx[0];\n
             \n if (!tx) {
               throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
-            } \n
-            let encEvent = '';
+            } \n` : ` tx = sendTxn;` ),
+            `let encEvent = '';
             \n try {
             \n  encEvent = await instance.getPastEvents("EncryptedData");
             \n } catch (err) {

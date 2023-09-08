@@ -571,7 +571,11 @@ const visitor = {
         }
 
         const newFunctionDefinitionNode = node._newASTPointer;
-
+   // adds the return Parametes to the generate proof node
+   newNodes.generateProofNode.returnParameters = [];
+   for (const param of node._newASTPointer.returnParameters.parameters) {
+       newNodes.generateProofNode.returnParameters.push(param.name);
+   }
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
           if (param.isPrivate || param.isSecret || param.interactsWithSecret) {
@@ -592,6 +596,12 @@ const visitor = {
           delete state.publicInputs; // reset
         }
         if (state.constructorStatements && state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
+        // adds the return Parametes to the generate proof node
+        newNodes.sendTransactionNode.returnParameters = [];
+        for (const param of node._newASTPointer.returnParameters.parameters) {
+            newNodes.sendTransactionNode.returnParameters.push({name:param.name, typeName: param.typeName.name});
+        }
+        
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
           if (!param.isSecret) {

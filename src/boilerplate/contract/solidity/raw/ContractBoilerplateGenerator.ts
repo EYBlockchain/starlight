@@ -61,6 +61,7 @@ class ContractBoilerplateGenerator {
             ${[
               ...(nullifiersRequired ? [`uint nullifierRoot; 
               uint latestNullifierRoot; 
+              uint[] returnParam;
               uint[] newNullifiers;
                   `] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
@@ -103,11 +104,13 @@ class ContractBoilerplateGenerator {
     },
 
     verify({
+      containsAccessedOnlyState: accessedOnly,
       oldCommitmentAccessRequired: commitmentRoot,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
       encryptionRequired,
       circuitParams,
+      returnPara,
       constructorContainsSecret,
       isjoinCommitmentsFunction,
     }): string[] {
@@ -124,10 +127,10 @@ class ContractBoilerplateGenerator {
   
         if(type  === 'parameters'){
         switch (input) {
-          case 'nullifierRoot':  
-            verifyInput.push( `
+          case 'nullifierRoot' : 
+          verifyInput.push( `
             inputs[k++] = _inputs.nullifierRoot;`); 
-            break; 
+            break;
           case 'nullifier':  
             verifyInput.push( `
             inputs[k++] = newNullifiers[${counter.newNullifiers++}];`); 
@@ -172,7 +175,7 @@ class ContractBoilerplateGenerator {
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
       const verifyPreStatements: string[] = [
         'uint[] memory customInputs = _inputs.customInputs;', // TODO: do we need an indicator for when there are / aren't custom inputs? At the moment they're always assumed:
-
+        'uint[] memory returnParam = _inputs.returnParam;',
         ...(newNullifiers ? [`
           uint[] memory newNullifiers = _inputs.newNullifiers;`] : []),
 
@@ -197,8 +200,9 @@ class ContractBoilerplateGenerator {
           `
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
+            'returnParam.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
-            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoots(old and latest) and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0) + (returnParam.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoots(old and latest) and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,
@@ -218,10 +222,15 @@ class ContractBoilerplateGenerator {
               encryption: 0,
             };
 
-            _inputs.map(i => verifyInputsMap(type, i, counter));
-    
+            _inputs.map(i => verifyInputsMap(type, i, counter));          
           }
 
+          for (let [funcName, params] of Object.entries(returnPara)) {
+            if (funcName == name && params) 
+            verifyInput.push(`
+                inputs[k++] = _inputs.returnParam[0];  `)
+          }
+          
           if(_params && (Object.values(_params)[0].includes('nullifierRoot'))) verifyInput.push(`
             inputs[k++] = _inputs.latestNullifierRoot;`) 
             

@@ -306,9 +306,8 @@ export default {
     exit(path: NodePath, state: any) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, scope } = path;
-  
       const newFunctionDefinitionNode = node._newASTPointer;
- 
+      const circuitParams =  state.circuitParams[path.getUniqueFunctionName()];
       // Let's populate the `parameters` and `body`:
       const { parameters } = newFunctionDefinitionNode.parameters;
       const { postStatements, preStatements } = newFunctionDefinitionNode.body;
@@ -321,6 +320,7 @@ export default {
         ...buildNode('FunctionBoilerplate', {
           bpSection: 'parameters',
           scope,
+          circuitParams: circuitParams.parameters,
         }),
       );
 
@@ -338,8 +338,9 @@ export default {
           ...buildNode('FunctionBoilerplate', {
             bpSection: 'postStatements',
             scope,
+            circuitParams: circuitParams.parameters,
             customInputs: state.customInputs,
-           
+            
           }),
         );
       delete state?.customInputs;

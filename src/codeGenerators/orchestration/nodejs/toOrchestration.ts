@@ -42,22 +42,19 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
       node.inputParameters = node.inputParameters.filter(para => para !== undefined);
-      let returnIsSecret: string[] = [];
       const decStates = node.decrementedSecretStates;
       if(node.returnParameters.parameters) {
       node.returnParameters.parameters.forEach( node => {
-         returnIsSecret.push(node.isSecret);
-       })
-     }
-        node.returnParameters = node.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
-        node.returnParameters.forEach( (param, index) => {
-          if(decStates) {
-           if(decStates?.includes(param)){
-            node.returnParameters[index] = node.returnParameters[index]+'_2_newCommitment';
+         if(decStates){
+          if(decStates?.includes(node.name)){
+            node.name = node.name +'_2_newCommitment';
           }
-        } else if(returnIsSecret[index])
-            node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
+        } else if(node.isSecret && !(node.typeName.name === 'bool'))
+        node.name = node.name+'_newCommitment';
         })
+         }
+
+        node.returnParameters = node.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);
@@ -73,7 +70,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return node.name;
      
     case 'VariableDeclarationStatement': {
-      if (!node.interactsWithSecret)
+      if (!node.interactsWithSecret && !(node.declarations[0].typeName.name === 'bool'))
         return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue?.nodeType === 'Assignment') {
         if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
@@ -99,7 +96,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.initialValue.operator) {
         if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
         // local var dec
-        if (node.initialValue.nodeType === 'Literal' && !node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
+        if (node.initialValue.nodeType === 'Literal' && !node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
       } 
       return `\nlet ${codeGenerator(node.initialValue)};`;
@@ -202,14 +199,16 @@ export default function codeGenerator(node: any, options: any = {}): any {
       switch (node.subType) {
         default:
         case 'uint256':
+          if(node.name)
           return `parseInt(${node.name}.integer, 10)`;
+          return ;
         case 'bool':
           return `parseInt(${node.name}.integer, 10) === 0 ? false : true`;
         case 'address':
           if (options?.contractCall) return `${node.name}.hex(20)`
           return `${node.name}.integer`;
         case 'generalNumber':
-          return `generalise(${node.name})`;
+          return `generalise(${node.name})`;   
       }
 
     case 'MemberAccess':
