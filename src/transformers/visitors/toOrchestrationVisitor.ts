@@ -601,7 +601,10 @@ const visitor = {
               if (path.isStructDeclaration(param)) newParam.properties = param._newASTPointer.typeName.properties.map(p => p.name);
               if (path.isConstantArray) newParam.isConstantArray = true;
               newNodes.sendTransactionNode.publicInputs.push(newParam);
-            } else newNodes.sendTransactionNode.publicInputs.push(param.name);
+            } else {
+              newNodes.sendTransactionNode.publicInputs.push(param.name);
+              if (param.typeName.name === 'address') newNodes.sendTransactionNode.publicAddressInputs.push(param.name);
+            }
           }
         }
 

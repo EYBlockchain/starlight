@@ -256,6 +256,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractName,
         publicInputs = [],
         privateStates = {},
+        publicAddressInputs = [],
       } = fields;
       return {
         nodeType,
@@ -263,6 +264,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functionName,
         contractName,
         publicInputs,
+        publicAddressInputs,
       };
     }
     case 'SetupCommonFilesBoilerplate': {

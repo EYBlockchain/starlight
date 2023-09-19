@@ -794,7 +794,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           } else if (input.isConstantArray) {
             lines.push(`${input.name}.all.integer`);
           } else {
-            lines.push(`${input}.integer`);
+            if (node.publicAddressInputs.includes(input)) {
+              lines.push(`_${input}`);
+            } else {
+              lines.push(`${input}.integer`);
+            }
           }           
         });
         lines[lines.length - 1] += `, `;
