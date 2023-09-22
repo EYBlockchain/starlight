@@ -51,11 +51,11 @@ export const collectImportFiles = (
     case 'circuit': {
       contextDirPath ??= path.resolve(fileURLToPath(import.meta.url), '../../../circuits/');
       localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
-        let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
-        importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
-        // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
+      let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
+      importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
+      // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
 
-        if (
+      if (
           !(
             importFilePath.startsWith('utils') ||
             importFilePath.startsWith('ecc') ||
