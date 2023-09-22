@@ -105,7 +105,7 @@ export const collectImportFiles = (
     const writePath = context === 'orchestration' ? path.join(
       'orchestration',
       path.relative('./src/boilerplate', shortRelPath)
-    ) : shortRelPath;
+      ) : shortRelPath;
     if (context === 'contract') {
       // if import is an interface, we need to deploy contract e.g. IERC20 -> deploy ERC20
       if (
