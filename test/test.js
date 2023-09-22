@@ -131,7 +131,7 @@ describe("Code Gen testing", function () {
   });
 
   describe("#testing orchestration", function () {
-    it("Make sure orchestartion files are generated for all zolidity functions", function () {
+    it("Make sure orchestration files are generated for all zolidity functions", function () {
       var zappDirectory = fs.readdirSync(options.outputDirPath+'/orchestration/');
       let countorchestrationFiles = 0;
       for(var i in zappDirectory) {
