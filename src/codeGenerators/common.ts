@@ -51,11 +51,11 @@ export const collectImportFiles = (
     case 'circuit': {
       contextDirPath ??= path.resolve(fileURLToPath(import.meta.url), '../../../circuits/');
       localFilePaths = ImportStatementList.reduce((acc: string[], line: string) => {
-      let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
-      importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
-      // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
+        let importFilePath = line.match(/"(.*?)"/g)[0].replace(/"/g, ''); // get text between quotes; i.e. the import filepaths
+        importFilePath += path.extname(importFilePath) === '.zok' ? '' : '.zok'; // ensure file extension.
+        // We need to provide common files which _aren't_ included in the zokrates stdlib. Stdlib filepaths start with the following:
 
-      if (
+        if (
           !(
             importFilePath.startsWith('utils') ||
             importFilePath.startsWith('ecc') ||
@@ -105,7 +105,7 @@ export const collectImportFiles = (
     const writePath = context === 'orchestration' ? path.join(
       'orchestration',
       path.relative('./src/boilerplate', shortRelPath)
-      ) : shortRelPath;
+    ) : shortRelPath;
     if (context === 'contract') {
       // if import is an interface, we need to deploy contract e.g. IERC20 -> deploy ERC20
       if (
@@ -115,11 +115,10 @@ export const collectImportFiles = (
       ) {
         // if we import an interface, we must find the original contract
         // we assume that any interface begins with I (substring(1)) and the remaining chars are the original contract name
-        const newLocalPath = p.replace(n, n.substring(1));
-        const newPath = shortRelPath.replace(n, n.substring(1));
+        const newPath = absPath.replace(n, n.substring(1)); // We should operate on an absolute path here, rather than the relative one. It will now work if we're using the zappify command in a different directory.
         const check = fs.existsSync(newPath);
         if (check) {
-          localFilePaths.push(newLocalPath);
+          localFilePaths.push(newPath);
         }
       }
     }
