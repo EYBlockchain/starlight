@@ -20,7 +20,7 @@ _Solidity contract --> Zolidity contract --> zappify --> zApp_
 
 The main objective of this transpiler is to enable developers to quickly draft frameworks for zApps.
 
-See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the transpiler works.
+See [here](https://starlight-3.gitbook.io/starlight/) for the gitbook, and [here](https://starlight-3.gitbook.io/starlight/doc/writeup/) for an enormously detailed explanation of how the transpiler works.
 
 
 ---
