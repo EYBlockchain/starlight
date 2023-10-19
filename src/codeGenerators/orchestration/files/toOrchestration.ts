@@ -163,17 +163,19 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams: string[] = [];
-    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
-    if(returnParamsName.length > 0){
-    returnParamsName.forEach(param => {
-      if(fn.decrementsSecretState.includes(param))
-         returnParams.push(param+'_2_newCommitment');
-      else if(param !== 'true')
-       returnParams.push(param+'_newCommitment');
-       else
-       returnParams.push('bool');
-    });
-  }
+  const decStates = fn.decrementedSecretStates;
+      if(fn.returnParameters.parameters) {
+        fn.returnParameters.parameters.forEach( node => {
+         if(decStates){
+          if(decStates?.includes(node.name)){
+            node.name = node.name +'_2_newCommitment';
+          }
+        } else if(node.isSecret && !(node.typeName.name === 'bool'))
+        node.name = node.name+'_newCommitment';
+        })
+         }
+
+         returnParams = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
     fnboilerplate = fnboilerplate.replace(/,const/g, `const`);

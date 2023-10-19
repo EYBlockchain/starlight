@@ -479,9 +479,9 @@ export function buildNode(nodeType: string, fields: any = {}): any {
     }
     case 'FunctionBoilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
-      const { scope, bpSection, customInputs } = fields;
+      const { scope, bpSection,  circuitParams, customInputs } = fields;
       const bp = new FunctionBP(scope);
-      return bp.getBoilerplate(bpSection, customInputs);
+      return bp.getBoilerplate(bpSection, circuitParams, customInputs);
     }
     // Boilerplate nodeTypes will be understood by the codeGenerator, where raw boilerplate code will be inserted.
     case 'ShieldContractConstructorBoilerplate': {

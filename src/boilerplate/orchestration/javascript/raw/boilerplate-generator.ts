@@ -270,12 +270,15 @@ class BoilerplateGenerator {
             ${stateName}_0_nullifier = generalise(${stateName}_0_nullifier.hex(32)); // truncate
             ${stateName}_1_nullifier = generalise(${stateName}_1_nullifier.hex(32)); // truncate
             // Non-membership witness for Nullifier
+            
             const ${stateName}_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_0_nullifier);
-            const ${stateName}_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_1_nullifier);
-
             const ${stateName}_nullifierRoot = generalise(${stateName}_0_nullifier_NonMembership_witness.root);
             const ${stateName}_0_nullifier_path = generalise(${stateName}_0_nullifier_NonMembership_witness.path).all;
+
+            await temporaryUpdateNullifier(${stateName}_0_nullifier);
+            const ${stateName}_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_1_nullifier); 
             const ${stateName}_1_nullifier_path = generalise(${stateName}_1_nullifier_NonMembership_witness.path).all;
+            await temporaryUpdateNullifier(${stateName}_1_nullifier);
             `];
         case 'whole':
           if(accessedOnly)
@@ -284,6 +287,7 @@ class BoilerplateGenerator {
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
 
             // Non-membership witness for Nullifier
+
             const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
 
             const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
@@ -294,71 +298,20 @@ class BoilerplateGenerator {
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
 
             // Non-membership witness for Nullifier
+
             const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
 
             const ${stateName}_nullifierRoot = generalise(${stateName}_nullifier_NonMembership_witness.root);
             const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
-          `];
-        default:
-          throw new TypeError(stateType);
-      }
-    },
-  };
-
-  temporaryUpdatedNullifier = { 
-    postStatements({ stateName, accessedOnly, stateType }): string[] {
-      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-      switch (stateType) {
-        
-        case 'partitioned':
-          return [`
-            
-
-            await temporaryUpdateNullifier(${stateName}_0_nullifier);
-            await temporaryUpdateNullifier(${stateName}_1_nullifier);
-            `];
-        case 'whole':
-          if(!accessedOnly)
-          return [`
             await temporaryUpdateNullifier(${stateName}_nullifier);
           `];
-          return [` `]; 
-        default:
-          throw new TypeError(stateType);
-      }
-    },
-
-  };
-
-  calculateUpdateNullifierPath = {
-    postStatements({ stateName, accessedOnly, stateType }): string[] {
-      // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-      switch (stateType) {
-        
-        case 'partitioned':
-          return [`
-           // Get the new updated nullifier Paths
-            const ${stateName}_0_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_0_nullifier);
-            const ${stateName}_1_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_1_nullifier);
- 
-            const ${stateName}_newNullifierRoot = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.root);
-            const ${stateName}_0_nullifier_updatedpath = generalise(${stateName}_0_updated_nullifier_NonMembership_witness.path).all;
-            const ${stateName}_1_nullifier_updatedpath = generalise(${stateName}_1_updated_nullifier_NonMembership_witness.path).all;
-            `];
-        case 'whole':
-          if(!accessedOnly)
-          return [`
-          // Get the new updated nullifier Paths 
-            const ${stateName}_updated_nullifier_NonMembership_witness =  getupdatedNullifierPaths(${stateName}_nullifier);
-            const ${stateName}_nullifier_updatedpath = generalise(${stateName}_updated_nullifier_NonMembership_witness.path).all;
-            const ${stateName}_newNullifierRoot = generalise(${stateName}_updated_nullifier_NonMembership_witness.root);
-          `]; 
-         return [` `]; 
         default:
           throw new TypeError(stateType);
       }
     },
   };
+
+  
 
   calculateCommitment = {
 
@@ -405,7 +358,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree } from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
@@ -454,13 +407,10 @@ class BoilerplateGenerator {
               \tsecretKey.integer,
               \tsecretKey.integer,
               ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-              ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
-              \t${stateName}_0_nullifier_updatedpath.integer,
               \t${stateName}_1_nullifier.integer,
               \t${stateName}_1_nullifier_path.integer,
-              \t${stateName}_1_nullifier_updatedpath.integer,
               ${prev(0)},
               \t${stateName}_0_prevSalt.integer,
               ${prev(1)},
@@ -489,10 +439,8 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
-                      \t${stateName}_nullifier_updatedpath.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
@@ -517,10 +465,8 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
-                      \t${stateName}_nullifier_updatedpath.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
@@ -654,7 +600,7 @@ integrationTestBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments, resetTemporaryNullifierTree} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -693,7 +639,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, resetTemporaryNullifierTree } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */

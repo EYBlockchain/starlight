@@ -29,13 +29,13 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
           item.expression.components.forEach(element => {
             if(element.kind === 'bool'){
               thisState.customInputs ??= [];
-              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
+              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, inCircuit: true});
             }
           });
         } else {
           if(item.expression.kind === 'bool'){
             thisState.customInputs ??= [];
-            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
+            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, inCircuit: true});
           }
         }
       }
@@ -44,7 +44,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
    if(thisState.variableName.includes(indicator.node.name))
-    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}});
+    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'},inCircuit: true});
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -306,9 +306,8 @@ export default {
     exit(path: NodePath, state: any) {
       // We populate the entire shield contract upon exit, having populated the FunctionDefinition's scope by this point.
       const { node, scope } = path;
-  
       const newFunctionDefinitionNode = node._newASTPointer;
- 
+      const circuitParams =  state.circuitParams[path.getUniqueFunctionName()];
       // Let's populate the `parameters` and `body`:
       const { parameters } = newFunctionDefinitionNode.parameters;
       const { postStatements, preStatements } = newFunctionDefinitionNode.body;
@@ -321,6 +320,7 @@ export default {
         ...buildNode('FunctionBoilerplate', {
           bpSection: 'parameters',
           scope,
+          circuitParams: circuitParams.parameters,
         }),
       );
 
@@ -338,8 +338,9 @@ export default {
           ...buildNode('FunctionBoilerplate', {
             bpSection: 'postStatements',
             scope,
+            circuitParams: circuitParams.parameters,
             customInputs: state.customInputs,
-           
+            
           }),
         );
       delete state?.customInputs;

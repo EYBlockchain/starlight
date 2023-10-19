@@ -124,7 +124,6 @@ const visitor = {
     enter(path: NodePath, state: any) {
 
       const { node, parent, scope } = path;
-
       // Check the function for modifications to any stateVariables.
       // We'll need to create a new circuit file if we find a modification.
       // TODO: will we also need a new circuit file even if we're merely 'referring to' a secret state (because then a nullifier might be needed?)
@@ -349,7 +348,6 @@ const visitor = {
                 break;
               }
               case 'IndexAccess':{
-                console.log(node);
                 if(id == node.expression.indexExpression.referencedDeclaration) {
                   if ((bindings instanceof VariableBinding)){
                     if(item.name.includes(bindings.node.name))
@@ -417,7 +415,6 @@ const visitor = {
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-
       if (node.stateVariable) {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
@@ -427,20 +424,20 @@ const visitor = {
       if (path.isLocalStackVariableDeclaration())
         declarationType = 'localStack';
       if (path.isFunctionParameterDeclaration()) declarationType = 'parameter';
-
+      
       if (
         declarationType === 'localStack' &&
-        !node.isSecret &&
+        !(node.isSecret || node.declarations[0].isSecret) &&
         !scope.getReferencedIndicator(node)?.interactsWithSecret &&
-        !path.getAncestorContainedWithin('initializationExpression')
+        !path.getAncestorContainedWithin('initializationExpression' ) 
       ) {
         // we don't want to add non secret local vars
-
         node._newASTPointer = parent._newASTPointer;
         state.skipSubNodes = true;
+
         return;
       }
-
+ 
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
 
@@ -543,7 +540,8 @@ const visitor = {
       if((scope.getReferencedNode(expression.expression))?.containsSecret)
       node.containsSecret = 'true';
     }
-let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret ||path.getAncestorOfType('IfStatement')?.containsSecret;
+
       if(path.getAncestorOfType('ForStatement') && expression.containsPublic ){
         childOfSecret = false;
       }
@@ -906,7 +904,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       // a visitor to collect all identifiers in an if condition
       // we use this list later to init temp variables
       const findConditionIdentifiers = (thisPath: NodePath, state: any) => {
-        if (!thisPath.scope.getReferencedIndicator(thisPath.node)?.isModified) return;
+        if(!thisPath.scope.getReferencedIndicator(thisPath.node)?.isModified) return;
         if (!thisPath.getAncestorContainedWithin('condition')) return;
         if (thisPath.getAncestorContainedWithin('baseExpression') || (
           thisPath.getAncestorOfType('MemberAccess') && thisPath.containerName === 'expression'
@@ -944,6 +942,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
             break;
         }
       };
+      
       let identifiersInCond = { skipSubNodes: false, list: [] };
       path.traversePathsFast(findConditionIdentifiers, identifiersInCond);
       path.node._newASTPointer.conditionVars = identifiersInCond.list;

@@ -162,6 +162,7 @@ const internalCallVisitor = {
                       }
                     }
                    generateProofNode.parameters = [];
+                   generateProofNode.returnparameters = [];
                   }
                  if(node.nodeType === 'SendTransaction'){
                     sendTransactionNode = cloneDeep(node);
