@@ -63,6 +63,7 @@ export default function toOrchestration(ast: any, options: any) {
   const contractName = `${
     contractNode.name.charAt(0).toUpperCase() + contractNode.name.slice(1)
   }Shield`;
+  const wholeStateNames = contractNode._newASTPointer.wholeNullified;
 
   // copy over existing backend files to the output dir:
   logger.verbose(
@@ -79,6 +80,7 @@ export default function toOrchestration(ast: any, options: any) {
     if (!fileObj.generic) {
       file = file.replace(/CONTRACT_NAME/g, contractName);
       file = file.replace(/FUNCTION_NAME/g, options.zappName);
+      file = file.replace(/WHOLE_STATE_NAMES/g, wholeStateNames ? wholeStateNames.map(n => `'${n}'`).join(', ') : '');
     }
     const dir = pathjs.dirname(filepath);
     logger.debug(`About to save to ${filepath}...`);

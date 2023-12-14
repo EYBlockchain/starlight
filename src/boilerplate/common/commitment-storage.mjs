@@ -16,6 +16,7 @@ const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
 
 const TRUNC_LENGTH = 32; // Just for testing so we don't make more than 32 deep smt trees.
+const WHOLE_STATES = [WHOLE_STATE_NAMES];
 // structure for SMT
 const Branch = (leftTree, rightTree) => ({
   tag: 'branch',
@@ -92,6 +93,17 @@ export async function getCommitmentsByState(name, mappingKey = null) {
 	const commitments = await db
 		.collection(COMMITMENTS_COLLECTION)
 		.find(query)
+		.toArray();
+	return commitments;
+}
+
+// function to retrieve all known nullified commitments
+export async function getNullifiedCommitments() {
+	const connection = await mongo.connection(MONGO_URL);
+	const db = connection.db(COMMITMENTS_DB);
+	const commitments = await db
+		.collection(COMMITMENTS_COLLECTION)
+		.find({ isNullified: true })
 		.toArray();
 	return commitments;
 }
@@ -530,6 +542,28 @@ export async function temporaryUpdateNullifier(nullifier){
 	
 	temp_smt_tree = insertLeaf(generalise(nullifier).hex(32), temp_smt_tree);
 	
+}
+
+export async function reinstateNullifiers() {
+	const initialised = [];
+	const nullifiedCommitments = await getNullifiedCommitments();
+	if (!nullifiedCommitments) {
+		logger.info('No nullifiers to add to the tree');
+		return;
+	}
+	logger.warn(
+	'Reinstatiating nullifiers - NOTE that any nullifiers added from another client may not be known here, so the tree will be out of sync.',
+	);
+	for (const c of nullifiedCommitments) {
+		if (WHOLE_STATES.includes(c.name) && !initialised.includes(c.preimage.stateVarId)) {
+			logger.debug(`initialising state ${c.name}`);
+			smt_tree = insertLeaf(poseidonHash([BigInt(c.preimage.stateVarId), BigInt(0), BigInt(0)]).hex(32), smt_tree);
+			initialised.push(c.preimage.stateVarId);
+		}
+		logger.debug(`nullifying state ${c.name}: ${c.nullifier}`);
+		smt_tree = insertLeaf(c.nullifier, smt_tree);
+	}
+	temp_smt_tree = smt_tree;
 }
 
 export function getupdatedNullifierPaths(nullifier){

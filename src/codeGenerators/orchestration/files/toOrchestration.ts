@@ -435,6 +435,13 @@ export default function fileGenerator(node: any) {
       const migrationsfile = files.filter(obj =>
         obj.filepath.includes(`shield`),
       )[0];
+
+      if (node.functionNames.includes('cnstrctr')) {
+        const redeployPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/redeploy');
+        const redeployFile = { filepath: 'bin/redeploy', file: fs.readFileSync(redeployPath, 'utf8') };
+        prepareSetupScript(redeployFile, node);
+        files.push(redeployFile);
+      }
       // replace placeholder values with ours
       vkfile.file = vkfile.file.replace(
         /FUNCTION_NAMES/g,
