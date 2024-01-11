@@ -1,3 +1,5 @@
+_This code is not owned by EY and EY provides no warranty and disclaims any and all liability for use of this code. Users must conduct their own diligence with respect to use for their purposes and any and all usage is on an as-is basis and at your own risk._
+
 # starlight :stars:
 
 Generate a zApp from a Solidity contract.
@@ -20,7 +22,7 @@ _Solidity contract --> Zolidity contract --> zappify --> zApp_
 
 The main objective of this transpiler is to enable developers to quickly draft frameworks for zApps.
 
-See [here](./doc/WRITEUP.md) for an enormously detailed explanation of how the transpiler works.
+See [here](https://starlight-3.gitbook.io/starlight/) for the gitbook, and [here](https://starlight-3.gitbook.io/starlight/doc/writeup/) for an enormously detailed explanation of how the transpiler works.
 
 
 ---
@@ -326,6 +328,20 @@ You can also filter these commitments by variable name. Using the example above,
 }
 ```
 as a GET request to `http://localhost:3000/getCommitmentsByVariableName`.
+
+#### Using secret states in the constructor
+
+Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Any user supplied inputs will be prompted for in the command line when running `./bin/setup`.
+
+Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
+
+If you would like to restart the zapp and redeploy the contract, always (with no running docker containers) run:
+
+`./bin/redeploy` <-- creates a new constructor proof and saves the commitment, then deploys the shield contract
+
+`npm run restart` <-- if you'd like to use the APIs, always **restart** rather than **start** since the latter clears your local dbs
+
+Then, if you previously had nullifiers, reinstate them in your local sparse merkle tree by sending a POST to `http://localhost:3000/reinstateNullifiers`.
 
 #### Deploy on public testnets
 

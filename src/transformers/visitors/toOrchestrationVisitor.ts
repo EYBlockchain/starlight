@@ -240,6 +240,7 @@ const visitor = {
 
     exit(path: NodePath, state: any) {
       const { node } = path;
+      node._newASTPointer.wholeNullified = state.wholeNullified;
       for (const file of node._newASTPointer) {
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           file.constructorParams = state.constructorParams;
@@ -445,6 +446,11 @@ const visitor = {
               || '';
           }
 
+          if (stateVarIndicator.isWhole && stateVarIndicator.isNullified) {
+            state.wholeNullified ??= [];
+            if (!state.wholeNullified.includes(name)) state.wholeNullified.push(name)
+          }
+          
           let { incrementsArray, incrementsString } = isIncremented
             ? collectIncrements(stateVarIndicator)
             : { incrementsArray: null, incrementsString: null };
