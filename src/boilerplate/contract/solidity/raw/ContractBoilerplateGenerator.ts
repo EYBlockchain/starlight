@@ -259,6 +259,7 @@ class ContractBoilerplateGenerator {
        ...(newNullifiers) ? [`
        if (newNullifiers.length > 0) {
         newNullifierRoot = _inputs.latestNullifierRoot;
+        updateNullifiers(newNullifiers, newNullifierRoot);
       }`] : [] 
       ];
 
