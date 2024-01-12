@@ -197,8 +197,8 @@ function codeGenerator(node: any) {
     case 'InternalFunctionCall' :{
       if(node.parameters ){
         if(node.internalFunctionInteractsWithSecret)
-         return `\t \t \t \t ${node.name} (${node.parameters});`
-        return  `\t \t \t \t ${node.name} (${node.parameters.map(codeGenerator)});`
+         return `\t \t \t \t ${node.name} (inputs, proof);`
+        return  `\t \t \t \t ${node.name} (inputs, proof);`
       } else {
          const args = node.arguments.map(codeGenerator);
          return `\t \t \t \t${node.name} (${args.join(', ')});`
