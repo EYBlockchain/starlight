@@ -790,11 +790,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
-            lines.push(`[${input.properties.map(p => `${input.name}${input.isConstantArray ? '.all' : ''}.${p}.integer`).join(',')}]`)
+            lines.push(`customInputs: [${input.properties.map(p => `${input.name}${input.isConstantArray ? '.all' : ''}.${p}.integer`).join(',')}]`)
           } else if (input.isConstantArray) {
-            lines.push(`${input.name}.all.integer`);
+            lines.push(`customInputs: ${input.name}.all.integer`);
           } else {
-            lines.push(`${input}.integer`);
+            lines.push(`customInputs: ${input}.integer`);
           }           
         });
         lines[lines.length - 1] += `, `;
@@ -806,12 +806,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[3] = arr of commitments
       
 
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
-      if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
-      if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
-      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
-      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
-      if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
+      if (params[0][0][0]) params[0][0] = `nullifierRoot: ${params[0][0][0]},latestNullifierRoot:${params[0][0][1]},`; // nullifierRoot - array 
+      if (params[0][2][0]) params[0][2] = `commitmentRoot: ${params[0][2][0]},`; // commitmentRoot - array 
+      if (params[0][1][0]) params[0][1] = `newNullifiers: [${params[0][1]}],`; // nullifiers - array
+      if (params[0][3][0]) params[0][3] = `newCommitments: [${params[0][3]}],`; // commitments - array
+      if (params[0][4][0]) params[0][4] = `cipherText: [${params[0][4]}],`; // cipherText - array of arrays
+      if (params[0][5][0]) params[0][5] = `encKeys: [${params[0][5]}],`; // cipherText - array of arrays
 
 
       if (node.functionName === 'cnstrctr') return {
@@ -820,12 +820,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
-
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          .${node.functionName}({${lines} ${params[0][0]}${params[0][1]}${params[0][2]}${params[0][3]}${params[0][4]}${params[0][5]}}, proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,

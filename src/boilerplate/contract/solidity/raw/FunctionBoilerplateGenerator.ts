@@ -101,43 +101,6 @@ class FunctionBoilerplateGenerator {
 
       return [
         `
-          Inputs memory inputs;`,
-
-        ...(customInputs?.length ?
-          [`
-          inputs.customInputs = new uint[](${customInputs.flat(Infinity).length});
-        	${customInputs.flat(Infinity).map((input: any, i: number) => {
-            if (input.type === 'address') return `inputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
-            if (input.type === 'bool' && !['0', '1'].includes(input.name)) return `inputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
-            return `inputs.customInputs[${i}] = ${input.name};`;
-          }).join('\n')}`]
-          : []),
-
-          ...(newNullifiers ? [`
-          inputs.nullifierRoot = nullifierRoot; `] : []),
-
-          ...(newNullifiers ? [`
-          inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
-
-
-        ...(newNullifiers ? [`
-          inputs.newNullifiers = newNullifiers;
-           `] : []),
-
-        ...(commitmentRoot ? [`
-          inputs.commitmentRoot = commitmentRoot;`] : []),
-
-        ...(newCommitments ? [`
-          inputs.newCommitments = newCommitments;`] : []),
-
-        ...(encryptionRequired ? [`
-          inputs.cipherText = cipherText;`] : []),
-
-        ...(encryptionRequired ? [`
-          inputs.encKeys = ephPubKeys;`] : []),
-        `
-          ${msgSigCheck.join('\n')}`,
-        `
           verify(proof, uint(FunctionNames.${functionName}), inputs);`,
 
         ...(encryptionRequired ? [`

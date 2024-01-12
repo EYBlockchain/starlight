@@ -82,7 +82,7 @@ function codeGenerator(node: any) {
 
       }
 
-      const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} {`;
+      const functionSignature = `${functionType} (Inputs calldata inputs, uint256[] calldata proof) ${node.visibility} ${node.stateMutability} {`;
       let body = codeGenerator(node.body);
       let msgSigCheck = body.slice(body.indexOf('bytes4 sig'), body.indexOf('verify') )
       if(!node.msgSigRequired)
