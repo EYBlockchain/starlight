@@ -48,6 +48,7 @@ contract MerkleTree is MiMC {
     */
     event NewLeaf(uint leafIndex, uint leafValue, uint root);
     event NewLeaves(uint minLeafIndex, uint[] leafValues, uint root);
+    event NewNullifiers(uint[] nullifiers, uint nullifierRoot);
 
     // event Output(uint[] input, uint[] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
 
@@ -258,4 +259,10 @@ contract MerkleTree is MiMC {
 
     // Intial Root for sparse merkle tree
     uint256 public constant Initial_NullifierRoot = 21443572485391568159800782191812935835534334817699172242223315142338162256601;
+
+    // function emitting the new nullifier event
+    function updateNullifiers(uint[] memory nullifiers, uint nullifierRoot) public  {
+        
+        emit NewNullifiers(nullifiers, nullifierRoot);
+    }
 }

@@ -359,6 +359,7 @@ class BoilerplateGenerator {
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
+        `\nimport { getnullifierMembershipWitness,temporaryUpdateNullifier} from './common/nullifier-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
@@ -600,7 +601,7 @@ integrationTestBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments, resetTemporaryNullifierTree} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport { resetTemporaryNullifierTree } from "./common/nullifier-storage.mjs";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -639,7 +640,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, resetTemporaryNullifierTree, reinstateNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";\nimport { resetTemporaryNullifierTree, reinstateNullifiers } from "./common/nullifier-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
