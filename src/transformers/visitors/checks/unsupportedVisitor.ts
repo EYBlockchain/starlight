@@ -83,7 +83,7 @@ export default {
     enter(node: any) {
       if (node.name.startsWith('_'))
         throw new ZKPError(
-          `Zokrates does not support variables that begin with _ such as as _value.`,
+          `Zokrates does not support variables that begin with an underscore such as as _value.`,
           node
         );
     },
