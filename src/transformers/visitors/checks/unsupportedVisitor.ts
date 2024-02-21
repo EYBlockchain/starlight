@@ -7,7 +7,7 @@
  * support for yet.
  */
 
-import { TODOError, ZKPError } from '../../../error/errors.js';
+import { TODOError, ZKPError, ParseError } from '../../../error/errors.js';
 import { traverseNodesFast } from '../../../traverse/traverse.js';
 
 
@@ -76,6 +76,27 @@ export default {
           `We can't currently handle conditions which are singular variables - instead of if(a) try something like if(a == true). This is because the compiler must store the 'LHS' (a) and 'RHS' (true) value of the condition in case either are modified throughout the function.`,
           node.condition
         );
+    },
+  },
+
+  BinaryOperation: {
+    enter(node: any) {
+      if (node.operator == "&&" || node.operator == "||") {
+        if (node.leftExpression.nodeType == "BinaryOperation" ) {
+          if ((node.leftExpression.operator == "&&" || node.leftExpression.operator == "||") && node.leftExpression.operator !== node.operator) {
+            throw new ParseError(
+              `A condition contains nested logical operators without brackets. Starlight does not know whether to read from right or left.`
+            );
+          }
+        }
+        if (node.rightExpression.nodeType == "BinaryOperation" ) {
+          if ((node.rightExpression.operator == "&&" || node.rightExpression.operator == "||") && node.rightExpression.operator !== node.operator) {
+            throw new ParseError(
+              `A condition contains nested logical operators without brackets. Starlight does not know whether to read from right or left.`
+            );
+          }
+        }
+      }
     },
   },
 };

@@ -461,7 +461,11 @@ const visitor = {
 
       const newNode = buildNode('BinaryOperation', { operator });
       node._newASTPointer = newNode;
-      path.inList ? parent._newASTPointer[path.containerName].push(newNode) : parent._newASTPointer[path.containerName] = newNode;
+      if (parent.nodeType === "TupleExpression") {
+        path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer = newNode;
+      } else {
+        path.inList ? parent._newASTPointer[path.containerName].push(newNode) : parent._newASTPointer[path.containerName] = newNode;
+      } 
     },
   },
 
@@ -507,7 +511,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
-      node._newASTPointer = newNode.components;
+      node._newASTPointer = newNode.components
       parent._newASTPointer[path.containerName] = newNode;
     },
   },
