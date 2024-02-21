@@ -97,6 +97,13 @@ export default {
           }
         }
       }
+  VariableDeclaration: {
+    enter(node: any) {
+      if (node.name.startsWith('_'))
+        throw new ZKPError(
+          `Zokrates does not support variables that begin with an underscore such as as _value.`,
+          node
+        );
     },
   },
 };
