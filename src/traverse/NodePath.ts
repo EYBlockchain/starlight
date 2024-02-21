@@ -63,6 +63,7 @@ export default class NodePath {
   inList: boolean;
   scope: Scope;
   isSecret?: boolean;
+  isSharedSecret?:boolean;
   isPublic?: boolean;
   containsSecret?: boolean;
   containsPublic?: boolean;

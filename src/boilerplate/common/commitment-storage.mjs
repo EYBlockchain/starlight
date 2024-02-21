@@ -3,17 +3,21 @@
 Logic for storing and retrieving commitments from a mongo DB.
 */
 import config from 'config';
+import fs from 'fs';
 import gen from 'general-number';
 import mongo from './mongo.mjs';
 import logger from './logger.mjs';
 import utils from "zkp-utils";
 import { poseidonHash } from './number-theory.mjs';
+import { sharedSecretKey, scalarMult, compressStarlightKey } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
 import { SumType, reduceTree, toBinArray, poseidonConcatHash } from './smt_utils.mjs';
 import { hlt } from './hash-lookup.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
+
+const keyDb = '/app/orchestration/common/db/key.json';
 
 const TRUNC_LENGTH = 32; // Just for testing so we don't make more than 32 deep smt trees.
 const WHOLE_STATES = [WHOLE_STATE_NAMES];
@@ -336,40 +340,6 @@ export async function joinCommitments(
 	oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
 	oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32)); // truncate
 
-	// Non-membership witness for Nullifier
-	const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-		oldCommitment_0_nullifier
-	);
-	const oldCommitment_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-		oldCommitment_1_nullifier
-	);
-
-	const oldCommitment_nullifierRoot = generalise(oldCommitment_0_nullifier_NonMembership_witness.root);
-	const oldCommitment_0_nullifier_path = generalise(
-		oldCommitment_0_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_1_nullifier_path = generalise(
-		oldCommitment_1_nullifier_NonMembership_witness.path
-	).all;
-
-
-	await temporaryUpdateNullifier(a_0_nullifier);
-	await temporaryUpdateNullifier(a_1_nullifier);
-
-	const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-		oldCommitment_0_nullifier
-	);
-	const oldCommitment_1_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-		oldCommitment_1_nullifier
-	);
-
-	const oldCommitment_0_nullifier_newpath = generalise(
-		oldCommitment_0_updated_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_1_nullifier_newpath = generalise(
-		oldCommitment_1_updated_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_newNullifierRoot = generalise(oldCommitment_0_updated_nullifier_NonMembership_witness.root);
 	// Calculate commitment(s):
 
 	const newCommitment_newSalt = generalise(utils.randomHex(31));
@@ -406,14 +376,8 @@ export async function joinCommitments(
 		secretKey.integer,
 		secretKey.integer,
 
-		oldCommitment_nullifierRoot.integer,
-		oldCommitment_newNullifierRoot.integer,
 		oldCommitment_0_nullifier.integer,
-		oldCommitment_0_nullifier_path.integer,
-		oldCommitment_0_nullifier_newpath.integer,
 		oldCommitment_1_nullifier.integer,
-		oldCommitment_1_nullifier_path.integer,
-		oldCommitment_1_nullifier_newpath.integer,
 		oldCommitment_0_prev.integer,
 		oldCommitment_0_prevSalt.integer,
 		oldCommitment_1_prev.integer,
@@ -436,8 +400,6 @@ export async function joinCommitments(
 
 	const txData = await instance.methods
 		.joinCommitments(
-			oldCommitment_nullifierRoot.integer,
-			oldCommitment_newNullifierRoot.integer,
 			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
 			oldCommitment_root.integer,
 			[newCommitment.integer],
@@ -581,5 +543,47 @@ export function getupdatedNullifierPaths(nullifier){
 	const root = getHash(temp_smt_tree);
 	const witness = { path: membershipPath.path, root: root };
 	return witness;
+}
+
+export async function getSharedkeys(
+	_recipientPublicKey
+) {
+
+	const keys = JSON.parse(
+		fs.readFileSync(keyDb, "utf-8", (err) => {
+			console.log(err);
+		})
+	);
+	const secretKey = generalise(keys.secretKey);
+	const publicKey = generalise(keys.publicKey);
+const recipientPublicKey = generalise(_recipientPublicKey);
+	
+	let sharedSecret = sharedSecretKey(secretKey, recipientPublicKey);
+	sharedSecret = generalise(utils.resizeHex(sharedSecret.hex(32), 31));
+
+	let sharePublicKeyPoint = generalise(
+		scalarMult(sharedSecret.hex(32), config.BABYJUBJUB.GENERATOR)
+	);
+
+
+	let sharedPublicKey = compressStarlightKey(sharePublicKeyPoint);
+
+	while (sharedPublicKey === null) {
+		logger.warn(`your secret key created a large public key - resetting`);
+		let sharedPublicKeyPoint = generalise(
+			scalarMult(sharedSecret.hex(32), config.BABYJUBJUB.GENERATOR)
+		);
+		sharedPublicKey = compressStarlightKey(sharedPublicKeyPoint);
+	}
+
+	const keyJson = {
+		secretKey: secretKey.integer,
+		publicKey: publicKey.integer,
+		sharedSecretKey: sharedSecret.integer,
+		sharedPublicKey: sharedPublicKey.integer, // not req
+	};
+	fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
+
+	return publicKey;
 }
 

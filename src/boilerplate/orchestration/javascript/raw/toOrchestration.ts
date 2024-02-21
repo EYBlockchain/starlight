@@ -57,12 +57,12 @@ const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
   const output: string[][] = [[],[],[],[],[],[]];
-  // output[0] = nullifier root(s)
-  // output[1] = arr of nullifiers
-  // output[2] = commitments root(s)
-  // output[3] = arr of commitments
+   // output[0] = arr of nullifiers
+  // output[1] = root(s)
+  // output[2] = arr of commitments
+  // output[3] = arr of nullifiers to check, not add (for accessed states)
   // output[4] = arr of cipherText
-  // output[5] = arr of enc keys
+  // output[5] = arr of enc key
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(privateStates)) {
@@ -71,17 +71,14 @@ export const sendTransactionBoilerplate = (node: any) => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            output[2].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`, `${privateStateName}_newNullifierRoot.integer`);
-            output[1].push(
-              `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
-            );
-            output[3].push(`${privateStateName}_2_newCommitment.integer`);
+            output[1].push(`${privateStateName}_root.integer`);
+            output[0].push(`${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`);
+            output[2].push(`${privateStateName}_2_newCommitment.integer`);
             break;
           case false:
           default:
             // increment
-            output[3].push(`${privateStateName}_newCommitment.integer`);
+            output[2].push(`${privateStateName}_newCommitment.integer`);
             if (stateNode.encryptionRequired) {
               output[4].push(`${privateStateName}_cipherText`);
               output[5].push(`${privateStateName}_encKey`);
@@ -93,13 +90,12 @@ export const sendTransactionBoilerplate = (node: any) => {
       default:
         // whole
         if (!stateNode.reinitialisedOnly)
-          output[2].push(`${privateStateName}_root.integer`);
+          output[1].push(`${privateStateName}_root.integer`);
           if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
-            output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
+            output[0].push(`${privateStateName}_nullifier.integer`);
           }
           if (!stateNode.accessedOnly && !stateNode.burnedOnly)
-            output[3].push(`${privateStateName}_newCommitment.integer`);
+            output[2].push(`${privateStateName}_newCommitment.integer`);
           if (stateNode.encryptionRequired) {
             output[4].push(`${privateStateName}_cipherText`);
             output[5].push(`${privateStateName}_encKey`);
@@ -287,6 +283,7 @@ export const preimageBoilerPlate = (node: any) => {
           reinitialisedOnly: false,
           initialised: stateNode.initialised,
           structProperties: stateNode.structProperties,
+          isSharedSecret: stateNode.isSharedSecret,
           accessedOnly: true,
           stateVarIds,
         }));
@@ -302,6 +299,9 @@ export const preimageBoilerPlate = (node: any) => {
     let newOwnerStatment: string;
     switch (newOwner) {
       case null:
+        if(stateNode.isSharedSecret)
+        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+        else
         newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         break;
       case 'msg':
@@ -320,6 +320,9 @@ export const preimageBoilerPlate = (node: any) => {
           }
           \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
+          if(stateNode.isSharedSecret)
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+          else
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
         break;
@@ -332,6 +335,9 @@ export const preimageBoilerPlate = (node: any) => {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         } else {
           // is secret - we just use the users to avoid revealing the secret owner
+          if(stateNode.isSharedSecret)
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+          else
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`
 
           // BELOW reveals the secret owner as we check the public key in the contract
@@ -354,6 +360,7 @@ export const preimageBoilerPlate = (node: any) => {
             reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
+            isSharedSecret: stateNode.isSharedSecret,
             accessedOnly: false,
             stateVarIds,
           }));
@@ -378,6 +385,7 @@ export const preimageBoilerPlate = (node: any) => {
                 newOwnerStatment,
                 initialised: false,
                 reinitialisedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 accessedOnly: false,
                 stateVarIds,
               }));
@@ -398,6 +406,7 @@ export const preimageBoilerPlate = (node: any) => {
                 structProperties: stateNode.structProperties,
                 initialised: false,
                 reinitialisedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 accessedOnly: false,
                 stateVarIds,
               }));
@@ -576,6 +585,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'decrement',
+                    isSharedSecret: stateNode.isSharedSecret,
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `${stateName}_stateVarId_key.integer`
@@ -591,6 +601,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
+                    isSharedSecret: stateNode.isSharedSecret,
                     mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `${stateName}_stateVarId_key.integer`
@@ -608,6 +619,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
+                isSharedSecret: stateNode.isSharedSecret,
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
                   ? `${stateName}_stateVarId_key.integer`
@@ -672,6 +684,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           lines.push(
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
+              isSharedSecret: stateNode.isSharedSecret,
               accessedOnly: stateNode.accessedOnly,
               stateType: 'partitioned',
             }));
@@ -680,44 +693,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           lines.push(
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'whole',
-            }));
-        }
-      }
-
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'partitioned',
-            }));
-
-        } else {
-          lines.push(
-            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'whole',
-            }));
-        }
-      }
-
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'partitioned',
-            }));
-
-        } else {
-          lines.push(
-            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-              stateName,
+              isSharedSecret: stateNode.isSharedSecret,
               accessedOnly: stateNode.accessedOnly,
               stateType: 'whole',
             }));
@@ -737,6 +713,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               Orchestrationbp.calculateCommitment.postStatements( {
                 stateName,
                 stateType: 'whole',
+                isSharedSecret: stateNode.isSharedSecret,
                 structProperties: stateNode.structProperties,
               }));
 
@@ -750,6 +727,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'decrement',
+                    isSharedSecret: stateNode.isSharedSecret,
                     structProperties: stateNode.structProperties,
                   }));
 
@@ -761,6 +739,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'increment',
+                    isSharedSecret: stateNode.isSharedSecret,
                     structProperties: stateNode.structProperties,
                   }));
 
@@ -800,16 +779,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         lines[lines.length - 1] += `, `;
       }
       params[0] = sendTransactionBoilerplate(node);
-      // params[0] = arr of nullifier root(s)
-      // params[1] = arr of commitment root(s)
-      // params[2] =  arr of nullifiers 
-      // params[3] = arr of commitments
-      
-
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
-      if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
-      if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
-      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
+      // params[0] = arr of nullifiers
+      // params[1] = root(s)
+      // params[2] = arr of commitments
+      if (params[0][1][0]) params[0][1] = `${params[0][1][0]},`; // root - single input
+      if (params[0][0][0]) params[0][0] = `[${params[0][0]}],`; // nullifiers - array
+      if (params[0][2][0]) params[0][2] = `[${params[0][2]}],`; // commitments - array
+      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // accessed nullifiers - array
       if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
       if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
 
@@ -817,10 +793,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
-
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:

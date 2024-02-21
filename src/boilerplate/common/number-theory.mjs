@@ -313,6 +313,41 @@ function decrypt(encryptedMessages, secretKey, encPublicKey) {
   return plainText;
 }
 
+
+/**
+@param {string} secretKey - hex string
+@param {string[2]} recipientPublicKey - hex string[]
+@return {string} key - int string
+*/
+function sharedSecretKey(secretKey, recipientPublicKey) {
+	
+	const publickKeyPoint = decompressStarlightKey(recipientPublicKey);
+	const sharedSecret = scalarMult(secretKey.hex(32), [
+		BigInt(generalise(publickKeyPoint[0]).hex(32)),
+		BigInt(generalise(publickKeyPoint[1]).hex(32)),
+	]);
+	const key = poseidonHash([
+		sharedSecret[0],
+		sharedSecret[1],
+		BigInt(DOMAIN_KEM),
+	]);
+
+	let sharePublicKeyPoint = generalise(
+		scalarMult(key.hex(32), config.BABYJUBJUB.GENERATOR)
+	);
+
+	let yBits = sharePublicKeyPoint[1].binary;
+	if (yBits.length >= 253) 
+	yBits = yBits.slice(2);
+	const xBits = sharePublicKeyPoint[0].binary;
+	const sign = xBits[xBits.length - 1];
+	let sharedPublicKey = new GN(sign + yBits.padStart(253, "0"), "binary");
+
+
+	return [key, sharedPublicKey];
+	
+}
+
 // Implements the Poseidon hash, drawing on the ZoKrates implementation
 // roundsP values referred from circom library
 // https://github.com/iden3/circomlibjs/blob/main/src/poseidon_opt.js
@@ -386,4 +421,5 @@ export {
   decompressStarlightKey,
   decrypt,
   poseidonHash,
+  sharedSecretKey,
 };

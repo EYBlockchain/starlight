@@ -347,6 +347,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   node: any;
 
   isSecret: boolean;
+  isSharedSecret: boolean;
   isUnknown?: boolean;
   isKnown?: boolean;
 
@@ -406,6 +407,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.parentIndicator = path.scope.indicators;
 
     this.isSecret = referencedBinding.isSecret;
+    this.isSharedSecret = referencedBinding.isSharedSecret;
 
     this.referenceCount = 0;
     this.referencingPaths = [];

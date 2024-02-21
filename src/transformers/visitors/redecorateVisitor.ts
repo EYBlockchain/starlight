@@ -40,14 +40,15 @@ export default {
     enter(node: any, state: any) {
       // for each decorator we have to re-add...
       for (const toRedecorate of state) {
-        // skip if the decorator is not secret (can't be a variable dec) or if its already been added
-        if (toRedecorate.added || toRedecorate.decorator !== 'secret') continue;
+        // skip if the decorator is not secret or sharedSecret (can't be a variable dec) or if its already been added
+        if (toRedecorate.added || (toRedecorate.decorator !== 'secret' &&  toRedecorate.decorator !== 'sharedSecret')) continue;
         // extract the char number
         const srcStart = node.src.split(':')[0];
         // if it matches the one we removed, add it back to the AST
         if (toRedecorate.charStart === Number(srcStart)) {
           toRedecorate.added = true;
           node.isSecret = true;
+          if(toRedecorate.decorator === 'sharedSecret')node.isSharedSecret = true;
           return;
         }
       }

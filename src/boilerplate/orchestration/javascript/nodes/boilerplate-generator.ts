@@ -30,6 +30,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
@@ -55,6 +56,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
@@ -92,6 +94,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         accessedOnly,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         
@@ -103,6 +106,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         privateStateName,
         stateVarId: id,
         increment,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,

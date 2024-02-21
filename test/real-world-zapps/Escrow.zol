@@ -11,9 +11,6 @@ contract Escrow {
     secret mapping(address => uint256) public balances;
     IERC20 public erc20;
 
-    constructor(address _erc20) {
-        erc20 = IERC20(_erc20);
-    }
 
     function deposit(uint256 amount) public {
         bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
