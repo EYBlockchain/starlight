@@ -511,7 +511,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
-      node._newASTPointer = newNode.components
+      node._newASTPointer = newNode.components;
       parent._newASTPointer[path.containerName] = newNode;
     },
   },
