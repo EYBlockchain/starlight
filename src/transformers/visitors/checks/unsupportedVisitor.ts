@@ -97,6 +97,9 @@ export default {
           }
         }
       }
+    },
+  },
+    
   VariableDeclaration: {
     enter(node: any) {
       if (node.name.startsWith('_'))
