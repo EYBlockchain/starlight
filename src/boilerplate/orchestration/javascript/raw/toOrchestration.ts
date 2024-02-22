@@ -155,6 +155,7 @@ export const generateProofBoilerplate = (node: any) => {
 
       });
     // then we build boilerplate code per state
+    console.log(stateNode);
     switch (stateNode.isWhole) {
       case true:
         output.push(
@@ -166,6 +167,7 @@ export const generateProofBoilerplate = (node: any) => {
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            isSharedSecret: stateNode.isSharedSecret,
             nullifierRootRequired: !containsNullifierRoot,
             initialisationRequired: stateNode.initialisationRequired,
             encryptionRequired: stateNode.encryptionRequired,
@@ -206,6 +208,7 @@ export const generateProofBoilerplate = (node: any) => {
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 parameters,
               })
             );
@@ -237,6 +240,7 @@ export const generateProofBoilerplate = (node: any) => {
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: false,
                 accessedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 parameters,
               })
             );
@@ -592,6 +596,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    reinitialisedOnly: stateNode.reinitialisedOnly,
                   }));
 
                 break;
@@ -608,6 +613,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    reinitialisedOnly: stateNode.reinitialisedOnly,
                   }));
 
                 break;
@@ -626,6 +632,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
+                reinitialisedOnly: stateNode.reinitialisedOnly,
               }));
         }
       }

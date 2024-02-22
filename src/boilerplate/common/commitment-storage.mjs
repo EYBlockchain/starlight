@@ -558,32 +558,16 @@ export async function getSharedkeys(
 	const publicKey = generalise(keys.publicKey);
 const recipientPublicKey = generalise(_recipientPublicKey);
 	
-	let sharedSecret = sharedSecretKey(secretKey, recipientPublicKey);
-	sharedSecret = generalise(utils.resizeHex(sharedSecret.hex(32), 31));
-
-	let sharePublicKeyPoint = generalise(
-		scalarMult(sharedSecret.hex(32), config.BABYJUBJUB.GENERATOR)
-	);
-
-
-	let sharedPublicKey = compressStarlightKey(sharePublicKeyPoint);
-
-	while (sharedPublicKey === null) {
-		logger.warn(`your secret key created a large public key - resetting`);
-		let sharedPublicKeyPoint = generalise(
-			scalarMult(sharedSecret.hex(32), config.BABYJUBJUB.GENERATOR)
-		);
-		sharedPublicKey = compressStarlightKey(sharedPublicKeyPoint);
-	}
-
+	let sharedKey  = sharedSecretKey(secretKey, recipientPublicKey);
 	const keyJson = {
 		secretKey: secretKey.integer,
 		publicKey: publicKey.integer,
-		sharedSecretKey: sharedSecret.integer,
-		sharedPublicKey: sharedPublicKey.integer, // not req
+		sharedSecretKey: sharedKey[0].integer,
+		sharedPublicKey: sharedKey[1].integer, // not req
 	};
 	fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
 
 	return publicKey;
 }
+
 

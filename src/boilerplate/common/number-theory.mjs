@@ -320,7 +320,6 @@ function decrypt(encryptedMessages, secretKey, encPublicKey) {
 @return {string} key - int string
 */
 function sharedSecretKey(secretKey, recipientPublicKey) {
-	
 	const publickKeyPoint = decompressStarlightKey(recipientPublicKey);
 	const sharedSecret = scalarMult(secretKey.hex(32), [
 		BigInt(generalise(publickKeyPoint[0]).hex(32)),
@@ -345,7 +344,6 @@ function sharedSecretKey(secretKey, recipientPublicKey) {
 
 
 	return [key, sharedPublicKey];
-	
 }
 
 // Implements the Poseidon hash, drawing on the ZoKrates implementation

@@ -276,11 +276,11 @@ class BoilerplateGenerator {
         case 'whole':
           if(accessedOnly)
           return [`
-            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), ${isSharedSecret ? `BigInt(sharedSecretKey.hex(32))`: `BigInt(secretKey.hex(32))`}, BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
           `];
           return [`
-            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), ${isSharedSecret ? `BigInt(sharedSecretKey.hex(32))`: `BigInt(secretKey.hex(32))`}, BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
           `];
         default:
@@ -357,6 +357,7 @@ class BoilerplateGenerator {
       reinitialisedOnly,
       burnedOnly,
       accessedOnly,
+      isSharedSecret,
       nullifierRootRequired,
       initialisationRequired,
       encryptionRequired,
@@ -382,8 +383,8 @@ class BoilerplateGenerator {
           prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \tsecretKey.integer,
-              \tsecretKey.integer,
+              \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
+              \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_1_nullifier.integer,
               ${prev(0)},
@@ -412,7 +413,7 @@ class BoilerplateGenerator {
                 case true:
                   return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \tsecretKey.integer,
+                      \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
                       \t${stateName}_nullifier.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
@@ -425,7 +426,7 @@ class BoilerplateGenerator {
                     case true:
                       return [`
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
-                          \tsecretKey.integer,
+                          \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
                           \t${stateName}_nullifier.integer,
                           ${prev},
                           \t${stateName}_prevSalt.integer,
@@ -435,7 +436,7 @@ class BoilerplateGenerator {
                     default:
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
+                      \t${stateName}_commitmentExists ? ${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`}: generalise(0).integer,
                       \t${stateName}_nullifier.integer,
                       ${prev},
                       \t${stateName}_prevSalt.integer,
@@ -474,6 +475,7 @@ sendTransaction = {
       mappingKey,
       burnedOnly,
       structProperties,
+      reinitialisedOnly,
     }): string[] {
       let value;
       switch (stateType) {
@@ -519,7 +521,7 @@ sendTransaction = {
             default:
               value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}`)} }` : `${stateName}`;
               return [`
-                \nif (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32));
+                \n${reinitialisedOnly? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32));`}
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',

@@ -118,8 +118,9 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, typeName }): string[] {
+    parameters({ name: x, typeName, reinitialisable }): string[] {
       // prettier-ignore
+      if(!reinitialisable)
       return [
         `private  ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
         `private field ${x}_oldCommitment_salt`,
@@ -136,8 +137,8 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, structProperties }): string[] {
-      if (structProperties)
+    postStatements({ name: x, structProperties, reinitialisable }): string[] {
+      if (structProperties && !reinitialisable)
         return [
           `
           // ${x}_oldCommitment_commitment: preimage check
@@ -149,6 +150,7 @@ class BoilerplateGenerator {
             ${x}_oldCommitment_salt\\
           ])`,
         ];
+      if(!reinitialisable)  
       return [
         `
         // ${x}_oldCommitment_commitment: preimage check
