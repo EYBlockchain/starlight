@@ -53,26 +53,32 @@ const buildSources = (file: any, options: any) => {
   rl.forEach((line: string) => {
     line = tidy(line);
     if (line && line.startsWith('import')) {
-      let relPath = line.substring(8, line.length - 3);
+      console.log('line:', line);
+      let relPath = line.match(/"([^"]+)"/)[1];
+      if(!relPath.includes('@openzeppelin')) {
 
       const importPath = path.resolve(path.dirname(options.inputFilePath), relPath);
+
+      console.log('importPath:', importPath);
 
       relPath = path.relative(options.topDir, importPath);
 
       contractsFiles.push([importPath, relPath]);
+      }
     }
   });
 
   // console.log('CONTRACTSFILES:', contractsFiles);
 
   contractsFiles.forEach(contractPath => {
-    if (path.extname(contractPath[0]) === '.sol') {
+    if (path.extname(contractPath[0]) === '.sol' && !contractPath[1].includes('@openzeppelin')) {
       const contractFile = fs.readFileSync(contractPath[0], 'utf8');
+
       sources[contractPath[1]] = {
         contents: contractFile,
       };
       const contractOptions = {
-        inputFilePath: `${path.dirname(options.inputFilePath)}/${contractPath[1]}`,
+        inputFilePath: contractPath[0],
         topDir: options.topDir,
       };
       const contractFileSources = buildSources(contractFile, contractOptions);
@@ -145,13 +151,23 @@ const compile = (solidityFile: string, options: any) => {
   const params = createSolcInput(solidityFile);
   const findImports = (_import: any) => {
     logger.debug('import:', _import);
-    if (sources[_import.toString()]) {
+    const importString = _import.toString();
+    if (sources[importString] && !importString.includes('@openzeppelin')) {
       return {
-        contents: sources[_import.toString()].contents,
+        contents: sources[importString].contents,
+      };
+    } 
+    if (importString.includes('@openzeppelin')) {
+      const newimportString = 'node_modules/' + importString;
+      return {
+        contents: fs.readFileSync(newimportString, 'utf8'),
       };
     }
     throw new FilingError(`We couldn't find the import ${_import}`);
   };
+
+
+  
 
   const compiled = JSON.parse(
     solc.compile(JSON.stringify(params), { import: findImports }),
@@ -170,3 +186,4 @@ const compile = (solidityFile: string, options: any) => {
 };
 
 export default compile;
+
