@@ -36,7 +36,7 @@ export async function getContractAddress(contractName) {
 		while (errorCount < 25) {
 			try {
 				const contractInterface = await getContractInterface(contractName);
-				const networkId = await web3.eth.net.getId();
+				const networkId = '25581337';
         logger.silly('networkId:', networkId);
 
 				if (

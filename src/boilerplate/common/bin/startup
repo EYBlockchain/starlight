@@ -5,7 +5,6 @@ docker-compose -f docker-compose.zapp.yml down -v
 
 sleep 5
 
-docker-compose -f docker-compose.zapp.yml up -d ganache
 docker-compose -f docker-compose.zapp.yml up -d zokrates
 
 sleep 5

@@ -26,23 +26,19 @@ services:
     depends_on:
       - zokrates
       - timber
-      - ganache
       - zapp-mongo
     volumes:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
       - ./migrations/:/app/migrations/
-      - ./truffle-config.js:/app/truffle-config.js
       - ./circuits/:/app/circuits:delegated
       - ./orchestration/:/app/orchestration:delegated
       - ./test/:/app/test:delegated
       - ./config/:/app/config:delegated
     environment:
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
-      RPC_URL: ws://ganache:8545
-      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
-      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
+      BLOCKCHAIN_HOST: ws://20.115.65.190
+      BLOCKCHAIN_PORT: 8546
+      RPC_URL: http://20.115.65.190:8545
       LOG_LEVEL: info
       MONGO_HOST: mongodb://zapp-mongo
       MONGO_PORT: 27019
@@ -74,7 +70,6 @@ services:
     restart: on-failure
     depends_on:
       - timber-mongo
-      - ganache
     volumes:
       - ./config/:/app/config
       - ./contracts/:/app/contracts:consistent
@@ -85,11 +80,11 @@ services:
       HASH_TYPE: 'mimc'
       LOG_LEVEL: 'silly'
       UNIQUE_LEAVES: 'true'
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
-      RPC_URL: ws://ganache:8545
-      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
-      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
+      BLOCKCHAIN_HOST: ws://20.115.65.190
+      BLOCKCHAIN_PORT: 8546
+      RPC_URL: 
+      DEFAULT_ACCOUNT: '0x80D2BAa2b24c44A450e375B834D3a07845250476'
+      KEY: '6c947b9fad01234064bd0bf479b432be1b346a0049bd2f80506bca7853a9945a'
       CONTRACT_LOCATION: 'default'
       MONGO_HOST: mongodb://timber-mongo
       MONGO_PORT: 27017
@@ -127,33 +122,20 @@ services:
     networks:
       - zapp_network
 
-  
-  ganache:
-    image: trufflesuite/ganache:v7.4.4
-    command: --accounts=10 --gasLimit=100000000 --deterministic -i 1337
-    ports:
-      - '8545:8545'
-    networks:
-      - zapp_network
 
   deployer:
     build:
       context: .
       dockerfile: Dockerfile.deployer
-    depends_on:
-      - ganache
     volumes:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
       - ./migrations/:/app/migrations/
-      - ./truffle-config.js:/app/truffle-config.js
       - ./orchestration/:/app/orchestration:delegated
     environment:
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
-      RPC_URL: ws://ganache:8545
-      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
-      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
+      RPC_URL: http://20.115.65.190:8545
+      DEFAULT_ACCOUNT: '0x80D2BAa2b24c44A450e375B834D3a07845250476'
+      KEY: '6c947b9fad01234064bd0bf479b432be1b346a0049bd2f80506bca7853a9945a'
     networks:
       - zapp_network
 

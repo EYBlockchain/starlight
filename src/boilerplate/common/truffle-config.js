@@ -24,7 +24,7 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 const rpcUrl = process.env.RPC_URL;
-const mnemonic = process.env.DEFAULT_ACCOUNT_MNEMONIC;
+const mnemonic = process.env.KEY;
 
 module.exports = {
   /**
@@ -77,6 +77,16 @@ module.exports = {
       timeoutBlocks:200,
       skipDryRun: true
     },
+    besu: {
+      provider: () => new HDWalletProvider(mnemonic, rpcUrl),
+      network_id: 25581337,
+      gas:8500000,
+      gasPrice:0,
+      confirmations: 1,
+      timeoutBlocks: 20,
+      networkCheckTimeout: 5000000,
+      skipDryRun: true
+    }
     // localhost: {
     //   host: 'localhost', // Localhost (default: none)
     //   port: 8545, // Standard Ethereum port (default: none)
