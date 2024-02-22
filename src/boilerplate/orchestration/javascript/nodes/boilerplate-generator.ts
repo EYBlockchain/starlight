@@ -138,6 +138,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        isSharedSecret: indicator.isSharedSecret,
         nullifierRequired: indicator.isNullified,
         increment,
         structProperties,
