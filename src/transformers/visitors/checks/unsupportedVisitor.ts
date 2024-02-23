@@ -85,14 +85,14 @@ export default {
         if (node.leftExpression.nodeType == "BinaryOperation" ) {
           if ((node.leftExpression.operator == "&&" || node.leftExpression.operator == "||") && node.leftExpression.operator !== node.operator) {
             throw new ParseError(
-              `A condition contains nested logical operators without brackets. Starlight does not know whether to read from right or left.`
+              `Please use brackets to clarify the logic structure. A condition contains nested logical operators without brackets, which can lead to ambiguity in reading the logic flow.`
             );
           }
         }
         if (node.rightExpression.nodeType == "BinaryOperation" ) {
           if ((node.rightExpression.operator == "&&" || node.rightExpression.operator == "||") && node.rightExpression.operator !== node.operator) {
             throw new ParseError(
-              `A condition contains nested logical operators without brackets. Starlight does not know whether to read from right or left.`
+              `Please use brackets to clarify the logic structure. A condition contains nested logical operators without brackets, which can lead to ambiguity in reading the logic flow.`
             );
           }
         }
