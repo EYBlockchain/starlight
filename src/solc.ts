@@ -53,13 +53,10 @@ const buildSources = (file: any, options: any) => {
   rl.forEach((line: string) => {
     line = tidy(line);
     if (line && line.startsWith('import')) {
-      console.log('line:', line);
       let relPath = line.match(/"([^"]+)"/)[1];
       if(!relPath.includes('@openzeppelin')) {
 
       const importPath = path.resolve(path.dirname(options.inputFilePath), relPath);
-
-      console.log('importPath:', importPath);
 
       relPath = path.relative(options.topDir, importPath);
 
@@ -174,13 +171,22 @@ const compile = (solidityFile: string, options: any) => {
   );
   logger.debug('compiled', compiled);
   errorHandling(compiled);
+  
 
   const { ast } = compiled.sources.input;
 
   const astFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol_ast.json`;
-
+ 
   logger.debug('filepath', astFilePath);
   fs.writeFileSync(astFilePath, JSON.stringify(ast, null, 4));
+  Object.keys(sources).forEach((importString) => { 
+    const innerDir = path.dirname(importString);
+    if (!fs.existsSync(`${options.contractsDirPath}/${innerDir}`)) {
+      fs.mkdirSync(`${options.contractsDirPath}/${innerDir}`, { recursive: true });
+    }
+    const importFilePath = `${options.contractsDirPath}/${importString}`;
+    fs.writeFileSync(importFilePath, sources[importString].contents);
+  });
 
   return ast;
 };
