@@ -204,7 +204,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         case 'uint256':
           return `parseInt(${node.name}.integer, 10)`;
         case 'bool':
-          return `parseInt(${node.name}.integer, 10) === 0 ? false : true`;
+          //return `parseInt(${node.name}.integer, 10) === 0 ? false : true`;
+          return `!(parseInt(${node.name}.integer, 10) === 0)`;
         case 'address':
           if (options?.contractCall) return `${node.name}.hex(20)`
           return `${node.name}.integer`;
