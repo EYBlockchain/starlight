@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./Escrow-imports/IERC1155.sol";
+
+contract ERC1155Escrow  {
+    
+
+    secret mapping(uint256 => mapping(address => uint256)) public tokens;
+
+    IERC1155 public erc1155;
+
+    
+    constructor(address _erc1155 ) {
+        erc1155 = IERC1155(_erc1155);
+    }
+
+    function deposit(uint256 tokenId, uint256 amount) public {
+          erc1155.safeTransferFrom(msg.sender, address(this), tokenId, amount, " " );
+
+          tokens[tokenId][msg.sender] += amount;
+        
+    }
+
+    function transfer(secret address recipient, secret uint256 tokenId, secret uint256 amount) external {
+        
+      unknown tokens[tokenId][recipient] += amount;
+      tokens[tokenId][msg.sender] -= amount;
+    }
+
+    function withdraw(uint256 tokenId, uint256 amount) public {
+          erc1155.safeTransferFrom(address(this), msg.sender, tokenId, amount, "");
+          
+          tokens[tokenId][msg.sender] -= amount;
+        
+    }
+}

@@ -80,11 +80,11 @@ export default {
           node,
         );
 
-      if (varDec.isUnknown && node.reinitialisable)
-        throw new SyntaxUsageError(
-          `Variable ${node.name} is marked as both unknown and reinitialisable. You must know a state's value to be able to initialise it!`,
-          node,
-        );
+      // if (varDec.isUnknown && node.reinitialisable)
+      //   throw new SyntaxUsageError(
+      //     `Variable ${node.name} is marked as both unknown and reinitialisable. You must know a state's value to be able to initialise it!`,
+      //     node,
+      //   );
 
       // @Binding new properties
       if (node.isKnown) varDec.isKnown = node.isKnown;
