@@ -49,6 +49,7 @@ export default class MappingKey {
   newCommitmentsRequired: boolean;
 
   isMapping: boolean;
+  isNestedMapping:boolean;
   isStruct: boolean;
 
   isParent?: boolean;
@@ -95,6 +96,7 @@ export default class MappingKey {
   }
 
   constructor(container: any, keyPath: NodePath, isStructProperty = false) {
+    console.log('MappingKey constructor', keyPath);
     this.container = container;
     this.id = container.id;
     this.node = container.node;
@@ -110,7 +112,6 @@ export default class MappingKey {
     this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
-
     this.isMapping = container.isMapping;
     this.isStruct = container.isStruct; // keyPath.isStruct();
 
@@ -299,6 +300,7 @@ export default class MappingKey {
 
   prelimTraversalErrorChecks() {
     // error: conflicting unknown/whole state
+
     if (this.isUnknown && this.isWhole) {
       throw new SyntaxUsageError(
         `Can't mark a whole state as 'unknown'`,

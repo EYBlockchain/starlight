@@ -800,6 +800,19 @@ export default class NodePath {
       return true;
     return false;
   }
+  /**
+   * Checks whether a node is a VariableDeclaration of a Nested Mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isNestedMappingDeclaration(node: any = this.node): boolean {
+    if (
+      node.nodeType === 'VariableDeclaration' &&
+      node.typeName.nodeType === 'Mapping' && node.typeName.valueType.nodeType === 'Mapping'
+    )
+      return true;
+    return false;
+  }
 
    /**
    * Checks whether a node is an EventDefinition.
@@ -822,6 +835,18 @@ export default class NodePath {
     // It could be a mapping or it could be an array. The only way to tell is to trace it all the way back to its referencedDeclaration.
     const varDecNode = this.getReferencedNode(node); // If it's an IndexAccess node, it will look at the IndexAccess.baseExpression through getReferencedDeclarationId().
     return this.isMappingDeclaration(varDecNode || node);
+  }
+
+  /**
+   * Checks whether a node is an Identifier for a  nested mapping.
+   * @param {node} node (optional - defaults to this.node)
+   * @returns {Boolean}
+   */
+  isNestedMapping(node: any = this.node): boolean {
+    if (!['IndexAccess', 'Identifier'].includes(node.nodeType)) return false;
+    // It could be a mapping or it could be an array. The only way to tell is to trace it all the way back to its referencedDeclaration.
+    const varDecNode = this.getReferencedNode(node); // If it's an IndexAccess node, it will look at the IndexAccess.baseExpression through getReferencedDeclarationId().
+    return this.isNestedMappingDeclaration(varDecNode || node);
   }
 
   /**

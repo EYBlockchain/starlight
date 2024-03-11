@@ -212,6 +212,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   structProperties?: any;
 
   isMapping?:boolean;
+  isNestedMapping?:boolean;
   mappingKeys?: any;
 
   initialValue?: any;
@@ -253,6 +254,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   }
 
   addMappingKey(referencingPath: NodePath): MappingKey {
+    console.log(referencingPath);
     const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
@@ -270,6 +272,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
     const mappingKeyExists = !!this.mappingKeys[keyName];
     if (!mappingKeyExists)
       this.mappingKeys[keyName] = new MappingKey(this, keyPath);
+    ;
 
     return this.mappingKeys[keyName];
   }
@@ -351,6 +354,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
   isKnown?: boolean;
 
   isMapping?: boolean;
+  isNestedMapping?: boolean;
   isStruct?: boolean;
   structProperties?: {[key: string]: any};
   mappingKeys?: {[key: string]: MappingKey};
@@ -422,6 +426,8 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
     if (path.isMappingIdentifier() || path.isArray()) {
       this.isMapping = true;
+      if(this.isMapping && path.isNestedMapping())
+        this.isNestedMapping = true;
       this.mappingKeys = {};
     }
     if (path.isStruct()) {
