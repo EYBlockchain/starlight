@@ -243,10 +243,12 @@ function codeGenerator(node: any) {
       }
       // we use our list of condition vars to init temp variables. 
       node.conditionVars.forEach(elt => {
-        let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
-        if (elt.isVarDec === false) varDec = '';
-        initialStatements += `
+        if (elt.nodeType !== 'IndexAccess' || (elt.indexExpression && elt.indexExpression.nodeType === 'MsgSender')){
+          let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
+          if (elt.isVarDec === false) varDec = '';
+          initialStatements += `
         ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
+        }
       });
       for (let i =0; i<node.trueBody.length; i++) {
         trueStatements+= `
