@@ -349,7 +349,6 @@ const visitor = {
                 break;
               }
               case 'IndexAccess':{
-                console.log(node);
                 if(id == node.expression.indexExpression.referencedDeclaration) {
                   if ((bindings instanceof VariableBinding)){
                     if(item.name.includes(bindings.node.name))
@@ -905,6 +904,17 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
     exit(path: NodePath) {
       // a visitor to collect all identifiers in an if condition
       // we use this list later to init temp variables
+      //First, we need to find identifiers already declared in previous if statements so we know to avoid redeclaring them.
+      let ifStatementPaths = path.getSiblingNodes().filter(element => element.nodeType === 'IfStatement');
+      let tempDec: any[] = [];
+      ifStatementPaths.forEach((element) => {
+        if (element._newASTPointer && element._newASTPointer.conditionVars) {
+          element._newASTPointer.conditionVars.forEach((elem) => {
+            tempDec.push(elem.name);
+          });
+        }
+      });
+      // Next we find the identifiers in the current if statement and add them to the list.
       const findConditionIdentifiers = (thisPath: NodePath, state: any) => {
         if (!thisPath.scope.getReferencedIndicator(thisPath.node)?.isModified) return;
         if (!thisPath.getAncestorContainedWithin('condition')) return;
@@ -947,6 +957,15 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       let identifiersInCond = { skipSubNodes: false, list: [] };
       path.traversePathsFast(findConditionIdentifiers, identifiersInCond);
       path.node._newASTPointer.conditionVars = identifiersInCond.list;
+      // Determine whether each identifier in conditionVar is a new declaration or a redeclaration.
+      path.node._newASTPointer.conditionVars.forEach((condVar) => {
+        condVar.isVarDec = true;
+        tempDec.forEach((prevCondVar) => {
+          if (condVar.name === prevCondVar) {
+            condVar.isVarDec = false;
+          }
+        });
+      });
     }
   },
 

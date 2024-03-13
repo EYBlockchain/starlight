@@ -241,10 +241,12 @@ function codeGenerator(node: any) {
       assert(${codeGenerator(node.condition)})`;
       return initialStatements;
       }
-      // we use our list of condition vars to init temp variables
+      // we use our list of condition vars to init temp variables. 
       node.conditionVars.forEach(elt => {
+        let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
+        if (elt.isVarDec === false) varDec = '';
         initialStatements += `
-        ${elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field'} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
+        ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
       });
       for (let i =0; i<node.trueBody.length; i++) {
         trueStatements+= `
