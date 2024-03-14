@@ -679,15 +679,21 @@ export class Scope {
     if (refPaths && thisIndex && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
 
     let { name } = identifierNode;
-
+    if (identifierNode.id == 41) console.log("get here");
+    if (identifierNode.id == 41) console.log(identifierNode);
+    if (identifierNode.id == 41) console.log(refPaths?.[thisIndex].key);
     // we find the next indexExpression after this identifier
     for (let i = thisIndex || 0; i < (refPaths?.length || 0); i++) {
       if (refPaths?.[i].key !== 'indexExpression' || !thisIndex) continue;
       if (refPaths[thisIndex].isModification() && !forceNotModification) {
         name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess'));
+        if (identifierNode.id == 41) console.log("get here 1");
+        if (identifierNode.id == 41) console.log(name);
         break;
         // if this identifier is not a modification, we need the previous indexExpression
       } else {
+        if (identifierNode.id == 41) console.log("get here 2");
+        if (identifierNode.id == 41) console.log(name);
         for (let j = i - 1; j >= 0; j--) {
           if (refPaths[j].key === 'indexExpression') {
             name = this.getMappingKeyName(refPaths[j].getAncestorOfType('IndexAccess'));

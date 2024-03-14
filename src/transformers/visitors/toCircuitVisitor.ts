@@ -46,8 +46,11 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
-    if (thisPath.containerName === 'indexExpression')
+    if (thisPath.containerName === 'indexExpression'){
       name = binding.getMappingKeyName(thisPath);
+      //console.log(name);
+      //console.log("line 51");
+    }
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
     parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
@@ -56,6 +59,12 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
       params.push(parameterNode);
     // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
     thisState.skipSubNodes = true;
+    //LYD TO DO
+    //Here we need to modify the name so that index_2 appears instead of index
+    //if (thisPath.nodeType === `Identifier` && node.name === lefthandthing){
+      //Somehow change name of right hand side
+    //}
+
   }
 };
 
@@ -349,7 +358,6 @@ const visitor = {
                 break;
               }
               case 'IndexAccess':{
-                console.log(node);
                 if(id == node.expression.indexExpression.referencedDeclaration) {
                   if ((bindings instanceof VariableBinding)){
                     if(item.name.includes(bindings.node.name))
@@ -526,6 +534,8 @@ const visitor = {
           name: path.scope.getIdentifierMappingKeyName(subExpression)
         }),
       });
+      //console.log(newNode);
+      //console.log("line 531")
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
       state.skipSubNodes = true;
@@ -587,6 +597,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
               });
+              //console.log(newNode);
+              //console.log("line 594");
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
               node._newASTPointer = newNode.subtrahend;
             } else {
@@ -601,6 +613,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
               });
+              //console.log(newNode);
+              //console.log("line 610");
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
               node._newASTPointer = newNode.addend;
             }
@@ -641,7 +655,6 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
               .replace('.value','Value')
               .replace('.', 'dot')
           : referencedIndicator?.name;
-
         if (referencedIndicator?.isMapping && lhs.baseExpression) {
           lhs = lhs.baseExpression;
         } else if (lhs.nodeType === 'MemberAccess') {
@@ -650,12 +663,12 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         }
         // collect all index names
         const names = referencedIndicator?.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
-
         // check whether this is the first instance of a new index name
-        const firstInstanceOfNewName = names && names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
+        const firstInstanceOfNewName = names && names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name && names[names.length - 1].name !== names[0].name;
         if (referencedIndicator instanceof StateVariableIndicator &&
-          (firstInstanceOfNewName || (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
-            lhs.id === referencedIndicator.referencingPaths[0].parent.id)) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+          (firstInstanceOfNewName 
+            || (referencedIndicator.isSecret && (lhs.id === referencedIndicator.referencingPaths[0].node.id ||lhs.id === referencedIndicator.referencingPaths[0].parent.id))
+           ) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
           !(
             referencedIndicator.isWhole &&
             referencedIndicator.oldCommitmentAccessRequired
@@ -862,6 +875,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         node.nodeType,
         { name, type: node.typeDescriptions?.typeString },
       );
+      //console.log(node);
+      //console.log(newNode);
       if (path.isStruct(node)) addStructDefinition(path);
       if (path.getAncestorOfType('IfStatement')) node._newASTPointer = newNode;
       // no pointer needed, because this is a leaf, so we won't be recursing any further.

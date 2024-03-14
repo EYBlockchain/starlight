@@ -23,7 +23,7 @@ const getAccessedValue = (name: string) => {
  */
 const getPublicValue = (node: any) => {
   if (node.nodeType !== 'IndexAccess')
-    return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());`;
+    return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());\n let ${node.name}_init = ${node.name};`;
   return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
 };
 
@@ -58,6 +58,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         } else if(returnIsSecret[index])
             node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
         })
+        //console.log("Get here1");
+        //console.log(node.parameters);
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);
@@ -83,7 +85,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         }
         if (node.declarations[0].isStruct) return `\n let ${codeGenerator(node.declarations[0])} = {}; \n${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.initialValue)};`;
-      } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) {
+      } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) { 
         return `${getPublicValue(node.declarations[0])}`
       } else if (node.declarations[0].isAccessed) {
         return `${getAccessedValue(node.declarations[0].name)}`;
@@ -192,7 +194,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
     case 'UnaryOperation':
       // ++ or -- on a parseInt() does not work
-      return `generalise(${node.subExpression.name}.integer${node.operator})`;
+      //return `generalise(${node.subExpression.name}.integer${node.operator})`;
+      return `generalise(parseInt(${node.subExpression.name}.integer,10)${node.operator[0]}1)`;
 
     case 'Literal':
       return node.value;

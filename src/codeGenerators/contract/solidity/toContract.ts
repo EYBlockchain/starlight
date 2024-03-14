@@ -143,7 +143,7 @@ function codeGenerator(node: any) {
       const preStatements: string = node.preStatements.flatMap(codeGenerator);
       const statements: string = node.statements.flatMap(codeGenerator);
       const postStatements: string = node.postStatements.flatMap(codeGenerator);
-      return [...preStatements, ...statements, ...postStatements].join('\n');
+      return [...preStatements, ...postStatements, ...statements].join('\n');
     }
     case 'ExpressionStatement':{
       return codeGenerator(node.expression);

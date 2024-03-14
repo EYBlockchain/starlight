@@ -243,6 +243,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
     }
     case 'GenerateProof': {
       const { circuitName, privateStates = {}, parameters = [] } = fields;
+      //console.log(parameters);
       return {
         nodeType,
         circuitName,
