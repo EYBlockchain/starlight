@@ -217,12 +217,11 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
     if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);
     // check we haven't already imported this node
     if (fnDefNode.node._newASTPointer.body.preStatements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name)) return;
-    //console.log(newNode);
     fnDefNode.node._newASTPointer.body.preStatements.unshift(
       newNode,
-    );
-    
-  }
+    );    
+  } 
+
     if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) addPublicInput(NodePath.getPath(node.indexExpression), state, null);
 }
 /**
@@ -1037,7 +1036,6 @@ const visitor = {
       const newState: any = {};
       path.traversePathsFast(interactsWithSecretVisitor, newState);
       const { interactsWithSecret } = newState;
-
       let indicator;
       let name;
       // we mark this to grab anything we need from the db / contract
@@ -1140,8 +1138,11 @@ const visitor = {
         }
       }
       if (node.expression.expression?.name !== 'require') {
+        // We no longer check indicator?.interactsWithSecret because in most cases interactsWithSecret is set to true in addPublicInput anyway. 
+        // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
         const newNode = buildNode(node.nodeType, {
-          interactsWithSecret: interactsWithSecret || indicator?.interactsWithSecret,
+          interactsWithSecret: interactsWithSecret,
+          //|| indicator?.interactsWithSecret,
           oldASTId: node.id,
         });
 

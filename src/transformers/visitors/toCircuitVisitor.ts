@@ -44,27 +44,23 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
           num_modifiers++;
         } 
         let expNode = statements.find((n:any) => n?.id === expressionId);
+        let index_expNode = fnDefNode.node._newASTPointer.body.statements.indexOf(expNode);
         if (expNode && !expNode.isAccessed) {
           expNode.isAccessed = true;
           if(path.containerName !== 'indexExpression'){
-            const decInnerNode = buildNode('VariableDeclaration', {
-              name: `${node.name}_${num_modifiers}`,
-              isAccessed: true,
-              isSecret: false,
-              interactsWithSecret: true,
-            });
             const initInnerNode = buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
               operator: '=',
               rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
             });
-            const newNode1 = buildNode('VariableDeclarationStatement', {
-                declarations: [decInnerNode],
-                initialValue: initInnerNode,
+            const newNode1 = buildNode('ExpressionStatement', {
+                expression: initInnerNode,
                 interactsWithSecret: true,
-                isModifiedDeclaration: true,
+                isVarDec: true,
             });
-            fnDefNode.node._newASTPointer.body.statements.push(newNode1);
+            if (index_expNode !== -1) {
+              fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+            }
           } else{
             let modName = expNode.expression.initialValue.leftHandSide?.name || expNode.expression.initialValue.name;
             const InnerNode = buildNode('Assignment', {
@@ -76,7 +72,9 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
               expression: InnerNode,
               interactsWithSecret: true,
             });
-            fnDefNode.node._newASTPointer.body.statements.push(newNode1);
+            if (index_expNode !== -1) {
+              fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+            }
           }
         }
       }
