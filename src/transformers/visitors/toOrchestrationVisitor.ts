@@ -273,7 +273,7 @@ const visitor = {
   FunctionDefinition: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      if (scope.modifiesSecretState()) {
+    //  if (scope.modifiesSecretState()) {
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
@@ -319,9 +319,11 @@ const visitor = {
           );
         }
         }
-      } else {
+      //} 
+      
+     /* else {
         state.skipSubNodes = true;
-      }
+      }*/
 
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
