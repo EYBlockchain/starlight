@@ -163,7 +163,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
           const moveExpNode = cloneDeep(expNode);
           fnDefNode.node._newASTPointer.body.preStatements.push(moveExpNode);
           delete statements[statements.indexOf(expNode)];
-          if(path.containerName !== 'indexExpression'){
+          if(expNode.nodeType === "ExpressionStatement"){
             const decInnerNode = buildNode('VariableDeclaration', {
               name: `${node.name}_${num_modifiers}`,
               isAccessed: true,
@@ -197,8 +197,12 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
         }
       }
     });
-    if (num_modifiers != 0) {
-      IDnode.name += `_${num_modifiers}`;
+    if (num_modifiers != 0)  {
+       if (IDnode.name === node.name){
+        IDnode.name += `_${num_modifiers}`;
+      } else {
+        IDnode.name =  `${node.name}_${num_modifiers}`;
+      }
     }
     fnDefNode.node._newASTPointer.body.preStatements = fnDefNode.node._newASTPointer.body.preStatements.filter(p => p.expression?.rightHandSide?.name !== `${node.name}_init`);
     const endNodeInit = buildNode('Assignment', {

@@ -47,7 +47,7 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
         let index_expNode = fnDefNode.node._newASTPointer.body.statements.indexOf(expNode);
         if (expNode && !expNode.isAccessed) {
           expNode.isAccessed = true;
-          if(path.containerName !== 'indexExpression'){
+          if(expNode.nodeType === "ExpressionStatement"){
             const initInnerNode = buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
               operator: '=',
@@ -79,8 +79,12 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
         }
       }
     });
-    if (num_modifiers != 0) {
-      IDnode.name += `_${num_modifiers}`;
+    if (num_modifiers != 0)  {
+      if (IDnode.name === node.name){
+        IDnode.name += `_${num_modifiers}`;
+      } else {
+        IDnode.name =  `${node.name}_${num_modifiers}`;
+      }
     }
     for (let i = fnDefNode.node._newASTPointer.body.statements.length - 1; i >= 0; i--) {
       const p = fnDefNode.node._newASTPointer.body.statements[i];
@@ -752,8 +756,10 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         }
         // collect all index names
         const names = referencedIndicator?.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
+        console.log(names);
         // check whether this is the first instance of a new index name
         const firstInstanceOfNewName = names && names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name && names[names.length - 1].name !== names[0].name;
+        console.log(firstInstanceOfNewName);
         if (referencedIndicator instanceof StateVariableIndicator &&
           (firstInstanceOfNewName 
             || (referencedIndicator.isSecret && (lhs.id === referencedIndicator.referencingPaths[0].node.id ||lhs.id === referencedIndicator.referencingPaths[0].parent.id))
@@ -777,8 +783,15 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         parent._newASTPointer[path.containerName] = newNode;
       }
       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
-      //console.log(fnDefNode.node._newASTPointer.body.statements);
-    },
+      let ind = fnDefNode.node._newASTPointer.body.statements.length - 2;
+      while (ind >= 0  && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name.includes("_init")){
+        let temp = fnDefNode.node._newASTPointer.body.statements[ind+1];
+        fnDefNode.node._newASTPointer.body.statements[ind+1] = fnDefNode.node._newASTPointer.body.statements[ind];
+        fnDefNode.node._newASTPointer.body.statements[ind] = temp;
+        ind--;
+        //console.log(fnDefNode.node._newASTPointer.body.statements);
+      }
+    }
   },
 
   StructDefinition: {

@@ -10,14 +10,21 @@ contract Assign {
 
   uint256 public index;
 
+  uint256 public j;
 
   function add(secret uint256 value) public {
     known a += value + index;
     b[index] = 0;
-    index++;
+    index = 1 + index;
     b[index] = value;
     index++;
+    j++;
+    b[index] = value  +index +j;
+    index++;
+    a += value + index;
     b[index] = value + index;
+    index++;
+    j++;
   }
 
   function remove(secret uint256 value) public {
