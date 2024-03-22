@@ -127,8 +127,6 @@ class ContractBoilerplateGenerator {
           case 'nullifierRoot':  
             verifyInput.push( `
             inputs[k++] = _inputs.nullifierRoot;`); 
-            verifyInput.push( `
-            inputs[k++] = _inputs.latestNullifierRoot;`); 
             break; 
           case 'nullifier':  
             verifyInput.push( `
@@ -221,13 +219,15 @@ class ContractBoilerplateGenerator {
             };
 
             _inputs.map(i => verifyInputsMap(type, i, counter));
-           
-
-           
+    
           }
-          
-          if(_params && !(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`
+
+          if(_params && (Object.values(_params)[0].includes('nullifierRoot'))) verifyInput.push(`
+            inputs[k++] = _inputs.latestNullifierRoot;`) 
+            
+          if(_params && !(Object.values(_params)[0].includes('nullifierRoot')) && !(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`
             inputs[k++] = 1;`) 
+          
       
         verifyInputs.push(`
           if (functionId == uint(FunctionNames.${name})) {
@@ -270,9 +270,6 @@ class ContractBoilerplateGenerator {
 
             Inputs memory inputs;
 
-            inputs.customInputs = new uint[](1);
-        	  inputs.customInputs[0] = 1;
-
             inputs.nullifierRoot = nullifierRoot;
 
             inputs.latestNullifierRoot = latestNullifierRoot;
@@ -295,12 +292,11 @@ class ContractBoilerplateGenerator {
            uint k = 0;
 
            inputs[k++] = _inputs.nullifierRoot;
-           inputs[k++] = _inputs.latestNullifierRoot;
            inputs[k++] = newNullifiers[0];
            inputs[k++] = newNullifiers[1];
            inputs[k++] = _inputs.commitmentRoot;
            inputs[k++] = newCommitments[0];
-           inputs[k++] = 1;
+           inputs[k++] = _inputs.latestNullifierRoot;
                 
          }`)
 

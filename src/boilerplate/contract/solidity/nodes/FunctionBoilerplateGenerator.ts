@@ -71,7 +71,7 @@ class FunctionBoilerplateGenerator {
     },
 
     getIndicators() {
-      const { indicators, msgSigRequired } = this.scope;
+      const { indicators } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
 
       const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, encryptionRequired } = indicators;
@@ -119,13 +119,10 @@ class FunctionBoilerplateGenerator {
         if(node.expression?.nodeType === 'InternalFunctionCall'){
           if(node.expression.parameters.includes('cipherText') ) 
            internalFunctionEncryptionRequired = true 
-
-        }
-        
+        }      
       })
 
-
-      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired) {
+      if(path.node.returnParameters.parameters.length === 0 && !indicators.encryptionRequired && !internalFunctionEncryptionRequired ) {
         publicParams?.push({ name: 1, type: 'uint256', dummy: true , inCircuit: true });
       }
 

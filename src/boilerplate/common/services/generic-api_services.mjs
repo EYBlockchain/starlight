@@ -6,7 +6,7 @@ import { startEventFilter, getSiblingPath } from "./common/timber.mjs";
 import fs from "fs";
 import logger from "./common/logger.mjs";
 import { decrypt } from "./common/number-theory.mjs";
-import { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";
+import { getAllCommitments, getCommitmentsByState} from "./common/commitment-storage.mjs";
 import web3 from "./common/web3.mjs";
 
 /**
@@ -44,7 +44,7 @@ export async function service_FUNCTION_NAME (req, res, next){
       console.log(`Merkle tree event returnValues:`);
       console.log(tx.returnValues);
     }
-    if (encEvent.event) {
+    if (encEvent && encEvent[0]?.event) {
       encryption.msgs = encEvent[0].returnValues[0];
       encryption.key = encEvent[0].returnValues[1];
       console.log("EncryptedMsgs:");
@@ -52,6 +52,7 @@ export async function service_FUNCTION_NAME (req, res, next){
   }
     await sleep(10);
   } catch (err) {
+    await resetTemporaryNullifierTree();
     logger.error(err);
     res.send({ errors: [err.message] });
   }
