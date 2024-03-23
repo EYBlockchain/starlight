@@ -115,11 +115,10 @@ export const collectImportFiles = (
       ) {
         // if we import an interface, we must find the original contract
         // we assume that any interface begins with I (substring(1)) and the remaining chars are the original contract name
-        const newLocalPath = p.replace(n, n.substring(1));
-        const newPath = shortRelPath.replace(n, n.substring(1));
+        const newPath = absPath.replace(n, n.substring(1)); // We should operate on an absolute path here, rather than the relative one. It will now work if we're using the zappify command in a different directory.
         const check = fs.existsSync(newPath);
         if (check) {
-          localFilePaths.push(newLocalPath);
+          localFilePaths.push(newPath);
         }
       }
     }
