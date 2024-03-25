@@ -15,11 +15,9 @@ import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPo
 // useful for subtrees like ExpressionStatements
 const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
   const { node } = thisPath;
-
   if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
   if(node.typeDescriptions.typeIdentifier.includes(`_function_`)) return;
   if (thisPath.isRequireStatement(node)) return;
-
   let { name } = thisPath.isMsg(node) ? node : thisPath.scope.getReferencedIndicator(node, true);
   const binding = thisPath.getReferencedBinding(node);
   let isCondition = !!thisPath.getAncestorContainedWithin('condition') && thisPath.getAncestorOfType('IfStatement')?.containsSecret;
@@ -622,7 +620,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
             tempRHSParent._newASTPointer = newNode;
             // we don't want to add public inputs twice:
 
-            tempRHSPath.traverse(visitor, { skipPublicInputs: true });
+            tempRHSPath.traverse(visitor, { skips: true });
             rhsPath.traversePathsFast(publicInputsVisitor, {});
             state.skipSubNodes = true;
             parent._newASTPointer.push(newNode);
@@ -1062,8 +1060,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
   IndexAccess: {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
-
-      if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
+      if ( !node.baseExpression.containsSecret || !node.containsSecret) {
+        path.traversePathsFast(publicInputsVisitor, {});}
 
       const newNode = buildNode('IndexAccess');
       if (path.isConstantArray(node) && (path.isLocalStackVariable(node) || path.isFunctionParameter(node))) newNode.isConstantArray = true;

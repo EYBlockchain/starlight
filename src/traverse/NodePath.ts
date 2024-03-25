@@ -871,9 +871,42 @@ export default class NodePath {
     const { indexExpression } = node;
     const keyNode = (this.isMsgSender(indexExpression) || this.isMsgValue(indexExpression))
       ? indexExpression?.expression
-      : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation
+      : indexExpression; // the former to pick up the 'msg' identifier of a 'msg.sender' ast representation 
     return keyNode;
   }
+
+  /**
+   * A mapping's subkey will contain an Identifier node pointing to a previously-declared nested mapping variable.
+   * @param {Object} - the nested mapping's index access node.
+   * @returns {Node} - an Identifier subkey node
+   */
+  getNestedMappingKeyIdentifier(node: any = this.node, parent: any = this.parentPath.parent): any {
+    if (!parent) return; // Check if parent exists
+     
+    let indexNodes: any = {}; // Array to store index nodes
+    // Iterate over all occurrences of indexExpression in parent
+    const { baseExpression } = parent;
+    if(!baseExpression) return node;
+    for (const key in baseExpression) {
+      if(baseExpression.hasOwnProperty(key) && key === 'indexExpression') {
+        const indexExpression  = baseExpression[key];
+        indexNodes = (this.isMsgSender(indexExpression) || this.isMsgValue(indexExpression))
+                ? indexExpression?.expression
+                : indexExpression;      
+         indexNodes.isNestedMapping = true;
+      }
+        if (parent.hasOwnProperty(key) && key === 'indexExpression') {
+            const indexExpression = parent[key];
+            indexNodes['indexExpression'] = (this.isMsgSender(indexExpression) || this.isMsgValue(indexExpression))
+                ? indexExpression?.expression
+                : indexExpression;
+
+        }
+    }
+    return indexNodes;
+
+  }
+  
 
   /**
    * A struct property will contain a MemberAccess node pointing to a previously-declared variable.

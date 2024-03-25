@@ -447,6 +447,7 @@ const visitor = {
                 getIndexAccessName(stateVarIndicator.modifyingPaths[stateVarIndicator.modifyingPaths.length -1].getAncestorOfType('IndexAccess')?.node) :
                 getIndexAccessName(stateVarIndicator.referencingPaths[stateVarIndicator.referencingPaths.length -1].getAncestorOfType('IndexAccess')?.node))
               || '';
+             if(stateVarIndicator.isNestedMapping) name =  stateVarIndicator.name.replaceAll('[', '_').replaceAll(']', '');
           }
 
           if (stateVarIndicator.isWhole && stateVarIndicator.isNullified) {
@@ -998,12 +999,20 @@ const visitor = {
       state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
       if (node.expression.nodeType === 'Assignment' || node.expression.nodeType === 'UnaryOperation') {
+        console.log(" node ------>",node);
         let { leftHandSide: lhs } = node.expression;
         if (!lhs) lhs = node.expression.subExpression;
        indicator = scope.getReferencedIndicator(lhs, true);
+       if(!indicator) indicator = scope.getReferencedIndicator(lhs.baseExpression, true);
 
-        const name = indicator.isMapping
-          ? indicator.name
+        const name = indicator.isMapping 
+          ? indicator.isNestedMapping ? 
+          indicator.name
+          .replaceAll('[', '_')
+          .replaceAll(']', '')
+          .replaceAll('.sender', 'Sender')
+          .replaceAll('.value', 'Value') :
+          indicator.name
               .replace('[', '_')
               .replace(']', '')
               .replace('.sender', 'Sender')

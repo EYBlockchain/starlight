@@ -7,10 +7,10 @@ contract BucketsOfBalls {
     secret mapping(uint256 => mapping (uint256 => uint256)) public buckets;
 
     function deposit(secret uint256 bucketId, secret uint256 bucket, secret uint256 amountDeposit) public {
-        unknown buckets[bucket][bucketId] += amountDeposit;
+         unknown buckets[bucket][bucketId] += amountDeposit;
     }
 
     function transfer(secret uint256 fromBucketId, secret uint256 bucket, secret uint256 numberOfBalls) public {
-        buckets[bucket][fromBucketId] -= numberOfBalls;
+         buckets[bucket][fromBucketId] -= numberOfBalls;
     }
 }

@@ -102,6 +102,7 @@ class BoilerplateGenerator {
   newCommitmentsRequired?: boolean;
   encryptionRequired?: boolean;
   isMapping: boolean;
+  isNestedMapping:boolean;
   isStruct: boolean;
   structProperties?: string[];
   typeName?: string;
@@ -142,6 +143,7 @@ class BoilerplateGenerator {
       isAccessed,
       newCommitmentsRequired,
       isMapping,
+      isNestedMapping,
       isStruct,
       initialisationRequired,
       encryptionRequired,
@@ -156,6 +158,7 @@ class BoilerplateGenerator {
       isAccessed,
       newCommitmentsRequired,
       isMapping,
+      isNestedMapping,
       isStruct,
       initialisationRequired,
       encryptionRequired,
@@ -184,7 +187,10 @@ class BoilerplateGenerator {
 
         this.mappingName = this.indicators.name;
         this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
-
+        if(mappingKeyIndicator.isNestedMapping){
+          this.mappingKeyName = mappingKeyIndicator.referencedKeyName.replaceAll('[', '_').replaceAll(']', '');
+          this.name = mappingKeyIndicator.name.replaceAll('.', 'dot').replaceAll('[', '_').replaceAll(']', '');
+        } 
         if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
           this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
           this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name)
@@ -219,7 +225,6 @@ class BoilerplateGenerator {
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
-
     return {
       nodeType: 'BoilerplateStatement',
       bpSection: 'statements',
@@ -355,8 +360,9 @@ class BoilerplateGenerator {
 
   mapping = (bpSection) => ({
     mappingName: this.mappingName,
-    mappingKeyName: bpSection === 'postStatements' ? this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
+    mappingKeyName: bpSection === 'postStatements' ?  this.isNestedMapping? this.mappingKeyName.replace('_', ' ').replaceAll('_', ', '): this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
   });
+  
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
   incrementation = () => {

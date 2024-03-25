@@ -149,6 +149,7 @@ export class VariableBinding extends Binding {
   decrements: any[] = []; // array of nodes
 
   isMapping?: boolean;
+  isNestedMapping?: boolean;
   mappingKeys: any = {}; // object of objects, indexed by node id.
 
   isStruct?: boolean;
@@ -196,6 +197,8 @@ export class VariableBinding extends Binding {
     if (path.isMappingDeclaration() || path.isArrayDeclaration()) {
       this.isMapping = true;
       this.mappingKeys = {};
+      if(path.isNestedMappingDeclaration())
+      this.isNestedMapping = true;
     }
 
     if (path.isStruct()) {
@@ -216,7 +219,7 @@ export class VariableBinding extends Binding {
   // If this binding represents a mapping stateVar, then throughout the code, this mapping will be accessed with different keys. Only when we reach that key during traversal can we update this binding to say "this mapping sometimes gets accessed via this particular key"
   // @param referencingPath = NodePath of baseExpression
   addMappingKey(referencingPath: NodePath): MappingKey {
-    const keyNode = referencingPath.getMappingKeyIdentifier();
+    let keyNode = this.isNestedMapping ? referencingPath.getNestedMappingKeyIdentifier() : referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');
 
@@ -234,9 +237,9 @@ export class VariableBinding extends Binding {
     const mappingKeyExists = !!this.mappingKeys[keyName];
     if (!mappingKeyExists)
       this.mappingKeys[keyName] = new MappingKey(this, keyPath);
-
     return this.mappingKeys[keyName];
   }
+
 
   addStructProperty(referencingPath: NodePath): MappingKey {
     // we DONT want to add a struct property if we have a mapping of a struct

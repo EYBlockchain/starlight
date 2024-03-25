@@ -80,6 +80,7 @@ export default class MappingKey {
     if (this.keyPath.isMsgSender(keyNode)) return 'msgSender';
     if (this.keyPath.isMsgValue(keyNode)) return 'msgValue';
     if (this.keyPath.isMsg(keyNode)) return 'msg';
+    if(keyNode.isNestedMapping) return `[${keyNode.name}][${this.returnKeyName(keyNode.indexExpression)}]`;
     switch (keyNode.nodeType) {
       case 'VariableDeclaration':
       case 'Identifier':
@@ -96,23 +97,22 @@ export default class MappingKey {
   }
 
   constructor(container: any, keyPath: NodePath, isStructProperty = false) {
-    console.log('MappingKey constructor', keyPath);
     this.container = container;
     this.id = container.id;
     this.node = container.node;
 
     this.keyPath = keyPath;
-
     this.referencedKeyId = keyPath.node.referencedDeclaration;
     this.referencedKeyName = isStructProperty ? keyPath.node.memberName : this.returnKeyName(keyPath.node);
-
     this.referencedKeyNodeType = keyPath.isMsg()
       ? 'msg.sender'
-      : keyPath.getReferencedNode()?.nodeType;
+      : keyPath.getReferencedNode()?.nodeType;   
     this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
     this.isMapping = container.isMapping;
+    this.isNestedMapping = container.isNestedMapping;
+
     this.isStruct = container.isStruct; // keyPath.isStruct();
 
     if (this.isStruct && this.container.isParent) {
@@ -120,11 +120,14 @@ export default class MappingKey {
       // we do not currently allow struct of mapping types
       this.name = `${container.name}.${keyPath.node.memberName}`;
 
-    } else if (this.isMapping) {
+    } else if (this.isMapping && !this.isNestedMapping) {
       this.name = this.isMsgSender
         ? `${container.name}[msg.sender]`
         : `${container.name}[${this.referencedKeyName}]`;
-    } else if (this.isStruct) {
+    }else if (this.isNestedMapping) {
+      this.name = `${container.name}${this.referencedKeyName}`;
+    }
+    else if (this.isStruct) {
       this.name = `${container.name}.${keyPath.node.memberName}`;
     }
 
@@ -216,6 +219,7 @@ export default class MappingKey {
   }
 
   updateIncrementation(path: NodePath, state: any) {
+    
     if (!path.isIncremented || state.incrementedIdentifier.isKnown) {
       this.isWhole = true;
       const reason = { src: state.incrementedIdentifier.src, 0: `Overwritten` };

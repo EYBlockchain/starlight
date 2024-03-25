@@ -254,7 +254,7 @@ export class LocalVariableIndicator extends FunctionDefinitionIndicator {
   }
 
   addMappingKey(referencingPath: NodePath): MappingKey {
-    console.log(referencingPath);
+
     const keyNode = referencingPath.getMappingKeyIdentifier();
     const keyPath = NodePath.getPath(keyNode);
     if (!keyPath) throw new Error('No keyPath found in pathCache');

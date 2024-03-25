@@ -1,5 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 
+import MappingKey from 'src/traverse/MappingKey.js';
 import OrchestrationBP from './boilerplate-generator.js';
 
 
@@ -27,6 +28,7 @@ const stateVariableIds = (node: any) => {
           `\nconst ${privateStateName}_stateVarId_key = generalise(${stateNode.stateVarId[1]});`,
         );
       } else {
+        console.log('stateNode.stateVarId:', stateNode.stateVarId);
         stateVarIds.push(
           `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
         );
@@ -549,6 +551,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'InitialiseKeys':
+      console.log(" OnChainKeyRegistry: ------->", node );
       states[0] = node.onChainKeyRegistry ? `true` : `false`;
       return {
         statements: [
