@@ -756,10 +756,9 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         }
         // collect all index names
         const names = referencedIndicator?.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
-        console.log(names);
         // check whether this is the first instance of a new index name
         const firstInstanceOfNewName = names && names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name && names[names.length - 1].name !== names[0].name;
-        console.log(firstInstanceOfNewName);
+        
         if (referencedIndicator instanceof StateVariableIndicator &&
           (firstInstanceOfNewName 
             || (referencedIndicator.isSecret && (lhs.id === referencedIndicator.referencingPaths[0].node.id ||lhs.id === referencedIndicator.referencingPaths[0].parent.id))
@@ -770,7 +769,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
           ) // FIX - sometimes a variable will be declared twice when we insert oldCommitmentPreimage preStatements before an overwrite - we check here
         ) {
           isVarDec = true;
-        }
+        }     
       }
       let nodeID = node.id;
       newNode = buildNode('ExpressionStatement', { isVarDec });
