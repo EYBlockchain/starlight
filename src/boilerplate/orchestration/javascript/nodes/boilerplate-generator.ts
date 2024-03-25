@@ -138,6 +138,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         increment,
         structProperties,
         isMapping: indicator.isMapping,
+        isNestedMapping: indicator.isNestedMapping,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         isOwned: indicator.isOwned,

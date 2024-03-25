@@ -28,7 +28,6 @@ const stateVariableIds = (node: any) => {
           `\nconst ${privateStateName}_stateVarId_key = generalise(${stateNode.stateVarId[1]});`,
         );
       } else {
-        console.log('stateNode.stateVarId:', stateNode.stateVarId);
         stateVarIds.push(
           `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
         );
@@ -133,14 +132,17 @@ export const generateProofBoilerplate = (node: any) => {
     }
     const parameters: string[] = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
+    console.log('state Node for mapping key:', stateNode);
     const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
 
     const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
-    const stateVarIdLines =
-      stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
-        ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
-        : [];
+    let stateVarIdLines =
+      stateNode.isMapping  && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
+        ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`] : [];
+    
+
+   
     // we add any extra params the circuit needs
     node.parameters
       .filter(

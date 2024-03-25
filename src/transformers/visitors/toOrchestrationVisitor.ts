@@ -440,6 +440,8 @@ const visitor = {
             secretModified =
               stateVarIndicator.container?.isSecret && stateVarIndicator.container?.isModified;
             id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node) || ``];
+console.log('Nested Mapping keys : ', scope.getMappingKeyName(stateVarIndicator.keyPath.node));
+
 
             name = (accessedOnly ?
               getIndexAccessName(stateVarIndicator.accessedPaths[stateVarIndicator.accessedPaths.length -1]?.getAncestorOfType('IndexAccess')?.node) :
