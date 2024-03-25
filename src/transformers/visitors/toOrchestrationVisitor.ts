@@ -245,8 +245,9 @@ const visitor = {
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           file.constructorParams = state.constructorParams;
           file.contractImports = state.contractImports;
-          if(state.isjoinCommitmentsFunction?.includes('true'))
+          if(state.isjoinSplitCommitmentsFunction?.includes('true'))
             file.functionNames.push('joinCommitments');
+            file.functionNames.push('splitCommitments');
         }
         if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
           file.nodes[0].constructorParams = state.constructorParams;
@@ -354,8 +355,8 @@ const visitor = {
           indicators.isPartitioned &&
           !indicators.isStruct &&
           indicators.isNullified ) {
-           state.isjoinCommitmentsFunction ??= [];
-           state.isjoinCommitmentsFunction?.push('true');
+           state.isjoinSplitCommitmentsFunction ??= [];
+           state.isjoinSplitCommitmentsFunction?.push('true');
          }
       }
 

@@ -176,18 +176,27 @@ const visitor = {
 
 
       const joinCommitmentsNode = buildNode('File', {
-       fileName: `joinCommitments`,
+       fileName: `joinSplitCommitments`,
         fileId: node.id,
         nodes: [ ],
       });
 
-      // check for joinCommitments
+      const splitCommitmentsNode = buildNode('File', {
+        fileName: `spiltCommitments`,
+         fileId: node.id,
+         nodes: [ ],
+       });
+
+      // check for joinCommitments and splitCommitments
       for(const [, indicator ] of Object.entries(indicators)){
         if((indicator instanceof StateVariableIndicator)
           && indicator.isPartitioned
           && indicator.isNullified && !indicator.isStruct) {
             if (!parent._newASTPointer.some(n => n.fileName === joinCommitmentsNode.fileName)){
               parent._newASTPointer.push(joinCommitmentsNode);
+            }
+            if (!parent._newASTPointer.some(n => n.fileName === splitCommitmentsNode.fileName)){
+              parent._newASTPointer.push(splitCommitmentsNode);
             }
         }
         if(indicator instanceof StateVariableIndicator && indicator.encryptionRequired) {
