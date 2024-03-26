@@ -11,8 +11,8 @@ contract Escrow {
     secret mapping(address => uint256) public balances;
     IERC20 public erc20;
 
-    constructor(address _erc20) {
-        erc20 = IERC20(_erc20);
+    constructor(address erc20Address) {
+        erc20 = IERC20(erc20Address);
     }
 
     function deposit(uint256 amount) public {
