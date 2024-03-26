@@ -31,7 +31,7 @@ def main(\
 	private field[32] oldCommitment_0_membershipWitness_siblingPath,\
 	private field newCommitment_0_owner_publicKey_field,\
 	private field newCommitment_0_salt_field,\
-	public field newCommitment_0_commitment\
+	public field newCommitment_0_commitment,\
     private field newCommitment_1_owner_publicKey_field,\
 	private field newCommitment_1_salt_field,\
 	public field newCommitment_1_commitment\
