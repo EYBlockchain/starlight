@@ -47,7 +47,7 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
         let index_expNode = fnDefNode.node._newASTPointer.body.statements.indexOf(expNode);
         if (expNode && !expNode.isAccessed) {
           expNode.isAccessed = true;
-          if(expNode.nodeType === "ExpressionStatement"){
+          if(!expNode.isVarDec){
             const initInnerNode = buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
               operator: '=',
@@ -62,7 +62,7 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
               fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
             }
           } else{
-            let modName = expNode.expression.initialValue.leftHandSide?.name || expNode.expression.initialValue.name;
+            let modName = expNode.expression.initialValue?.leftHandSide?.name || expNode.expression.initialValue?.name || expNode.expression.leftHandSide?.name;
             const InnerNode = buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'  }),
               operator: '=',

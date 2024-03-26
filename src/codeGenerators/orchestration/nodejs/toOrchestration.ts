@@ -58,8 +58,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
         } else if(returnIsSecret[index])
             node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
         })
-        //console.log("Get here1");
-        //console.log(node.parameters);
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);
@@ -128,16 +126,30 @@ export default function codeGenerator(node: any, options: any = {}): any {
      return " ";
 
     case 'Assignment':
-      if (['+=', '-=', '*='].includes(node.operator)) {
-        return `${codeGenerator(node.leftHandSide, {
-          lhs: true,
-        })} = ${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
-          0,
-        )} ${codeGenerator(node.rightHandSide)}`;
+      if (node.rightHandSide.subType !== 'generalNumber'){
+        if (['+=', '-=', '*='].includes(node.operator)) {
+          return `${codeGenerator(node.leftHandSide, {
+            lhs: true,
+          })} = generalise(${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
+            0,
+          )} ${codeGenerator(node.rightHandSide)})`;
+        }
+        return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
+          node.operator
+        } generalise(${codeGenerator(node.rightHandSide)})`;
+      } else {
+        if (['+=', '-=', '*='].includes(node.operator)) {
+          return `${codeGenerator(node.leftHandSide, {
+            lhs: true,
+          })} = ${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
+            0,
+          )} ${codeGenerator(node.rightHandSide)}`;
+        }
+        return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
+          node.operator
+        } ${codeGenerator(node.rightHandSide)}`;
       }
-      return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
-        node.operator
-      } ${codeGenerator(node.rightHandSide)}`;
+      
 
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${
@@ -195,7 +207,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'UnaryOperation':
       // ++ or -- on a parseInt() does not work
       //return `generalise(${node.subExpression.name}.integer${node.operator})`;
-      return `generalise(parseInt(${node.subExpression.name}.integer,10)${node.operator[0]}1)`;
+      return `parseInt(${node.subExpression.name}.integer,10)${node.operator[0]}1`;
 
     case 'Literal':
       return node.value;
