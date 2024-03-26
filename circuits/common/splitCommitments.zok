@@ -22,7 +22,7 @@ def main(\
     public field nullifierRoot,\
     public field newNullifierRoot,\
 	public field oldCommitment_0_nullifier,\
-    public field[32] oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
+    private field[32] oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
     private field[32] oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
 	private field oldCommitment_0_value,\
 	private field oldCommitment_0_salt_field,\

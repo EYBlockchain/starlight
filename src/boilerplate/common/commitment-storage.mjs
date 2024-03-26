@@ -10,12 +10,7 @@ import logger from './logger.mjs';
 import utils from 'zkp-utils';
 import { poseidonHash } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-import {
-  SumType,
-  reduceTree,
-  toBinArray,
-  poseidonConcatHash,
-} from './smt_utils.mjs';
+import { SumType, reduceTree, toBinArray, poseidonConcatHash } from './smt_utils.mjs';
 import { hlt } from './hash-lookup.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
@@ -213,7 +208,6 @@ export async function markNullified(commitmentHash, secretKey = null) {
 }
 
 export function getInputCommitments(
-  contractName,
   publicKey,
   value,
   commitments,
@@ -555,7 +549,7 @@ export async function splitCommitments(
 
   // Extract set membership witness:
 
-  const oldCommitment_0_witness = witnesses;
+  const oldCommitment_0_witness = witness;
 
   const oldCommitment_0_index = generalise(oldCommitment_0_witness.index);
   const oldCommitment_root = generalise(oldCommitment_0_witness.root);
@@ -623,11 +617,12 @@ export async function splitCommitments(
     BigInt(newCommitment_0_newSalt.hex(32)),
   ]);
 
-  newCommitment_1 = generalise(newCommitment_1.hex(32)); // truncate
+  newCommitment_0 = generalise(newCommitment_0.hex(32)); // truncate
 
   const newCommitment_1_newSalt = generalise(utils.randomHex(31));
 
-  let newCommitment_1_value = parseInt(oldCommitment_0_prev.integer, 10) - parseInt(value.integer, 10);
+  let newCommitment_1_value =
+    parseInt(oldCommitment_0_prev.integer, 10) - parseInt(value.integer, 10);
 
   newCommitment_1_value = generalise(newCommitment_1_value);
 
