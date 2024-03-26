@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable import/no-cycle */
 /**
 Logic for storing and retrieving commitments from a mongo DB.
@@ -6,7 +7,7 @@ import config from 'config';
 import gen from 'general-number';
 import mongo from './mongo.mjs';
 import logger from './logger.mjs';
-import utils from "zkp-utils";
+import utils from 'zkp-utils';
 import { poseidonHash } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
 import {
@@ -212,7 +213,7 @@ export async function markNullified(commitmentHash, secretKey = null) {
 }
 
 export function getInputCommitments(
-  contractName,	
+  contractName,
   publicKey,
   value,
   commitments,
@@ -242,9 +243,6 @@ export function getInputCommitments(
     possibleCommitments.length === 1 &&
     commitmentsSum >= parseInt(value, 10)
   ) {
-    logger.warn(
-      'Only one commitment exists, but it is enough to use. Calling Split Commitment circuit. It will generate proof to split commitments, this will require an on-chain verification',
-    );
     return [true, possibleCommitments[0], null];
   }
   possibleCommitments.sort(
@@ -252,7 +250,7 @@ export function getInputCommitments(
       parseInt(commitB.preimage.value, 10) -
       parseInt(commitA.preimage.value, 10),
   );
-  
+
   if (
     parseInt(possibleCommitments[0].preimage.value, 10) +
       parseInt(possibleCommitments[1].preimage.value, 10) >=
@@ -265,357 +263,592 @@ export function getInputCommitments(
   return null;
 }
 
-function getStructInputCommitments(
-	value,
-	possibleCommitments
-) {
-	if (possibleCommitments.length < 2) {
-		logger.warn('Enough Commitments dont exists to use.' )
-		return null;
-	}
-	let possibleCommitmentsProp = [];
-	value.forEach((propValue, i) => {
-		let possibleCommitmentsTemp = [];
-		possibleCommitments.sort(
-			(commitA, commitB) =>
-				parseInt(Object.values(commitB.preimage.value)[i], 10) -
-				parseInt(Object.values(commitA.preimage.value)[i], 10)
-		);
-		if (!possibleCommitmentsProp.length) {
-			if (
-				parseInt(Object.values(possibleCommitments[0].preimage.value)[i], 10) +
-					parseInt(Object.values(possibleCommitments[1].preimage.value)[i], 10) >=
-				parseInt(propValue, 10)
-			) {
-				possibleCommitmentsProp.push([
-					possibleCommitments[0],
-					possibleCommitments[1],
-				]);
-			} else {
-				possibleCommitments.splice(0,2);
-				possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
-			}
-		} else {
-			possibleCommitments.forEach((possibleCommit) => {
-				if (possibleCommitmentsProp.includes(possibleCommit)) possibleCommitmentsTemp.push(possibleCommit);
-			});
-			if (
-				possibleCommitmentsTemp.length > 1 && 
-					parseInt(Object.values(possibleCommitmentsTemp[0].preimage.value)[i], 10) +
-						parseInt(Object.values(possibleCommitmentsTemp[1].preimage.value)[i], 10) <
-					parseInt(propValue, 10)
-				) {
-					possibleCommitments.splice(0,2);
-					possibleCommitmentsProp = getStructInputCommitments(value, possibleCommitments);
-			}
-		}
-	});
-	return possibleCommitmentsProp;
+function getStructInputCommitments(value, possibleCommitments) {
+  if (possibleCommitments.length < 2) {
+    logger.warn('Enough Commitments dont exists to use.');
+    return null;
+  }
+  let possibleCommitmentsProp = [];
+  value.forEach((propValue, i) => {
+    let possibleCommitmentsTemp = [];
+    possibleCommitments.sort(
+      (commitA, commitB) =>
+        parseInt(Object.values(commitB.preimage.value)[i], 10) -
+        parseInt(Object.values(commitA.preimage.value)[i], 10),
+    );
+    if (!possibleCommitmentsProp.length) {
+      if (
+        parseInt(Object.values(possibleCommitments[0].preimage.value)[i], 10) +
+          parseInt(
+            Object.values(possibleCommitments[1].preimage.value)[i],
+            10,
+          ) >=
+        parseInt(propValue, 10)
+      ) {
+        possibleCommitmentsProp.push([
+          possibleCommitments[0],
+          possibleCommitments[1],
+        ]);
+      } else {
+        possibleCommitments.splice(0, 2);
+        possibleCommitmentsProp = getStructInputCommitments(
+          value,
+          possibleCommitments,
+        );
+      }
+    } else {
+      possibleCommitments.forEach(possibleCommit => {
+        if (possibleCommitmentsProp.includes(possibleCommit))
+          possibleCommitmentsTemp.push(possibleCommit);
+      });
+      if (
+        possibleCommitmentsTemp.length > 1 &&
+        parseInt(
+          Object.values(possibleCommitmentsTemp[0].preimage.value)[i],
+          10,
+        ) +
+          parseInt(
+            Object.values(possibleCommitmentsTemp[1].preimage.value)[i],
+            10,
+          ) <
+          parseInt(propValue, 10)
+      ) {
+        possibleCommitments.splice(0, 2);
+        possibleCommitmentsProp = getStructInputCommitments(
+          value,
+          possibleCommitments,
+        );
+      }
+    }
+  });
+  return possibleCommitmentsProp;
 }
 
 export async function joinCommitments(
-	contractName,
-	statename,
-	secretKey,
-	publicKey,
-	stateVarId,
-	commitments,
-	witnesses,
-	instance,
-	contractAddr,
-	web3,
+  contractName,
+  statename,
+  secretKey,
+  publicKey,
+  stateVarId,
+  commitments,
+  witnesses,
+  instance,
+  contractAddr,
+  web3,
 ) {
-	logger.warn(
-		"Existing Commitments are not appropriate and we need to call Join Commitment Circuit. It will generate proof to join commitments, this will require an on-chain verification"
-	);
+  logger.warn(
+    'Existing Commitments are not appropriate and we need to call Join Commitment Circuit. It will generate proof to join commitments, this will require an on-chain verification',
+  );
 
-	const oldCommitment_0_prevSalt = generalise(commitments[0].preimage.salt);
-	const oldCommitment_1_prevSalt = generalise(commitments[1].preimage.salt);
-	const oldCommitment_0_prev = generalise(commitments[0].preimage.value);
-	const oldCommitment_1_prev = generalise(commitments[1].preimage.value);
+  const oldCommitment_0_prevSalt = generalise(commitments[0].preimage.salt);
+  const oldCommitment_1_prevSalt = generalise(commitments[1].preimage.salt);
+  const oldCommitment_0_prev = generalise(commitments[0].preimage.value);
+  const oldCommitment_1_prev = generalise(commitments[1].preimage.value);
 
-	// Extract set membership witness:
+  // Extract set membership witness:
 
-	const oldCommitment_0_witness = witnesses[0];
-	const oldCommitment_1_witness = witnesses[1];
+  const oldCommitment_0_witness = witnesses[0];
+  const oldCommitment_1_witness = witnesses[1];
 
-	const oldCommitment_0_index = generalise(oldCommitment_0_witness.index);
-	const oldCommitment_1_index = generalise(oldCommitment_1_witness.index);
-	const oldCommitment_root = generalise(oldCommitment_0_witness.root);
-	const oldCommitment_0_path = generalise(oldCommitment_0_witness.path).all;
-	const oldCommitment_1_path = generalise(oldCommitment_1_witness.path).all;
+  const oldCommitment_0_index = generalise(oldCommitment_0_witness.index);
+  const oldCommitment_1_index = generalise(oldCommitment_1_witness.index);
+  const oldCommitment_root = generalise(oldCommitment_0_witness.root);
+  const oldCommitment_0_path = generalise(oldCommitment_0_witness.path).all;
+  const oldCommitment_1_path = generalise(oldCommitment_1_witness.path).all;
 
-	// increment would go here but has been filtered out
+  // increment would go here but has been filtered out
 
-	// Calculate nullifier(s):
+  // Calculate nullifier(s):
 
-	let oldCommitment_stateVarId = stateVarId[0];
-	if (stateVarId.length > 1) {
-		oldCommitment_stateVarId = generalise(
-			utils.mimcHash(
-				[generalise(stateVarId[0]).bigInt, generalise(stateVarId[1]).bigInt],
-				"ALT_BN_254"
-			)
-		).hex(32);
-	}
+  let oldCommitment_stateVarId = stateVarId[0];
+  if (stateVarId.length > 1) {
+    oldCommitment_stateVarId = generalise(
+      utils.mimcHash(
+        [generalise(stateVarId[0]).bigInt, generalise(stateVarId[1]).bigInt],
+        'ALT_BN_254',
+      ),
+    ).hex(32);
+  }
 
-	let oldCommitment_0_nullifier = poseidonHash([
-		BigInt(oldCommitment_stateVarId),
-		BigInt(secretKey.hex(32)),
-		BigInt(oldCommitment_0_prevSalt.hex(32)),
-	]);
-	let oldCommitment_1_nullifier = poseidonHash([
-		BigInt(oldCommitment_stateVarId),
-		BigInt(secretKey.hex(32)),
-		BigInt(oldCommitment_1_prevSalt.hex(32)),
-	]);
-	oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
-	oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32)); // truncate
+  let oldCommitment_0_nullifier = poseidonHash([
+    BigInt(oldCommitment_stateVarId),
+    BigInt(secretKey.hex(32)),
+    BigInt(oldCommitment_0_prevSalt.hex(32)),
+  ]);
+  let oldCommitment_1_nullifier = poseidonHash([
+    BigInt(oldCommitment_stateVarId),
+    BigInt(secretKey.hex(32)),
+    BigInt(oldCommitment_1_prevSalt.hex(32)),
+  ]);
+  oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
+  oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32)); // truncate
 
-	// Non-membership witness for Nullifier
-	const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-		oldCommitment_0_nullifier
-	);
-	const oldCommitment_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-		oldCommitment_1_nullifier
-	);
+  // Non-membership witness for Nullifier
+  const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
+    oldCommitment_0_nullifier,
+  );
+  const oldCommitment_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(
+    oldCommitment_1_nullifier,
+  );
 
-	const oldCommitment_nullifierRoot = generalise(oldCommitment_0_nullifier_NonMembership_witness.root);
-	const oldCommitment_0_nullifier_path = generalise(
-		oldCommitment_0_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_1_nullifier_path = generalise(
-		oldCommitment_1_nullifier_NonMembership_witness.path
-	).all;
+  const oldCommitment_nullifierRoot = generalise(
+    oldCommitment_0_nullifier_NonMembership_witness.root,
+  );
+  const oldCommitment_0_nullifier_path = generalise(
+    oldCommitment_0_nullifier_NonMembership_witness.path,
+  ).all;
+  const oldCommitment_1_nullifier_path = generalise(
+    oldCommitment_1_nullifier_NonMembership_witness.path,
+  ).all;
 
+  await temporaryUpdateNullifier(a_0_nullifier);
+  await temporaryUpdateNullifier(a_1_nullifier);
 
-	await temporaryUpdateNullifier(a_0_nullifier);
-	await temporaryUpdateNullifier(a_1_nullifier);
+  const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
+    oldCommitment_0_nullifier,
+  );
+  const oldCommitment_1_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
+    oldCommitment_1_nullifier,
+  );
 
-	const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-		oldCommitment_0_nullifier
-	);
-	const oldCommitment_1_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-		oldCommitment_1_nullifier
-	);
+  const oldCommitment_0_nullifier_newpath = generalise(
+    oldCommitment_0_updated_nullifier_NonMembership_witness.path,
+  ).all;
+  const oldCommitment_1_nullifier_newpath = generalise(
+    oldCommitment_1_updated_nullifier_NonMembership_witness.path,
+  ).all;
+  const oldCommitment_newNullifierRoot = generalise(
+    oldCommitment_0_updated_nullifier_NonMembership_witness.root,
+  );
+  // Calculate commitment(s):
 
-	const oldCommitment_0_nullifier_newpath = generalise(
-		oldCommitment_0_updated_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_1_nullifier_newpath = generalise(
-		oldCommitment_1_updated_nullifier_NonMembership_witness.path
-	).all;
-	const oldCommitment_newNullifierRoot = generalise(oldCommitment_0_updated_nullifier_NonMembership_witness.root);
-	// Calculate commitment(s):
+  const newCommitment_newSalt = generalise(utils.randomHex(31));
 
-	const newCommitment_newSalt = generalise(utils.randomHex(31));
+  let newCommitment_value =
+    parseInt(oldCommitment_0_prev.integer, 10) +
+    parseInt(oldCommitment_1_prev.integer, 10);
 
-	let newCommitment_value =
-		parseInt(oldCommitment_0_prev.integer, 10) +
-		parseInt(oldCommitment_1_prev.integer, 10);
+  newCommitment_value = generalise(newCommitment_value);
 
-	newCommitment_value = generalise(newCommitment_value);
+  let newCommitment = poseidonHash([
+    BigInt(oldCommitment_stateVarId),
+    BigInt(newCommitment_value.hex(32)),
+    BigInt(publicKey.hex(32)),
+    BigInt(newCommitment_newSalt.hex(32)),
+  ]);
 
-	let newCommitment = poseidonHash([
-		BigInt(oldCommitment_stateVarId),
-		BigInt(newCommitment_value.hex(32)),
-		BigInt(publicKey.hex(32)),
-		BigInt(newCommitment_newSalt.hex(32)),
-	]);
+  newCommitment = generalise(newCommitment.hex(32)); // truncate
 
-	newCommitment = generalise(newCommitment.hex(32)); // truncate
+  let stateVarID = parseInt(oldCommitment_stateVarId, 16);
+  let fromID = 0;
+  let isMapping = 0;
+  if (stateVarId.length > 1) {
+    stateVarID = stateVarId[0];
+    fromID = stateVarId[1].integer;
+    isMapping = 1;
+  }
 
-	let stateVarID = parseInt(oldCommitment_stateVarId, 16);
-	let fromID = 0;
-	let isMapping = 0;
-	if (stateVarId.length > 1) {
-		stateVarID = stateVarId[0];
-		fromID = stateVarId[1].integer;
-		isMapping = 1;
-	}
+  // Call Zokrates to generate the proof:
+  const allInputs = [
+    fromID,
+    stateVarID,
+    isMapping,
+    secretKey.integer,
+    secretKey.integer,
 
-	// Call Zokrates to generate the proof:
-	const allInputs = [
-		fromID,
-		stateVarID,
-		isMapping,
-		secretKey.integer,
-		secretKey.integer,
-
-		oldCommitment_nullifierRoot.integer,
-		oldCommitment_newNullifierRoot.integer,
-		oldCommitment_0_nullifier.integer,
-		oldCommitment_0_nullifier_path.integer,
-		oldCommitment_0_nullifier_newpath.integer,
-		oldCommitment_1_nullifier.integer,
-		oldCommitment_1_nullifier_path.integer,
-		oldCommitment_1_nullifier_newpath.integer,
-		oldCommitment_0_prev.integer,
-		oldCommitment_0_prevSalt.integer,
-		oldCommitment_1_prev.integer,
-		oldCommitment_1_prevSalt.integer,
-		oldCommitment_root.integer,
-		oldCommitment_0_index.integer,
-		oldCommitment_0_path.integer,
-		oldCommitment_1_index.integer,
-		oldCommitment_1_path.integer,
-		publicKey.integer,
-		newCommitment_newSalt.integer,
-		newCommitment.integer,
-	].flat(Infinity);
+    oldCommitment_nullifierRoot.integer,
+    oldCommitment_newNullifierRoot.integer,
+    oldCommitment_0_nullifier.integer,
+    oldCommitment_0_nullifier_path.integer,
+    oldCommitment_0_nullifier_newpath.integer,
+    oldCommitment_1_nullifier.integer,
+    oldCommitment_1_nullifier_path.integer,
+    oldCommitment_1_nullifier_newpath.integer,
+    oldCommitment_0_prev.integer,
+    oldCommitment_0_prevSalt.integer,
+    oldCommitment_1_prev.integer,
+    oldCommitment_1_prevSalt.integer,
+    oldCommitment_root.integer,
+    oldCommitment_0_index.integer,
+    oldCommitment_0_path.integer,
+    oldCommitment_1_index.integer,
+    oldCommitment_1_path.integer,
+    publicKey.integer,
+    newCommitment_newSalt.integer,
+    newCommitment.integer,
+  ].flat(Infinity);
 
   const res = await generateProof('joinCommitments', allInputs);
-	const proof = generalise(Object.values(res.proof).flat(Infinity))
-		.map((coeff) => coeff.integer)
-		.flat(Infinity);
-	// Send transaction to the blockchain:
+  const proof = generalise(Object.values(res.proof).flat(Infinity))
+    .map(coeff => coeff.integer)
+    .flat(Infinity);
+  // Send transaction to the blockchain:
 
-	const txData = await instance.methods
-		.joinCommitments(
-			oldCommitment_nullifierRoot.integer,
-			oldCommitment_newNullifierRoot.integer,
-			[oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
-			oldCommitment_root.integer,
-			[newCommitment.integer],
-			proof
-		).encodeABI();
+  const txData = await instance.methods
+    .joinCommitments(
+      oldCommitment_nullifierRoot.integer,
+      oldCommitment_newNullifierRoot.integer,
+      [oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
+      oldCommitment_root.integer,
+      [newCommitment.integer],
+      proof,
+    )
+    .encodeABI();
 
-	let txParams = {
-			from: config.web3.options.defaultAccount,
-			to: contractAddr,
-			gas: config.web3.options.defaultGas,
-			gasPrice: config.web3.options.defaultGasPrice,
-			data: txData,
-			chainId: await web3.eth.net.getId(),
-		};
-
-	const key = config.web3.key;
-
-	const signed = await web3.eth.accounts.signTransaction(txParams, key);
-
-	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-
-	let tx = await instance.getPastEvents("allEvents");
-
-	tx = tx[0];
-
-	await markNullified(generalise(commitments[0]._id), secretKey.hex(32));
-	await markNullified(generalise(commitments[1]._id), secretKey.hex(32));
-	await storeCommitment({
-		hash: newCommitment,
-		name: statename,
-		mappingKey: fromID,
-		preimage: {
-			stateVarId: generalise(oldCommitment_stateVarId),
-			value: newCommitment_value,
-			salt: newCommitment_newSalt,
-			publicKey: publicKey,
-		},
-		secretKey: secretKey,
-		isNullified: false,
-	});
-
-	return { tx };
-}
-
-
- // This is a helper function for checkMembership
-const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
-	switch (tree.tag) {
-	  case 'branch':
-		return binArr[0] === '0'
-		  ? _getnullifierMembershipWitness(
-			  binArr.slice(1),
-			  element,
-			  tree.left,
-			  [getHash(tree.right) ].concat(acc),
-			)
-		  : _getnullifierMembershipWitness(
-			  binArr.slice(1),
-			  element,
-			  tree.right,
-			  [getHash(tree.left)].concat(acc),
-			);
-			case "leaf": {
-				if (binArr.length > 0) {
-					while (binArr.length > 0) {
-						binArr[0] === "0"
-							? (acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc))
-							: (acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc));
-						binArr = binArr.slice(1);
-					}
-					return { isMember: false, path: acc };
-				} else {
-					return tree.val !== element
-						? { isMember: false, path: acc }
-						: { isMember: true, path: acc };
-				}
-			}
-	  default:
-		return tree;
-	}
+  let txParams = {
+    from: config.web3.options.defaultAccount,
+    to: contractAddr,
+    gas: config.web3.options.defaultGas,
+    gasPrice: config.web3.options.defaultGasPrice,
+    data: txData,
+    chainId: await web3.eth.net.getId(),
   };
 
-export async function updateNullifierTree() {
-	smt_tree = temp_smt_tree;
+  const key = config.web3.key;
+
+  const signed = await web3.eth.accounts.signTransaction(txParams, key);
+
+  const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+  let tx = await instance.getPastEvents('allEvents');
+
+  tx = tx[0];
+
+  await markNullified(generalise(commitments[0]._id), secretKey.hex(32));
+  await markNullified(generalise(commitments[1]._id), secretKey.hex(32));
+  await storeCommitment({
+    hash: newCommitment,
+    name: statename,
+    mappingKey: fromID,
+    preimage: {
+      stateVarId: generalise(oldCommitment_stateVarId),
+      value: newCommitment_value,
+      salt: newCommitment_newSalt,
+      publicKey: publicKey,
+    },
+    secretKey: secretKey,
+    isNullified: false,
+  });
+
+  return { tx };
 }
 
+export async function splitCommitments(
+  contractName,
+  statename,
+  value,
+  secretKey,
+  publicKey,
+  stateVarId,
+  commitment,
+  witness,
+  instance,
+  contractAddr,
+  web3,
+) {
+  logger.warn(
+    'Only one commitment exists, but it is enough to use. Calling Split Commitment circuit. It will generate proof to split commitments, this will require an on-chain verification',
+  );
+
+  const oldCommitment_0_prevSalt = generalise(commitment.preimage.salt);
+  const oldCommitment_0_prev = generalise(commitment.preimage.value);
+
+  // Extract set membership witness:
+
+  const oldCommitment_0_witness = witnesses;
+
+  const oldCommitment_0_index = generalise(oldCommitment_0_witness.index);
+  const oldCommitment_root = generalise(oldCommitment_0_witness.root);
+  const oldCommitment_0_path = generalise(oldCommitment_0_witness.path).all;
+
+  // increment would go here but has been filtered out
+
+  // Calculate nullifier(s):
+
+  let oldCommitment_stateVarId = stateVarId[0];
+  if (stateVarId.length > 1) {
+    oldCommitment_stateVarId = generalise(
+      utils.mimcHash(
+        [generalise(stateVarId[0]).bigInt, generalise(stateVarId[1]).bigInt],
+        'ALT_BN_254',
+      ),
+    ).hex(32);
+  }
+
+  let oldCommitment_0_nullifier = poseidonHash([
+    BigInt(oldCommitment_stateVarId),
+    BigInt(secretKey.hex(32)),
+    BigInt(oldCommitment_0_prevSalt.hex(32)),
+  ]);
+
+  oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
+
+  // Non-membership witness for Nullifier
+  const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
+    oldCommitment_0_nullifier,
+  );
+
+  const oldCommitment_nullifierRoot = generalise(
+    oldCommitment_0_nullifier_NonMembership_witness.root,
+  );
+  const oldCommitment_0_nullifier_path = generalise(
+    oldCommitment_0_nullifier_NonMembership_witness.path,
+  ).all;
+
+  await temporaryUpdateNullifier(oldCommitment_0_nullifier);
+
+  const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
+    oldCommitment_0_nullifier,
+  );
+
+  const oldCommitment_0_nullifier_newpath = generalise(
+    oldCommitment_0_updated_nullifier_NonMembership_witness.path,
+  ).all;
+
+  const oldCommitment_newNullifierRoot = generalise(
+    oldCommitment_0_updated_nullifier_NonMembership_witness.root,
+  );
+  // Calculate commitment(s):
+
+  const newCommitment_0_newSalt = generalise(utils.randomHex(31));
+
+  let newCommitment_0_value = parseInt(value.integer, 10);
+
+  newCommitment_0_value = generalise(newCommitment_0_value);
+
+  let newCommitment_0 = poseidonHash([
+    BigInt(oldCommitment_stateVarId),
+    BigInt(newCommitment_0_value.hex(32)),
+    BigInt(publicKey.hex(32)),
+    BigInt(newCommitment_0_newSalt.hex(32)),
+  ]);
+
+  newCommitment_1 = generalise(newCommitment_1.hex(32)); // truncate
+
+  const newCommitment_1_newSalt = generalise(utils.randomHex(31));
+
+  let newCommitment_1_value = parseInt(oldCommitment_0_prev.integer, 10) - parseInt(value.integer, 10);
+
+  newCommitment_1_value = generalise(newCommitment_1_value);
+
+  let newCommitment_1 = poseidonHash([
+    BigInt(oldCommitment_stateVarId),
+    BigInt(newCommitment_1_value.hex(32)),
+    BigInt(publicKey.hex(32)),
+    BigInt(newCommitment_1_newSalt.hex(32)),
+  ]);
+
+  newCommitment_1 = generalise(newCommitment_1.hex(32)); // truncate
+
+  let stateVarID = parseInt(oldCommitment_stateVarId, 16);
+  let fromID = 0;
+  let isMapping = 0;
+  if (stateVarId.length > 1) {
+    stateVarID = stateVarId[0];
+    fromID = stateVarId[1].integer;
+    isMapping = 1;
+  }
+
+  // Call Zokrates to generate the proof:
+  const allInputs = [
+	value.integer,
+    fromID,
+    stateVarID,
+    isMapping,
+    secretKey.integer,
+
+    oldCommitment_nullifierRoot.integer,
+    oldCommitment_newNullifierRoot.integer,
+    oldCommitment_0_nullifier.integer,
+    oldCommitment_0_nullifier_path.integer,
+    oldCommitment_0_nullifier_newpath.integer,
+    oldCommitment_0_prev.integer,
+    oldCommitment_0_prevSalt.integer,
+    oldCommitment_root.integer,
+    oldCommitment_0_index.integer,
+    oldCommitment_0_path.integer,
+    publicKey.integer,
+    newCommitment_0_newSalt.integer,
+    newCommitment_0.integer,
+    publicKey.integer,
+    newCommitment_1_newSalt.integer,
+    newCommitment_1.integer,
+  ].flat(Infinity);
+
+  const res = await generateProof('splitCommitments', allInputs);
+  const proof = generalise(Object.values(res.proof).flat(Infinity))
+    .map(coeff => coeff.integer)
+    .flat(Infinity);
+  // Send transaction to the blockchain:
+
+  const txData = await instance.methods
+    .splitCommitments(
+      oldCommitment_nullifierRoot.integer,
+      oldCommitment_newNullifierRoot.integer,
+      [oldCommitment_0_nullifier.integer.integer],
+      oldCommitment_root.integer,
+      [newCommitment_0.integer, newCommitment_1.integer],
+      proof,
+    )
+    .encodeABI();
+
+  let txParams = {
+    from: config.web3.options.defaultAccount,
+    to: contractAddr,
+    gas: config.web3.options.defaultGas,
+    gasPrice: config.web3.options.defaultGasPrice,
+    data: txData,
+    chainId: await web3.eth.net.getId(),
+  };
+
+  const key = config.web3.key;
+
+  const signed = await web3.eth.accounts.signTransaction(txParams, key);
+
+  const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+  let tx = await instance.getPastEvents('allEvents');
+
+  tx = tx[0];
+
+  await markNullified(generalise(commitment._id), secretKey.hex(32));
+
+  await storeCommitment({
+    hash: newCommitment_0,
+    name: statename,
+    mappingKey: fromID,
+    preimage: {
+      stateVarId: generalise(oldCommitment_stateVarId),
+      value: newCommitment_0_value,
+      salt: newCommitment_0_newSalt,
+      publicKey: publicKey,
+    },
+    secretKey: secretKey,
+    isNullified: false,
+  });
+
+  await storeCommitment({
+    hash: newCommitment_1,
+    name: statename,
+    mappingKey: fromID,
+    preimage: {
+      stateVarId: generalise(oldCommitment_stateVarId),
+      value: newCommitment_1_value,
+      salt: newCommitment_1_newSalt,
+      publicKey: publicKey,
+    },
+    secretKey: secretKey,
+    isNullified: false,
+  });
+
+  return { tx };
+}
+
+// This is a helper function for checkMembership
+const _getnullifierMembershipWitness = (binArr, element, tree, acc) => {
+  switch (tree.tag) {
+    case 'branch':
+      return binArr[0] === '0'
+        ? _getnullifierMembershipWitness(
+            binArr.slice(1),
+            element,
+            tree.left,
+            [getHash(tree.right)].concat(acc),
+          )
+        : _getnullifierMembershipWitness(
+            binArr.slice(1),
+            element,
+            tree.right,
+            [getHash(tree.left)].concat(acc),
+          );
+    case 'leaf': {
+      if (binArr.length > 0) {
+        while (binArr.length > 0) {
+          binArr[0] === '0'
+            ? (acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc))
+            : (acc = [hlt[TRUNC_LENGTH - (binArr.length - 1)]].concat(acc));
+          binArr = binArr.slice(1);
+        }
+        return { isMember: false, path: acc };
+      } else {
+        return tree.val !== element
+          ? { isMember: false, path: acc }
+          : { isMember: true, path: acc };
+      }
+    }
+    default:
+      return tree;
+  }
+};
+
+export async function updateNullifierTree() {
+  smt_tree = temp_smt_tree;
+}
 
 export function getnullifierMembershipWitness(nullifier) {
-
-	const binArr = toBinArray(generalise(nullifier))
-	const padBinArr = Array(254 - binArr.length)
-		.fill("0")
-		.concat(...binArr).slice(0, TRUNC_LENGTH);
-	const  membershipPath = _getnullifierMembershipWitness(padBinArr, nullifier, smt_tree, []);
-    const root = getHash(smt_tree);
-	const witness = {path : membershipPath.path, root: root}
-	return witness;
-
+  const binArr = toBinArray(generalise(nullifier));
+  const padBinArr = Array(254 - binArr.length)
+    .fill('0')
+    .concat(...binArr)
+    .slice(0, TRUNC_LENGTH);
+  const membershipPath = _getnullifierMembershipWitness(
+    padBinArr,
+    nullifier,
+    smt_tree,
+    [],
+  );
+  const root = getHash(smt_tree);
+  const witness = { path: membershipPath.path, root: root };
+  return witness;
 }
 
-export async function temporaryUpdateNullifier(nullifier){
-	
-	temp_smt_tree = insertLeaf(generalise(nullifier).hex(32), temp_smt_tree);
-	
+export async function temporaryUpdateNullifier(nullifier) {
+  temp_smt_tree = insertLeaf(generalise(nullifier).hex(32), temp_smt_tree);
 }
 
 export async function reinstateNullifiers() {
-	const initialised = [];
-	const nullifiedCommitments = await getNullifiedCommitments();
-	if (!nullifiedCommitments) {
-		logger.info('No nullifiers to add to the tree');
-		return;
-	}
-	logger.warn(
-	'Reinstatiating nullifiers - NOTE that any nullifiers added from another client may not be known here, so the tree will be out of sync.',
-	);
-	for (const c of nullifiedCommitments) {
-		if (WHOLE_STATES.includes(c.name) && !initialised.includes(c.preimage.stateVarId)) {
-			logger.debug(`initialising state ${c.name}`);
-			smt_tree = insertLeaf(poseidonHash([BigInt(c.preimage.stateVarId), BigInt(0), BigInt(0)]).hex(32), smt_tree);
-			initialised.push(c.preimage.stateVarId);
-		}
-		logger.debug(`nullifying state ${c.name}: ${c.nullifier}`);
-		smt_tree = insertLeaf(c.nullifier, smt_tree);
-	}
-	temp_smt_tree = smt_tree;
+  const initialised = [];
+  const nullifiedCommitments = await getNullifiedCommitments();
+  if (!nullifiedCommitments) {
+    logger.info('No nullifiers to add to the tree');
+    return;
+  }
+  logger.warn(
+    'Reinstatiating nullifiers - NOTE that any nullifiers added from another client may not be known here, so the tree will be out of sync.',
+  );
+  for (const c of nullifiedCommitments) {
+    if (
+      WHOLE_STATES.includes(c.name) &&
+      !initialised.includes(c.preimage.stateVarId)
+    ) {
+      logger.debug(`initialising state ${c.name}`);
+      smt_tree = insertLeaf(
+        poseidonHash([BigInt(c.preimage.stateVarId), BigInt(0), BigInt(0)]).hex(
+          32,
+        ),
+        smt_tree,
+      );
+      initialised.push(c.preimage.stateVarId);
+    }
+    logger.debug(`nullifying state ${c.name}: ${c.nullifier}`);
+    smt_tree = insertLeaf(c.nullifier, smt_tree);
+  }
+  temp_smt_tree = smt_tree;
 }
 
-export function getupdatedNullifierPaths(nullifier){
-	const binArr = toBinArray(generalise(nullifier));
-	const padBinArr = Array(254 - binArr.length)
-		.fill("0")
-		.concat(...binArr)
-		.slice(0, TRUNC_LENGTH);
-	const membershipPath = _getnullifierMembershipWitness(
-		padBinArr,
-		nullifier,
-		temp_smt_tree,
-		[]
-	);
-	const root = getHash(temp_smt_tree);
-	const witness = { path: membershipPath.path, root: root };
-	return witness;
+export function getupdatedNullifierPaths(nullifier) {
+  const binArr = toBinArray(generalise(nullifier));
+  const padBinArr = Array(254 - binArr.length)
+    .fill('0')
+    .concat(...binArr)
+    .slice(0, TRUNC_LENGTH);
+  const membershipPath = _getnullifierMembershipWitness(
+    padBinArr,
+    nullifier,
+    temp_smt_tree,
+    [],
+  );
+  const root = getHash(temp_smt_tree);
+  const witness = { path: membershipPath.path, root: root };
+  return witness;
 }
-

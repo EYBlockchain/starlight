@@ -176,13 +176,13 @@ const visitor = {
 
 
       const joinCommitmentsNode = buildNode('File', {
-       fileName: `joinSplitCommitments`,
+       fileName: `joinCommitments`,
         fileId: node.id,
         nodes: [ ],
       });
 
       const splitCommitmentsNode = buildNode('File', {
-        fileName: `spiltCommitments`,
+        fileName: `splitCommitments`,
          fileId: node.id,
          nodes: [ ],
        });
