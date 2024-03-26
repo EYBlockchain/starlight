@@ -680,7 +680,7 @@ export async function splitCommitments(
     .splitCommitments(
       oldCommitment_nullifierRoot.integer,
       oldCommitment_newNullifierRoot.integer,
-      [oldCommitment_0_nullifier.integer.integer],
+      [oldCommitment_0_nullifier.integer],
       oldCommitment_root.integer,
       [newCommitment_0.integer, newCommitment_1.integer],
       proof,
