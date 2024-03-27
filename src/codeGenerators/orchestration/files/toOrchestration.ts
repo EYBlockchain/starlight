@@ -6,6 +6,7 @@ import { collectImportFiles, localFile } from '../../common.js'
 import OrchestrationBP from '../../../boilerplate/orchestration/javascript/raw/boilerplate-generator.js';
 import codeGenerator from '../nodejs/toOrchestration.js';
 import logger from '../../../utils/logger.js';
+import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../../traverse/Indicator.js';
 
 
 /**
@@ -145,6 +146,32 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
+
+
+    const parameters = fn.parameters.parameters;
+    const modifiedStateVariables = fn.parameters.modifiedStateVariables;
+
+    // Check if the function interacts with secret or public data
+    let interactsWithSecret = false;
+    let interactsWithPublic = false;
+
+    parameters.forEach(param => {
+      if (param.isSecret) {
+        interactsWithSecret = true;
+      } else {
+        interactsWithPublic = true;
+      }
+    });
+
+    modifiedStateVariables.forEach(stateVar => {
+      if (stateVar.isSecret) {
+        interactsWithSecret = true;
+      } else {
+        interactsWithPublic = true;
+      }
+    });
+ 
+
     fn.parameters.parameters.forEach(p => {
       if (p.typeName.isStruct) {
         structparams = `{ ${p.typeName.properties.map(prop => `${prop.name}: req.body.${p.name}.${prop.name}`)}}`;
@@ -161,19 +188,35 @@ const prepareIntegrationApiServices = (node: any) => {
 
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
-    // Adding Return parameters
+      // Adding Return parameters
     let returnParams: string[] = [];
-    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
-    if(returnParamsName.length > 0){
-    returnParamsName.forEach(param => {
-      if(fn.decrementsSecretState.includes(param))
-         returnParams.push(param+'_2_newCommitment');
-      else if(param !== 'true')
-       returnParams.push(param+'_newCommitment');
-       else
-       returnParams.push('bool');
-    });
+  
+      
+    if(interactsWithSecret) {
+      console.log(`${fn.name} interacts with secret data`);
+      let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
+      if(returnParamsName.length > 0){
+      returnParamsName.forEach(param => {
+        if(fn.decrementsSecretState.includes(param)) 
+           returnParams.push(param+'_2_newCommitment');
+        else if(param !== 'true') 
+         returnParams.push(param+'_newCommitment');
+         else 
+         returnParams.push('bool');
+      });
+    }
   }
+   
+    
+else {
+      // Handle functions that interact with public data
+    console.log(`${fn.name} interacts with public data`);
+    fnboilerplate = fnboilerplate.replace(/const { tx , encEvent, _RESPONSE_} = await FUNCTION_NAME\(FUNCTION_SIG\);/, 'const { tx } = await FUNCTION_NAME(FUNCTION_SIG);');
+    fnboilerplate = fnboilerplate.replace(/res.send\({tx, encEvent, _RESPONSE_}\);/, 'res.send({tx});');
+  }
+         //let returnParamsName = fn.returnParameters.parameters.filter((paramnode) => paramnode.isSecret).map((paramnode) => paramnode.name) || [];
+   
+// to close if (fn.isSecret)
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
     fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
@@ -192,12 +235,17 @@ const prepareIntegrationApiServices = (node: any) => {
     // for each function, add the new imports and boilerplate to existing test
     outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
 
-  });
+  }  );
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
-  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`;
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`; 
   return outputApiServiceFile;
-};
+} ;
+
+
+
+    
+    
 const prepareIntegrationApiRoutes = (node: any) => {
   // import generic test skeleton
   let outputApiRoutesFile =``;

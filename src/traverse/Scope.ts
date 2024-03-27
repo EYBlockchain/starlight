@@ -482,6 +482,7 @@ export class Scope {
     const validBooleanKeys = [
       'stateVariable',
       'isSecret',
+      'isPublic',
       'isRefenced',
       'isModified',
       'isWhole',

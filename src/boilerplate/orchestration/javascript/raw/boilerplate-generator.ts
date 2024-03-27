@@ -405,7 +405,8 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree } from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
+        `\nimport { getSum } from '/common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
@@ -624,6 +625,42 @@ sendTransaction = {
     },
 };
 
+calculateSumNullifiedCommitments = {
+  calculateSum({ stateType, commitments }) {
+    switch (stateType) {
+      case 'increment':
+        let sum = 0;
+        for (const commitment of commitments) {
+          if (commitment.isNullified) {
+            sum += commitment.value;
+          }
+        }
+        return sum;
+        case 'decrement':
+        let sumDecrement = 0;
+        for (const commitment of commitments) {
+          if (commitment.isDecrement && commitment.isNullified) {
+            sumDecrement += commitment.value;
+          }
+        }
+        return sumDecrement;
+        case 'whole':
+          let sumWhole = 0;
+          for (const commitment of commitments) {
+            if (commitment.isWhole && commitment.isNullified) {
+              sumWhole += commitment.value;
+            }
+          }
+          return sumWhole;
+      default:
+        throw new TypeError(stateType);
+    }
+  },
+};
+
+
+
+
 integrationTestBoilerplate = {
   import(): string {
     return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
@@ -654,7 +691,7 @@ integrationTestBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments, getCommitmentsByState, reinstateNullifiers, getSum} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -693,7 +730,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getSum } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -729,6 +766,19 @@ integrationApiServicesBoilerplate = {
           res.send({ errors: [err.message] });
         }
       }
+      export async function service_getSum(req, res, next) {
+        try {
+      
+          const sum = await getSum();
+          //res.status(200).json({ sum });
+          res.send({ sum });
+        } catch (error) {
+          console.error("Error in calculation :", error);
+          //res.status(500).json({ error: "Erreur lors du calcul de la somme des commitments nullified." });
+          res.status(500).send({ error: err.message });
+        }
+      }
+      
       
       export async function service_getCommitmentsByState(req, res, next) {
         try {
@@ -779,6 +829,8 @@ integrationApiRoutesBoilerplate = {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
     router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    //route ti get sum of values of nullified commitments
+    router.get("/getSum", service_getSum);
     // nullifier route
     router.post("/reinstateNullifiers", service_reinstateNullifiers);
     `;

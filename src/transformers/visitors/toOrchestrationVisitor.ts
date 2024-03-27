@@ -319,7 +319,54 @@ const visitor = {
           );
         }
         }
-      } else {
+      } /*else if (!scope.modifiesSecretState()) {
+        const contractName = `${parent.name}Shield`;
+        const fnName = path.getUniqueFunctionName();
+        node.fileName = fnName;
+
+        // After getting an appropriate Name , we build the node
+
+        const newNode = buildNode('File', {
+          fileName: fnName, // the name of this function
+          fileExtension: '.mjs',
+          nodes: [
+            buildNode('Imports'),
+            buildNode('FunctionDefinition', { name: node.name, contractName }),
+          ],
+        });
+
+
+        node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
+        parent._newASTPointer.push(newNode);
+        for (const file of parent._newASTPointer) {
+          if (file.nodes?.[0].nodeType === 'IntegrationTestBoilerplate') {
+            file.nodes[0].functions.push(
+              buildNode('IntegrationTestFunction', {
+                name: fnName,
+                parameters: [],
+              }),
+            );
+          }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiServiceFunction', {
+              name: fnName,
+              parameters: [],
+              returnParameters:[],
+            }),
+          );
+        }
+        if (file.nodes?.[0].nodeType === 'IntegrationApiRoutesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiRoutesFunction', {
+              name: fnName,
+              parameters: [],
+            }),
+          );
+        }
+        } }*/
+      
+      else {
         state.skipSubNodes = true;
       }
 
