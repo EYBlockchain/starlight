@@ -985,6 +985,40 @@ const visitor = {
       }
     },
 
+    exit(path: NodePath) {
+      // Convert 'a += b' into 'a = a + b' for all operators, because otherwise we cannot get the correct name with getIdentifierMappingKeyName.
+      // For, example instead of a_3 += 5 we need a_3 = a_2 +5. 
+      const expandAssignment = (node: any) => {
+        const { operator, leftHandSide, rightHandSide } = node;
+        const expandableOps = ['+=', '-=', '*=', '/=', '%=', '|=', '&=', '^='];
+        if (!expandableOps.includes(operator)) return node;
+        const op = operator.charAt(0);
+        const binOpNode = buildNode('BinaryOperation', {
+          operator: op,
+          leftExpression: cloneDeep(leftHandSide),
+          rightExpression: rightHandSide,
+        });
+        const assNode = buildNode('Assignment', {
+          operator: '=',
+          leftHandSide,
+          rightHandSide: binOpNode,
+        });
+        binOpNode.leftExpression.name = path.scope.getIdentifierMappingKeyName(path.node.leftHandSide, true);
+        return assNode;
+      };
+
+      const { parent } = path;
+      if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+        const circuitNode = parent._newASTPointer.initialValue;
+        const newNode = expandAssignment(circuitNode);
+        parent._newASTPointer.initialValue = newNode;
+      } else {
+        const circuitNode = parent._newASTPointer.expression;
+        const newNode = expandAssignment(circuitNode);
+        parent._newASTPointer.expression = newNode;
+      }
+      // node._newASTPointer = newNode; // no need to ascribe the node._newASTPointer, because we're exiting.
+    },
   },
 
   TupleExpression: {
