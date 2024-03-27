@@ -71,6 +71,33 @@ const buildSources = (file: any, options: any) => {
     if (path.extname(contractPath[0]) === '.sol' && !contractPath[1].includes('@openzeppelin')) {
       const contractFile = fs.readFileSync(contractPath[0], 'utf8');
 
+      // if import is an interface, we need to have contract e.g. IERC20 -> deploy ERC20
+      const importContractName = path.basename(
+        contractPath[1],
+        path.extname(contractPath[1]),
+      );
+
+      
+
+      if (
+        importContractName.startsWith(`I`) &&
+        contractFile.replace(/{.*$/, '').includes('interface')
+      ) {
+        const relPath = contractPath[1].replace(
+          importContractName,
+          importContractName.substring(1),
+          );
+        const importPath =   contractPath[0].replace(
+          importContractName,
+          importContractName.substring(1),
+          );
+          if(fs.existsSync(importPath)){
+          sources[relPath] = {
+            contents: fs.readFileSync(importPath, 'utf8'),
+          };
+        }
+      }
+
       sources[contractPath[1]] = {
         contents: contractFile,
       };

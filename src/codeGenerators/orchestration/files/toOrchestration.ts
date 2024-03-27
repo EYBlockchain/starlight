@@ -267,10 +267,15 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   if (node.contractImports && constructorParamsIncludesAddr) {
     node.contractImports.forEach((importObj: any) => {
       // read each imported contract
+      if(!fs.existsSync(`./contracts/${importObj.absolutePath}`)){
+        logger.warn(`Please Make Sure you Deploy all the imports before testing the zApp.`);
+        return;
+      } 
       const importedContract = fs.readFileSync(
         `./contracts/${importObj.absolutePath}`,
         'utf8',
       );
+     
       let importedContractName = path.basename(
         importObj.absolutePath,
         path.extname(importObj.absolutePath),
@@ -293,13 +298,21 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
           customImports += `const ${importedContractName} = artifacts.require("${importedContractName}"); \n`;
           if (
             importedContractName === 'ERC20' ||
-            importedContractName === 'ERC721'
+            importedContractName === 'ERC721' || importedContractName === 'ERC1155'
           ) {
             // HACK ERC contracts are commonly used, so we support them in migrations
             logger.warn(
               `It looks like you're using an ERC contract - please make sure you increase the allowance of the shield contract before testing!`,
             );
-            customDeployments += `await deployer.deploy(${importedContractName}, 'MyCoin', 'MC'); \n`;
+            switch (importedContractName) {
+              case 'ERC20':
+              case 'ERC721':
+                customDeployments += `await deployer.deploy(${importedContractName}); \n`;
+                break;
+              case 'ERC1155':
+                customDeployments += `await deployer.deploy(${importedContractName}, https://Mytokens.example/api/item/{id}.json); \n`;
+                break; 
+            }
           } else {
             customDeployments += `await deployer.deploy(${importedContractName}); \n`;
           }
