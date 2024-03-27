@@ -13,8 +13,9 @@ contract Assign {
   uint256 public j;
 
   function add(secret uint256 value) public {
+    index++;
     known a += value + index;
-    b[index] = 0;
+    //b[index] = 0;
     index = index +1;
     b[index] = value;
     index++;

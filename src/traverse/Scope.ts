@@ -677,7 +677,6 @@ export class Scope {
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
     if (refPaths && thisIndex && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
-
     let { name } = identifierNode;
     // we find the next indexExpression after this identifier
     for (let i = thisIndex || 0; i < (refPaths?.length || 0); i++) {

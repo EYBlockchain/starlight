@@ -163,7 +163,10 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
           const moveExpNode = cloneDeep(expNode);
           fnDefNode.node._newASTPointer.body.preStatements.push(moveExpNode);
           delete statements[statements.indexOf(expNode)];
-          if(expNode.nodeType === "ExpressionStatement"){
+          if(
+            (expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
+            (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name)
+          ) {
             const decInnerNode = buildNode('VariableDeclaration', {
               name: `${node.name}_${num_modifiers}`,
               isAccessed: true,
@@ -183,10 +186,11 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
             });
             fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);
           } else{
+            let name_new = expNode.initialValue?.leftHandSide.name || expNode.expression.leftHandSide.name;
             const InnerNode = buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'  }),
               operator: '=',
-              rightHandSide: buildNode('Identifier', { name: `${expNode.initialValue.leftHandSide.name}`, subType: 'generalNumber' })
+              rightHandSide: buildNode('Identifier', { name: `${name_new}`, subType: 'generalNumber' })
             });
             const newNode1 = buildNode('ExpressionStatement', {
               expression: InnerNode,
@@ -1003,7 +1007,13 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
+        const binding = path.getReferencedBinding(path.node.leftHandSide);
+        if( (binding instanceof VariableBinding) && !binding.isSecret && 
+        binding.stateVariable){
+          binOpNode.leftExpression.name = path.node.leftHandSide.name;
+        } else {
         binOpNode.leftExpression.name = path.scope.getIdentifierMappingKeyName(path.node.leftHandSide, true);
+        }
         return assNode;
       };
 
@@ -1049,10 +1059,19 @@ const visitor = {
       newRHS.traverse(visitor, {});
 
       newNode.leftHandSide = newRHS.parent._newASTPointer.subExpression;
-      newNode.rightHandSide.subExpression =  buildNode('Identifier', {
-              name: path.scope.getIdentifierMappingKeyName(subExpression, true),
-              subType: node.typeDescriptions.typeString,
-            });
+      const binding = path.getReferencedBinding(node.subExpression);
+      if ( (binding instanceof VariableBinding) && !binding.isSecret && 
+      binding.stateVariable){
+        newNode.rightHandSide.subExpression =  buildNode('Identifier', {
+          name: subExpression.name,
+          subType: node.typeDescriptions.typeString,
+        });
+      } else{
+        newNode.rightHandSide.subExpression =  buildNode('Identifier', {
+          name: path.scope.getIdentifierMappingKeyName(subExpression, true),
+          subType: node.typeDescriptions.typeString,
+        });
+      }
 
       node._newASTPointer = newNode;
       if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
@@ -1099,14 +1118,32 @@ const visitor = {
           lhs = lhs.expression;
           if (lhs.baseExpression) lhs = lhs.baseExpression;
         }
-
+        
         // check whether this statement should be init separately in the constructor
         const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
         // collect all index names
+        let ind =0;
+        indicator.referencingPaths.filter(((p: NodePath) => p.node.id <= lhs.id)).forEach((p: NodePath) => {
+          //if (ind > indicator.referencingPaths.filter(((p: NodePath) => p.node.id <= lhs.id)).length -3 && indicator.name === 'index') console.log(p.node);
+          if (ind == indicator.referencingPaths.filter(((p: NodePath) => p.node.id <= lhs.id)).length -2 && indicator.name === 'index') {
+            //console.log(p.node);
+            //console.log(scope.getIdentifierMappingKeyName(p.node));
+          }
+          ind++;
+        });   
+
+        //TO DO LYD: we need to fix names so that getIdentifierMappingKeyName isn't used for any nodes on the right hand side.
         const names = indicator.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
-      
+        console.log(names);
         // check whether this is the first instance of a new index name 
-        const firstInstanceOfNewName = names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name && names[names.length - 1].name !== names[0].name;
+        let firstInstanceOfNewName = true;
+        firstInstanceOfNewName =  (names[names.length - 1].name !== indicator.name);
+        names.forEach((elem) => {
+          if (names[names.length - 1].name === elem.name){
+            firstInstanceOfNewName = false;
+          }
+        });   
+
 
         // check whether this should be a VariableDeclaration
         const firstEdit =
@@ -1401,7 +1438,12 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       let { name } = node;
-      name = path.scope.getIdentifierMappingKeyName(node);
+      const binding = path.getReferencedBinding(node);
+      if ( (binding instanceof VariableBinding) && !binding.isSecret && 
+      binding.stateVariable && path.getAncestorContainedWithin('rightHandSide') ){
+      } else{
+        name = path.scope.getIdentifierMappingKeyName(node);
+      }
       const newNode = buildNode(node.nodeType, {
         name,
         subType: node.typeDescriptions.typeString,
