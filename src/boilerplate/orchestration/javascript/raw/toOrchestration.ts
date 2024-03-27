@@ -6,6 +6,8 @@ import OrchestrationBP from './boilerplate-generator.js';
 
 const stateVariableIds = (node: any) => {
   const {privateStateName, stateNode} = node;
+  const stateName = privateStateName.split('_');
+  const mappingKeyNames = [stateName.slice(0, -1).join('_'), stateName[stateName.length - 1]];
   const stateVarIds: string[] = [];
   // state variable ids
   // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
@@ -42,6 +44,36 @@ const stateVariableIds = (node: any) => {
         `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
       );
     }
+    // in case of nested mapping we need to add value key as well
+    if(mappingKeyNames.length > 1){
+      stateNode.stateVarId[2] = mappingKeyNames[1];
+      if (
+        privateStateName.includes(mappingKeyNames[1].replaceAll('.', 'dot')) &&
+        mappingKeyNames[1] !== 'msg'
+      ) {
+        if (+mappingKeyNames[1] || mappingKeyNames[1] === '0') {
+          stateVarIds.push(
+            `\nconst ${privateStateName}_stateVarId_valueKey = generalise(${mappingKeyNames[1]});`,
+          );
+        } else {
+          stateVarIds.push(
+            `\nconst ${privateStateName}_stateVarId_valueKey = ${mappingKeyNames[1]};`,
+          );
+        }
+      }
+      // ... and the mapping key is msg, and the caller of the fn has the msg key
+      if (
+        mappingKeyNames[1] === 'msg' &&
+        privateStateName.includes('msg')
+      ) {
+        stateVarIds.push(
+          `\nconst ${privateStateName}_stateVarId_valueKey = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
+        );
+      }
+      stateVarIds.push(
+        `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt, ${privateStateName}_stateVarId_valueKey.bigInt], 'ALT_BN_254')).hex(32);`,
+      );
+    } else
     stateVarIds.push(
       `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
     );
@@ -132,7 +164,6 @@ export const generateProofBoilerplate = (node: any) => {
     }
     const parameters: string[] = [];
     // we include the state variable key (mapping key) if its not a param (we include params separately)
-    console.log('state Node for mapping key:', stateNode);
     const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
 
@@ -140,7 +171,8 @@ export const generateProofBoilerplate = (node: any) => {
     let stateVarIdLines =
       stateNode.isMapping  && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`] : [];
-    
+       stateNode.isNestedMapping && !node.parameters.includes(stateNode.stateVarId[2]) ? stateVarIdLines.push(`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_valueKey.integer,`) : ' ';
+
 
    
     // we add any extra params the circuit needs
@@ -553,7 +585,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'InitialiseKeys':
-      console.log(" OnChainKeyRegistry: ------->", node );
       states[0] = node.onChainKeyRegistry ? `true` : `false`;
       return {
         statements: [

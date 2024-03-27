@@ -104,8 +104,12 @@ class BoilerplateGenerator {
     }): string[] {
         const stateVarId: string[] = [];
       if(stateVarIds.length > 1){
+        console.log(stateName);
+        const state = stateName.split('_');
+        const mappingKeyNames = [state.slice(0, -1).join('_'), state[state.length - 1]];
         stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
         stateVarId.push(`${stateName}_stateVarId_key`);
+        console.log('ReadPreimage ------>', mappingKeyNames, stateVarId);
       } else
        stateVarId.push(`${stateName}_stateVarId`);
 
