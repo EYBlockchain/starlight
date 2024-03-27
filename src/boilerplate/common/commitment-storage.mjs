@@ -112,10 +112,16 @@ export async function getNullifiedCommitments() {
  * Retourne la somme des valeurs de tous les engagements nullifiés.
  * @returns {Promise<number>} La somme des valeurs de tous les engagements nullifiés.
  */
-export async function getSum() {
-    const nullifiedCommitments = await getNullifiedCommitments();
+export async function getBalance() {
+    const connection = await mongo.connection(MONGO_URL);
+    const db = connection.db(COMMITMENTS_DB);
+    const commitments = await db
+        .collection(COMMITMENTS_COLLECTION)
+        .find({ isNullified: false }) //  no nullified
+        .toArray();
+    
     let sumOfValues = 0;
-    nullifiedCommitments.forEach(commitment => {
+    commitments.forEach(commitment => {
         sumOfValues += parseInt(commitment.preimage.value, 10);
     });
     return sumOfValues;
