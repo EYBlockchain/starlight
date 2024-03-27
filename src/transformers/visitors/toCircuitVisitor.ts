@@ -591,7 +591,7 @@ const visitor = {
         const op = operator.charAt(0);
         const binOpNode = buildNode('BinaryOperation', {
           operator: op,
-          leftExpression: leftHandSide,
+          leftExpression: cloneDeep(leftHandSide),
           rightExpression: rightHandSide,
         });
         const assNode = buildNode('Assignment', {
@@ -599,6 +599,7 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
+        binOpNode.leftExpression.name = path.scope.getIdentifierMappingKeyName(path.node.leftHandSide, true);
         return assNode;
       };
 
