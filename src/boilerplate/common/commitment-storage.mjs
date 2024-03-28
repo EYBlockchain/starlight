@@ -109,8 +109,8 @@ export async function getNullifiedCommitments() {
 }
 
 /**
- * Retourne la somme des valeurs de tous les engagements nullifiés.
- * @returns {Promise<number>} La somme des valeurs de tous les engagements nullifiés.
+ * Retourne la somme des valeurs de tous les engagements non nullifiés.
+ * @returns {Promise<number>} La somme des valeurs de tous les engagements non nullifiés.
  */
 export async function getBalance() {
     const connection = await mongo.connection(MONGO_URL);

@@ -176,23 +176,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       throw new TypeError(nodeType);
   }
 }
-export function buildPublicStateNode(nodeType: string, fields: any = {}): any {
-  switch (nodeType) {
-    case 'SendTransaction': {
-      const {
-      
-        accessedOnly,
-      } = fields;
-      return {
-        nodeType,
-        accessedOnly,
-      };
-    }
-    // Ajoutez d'autres cas selon les besoins pour d'autres types de nœuds
-    default:
-      throw new TypeError(nodeType);
-  }
-}
+
 
 
 /**

@@ -136,7 +136,7 @@ export class Binding {
 export class VariableBinding extends Binding {
   isSecret: boolean;
   stateVariable: boolean;
-  isPublic: boolean;
+  
 
   isModified: boolean;
   modificationCount: number = 0;
