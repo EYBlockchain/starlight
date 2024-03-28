@@ -191,8 +191,6 @@ const prepareIntegrationApiServices = (node: any) => {
       // Adding Return parameters
     let returnParams: string[] = [];
   
-      
-    if(interactsWithSecret) {
       console.log(`${fn.name} interacts with secret data`);
       let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
       if(returnParamsName.length > 0){
@@ -205,15 +203,11 @@ const prepareIntegrationApiServices = (node: any) => {
          returnParams.push('bool');
       });
     }
-  }
-   
-    
-else {
       // Handle functions that interact with public data
     console.log(`${fn.name} interacts with public data`);
     fnboilerplate = fnboilerplate.replace(/const { tx , encEvent, _RESPONSE_} = await FUNCTION_NAME\(FUNCTION_SIG\);/, 'const { tx } = await FUNCTION_NAME(FUNCTION_SIG);');
     fnboilerplate = fnboilerplate.replace(/res.send\({tx, encEvent, _RESPONSE_}\);/, 'res.send({tx});');
-  }
+  
          //let returnParamsName = fn.returnParameters.parameters.filter((paramnode) => paramnode.isSecret).map((paramnode) => paramnode.name) || [];
    
 // to close if (fn.isSecret)

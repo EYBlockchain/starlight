@@ -624,41 +624,6 @@ sendTransaction = {
     },
 };
 
-calculateSumNullifiedCommitments = {
-  calculateSum({ stateType, commitments }) {
-    switch (stateType) {
-      case 'increment':
-        let sum = 0;
-        for (const commitment of commitments) {
-          if (commitment.isNullified) {
-            sum += commitment.value;
-          }
-        }
-        return sum;
-        case 'decrement':
-        let sumDecrement = 0;
-        for (const commitment of commitments) {
-          if (commitment.isDecrement && commitment.isNullified) {
-            sumDecrement += commitment.value;
-          }
-        }
-        return sumDecrement;
-        case 'whole':
-          let sumWhole = 0;
-          for (const commitment of commitments) {
-            if (commitment.isWhole && commitment.isNullified) {
-              sumWhole += commitment.value;
-            }
-          }
-          return sumWhole;
-      default:
-        throw new TypeError(stateType);
-    }
-  },
-};
-
-
-
 
 integrationTestBoilerplate = {
   import(): string {
