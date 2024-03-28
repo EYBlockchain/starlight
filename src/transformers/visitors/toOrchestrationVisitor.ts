@@ -319,7 +319,8 @@ const visitor = {
           );
         }
         }
-      } else {
+      } 
+      else {
         state.skipSubNodes = true;
       }
 

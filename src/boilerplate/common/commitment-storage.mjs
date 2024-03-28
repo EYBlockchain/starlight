@@ -109,6 +109,26 @@ export async function getNullifiedCommitments() {
 }
 
 /**
+ * Retourne la somme des valeurs de tous les engagements non nullifiés.
+ * @returns {Promise<number>} La somme des valeurs de tous les engagements non nullifiés.
+ */
+export async function getBalance() {
+    const connection = await mongo.connection(MONGO_URL);
+    const db = connection.db(COMMITMENTS_DB);
+    const commitments = await db
+        .collection(COMMITMENTS_COLLECTION)
+        .find({ isNullified: false }) //  no nullified
+        .toArray();
+    
+    let sumOfValues = 0;
+    commitments.forEach(commitment => {
+        sumOfValues += parseInt(commitment.preimage.value, 10);
+    });
+    return sumOfValues;
+}
+
+
+/**
  * @returns all the commitments existent in this database.
  */
  export async function getAllCommitments() {
@@ -117,6 +137,14 @@ export async function getNullifiedCommitments() {
 	const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
 	return allCommitments;
   }
+  
+
+
+
+
+
+
+
 
 
 // function to update an existing commitment
@@ -189,6 +217,8 @@ export async function markNullified(commitmentHash, secretKey = null) {
 
     return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
   }
+
+ 
 
 
   export function getInputCommitments(

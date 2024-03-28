@@ -405,7 +405,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree } from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
@@ -624,6 +624,7 @@ sendTransaction = {
     },
 };
 
+
 integrationTestBoilerplate = {
   import(): string {
     return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
@@ -693,7 +694,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -729,6 +730,19 @@ integrationApiServicesBoilerplate = {
           res.send({ errors: [err.message] });
         }
       }
+      export async function service_getBalance(req, res, next) {
+        try {
+      
+          const sum = await getBalance();
+          //res.status(200).json({ sum });
+          res.send({ sum });
+        } catch (error) {
+          console.error("Error in calculation :", error);
+          //res.status(500).json({ error: "Erreur lors du calcul de la somme des commitments nullified." });
+          res.status(500).send({ error: err.message });
+        }
+      }
+      
       
       export async function service_getCommitmentsByState(req, res, next) {
         try {
@@ -773,12 +787,14 @@ integrationApiRoutesBoilerplate = {
         (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getBalance } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
     router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    //route ti get sum of values of nullified commitments
+    router.get("/getBalance", service_getBalance);
     // nullifier route
     router.post("/reinstateNullifiers", service_reinstateNullifiers);
     `;
