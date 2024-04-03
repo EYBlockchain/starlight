@@ -680,7 +680,7 @@ export class Scope {
     let { name } = identifierNode;
     // we find the next indexExpression after this identifier
     for (let i = thisIndex || 0; i < (refPaths?.length || 0); i++) {
-      if (refPaths?.[i].key !== 'indexExpression' || !thisIndex) continue;
+      if (refPaths?.[i].key !== 'indexExpression' || (!thisIndex && thisIndex !== 0 )) continue;
       if (refPaths[thisIndex].isModification() && !forceNotModification) {
         name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess'));
         break;

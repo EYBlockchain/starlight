@@ -165,26 +165,28 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
           delete statements[statements.indexOf(expNode)];
           if(
             (expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
-            (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name) && num_modifiers !=0
+            (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name) 
           ) {
-            const decInnerNode = buildNode('VariableDeclaration', {
-              name: `${node.name}_${num_modifiers}`,
-              isAccessed: true,
-              isSecret: false,
-              interactsWithSecret: true,
-            });
-            const initInnerNode = buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
-              operator: '=',
-              rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
-            });
-            const newNode1 = buildNode('VariableDeclarationStatement', {
-                declarations: [decInnerNode],
-                initialValue: initInnerNode,
+            if (num_modifiers !=0){
+              const decInnerNode = buildNode('VariableDeclaration', {
+                name: `${node.name}_${num_modifiers}`,
+                isAccessed: true,
+                isSecret: false,
                 interactsWithSecret: true,
-                isModifiedDeclaration: true,
-            });
-            fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);
+              });
+              const initInnerNode = buildNode('Assignment', {
+                leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
+                operator: '=',
+                rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+              });
+              const newNode1 = buildNode('VariableDeclarationStatement', {
+                  declarations: [decInnerNode],
+                  initialValue: initInnerNode,
+                  interactsWithSecret: true,
+                  isModifiedDeclaration: true,
+              });
+              fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);
+            }
           } else{
             let name_new = expNode.initialValue?.leftHandSide.name || expNode.expression.leftHandSide.name;
             const InnerNode = buildNode('Assignment', {
@@ -1122,18 +1124,8 @@ const visitor = {
         // check whether this statement should be init separately in the constructor
         const requiresConstructorInit = state.constructorStatements?.some((node: any) => node.declarations[0].name === indicator.name) && scope.scopeName === '';
         // collect all index names
-        let ind =0;
-        indicator.referencingPaths.filter(((p: NodePath) => p.node.id <= lhs.id)).forEach((p: NodePath) => {
-          //if (ind > indicator.referencingPaths.filter(((p: NodePath) => p.node.id <= lhs.id)).length -3 && indicator.name === 'index') console.log(p.node);
-          if (ind == indicator.referencingPaths.filter(((p: NodePath) => p.node.id <= lhs.id)).length -2 && indicator.name === 'index') {
-            //console.log(p.node);
-            //console.log(scope.getIdentifierMappingKeyName(p.node));
-          }
-          ind++;
-        });   
-
-       // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
         const names = indicator.referencingPaths.map((p: NodePath) => ({ name: p.getAncestorContainedWithin('rightHandSide') ?  p.node.name : scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
+       // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
         let firstInstanceOfNewName = true;
         firstInstanceOfNewName =  (names[names.length - 1].name !== indicator.name);
         let i =0;
