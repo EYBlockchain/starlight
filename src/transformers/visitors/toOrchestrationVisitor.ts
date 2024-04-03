@@ -165,7 +165,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
           delete statements[statements.indexOf(expNode)];
           if(
             (expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
-            (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name)
+            (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name) && num_modifiers !=0
           ) {
             const decInnerNode = buildNode('VariableDeclaration', {
               name: `${node.name}_${num_modifiers}`,
@@ -1132,18 +1132,17 @@ const visitor = {
           ind++;
         });   
 
-        //TO DO LYD: we need to fix names so that getIdentifierMappingKeyName isn't used for any nodes on the right hand side.
-        const names = indicator.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
-        console.log(names);
-        // check whether this is the first instance of a new index name 
+       // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
+        const names = indicator.referencingPaths.map((p: NodePath) => ({ name: p.getAncestorContainedWithin('rightHandSide') ?  p.node.name : scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
         let firstInstanceOfNewName = true;
         firstInstanceOfNewName =  (names[names.length - 1].name !== indicator.name);
+        let i =0;
         names.forEach((elem) => {
-          if (names[names.length - 1].name === elem.name){
+          if (i !== names.length - 1 && names[names.length - 1].name === elem.name){
             firstInstanceOfNewName = false;
           }
-        });   
-
+          i++;
+        });      
 
         // check whether this should be a VariableDeclaration
         const firstEdit =
