@@ -117,17 +117,49 @@ export async function getNullifiedCommitments() {
 }
 
 /**
- * @returns all the commitments existent in this database.
+ * @returns {Promise<number>} The sum of the values ​​of all non-nullified commitments
  */
-export async function getAllCommitments() {
+export async function getBalance() {
+    const connection = await mongo.connection(MONGO_URL);
+    const db = connection.db(COMMITMENTS_DB);
+    const commitments = await db
+        .collection(COMMITMENTS_COLLECTION)
+        .find({ isNullified: false }) //  no nullified
+        .toArray();
+    
+    let sumOfValues = 0;
+    commitments.forEach(commitment => {
+        sumOfValues += parseInt(commitment.preimage.value, 10);
+    });
+    return sumOfValues;
+}
+
+export async function getBalanceByState(name, mappingKey = null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const allCommitments = await db
+  const query = { name: name };
+  if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
+  const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find()
+    .find(query)
     .toArray();
-  return allCommitments;
+	let sumOfValues = 0;
+	commitments.forEach(commitment => {
+	  sumOfValues += commitment.isNullified ? 0 :  parseInt(commitment.preimage.value, 10);
+	});
+  return sumOfValues;
 }
+
+/**
+ * @returns all the commitments existent in this database.
+ */
+ export async function getAllCommitments() {
+	const connection = await mongo.connection(MONGO_URL);
+	const db = connection.db(COMMITMENTS_DB);
+	const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
+	return allCommitments;
+  }
+  
 
 // function to update an existing commitment
 export async function updateCommitment(commitment, updates) {

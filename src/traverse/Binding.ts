@@ -136,7 +136,6 @@ export class Binding {
 export class VariableBinding extends Binding {
   isSecret: boolean;
   stateVariable: boolean;
-
   isModified: boolean;
   modificationCount: number = 0;
   modifyingPaths: NodePath[] = []; // array of paths of `Identifier` nodes which modify this variable
