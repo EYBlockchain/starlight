@@ -163,9 +163,6 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams: string[] = [];
-  
-      
-    if(interactsWithSecret) {
       let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
       if(returnParamsName.length > 0){
       returnParamsName.forEach(param => {
@@ -177,17 +174,7 @@ const prepareIntegrationApiServices = (node: any) => {
          returnParams.push('bool');
       });
     }
-  }
    
-    
-else {
-      // Handle functions that interact with public data
-    fnboilerplate = fnboilerplate.replace(/const { tx , encEvent, _RESPONSE_} = await FUNCTION_NAME\(FUNCTION_SIG\);/, 'const { tx } = await FUNCTION_NAME(FUNCTION_SIG);');
-    fnboilerplate = fnboilerplate.replace(/res.send\({tx, encEvent, _RESPONSE_}\);/, 'res.send({tx});');
-  }
-         //let returnParamsName = fn.returnParameters.parameters.filter((paramnode) => paramnode.isSecret).map((paramnode) => paramnode.name) || [];
-   
-// to close if (fn.isSecret)
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
     fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
