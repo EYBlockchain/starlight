@@ -8,7 +8,6 @@ import codeGenerator from '../nodejs/toOrchestration.js';
 import logger from '../../../utils/logger.js';
 
 
-
 /**
  * Parses the boilerplate import statements, and grabs any common files.
  * @return - { filepath: 'path/to/file.zok', file: 'the code' };
@@ -146,7 +145,7 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
-
+    
     fn.parameters.parameters.forEach(p => {
       if (p.typeName.isStruct) {
         structparams = `{ ${p.typeName.properties.map(prop => `${prop.name}: req.body.${p.name}.${prop.name}`)}}`;
@@ -163,11 +162,9 @@ const prepareIntegrationApiServices = (node: any) => {
 
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
-      // Adding Return parameters
+    // Adding Return parameters
     let returnParams: string[] = [];
-  
-
-      let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
+    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
       if(returnParamsName.length > 0){
       returnParamsName.forEach(param => {
         if(fn.decrementsSecretState.includes(param)) 
@@ -178,8 +175,6 @@ const prepareIntegrationApiServices = (node: any) => {
          returnParams.push('bool');
       });
     }
-      
-
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
     fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
@@ -198,12 +193,12 @@ const prepareIntegrationApiServices = (node: any) => {
     // for each function, add the new imports and boilerplate to existing test
     outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
 
-  }  );
+  });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
   outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`; 
   return outputApiServiceFile;
-} ;
+};
 
 
 

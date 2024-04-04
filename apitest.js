@@ -38,8 +38,6 @@ res[4] = await chai
 .get('/getCommitmentsByVariableName')
 .send({ name: 'a' });
 
-
-
 if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
   shell.echo('docker stop failed');
   shell.exit(1);

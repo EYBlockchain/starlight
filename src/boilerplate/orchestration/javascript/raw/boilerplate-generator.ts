@@ -624,7 +624,6 @@ sendTransaction = {
     },
 };
 
-
 integrationTestBoilerplate = {
   import(): string {
     return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
@@ -738,7 +737,7 @@ integrationApiServicesBoilerplate = {
           res.send({ sum });
         } catch (error) {
           console.error("Error in calculation :", error);
-          //res.status(500).json({ error: "Erreur lors du calcul de la somme des commitments nullified." });
+          //res.status(500).json({ error: "Error" });
           res.status(500).send({ error: err.message });
         }
       }

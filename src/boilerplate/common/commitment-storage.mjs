@@ -109,7 +109,6 @@ export async function getNullifiedCommitments() {
 }
 
 /**
- * Retourne la somme des valeurs de tous les engagements non nullifiés.
  * @returns {Promise<number>} La somme des valeurs de tous les engagements non nullifiés.
  */
 export async function getBalance() {
@@ -126,8 +125,6 @@ export async function getBalance() {
     });
     return sumOfValues;
 }
-
-
 /**
  * @returns all the commitments existent in this database.
  */
@@ -137,15 +134,6 @@ export async function getBalance() {
 	const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
 	return allCommitments;
   }
-  
-
-
-
-
-
-
-
-
 
 // function to update an existing commitment
 export async function updateCommitment(commitment, updates) {
@@ -217,8 +205,6 @@ export async function markNullified(commitmentHash, secretKey = null) {
 
     return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
   }
-
- 
 
 
   export function getInputCommitments(
