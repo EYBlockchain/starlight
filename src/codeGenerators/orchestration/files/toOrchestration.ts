@@ -164,16 +164,16 @@ const prepareIntegrationApiServices = (node: any) => {
     // Adding Return parameters
     let returnParams: string[] = [];
     let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
-      if(returnParamsName.length > 0){
-      returnParamsName.forEach(param => {
-        if(fn.decrementsSecretState.includes(param)) 
-           returnParams.push(param+'_2_newCommitment');
-        else if(param !== 'true') 
-         returnParams.push(param+'_newCommitment');
-         else 
-         returnParams.push('bool');
-      });
-    }
+    if(returnParamsName.length > 0){
+    returnParamsName.forEach(param => {
+      if(fn.decrementsSecretState.includes(param)) 
+          returnParams.push(param+'_2_newCommitment');
+      else if(param !== 'true') 
+        returnParams.push(param+'_newCommitment');
+        else 
+        returnParams.push('bool');
+    });
+  }
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
     fnboilerplate = fnboilerplate.replace(/,const/g, `const`);
@@ -198,7 +198,6 @@ const prepareIntegrationApiServices = (node: any) => {
   outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`; 
   return outputApiServiceFile;
 };
- 
 const prepareIntegrationApiRoutes = (node: any) => {
   // import generic test skeleton
   let outputApiRoutesFile =``;

@@ -792,7 +792,6 @@ integrationApiRoutesBoilerplate = {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
     router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
-    //route ti get sum of values of nullified commitments
     router.get("/getBalance", service_getBalance);
     // nullifier route
     router.post("/reinstateNullifiers", service_reinstateNullifiers);
