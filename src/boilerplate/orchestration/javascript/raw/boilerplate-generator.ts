@@ -168,6 +168,18 @@ class BoilerplateGenerator {
             \nlet ${stateName}_witness_0;
             \nlet ${stateName}_witness_1;
 
+            if(${stateName}_1_oldCommitment === null && ${stateName}_commitmentFlag){
+              \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3);
+               ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
+
+               [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+                publicKey.hex(32),
+                ${stateName}_newCommitmentValue.integer,
+                ${stateName}_preimage,
+              );
+            }
+
             while(${stateName}_commitmentFlag === false) {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
@@ -336,7 +348,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified } from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified } from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,

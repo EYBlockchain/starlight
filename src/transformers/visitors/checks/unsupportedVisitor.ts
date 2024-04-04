@@ -7,7 +7,7 @@
  * support for yet.
  */
 
-import { TODOError, ZKPError } from '../../../error/errors.js';
+import { TODOError, ZKPError, ParseError } from '../../../error/errors.js';
 import { traverseNodesFast } from '../../../traverse/traverse.js';
 
 
@@ -75,6 +75,37 @@ export default {
         throw new TODOError(
           `We can't currently handle conditions which are singular variables - instead of if(a) try something like if(a == true). This is because the compiler must store the 'LHS' (a) and 'RHS' (true) value of the condition in case either are modified throughout the function.`,
           node.condition
+        );
+    },
+  },
+
+  BinaryOperation: {
+    enter(node: any) {
+      if (node.operator == "&&" || node.operator == "||") {
+        if (node.leftExpression.nodeType == "BinaryOperation" ) {
+          if ((node.leftExpression.operator == "&&" || node.leftExpression.operator == "||") && node.leftExpression.operator !== node.operator) {
+            throw new ParseError(
+              `Please use brackets to clarify the logic structure. A condition contains nested logical operators without brackets, which can lead to ambiguity in reading the logic flow.`
+            );
+          }
+        }
+        if (node.rightExpression.nodeType == "BinaryOperation" ) {
+          if ((node.rightExpression.operator == "&&" || node.rightExpression.operator == "||") && node.rightExpression.operator !== node.operator) {
+            throw new ParseError(
+              `Please use brackets to clarify the logic structure. A condition contains nested logical operators without brackets, which can lead to ambiguity in reading the logic flow.`
+            );
+          }
+        }
+      }
+    },
+  },
+    
+  VariableDeclaration: {
+    enter(node: any) {
+      if (node.name.startsWith('_'))
+        throw new ZKPError(
+          `Zokrates does not support variables that begin with an underscore such as as _value.`,
+          node
         );
     },
   },

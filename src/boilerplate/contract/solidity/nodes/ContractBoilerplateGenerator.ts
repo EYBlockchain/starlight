@@ -57,6 +57,8 @@ class ContractBoilerplateGenerator {
         'verify',
         'joinCommitmentsFunction',
         'joinCommitmentsCircuitName',
+        'splitCommitmentsFunction',
+        'splitCommitmentsCircuitName',
       ];
     },
 
@@ -69,10 +71,10 @@ class ContractBoilerplateGenerator {
 
     stateVariableDeclarations() {
       const { scope } = this;
-      let isjoinCommitmentsFunction : string[]=[];
+      let isjoinSplitCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(scope.bindings)){
        if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct )
-          isjoinCommitmentsFunction?.push('true');
+          isjoinSplitCommitmentsFunction?.push('true');
       }
       let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
@@ -81,8 +83,8 @@ class ContractBoilerplateGenerator {
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
       );
       let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
-      if (isjoinCommitmentsFunction.includes('true')) { 
-        functionNames.push('joinCommitments')
+      if (isjoinSplitCommitmentsFunction.includes('true')) { 
+        functionNames.push('joinCommitments', 'splitCommitments');
         nullifiersRequired = true;
         oldCommitmentAccessRequired = true;
       }
@@ -107,10 +109,10 @@ class ContractBoilerplateGenerator {
       let {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = this.scope;
-      let isjoinCommitmentsFunction : string[]=[];
+      let isjoinSplitCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(this.scope.bindings)){
        if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct)
-          isjoinCommitmentsFunction?.push('true');
+          isjoinSplitCommitmentsFunction?.push('true');
       }
       let parameterList: any[];
       let paramtype: string;
@@ -172,7 +174,7 @@ class ContractBoilerplateGenerator {
      circuitParams[ functionName ] = parameterList;
     }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinCommitmentsFunction};
+      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinSplitCommitmentsFunction};
     },
 
   };

@@ -53,6 +53,9 @@ function codeGenerator(node: any) {
       if (!file && node.fileName === `joinCommitments`) {
         thisFile.file = fs.readFileSync(path.resolve(fileURLToPath(import.meta.url), '../../../../../circuits/common/joinCommitments.zok'), 'utf8');
       }
+      if (!file && node.fileName === `splitCommitments`) {
+        thisFile.file = fs.readFileSync(path.resolve(fileURLToPath(import.meta.url), '../../../../../circuits/common/splitCommitments.zok'), 'utf8');
+      }
       const importedFiles = collectImportFiles(thisFile.file, 'circuit');
       return [thisFile, ...importedFiles];
     }
@@ -197,6 +200,8 @@ function codeGenerator(node: any) {
     }
     case 'JoinCommitmentFunctionDefinition' :
     return `${CircuitBP.uniqueify(node.body.statements.flatMap(codeGenerator)).join('\n')}`;
+    case 'SplitCommitmentFunctionDefinition' :
+      return `${CircuitBP.uniqueify(node.body.statements.flatMap(codeGenerator)).join('\n')}`;
     case 'Return':
       return  ` ` ;
 
@@ -241,10 +246,14 @@ function codeGenerator(node: any) {
       assert(${codeGenerator(node.condition)})`;
       return initialStatements;
       }
-      // we use our list of condition vars to init temp variables
+      // we use our list of condition vars to init temp variables. 
       node.conditionVars.forEach(elt => {
-        initialStatements += `
-        ${elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field'} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
+        if (elt.nodeType !== 'IndexAccess' || (elt.indexExpression && elt.indexExpression.nodeType === 'MsgSender')){
+          let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
+          if (elt.isVarDec === false) varDec = '';
+          initialStatements += `
+        ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
+        }
       });
       for (let i =0; i<node.trueBody.length; i++) {
         trueStatements+= `
