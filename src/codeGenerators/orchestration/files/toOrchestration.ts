@@ -145,7 +145,6 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
-    
     fn.parameters.parameters.forEach(p => {
       if (p.typeName.isStruct) {
         structparams = `{ ${p.typeName.properties.map(prop => `${prop.name}: req.body.${p.name}.${prop.name}`)}}`;
@@ -164,7 +163,7 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams: string[] = [];
-    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
+    let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
       if(returnParamsName.length > 0){
       returnParamsName.forEach(param => {
         if(fn.decrementsSecretState.includes(param)) 
@@ -199,11 +198,7 @@ const prepareIntegrationApiServices = (node: any) => {
   outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`; 
   return outputApiServiceFile;
 };
-
-
-
-    
-    
+ 
 const prepareIntegrationApiRoutes = (node: any) => {
   // import generic test skeleton
   let outputApiRoutesFile =``;

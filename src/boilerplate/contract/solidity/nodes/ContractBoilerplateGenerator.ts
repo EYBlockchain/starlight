@@ -79,7 +79,6 @@ class ContractBoilerplateGenerator {
       } = scope;
       const fnDefBindings = scope.filterBindings(
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
-        //// Connect from here
       );
       let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
       if (isjoinCommitmentsFunction.includes('true')) { 
