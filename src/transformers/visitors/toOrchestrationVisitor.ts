@@ -188,7 +188,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
               fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);
             }
           } else{
-            let name_new = expNode.initialValue?.leftHandSide.name || expNode.expression.leftHandSide.name;
+            let name_new = expNode.expression.initialValue?.leftHandSide?.name || expNode.initialValue?.leftHandSide.name || expNode.expression.leftHandSide.name;
             const InnerNode = buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'  }),
               operator: '=',

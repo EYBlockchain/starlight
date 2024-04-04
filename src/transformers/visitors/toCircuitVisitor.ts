@@ -47,19 +47,22 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
         let index_expNode = fnDefNode.node._newASTPointer.body.statements.indexOf(expNode);
         if (expNode && !expNode.isAccessed) {
           expNode.isAccessed = true;
-          if(!expNode.isVarDec){
-            const initInnerNode = buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
-              operator: '=',
-              rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
-            });
-            const newNode1 = buildNode('ExpressionStatement', {
-                expression: initInnerNode,
-                interactsWithSecret: true,
-                isVarDec: true,
-            });
-            if (index_expNode !== -1) {
-              fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+          if((expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
+          (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name)){
+            if (num_modifiers !=0){
+              const initInnerNode = buildNode('Assignment', {
+                leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
+                operator: '=',
+                rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+              });
+              const newNode1 = buildNode('ExpressionStatement', {
+                  expression: initInnerNode,
+                  interactsWithSecret: true,
+                  isVarDec: true,
+              });
+              if (index_expNode !== -1) {
+                fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+              }
             }
           } else{
             let modName = expNode.expression.initialValue?.leftHandSide?.name || expNode.expression.initialValue?.name || expNode.expression.leftHandSide?.name;
@@ -599,7 +602,13 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
+        const binding = path.getReferencedBinding(path.node.leftHandSide);
+        if( (binding instanceof VariableBinding) && !binding.isSecret && 
+        binding.stateVariable){
+          binOpNode.leftExpression.name = path.node.leftHandSide.name;
+        } else {
         binOpNode.leftExpression.name = path.scope.getIdentifierMappingKeyName(path.node.leftHandSide, true);
+        }
         return assNode;
       };
 
@@ -624,16 +633,24 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { operator, prefix, subExpression } = node;
+      const binding = path.getReferencedBinding(node.subExpression);
       const newNode = buildNode(node.nodeType, {
         operator,
         prefix,
-        subExpression: buildNode(subExpression.nodeType, {
-          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
-        }),
         initialValue: buildNode(subExpression.nodeType, {
           name: path.scope.getIdentifierMappingKeyName(subExpression)
         }),
       });
+      if ( (binding instanceof VariableBinding) && !binding.isSecret && 
+      binding.stateVariable){
+        newNode.subExpression =  buildNode(subExpression.nodeType, {
+          name: subExpression.name,
+        });
+      } else{
+        newNode.subExpression =  buildNode(subExpression.nodeType, {
+          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
+        });
+      }
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
       state.skipSubNodes = true;
@@ -756,9 +773,17 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
           if (lhs.baseExpression) lhs = lhs.baseExpression;
         }
         // collect all index names
-        const names = referencedIndicator?.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
-        // check whether this is the first instance of a new index name
-        const firstInstanceOfNewName = names && names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name && names[names.length - 1].name !== names[0].name;
+        const names = referencedIndicator.referencingPaths.map((p: NodePath) => ({ name: p.getAncestorContainedWithin('rightHandSide') ?  p.node.name : scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
+        // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
+        let firstInstanceOfNewName = true;
+        let i =0;
+        firstInstanceOfNewName =  (names[names.length - 1].name !== referencedIndicator.name);
+        names.forEach((elem) => {
+          if (i !== names.length - 1 && names[names.length - 1].name === elem.name){
+            firstInstanceOfNewName = false;
+          }
+          i++;
+        });   
         
         if (referencedIndicator instanceof StateVariableIndicator &&
           (firstInstanceOfNewName 
@@ -975,8 +1000,12 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       // local variable decs and parameters are dealt with elsewhere
       // secret state vars are input via commitment values
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
-      name = path.scope.getIdentifierMappingKeyName(node);
-
+      const binding = path.getReferencedBinding(node);
+      if ( (binding instanceof VariableBinding) && !binding.isSecret && 
+      binding.stateVariable && path.getAncestorContainedWithin('rightHandSide') ){
+      } else{
+        name = path.scope.getIdentifierMappingKeyName(node);
+      }
       const newNode = buildNode(
         node.nodeType,
         { name, type: node.typeDescriptions?.typeString },
