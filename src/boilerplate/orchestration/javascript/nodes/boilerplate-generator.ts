@@ -52,7 +52,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'WritePreimage': {
-      const { id, increment, burnedOnly, indicator = {} } = fields;
+      const { id, increment, burnedOnly, reinitialisedOnly, indicator = {} } = fields
       return {
         increment,
         stateVarId: id,
@@ -64,6 +64,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
         burnedOnly,
+        reinitialisedOnly,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned

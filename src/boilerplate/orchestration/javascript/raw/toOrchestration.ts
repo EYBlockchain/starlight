@@ -155,7 +155,6 @@ export const generateProofBoilerplate = (node: any) => {
 
       });
     // then we build boilerplate code per state
-    console.log(stateNode);
     switch (stateNode.isWhole) {
       case true:
         output.push(
@@ -596,7 +595,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
-                    reinitialisedOnly: stateNode.reinitialisedOnly,
+                    reinitialisedOnly: false,
                   }));
 
                 break;
@@ -631,8 +630,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   ? `${stateName}_stateVarId_key.integer`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
-                structProperties: stateNode.structProperties,
                 reinitialisedOnly: stateNode.reinitialisedOnly,
+                structProperties: stateNode.structProperties,
+                
               }));
         }
       }

@@ -2,7 +2,7 @@
 
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
-import fs from 'fs';
+import fs, { stat } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -474,8 +474,9 @@ sendTransaction = {
       mappingName,
       mappingKey,
       burnedOnly,
-      structProperties,
       reinitialisedOnly,
+      structProperties,
+      
     }): string[] {
       let value;
       switch (stateType) {
@@ -521,7 +522,7 @@ sendTransaction = {
             default:
               value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}`)} }` : `${stateName}`;
               return [`
-                \n${reinitialisedOnly? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32));`}
+                \n${reinitialisedOnly ? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32));`}
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
