@@ -53,6 +53,9 @@ function codeGenerator(node: any) {
       if (!file && node.fileName === `joinCommitments`) {
         thisFile.file = fs.readFileSync(path.resolve(fileURLToPath(import.meta.url), '../../../../../circuits/common/joinCommitments.zok'), 'utf8');
       }
+      if (!file && node.fileName === `splitCommitments`) {
+        thisFile.file = fs.readFileSync(path.resolve(fileURLToPath(import.meta.url), '../../../../../circuits/common/splitCommitments.zok'), 'utf8');
+      }
       const importedFiles = collectImportFiles(thisFile.file, 'circuit');
       return [thisFile, ...importedFiles];
     }
@@ -197,6 +200,8 @@ function codeGenerator(node: any) {
     }
     case 'JoinCommitmentFunctionDefinition' :
     return `${CircuitBP.uniqueify(node.body.statements.flatMap(codeGenerator)).join('\n')}`;
+    case 'SplitCommitmentFunctionDefinition' :
+      return `${CircuitBP.uniqueify(node.body.statements.flatMap(codeGenerator)).join('\n')}`;
     case 'Return':
       return  ` ` ;
 
