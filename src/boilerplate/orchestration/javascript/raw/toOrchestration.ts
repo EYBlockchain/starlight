@@ -146,7 +146,7 @@ export const generateProofBoilerplate = (node: any) => {
       }
     }
     const stateVarIdLines =
-      stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !isIncluded && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
+      stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !isIncluded && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];
     // we add any extra params the circuit needs
@@ -425,9 +425,6 @@ export const preimageBoilerPlate = (node: any) => {
  */
 
 export const OrchestrationCodeBoilerPlate: any = (node: any) => {
-  //console.log("Get here 2");
-  //console.log(node.nodeType);
-  //console.log(node.parameters);
   const lines: any[] = [];
   const params:any[] = [];
   const states: string[] = [];

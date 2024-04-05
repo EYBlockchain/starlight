@@ -78,6 +78,21 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
             if (index_expNode !== -1) {
               fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
             }
+            if (`${modName}` !== `${node.name}_${num_modifiers}` && num_modifiers !==0){
+              const initInnerNode1 = buildNode('Assignment', {
+                leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
+                operator: '=',
+                rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+              });
+              const newNode2 = buildNode('ExpressionStatement', {
+                  expression: initInnerNode1,
+                  interactsWithSecret: true,
+                  isVarDec: true,
+              });
+              if (index_expNode !== -1) {
+                fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 2, 0, newNode2);
+              }
+            }
           }
         }
       }
@@ -156,9 +171,10 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
-    if (thisPath.containerName === 'indexExpression'){
-      name = binding.getMappingKeyName(thisPath);
-    }
+    // We never need the input to the circuit to be the MappingKeyNaem
+    //if (thisPath.containerName === 'indexExpression'){
+    //  name = binding.getMappingKeyName(thisPath);
+    //}
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
     parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
@@ -814,7 +830,6 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         fnDefNode.node._newASTPointer.body.statements[ind+1] = fnDefNode.node._newASTPointer.body.statements[ind];
         fnDefNode.node._newASTPointer.body.statements[ind] = temp;
         ind--;
-        //console.log(fnDefNode.node._newASTPointer.body.statements);
       }
     }
   },

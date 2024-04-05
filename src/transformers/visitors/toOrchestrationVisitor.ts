@@ -142,6 +142,13 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
 
     fnDefNode.node._newASTPointer.body.preStatements ??= [];
 
+    // check we haven't already imported this node
+    if (!(fnDefNode.node._newASTPointer.body.preStatements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name))) {
+      fnDefNode.node._newASTPointer.body.preStatements.unshift(
+        newNode,
+      ); 
+    } 
+
     // below: we move statements into preStatementsif they are modified before the relevant secret state
 
     const modifiedBeforePaths = path.scope.getReferencedIndicator(node, true)?.modifyingPaths?.filter((p: NodePath) => p.node.id < node.id);
@@ -188,7 +195,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
               fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);
             }
           } else{
-            let name_new = expNode.expression.initialValue?.leftHandSide?.name || expNode.initialValue?.leftHandSide.name || expNode.expression.leftHandSide.name;
+            let name_new = expNode.expression?.initialValue?.leftHandSide?.name || expNode.initialValue?.leftHandSide.name || expNode.expression?.leftHandSide.name;
             const InnerNode = buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'  }),
               operator: '=',
@@ -199,6 +206,26 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
               interactsWithSecret: true,
             });
             fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);
+            if (`${name_new}` !== `${node.name}_${num_modifiers}` && num_modifiers !==0){
+              const decInnerNode1 = buildNode('VariableDeclaration', {
+                name: `${node.name}_${num_modifiers}`,
+                isAccessed: true,
+                isSecret: false,
+                interactsWithSecret: true,
+              });
+              const initInnerNode1 = buildNode('Assignment', {
+                leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
+                operator: '=',
+                rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+              });
+              const newNode2 = buildNode('VariableDeclarationStatement', {
+                  declarations: [decInnerNode1],
+                  initialValue: initInnerNode1,
+                  interactsWithSecret: true,
+                  isModifiedDeclaration: true,
+              });
+              fnDefNode.node._newASTPointer.body.preStatements.push(newNode2);
+            }
           }
         }
       }
@@ -224,12 +251,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
 
     // if the node is the indexExpression, we dont need its value in the circuit
     state.publicInputs ??= [];
-    if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);
-    // check we haven't already imported this node
-    if (fnDefNode.node._newASTPointer.body.preStatements.some((n: any) => n.nodeType === 'VariableDeclarationStatement' && n.declarations[0]?.name === name)) return;
-    fnDefNode.node._newASTPointer.body.preStatements.unshift(
-      newNode,
-    );    
+    if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);   
   } 
 
     if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) addPublicInput(NodePath.getPath(node.indexExpression), state, null);
@@ -494,7 +516,7 @@ const visitor = {
               stateVarIndicator.container?.isAccessed && !stateVarIndicator.container?.isModified;
             secretModified =
               stateVarIndicator.container?.isSecret && stateVarIndicator.container?.isModified;
-            id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node) || ``];
+            id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node) || ``, stateVarIndicator.keyPath.node.name];
 
             name = (accessedOnly ?
               getIndexAccessName(stateVarIndicator.accessedPaths[stateVarIndicator.accessedPaths.length -1]?.getAncestorOfType('IndexAccess')?.node) :
