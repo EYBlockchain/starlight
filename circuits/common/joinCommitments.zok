@@ -19,6 +19,8 @@ def main(\
 	private bool isMapping,\
 	private field oldCommitment_0_owner_secretKey_field,\
 	private field oldCommitment_1_owner_secretKey_field,\
+  public field nullifierRoot,\
+  public field newNullifierRoot,\
 	public field oldCommitment_0_nullifier,\
   private field[32] oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
   private field[32] oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
