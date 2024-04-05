@@ -896,15 +896,16 @@ DoWhileStatement: {
            state.fnParameters.push(args[index]);
 
          });
-         const params = [
-               ...(internalfnDefIndicators.nullifiersRequired?  [`newNullifiers`] : []), 
-               ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
-               ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
-               ...(internalfnDefIndicators.containsAccessedOnlyState ? [`checkNullifiers`] : []),
-               ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
-               ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
-               `proof`,
-         ]
+          const params = [...(internalfnDefIndicators.nullifiersRequired? [`nullifierRoot`] : []),
+          ...(internalfnDefIndicators.nullifiersRequired? [`latestNullifierRoot`] : []),
+          ...(internalfnDefIndicators.nullifiersRequired?  [`newNullifiers`] : []), 
+          ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
+          ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
+          ...(internalfnDefIndicators.containsAccessedOnlyState ? [`checkNullifiers`] : []),
+          ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
+          ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
+          `proof`,
+    ]
 
          state.fnParameters = state.fnParameters.concat(params);
 
