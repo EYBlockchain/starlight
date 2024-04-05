@@ -43,10 +43,9 @@ class FunctionBoilerplateGenerator {
       if (isConstructor && encryptionRequired) throw new Error(`There shouldn't be any secret states that require sharing encrypted data in the constructor.`)
       const visibility = isConstructor ? 'memory' : 'calldata';
       return [
-        ...(newNullifiers ? [`uint256[] ${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
+        ...(newNullifiers ? [`uint256 nullifierRoot, uint256 latestNullifierRoot,uint256[] ${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
         ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
         ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
-        ...(checkNullifiers ? [`uint256[] ${visibility} checkNullifiers`] : []),
         ...(encryptionRequired ? [`uint256[][] calldata cipherText`] : []),
         ...(encryptionRequired ? [`uint256[2][] calldata ephPubKeys`] : []),
         ...(newCommitments || newNullifiers ? [`uint256[] ${visibility} proof`] : []),
@@ -67,12 +66,13 @@ class FunctionBoilerplateGenerator {
       // prettier-ignore
 
       let parameter = [
-      ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
+        ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
         .map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.isConstantArray ? `${input.type}[${input.isConstantArray}]` : input.type) : []), // TODO arrays of structs/ structs of arrays
+      ...(newNullifiers ? [`uint256`] : []),
+      ...(newNullifiers ? [`uint256`] : []),
       ...(newNullifiers ? [`uint256[]`] : []), 
       ...(commitmentRoot  ? [`uint256`] : []),
       ...(newCommitments  ? [`uint256[]`] : []),
-      ...(checkNullifiers ? [`uint256[]`] : []),
       ...(encryptionRequired  ? [`uint256[][]`] : []),
       ...(encryptionRequired ? [`uint256[2][]`] : []),
       `uint256[]`,
@@ -114,13 +114,16 @@ class FunctionBoilerplateGenerator {
           }).join('\n')}`]
           : []),
 
+        ...(newNullifiers ? [`
+        inputs.nullifierRoot = nullifierRoot; `] : []),
+
+        ...(newNullifiers ? [`
+        inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
+
 
         ...(newNullifiers ? [`
           inputs.newNullifiers = newNullifiers;
            `] : []),
-
-        ...(checkNullifiers ? [`
-      inputs.checkNullifiers = checkNullifiers;`] : []),   
 
         ...(commitmentRoot ? [`
           inputs.commitmentRoot = commitmentRoot;`] : []),

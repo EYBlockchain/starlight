@@ -130,8 +130,12 @@ class ContractBoilerplateGenerator {
         params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
-              if (circuitParamNode.isNullified) 
+              if (circuitParamNode.isNullified) {
+                if (!newList.includes('nullifierRoot')) 
+                  newList.push('nullifierRoot')
                 newList.push('nullifier');
+ 
+              } 
               break;
             case 'newCommitment':
               newList.push(circuitParamNode.bpType);
