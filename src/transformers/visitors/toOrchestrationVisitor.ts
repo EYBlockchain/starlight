@@ -1031,26 +1031,24 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
-        const binding = path.getReferencedBinding(path.node.leftHandSide);
-        if( (binding instanceof VariableBinding) && !binding.isSecret && 
-        binding.stateVariable){
-          binOpNode.leftExpression.name = path.node.leftHandSide.name;
-        } else {
-        binOpNode.leftExpression.name = path.scope.getIdentifierMappingKeyName(path.node.leftHandSide, true);
-        }
+        binOpNode.leftExpression.name = path.node.leftHandSide.name;
         return assNode;
       };
 
       const { parent } = path;
-      if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
-        const circuitNode = parent._newASTPointer.initialValue;
-        const newNode = expandAssignment(circuitNode);
-        parent._newASTPointer.initialValue = newNode;
-      } else {
-        const circuitNode = parent._newASTPointer.expression;
-        const newNode = expandAssignment(circuitNode);
-        parent._newASTPointer.expression = newNode;
-      }
+      const binding = path.getReferencedBinding(path.node.leftHandSide);
+      if( (binding instanceof VariableBinding) && !binding.isSecret && 
+        binding.stateVariable){
+          if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+            const circuitNode = parent._newASTPointer.initialValue;
+            const newNode = expandAssignment(circuitNode);
+            parent._newASTPointer.initialValue = newNode;
+          } else {
+            const circuitNode = parent._newASTPointer.expression;
+            const newNode = expandAssignment(circuitNode);
+            parent._newASTPointer.expression = newNode;
+          }
+        }
       // node._newASTPointer = newNode; // no need to ascribe the node._newASTPointer, because we're exiting.
     },
   },
