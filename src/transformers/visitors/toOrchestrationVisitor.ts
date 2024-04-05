@@ -1147,7 +1147,11 @@ const visitor = {
         const names = indicator.referencingPaths.map((p: NodePath) => ({ name: p.getAncestorContainedWithin('rightHandSide') ?  p.node.name : scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
        // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
         let firstInstanceOfNewName = true;
-        firstInstanceOfNewName =  (names[names.length - 1].name !== indicator.name);
+        if (indicator.isMapping) {
+          firstInstanceOfNewName = (names.length > 1);
+        } else {
+          firstInstanceOfNewName =  (names[names.length - 1].name !== indicator.name);
+        }
         let i =0;
         names.forEach((elem) => {
           if (i !== names.length - 1 && names[names.length - 1].name === elem.name){
