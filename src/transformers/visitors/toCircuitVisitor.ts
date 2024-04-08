@@ -15,8 +15,10 @@ import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPo
 
 // public variables that interact with the secret also need to be modified within the circuit.
 const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
-  const { node } = path;
-  let { name } = path.scope.getReferencedIndicator(node, true) || path.node;
+  const {parent, node } = path;
+  // Break if the identifier is a mapping or array. 
+  if ( parent.indexExpression && parent.baseExpression === node ) {
+    return;}
   const binding = path.getReferencedBinding(node);
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
   
@@ -26,7 +28,7 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
     binding instanceof VariableBinding &&
     (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
-    binding.stateVariable && !binding.isSecret
+    binding.stateVariable && !binding.isSecret 
   ) {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
     if (!fnDefNode) throw new Error(`Not in a function`);
@@ -132,7 +134,8 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
     });
     fnDefNode.node._newASTPointer.body.statements.push(endNode);  
   }
-    if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) publicVariablesVisitor(NodePath.getPath(node.indexExpression), state, null);
+  // We no longer need this because index expression nodes are not input. 
+    //if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) publicVariablesVisitor(NodePath.getPath(node.indexExpression), state, null);
 }
 
 
@@ -1199,7 +1202,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
 
       const newNode = buildNode('IndexAccess');
       if (path.isConstantArray(node) && (path.isLocalStackVariable(node) || path.isFunctionParameter(node))) newNode.isConstantArray = true;
-      publicVariablesVisitor(path, state,newNode);
+      // We don't need this because index access expressions always contain identifiers. 
+      //publicVariablesVisitor(path, state,newNode);
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
