@@ -108,21 +108,10 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
     }
     for (let i = fnDefNode.node._newASTPointer.body.statements.length - 1; i >= 0; i--) {
       const p = fnDefNode.node._newASTPointer.body.statements[i];
-      if (p.expression?.leftHandSide?.name === `${node.name}_init` || p.expression?.rightHandSide?.name === `${node.name}_init`) {
+      if (p.expression?.rightHandSide?.name === `${node.name}_init`) {
         fnDefNode.node._newASTPointer.body.statements.splice(i, 1);
       }
     }
-    const beginNodeInit = buildNode('Assignment', {
-      leftHandSide: buildNode('Identifier', { name: `${node.name}_init`, subType: 'generalNumber'   }),
-      operator: '=',
-      rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' }),
-    });
-    const beginNode = buildNode('ExpressionStatement', {
-        expression: beginNodeInit,
-        interactsWithSecret: true,
-        isVarDec: true,
-    });
-    fnDefNode.node._newASTPointer.body.statements.unshift(beginNode);
     const endNodeInit = buildNode('Assignment', {
       leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'   }),
       operator: '=',
@@ -131,7 +120,9 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
     const endNode = buildNode('ExpressionStatement', {
         expression: endNodeInit,
         interactsWithSecret: true,
+        isVarDec: false,
     });
+    endNode.isEndInit = true;
     fnDefNode.node._newASTPointer.body.statements.push(endNode);  
   }
   // We no longer need this because index expression nodes are not input. 
@@ -182,8 +173,20 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
     const params = fnDefNode._newASTPointer.parameters.parameters;
-    if (!params.some(n => n.id === parameterNode.id))
+    if (!params.some(n => n.id === parameterNode.id)){
       params.push(parameterNode);
+      const beginNodeInit = buildNode('Assignment', {
+        leftHandSide: buildNode('Identifier', { name: `${name}_init`, subType: 'generalNumber'   }),
+        operator: '=',
+        rightHandSide: buildNode('Identifier', { name: `${name}`, subType: 'generalNumber' }),
+      });
+      const beginNode = buildNode('ExpressionStatement', {
+          expression: beginNodeInit,
+          interactsWithSecret: true,
+          isVarDec: true,
+      });
+      fnDefNode._newASTPointer.body.statements.unshift(beginNode);
+    }
     // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
     thisState.skipSubNodes = true;
   }
@@ -303,6 +306,16 @@ const visitor = {
       const { node, parent, scope } = path;
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
+
+      //Ensure we do not have any statements of the form x = x_init where x is not a parameter input to the circuit.
+      for (let i = newFunctionDefinitionNode.body.statements.length - 1; i >= 0; i--) {
+        const statementNode = newFunctionDefinitionNode.body.statements[i];
+        if ( statementNode.isEndInit &&
+          newFunctionDefinitionNode.parameters.parameters.every(paramNode => paramNode.name !== statementNode.expression?.leftHandSide)
+        ) {
+          newFunctionDefinitionNode.body.statements.splice(i, 1);
+        }
+      }
 
 
       const joinCommitmentsNode = buildNode('File', {

@@ -237,17 +237,19 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
         IDnode.name =  `${node.name}_${num_modifiers}`;
       }
     }
-    fnDefNode.node._newASTPointer.body.preStatements = fnDefNode.node._newASTPointer.body.preStatements.filter(p => p.expression?.rightHandSide?.name !== `${node.name}_init`);
-    const endNodeInit = buildNode('Assignment', {
-      leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'   }),
-      operator: '=',
-      rightHandSide: buildNode('Identifier', { name: `${node.name}_init`, subType: 'generalNumber' }),
-    });
-    const endNode = buildNode('ExpressionStatement', {
-        expression: endNodeInit,
-        interactsWithSecret: true,
-    });
-    fnDefNode.node._newASTPointer.body.preStatements.push(endNode);
+    if (node.nodeType !== 'IndexAccess') {
+      fnDefNode.node._newASTPointer.body.preStatements = fnDefNode.node._newASTPointer.body.preStatements.filter(p => p.expression?.rightHandSide?.name !== `${node.name}_init`);
+      const endNodeInit = buildNode('Assignment', {
+        leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'   }),
+        operator: '=',
+        rightHandSide: buildNode('Identifier', { name: `${node.name}_init`, subType: 'generalNumber' }),
+      });
+      const endNode = buildNode('ExpressionStatement', {
+          expression: endNodeInit,
+          interactsWithSecret: true,
+      });
+      fnDefNode.node._newASTPointer.body.preStatements.push(endNode);
+    }
 
     // if the node is the indexExpression, we dont need its value in the circuit
     state.publicInputs ??= [];
