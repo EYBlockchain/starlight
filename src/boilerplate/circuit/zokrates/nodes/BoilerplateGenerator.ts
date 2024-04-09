@@ -113,12 +113,12 @@ class BoilerplateGenerator {
   mappingName: string;
   indicators: any;
   newCommitmentValue: any;
+  containsAccessedOnlyStates: boolean
 
 
   bpSections: string[] = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
 
   constructor(indicators: StateVariableIndicator) {
-
     // Through prior traversals, a BoilerplateGenerator class for this set of indicators might already be stored in memory:
     if (bpCache.has(indicators)) return bpCache.get(indicators);
 
