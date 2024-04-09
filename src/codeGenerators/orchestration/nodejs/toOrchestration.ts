@@ -126,7 +126,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
      return " ";
 
     case 'Assignment':
-      if (node.rightHandSide.subType !== 'generalNumber'){
+      if (node.rightHandSide.nodeType === 'Identifier' && node.rightHandSide.subType !== 'generalNumber'){
         if (['+=', '-=', '*='].includes(node.operator)) {
           return `${codeGenerator(node.leftHandSide, {
             lhs: true,
