@@ -305,7 +305,8 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
               `It looks like you're using an ERC contract - please make sure you increase the allowance of the shield contract before testing!`,
             );
             switch (importedContractName) {
-              case 'ERC20':
+              case 'ERC20': customDeployments += `await deployer.deploy(${importedContractName}, 'MyCoin', 'MC'); \n`;
+              break;
               case 'ERC721':
                 customDeployments += `await deployer.deploy(${importedContractName}); \n`;
                 break;
