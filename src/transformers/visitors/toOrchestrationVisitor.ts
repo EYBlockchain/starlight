@@ -1051,6 +1051,11 @@ const visitor = {
             parent._newASTPointer.expression = newNode;
           }
         }
+        if (path.getAncestorContainedWithin('initializationExpression') && parent._newASTPointer.nodeType === 'VariableDeclarationStatement' ){
+          parent._newASTPointer.initialValue.isInitializationAssignment = true;
+        } else if (path.getAncestorContainedWithin('initializationExpression')) {
+          parent._newASTPointer.expression.isInitializationAssignment = true;
+        }
       // node._newASTPointer = newNode; // no need to ascribe the node._newASTPointer, because we're exiting.
     },
   },
