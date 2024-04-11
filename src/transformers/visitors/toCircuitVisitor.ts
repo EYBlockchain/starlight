@@ -123,7 +123,7 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
         isVarDec: false,
     });
     endNode.isEndInit = true;
-    fnDefNode.node._newASTPointer.body.statements.push(endNode);  
+    fnDefNode.node._newASTPointer.body.statements.push(endNode);
   }
   // We no longer need this because index expression nodes are not input. 
     //if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) publicVariablesVisitor(NodePath.getPath(node.indexExpression), state, null);
@@ -310,8 +310,8 @@ const visitor = {
       //Ensure we do not have any statements of the form x = x_init where x is not a parameter input to the circuit.
       for (let i = newFunctionDefinitionNode.body.statements.length - 1; i >= 0; i--) {
         const statementNode = newFunctionDefinitionNode.body.statements[i];
-        if ( statementNode.isEndInit &&
-          newFunctionDefinitionNode.parameters.parameters.every(paramNode => paramNode.name !== statementNode.expression?.leftHandSide)
+        if ( statementNode.isEndInit && 
+          newFunctionDefinitionNode.parameters.parameters.every(paramNode => paramNode.name !== statementNode.expression?.leftHandSide.name)
         ) {
           newFunctionDefinitionNode.body.statements.splice(i, 1);
         }
