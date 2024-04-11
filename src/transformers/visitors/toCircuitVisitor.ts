@@ -32,13 +32,14 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
   ) {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
     if (!fnDefNode) throw new Error(`Not in a function`);
-    // below: we move statements into preStatementsif they are modified before the relevant secret state
 
     const modifiedBeforePaths = path.scope.getReferencedIndicator(node, true)?.modifyingPaths?.filter((p: NodePath) => p.node.id < node.id);
 
     const statements = fnDefNode.node._newASTPointer.body.statements;
 
     let num_modifiers=0;
+    // For each statement that modifies the public variable previously, we need to ensure that the modified variable is stored for later. 
+    // We also need that the original public variable is updated, e.g if the statement is index_2 = index +1, we need an extra statement index = index_2.
     modifiedBeforePaths?.forEach((p: NodePath) => {
       const expressionId = p.getAncestorOfType('ExpressionStatement')?.node?.id;
       if (expressionId) {
@@ -99,6 +100,7 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
         }
       }
     });
+    // We ensure here that the public variable used has the correct name, e.g index_2 instead of index.
     if (num_modifiers != 0)  {
       if (IDnode.name === node.name){
         IDnode.name += `_${num_modifiers}`;
@@ -106,6 +108,8 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
         IDnode.name =  `${node.name}_${num_modifiers}`;
       }
     }
+    // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
+    // e.g. index = index_init. 
     for (let i = fnDefNode.node._newASTPointer.body.statements.length - 1; i >= 0; i--) {
       const p = fnDefNode.node._newASTPointer.body.statements[i];
       if (p.expression?.rightHandSide?.name === `${node.name}_init`) {
@@ -165,7 +169,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
-    // We never need the input to the circuit to be the MappingKeyNaem
+    // We never need the input to the circuit to be the MappingKeyName
     //if (thisPath.containerName === 'indexExpression'){
     //  name = binding.getMappingKeyName(thisPath);
     //}
@@ -175,6 +179,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     const params = fnDefNode._newASTPointer.parameters.parameters;
     if (!params.some(n => n.id === parameterNode.id)){
       params.push(parameterNode);
+      // For each non-secret variable that is input to the circuit, we need to ensure the initial value is stored for later.
       const beginNodeInit = buildNode('Assignment', {
         leftHandSide: buildNode('Identifier', { name: `${name}_init`, subType: 'generalNumber'   }),
         operator: '=',
@@ -634,6 +639,8 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
+        // We need to ensure that for non-secret variables the name used on the right hand side of the assignment 
+        // is always the original name. (As the original variable is always updated we always get the right value.)
         const binding = path.getReferencedBinding(path.node.leftHandSide);
         if( (binding instanceof VariableBinding) && !binding.isSecret && 
         binding.stateVariable){
@@ -673,6 +680,8 @@ const visitor = {
           name: path.scope.getIdentifierMappingKeyName(subExpression)
         }),
       });
+      //We need to ensure that for non-secret variables the name used on the right hand side of the assignment 
+      // is always the original name. (As the original variable is always updated we always get the right value.)
       if ( (binding instanceof VariableBinding) && !binding.isSecret && 
       binding.stateVariable){
         newNode.subExpression =  buildNode(subExpression.nodeType, {
@@ -809,7 +818,9 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
         let firstInstanceOfNewName = true;
         let i =0;
+        // We first check if the relevant name has been modified from the original variable name as otherwise we don't need to declare the new name. 
         firstInstanceOfNewName =  (names[names.length - 1].name !== referencedIndicator.name);
+        // We check that the name has not been used previously, in this case we need to declare it. 
         names.forEach((elem) => {
           if (i !== names.length - 1 && names[names.length - 1].name === elem.name){
             firstInstanceOfNewName = false;
@@ -840,6 +851,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         parent._newASTPointer[path.containerName] = newNode;
       }
       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+      // We ensure the original variable name is set to the initial value only at the end of the statements. 
+      //E.g index = index_init should only appear at the end of all the modifying statements. 
       let ind = fnDefNode.node._newASTPointer.body.statements.length - 2;
       while (ind >= 0  && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name.includes("_init")){
         let temp = fnDefNode.node._newASTPointer.body.statements[ind+1];
@@ -1031,6 +1044,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       // local variable decs and parameters are dealt with elsewhere
       // secret state vars are input via commitment values
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
+      // Only use the mapping key name if it is on the left hand side. 
       const binding = path.getReferencedBinding(node);
       if ( (binding instanceof VariableBinding) && !binding.isSecret && 
       binding.stateVariable && path.getAncestorContainedWithin('rightHandSide') ){

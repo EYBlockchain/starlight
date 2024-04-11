@@ -273,7 +273,6 @@ export default {
       }
 
       // a *= something, a /= something
-      // OR lhs non-secret - we don't care about those
       if (
         operator === '%=' ||
         operator === '/=' ||

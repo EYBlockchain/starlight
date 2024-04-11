@@ -23,6 +23,7 @@ const getAccessedValue = (name: string) => {
  */
 const getPublicValue = (node: any) => {
   if (node.nodeType !== 'IndexAccess')
+    // In the _init variable we save the initial value of the variable for use later. 
     return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());\n let ${node.name}_init = ${node.name};`;
   return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
 };
@@ -126,6 +127,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
      return " ";
 
     case 'Assignment':
+      // To ensure the left hand side is always a general number, we generalise it here (excluding the initialisation in a for loop). 
       if (!node.isInitializationAssignment && node.rightHandSide.subType !== 'generalNumber'){
         if (['+=', '-=', '*='].includes(node.operator)) {
           return `${codeGenerator(node.leftHandSide, {
@@ -206,7 +208,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
     case 'UnaryOperation':
       // ++ or -- on a parseInt() does not work
-      //return `generalise(${node.subExpression.name}.integer${node.operator})`;
       return `parseInt(${node.subExpression.name}.integer,10)${node.operator[0]}1`;
 
     case 'Literal':
