@@ -322,6 +322,15 @@ const visitor = {
         }
       }
 
+      // Ensure non-secret inputs to the circuit are not declared      
+      for (let i = newFunctionDefinitionNode.body.statements.length - 1; i >= 0; i--) {
+        const statementNode = newFunctionDefinitionNode.body.statements[i];
+        newFunctionDefinitionNode.parameters.parameters.forEach((paramNode) => {
+          if ( statementNode.isVarDec && statementNode.expression && (paramNode.name === statementNode.expression.leftHandSide?.name || paramNode.name === statementNode.expression.initialValue?.name)) {
+            statementNode.isVarDec =false;
+          }
+        });
+      }
 
       const joinCommitmentsNode = buildNode('File', {
        fileName: `joinCommitments`,
@@ -818,9 +827,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
         let firstInstanceOfNewName = true;
         let i =0;
-        // We first check if the relevant name has been modified from the original variable name as otherwise we don't need to declare the new name. 
-        firstInstanceOfNewName =  (names[names.length - 1].name !== referencedIndicator.name);
         // We check that the name has not been used previously, in this case we need to declare it. 
+        // We ensure that variables are not declared when they are input to the circuit elsewhere. 
         names.forEach((elem) => {
           if (i !== names.length - 1 && names[names.length - 1].name === elem.name){
             firstInstanceOfNewName = false;
