@@ -859,7 +859,10 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
           ) // FIX - sometimes a variable will be declared twice when we insert oldCommitmentPreimage preStatements before an overwrite - we check here
         ) {
           isVarDec = true;
-        }     
+        }  
+        if (!(referencedIndicator instanceof StateVariableIndicator) ){
+          isVarDec = true;
+        }        
       }
       let nodeID = node.id;
       newNode = buildNode('ExpressionStatement', { isVarDec });
@@ -1172,6 +1175,12 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       };
       let identifiersInCond = { skipSubNodes: false, list: [] };
       path.traversePathsFast(findConditionIdentifiers, identifiersInCond);
+      // Remove duplicates 
+      identifiersInCond.list = identifiersInCond.list.filter((value, index, self) => 
+        index === self.findIndex((t) => (
+          t.name === value.name
+        ))
+      );
       path.node._newASTPointer.conditionVars = identifiersInCond.list;
       // Determine whether each identifier in conditionVar is a new declaration or a redeclaration.
       path.node._newASTPointer.conditionVars.forEach((condVar) => {
