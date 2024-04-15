@@ -90,7 +90,7 @@ library Pairing {
         uint elements = p1.length;
         uint inputSize = elements * 6;
         uint[] memory input = new uint[](inputSize);
-        for (uint i = 0; i < elements; i++)
+        for (uint i = 0; i < elements; ++i)
         {
             input[i * 6 + 0] = p1[i].X;
             input[i * 6 + 1] = p1[i].Y;
