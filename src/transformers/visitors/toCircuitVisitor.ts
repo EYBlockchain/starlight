@@ -9,6 +9,7 @@ import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator} from '../../traverse/Indicator.js';
+import { LocalVariableIndicator} from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer, getIndexAccessName } from './common.js';
 
 
@@ -582,7 +583,6 @@ const visitor = {
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-
       if (node.stateVariable) {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
@@ -595,7 +595,7 @@ const visitor = {
 
       if (
         declarationType === 'localStack' &&
-        !node.isSecret &&
+        !node.isSecret && !node.declarations[0].isSecret &&
         !scope.getReferencedIndicator(node)?.interactsWithSecret &&
         !path.getAncestorContainedWithin('initializationExpression')
       ) {
@@ -860,9 +860,9 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         ) {
           isVarDec = true;
         }  
-        if (!(referencedIndicator instanceof StateVariableIndicator) ){
+        if (referencedIndicator instanceof LocalVariableIndicator &&  firstInstanceOfNewName && names[names.length - 1].name !== referencedIndicator.name){
           isVarDec = true;
-        }        
+        }       
       }
       let nodeID = node.id;
       newNode = buildNode('ExpressionStatement', { isVarDec });
