@@ -111,6 +111,12 @@ function codeGenerator(node: any) {
     }
 
     case 'StructDefinition': {
+      //Convert all boolean types to field because bools are never input to the circuit
+      for (let i = 0; i < node.members.length; i++) {
+        if (node.members[i].type === "bool"){
+          node.members[i].type = "field";
+        }
+      }
       return `struct ${node.name} {
         ${node.members.map((mem: any) => mem.type + ' ' + mem.name).join(`\n`)}
       }`;
