@@ -220,6 +220,8 @@ function codeGenerator(node: any) {
       return node.name;
 
     case 'Literal':
+      // We convert to an integer in the circuit as this is necessary for hashing. 
+      if (node.value === "true" || node.value === "false") return node.value === "true" ? 1 : 0;
       return node.value;
 
     case 'IndexAccess':

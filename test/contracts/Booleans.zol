@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: CC0
+ 
+pragma solidity ^0.8.0;
+ 
+contract Assign {
+ 
+  secret bool private a;
+ 
+ 
+  function add( secret uint256 value) public {
+    if(value > 10) {
+        a= true;
+    }
+    if(value < 10) {
+        a= false;
+    }
+     
+  }
+ 
+}
+
