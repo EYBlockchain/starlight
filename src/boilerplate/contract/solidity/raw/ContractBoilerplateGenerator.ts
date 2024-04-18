@@ -25,7 +25,6 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired,
       nullifiersRequired,
       newCommitmentsRequired,
-      containsAccessedOnlyState,
       encryptionRequired,
       //isInternalFunctionCall add it
     }): string[] {
@@ -107,7 +106,6 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired: commitmentRoot,
       nullifiersRequired: newNullifiers,
       newCommitmentsRequired: newCommitments,
-      containsAccessedOnlyState: checkNullifiers,
       encryptionRequired,
       circuitParams,
       constructorContainsSecret,
@@ -136,9 +134,6 @@ class ContractBoilerplateGenerator {
             verifyInput.push( `
             inputs[k++] = newNullifiers[${counter.newNullifiers++}];`); 
             break;
-          case 'checkNullifier':
-            verifyInput.push(`
-            inputs[k++] = checkNullifiers[${counter.checkNullifiers++}];`);  
           case 'newCommitment':
             verifyInput.push(`
             inputs[k++] = newCommitments[${counter.newCommitments++}];`);
@@ -221,7 +216,6 @@ class ContractBoilerplateGenerator {
             const counter = {
               customInputs: 0,
               newNullifiers: 0,
-              checkNullifiers: 0,
               newCommitments: 0,
               encryption: 0,
             };

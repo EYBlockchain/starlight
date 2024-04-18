@@ -40,6 +40,8 @@ cp entrypoint_default.sh entrypoint.sh
 
 cp bin/default_startup bin/startup
 
+rm -rf proving-files
+
 perl -i -pe "s,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,docker-compose.zapp.yml,g" package.json
 
 if [[ $network == 'mumbai' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]]
