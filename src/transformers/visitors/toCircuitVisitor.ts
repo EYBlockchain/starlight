@@ -939,8 +939,19 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         switch (thisPath.node.nodeType) {
           case 'Identifier':
             if (!thisPath.getAncestorOfType('IndexAccess')) {
-              state.list.push(cloneDeep(thisPath.node._newASTPointer));
-              thisPath.node._newASTPointer.name += '_temp';
+              if (thisPath.parent.nodeType === 'UnaryOperation'){
+                if (thisPath.getAncestorContainedWithin('subExpression')){
+                  state.list.push(cloneDeep(thisPath.parent._newASTPointer.subExpression));
+                  thisPath.parent._newASTPointer.subExpression.name += '_temp';
+                } 
+                if (thisPath.getAncestorContainedWithin('initialValue')) {
+                  state.list.push(cloneDeep(thisPath.parent._newASTPointer.initialValue));
+                  thisPath.parent._newASTPointer.initialValue.name += '_temp';
+                } 
+              } else{
+                state.list.push(cloneDeep(thisPath.node._newASTPointer));
+                thisPath.node._newASTPointer.name += '_temp';
+              }
             } else {
               thisPath.parent._newASTPointer.indexExpression.name += '_temp';
             }

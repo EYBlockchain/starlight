@@ -192,6 +192,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
     case 'UnaryOperation':
       // ++ or -- on a parseInt() does not work
+      if (node.subExpression.subType === 'bool' && node.operator === '!'){
+        return `generalise(${node.subExpression.name}${node.operator})`;
+      }
       return `generalise(${node.subExpression.name}.integer${node.operator})`;
 
     case 'Literal':

@@ -957,7 +957,6 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { operator, prefix, subExpression } = node;
-
       const newNode = buildNode('Assignment', { operator: '='});
       newNode.rightHandSide = buildNode(node.nodeType, { operator, prefix });
 
@@ -974,7 +973,10 @@ const visitor = {
       node._newASTPointer = newNode;
       if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
         parent._newASTPointer.initialValue = newNode;
-      } else {
+      } else if (parent._newASTPointer.nodeType === 'BinaryOperation') {
+        parent._newASTPointer.rightExpression = newNode;
+      }
+        else {
         parent._newASTPointer.expression = newNode;
       }
       // we make a custom node like a = a++ to avoid nodejs errors => stop traversing

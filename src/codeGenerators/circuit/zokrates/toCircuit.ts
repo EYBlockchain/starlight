@@ -256,11 +256,20 @@ function codeGenerator(node: any) {
       }
       // we use our list of condition vars to init temp variables. 
       node.conditionVars.forEach(elt => {
+        let isBool = false;
         if (elt.nodeType !== 'IndexAccess' || (elt.indexExpression && elt.indexExpression.nodeType === 'MsgSender')){
           let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
+          isBool = (varDec === 'bool');
           if (elt.isVarDec === false) varDec = '';
-          initialStatements += `
+          if (isBool) {
+            // Convert back to boolean from integer as inputs are input to the circuits. 
+            initialStatements += `
+        ${varDec} ${codeGenerator(elt)}_temp = if ${codeGenerator(elt)} == 1 then true else  false fi \n
+        `;
+          } else{
+            initialStatements += `
         ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
+          }
         }
       });
       for (let i =0; i<node.trueBody.length; i++) {
