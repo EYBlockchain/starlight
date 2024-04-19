@@ -16,7 +16,7 @@ contract Assign {
         a= true;
         //b= false;
     }
-    if( value < 10 && c) {
+    if( value < 10 && !c) {
         a= false;
         c= true;
     }
