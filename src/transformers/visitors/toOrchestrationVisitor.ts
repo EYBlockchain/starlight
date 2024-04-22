@@ -970,13 +970,15 @@ const visitor = {
               subType: node.typeDescriptions.typeString,
             });
 
-      node._newASTPointer = newNode;
       if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+        node._newASTPointer = newNode;
         parent._newASTPointer.initialValue = newNode;
       } else if (parent._newASTPointer.nodeType === 'BinaryOperation') {
-        parent._newASTPointer.rightExpression = newNode;
+        node._newASTPointer = newNode.rightHandSide;
+        parent._newASTPointer.rightExpression = newNode.rightHandSide;
       }
         else {
+          node._newASTPointer = newNode;
         parent._newASTPointer.expression = newNode;
       }
       // we make a custom node like a = a++ to avoid nodejs errors => stop traversing

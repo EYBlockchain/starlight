@@ -195,9 +195,13 @@ class BoilerplateGenerator {
         this.generateBoilerplate();
       }
     } else {
-      if (indicators instanceof StateVariableIndicator && indicators.structProperties) {
-        this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
-        this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+      if (indicators instanceof StateVariableIndicator) {
+        if (indicators.structProperties){
+          this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
+          this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+        } else {
+          this.typeName = indicators.referencingPaths[0]?.node.typeDescriptions?.typeString;
+        }
       }
       this.assignIndicators(indicators);
       this.generateBoilerplate();

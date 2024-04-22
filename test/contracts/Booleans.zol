@@ -6,14 +6,17 @@ contract Assign {
  
   secret bool private a;
   secret bool private c;
+  //bool private d;
  
  
   function add( secret uint256 value) public {
     //secret bool b;
     //b = true;
+    //c = a && c && d;
     c = a && c;
     if(value > 10 && c) {
         a= true;
+        //a= !c;
         //b= false;
     }
     if( value < 10 && !c) {

@@ -111,12 +111,6 @@ function codeGenerator(node: any) {
     }
 
     case 'StructDefinition': {
-      //Convert all boolean types to field because bools are never input to the circuit
-      for (let i = 0; i < node.members.length; i++) {
-        if (node.members[i].type === "bool"){
-          node.members[i].type = "field";
-        }
-      }
       return `struct ${node.name} {
         ${node.members.map((mem: any) => mem.type + ' ' + mem.name).join(`\n`)}
       }`;
@@ -226,8 +220,6 @@ function codeGenerator(node: any) {
       return node.name;
 
     case 'Literal':
-      // We convert to an integer in the circuit as this is necessary for hashing. 
-      if (node.value === "true" || node.value === "false") return node.value === "true" ? 1 : 0;
       return node.value;
 
     case 'IndexAccess':
@@ -256,20 +248,11 @@ function codeGenerator(node: any) {
       }
       // we use our list of condition vars to init temp variables. 
       node.conditionVars.forEach(elt => {
-        let isBool = false;
         if (elt.nodeType !== 'IndexAccess' || (elt.indexExpression && elt.indexExpression.nodeType === 'MsgSender')){
           let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
-          isBool = (varDec === 'bool');
           if (elt.isVarDec === false) varDec = '';
-          if (isBool) {
-            // Convert back to boolean from integer as inputs are input to the circuits. 
-            initialStatements += `
-        ${varDec} ${codeGenerator(elt)}_temp = if ${codeGenerator(elt)} == 1 then true else  false fi \n
-        `;
-          } else{
-            initialStatements += `
+          initialStatements += `
         ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
-          }
         }
       });
       for (let i =0; i<node.trueBody.length; i++) {

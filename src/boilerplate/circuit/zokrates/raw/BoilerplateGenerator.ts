@@ -182,7 +182,18 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, structProperties }): string[] {
+    postStatements({ name: x, structProperties, typeName }): string[] {
+
+      const lines: string[] = [];
+      if (!structProperties ) {
+        if (typeName === 'bool'){
+          lines.push(`field ${x}_oldCommitment_value_field = if ${x}_oldCommitment_value then 1 else 0 fi`);
+        } else {
+          lines.push(`field ${x}_oldCommitment_value_field = ${x}_oldCommitment_value`);
+        }
+          
+      }
+
       if (structProperties)
         return [
           `
@@ -196,13 +207,19 @@ class BoilerplateGenerator {
           ])`,
         ];
       return [
+
         `
+
+        // prepare secret state '${x}' for commitment
+
+          ${lines}
+          
         // ${x}_oldCommitment_commitment: preimage check
 
 
         field ${x}_oldCommitment_commitment_field = poseidon([\\
           ${x}_stateVarId_field,\\
-          ${x}_oldCommitment_value,\\
+          ${x}_oldCommitment_value_field,\\
           ${x}_oldCommitment_owner_publicKey,\\
           ${x}_oldCommitment_salt\
         ])`,
@@ -315,7 +332,14 @@ class BoilerplateGenerator {
           );
         }
       } else {
-        if (!structProperties) lines.push(`field ${x}_newCommitment_value_field = ${y}`);
+        if (!structProperties ) {
+          if (typeName === 'bool'){
+            lines.push(`field ${x}_newCommitment_value_field = if ${y} then 1 else 0 fi`);
+          } else {
+            lines.push(`field ${x}_newCommitment_value_field = ${y}`);
+          }
+          
+        }
         else lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y[p]}`}`)} }`)
       }
 
