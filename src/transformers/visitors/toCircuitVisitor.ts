@@ -48,7 +48,8 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
       name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
     if (thisPath.containerName === 'indexExpression')
       name = binding.getMappingKeyName(thisPath);
-    const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
+    let nodeTypeString = node.typeDescriptions.typeString === 'bool' ? 'bool': 'field';
+    const parameterNode = buildNode('VariableDeclaration', { name, type: nodeTypeString, isSecret: false, declarationType: 'parameter'});
     parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
     const params = fnDefNode._newASTPointer.parameters.parameters;
