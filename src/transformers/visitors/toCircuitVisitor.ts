@@ -9,7 +9,131 @@ import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import { StateVariableIndicator} from '../../traverse/Indicator.js';
+import { LocalVariableIndicator} from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPointer, getIndexAccessName } from './common.js';
+
+
+
+// public variables that interact with the secret also need to be modified within the circuit.
+const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
+  const {parent, node } = path;
+  // Break if the identifier is a mapping or array. 
+  if ( parent.indexExpression && parent.baseExpression === node ) {
+    return;}
+  const binding = path.getReferencedBinding(node);
+  if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
+  
+  // If there is a statment where a secret variable interacts with a public one, we need to adjust previous statements where the public variable was modified.
+
+  if (
+    binding instanceof VariableBinding &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    binding.stateVariable && !binding.isSecret 
+  ) {
+    const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+    if (!fnDefNode) throw new Error(`Not in a function`);
+
+    const modifiedBeforePaths = path.scope.getReferencedIndicator(node, true)?.modifyingPaths?.filter((p: NodePath) => p.node.id < node.id);
+
+    const statements = fnDefNode.node._newASTPointer.body.statements;
+
+    let num_modifiers=0;
+    // For each statement that modifies the public variable previously, we need to ensure that the modified variable is stored for later. 
+    // We also need that the original public variable is updated, e.g if the statement is index_2 = index +1, we need an extra statement index = index_2.
+    modifiedBeforePaths?.forEach((p: NodePath) => {
+      const expressionId = p.getAncestorOfType('ExpressionStatement')?.node?.id;
+      if (expressionId) {
+        if (path.containerName !== 'indexExpression') {
+          num_modifiers++;
+        } 
+        let expNode = statements.find((n:any) => n?.id === expressionId);
+        let index_expNode = fnDefNode.node._newASTPointer.body.statements.indexOf(expNode);
+        if (expNode && !expNode.isAccessed) {
+          expNode.isAccessed = true;
+          if((expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
+          (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name)){
+            if (num_modifiers !=0){
+              const initInnerNode = buildNode('Assignment', {
+                leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
+                operator: '=',
+                rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+              });
+              const newNode1 = buildNode('ExpressionStatement', {
+                  expression: initInnerNode,
+                  interactsWithSecret: true,
+                  isVarDec: true,
+              });
+              if (index_expNode !== -1) {
+                fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+              }
+            }
+          } else{
+            let modName = expNode.expression.initialValue?.leftHandSide?.name || expNode.expression.initialValue?.name || expNode.expression.leftHandSide?.name;
+            const InnerNode = buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'  }),
+              operator: '=',
+              rightHandSide: buildNode('Identifier', { name: `${modName}`, subType: 'generalNumber' })
+            });
+            const newNode1 = buildNode('ExpressionStatement', {
+              expression: InnerNode,
+              interactsWithSecret: true,
+            });
+            if (index_expNode !== -1) {
+              fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+            }
+            if (`${modName}` !== `${node.name}_${num_modifiers}` && num_modifiers !==0){
+              const initInnerNode1 = buildNode('Assignment', {
+                leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
+                operator: '=',
+                rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+              });
+              const newNode2 = buildNode('ExpressionStatement', {
+                  expression: initInnerNode1,
+                  interactsWithSecret: true,
+                  isVarDec: true,
+              });
+              if (index_expNode !== -1) {
+                fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 2, 0, newNode2);
+              }
+            }
+          }
+        }
+      }
+    });
+    // We ensure here that the public variable used has the correct name, e.g index_2 instead of index.
+    if (num_modifiers != 0)  {
+      if (IDnode.name === node.name){
+        IDnode.name += `_${num_modifiers}`;
+      } else {
+        IDnode.name =  `${node.name}_${num_modifiers}`;
+      }
+    }
+    // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
+    // e.g. index = index_init. 
+    for (let i = fnDefNode.node._newASTPointer.body.statements.length - 1; i >= 0; i--) {
+      const p = fnDefNode.node._newASTPointer.body.statements[i];
+      if (p.expression?.rightHandSide?.name === `${node.name}_init`) {
+        fnDefNode.node._newASTPointer.body.statements.splice(i, 1);
+      }
+    }
+    const endNodeInit = buildNode('Assignment', {
+      leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'   }),
+      operator: '=',
+      rightHandSide: buildNode('Identifier', { name: `${node.name}_init`, subType: 'generalNumber' }),
+    });
+    const endNode = buildNode('ExpressionStatement', {
+        expression: endNodeInit,
+        interactsWithSecret: true,
+        isVarDec: false,
+    });
+    endNode.isEndInit = true;
+    fnDefNode.node._newASTPointer.body.statements.push(endNode);
+  }
+  // We no longer need this because index expression nodes are not input. 
+    //if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) publicVariablesVisitor(NodePath.getPath(node.indexExpression), state, null);
+}
+
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
 // useful for subtrees like ExpressionStatements
@@ -46,14 +170,29 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
-    if (thisPath.containerName === 'indexExpression')
-      name = binding.getMappingKeyName(thisPath);
+    // We never need the input to the circuit to be the MappingKeyName
+    //if (thisPath.containerName === 'indexExpression'){
+    //  name = binding.getMappingKeyName(thisPath);
+    //}
     const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
     parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
     const params = fnDefNode._newASTPointer.parameters.parameters;
-    if (!params.some(n => n.id === parameterNode.id))
+    if (!params.some(n => n.id === parameterNode.id)){
       params.push(parameterNode);
+      // For each non-secret variable that is input to the circuit, we need to ensure the initial value is stored for later.
+      const beginNodeInit = buildNode('Assignment', {
+        leftHandSide: buildNode('Identifier', { name: `${name}_init`, subType: 'generalNumber'   }),
+        operator: '=',
+        rightHandSide: buildNode('Identifier', { name: `${name}`, subType: 'generalNumber' }),
+      });
+      const beginNode = buildNode('ExpressionStatement', {
+          expression: beginNodeInit,
+          interactsWithSecret: true,
+          isVarDec: true,
+      });
+      fnDefNode._newASTPointer.body.statements.unshift(beginNode);
+    }
     // even if the indexAccessNode is not a public input, we don't want to check its base and index expression nodes
     thisState.skipSubNodes = true;
   }
@@ -174,6 +313,25 @@ const visitor = {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
+      //Ensure we do not have any statements of the form x = x_init where x is not a parameter input to the circuit.
+      for (let i = newFunctionDefinitionNode.body.statements.length - 1; i >= 0; i--) {
+        const statementNode = newFunctionDefinitionNode.body.statements[i];
+        if ( statementNode.isEndInit && 
+          newFunctionDefinitionNode.parameters.parameters.every(paramNode => paramNode.name !== statementNode.expression?.leftHandSide.name)
+        ) {
+          newFunctionDefinitionNode.body.statements.splice(i, 1);
+        }
+      }
+
+     /// Ensure non-secret inputs to the circuit are not declared      
+      for (let i = newFunctionDefinitionNode.body.statements.length - 1; i >= 0; i--) {
+        const statementNode = newFunctionDefinitionNode.body.statements[i];
+        newFunctionDefinitionNode.parameters.parameters.forEach((paramNode) => {
+          if ( statementNode.isVarDec && statementNode.expression && (paramNode.name === statementNode.expression.leftHandSide?.name || paramNode.name === statementNode.expression.initialValue?.name)) {
+            statementNode.isVarDec =false;
+          }
+        });
+      }
 
       const joinCommitmentsNode = buildNode('File', {
        fileName: `joinCommitments`,
@@ -425,7 +583,6 @@ const visitor = {
   VariableDeclarationStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-
       if (node.stateVariable) {
         throw new Error(
           `TODO: VariableDeclarationStatements of secret state variables are tricky to initialise because they're assigned-to outside of a function. Future enhancement.`,
@@ -438,7 +595,7 @@ const visitor = {
 
       if (
         declarationType === 'localStack' &&
-        !node.isSecret &&
+        !node.isSecret && !node.declarations[0].isSecret &&
         !scope.getReferencedIndicator(node)?.interactsWithSecret &&
         !path.getAncestorContainedWithin('initializationExpression')
       ) {
@@ -496,7 +653,7 @@ const visitor = {
         const op = operator.charAt(0);
         const binOpNode = buildNode('BinaryOperation', {
           operator: op,
-          leftExpression: leftHandSide,
+          leftExpression: cloneDeep(leftHandSide),
           rightExpression: rightHandSide,
         });
         const assNode = buildNode('Assignment', {
@@ -504,6 +661,15 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
+        // We need to ensure that for non-secret variables the name used on the right hand side of the assignment 
+        // is always the original name. (As the original variable is always updated we always get the right value.)
+        const binding = path.getReferencedBinding(path.node.leftHandSide);
+        if( (binding instanceof VariableBinding) && !binding.isSecret && 
+        binding.stateVariable){
+          binOpNode.leftExpression.name = path.node.leftHandSide.name;
+        } else {
+        binOpNode.leftExpression.name = path.scope.getIdentifierMappingKeyName(path.node.leftHandSide, true);
+        }
         return assNode;
       };
 
@@ -528,16 +694,26 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { operator, prefix, subExpression } = node;
+      const binding = path.getReferencedBinding(node.subExpression);
       const newNode = buildNode(node.nodeType, {
         operator,
         prefix,
-        subExpression: buildNode(subExpression.nodeType, {
-          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
-        }),
         initialValue: buildNode(subExpression.nodeType, {
           name: path.scope.getIdentifierMappingKeyName(subExpression)
         }),
       });
+      //We need to ensure that for non-secret variables the name used on the right hand side of the assignment 
+      // is always the original name. (As the original variable is always updated we always get the right value.)
+      if ( (binding instanceof VariableBinding) && !binding.isSecret && 
+      binding.stateVariable){
+        newNode.subExpression =  buildNode(subExpression.nodeType, {
+          name: subExpression.name,
+        });
+      } else{
+        newNode.subExpression =  buildNode(subExpression.nodeType, {
+          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
+        });
+      }
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
       state.skipSubNodes = true;
@@ -653,7 +829,6 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
               .replace('.value','Value')
               .replace('.', 'dot')
           : referencedIndicator?.name;
-
         if (referencedIndicator?.isMapping && lhs.baseExpression) {
           lhs = lhs.baseExpression;
         } else if (lhs.nodeType === 'MemberAccess') {
@@ -661,30 +836,55 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
           if (lhs.baseExpression) lhs = lhs.baseExpression;
         }
         // collect all index names
-        const names = referencedIndicator?.referencingPaths.map((p: NodePath) => ({ name: scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
-
-        // check whether this is the first instance of a new index name
-        const firstInstanceOfNewName = names && names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
+        const names = referencedIndicator.referencingPaths.map((p: NodePath) => ({ name: p.getAncestorContainedWithin('rightHandSide') ?  p.node.name : scope.getIdentifierMappingKeyName(p.node), id: p.node.id })).filter(n => n.id <= lhs.id);
+        // check whether this is the first instance of a new index name. We only care if the previous index name is on the left hand side, because this will lead to a double variable declaration. 
+        let firstInstanceOfNewName = true;
+        let i =0;
+        // We check that the name has not been used previously, in this case we need to declare it. 
+        // We ensure that variables are not declared when they are input to the circuit elsewhere. 
+        names.forEach((elem) => {
+          if (i !== names.length - 1 && names[names.length - 1].name === elem.name){
+            firstInstanceOfNewName = false;
+          }
+          i++;
+        });   
+        
         if (referencedIndicator instanceof StateVariableIndicator &&
-          (firstInstanceOfNewName || (lhs.id === referencedIndicator.referencingPaths[0].node.id ||
-            lhs.id === referencedIndicator.referencingPaths[0].parent.id)) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
+          (firstInstanceOfNewName 
+            || (referencedIndicator.isSecret && (lhs.id === referencedIndicator.referencingPaths[0].node.id ||lhs.id === referencedIndicator.referencingPaths[0].parent.id))
+           ) && // the parent logic captures IndexAccess nodes whose IndexAccess.baseExpression was actually the referencingPath
           !(
             referencedIndicator.isWhole &&
             referencedIndicator.oldCommitmentAccessRequired
           ) // FIX - sometimes a variable will be declared twice when we insert oldCommitmentPreimage preStatements before an overwrite - we check here
         ) {
           isVarDec = true;
-        }
+        }  
+        if (referencedIndicator instanceof LocalVariableIndicator &&  firstInstanceOfNewName && names[names.length - 1].name !== referencedIndicator.name){
+          isVarDec = true;
+        }       
       }
-
+      let nodeID = node.id;
       newNode = buildNode('ExpressionStatement', { isVarDec });
+      newNode.id = nodeID;
+      newNode.isAccessed = false;
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
       } else {
         parent._newASTPointer[path.containerName] = newNode;
       }
-    },
+      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+      // We ensure the original variable name is set to the initial value only at the end of the statements. 
+      //E.g index = index_init should only appear at the end of all the modifying statements. 
+      let ind = fnDefNode.node._newASTPointer.body.statements.length - 2;
+      while (ind >= 0  && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name.includes("_init")){
+        let temp = fnDefNode.node._newASTPointer.body.statements[ind+1];
+        fnDefNode.node._newASTPointer.body.statements[ind+1] = fnDefNode.node._newASTPointer.body.statements[ind];
+        fnDefNode.node._newASTPointer.body.statements[ind] = temp;
+        ind--;
+      }
+    }
   },
 
   StructDefinition: {
@@ -868,13 +1068,19 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       // local variable decs and parameters are dealt with elsewhere
       // secret state vars are input via commitment values
       if (!state.skipPublicInputs) path.traversePathsFast(publicInputsVisitor, {});
-      name = path.scope.getIdentifierMappingKeyName(node);
-
+      // Only use the mapping key name if it is on the left hand side. 
+      const binding = path.getReferencedBinding(node);
+      if ( (binding instanceof VariableBinding) && !binding.isSecret && 
+      binding.stateVariable && path.getAncestorContainedWithin('rightHandSide') ){
+      } else{
+        name = path.scope.getIdentifierMappingKeyName(node);
+      }
       const newNode = buildNode(
         node.nodeType,
         { name, type: node.typeDescriptions?.typeString },
       );
       if (path.isStruct(node)) addStructDefinition(path);
+      publicVariablesVisitor(path, state,newNode);
       if (path.getAncestorOfType('IfStatement')) node._newASTPointer = newNode;
       // no pointer needed, because this is a leaf, so we won't be recursing any further.
       // UNLESS we must add and rename if conditionals 
@@ -969,6 +1175,12 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       };
       let identifiersInCond = { skipSubNodes: false, list: [] };
       path.traversePathsFast(findConditionIdentifiers, identifiersInCond);
+      // Remove duplicates 
+      identifiersInCond.list = identifiersInCond.list.filter((value, index, self) => 
+        index === self.findIndex((t) => (
+          t.name === value.name
+        ))
+      );
       path.node._newASTPointer.conditionVars = identifiersInCond.list;
       // Determine whether each identifier in conditionVar is a new declaration or a redeclaration.
       path.node._newASTPointer.conditionVars.forEach((condVar) => {
@@ -1067,6 +1279,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
 
       const newNode = buildNode('IndexAccess');
       if (path.isConstantArray(node) && (path.isLocalStackVariable(node) || path.isFunctionParameter(node))) newNode.isConstantArray = true;
+      // We don't need this because index access expressions always contain identifiers. 
+      //publicVariablesVisitor(path, state,newNode);
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },

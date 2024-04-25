@@ -1030,11 +1030,12 @@ export default class NodePath {
         // Currently, the only state variable 'modifications' we're aware of are:
         //   - when a state variable is referenced on the LHS of an assignment;
         //   - a unary operator
+        // We now do this by checking if at any point the identifier is within a right hand side. If so it cannot be on the LHS of an assignment.
         // prettier-ignore
         return (
           !(this.queryAncestors(path => path.containerName === 'indexExpression')) && !this.getAncestorOfType('FunctionCall') &&
           !this.getAncestorContainedWithin('initialValue') &&
-          this.getLhsAncestor(true) && !(this.queryAncestors(path => path.containerName === 'condition') ||  this.queryAncestors(path => path.containerName === 'initializationExpression') ||  this.queryAncestors(path => path.containerName === 'loopExpression'))
+          !this.getRhsAncestor(true) && !(this.queryAncestors(path => path.containerName === 'condition') ||  this.queryAncestors(path => path.containerName === 'initializationExpression') ||  this.queryAncestors(path => path.containerName === 'loopExpression'))
         );
       default:
         return false;
