@@ -5,23 +5,25 @@ pragma solidity ^0.8.0;
 contract Assign {
  
   secret bool private a;
+  //secret uint256 private b;
+   //secret uint256 private g;
   secret bool private c;
-  bool private d;
+  //bool private d;
  
  
-  function add( secret uint256 value) public {
+  function add( secret uint256 value, secret bool value_bool, bool value_publicbool) public {
     //secret bool b;
-    //b = true;
-    c = a && c && d;
+    secret bool l = false;
+    bool m = false;
     c = a && c;
     if(value > 10 && c) {
-        a= true;
+        a= value_bool && value_publicbool;
         //a= !c;
         //b= false;
     }
     if( value < 10 && !c) {
         a= false;
-        c= true;
+        c= l && a && m;
     }
     //return b;
      

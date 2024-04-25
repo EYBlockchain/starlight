@@ -533,12 +533,17 @@ const visitor = {
         operator,
         prefix,
         subExpression: buildNode(subExpression.nodeType, {
-          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
+          name: path.scope.getIdentifierMappingKeyName(subExpression, true),
         }),
         initialValue: buildNode(subExpression.nodeType, {
           name: path.scope.getIdentifierMappingKeyName(subExpression)
         }),
       });
+      if (subExpression.typeDescriptions.typeString === 'bool') {
+        newNode.subExpression.typeName =  buildNode('ElementaryTypeName', {
+          name: `bool`
+        });
+      }
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
       state.skipSubNodes = true;

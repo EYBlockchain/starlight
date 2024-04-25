@@ -1030,13 +1030,13 @@ const visitor = {
 
         // check whether this is the first instance of a new index name
         const firstInstanceOfNewName = names.length > 1 && names[names.length - 1].name !== names[names.length - 2].name;
-
+        
         // check whether this should be a VariableDeclaration
         const firstEdit =
           (firstInstanceOfNewName && indicator.interactsWithSecret) ||
           (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) ||
           (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole);
-
+          
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (

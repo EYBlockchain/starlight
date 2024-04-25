@@ -209,6 +209,9 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
     case 'UnaryOperation':
+      if (node.subExpression?.typeName.name === 'bool' && node.operator === '!'){
+        return `${node.operator}${node.subExpression.name}`;
+      }
       return `${codeGenerator(node.initialValue)} = ${codeGenerator(node.subExpression)} ${node.operator[0]} 1`
 
     case 'BinaryOperation':
