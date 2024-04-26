@@ -48,7 +48,13 @@ class BoilerplateGenerator {
   };
 
   nullification = {
-    importStatements(): string[] {
+    importStatements({containsAccessedOnlyState}): string[] {
+      if(containsAccessedOnlyState) 
+      return [
+        `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
+        `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
+      ];
+
       return [
         `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
         `from "./common/hashes/poseidon/poseidon.zok" import main as poseidon`,
@@ -57,8 +63,17 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, isAccessed, isNullified }): string[] {
-      let para = [
+    parameters({ name: x, isAccessed, isNullified, containsAccessedOnlyState }): string[] {
+      let para = []
+      if(!containsAccessedOnlyState)
+       {
+        para = [
+        `private field ${x}_oldCommitment_owner_secretKey`,
+        `public field ${x}_oldCommitment_nullifier`,
+        
+      ]
+    } else {
+      para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
         `public field nullifierRoot`,
         `public field newNullifierRoot`,
@@ -73,7 +88,7 @@ class BoilerplateGenerator {
         `public field nullifierRoot`,
         `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
       ]
-
+    }
       return para;
     },
 
@@ -87,9 +102,28 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x , isAccessed, isNullified}): string[] {
+    postStatements({ name: x , isAccessed, isNullified, containsAccessedOnlyState}): string[] {
       // default nullification lines (for partitioned & whole states)
-      let lines = [
+      let lines = [];
+      if(containsAccessedOnlyState){
+        lines = [
+          `
+          // Nullify ${x}:
+  
+          field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
+            ${x}_stateVarId_field,\\
+            ${x}_oldCommitment_owner_secretKey,\\
+            ${x}_oldCommitment_salt\\
+          ])
+  
+          assert(\\
+          field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
+          )
+          `,
+        ];
+  
+      } else {
+       lines = [
         `
         // Nullify ${x}:
 
@@ -142,6 +176,7 @@ class BoilerplateGenerator {
        )
         `,
       ];
+    }
 
      
       if (this.initialisationRequired && this.isWhole) {
@@ -427,7 +462,11 @@ class BoilerplateGenerator {
   };
 
   mapping = {
-    importStatements(): string[] {
+    importStatements({isNestedMapping}): string[] {
+      if(isNestedMapping)
+      return [
+        `from "./common/hashes/mimc/altbn254/mimc3.zok" import main as mimc3`,
+      ];
       return [
         `from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2`,
       ];
@@ -448,8 +487,13 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, mappingName: m, mappingKeyName: k }): string[] {
+    postStatements({ name: x, mappingName: m, mappingKeyName: k, isNestedMapping }): string[] {
       // const x = `${m}_${k}`;
+      if(isNestedMapping)
+      return [
+        `
+        field ${x}_stateVarId_field = mimc3([${m}_mappingId, ${k}])`,
+      ];
       return [
         `
         field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,

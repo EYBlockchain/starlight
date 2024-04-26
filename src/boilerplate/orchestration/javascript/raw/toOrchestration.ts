@@ -46,6 +46,7 @@ const stateVariableIds = (node: any) => {
     }
     // in case of nested mapping we need to add value key as well
     if(mappingKeyNames.length > 1){
+      console.log(mappingKeyNames);
       stateNode.stateVarId[2] = mappingKeyNames[1];
       if (
         privateStateName.includes(mappingKeyNames[1].replaceAll('.', 'dot')) &&
@@ -206,6 +207,7 @@ export const generateProofBoilerplate = (node: any) => {
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
             nullifierRootRequired: !containsNullifierRoot,
             initialisationRequired: stateNode.initialisationRequired,
             encryptionRequired: stateNode.encryptionRequired,
@@ -246,6 +248,7 @@ export const generateProofBoilerplate = (node: any) => {
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
+                containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
                 parameters,
               })
             );
@@ -277,6 +280,7 @@ export const generateProofBoilerplate = (node: any) => {
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: false,
                 accessedOnly: false,
+                containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
                 parameters,
               })
             );
@@ -617,6 +621,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
+                    containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
                     structProperties: stateNode.structProperties,
                   }));
 
@@ -632,6 +637,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
+                    containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
                     structProperties: stateNode.structProperties,
                   }));
 
@@ -649,6 +655,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   ? `${stateName}_stateVarId_key.integer`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
+                containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
                 structProperties: stateNode.structProperties,
               }));
         }
@@ -709,6 +716,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
               accessedOnly: stateNode.accessedOnly,
+              containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
               stateType: 'partitioned',
             }));
 
@@ -717,6 +725,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.calculateNullifier.postStatements({
               stateName,
               accessedOnly: stateNode.accessedOnly,
+              containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
               stateType: 'whole',
             }));
         }
@@ -728,6 +737,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.temporaryUpdatedNullifier.postStatements({
               stateName,
               accessedOnly: stateNode.accessedOnly,
+              containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
               stateType: 'partitioned',
             }));
 
@@ -736,6 +746,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.temporaryUpdatedNullifier.postStatements({
               stateName,
               accessedOnly: stateNode.accessedOnly,
+              containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
               stateType: 'whole',
             }));
         }
@@ -747,6 +758,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.calculateUpdateNullifierPath.postStatements({
               stateName,
               accessedOnly: stateNode.accessedOnly,
+              containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
               stateType: 'partitioned',
             }));
 
@@ -755,6 +767,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.calculateUpdateNullifierPath.postStatements({
               stateName,
               accessedOnly: stateNode.accessedOnly,
+              containsAccessedOnlyState: stateNode.containsAccessedOnlyState,
               stateType: 'whole',
             }));
         }
@@ -842,7 +855,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[3] = arr of commitments
       
 
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
+      if (params[0][0][0] && node.containsAccessedOnlyState) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
       if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
       if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
@@ -853,7 +866,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [${ node.containsAccessedOnlyState ? params[0][0] : ' '}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
 
@@ -861,7 +874,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          .${node.functionName}(${lines}${node.containsAccessedOnlyState ? params[0][0] : ' '} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,

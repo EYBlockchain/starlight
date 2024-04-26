@@ -44,8 +44,9 @@ class ContractBoilerplateGenerator {
         ...(encryptionRequired ? [`
           event EncryptedData(uint256[] cipherText, uint256[2] ephPublicKey);`] : []),
 
-        ...nullifiersRequired ? [`
-          uint256 public newNullifierRoot;`] : [],
+        ...nullifiersRequired ?  containsAccessedOnlyState ? [` 
+        mapping(uint256 => uint256) public nullifiers;`] :[`
+        uint256 public newNullifierRoot;`]: [],
 
         ...(oldCommitmentAccessRequired ? [`
           mapping(uint256 => uint256) public commitmentRoots;`] : []),
@@ -59,8 +60,10 @@ class ContractBoilerplateGenerator {
         `
           struct Inputs {
             ${[
-              ...(nullifiersRequired ? [`uint nullifierRoot; 
+              ...(nullifiersRequired ? !containsAccessedOnlyState ? [`uint nullifierRoot; 
               uint latestNullifierRoot; 
+              uint[] newNullifiers;
+                  `] : [`
               uint[] newNullifiers;
                   `] : []),
               ...(oldCommitmentAccessRequired ? [`uint commitmentRoot;`] : []),
@@ -73,7 +76,7 @@ class ContractBoilerplateGenerator {
       ];
     },
 
-    constructor({nullifiersRequired}): string[] {
+    constructor({containsAccessedOnlyState}): string[] {
       // This boilerplate will only be used if the .zol developer didn't write their own constructor. If they already wrote a constructor, we add this boilerplate in the FunctionBoilerplate generator.
       return [
         `
@@ -85,7 +88,7 @@ class ContractBoilerplateGenerator {
       		for (uint i = 0; i < vk.length; i++) {
       			vks[i] = vk[i];
       		}`,
-          ...( nullifiersRequired ? [`
+          ...(!containsAccessedOnlyState ? [`
           newNullifierRoot = Initial_NullifierRoot;`] : []),        
       	  `
         }`,
@@ -110,6 +113,7 @@ class ContractBoilerplateGenerator {
       circuitParams,
       constructorContainsSecret,
       isjoinSplitCommitmentsFunction,
+      containsAccessedOnlyState,
     }): string[] {
       const verifyFunctionSignature = `
         function verify(
@@ -124,11 +128,13 @@ class ContractBoilerplateGenerator {
   
         if(type  === 'parameters'){
         switch (input) {
-          case 'nullifierRoot':  
+          case 'nullifierRoot': 
+            if(!containsAccessedOnlyState) {
             verifyInput.push( `
             inputs[k++] = _inputs.nullifierRoot;`); 
             verifyInput.push( `
             inputs[k++] = _inputs.latestNullifierRoot;`); 
+            }
             break; 
           case 'nullifier':  
             verifyInput.push( `
@@ -178,6 +184,13 @@ class ContractBoilerplateGenerator {
         ...(newNullifiers ? [`
           uint[] memory newNullifiers = _inputs.newNullifiers;`] : []),
 
+          ...(containsAccessedOnlyState ?  [`
+          for (uint i; i < newNullifiers.length; i++) {
+      			uint n = newNullifiers[i];
+      			require(nullifiers[n] == 0, "Nullifier already exists");
+      			nullifiers[n] = n;
+      		}`] : []),  
+
         // removed to prevent stack too deep err - converted commitmentRoot to _inputs.commitmentRoot below
         // ...(commitmentRoot ? [`
         //   uint commitmentRoot = _inputs.commitmentRoot;`] : []),
@@ -200,7 +213,7 @@ class ContractBoilerplateGenerator {
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
-            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoots(old and latest) and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(commitmentRoot ? !containsAccessedOnlyState ? ['(newNullifiers.length > 0 ? 3 : 0)'] : ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // newNullifiers , nullifierRoots(old and latest) and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,
@@ -211,7 +224,7 @@ class ContractBoilerplateGenerator {
       for (let [name, _params] of Object.entries(circuitParams)) {
         if (_params) 
           for (let [type, _inputs] of Object.entries(_params)) {
-            if(type  === 'parameters' && _inputs.includes('nullifierRoot')) verifyInput.push(` 
+            if(type  === 'parameters' && _inputs.includes('nullifierRoot') && !containsAccessedOnlyState) verifyInput.push(` 
             require(newNullifierRoot == _inputs.nullifierRoot, "Input NullifierRoot does not exist.");`) 
             const counter = {
               customInputs: 0,
@@ -256,26 +269,22 @@ class ContractBoilerplateGenerator {
           []
         ),
 
-       ...(newNullifiers) ? [`
+       ...(newNullifiers) ? !containsAccessedOnlyState ? [`
        if (newNullifiers.length > 0) {
         newNullifierRoot = _inputs.latestNullifierRoot;
-      }`] : [] 
+      }`] : [] : []
       ];
 
       if (isjoinSplitCommitmentsFunction?.includes('true')) {
 
        joinSplitCommitmentsInputs.push(
         `
-           function joinCommitments(uint256 nullifierRoot, uint256 latestNullifierRoot, uint256[] calldata newNullifiers,  uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
+           function joinCommitments(uint256[] calldata newNullifiers,  uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
 
             Inputs memory inputs;
 
             inputs.customInputs = new uint[](1);
         	  inputs.customInputs[0] = 1;
-
-            inputs.nullifierRoot = nullifierRoot;
-
-            inputs.latestNullifierRoot = latestNullifierRoot;
 
             inputs.newNullifiers = newNullifiers;
 
@@ -286,16 +295,12 @@ class ContractBoilerplateGenerator {
             verify(proof, uint(FunctionNames.joinCommitments), inputs);
         }
         
-        function splitCommitments(uint256 nullifierRoot, uint256 latestNullifierRoot, uint256[] calldata newNullifiers,  uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
+        function splitCommitments( uint256[] calldata newNullifiers,  uint256 commitmentRoot, uint256[] calldata newCommitments, uint256[] calldata proof) public {
 
           Inputs memory inputs;
 
           inputs.customInputs = new uint[](1);
           inputs.customInputs[0] = 1;
-
-          inputs.nullifierRoot = nullifierRoot;
-
-          inputs.latestNullifierRoot = latestNullifierRoot;
 
           inputs.newNullifiers = newNullifiers;
 
@@ -309,13 +314,7 @@ class ContractBoilerplateGenerator {
 
          if (functionId == uint(FunctionNames.joinCommitments)) {
 
-          
-          require(newNullifierRoot == _inputs.nullifierRoot, "Input NullifierRoot does not exist.");
-
            uint k = 0;
-
-           inputs[k++] = _inputs.nullifierRoot;
-           inputs[k++] = _inputs.latestNullifierRoot;
            inputs[k++] = newNullifiers[0];
            inputs[k++] = newNullifiers[1];
            inputs[k++] = _inputs.commitmentRoot;
@@ -326,13 +325,7 @@ class ContractBoilerplateGenerator {
          
          if (functionId == uint(FunctionNames.splitCommitments)) {
 
-          
-          require(newNullifierRoot == _inputs.nullifierRoot, "Input NullifierRoot does not exist.");
-
            uint k = 0;
-
-           inputs[k++] = _inputs.nullifierRoot;
-           inputs[k++] = _inputs.latestNullifierRoot;
            inputs[k++] = newNullifiers[0];
            inputs[k++] = _inputs.commitmentRoot;
            inputs[k++] = newCommitments[0];

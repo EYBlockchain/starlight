@@ -31,7 +31,6 @@ class FunctionBoilerplateGenerator {
 
   categorySelector = () => {
     const { scope } = this;
-
     const isConstructorFunction =
       scope.path.node.nodeType === 'FunctionDefinition' && scope.path.node.kind === 'constructor';
     if (isConstructorFunction && scope.containsSecret) {
@@ -73,9 +72,10 @@ class FunctionBoilerplateGenerator {
     getIndicators() {
       const { indicators, msgSigRequired } = this.scope;
       const isConstructor = this.scope.path.node.kind === 'constructor' ? true : false;
-
-      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, encryptionRequired } = indicators;
+    
+      const { nullifiersRequired, oldCommitmentAccessRequired, msgSenderParam, msgValueParam, encryptionRequired } = indicators;
       const newCommitmentsRequired = indicators.newCommitmentsRequired;
+      const containsAccessedOnlyState = indicators.containsAccessedOnlyState;
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, msgSenderParam, msgValueParam, containsAccessedOnlyState, isConstructor, encryptionRequired };
     },
 

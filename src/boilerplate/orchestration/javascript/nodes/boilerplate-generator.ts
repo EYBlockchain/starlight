@@ -5,6 +5,7 @@ import buildNode from '../../../../types/orchestration-types.js';
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
  */
+let containsAccessedOnlyState = false ;
 export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'InitialisePreimage': {
@@ -88,10 +89,12 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'CalculateNullifier': {
-      const { increment, accessedOnly = false, indicator = {} } = fields;
+      const { increment, accessedOnly = false, containsAccessedOnlyState = false, indicator = {} } = fields;
+
       return {
         increment,
         accessedOnly,
+        containsAccessedOnlyState,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         
@@ -124,6 +127,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        containsAccessedOnlyState,
         privateStateName,
         indicator = {},
       } = fields;
@@ -134,6 +138,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        containsAccessedOnlyState,
         nullifierRequired: indicator.isNullified,
         increment,
         structProperties,
@@ -159,6 +164,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        containsAccessedOnlyState,
         indicator = {},
       } = fields;
       return {
@@ -168,8 +174,10 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        containsAccessedOnlyState,
         encryptionRequired: indicator.encryptionRequired,
         nullifierRequired: indicator.isNullified,
+        
       };
     }
 

@@ -347,7 +347,7 @@ const visitor = {
       state.msgValueParam ??= scope.indicators.msgValueParam;
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
-
+      
 
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
@@ -359,6 +359,10 @@ const visitor = {
           indicators.isNullified ) {
            state.isjoinSplitCommitmentsFunction ??= [];
            state.isjoinSplitCommitmentsFunction?.push('true');
+         }
+         if((indicators instanceof StateVariableIndicator) && indicators.isAccessed && !indicators.isNullified) {
+          state.containsAccessedOnlyState ??= [];
+          state.containsAccessedOnlyState?.push('true');
          }
       }
 
@@ -433,6 +437,7 @@ const visitor = {
           let { name, isIncremented } = stateVarIndicator;
           let accessedOnly = stateVarIndicator?.isAccessed && !stateVarIndicator?.isModified;
           let secretModified = stateVarIndicator.isSecret && stateVarIndicator.isModified;
+          let containsAccessedOnlyState = state.containsAccessedOnlyState?.includes('true') ? true : false;
 
           if (stateVarIndicator instanceof MappingKey) {
             accessedOnly =
@@ -440,8 +445,6 @@ const visitor = {
             secretModified =
               stateVarIndicator.container?.isSecret && stateVarIndicator.container?.isModified;
             id = [id, scope.getMappingKeyName(stateVarIndicator.keyPath.node) || ``];
-console.log('Nested Mapping keys : ', scope.getMappingKeyName(stateVarIndicator.keyPath.node));
-
 
             name = (accessedOnly ?
               getIndexAccessName(stateVarIndicator.accessedPaths[stateVarIndicator.accessedPaths.length -1]?.getAncestorOfType('IndexAccess')?.node) :
@@ -501,7 +504,9 @@ console.log('Nested Mapping keys : ', scope.getMappingKeyName(stateVarIndicator.
               name
             ] = buildPrivateStateNode('CalculateNullifier', {
               accessedOnly,
+              containsAccessedOnlyState,
               indicator: stateVarIndicator,
+              
             });
           }
 
@@ -529,6 +534,7 @@ console.log('Nested Mapping keys : ', scope.getMappingKeyName(stateVarIndicator.
                 !stateVarIndicator.newCommitmentsRequired,
               increment: isIncremented ? incrementsArray : undefined,
               accessedOnly,
+              containsAccessedOnlyState,
               indicator: stateVarIndicator,
             });
 
@@ -543,6 +549,7 @@ console.log('Nested Mapping keys : ', scope.getMappingKeyName(stateVarIndicator.
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
               accessedOnly,
+              containsAccessedOnlyState,
             });
           }
           if (secretModified && !accessedOnly) {
@@ -573,6 +580,7 @@ console.log('Nested Mapping keys : ', scope.getMappingKeyName(stateVarIndicator.
               burnedOnly:
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
+              containsAccessedOnlyState,
             });
           }
         }
@@ -1001,7 +1009,6 @@ console.log('Nested Mapping keys : ', scope.getMappingKeyName(stateVarIndicator.
       state.interactsWithSecret = interactsWithSecret;
       // ExpressionStatements can contain an Assignment node.
       if (node.expression.nodeType === 'Assignment' || node.expression.nodeType === 'UnaryOperation') {
-        console.log(" node ------>",node);
         let { leftHandSide: lhs } = node.expression;
         if (!lhs) lhs = node.expression.subExpression;
        indicator = scope.getReferencedIndicator(lhs, true);

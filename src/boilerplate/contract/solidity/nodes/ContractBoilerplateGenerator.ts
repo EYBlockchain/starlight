@@ -72,12 +72,17 @@ class ContractBoilerplateGenerator {
     stateVariableDeclarations() {
       const { scope } = this;
       let isjoinSplitCommitmentsFunction : string[]=[];
+      let containsAccessedOnlyState : string = 'false';
       for(const [, binding ] of Object.entries(scope.bindings)){
        if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct )
           isjoinSplitCommitmentsFunction?.push('true');
+      if((binding instanceof VariableBinding) &&  !binding.isNullified && binding.isAccessed )
+      containsAccessedOnlyState = 'true'
+      this.scope.indicators.containsAccessedOnlyState = true
       }
+      
       let {
-        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
+        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, encryptionRequired },
       } = scope;
       const fnDefBindings = scope.filterBindings(
         (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
@@ -100,19 +105,29 @@ class ContractBoilerplateGenerator {
 
     constructor() {
       const {indicators: { nullifiersRequired }} = this.scope;
-      return { nullifiersRequired };
+      let containsAccessedOnlyState : string = 'false';
+      for(const [, binding ] of Object.entries(this.scope.bindings)){
+          if((binding instanceof VariableBinding) &&  !binding.isNullified && binding.isAccessed )
+          containsAccessedOnlyState = 'true'
+          this.scope.indicators.containsAccessedOnlyState = true
+      }
+      return { nullifiersRequired, containsAccessedOnlyState };
     },
 
     registerZKPPublicKey() {},
 
     verify(circuitParams: Object ) {
       let {
-        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
+        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, encryptionRequired },
       } = this.scope;
       let isjoinSplitCommitmentsFunction : string[]=[];
+      let containsAccessedOnlyState : string = 'false';
       for(const [, binding ] of Object.entries(this.scope.bindings)){
        if((binding instanceof VariableBinding) && binding.isPartitioned && binding.isNullified && !binding.isStruct)
           isjoinSplitCommitmentsFunction?.push('true');
+          if((binding instanceof VariableBinding) &&  !binding.isNullified && binding.isAccessed )
+          containsAccessedOnlyState = 'true'
+          this.scope.indicators.containsAccessedOnlyState = true
       }
       let parameterList: any[];
       let paramtype: string;
@@ -130,7 +145,7 @@ class ContractBoilerplateGenerator {
         params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
-              if (circuitParamNode.isNullified) {
+              if (circuitParamNode.isNullified && containsAccessedOnlyState) {
                 if (!newList.includes('nullifierRoot')) 
                   newList.push('nullifierRoot')
                 newList.push('nullifier');
@@ -177,6 +192,7 @@ class ContractBoilerplateGenerator {
       }
      circuitParams[ functionName ] = parameterList;
     }
+    console.log('containsAccessedOnlyState', containsAccessedOnlyState);
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinSplitCommitmentsFunction};
     },

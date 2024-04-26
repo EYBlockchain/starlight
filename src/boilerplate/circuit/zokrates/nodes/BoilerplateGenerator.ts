@@ -8,6 +8,7 @@ import MappingKey from '../../../../traverse/MappingKey.js';
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs
+let containsAccessedOnlyState = false;
 const collectIncrements = (bpg: BoilerplateGenerator) => {
   const stateVarIndicator = bpg.thisIndicator || bpg.indicators;
   const incrementsArray: any[] = [];
@@ -169,6 +170,7 @@ class BoilerplateGenerator {
 
   initialise(indicators: StateVariableIndicator){
     this.indicators = indicators;
+    containsAccessedOnlyState = (indicators.isAccessed && !indicators.isNullified);
     if (indicators.isMapping && indicators.mappingKeys) {
       for (let [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
         mappingKeyIndicator.isMapping = true;
@@ -255,13 +257,14 @@ class BoilerplateGenerator {
           ...(this.isWhole && { isWhole: this.isWhole }),
           ...(this.isPartitioned && { isPartitioned: this.isPartitioned }),
           ...(this.isNullified && { isNullified: this.isNullified }),
-          ...(this.isMapping && { isMapping: this.isMapping }),
+          ...(this.isMapping && { isMapping: this.isMapping, isNestedMapping: this.isNestedMapping }),
           ...(this.isStruct && { structProperties: this.structProperties}),
           ...(this.typeName && { typeName: this.typeName}),
           ...(this.mappingKeyName && { mappingKeyTypeName: this.mappingKeyTypeName }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
+          ...(containsAccessedOnlyState && {containsAccessedOnlyState: containsAccessedOnlyState }),
           // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }), // TODO
           ...this[bpType](bpSection),
         })

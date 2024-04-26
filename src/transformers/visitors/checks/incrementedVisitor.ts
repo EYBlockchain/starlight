@@ -235,7 +235,6 @@ export default {
       // here: we check whether the assignment is an incrementation
       if (!state.unmarkedIncrementation) return;
       const { node, scope } = path;
-      console.log('node Swati =--> ', node);
       const { operator, leftHandSide, rightHandSide } = node;
       // In case of nested mapping lefthand side is an base Expression.
       const lhsSecret = !!scope.getReferencedBinding(leftHandSide)?.isSecret || !!scope.getReferencedBinding(leftHandSide.baseExpression)?.isSecret;

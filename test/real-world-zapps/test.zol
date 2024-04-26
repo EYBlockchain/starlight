@@ -1,0 +1,151 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+import "./Escrow-imports/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+
+contract Swap {
+
+   secret mapping(address => mapping(address => uint256)) private balances;
+   secret mapping(uint256 => mapping(address => uint256)) private tokenOwners;
+
+
+   uint256 private swapIdCounter;
+
+    struct swapStruct{
+        uint256 swapAmountSent;
+        uint256 swapAmountRecieved;
+        uint256 swapTokenSentId;
+        uint256 swapTokenSentAmount;
+        uint256 swapTokenRecievedId;
+        uint256 swapTokenRecievedAmount;
+        uint256 swapId;
+        address swapSender;
+        address swapReciever;
+        address erc20Address;
+        uint256 pendingStatus;
+    }
+    
+    secret mapping(uint256 => swapStruct) private swapProposals;  
+
+
+    function depositErc20(address erc20Address,  uint256 amount) public {
+        IERC20 erc20 = IERC20(erc20Address);
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances[erc20Address][msg.sender] += amount;
+    }
+
+    function depositErc1155(address erc1155Address, uint256 amount, uint256 tokenId) public {
+        IERC1155 erc1155 = IERC1155(erc1155Address);
+        erc1155.safeTransferFrom(msg.sender, address(this), tokenId, amount, " " );
+        tokenOwners[tokenId][msg.sender] += amount;
+    }
+
+
+    function startSwapWithErc20( 
+        secret address erc20Address,
+        secret address counterParty,  
+        secret uint256 amountSent, 
+        secret uint256 amountRecieved,  
+        secret uint256 tokenIdRecieved,
+        secret uint256 tokenRecievedAmount) public {
+            swapIdCounter++;
+            encrypt swapProposals[swapIdCounter].swapAmountSent += amountSent;
+            balances[erc20Address][msg.sender] -= amountSent; 
+            encrypt swapProposals[swapIdCounter].swapAmountRecieved += amountRecieved;
+            encrypt swapProposals[swapIdCounter].swapTokenSentId = 0;
+            encrypt swapProposals[swapIdCounter].swapTokenSentAmount = 0;         
+            encrypt swapProposals[swapIdCounter].swapTokenRecievedId = tokenIdRecieved;
+            encrypt swapProposals[swapIdCounter].swapTokenRecievedAmount = tokenRecievedAmount;
+            encrypt swapProposals[swapIdCounter].swapId = swapIdCounter;
+            encrypt swapProposals[swapIdCounter].pendingStatus = 1;
+            encrypt swapProposals[swapIdCounter].swapSender = msg.sender;
+            encrypt swapProposals[swapIdCounter].swapReciever = counterParty;    
+            encrypt swapProposals[swapIdCounter].erc20Address = erc20Address;    
+    }
+
+function startSwapWithErc1155( 
+        secret address erc20Address,
+        secret address counterParty,  
+        secret uint256 amountRecieved, 
+        secret uint256 tokenIdSent, 
+        secret uint256 tokenSentAmount,  
+        secret uint256 tokenIdRecieved,
+        secret uint256 tokenRecievedAmount) public {
+            swapIdCounter++;
+            encrypt swapProposals[swapIdCounter].swapTokenSentId = tokenIdSent;
+            encrypt swapProposals[swapIdCounter].swapTokenSentAmount += tokenSentAmount; 
+            tokenOwners[tokenIdSent][msg.sender] -= tokenSentAmount;
+            encrypt swapProposals[swapIdCounter].swapAmountSent = 0;
+            encrypt swapProposals[swapIdCounter].swapAmountRecieved += amountRecieved;       
+            encrypt swapProposals[swapIdCounter].swapTokenRecievedId = tokenIdRecieved;
+            encrypt swapProposals[swapIdCounter].swapTokenRecievedAmount = tokenRecievedAmount;
+            encrypt swapProposals[swapIdCounter].swapId = swapIdCounter;
+            encrypt swapProposals[swapIdCounter].pendingStatus = 1;
+            encrypt swapProposals[swapIdCounter].swapSender = msg.sender;
+            encrypt swapProposals[swapIdCounter].swapReciever = counterParty; 
+            encrypt swapProposals[swapIdCounter].erc20Address = erc20Address;       
+    }
+
+    function completeSwap(
+        secret uint256 swapId, 
+        secret uint256 amountSent, 
+        secret uint256 amountRecieved, 
+        secret uint256 tokenIdSent, 
+        secret uint256 tokenSentAmount, 
+        secret uint256 tokenIdRecieved,
+        secret uint256 tokenRecievedAmount) public {
+           
+           require(swapProposals[swapId].swapAmountRecieved == amountSent);
+           require(swapProposals[swapId].swapTokenRecievedId == tokenIdSent && swapProposals[swapId].swapTokenRecievedAmount == tokenSentAmount );
+           require(swapProposals[swapId].swapReciever == msg.sender);
+           require(swapProposals[swapId].pendingStatus == 1);
+
+           secret address erc20Address = swapProposals[swapId].erc20Address;
+
+            swapProposals[swapId].swapAmountSent -= amountRecieved;
+            swapProposals[swapId].swapAmountRecieved -= amountSent;
+            balances[erc20Address][msg.sender] -=  amountSent - amountRecieved; 
+            secret address counterParty = swapProposals[swapId].swapSender;
+            unknown balances[erc20Address][counterParty] += amountSent;
+            unknown tokenOwners[tokenIdSent][counterParty] += tokenSentAmount;
+            swapProposals[swapId].swapTokenSentAmount -= tokenSentAmount;  
+            
+            tokenOwners[tokenIdRecieved][msg.sender] += tokenRecievedAmount;
+            swapProposals[swapId].swapTokenRecievedAmount -= tokenRecievedAmount;
+
+            swapProposals[swapId].pendingStatus = 0;
+         
+    }
+
+    function cancelSwap( secret uint256 swapId ) public {
+           
+        require(swapProposals[swapId].swapSender == msg.sender);
+        require(swapProposals[swapId].pendingStatus == 1);
+        secret address erc20Address = swapProposals[swapId].erc20Address;
+        secret uint256 amountSent = swapProposals[swapId].swapAmountSent;
+        secret uint256 tokenIdSent = swapProposals[swapId].swapTokenSentId;
+        secret uint256 tokenSentAmount = swapProposals[swapId].swapTokenSentAmount;
+        balances[erc20Address][msg.sender] += amountSent; 
+        tokenOwners[tokenIdSent][msg.sender] += tokenSentAmount;
+        swapProposals[swapId].pendingStatus = 2;
+         
+    }
+
+    function withdrawErc20(address erc20Address, uint256 amount) public {
+        IERC20 erc20 = IERC20(erc20Address);
+        bool success = erc20.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+        balances[erc20Address][msg.sender] -= amount;
+    }
+
+    function withdrawErc1155(address erc1155Address, uint256 tokenId, uint256 amount) public {
+          IERC1155 erc1155 = IERC1155(erc1155Address);
+          erc1155.safeTransferFrom(address(this), msg.sender, tokenId, amount, "");
+          
+          tokenOwners[tokenId][msg.sender] -= amount;
+        
+    }
+}

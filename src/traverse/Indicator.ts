@@ -23,6 +23,7 @@ export class ContractDefinitionIndicator {
     this.oldCommitmentAccessRequired = false;
     this.nullifiersRequired = false;
     this.newCommitmentsRequired = false;
+    this.containsAccessedOnlyState = false;
   }
 
   // A ContractDefinitionIndicator will be updated if (some time after its creation) we encounter an AST node which gives us more information about the contract's global states
