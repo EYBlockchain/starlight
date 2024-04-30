@@ -971,14 +971,14 @@ const visitor = {
               subType: node.typeDescriptions.typeString,
             });
 
-      if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+      if (operator === '!'){
+          node._newASTPointer = newNode.rightHandSide;
+          parent._newASTPointer[path.containerName] = newNode.rightHandSide;
+      }
+      else if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
         node._newASTPointer = newNode;
         parent._newASTPointer.initialValue = newNode;
-      } else if (parent._newASTPointer.nodeType === 'BinaryOperation') {
-        node._newASTPointer = newNode.rightHandSide;
-        parent._newASTPointer.rightExpression = newNode.rightHandSide;
-      }
-        else {
+      } else {
           node._newASTPointer = newNode;
         parent._newASTPointer.expression = newNode;
       }
@@ -1326,7 +1326,6 @@ const visitor = {
         name,
         subType: node.typeDescriptions.typeString,
       });
-
       parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
       // if this is a public state variable, this fn will add a public input
       addPublicInput(path, state);

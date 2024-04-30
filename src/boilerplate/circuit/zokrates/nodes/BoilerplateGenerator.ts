@@ -200,7 +200,9 @@ class BoilerplateGenerator {
           this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
           this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
         } else {
-          this.typeName = indicators.referencingPaths[0]?.node.typeDescriptions?.typeString;
+          if (indicators.referencingPaths[0]?.node.typeDescriptions?.typeString === 'bool'){
+            this.typeName = 'bool';
+          }
         }
       }
       this.assignIndicators(indicators);
