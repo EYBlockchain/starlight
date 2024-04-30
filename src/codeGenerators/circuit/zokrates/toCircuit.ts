@@ -177,6 +177,10 @@ function codeGenerator(node: any) {
 
     case 'ExpressionStatement': {
       if (node.isVarDec) {
+        if (node.expression?.leftHandSide?.typeName === 'bool'){
+          return `
+          bool ${codeGenerator(node.expression)}`;
+        }
         return `
         field ${codeGenerator(node.expression)}`;
       }

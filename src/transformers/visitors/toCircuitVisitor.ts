@@ -189,6 +189,9 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
         operator: '=',
         rightHandSide: buildNode('Identifier', { name: `${name}`, subType: 'generalNumber' }),
       });
+      if (node.typeDescriptions?.typeString === 'bool') {
+        beginNodeInit.leftHandSide.typeName ='bool';
+      }
       const beginNode = buildNode('ExpressionStatement', {
           expression: beginNodeInit,
           interactsWithSecret: true,
