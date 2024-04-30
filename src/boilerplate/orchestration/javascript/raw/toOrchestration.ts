@@ -135,8 +135,18 @@ export const generateProofBoilerplate = (node: any) => {
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
 
     const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
+
+    // Check if the mapping is already included in the parameters
+    let name: string;
+    let state: any;
+    let isIncluded = false;
+    for ([name, state] of Object.entries(node.privateStates)) {
+      if (stateNode.stateVarId[0] === state.stateVarId[0] && stateName != name && node.parameters.includes(state.stateVarId[1]) ) {
+        isIncluded = true;
+      }
+    }
     const stateVarIdLines =
-      stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
+      stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !isIncluded && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];
     // we add any extra params the circuit needs

@@ -181,7 +181,6 @@ class BoilerplateGenerator {
         if (!mappingKeyIndicator.keyPath.isMsg() &&
         (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
           this.mappingKeyTypeName = 'local';
-
         this.mappingName = this.indicators.name;
         this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
 
