@@ -182,7 +182,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, structProperties, typeName }): string[] {
+    postStatements({ name: x, structProperties, structPropertiesTypes, typeName }): string[] {
 
       const lines: string[] = [];
       if (!structProperties ) {
@@ -190,22 +190,33 @@ class BoilerplateGenerator {
           lines.push(`field ${x}_oldCommitment_value_field = if ${x}_oldCommitment_value then 1 else 0 fi`);
         } else {
           lines.push(`field ${x}_oldCommitment_value_field = ${x}_oldCommitment_value`);
-        }
-          
-      }
+        }  
+      } 
 
-      if (structProperties)
+      if (structProperties){
+        if (structPropertiesTypes) {
+          structPropertiesTypes.forEach(property => {
+            if (property.typeName === 'bool'){
+              lines.push(`field ${x}_oldCommitment_value_${property.name}_field = if ${x}_oldCommitment_value.${property.name} then 1 else 0 fi`);
+            }
+          });
+        }
         return [
           `
+          // prepare secret state '${x}' for commitment
+
+          ${lines}
+          
           // ${x}_oldCommitment_commitment: preimage check
 
           field ${x}_oldCommitment_commitment_field = poseidon([\\
             ${x}_stateVarId_field,\\
-            ${structProperties.map(p => `\t ${x}_oldCommitment_value.${p},\\`).join('\n')}
+            ${structPropertiesTypes.map(p => (p.typeName === 'bool') ? `\t \t \t \t \t \t${x}_oldCommitment_value_${p.name}_field,\\` : `\t ${x}_oldCommitment_value.${p.name},\\`).join('\n')}
             ${x}_oldCommitment_owner_publicKey,\\
             ${x}_oldCommitment_salt\\
           ])`,
         ];
+      }
       return [
 
         `
@@ -306,7 +317,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, typeName }): string[] {
+    postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, structPropertiesTypes, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       const y = isWhole ? x : newCommitmentValue;
       const lines: string[] = [];
@@ -340,7 +351,16 @@ class BoilerplateGenerator {
           }
           
         }
-        else lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y[p]}`}`)} }`)
+        else {
+          lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y[p]}`}`)} }\n`);
+          if (structPropertiesTypes) {
+            structPropertiesTypes.forEach(property => {
+              if (property.typeName === 'bool'){
+                lines.push(`\t \t \t \t field ${x}_newCommitment_value_${property.name}_field = if ${x}_newCommitment_value.${property.name} then 1 else 0 fi`);
+              }
+            });
+          }
+        }
       }
 
       if (structProperties)
@@ -348,13 +368,13 @@ class BoilerplateGenerator {
           `
           // prepare secret state '${x}' for commitment
 
-          ${lines}
+          ${lines.join('\n')}
 
           // ${x}_newCommitment_commitment - preimage check
 
           field ${x}_newCommitment_commitment_check_field = poseidon([\\
             ${x}_stateVarId_field,\\
-            ${structProperties.map(p => `\t ${x}_newCommitment_value.${p},\\`).join('\n')}
+            ${structPropertiesTypes.map(p => (p.typeName === 'bool') ? `\t \t \t \t \t \t${x}_newCommitment_value_${p.name}_field,\\` : `\t ${x}_newCommitment_value.${p.name},\\`).join('\n')}
             ${x}_newCommitment_owner_publicKey,\\
             ${x}_newCommitment_salt\\
           ])
