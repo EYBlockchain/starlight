@@ -694,7 +694,7 @@ const visitor = {
             if (path.isStructDeclaration(param) || path.isConstantArray(param)  ||( param.typeName && param.typeName.name === 'bool')) {
               let newParam: any = {};
               newParam.name = param.name;
-              if (path.isStructDeclaration(param)) newParam.properties = param._newASTPointer.typeName.properties.map(p => p.name);
+              if (path.isStructDeclaration(param)) newParam.properties = param._newASTPointer.typeName.properties.map(p => ({"name" : p.name, "type" : p.type }));
               if (path.isConstantArray(param)) newParam.isConstantArray = true;
               if (param.typeName?.name === 'bool') newParam.isBool = true;
               newNodes.sendTransactionNode.publicInputs.push(newParam);
