@@ -170,8 +170,6 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
-    if (thisPath.containerName === 'indexExpression')
-      name = binding.getMappingKeyName(thisPath);
     let nodeTypeString = node.typeDescriptions.typeString === 'bool' ? 'bool': 'field';
     // We never need the input to the circuit to be the MappingKeyName
     //if (thisPath.containerName === 'indexExpression'){
