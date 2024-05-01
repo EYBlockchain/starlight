@@ -183,7 +183,6 @@ class BoilerplateGenerator {
     },
 
     postStatements({ name: x, structProperties, structPropertiesTypes, typeName }): string[] {
-
       const lines: string[] = [];
       if (!structProperties ) {
         if (typeName === 'bool'){
