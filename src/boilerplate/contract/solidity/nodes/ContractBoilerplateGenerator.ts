@@ -2,7 +2,6 @@
 import Scope from '../../../../traverse/Scope.js';
 import { VariableBinding } from '../../../../traverse/Binding.js';
 import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
-import { constants } from 'buffer';
 
 const bpCache = new WeakMap();
 
