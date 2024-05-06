@@ -53,7 +53,9 @@ services:
       - zapp_network
 
   zokrates:
-    image: ghcr.io/eyblockchain/zokrates-worker-starlight:v0.2
+    image: ghcr.io/eyblockchain/zokrates-worker-updated:latest
+    # the following image is for arm64 architecture. Uncomment the following lines and comment the above line if you are using ARM
+    # image: ghcr.io/eyblockchain/zokrates-worker-starlight:v0.2
     # platform: linux/arm64/v8
     volumes:
       - ./circuits/:/app/circuits:delegated
