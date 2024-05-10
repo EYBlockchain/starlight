@@ -13,7 +13,8 @@ contract MyContract {
   }
 
   function assign2(secret uint256 param3) public {
-    a[msg.sender] = a[msg.sender] - param3;
+    //a[msg.sender] = a[msg.sender] - param3;
+    a[msg.sender] -= param3;
     known b += param3;
   }
 
