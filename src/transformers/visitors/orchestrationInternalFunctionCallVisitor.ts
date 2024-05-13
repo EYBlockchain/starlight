@@ -94,8 +94,8 @@ const internalCallVisitor = {
                       }
                     });
                    for(const [index, oldStateName] of  oldStateArray.entries()) {
-                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[index]);
-                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[index]);
+                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
+                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[name][index]);
                     }
                   }
                   if(node.nodeType === 'Assignment'){
@@ -377,11 +377,14 @@ FunctionCall: {
     if(path.isInternalFunctionCall()) {
       const args = node.arguments;
       let isCircuit = false;
+      const name = node.expression.name;
+      state.newStateArray ??= {};
+      state.newStateArray[name] ??= [];
       for (const arg of args) {
       if(arg.expression?.typeDescriptions.typeIdentifier.includes('_struct'))
-        state.newStateArray =  args.map(arg => (arg.expression.name+'.'+arg.memberName));
+        state.newStateArray[name] =  args.map(arg => (arg.expression.name+'.'+arg.memberName));
       else
-       state.newStateArray =  args.map(arg => (arg.name));
+       state.newStateArray[name] =  args.map(arg => (arg.name));
       }
       let internalFunctionInteractsWithSecret = false;
       const newState: any = {};
