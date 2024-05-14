@@ -1,0 +1,124 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+import "./Escrow-imports/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+
+contract Swap {
+
+   secret mapping(address => mapping(address => uint256)) private balances;
+   secret mapping(address => mapping(uint256 => uint256)) private tokenOwners;
+
+    function depositErc20(address erc20Address,  uint256 amount) public {
+        IERC20 erc20 = IERC20(erc20Address);
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        encrypt balances[msg.sender][erc20Address] += amount;
+    }
+
+    function depositErc1155(address erc1155Address, uint256 amount, uint256 tokenId) public {
+        IERC1155 erc1155 = IERC1155(erc1155Address);
+        erc1155.safeTransferFrom(msg.sender, address(this), tokenId, amount, " " );
+        encrypt tokenOwners[msg.sender][tokenId] += amount;
+    }
+
+
+    
+
+    function completeSwapFromErc20ToErc1155( 
+         secret address erc20Address,
+           secret address counterParty,
+            secret uint256 amountRecieved,
+            secret uint256 tokenIdSent,
+            secret uint256 tokenSentAmount
+        ) public {
+           
+            encrypt unknown tokenOwners[counterParty][tokenIdSent] += tokenSentAmount;
+            encrypt tokenOwners[msg.sender][tokenIdSent] -= tokenSentAmount;
+
+            encrypt balances[msg.sender][erc20Address] +=  amountRecieved; 
+         
+    }
+
+    function completeSwapFromErc1155ToErc20( 
+        secret address erc20Address,
+        secret address counterParty,
+        secret uint256 amountSent,
+        secret uint256 tokenIdRecieved,
+        secret uint256 tokenRecievedAmount
+
+        ) public {
+           
+           
+            
+            encrypt unknown balances[counterParty][erc20Address] += amountSent; 
+
+            encrypt balances[msg.sender][erc20Address] -=  amountSent; 
+
+            encrypt tokenOwners[msg.sender][tokenIdRecieved] += tokenRecievedAmount;
+
+         
+    }
+function completeSwapFromErc20ToErc20( // Swati
+        secret address counterParty,
+        secret address erc20AddressSent,
+        secret address erc20AddressRecieved,
+        secret uint256 amountSent,
+        secret uint256 amountRecieved
+
+
+        ) public {
+            
+            encrypt unknown balances[counterParty][erc20AddressSent] += amountSent;  //jeff = 50 punds
+
+            encrypt balances[msg.sender][erc20AddressSent] -= amountSent; // swati -50 pounds
+
+            encrypt balances[msg.sender][erc20AddressRecieved] +=  amountRecieved; // swati = 100 USDC
+            
+         
+    }
+function completeSwapFromErc1155ToErc1155( 
+        secret address counterParty,
+            secret uint256 tokenIdRecieved,
+            secret uint256 tokenRecievedAmount,
+            secret uint256 tokenIdSent,
+            secret uint256 tokenSentAmount
+        ) public {
+           
+            
+            encrypt tokenOwners[msg.sender][tokenIdRecieved] += tokenRecievedAmount;
+
+            encrypt tokenOwners[msg.sender][tokenIdSent] -= tokenSentAmount;
+            encrypt unknown tokenOwners[counterParty][tokenIdSent] += tokenSentAmount;
+
+         
+    }
+
+
+    function cancelSwap( 
+    secret uint256 amountSent,
+        secret uint256 tokenIdSent,
+        secret uint256 tokenSentAmount,
+        secret address erc20Address ) public {
+           
+        encrypt balances[msg.sender][erc20Address] += amountSent; 
+        encrypt tokenOwners[msg.sender][tokenIdSent] += tokenSentAmount;
+         
+    }
+
+    function withdrawErc20(address erc20Address, uint256 amount) public {
+        IERC20 erc20 = IERC20(erc20Address);
+        bool success = erc20.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+        encrypt balances[msg.sender][erc20Address] -= amount;
+    }
+
+    function withdrawErc1155(address erc1155Address, uint256 tokenId, uint256 amount) public {
+          IERC1155 erc1155 = IERC1155(erc1155Address);
+          erc1155.safeTransferFrom(address(this), msg.sender, tokenId, amount, "");
+          
+          encrypt tokenOwners[msg.sender][tokenId] -= amount;
+        
+    }
+}

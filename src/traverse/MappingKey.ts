@@ -77,14 +77,21 @@ export default class MappingKey {
   encryptionRequired?: boolean;
 
   returnKeyName(keyNode: any) {
+
+    if(keyNode.isNestedMapping) 
+    return `[${keyNode.name == 'msg'? 'msgSender' : keyNode.name}][${this.returnKeyName(keyNode.indexExpression) == 'msg'? 'msgSender' : this.returnKeyName(keyNode.indexExpression) }]`;
+    
     if (this.keyPath.isMsgSender(keyNode)) return 'msgSender';
     if (this.keyPath.isMsgValue(keyNode)) return 'msgValue';
     if (this.keyPath.isMsg(keyNode)) return 'msg';
-    if(keyNode.isNestedMapping) return `[${keyNode.name}][${this.returnKeyName(keyNode.indexExpression)}]`;
+    
     switch (keyNode.nodeType) {
       case 'VariableDeclaration':
       case 'Identifier':
-        return keyNode.name;
+        if(keyNode.name === 'msg')
+         return 'msgSender';
+        else
+         return keyNode.name;
       case 'MemberAccess':
         return `${this.returnKeyName(keyNode.expression)}.${keyNode.memberName}`;
       case 'IndexAccess':
@@ -130,7 +137,6 @@ export default class MappingKey {
     else if (this.isStruct) {
       this.name = `${container.name}.${keyPath.node.memberName}`;
     }
-
     this.isReferenced = false;
     this.referenceCount = 0;
     this.referencingPaths = []; // paths which reference this variable

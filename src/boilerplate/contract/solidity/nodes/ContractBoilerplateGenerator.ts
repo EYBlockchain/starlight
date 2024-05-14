@@ -192,7 +192,6 @@ class ContractBoilerplateGenerator {
       }
      circuitParams[ functionName ] = parameterList;
     }
-    console.log('containsAccessedOnlyState', containsAccessedOnlyState);
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinSplitCommitmentsFunction};
     },

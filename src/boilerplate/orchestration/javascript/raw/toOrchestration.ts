@@ -8,9 +8,11 @@ const stateVariableIds = (node: any) => {
   const {privateStateName, stateNode} = node;
   const stateName = privateStateName.split('_');
   const mappingKeyNames = [stateName.slice(0, -1).join('_'), stateName[stateName.length - 1]];
+
   const stateVarIds: string[] = [];
   // state variable ids
   // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
+
   if (!stateNode.stateVarId[1]) {
     stateVarIds.push(
       `\nconst ${privateStateName}_stateVarId = generalise(${stateNode.stateVarId}).hex(32);`,
@@ -44,9 +46,9 @@ const stateVariableIds = (node: any) => {
         `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
       );
     }
-    // in case of nested mapping we need to add value key as well
-    if(mappingKeyNames.length > 1){
-      console.log(mappingKeyNames);
+     // in case of nested mapping we need to add value key as well
+     if(mappingKeyNames.length > 1){
+  
       stateNode.stateVarId[2] = mappingKeyNames[1];
       if (
         privateStateName.includes(mappingKeyNames[1].replaceAll('.', 'dot')) &&
@@ -169,10 +171,21 @@ export const generateProofBoilerplate = (node: any) => {
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
 
     const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
+
+    // Check if the mapping is already included in the parameters
+    let name: string;
+    let state: any;
+    let isIncluded = false;
+    for ([name, state] of Object.entries(node.privateStates)) {
+      if (stateNode.stateVarId[0] === state.stateVarId[0] && stateName != name && node.parameters.includes(state.stateVarId[1]) ) {
+        isIncluded = true;
+      }
+    }
     let stateVarIdLines =
-      stateNode.isMapping  && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
+      stateNode.isMapping  && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !isIncluded && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`] : [];
-       stateNode.isNestedMapping && !node.parameters.includes(stateNode.stateVarId[2]) ? stateVarIdLines.push(`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_valueKey.integer,`) : ' ';
+       stateNode.isNestedMapping && !(node.parameters.includes(stateNode.stateVarId[2]))  
+       ? stateVarIdLines.push(`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_valueKey.integer,`) : ' ';
 
 
    

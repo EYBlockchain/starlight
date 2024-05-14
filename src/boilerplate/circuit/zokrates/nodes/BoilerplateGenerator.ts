@@ -9,6 +9,8 @@ import MappingKey from '../../../../traverse/MappingKey.js';
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs
 let containsAccessedOnlyState = false;
+let mappingKeys = [];
+    let mappingTypes = [];
 const collectIncrements = (bpg: BoilerplateGenerator) => {
   const stateVarIndicator = bpg.thisIndicator || bpg.indicators;
   const incrementsArray: any[] = [];
@@ -34,6 +36,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     return structIncs;
   }
 
+  
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
   for (const inc of stateVarIndicator.increments) {
@@ -144,10 +147,10 @@ class BoilerplateGenerator {
       isAccessed,
       newCommitmentsRequired,
       isMapping,
-      isNestedMapping,
       isStruct,
       initialisationRequired,
       encryptionRequired,
+      isNestedMapping,
       // burnedOnly,
     } = indicators;
     Object.assign(this, {
@@ -158,11 +161,11 @@ class BoilerplateGenerator {
       isNullified,
       isAccessed,
       newCommitmentsRequired,
-      isMapping,
-      isNestedMapping,
+      isMapping,     
       isStruct,
       initialisationRequired,
       encryptionRequired,
+      isNestedMapping,
       thisIndicator: indicators, // used for gathering increments of mappings and/or structs
       // burnedOnly,
     });
@@ -173,7 +176,6 @@ class BoilerplateGenerator {
     containsAccessedOnlyState = (indicators.isAccessed && !indicators.isNullified);
     if (indicators.isMapping && indicators.mappingKeys) {
       for (let [mappingKeyName, mappingKeyIndicator] of Object.entries(indicators.mappingKeys)) {
-        mappingKeyIndicator.isMapping = true;
         this.assignIndicators(mappingKeyIndicator);
         if(mappingKeyName == 'msg')
         mappingKeyName = mappingKeyName+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
@@ -186,7 +188,6 @@ class BoilerplateGenerator {
         if (!mappingKeyIndicator.keyPath.isMsg() &&
         (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
           this.mappingKeyTypeName = 'local';
-
         this.mappingName = this.indicators.name;
         this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
         if(mappingKeyIndicator.isNestedMapping){
@@ -221,12 +222,14 @@ class BoilerplateGenerator {
     this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
   }
 
+
   generateBoilerplateStatement(bpType: string, extraParams?: any) {
     if (this.isMapping) {
       // Depending on the mapping key being used in the current statement being considered by the compiler, there will be different indicators. We'll need to 'refresh' the indicators that this class is looking at, each time we encounter a new statement.
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
+    
     return {
       nodeType: 'BoilerplateStatement',
       bpSection: 'statements',
@@ -245,6 +248,24 @@ class BoilerplateGenerator {
     if (this.isPartitioned) {
       this.newCommitmentValue = collectIncrements(this).incrementsString;
     }
+
+    if (this.isNestedMapping) {
+      for (let [mappingKeyName, mappingKeyIndicator] of Object.entries(this.thisIndicator.mappingKeys instanceof StateVariableIndicator)) {
+          mappingKeys = mappingKeyName.split('_');
+          mappingKeys.forEach((key, index) => {
+            if(key == 'msg')
+              key = key+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
+              if (!mappingKeyIndicator.keyPath.isMsg() &&
+              (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
+              mappingTypes[index] = 'local';
+          })
+      }
+    }
+// if(this.mappingKeyName) {
+//   console.log(this.indicators);
+//   console.log('Here ---->',this.mappingKeyName, this.mappingKeyTypeName)
+// }
+
     this.bpSections.forEach(bpSection => {
       this[bpSection] = this[bpSection]
         .concat({
@@ -260,7 +281,7 @@ class BoilerplateGenerator {
           ...(this.isMapping && { isMapping: this.isMapping, isNestedMapping: this.isNestedMapping }),
           ...(this.isStruct && { structProperties: this.structProperties}),
           ...(this.typeName && { typeName: this.typeName}),
-          ...(this.mappingKeyName && { mappingKeyTypeName: this.mappingKeyTypeName }),
+          ...(this.mappingKeyName && { mappingKeyTypeName: this.isNestedMapping ?  mappingTypes.toString() : this.mappingKeyTypeName }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
           ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
@@ -363,7 +384,7 @@ class BoilerplateGenerator {
 
   mapping = (bpSection) => ({
     mappingName: this.mappingName,
-    mappingKeyName: bpSection === 'postStatements' ?  this.isNestedMapping? this.mappingKeyName.replace('_', ' ').replaceAll('_', ', '): this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
+    mappingKeyName: bpSection === 'postStatements' ?  this.isNestedMapping? this.mappingKeyName.replace('_', ' ').replaceAll('_', ',') : this.mappingKeyName : bpSection === 'parameters' ? this.isNestedMapping ? this.mappingKeyName.replace('_', ' ').replaceAll('_', ',') : this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
   });
   
 

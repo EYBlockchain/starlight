@@ -400,6 +400,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     const referencedBinding = path.getReferencedBinding();
     const referencedId = referencedBinding?.id;
     const referencedName = referencedBinding?.name;
+  
 
     if (!(referencedBinding instanceof VariableBinding)) throw new TypeError(`Variable indicator for ${referencedName} cannot find a variable binding`);
 
@@ -762,6 +763,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
 
   updateEncryption(options?: any) {
     // no new commitments => nothing to encrypt
+    // console.log(this.mappingKeys);
     if (!this.newCommitmentsRequired) return;
     // decremented only => no new commitments to encrypt
     if (this.isPartitioned && this.isDecremented && this.nullificationCount === this.referenceCount) return;
@@ -774,6 +776,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     if ((!options?.encAllStates && !encThisState) && (!this.isPartitioned || !this.isOwned)) return;
     if (this.isMapping) {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
+     
       for (const [, mappingKey] of mappingKeys) {
         mappingKey.updateEncryption(options)
       }
@@ -781,8 +784,6 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     }
     if (this.isBurned) return;
     this.encryptionRequired = true;
-    this.parentIndicator.encryptionRequired = true;
-    this.parentIndicator.parentIndicator.encryptionRequired = true;
   }
 
   updateNewCommitmentsRequired() {

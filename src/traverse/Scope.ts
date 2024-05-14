@@ -677,12 +677,10 @@ export class Scope {
     const refPaths = this.getReferencedIndicator(identifierNode)?.referencingPaths;
     const thisIndex = refPaths?.findIndex(p => p.node === identifierNode);
     if (refPaths && thisIndex && refPaths[thisIndex]?.key === 'indexExpression') return this.getMappingKeyName(refPaths[thisIndex].getAncestorOfType('IndexAccess'));
-
     let { name } = identifierNode;
-
     // we find the next indexExpression after this identifier
-    for (let i = thisIndex || 0; i < (refPaths?.length || 0); i++) {
-      if (refPaths?.[i].key !== 'indexExpression' || !thisIndex) continue;
+    for (let i = Math.max(thisIndex, 0) || 0; i < (refPaths?.length || 0); i++) {
+      if (refPaths?.[i].key !== 'indexExpression' || (!thisIndex && thisIndex !== 0 )) continue; 
       if (refPaths[thisIndex].isModification() && !forceNotModification) {
         name = this.getMappingKeyName(refPaths[i].getAncestorOfType('IndexAccess'));
         break;
@@ -718,11 +716,13 @@ export class Scope {
     if (!keyIdentifierNode)
       return indexAccessNode.indexExpression.name || indexAccessNode.indexExpression.value;
     keyIdentifierNode.name ??= keyIdentifierNode.value;
+   
     const returnKeyName = node => {
-      if (this.path.isMsg(node)) return 'msg';
+      if (this.path.isMsg(node) && !node.isNestedMapping) return 'msg';
       switch (node.nodeType) {
         case 'VariableDeclaration':
         case 'Identifier':
+          if(node.isNestedMapping) return `${node.name}_${returnKeyName(node.indexExpression)}`;
           return node.name;
         case 'MemberAccess':
           return `${returnKeyName(node.expression)}.${node.memberName}`;

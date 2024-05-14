@@ -1,5 +1,7 @@
 /* eslint-disable import/no-cycle */
 
+import MappingKey from "src/traverse/MappingKey";
+
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
 
@@ -105,7 +107,7 @@ class BoilerplateGenerator {
     postStatements({ name: x , isAccessed, isNullified, containsAccessedOnlyState}): string[] {
       // default nullification lines (for partitioned & whole states)
       let lines = [];
-      if(containsAccessedOnlyState){
+      if(!containsAccessedOnlyState){
         lines = [
           `
           // Nullify ${x}:
@@ -472,8 +474,18 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ mappingKeyName: k, mappingKeyTypeName: t }): string[] {
+    parameters({ mappingKeyName: k, mappingKeyTypeName: t, isNestedMapping }): string[] {
+      // console.log("mappingKey Name in parameters:", k);
+      // console.log(" type ", t);
+      let name = k.split('_');
+      let para = []
       if (t === 'local') return [];
+      if(isNestedMapping) {
+      name.forEach( n => {
+    if(n != '')
+  para.push(`private ${t ? t : 'field'} ${k}`)})
+      return para ;
+      }
       return [
         `private ${t ? t : 'field'} ${k}`, // must be a field, in case we need to do arithmetic on it.
       ];
