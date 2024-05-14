@@ -31,13 +31,13 @@ const internalCallVisitor = {
                if(childNode.nodeType === 'FunctionDefinition'){
                  state.newParametersList = cloneDeep(childNode.parameters.modifiedStateVariables);
                  state.newParametersList.forEach(node => {
-                   for(const [index, oldStateName] of  oldStateArray.entries()) {
+                   for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                      node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
                     }
                   })
                 if(childNode.decrementedSecretStates){
                  newdecrementedSecretStates = cloneDeep(childNode.decrementedSecretStates);
-                 for(const [index, oldStateName] of  oldStateArray.entries()) {
+                 for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                    node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
                   }
                 }
@@ -48,7 +48,7 @@ const internalCallVisitor = {
                     let stateNode: any;
                     let newstateName: string;
                     for( [stateName, stateNode] of Object.entries(node.privateStates)){
-                      for(const [index, oldStateName] of  oldStateArray.entries()) {
+                      for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                         newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[name][index])
                         if(newstateName != stateName ){
                           node.privateStates[ newstateName ] = node.privateStates[stateName];
@@ -89,17 +89,17 @@ const internalCallVisitor = {
                state.newStatementList.forEach(node => {
                  if(node.nodeType === 'VariableDeclarationStatement'){
                    node.declarations.forEach(node => {
-                     for(const [index, oldStateName] of  oldStateArray.entries()) {
+                     for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                        node.name = node.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
                       }
                     });
-                   for(const [index, oldStateName] of  oldStateArray.entries()) {
+                   for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                      node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
                      if (node.initialValue.rightHandSide.name) node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[name][index]);
                     }
                   }
                   if(node.nodeType === 'Assignment'){
-                    for(const [index, oldStateName] of  oldStateArray.entries()) {
+                    for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                       node.leftHandSide.name = node.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
                       if (node.rightHandSide.name) node.rightHandSide.name = node.rightHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
                     }
@@ -112,7 +112,7 @@ const internalCallVisitor = {
                    let stateNode: any;
                    let newstateName: string;
                    for( [stateName, stateNode] of Object.entries(node.privateStates)){
-                     for(const [index, oldStateName] of  oldStateArray.entries()) {
+                     for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                        newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[name][index])
                        if(newstateName != stateName ){
                          node.privateStates[ newstateName ] = node.privateStates[stateName];
@@ -126,7 +126,7 @@ const internalCallVisitor = {
                    let stateNode: any;
                    let newstateName: string;
                    for( [stateName, stateNode] of Object.entries(node.privateStates)){
-                     for(const [index, oldStateName] of  oldStateArray.entries()) {
+                     for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                        newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[name][index])
                        if(newstateName != stateName ){
                          node.privateStates[ newstateName ] = node.privateStates[stateName];
@@ -146,7 +146,7 @@ const internalCallVisitor = {
                    let stateName: string;
                    let newstateName: string;
                    for( stateName of Object.keys(generateProofNode.privateStates)) {
-                     for(const [index, oldStateName] of  oldStateArray.entries()) {
+                     for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                        newstateName = stateName.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
                        if(newstateName != stateName ){
                          generateProofNode.privateStates[ newstateName ] = generateProofNode.privateStates[stateName];
@@ -169,7 +169,7 @@ const internalCallVisitor = {
                     let stateNode: any;
                     let newstateName: string;
                     for( [stateName, stateNode] of Object.entries(sendTransactionNode.privateStates)){
-                      for(const [index, oldStateName] of  oldStateArray.entries()) {
+                      for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                         newstateName = stateName.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
                         if(newstateName != stateName ){
                          sendTransactionNode.privateStates[ newstateName ] = sendTransactionNode.privateStates[stateName];
@@ -184,7 +184,7 @@ const internalCallVisitor = {
                     let stateNode: any;
                     let newstateName: string;
                     for( [stateName, stateNode] of Object.entries(writePreimageNode.privateStates)){
-                      for(const [index, oldStateName] of  oldStateArray.entries()) {
+                      for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                        newstateName = stateName.replace('_'+oldStateName, '_'+state.newStateArray[name][index])
                        if(newstateName != stateName ){
                          writePreimageNode.privateStates[ newstateName ] = writePreimageNode.privateStates[stateName];
@@ -325,7 +325,7 @@ const internalCallVisitor = {
                state.newStatementList = cloneDeep(childNode.body.statements);
                state.newStatementList.forEach(node => {
                  if(node.nodeType === 'VariableDeclarationStatement') {
-                   for(const [index, oldStateName] of  oldStateArray.entries()) {
+                   for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
                      node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name?.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
                      node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name?.replace(oldStateName,  state.newStateArray[name][index]);
                     }
@@ -388,7 +388,8 @@ FunctionCall: {
       }
       let internalFunctionInteractsWithSecret = false;
       const newState: any = {};
-      oldStateArray = internalFunctionCallVisitor(path, newState)
+      state.oldStateArray = state.oldStateArray ? state.oldStateArray : {};
+      state.oldStateArray[fn_name] = internalFunctionCallVisitor(path, newState);
       internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
       state.internalFncName ??= [];
       state.internalFncName.push(node.expression.name);

@@ -1344,7 +1344,8 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       }
      let internalFunctionInteractsWithSecret = false;
      const newState: any = {};
-     state.oldStateArray = internalFunctionCallVisitor(path, newState)
+     state.oldStateArray = state.oldStateArray ? state.oldStateArray : {};
+     state.oldStateArray[name] = internalFunctionCallVisitor(path, newState);
      internalFunctionInteractsWithSecret ||= newState.internalFunctionInteractsWithSecret;
      state.internalFncName ??= [];
      state.internalFncName.push(node.expression.name);

@@ -27,7 +27,7 @@ const internalCallVisitor = {
                 
                  state.newParameterList.forEach((node, nodeIndex) => {
                   if(node.nodeType === 'Boilerplate') {
-                    for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                    for(const [id, oldStateName] of  state.oldStateArray[name].entries()) {
                       node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
                       if(node.newCommitmentValue === oldStateName)
                        node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[name][id].name)
@@ -36,7 +36,7 @@ const internalCallVisitor = {
                      }
                    }
                    if(node.nodeType === 'VariableDeclaration'){
-                     for(const [id, oldStateName] of state.oldStateArray.entries()) {
+                     for(const [id, oldStateName] of state.oldStateArray[name].entries()) {
                        if(oldStateName !== state.newStateArray[name][id].name)
                        node.name = state.newStateArray[name][id].name;
                        node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
@@ -46,7 +46,7 @@ const internalCallVisitor = {
                    }
                  })
                  state.newReturnParameterList.forEach((node,nodeIndex) => {
-                  for(const [id, oldStateName] of state.oldStateArray.entries()) {
+                  for(const [id, oldStateName] of state.oldStateArray[name].entries()) {
                     if(oldStateName !== state.newStateArray[name][id].name)
                     node.name = state.newStateArray[name][id].name;
                  node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
@@ -171,7 +171,7 @@ const internalCallVisitor = {
                   if(node.nodeType === 'ExpressionStatement') {
                     if(node.expression.nodeType === 'Assignment') {
                       let  expressionList = cloneDeep(node);
-                      for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                      for(const [id, oldStateName] of  state.oldStateArray[name].entries()) {
                           if(state.newStateArray[name][id].memberName ){
                             if(node.expression.rightHandSide.rightExpression.name === oldStateName)
                              expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName)
@@ -198,7 +198,7 @@ const internalCallVisitor = {
                  childNode.body.preStatements.forEach(node => {
                    if(node.isPartitioned){
                      commitmentValue = node.newCommitmentValue;
-                     for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                     for(const [id, oldStateName] of  state.oldStateArray[name].entries()) {
                        if(commitmentValue.includes(oldStateName)){
                          if(state.newStateArray[name][id].memberName)
                            commitmentValue = commitmentValue.replace(oldStateName,state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName);
