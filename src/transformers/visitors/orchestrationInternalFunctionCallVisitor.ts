@@ -66,7 +66,7 @@ const internalCallVisitor = {
                           break;
                           }
                           case 'ReadPreimage': {
-                            stateNode.increment = stateNode.increment.replace(oldStateName+'.', state.newStateArray[name][index]+'.')
+                            if (stateNode.increment) stateNode.increment = stateNode.increment.replace(oldStateName+'.', state.newStateArray[name][index]+'.');
                             if(stateNode.mappingKey === oldStateName)
                             stateNode.mappingKey = stateNode.mappingKey.replace(oldStateName, state.newStateArray[name][index])
                             if(stateNode.stateVarId[1] === oldStateName)
@@ -95,13 +95,13 @@ const internalCallVisitor = {
                     });
                    for(const [index, oldStateName] of  oldStateArray.entries()) {
                      node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
-                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[name][index]);
+                     if (node.initialValue.rightHandSide.name) node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[name][index]);
                     }
                   }
                   if(node.nodeType === 'Assignment'){
                     for(const [index, oldStateName] of  oldStateArray.entries()) {
                       node.leftHandSide.name = node.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
-                      node.rightHandSide.name = node.rightHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
+                      if (node.rightHandSide.name) node.rightHandSide.name = node.rightHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
                     }
                   }
                 })
@@ -153,12 +153,12 @@ const internalCallVisitor = {
                          delete(generateProofNode.privateStates[ stateName ]);
                          stateName = newstateName;
                         }
-
-                        for( const [id, node] of Object.entries(generateProofNode.privateStates[stateName].increment) ){
-                          if(generateProofNode.privateStates[stateName].increment[id].name === oldStateName)
-                         generateProofNode.privateStates[stateName].increment[id].name = state.newStateArray[name][index];
-                    }
-
+                        if (generateProofNode.privateStates[stateName].increment){
+                          for( const [id, node] of Object.entries(generateProofNode.privateStates[stateName].increment) ){
+                            if(generateProofNode.privateStates[stateName].increment[id].name === oldStateName)
+                           generateProofNode.privateStates[stateName].increment[id].name = state.newStateArray[name][index];
+                          }
+                        }
                       }
                     }
                    generateProofNode.parameters = [];
