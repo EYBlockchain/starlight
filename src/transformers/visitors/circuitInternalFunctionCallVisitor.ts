@@ -125,10 +125,10 @@ const internalCallVisitor = {
                  case 'nullification' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
                   internalFncParameters.push(`nullifierRoot`);
-                  internalFncParameters.push(`newNullifierRoot`);
-                  internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
+                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`newNullifierRoot`);
+                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
                   internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_siblingPath`);
-                  internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_newsiblingPath`);
+                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_newsiblingPath`);
                   break;
                  };
                  case 'oldCommitmentPreimage' : {
