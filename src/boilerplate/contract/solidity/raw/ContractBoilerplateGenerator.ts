@@ -219,7 +219,6 @@ class ContractBoilerplateGenerator {
               newCommitments: 0,
               encryption: 0,
             };
-
             _inputs.map(i => verifyInputsMap(type, i, counter));
            
 
