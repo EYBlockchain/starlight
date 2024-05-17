@@ -3,6 +3,7 @@ import NodePath from '../../traverse/NodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import  buildNode  from '../../types/orchestration-types.js';
 import { internalFunctionCallVisitor } from './common.js';
+import { traverseNodesFast } from '../../traverse/traverse.js';
 
 function merge(array1, array2, index=0) {
 return array1.slice(0, index).concat(array2, array1.slice(index));
@@ -86,25 +87,22 @@ const internalCallVisitor = {
                 })
                state.newPreStatementList.splice(0,1);
                state.newStatementList = cloneDeep(childNode.body.statements);
+               const adjustNamesVisitor = (thisNode: any, state: any) => {
+                if (thisNode.nodeType === 'VariableDeclaration'){
+                  thisNode.name = thisNode.name.replace(state.oldStateName, state.newStateArray[name][state.currentIndex]);
+                }
+                if (thisNode.nodeType === 'Identifier'){
+                  thisNode.name = thisNode.name.replace(state.oldStateName, state.newStateArray[name][state.currentIndex]);
+                }
+              }
                state.newStatementList.forEach(node => {
-                 if(node.nodeType === 'VariableDeclarationStatement'){
-                   node.declarations.forEach(node => {
-                     for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
-                       node.name = node.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
-                      }
-                    });
-                   for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
-                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
-                     if (node.initialValue.rightHandSide.name) node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name.replace(oldStateName,  state.newStateArray[name][index]);
-                    }
-                  }
-                  if(node.nodeType === 'Assignment'){
-                    for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
-                      node.leftHandSide.name = node.leftHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
-                      if (node.rightHandSide.name) node.rightHandSide.name = node.rightHandSide.name.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
-                    }
-                  }
-                })
+                for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
+                  state.oldStateName = oldStateName;
+                  state.currentIndex = index;
+                  traverseNodesFast(node, adjustNamesVisitor,  state);
+                }
+                
+              });
                 state.newPostStatementList = cloneDeep(childNode.body.postStatements);
                 state.newPostStatementList.forEach(node => {
                  if(node.nodeType === 'CalculateNullifier'){
@@ -259,28 +257,48 @@ const internalCallVisitor = {
                           break;
                         }
                      });
-                     let dupNode;
-                     let dupIndex;
-                     let dupAssignNode;
                      if(state.callingFncName[index].parent === 'FunctionDefinition'){
-                       childNode.body.statements.forEach((node, index)=> {
-                         if(node.nodeType === 'VariableDeclarationStatement'){
-                           state.newStatementList.some((statenode, id ) => {
-                             if(statenode.nodeType === 'VariableDeclarationStatement' && (node.declarations[0].name === statenode.declarations[0].name)){
-                               dupNode = statenode;
-                               dupIndex = index;
-                               dupAssignNode = state.newStatementList[id+1];
-
-                             }
-                           })
-                         }
-                       })
-                       if(dupNode){
-                         childNode.body.statements.splice(dupIndex+2, 0, dupNode.initialValue);
-                         childNode.body.statements.splice(dupIndex+3, 0, dupAssignNode);
-                       }
-                       else
-                       childNode.body.statements = [...new Set([...childNode.body.statements, ...state.newStatementList])]
+                      let intFnindex = childNode.body.statements.findIndex(statement => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name);
+                      childNode.body.statements.splice(intFnindex +1, 0, ...state.newStatementList);
+                      //insert extra var declarations if needed
+                      const findVarVisitor = (thisNode: any, state: any) => {
+                        if (thisNode.nodeType === 'Identifier'){
+                          if (!state.varNames.includes(thisNode.name)) {
+                            state.varNames.push(thisNode.name);
+                          }
+                        }
+                      }
+                      let newVarDecs = [];
+                      childNode.body.statements.forEach((node1, index1)=> {
+                        state.varNames = [];
+                        if (!(node1.expression && node1.expression?.nodeType === 'InternalFunctionCall')) traverseNodesFast(node1, findVarVisitor,  state);
+                        state.varNames.forEach((varName) => {
+                          childNode.body.statements.forEach((node2, index2)=> {
+                            if (index2 > index1 && node2.nodeType === 'VariableDeclarationStatement' && node2.declarations[0].name === varName){
+                              newVarDecs.push({"index": index1, "VarDec": cloneDeep(node2)});
+                            }
+                          });
+                        });
+                      });
+                      newVarDecs.sort((a, b) => b.index - a.index);
+                      newVarDecs.forEach((varDec) => {
+                        varDec.VarDec.initialValue = null;
+                        childNode.body.statements.splice(varDec.index, 0, varDec.VarDec);
+                      });
+                      // remove multiple variable declarations
+                      childNode.body.statements.forEach((node1, index1)=> {
+                         let isDecDeleted = false;
+                         if(node1.nodeType === 'VariableDeclarationStatement'){
+                          childNode.body.statements.forEach((node2, index2)=> {
+                            if(!isDecDeleted && index2 < index1 && node2.nodeType === 'VariableDeclarationStatement'){
+                              if ((node1.declarations[0].name === node2.declarations[0].name)){
+                                childNode.body.statements.splice(index1, 1, node1.initialValue);
+                                isDecDeleted = true;
+                              }
+                            }
+                          });
+                        }
+                      });
                      } else{
                        state.newStatementList.forEach((statenode, stateid) => {
                        childNode.body.statements.forEach((node, id)=> {
