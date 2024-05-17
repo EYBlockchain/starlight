@@ -211,6 +211,13 @@ const internalCallVisitor = {
                         case 'InitialisePreimage' : {
                          state.newPreStatementList.forEach(statenode => {
                            if(statenode.nodeType === 'InitialisePreimage'){
+                            Object.keys(node.privateStates).forEach(key => {
+                              Object.keys(statenode.privateStates).forEach(newKey => {
+                                if (key === newKey){
+                                  statenode.privateStates[newKey].accessedOnly = statenode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
+                                }
+                              });  
+                            });     
                              node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
                             }
                          });
@@ -219,6 +226,14 @@ const internalCallVisitor = {
                         case 'ReadPreimage': {
                           state.newPreStatementList.forEach(statenode => {
                             if(statenode.nodeType === 'ReadPreimage'){
+                              Object.keys(node.privateStates).forEach(key => {
+                                Object.keys(statenode.privateStates).forEach(newKey => {
+                                  if (key === newKey){
+                                    statenode.privateStates[newKey].accessedOnly = statenode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
+                                    statenode.privateStates[newKey].nullifierRequired = statenode.privateStates[newKey].nullifierRequired || node.privateStates[key].nullifierRequired;
+                                  }
+                                });  
+                              });     
                               node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
                              }
                           });
@@ -227,6 +242,14 @@ const internalCallVisitor = {
                           case 'MembershipWitness': {
                             state.newPreStatementList.forEach(statenode => {
                               if(statenode.nodeType === 'MembershipWitness'){
+                                Object.keys(node.privateStates).forEach(key => {
+                                  Object.keys(statenode.privateStates).forEach(newKey => {
+                                    if (key === newKey){
+                                      statenode.privateStates[newKey].accessedOnly = statenode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
+                                      statenode.privateStates[newKey].nullifierRequired = statenode.privateStates[newKey].nullifierRequired || node.privateStates[key].nullifierRequired;
+                                    }
+                                  });  
+                                });     
                                 node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
                                }
                             });
@@ -284,25 +307,49 @@ const internalCallVisitor = {
                        case 'CalculateNullifier' : {
                         state.newPostStatementList.forEach(statenode => {
                           if(statenode.nodeType === 'CalculateNullifier'){
-                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
+                            Object.keys(node.privateStates).forEach(key => {
+                              Object.keys(statenode.privateStates).forEach(newKey => {
+                                if (key === newKey){
+                                  statenode.privateStates[newKey].accessedOnly = statenode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
+                                }
+                              });  
+                            });                    
+                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates);
                            }
                         });
                         break;
                        }
                        case 'CalculateCommitment': {
                          state.newPostStatementList.forEach(statenode => {
-                           if(statenode.nodeType === 'CalculateCommitment'){
-                             node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
+                           if(statenode.nodeType === 'CalculateCommitment'){    
+                             node.privateStates = Object.assign(node.privateStates,statenode.privateStates);  
                             }
                          });
                          break;
                          }
                         case 'GenerateProof': {
-                          node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates)
+                          Object.keys(node.privateStates).forEach(key => {
+                            Object.keys(generateProofNode.privateStates).forEach(newKey => {
+                              if (key === newKey){
+                                generateProofNode.privateStates[newKey].accessedOnly = generateProofNode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
+                                generateProofNode.privateStates[newKey].nullifierRequired = generateProofNode.privateStates[newKey].nullifierRequired || node.privateStates[key].nullifierRequired;
+                                generateProofNode.privateStates[newKey].initialisationRequired = generateProofNode.privateStates[newKey].initialisationRequired || node.privateStates[key].initialisationRequired;
+                              }
+                            });  
+                          });        
+                          node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates);
                           node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
                           break;
                         }
                         case 'SendTransaction': {
+                          Object.keys(node.privateStates).forEach(key => {
+                            Object.keys(sendTransactionNode.privateStates).forEach(newKey => {
+                              if (key === newKey){
+                                sendTransactionNode.privateStates[newKey].accessedOnly = sendTransactionNode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
+                                sendTransactionNode.privateStates[newKey].nullifierRequired = sendTransactionNode.privateStates[newKey].nullifierRequired || node.privateStates[key].nullifierRequired;
+                              }
+                            });  
+                          });      
                            node.privateStates = Object.assign(node.privateStates,sendTransactionNode.privateStates)
                           break;
                         }

@@ -4,8 +4,62 @@ import NodePath from '../../traverse/NodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import buildNode from '../../types/orchestration-types.js'
 
-
-
+// We need to ensure that parameters appear in the same order as in the .mjs file if the same state variables are used in multiple function calls.
+// All parameters relating to the same state variable should be grouped together.
+const reorderParameters = (parameterList: any) => {
+  parameterList.forEach((param, index) => {
+    parameterList.forEach((newParam, newIndex) => {
+      if (param.name === newParam.name && param.bpType === 'nullification' && newParam.bpType === 'nullification') {
+        if (newIndex > index && param.isAccessed && !param.isNullified && (newParam.isNullified || !newParam.isAccessed) ){
+          parameterList[index] = newParam;
+        }
+      } 
+      if (param.name === newParam.name && param.bpType === 'oldCommitmentExistence' && newParam.bpType === 'oldCommitmentExistence') {
+        if (newIndex > index && (!param.isWhole || !param.initialisationRequired) && (newParam.isWhole && newParam.initialisationRequired) ){
+          parameterList[index] = newParam;
+        }
+      }
+    });
+  });
+  let newBPName: string;
+  let currentIndex: number;
+  let newCommitment = {};
+  parameterList.forEach((param, index) => {
+    if (param.name != newBPName && param.bpType){
+      newBPName = param.name;
+      currentIndex = index;
+      newCommitment[newBPName] = newCommitment[newBPName] ? newCommitment[newBPName] : [];
+      newCommitment[newBPName].push({"firstIndex": currentIndex, "isNewCommitment": false });
+    }
+    if (param.bpType === 'newCommitment'){
+      newCommitment[newBPName][newCommitment[newBPName].length -1].isNewCommitment = true;
+      newCommitment[newBPName][newCommitment[newBPName].length -1].newCommitmentIndex = index;
+    }
+    if (param.bpType === 'mapping'){
+      newCommitment[newBPName][newCommitment[newBPName].length -1].mappingIndex = index;
+    }
+    if (param.bpType === 'oldCommitmentExistence'){
+      newCommitment[newBPName][newCommitment[newBPName].length -1].oldCommitmentIndex = index;
+    }
+  });
+  let elementsToAdd = [];
+  Object.keys(newCommitment).forEach((varName) => {
+    if (newCommitment[varName][0].isNewCommitment === false && newCommitment[varName].length > 1){
+      let isSwapped = false;
+      newCommitment[varName].forEach((element) => {
+        if (element.isNewCommitment === true && !isSwapped){
+          let newIndex = newCommitment[varName][0].oldCommitmentIndex +1 || newCommitment[varName][0].mappingIndex+1 || newCommitment[varName][0].firstIndex +1;
+          let oldIndex = element.newCommitmentIndex;
+          elementsToAdd.push({"element": parameterList[oldIndex], "NewIndex": newIndex});
+        }
+      });
+    }
+  });
+  elementsToAdd.sort((a, b) => b.NewIndex - a.NewIndex );
+  elementsToAdd.forEach((element) => {
+    parameterList.splice(element.NewIndex, 0, element.element);
+  });
+}
 
 // let interactsWithSecret = false; // Added globaly as two objects are accesing it
 
@@ -121,8 +175,9 @@ const internalCallVisitor = {
                 })
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
-                    childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
-                    childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])]
+                    childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])];
+                    reorderParameters(childNode.parameters.parameters);
+                    childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])];
                     if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition'){
                     childNode.body.statements.forEach(node => {
                       if(node.nodeType === 'ExpressionStatement') {

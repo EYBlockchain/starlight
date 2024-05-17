@@ -145,8 +145,6 @@ export default {
           }
         });
       });
-      console.log(internalFunctionStateVarList);
-      console.log(secretStateVarList);
     },
   },
 };
