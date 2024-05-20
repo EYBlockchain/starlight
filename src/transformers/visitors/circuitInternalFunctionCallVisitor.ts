@@ -290,7 +290,6 @@ const internalCallVisitor = {
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
                      }
                     })
-
                     childNode.body.postStatements.forEach( node => {
                       if(isPartitioned){
                       if(internalFncbpType === callingFncbpType)
@@ -307,7 +306,8 @@ const internalCallVisitor = {
            }
          }
        })
-     })
+     });
+     
    },
  },
 
