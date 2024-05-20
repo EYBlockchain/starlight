@@ -299,6 +299,7 @@ const internalCallVisitor = {
                           });
                         }
                       });
+                      childNode.body.statements = childNode.body.statements.filter(item => item !== null);
                      } else{
                        state.newStatementList.forEach((statenode, stateid) => {
                        childNode.body.statements.forEach((node, id)=> {
