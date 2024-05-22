@@ -73,11 +73,12 @@ const internalCallVisitor = {
       state.internalFncName?.forEach( (name,index) => {
          node._newASTPointer.forEach(file => {
         if(file.fileName === name) {
-          if(state.circuitImport[index]==='true') {
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
                 state.newReturnParameterList = cloneDeep(childNode.returnParameters.parameters);
+                state.newPreStatementList = cloneDeep(childNode.body.preStatements);
+                state.newPostStatementList = cloneDeep(childNode.body.postStatements);
                 
                  state.newParameterList.forEach((node, nodeIndex) => {
                   if(node.nodeType === 'Boilerplate') {
@@ -110,7 +111,7 @@ const internalCallVisitor = {
                  })
                }
              })
-
+            if(state.circuitImport[index].isImported ==='true') {
 // Collect the internal call ParameterList
             let internalFncParameters: string[] = [];
             state.newParameterList.forEach(node => {
@@ -166,11 +167,12 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
+            }
 
             node._newASTPointer.forEach(file => {
               if(file.fileName === state.callingFncName[index].name){
                 file.nodes.forEach(childNode => {
-                  if(childNode.nodeType === 'StructDefinition' && !state.isAddStructDefinition)
+                  if(childNode.nodeType === 'StructDefinition' && !state.isAddStructDefinition && state.circuitImport[index].isImported === 'true')
                    file.nodes.splice(file.nodes.indexOf(childNode),1);
                 })
                 file.nodes.forEach(childNode => {
@@ -178,8 +180,8 @@ const internalCallVisitor = {
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])];
                     reorderParameters(childNode.parameters.parameters);
                     childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])];
-                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition'){
-                    childNode.body.statements.forEach(node => {
+                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition' && state.circuitImport[index].isImported === 'true'){
+                      childNode.body.statements.forEach(node => {
                       if(node.nodeType === 'ExpressionStatement') {
                         if(node.expression.nodeType === 'InternalFunctionCall' && node.expression.name === name){
                           node.expression.CircuitArguments = node.expression.CircuitArguments.concat(state.circuitArguments);
@@ -188,7 +190,7 @@ const internalCallVisitor = {
                          }
                        }
                      })
-                   } else {
+                   } else if (state.circuitImport[index].isImported === 'true') {
                         childNode.body.statements.forEach(node => {
                           if(node.nodeType === state.callingFncName[index].parent){
                             node.body.statements.forEach(kidNode => {
@@ -208,9 +210,8 @@ const internalCallVisitor = {
                }
 
              })
-           }
 
-          else if(state.circuitImport[index] === 'false'){
+          if(state.circuitImport[index].isImported === 'false'){
             let newExpressionList = [];
             let isPartitioned = false
             let internalFncbpType: string;
@@ -289,7 +290,75 @@ const internalCallVisitor = {
                       else
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
                      }
-                    })
+                    });
+                    childNode.body.preStatements.forEach(node => {
+                      switch(node.bpType) {
+                        case 'PoKoSK' : {
+                         state.newPreStatementList.forEach(statenode => {
+                           if(statenode.bpType === 'PoKoSK' && statenode.name === node.name){
+                            statenode.isNullified = statenode.isNullified || node.isNullified;
+                            node = Object.assign(node,statenode);
+                          }
+                         });
+                         break;
+                        }
+                        case 'nullification' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'nullification' && statenode.name === node.name){
+                             statenode.isNullified = statenode.isNullified || node.isNullified;
+                             node = Object.assign(node,statenode);
+                           }
+                          });
+                          break;
+                          }
+                        case 'oldCommitmentPreimage' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentPreimage' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        case 'oldCommitmentExistence' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentExistence' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }
+                        case 'newCommitment' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'newCommitment' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        default :
+                        break;
+                      }
+                     });
+                    let nonDuplicatePreStatements = [];
+                    state.newPreStatementList.forEach(stateNode => {
+                      let isDuplicate = false;
+                      let dupIndex =0;
+                      childNode.body.preStatements.forEach((existingNode, exIndex) => {
+                        if(existingNode.bpType === stateNode.bpType && existingNode.name === stateNode.name){
+                          isDuplicate = true;
+                        }
+                        if (existingNode.name === stateNode.name) {
+                          dupIndex = exIndex;
+                        }
+                      });
+                      if (!isDuplicate) nonDuplicatePreStatements.push({node: stateNode, index: dupIndex });
+                    });
+                    nonDuplicatePreStatements.forEach(dupNode => {
+                      childNode.body.preStatements.splice(dupNode.index +1, 0, dupNode.node);
+                    });
                     childNode.body.postStatements.forEach( node => {
                       if(isPartitioned){
                       if(internalFncbpType === callingFncbpType)
@@ -298,6 +367,74 @@ const internalCallVisitor = {
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
                      }
                     })
+                    childNode.body.postStatements.forEach(node => {
+                      switch(node.bpType) {
+                        case 'PoKoSK' : {
+                         state.newPostStatementList.forEach(statenode => {
+                           if(statenode.bpType === 'PoKoSK' && statenode.name === node.name){
+                            statenode.isNullified = statenode.isNullified || node.isNullified;
+                            node = Object.assign(node,statenode);
+                          }
+                         });
+                         break;
+                        }
+                        case 'nullification' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'nullification' && statenode.name === node.name){
+                             statenode.isNullified = statenode.isNullified || node.isNullified;
+                             node = Object.assign(node,statenode);
+                           }
+                          });
+                          break;
+                          }
+                        case 'oldCommitmentPreimage' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentPreimage' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        case 'oldCommitmentExistence' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentExistence' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }
+                        case 'newCommitment' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'newCommitment' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        default :
+                        break;
+                      }
+                     });
+                    let nonDuplicatePostStatements = [];
+                    state.newPostStatementList.forEach(stateNode => {
+                       let isDuplicate = false;
+                       let dupIndex =0;
+                       childNode.body.postStatements.forEach((existingNode, exIndex) => {
+                         if(existingNode.bpType === stateNode.bpType && existingNode.name === stateNode.name){
+                           isDuplicate = true;
+                         }
+                         if (existingNode.name === stateNode.name) {
+                           dupIndex = exIndex;
+                         }
+                       });
+                       if (!isDuplicate) nonDuplicatePostStatements.push({node: stateNode, index: dupIndex });
+                     });
+                     nonDuplicatePostStatements.forEach(dupNode => {
+                       childNode.body.postStatements.splice(dupNode.index +1, 0, dupNode.node);
+                     });
                   }
 
                  })

@@ -332,7 +332,7 @@ export default {
      
 
       // if contract is entirely public, we don't want zkp related boilerplate
-      if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
+      if (!path.scope.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret && !(node.kind === 'constructor')) return;
 
       parameters.push(
         ...buildNode('FunctionBoilerplate', {

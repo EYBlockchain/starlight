@@ -27,7 +27,6 @@ const internalCallVisitor = {
       node._newASTPointer.forEach(file => {
        state.internalFncName?.forEach( (name, index)=> {
          if(file.fileName === name && file.nodeType === 'File') {
-           if(state.circuitImport[index]==='true') {
              file.nodes.forEach(childNode => {
                if(childNode.nodeType === 'FunctionDefinition'){
                  state.newParametersList = cloneDeep(childNode.parameters.modifiedStateVariables);
@@ -290,7 +289,7 @@ const internalCallVisitor = {
                          let isDecDeleted = false;
                          if(node1.nodeType === 'VariableDeclarationStatement'){
                           childNode.body.statements.forEach((node2, index2)=> {
-                            if(!isDecDeleted && index2 < index1 && node2.nodeType === 'VariableDeclarationStatement'){
+                            if(!isDecDeleted && index2 < index1 && node2 && node2.nodeType === 'VariableDeclarationStatement'){
                               if ((node1.declarations[0].name === node2.declarations[0].name)){
                                 childNode.body.statements.splice(index1, 1, node1.initialValue);
                                 isDecDeleted = true;
@@ -384,54 +383,6 @@ const internalCallVisitor = {
                 })
               }
             })
-          }
-          if(state.circuitImport[index] === 'false') {
-           file.nodes.forEach(childNode => {
-             if(childNode.nodeType === 'FunctionDefinition'){
-               state.newStatementList = cloneDeep(childNode.body.statements);
-               state.newStatementList.forEach(node => {
-                 if(node.nodeType === 'VariableDeclarationStatement') {
-                   for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
-                     node.initialValue.leftHandSide.name = node.initialValue.leftHandSide.name?.replace('_'+oldStateName, '_'+ state.newStateArray[name][index]);
-                     node.initialValue.rightHandSide.name = node.initialValue.rightHandSide.name?.replace(oldStateName,  state.newStateArray[name][index]);
-                    }
-                  }
-                })
-              }
-            })
-
-            node._newASTPointer.forEach(file => {
-             if(file.fileName === state.callingFncName[index].name) {
-               file.nodes.forEach(childNode => {
-                 if(childNode.nodeType === 'FunctionDefinition') {
-                   if(state.callingFncName[index].parent === 'FunctionDefinition'){
-                     state.statementnode = childNode;
-                   } else{
-                     childNode.body.statements.forEach(kidNode => {
-                       if(kidNode.nodeType === state.callingFncName[index].parent)
-                         state.statementnode = kidNode;
-                   })
-                 }
-                   state.statementnode.body.statements.forEach(node => {
-                     if(node.nodeType === 'ExpressionStatement'&& node.expression.name === state.internalFncName[index]) {
-                       state.newStatementList.forEach(list => {
-                         if(list.nodeType === 'VariableDeclarationStatement')
-                          node.expression = Object.assign(node.expression,list.initialValue);
-                          if(list.nodeType === 'Assignment')
-                          state.statementnode.body.statements?.splice(state.statementnode.body.statements.indexOf(node)+1, 0, list);
-                        })
-                      }
-                      if(node.nodeType === 'VariableDeclarationStatement' && state.statementnode.body.statements.indexOf(node) != 0){
-                        state.statementnode.body.statements.splice(0, 0, state.statementnode.body.statements.splice(state.statementnode.body.statements.indexOf(node)+1, 1)[0]);
-                        state.statementnode.body.statements.splice(0, 0, state.statementnode.body.statements.splice(state.statementnode.body.statements.indexOf(node), 1)[0]);
-                      }
-                    });
-                  }
-                })
-
-              }
-            })
-          }
         }
       })
     })
@@ -464,7 +415,7 @@ FunctionCall: {
        const callingfnDefIndicators = callingfnDefPath?.scope.indicators;
        const functionReferncedNode = scope.getReferencedPath(node.expression);
        const internalfnDefIndicators = functionReferncedNode?.scope.indicators;
-       const startNodePath = path.getAncestorOfType('ContractDefinition')
+       const startNodePath = path.getAncestorOfType('ContractDefinition');
        startNodePath?.node.nodes.forEach(node => {
          if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
            if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){

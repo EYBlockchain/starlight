@@ -313,6 +313,21 @@ const visitor = {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
+      // We need to ensure the correctness of the circuitImport flag for each internal function call. The state may have been updated due to later function calls that modify the same secret state.
+      let importStatementList: any;
+      parent._newASTPointer.forEach((file: any) => {
+        if (file.fileName === node.fileName) {
+          importStatementList = file.nodes[0];
+        }
+      });
+      importStatementList.imports.forEach((importNode: any) => {
+        if (importNode.bpType === 'internalFunctionCall' && importNode.circuitImport) {
+          if (state.circuitImport[importNode.functionCallIndex].isImported === 'false'){
+            importNode.circuitImport = false;
+          }
+        } 
+      });
+
       //Ensure we do not have any statements of the form x = x_init where x is not a parameter input to the circuit.
       for (let i = newFunctionDefinitionNode.body.statements.length - 1; i >= 0; i--) {
         const statementNode = newFunctionDefinitionNode.body.statements[i];
@@ -1355,33 +1370,49 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       const functionReferncedNode = scope.getReferencedPath(node.expression);
       const internalfnDefIndicators = functionReferncedNode?.scope.indicators;
       state.isEncrypted = internalfnDefIndicators.encryptionRequired;
-      const startNodePath = path.getAncestorOfType('ContractDefinition')
+      const startNodePath = path.getAncestorOfType('ContractDefinition');
+      isCircuit = true;
+      let modifiedVariables = [];
       startNodePath?.node.nodes.forEach(node => {
+        //every state variable in the contract that isn't a struct
         if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){
-          if(internalfnDefIndicators[node.id] && internalfnDefIndicators[node.id].isModified){
-            if(callingfnDefIndicators[node.id]) {
-             if(callingfnDefIndicators[node.id].isModified) {
-               if(internalfnDefIndicators[node.id].isMapping){
-                 Object.keys(internalfnDefIndicators[node.id].mappingKeys).forEach(vars => {
-                   if(state.newStateArray[name].some(statename => statename === vars))
-                     isCircuit = false;
-                   else
-                    isCircuit = true;
-                 })
-                } else
-                 isCircuit = false;
+          // Check if this state variable is accessed in the current internal function i.e. AddA, AddB
+          if(internalfnDefIndicators[node.id]){
+            if (state.circuitImport) state.circuitImport.forEach(fnCall => {
+              if (fnCall.modVars.includes(node.name) && fnCall.callingFunction === callingfnDefPath.node.name) {
+                isCircuit = false;
+                fnCall.isImported = 'false';
               }
+            });
+            // Check if this state variable is modified in the current internal function i.e. AddA, AddB
+            if(internalfnDefIndicators[node.id].isModified){
+              modifiedVariables.push(node.name);
             }
-            else
-             isCircuit = true;
-          }
+            // Check if the state variable is accessed or modified outside of the current internal function
+            if(callingfnDefIndicators[node.id]) {
+              // Check if the state variable is modified outside of the current internal function
+              if(callingfnDefIndicators[node.id].isModified) {
+                if(internalfnDefIndicators[node.id].isMapping){
+                  Object.keys(internalfnDefIndicators[node.id].mappingKeys).forEach(vars => {
+                    if(state.newStateArray[name].some(statename => statename === vars))
+                      isCircuit = false;
+                  })
+                } else
+                  isCircuit = false;
+              } else {
+                  if(internalfnDefIndicators[node.id].isModified){
+                    isCircuit = false;
+                  }
+              } 
+            }           
+          } 
         }
       });
      state.circuitImport ??= [];
      if(isCircuit)
-       state.circuitImport.push('true');
+       state.circuitImport.push({isImported: 'true', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
      else
-       state.circuitImport.push('false');
+       state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
 
 
      const newNode = buildNode('InternalFunctionCall', {
@@ -1389,12 +1420,12 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        CircuitArguments: [],
        CircuitReturn:[],
-       circuitImport: isCircuit,
      });
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        circuitImport: isCircuit,
+       functionCallIndex: state.circuitImport.length -1,
        structImport: !state.isAddStructDefinition,
        structName: state.structName,
        isEncrypted: state.isEncrypted,
