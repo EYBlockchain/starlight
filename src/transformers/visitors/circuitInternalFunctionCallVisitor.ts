@@ -83,7 +83,10 @@ const internalCallVisitor = {
 
      // Find the Internal Function Node,
      const { node, parent } = path;
+     state.intFnindex = {}; 
       state.internalFncName?.forEach( (name,index) => {
+        if (!state.intFnindex[name]) state.intFnindex[name] = {};
+        let callingFncName = state.callingFncName[index].name;
          node._newASTPointer.forEach(file => {
         if(file.fileName === name) {
             file.nodes.forEach(childNode => {
@@ -183,7 +186,7 @@ const internalCallVisitor = {
             }
 
             node._newASTPointer.forEach(file => {
-              if(file.fileName === state.callingFncName[index].name){
+              if(file.fileName === callingFncName){
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'StructDefinition' && !state.isAddStructDefinition && state.circuitImport[index].isImported === 'true')
                    file.nodes.splice(file.nodes.indexOf(childNode),1);
@@ -280,7 +283,7 @@ const internalCallVisitor = {
                }
              })
              node._newASTPointer.forEach(file => {
-              if(file.fileName === state.callingFncName[index].name) {
+              if(file.fileName === callingFncName) {
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition') {
                     childNode.body.statements.forEach(node => {
@@ -288,13 +291,18 @@ const internalCallVisitor = {
                         callingFncbpType = node.bpType;
                       }
                     })
-                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition')
-                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])];
+                    let oldIndex = state.intFnindex[name][callingFncName] ? state.intFnindex[name][callingFncName] : -1;
+                    if(state.callingFncName[index].parent === 'FunctionDefinition'){
+                      state.intFnindex[name][callingFncName] = childNode.body.statements.findIndex((statement, stIndex) => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name && stIndex > oldIndex);
+                      childNode.body.statements.splice(state.intFnindex[name][callingFncName] +1, 0, ...newExpressionList);
+                    }
                     else{
                       childNode.body.statements.forEach(node => {
-                        if(node.nodeType === state.callingFncName[index].parent)
-                          node.body.statements = [...new Set([...node.body.statements, ...newExpressionList])];
-                           })
+                        if(node.nodeType === state.callingFncName[index].parent){
+                          state.intFnindex[name][callingFncName] = node.body.statements.findIndex((statement, stIndex) => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name && stIndex > oldIndex);
+                          node.body.statements.splice(state.intFnindex[name][callingFncName] +1, 0, ...newExpressionList);
+                        }
+                      })
                     }
                     childNode.body.preStatements.forEach( node => {
                       if(isPartitioned){
