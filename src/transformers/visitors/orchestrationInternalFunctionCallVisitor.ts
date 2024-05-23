@@ -270,7 +270,9 @@ const internalCallVisitor = {
                       let newVarDecs = [];
                       childNode.body.statements.forEach((node1, index1)=> {
                         state.varNames = [];
-                        if (!(node1.expression && node1.expression?.nodeType === 'InternalFunctionCall')) traverseNodesFast(node1, findVarVisitor,  state);
+                        if (!(node1.expression && node1.expression?.nodeType === 'InternalFunctionCall')){
+                          traverseNodesFast(node1, findVarVisitor,  state);
+                        } 
                         state.varNames.forEach((varName) => {
                           childNode.body.statements.forEach((node2, index2)=> {
                             if (index2 > index1 && node2.nodeType === 'VariableDeclarationStatement' && node2.declarations[0].name === varName){
@@ -281,7 +283,7 @@ const internalCallVisitor = {
                       });
                       newVarDecs.sort((a, b) => b.index - a.index);
                       newVarDecs.forEach((varDec) => {
-                        varDec.VarDec.initialValue = null;
+                        varDec.VarDec.initialValue = undefined;
                         childNode.body.statements.splice(varDec.index, 0, varDec.VarDec);
                       });
                       // remove multiple variable declarations
@@ -298,7 +300,7 @@ const internalCallVisitor = {
                           });
                         }
                       });
-                      childNode.body.statements = childNode.body.statements.filter(item => item !== null);
+                      childNode.body.statements = childNode.body.statements.filter(item => item !== null && item !== undefined);
                      } else{
                        state.newStatementList.forEach((statenode, stateid) => {
                        childNode.body.statements.forEach((node, id)=> {

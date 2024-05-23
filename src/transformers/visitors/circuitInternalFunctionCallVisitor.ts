@@ -61,6 +61,19 @@ const reorderParameters = (parameterList: any) => {
   });
 }
 
+
+// We need to ensure that preStatments and postStatements are in the right order.
+const reorderBoilerPlate = (bpStatementList: any) => {
+  let order = ['mapping','PoKoSK', 'nullification', 'oldCommitmentPreimage', 'oldCommitmentExistence', 'newCommitment', 'encryption'];
+  bpStatementList.sort((a, b) => {
+    if (a.name === b.name) {
+      return order.indexOf(a.bpType) - order.indexOf(b.bpType);
+    } else {
+      return 0;
+    }
+  });
+}
+
 // let interactsWithSecret = false; // Added globaly as two objects are accesing it
 
 const internalCallVisitor = {
@@ -359,6 +372,7 @@ const internalCallVisitor = {
                     nonDuplicatePreStatements.forEach(dupNode => {
                       childNode.body.preStatements.splice(dupNode.index +1, 0, dupNode.node);
                     });
+                    reorderBoilerPlate(childNode.body.preStatements);
                     childNode.body.postStatements.forEach( node => {
                       if(isPartitioned){
                       if(internalFncbpType === callingFncbpType)
@@ -421,7 +435,7 @@ const internalCallVisitor = {
                     let nonDuplicatePostStatements = [];
                     state.newPostStatementList.forEach(stateNode => {
                        let isDuplicate = false;
-                       let dupIndex =0;
+                       let dupIndex = undefined;
                        childNode.body.postStatements.forEach((existingNode, exIndex) => {
                          if(existingNode.bpType === stateNode.bpType && existingNode.name === stateNode.name){
                            isDuplicate = true;
@@ -431,10 +445,11 @@ const internalCallVisitor = {
                          }
                        });
                        if (!isDuplicate) nonDuplicatePostStatements.push({node: stateNode, index: dupIndex });
-                     });
-                     nonDuplicatePostStatements.forEach(dupNode => {
-                       childNode.body.postStatements.splice(dupNode.index +1, 0, dupNode.node);
-                     });
+                    });
+                    nonDuplicatePostStatements.forEach(dupNode => {
+                       childNode.body.postStatements.splice(!dupNode.index ? 0 : dupNode.index +1, 0, dupNode.node);
+                    });
+                    reorderBoilerPlate(childNode.body.postStatements);
                   }
 
                  })

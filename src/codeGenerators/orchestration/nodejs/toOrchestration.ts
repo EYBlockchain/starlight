@@ -90,8 +90,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `${getAccessedValue(node.declarations[0].name)}`;
       }
 
-      console.log("kangeroo");
-      console.log(node);
+      if (!node.initialValue) return ``;
       if (
         node.initialValue.operator &&
         !node.initialValue.operator.includes('=')
