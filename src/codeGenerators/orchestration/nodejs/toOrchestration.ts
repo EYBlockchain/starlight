@@ -90,8 +90,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `${getAccessedValue(node.declarations[0].name)}`;
       }
 
-      if (!node.initialValue) return ``;
-      if (
+      if (!node.initialValue && !node.declarations[0].isAccessed) return `\nlet ${codeGenerator(node.declarations[0])};`;
+      if (node.initialValue &&
         node.initialValue.operator &&
         !node.initialValue.operator.includes('=')
       )

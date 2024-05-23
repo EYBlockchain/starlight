@@ -25,7 +25,9 @@ const internalCallVisitor = {
       let sendTransactionNode : any;
       let newdecrementedSecretStates = [];
       node._newASTPointer.forEach(file => {
+        state.intFnindex = {}; 
        state.internalFncName?.forEach( (name, index)=> {
+        let callingFncName = state.callingFncName[index].name;
          if(file.fileName === name && file.nodeType === 'File') {
              file.nodes.forEach(childNode => {
                if(childNode.nodeType === 'FunctionDefinition'){
@@ -197,7 +199,7 @@ const internalCallVisitor = {
               }
             })
             node._newASTPointer.forEach(file => {
-             if(file.fileName === state.callingFncName[index].name) {
+             if(file.fileName === callingFncName) {
                 file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
@@ -257,8 +259,9 @@ const internalCallVisitor = {
                         }
                      });
                      if(state.callingFncName[index].parent === 'FunctionDefinition'){
-                      let intFnindex = childNode.body.statements.findIndex(statement => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name);
-                      childNode.body.statements.splice(intFnindex +1, 0, ...state.newStatementList);
+                      let oldIndex = state.intFnindex[callingFncName] ? state.intFnindex[callingFncName] : -1;
+                      state.intFnindex[callingFncName] = childNode.body.statements.findIndex((statement, stIndex) => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name && stIndex > oldIndex);
+                      childNode.body.statements.splice(state.intFnindex[callingFncName] +1, 0, ...state.newStatementList);
                       //insert extra var declarations if needed
                       const findVarVisitor = (thisNode: any, state: any) => {
                         if (thisNode.nodeType === 'Identifier'){
