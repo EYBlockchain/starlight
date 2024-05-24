@@ -125,6 +125,8 @@ const internalCallVisitor = {
                     state.state.newReturnParameterList.splice(nodeIndex,1);
                   }
                  })
+               } else if (childNode.nodeType === 'ImportStatementList'){
+                state.newImportStatementList = cloneDeep(childNode.imports);            
                }
              })
             if(state.circuitImport[index].isImported ==='true') {
@@ -458,6 +460,8 @@ const internalCallVisitor = {
                        childNode.body.postStatements.splice(!dupNode.index ? 0 : dupNode.index +1, 0, dupNode.node);
                     });
                     reorderBoilerPlate(childNode.body.postStatements);
+                  } else if (childNode.nodeType === 'ImportStatementList'){
+                    childNode.imports = [...new Set([...childNode.imports, ...state.newImportStatementList])];
                   }
 
                  })
