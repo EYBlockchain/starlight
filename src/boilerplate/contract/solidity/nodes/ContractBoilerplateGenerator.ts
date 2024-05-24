@@ -10,9 +10,7 @@ class ContractBoilerplateGenerator {
   scope : Scope;
   constructor(scope: Scope) {
     if (bpCache.has(scope)) return bpCache.get(scope);
-
     this.scope = scope;
-
     bpCache.set(scope, this);
   }
 
@@ -80,7 +78,7 @@ class ContractBoilerplateGenerator {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = scope;
       const fnDefBindings = scope.filterBindings(
-        (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
+        (b: any) => b.kind === 'FunctionDefinition' && (b.path.containsSecret || b.path.scope.indicators.internalFunctionInteractsWithSecret),
       );
       let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
       if (isjoinSplitCommitmentsFunction.includes('true')) { 
