@@ -293,8 +293,7 @@ export default {
 
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
-
-      if (!path.containsSecret) return;
+      if (!path.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret) return;
       const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
 
@@ -349,8 +348,7 @@ export default {
             customInputs: state.customInputs,
           }),
         );
-
-      if (path.scope.containsSecret)
+      if (path.scope.containsSecret || path.scope.indicators.internalFunctionInteractsWithSecret)
         postStatements.push(
           ...buildNode('FunctionBoilerplate', {
             bpSection: 'postStatements',
