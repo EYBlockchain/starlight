@@ -820,14 +820,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-      
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
+
+      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array
       if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
       if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
       if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
       if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
-
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
