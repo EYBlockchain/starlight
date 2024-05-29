@@ -1373,6 +1373,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       const startNodePath = path.getAncestorOfType('ContractDefinition');
       isCircuit = true;
       let modifiedVariables = [];
+      // Check if the internal function should be imported into the circuit (this is updated later if future internal function calls modify the state variables accessed in this internal function)
       startNodePath?.node.nodes.forEach(node => {
         //every state variable in the contract that isn't a struct
         if(node.nodeType === 'VariableDeclaration' && !node.typeDescriptions.typeIdentifier.includes('_struct')){

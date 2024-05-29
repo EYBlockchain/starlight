@@ -295,6 +295,7 @@ const internalCallVisitor = {
                     })
                     let oldIndex = state.intFnindex[name][callingFncName] ? state.intFnindex[name][callingFncName] : -1;
                     if(state.callingFncName[index].parent === 'FunctionDefinition'){
+                      // When merging the statements, we need to ensure that the new statements are added after the InternalFunctionCall statement.
                       state.intFnindex[name][callingFncName] = childNode.body.statements.findIndex((statement, stIndex) => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name && stIndex > oldIndex);
                       childNode.body.statements.splice(state.intFnindex[name][callingFncName] +1, 0, ...newExpressionList);
                     }

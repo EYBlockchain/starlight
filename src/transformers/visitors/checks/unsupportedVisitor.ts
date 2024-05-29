@@ -109,42 +109,4 @@ export default {
         );
     },
   },
-
-  ContractDefinition: {
-    enter(node: any, state: any) {
-      let internalFunctionStateVarList = {};
-      let secretStateVarList = {};
-      const nestedInternalFunctionVisitor = (thisNode: any, state: any) => {
-        if (thisNode.nodeType === 'VariableDeclaration' && thisNode.stateVariable && thisNode.isSecret){
-          secretStateVarList[thisNode.name] = [];
-        }
-        if (thisNode.nodeType === 'FunctionDefinition'){
-          internalFunctionStateVarList[thisNode.name] = [];
-        }
-        if (thisNode.nodeType === 'Identifier'){
-          let fnDefKeys = Object.keys(internalFunctionStateVarList);
-          let fnName = fnDefKeys[fnDefKeys.length - 1];
-          if (thisNode.typeDescriptions.typeIdentifier.includes("t_function_internal")){
-            internalFunctionStateVarList[fnName].push(thisNode.name);
-          }
-          if (Object.keys(secretStateVarList).includes(thisNode.name)){
-            secretStateVarList[thisNode.name].push(fnName);
-          }
-        }
-      }
-      traverseNodesFast(node, nestedInternalFunctionVisitor, state);
-
-      Object.keys(internalFunctionStateVarList).forEach((fnVar) => {
-        Object.keys(secretStateVarList).forEach((stateVar) => {
-          let commonElements = internalFunctionStateVarList[fnVar].filter(element => secretStateVarList[stateVar].includes(element));
-          if (commonElements.length > 1){
-            /*throw new ZKPError(
-              `A function makes use of a secret state variable in multiple internal function calls. This would mean a commitment would be nullified twice per function call and so is not supported in Starlight.`,
-              node
-            );*/
-          }
-        });
-      });
-    },
-  },
 };
