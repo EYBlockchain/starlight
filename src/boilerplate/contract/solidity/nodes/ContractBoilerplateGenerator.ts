@@ -46,7 +46,7 @@ class ContractBoilerplateGenerator {
     sectionSelector() {
       const { scope } = this;
       const containsCustomConstructorFunction = scope.someBinding(
-        (b: any) => b.kind === 'FunctionDefinition' && b.name === '', // this is the AST pattern for a constructor function
+        (b: any) => b.kind === 'FunctionDefinition' && b.name === '' && b.node.kind != 'fallback' && b.node.kind != 'receive', // this is the AST pattern for a constructor function
       );
 
       return [
