@@ -592,6 +592,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
                   }));
 
                 break;
@@ -607,6 +608,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
                   }));
 
                 break;
@@ -624,6 +626,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
+                isConstructor: node.isConstructor,
               }));
         }
       }

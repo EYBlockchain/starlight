@@ -569,6 +569,7 @@ sendTransaction = {
       mappingKey,
       burnedOnly,
       structProperties,
+      isConstructor
     }): string[] {
       let value;
       switch (stateType) {
