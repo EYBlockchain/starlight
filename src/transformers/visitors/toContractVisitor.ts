@@ -29,13 +29,13 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
           item.expression.components.forEach(element => {
             if(element.kind === 'bool'){
               thisState.customInputs ??= [];
-              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
+              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, isReturn: true});
             }
           });
         } else {
           if(item.expression.kind === 'bool'){
             thisState.customInputs ??= [];
-            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
+            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, isReturn: true});
           }
         }
       }
@@ -44,7 +44,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
    if(thisState.variableName.includes(indicator.node.name))
-    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}});
+    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}, isReturn: true});
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -61,7 +61,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
     if (!thisState.customInputs.some((input: any) => input.name === indicator?.name))
-      thisState.customInputs.push({name: indicator?.name, typeName: {name: type}, isConstantArray: thisPath.isConstantArray() ? thisPath.node.typeName.length.value : false, inCircuit: true });
+      thisState.customInputs.push({name: indicator?.name, typeName: {name: type}, isConstantArray: thisPath.isConstantArray() ? thisPath.node.typeName.length.value : false, inCircuit: true, isReturn: false });
   }
 };
 
@@ -162,6 +162,7 @@ export default {
           let returnfunctionName: string;
           for ([functionName, parameterList] of Object.entries(state.circuitParams)) {
             if(state.returnpara){
+              console.log('state.returnpara :', state.returnpara);
              for ([returnfunctionName, returnParameterList] of Object.entries(state.returnpara)){
                if(functionName === returnfunctionName ){
                  parameterList = parameterList && returnParameterList ? {... parameterList, ... returnParameterList} : parameterList;
@@ -431,7 +432,8 @@ export default {
        path.traversePathsFast(findCustomInputsVisitor, state);
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
-       state.returnpara[state.functionName].returnParameters = state.customInputs.map(n => n.name);
+       console.log('state.customInputs :', state.customInputs);
+       state.returnpara[state.functionName].returnParameters = state.customInputs.filter(n => n.isReturn).map(n => n.name );
        const newNode = buildNode(
        node.nodeType,
        { value: node.expression.value });

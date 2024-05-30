@@ -121,7 +121,7 @@ class ContractBoilerplateGenerator {
       let verifyInput: string[] = [];
   
       const verifyInputsMap = (type: string, input: string, counter: any) => {
-  
+        
         if(type  === 'parameters'){
         switch (input) {
           case 'nullifierRoot':  
@@ -149,6 +149,7 @@ class ContractBoilerplateGenerator {
         }
       }
         else if(type  === 'returnParameters') {
+          console.log('Input:', input);
           switch (input) {
             case 'encryption':
               verifyInput.push( `
