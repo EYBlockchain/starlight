@@ -286,6 +286,34 @@ function compressStarlightKey(publicKeyPoint) {
 }
 
 /**
+Encrypt messages encrypted with KEM-DEM
+@param {string[]} Plaintext - hex string[]
+@param {string} SendersecretKey - hex string
+@param {string[2]} RecieverPublicKey - hex string[]
+@return {string[]} plainText - int string[]
+*/
+function encrypt(plaintext, secretKey, recieverPublicKey) {
+  const encryptedMessages = [];
+  const sharedSecret = scalarMult(secretKey, [
+    BigInt(recieverPublicKey[0]),
+    BigInt(recieverPublicKey[1]),
+  ]);
+  const key = poseidonHash([
+    sharedSecret[0],
+    sharedSecret[1],
+    BigInt(DOMAIN_KEM),
+  ]);
+  plaintext.forEach((msg, index) => {
+    const hash = poseidonHash([key.bigInt, BigInt(DOMAIN_DEM), BigInt(index)]);
+    encryptedMessages[index] = addMod([BigInt(msg), hash.bigInt], Fp);
+    while (encryptedMessages[index] < 0n) {
+      encryptedMessages[index] += Fp;
+    }
+  });
+  return encryptedMessages;
+}
+
+/**
 Decrypt messages encrypted with KEM-DEM
 @param {string[]} encryptedMessages - hex string[]
 @param {string} secretKey - hex string
@@ -331,7 +359,8 @@ function sbox(state, f, p, r) {
   const N = state.length;
   state[0] = powerMod(state[0], 5n, q);
   for (let i = 1; i < N; i++) {
-    state[i] = r < f / 2 || r >= f / 2 + p ? powerMod(state[i], 5n, q) : state[i];
+    state[i] =
+      r < f / 2 || r >= f / 2 + p ? powerMod(state[i], 5n, q) : state[i];
   }
   return state;
 }
@@ -354,7 +383,24 @@ function poseidonHash(_inputs) {
   const inputs = _inputs;
   const N = inputs.length;
   const t = N + 1;
-  const roundsP = [56, 57, 56, 60, 60, 63, 64, 63, 60, 66, 60, 65, 70, 60, 64, 68];
+  const roundsP = [
+    56,
+    57,
+    56,
+    60,
+    60,
+    63,
+    64,
+    63,
+    60,
+    66,
+    60,
+    65,
+    70,
+    60,
+    64,
+    68,
+  ];
   const f = 8;
   const p = roundsP[t - 2];
   const c = C[t - 2];
@@ -384,6 +430,7 @@ export {
   scalarMult,
   compressStarlightKey,
   decompressStarlightKey,
+  encrypt,
   decrypt,
   poseidonHash,
 };
