@@ -315,6 +315,7 @@ const internalCallVisitor = {
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
                      }
                     });
+                    // We need to merge the pre-statments and post-statements of the internal function with the calling function.
                     childNode.body.preStatements.forEach(node => {
                       switch(node.bpType) {
                         case 'PoKoSK' : {
