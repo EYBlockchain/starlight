@@ -81,8 +81,7 @@ class BoilerplateGenerator {
                   );
                 const secretKey = generalise(keys.secretKey);
                 const publicKey = generalise(keys.publicKey);
-                const sharedSecretKey = generalise(keys.sharedSecretKey);
-                const sharedPublicKey = generalise(keys.sharedPublicKey);`
+               `
       ];
     },
 
@@ -795,8 +794,9 @@ integrationApiServicesBoilerplate = {
       }
       export async function service_getSharedKeys(req, res, next) {
         try {
-          const { recipientPubKey } = req.body;
-          const SharedKeys = await getSharedkeys(recipientPubKey);
+          const { recipientAddress } = req.body;
+          const recipientPubKey = req.body.recipientPubKey || 0
+          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey );
           res.send({ SharedKeys });
           await sleep(10);
         } catch (err) {

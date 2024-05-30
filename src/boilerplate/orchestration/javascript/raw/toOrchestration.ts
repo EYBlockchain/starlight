@@ -302,6 +302,7 @@ export const preimageBoilerPlate = (node: any) => {
     preimageParams.push(`\t${privateStateName}: 0,`);
 
     // ownership (PK in commitment)
+    console.log('stateNode ------->', stateNode);
     const newOwner = stateNode.isOwned ? stateNode.owner : null;
     let newOwnerStatment: string;
     switch (newOwner) {
