@@ -800,10 +800,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
-            lines.push(`[${input.properties.map(p => `${input.name}${input.isConstantArray ? '.all' : ''}.${p}.integer`).join(',')}]`)
+            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
           } else if (input.isConstantArray) {
             lines.push(`${input.name}.all.integer`);
-          } else {
+          } else if(input.isBool) {
+            lines.push(`(parseInt(${input.name}.integer, 10) === 1) ? true : false`);
+          }
+          else {
             lines.push(`${input}.integer`);
           }           
         });

@@ -170,11 +170,12 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     // TODO other types
     if (thisPath.isMapping() || thisPath.isArray())
       name = name.replace('[', '_').replace(']', '').replace('.sender', 'Sender').replace('.value','Value');
+    let nodeTypeString = node.typeDescriptions.typeString === 'bool' ? 'bool': 'field';
     // We never need the input to the circuit to be the MappingKeyName
     //if (thisPath.containerName === 'indexExpression'){
     //  name = binding.getMappingKeyName(thisPath);
     //}
-    const parameterNode = buildNode('VariableDeclaration', { name, type: 'field', isSecret: false, declarationType: 'parameter'});
+    const parameterNode = buildNode('VariableDeclaration', { name, type: nodeTypeString, isSecret: false, declarationType: 'parameter'});
     parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
     const params = fnDefNode._newASTPointer.parameters.parameters;
@@ -186,6 +187,9 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
         operator: '=',
         rightHandSide: buildNode('Identifier', { name: `${name}`, subType: 'generalNumber' }),
       });
+      if (node.typeDescriptions?.typeString === 'bool') {
+        beginNodeInit.leftHandSide.typeName ='bool';
+      }
       const beginNode = buildNode('ExpressionStatement', {
           expression: beginNodeInit,
           interactsWithSecret: true,
@@ -698,22 +702,23 @@ const visitor = {
       const newNode = buildNode(node.nodeType, {
         operator,
         prefix,
+        subExpression: buildNode(subExpression.nodeType, {
+          name: path.scope.getIdentifierMappingKeyName(subExpression, true),
+        }),
         initialValue: buildNode(subExpression.nodeType, {
           name: path.scope.getIdentifierMappingKeyName(subExpression)
         }),
       });
+      if (subExpression.typeDescriptions.typeString === 'bool') {
+        newNode.subExpression.typeName =  buildNode('ElementaryTypeName', {
+          name: `bool`});
+        }
       //We need to ensure that for non-secret variables the name used on the right hand side of the assignment 
       // is always the original name. (As the original variable is always updated we always get the right value.)
       if ( (binding instanceof VariableBinding) && !binding.isSecret && 
       binding.stateVariable){
-        newNode.subExpression =  buildNode(subExpression.nodeType, {
-          name: subExpression.name,
-        });
-      } else{
-        newNode.subExpression =  buildNode(subExpression.nodeType, {
-          name: path.scope.getIdentifierMappingKeyName(subExpression, true)
-        });
-      }
+        newNode.subExpression.name = subExpression.name;
+      } 
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
       state.skipSubNodes = true;
@@ -1145,8 +1150,19 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         switch (thisPath.node.nodeType) {
           case 'Identifier':
             if (!thisPath.getAncestorOfType('IndexAccess')) {
-              state.list.push(cloneDeep(thisPath.node._newASTPointer));
-              thisPath.node._newASTPointer.name += '_temp';
+              if (thisPath.parent.nodeType === 'UnaryOperation'){
+                if (thisPath.getAncestorContainedWithin('subExpression')){
+                  state.list.push(cloneDeep(thisPath.parent._newASTPointer.subExpression));
+                  thisPath.parent._newASTPointer.subExpression.name += '_temp';
+                } 
+                if (thisPath.getAncestorContainedWithin('initialValue')) {
+                  state.list.push(cloneDeep(thisPath.parent._newASTPointer.initialValue));
+                  thisPath.parent._newASTPointer.initialValue.name += '_temp';
+                } 
+              } else{
+                state.list.push(cloneDeep(thisPath.node._newASTPointer));
+                thisPath.node._newASTPointer.name += '_temp';
+              }
             } else {
               thisPath.parent._newASTPointer.indexExpression.name += '_temp';
             }

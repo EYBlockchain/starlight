@@ -691,11 +691,12 @@ const visitor = {
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
           if (!param.isSecret) {
-            if (path.isStructDeclaration(param) || path.isConstantArray(param)) {
+            if (path.isStructDeclaration(param) || path.isConstantArray(param)  ||( param.typeName && param.typeName.name === 'bool')) {
               let newParam: any = {};
               newParam.name = param.name;
-              if (path.isStructDeclaration(param)) newParam.properties = param._newASTPointer.typeName.properties.map(p => p.name);
-              if (path.isConstantArray) newParam.isConstantArray = true;
+              if (path.isStructDeclaration(param)) newParam.properties = param._newASTPointer.typeName.properties.map(p => ({"name" : p.name, "type" : p.type }));
+              if (path.isConstantArray(param)) newParam.isConstantArray = true;
+              if (param.typeName?.name === 'bool') newParam.isBool = true;
               newNodes.sendTransactionNode.publicInputs.push(newParam);
             } else newNodes.sendTransactionNode.publicInputs.push(param.name);
           }
@@ -1087,7 +1088,6 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const { operator, prefix, subExpression } = node;
-
       const newNode = buildNode('Assignment', { operator: '='});
       newNode.rightHandSide = buildNode(node.nodeType, { operator, prefix });
 
@@ -1111,10 +1111,15 @@ const visitor = {
         });
       }
 
-      node._newASTPointer = newNode;
-      if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+      if (operator === '!'){
+          node._newASTPointer = newNode.rightHandSide;
+          parent._newASTPointer[path.containerName] = newNode.rightHandSide;
+      }
+      else if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+        node._newASTPointer = newNode;
         parent._newASTPointer.initialValue = newNode;
       } else {
+          node._newASTPointer = newNode;
         parent._newASTPointer.expression = newNode;
       }
       // we make a custom node like a = a++ to avoid nodejs errors => stop traversing
@@ -1183,7 +1188,7 @@ const visitor = {
           (firstInstanceOfNewName && indicator.interactsWithSecret) ||
           (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) ||
           (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole);
-
+          
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
@@ -1482,7 +1487,6 @@ const visitor = {
         name,
         subType: node.typeDescriptions.typeString,
       });
-
       // if this is a public state variable, this fn will add a public input
       addPublicInput(path, state,newNode);
       parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
