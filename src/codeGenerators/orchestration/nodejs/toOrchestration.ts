@@ -257,6 +257,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'CalculateNullifier':
     case 'CalculateCommitment':
     case 'GenerateProof':
+    case 'EncryptBackupPreimage':
     case 'SendTransaction':
     case 'Imports':
     case 'KeyRegistrationFunction':

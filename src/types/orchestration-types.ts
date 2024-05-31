@@ -263,6 +263,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'CalculateNullifier':
     case 'CalculateCommitment':
     case 'GenerateProof':
+    case 'EncryptBackupPreimage':
     case 'SendTransaction':
     case 'SetupCommonFilesBoilerplate':
     case 'EditableCommitmentCommonFilesBoilerplate':

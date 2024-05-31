@@ -615,6 +615,19 @@ const visitor = {
               accessedOnly,
               indicator: stateVarIndicator,
             });
+          }
+
+          if (stateVarIndicator.newCommitmentsRequired) {
+            newNodes.encryptBackupPreimageNode.privateStates[
+              name
+            ] = buildPrivateStateNode('EncryptBackupPreimage', {
+              privateStateName: name,
+              id,
+              indicator: stateVarIndicator,
+            });
+          }
+
+          if (secretModified || accessedOnly) {
 
             newNodes.sendTransactionNode.privateStates[
               name
@@ -821,8 +834,9 @@ const visitor = {
         // 4 - CalculateNullifier - nullifiersRequired - per state
         // 5 - CalculateCommitment - newCommitmentsRequired - per state
         // 6 - GenerateProof - all - per function
-        // 7 - SendTransaction - all - per function
-        // 8 - WritePreimage - all - per state
+        // 7 - EncryptBackupPreimage -newCommitmentsRequired - per state
+        // 8 - SendTransaction - all - per function
+        // 9 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
         newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
         if (newNodes.membershipWitnessNode)
@@ -842,6 +856,8 @@ const visitor = {
           );
         if (newNodes.generateProofNode)
           newFunctionDefinitionNode.body.postStatements.push(newNodes.generateProofNode);
+        if (newNodes.encryptBackupPreimageNode)
+          newFunctionDefinitionNode.body.postStatements.push(newNodes.encryptBackupPreimageNode);
         if (newNodes.sendTransactionNode)
           newFunctionDefinitionNode.body.postStatements.push(
             newNodes.sendTransactionNode,

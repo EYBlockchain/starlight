@@ -796,6 +796,19 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ],
       };
 
+      case 'EncryptBackupPreimage':
+        for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+          lines.push(
+            Orchestrationbp.encryptBackupPreimage.postStatements( {
+              stateName,
+              encryptionRequired: stateNode.encryptionRequired,
+            }));
+        }
+        return {
+          statements: lines,
+        };
+  
+
     case 'SendTransaction':
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {

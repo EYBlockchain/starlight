@@ -152,6 +152,28 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
           : null,
       };
     }
+
+    case 'EncryptBackupPreimage': {
+      const { id, increment, privateStateName, indicator = {} } = fields;
+      return {
+        privateStateName,
+        stateVarId: id,
+        increment,
+        isWhole: indicator.isWhole,
+        isPartitioned: indicator.isPartitioned,
+        nullifierRequired: indicator.isNullified,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
+        encryptionRequired: indicator.encryptionRequired,
+        owner: indicator.isOwned
+          ? indicator.owner.node?.name || indicator.owner.name
+          : null,
+        ownerIsSecret: indicator.isOwned
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
+          : null,
+      };
+    }
     case 'SendTransaction': {
       const {
         increment,
@@ -248,6 +270,13 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         circuitName,
         privateStates,
         parameters,
+      };
+    }
+    case 'EncryptBackupPreimage': {
+      const { privateStates = {} } = fields;
+      return {
+        nodeType,
+        privateStates,
       };
     }
     case 'SendTransaction': {

@@ -421,7 +421,7 @@ class BoilerplateGenerator {
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
-        `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
+        `\nimport { decompressStarlightKey, encrypt, poseidonHash } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
@@ -551,6 +551,23 @@ class BoilerplateGenerator {
       }
     }
     return []; // here to stop ts complaining
+  },
+};
+
+encryptBackupPreimage = {
+
+  postStatements({ stateName, encryptionRequired }): string[] {
+    if (encryptionRequired) return [``];
+    return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
+    const ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
+    let ${stateName}_ephPublicKeyPoint = generalise(
+      scalarMult(${stateName}_ephSecretKey.hex(32), config.BABYJUBJUB.GENERATOR)); \n
+    let ${stateName}_ephPublicKey = compressStarlightKey(${stateName}_ephPublicKeyPoint); \n
+    const ${stateName}_cipherText = encrypt(
+      [BigInt(${stateName}_stateVarId),
+      BigInt(${stateName}),
+      BigInt(${stateName}_newSalt)],
+      ${stateName}_ephSecretKey,  ${stateName}_ephPublicKey);`];
   },
 };
 
