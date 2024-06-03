@@ -419,8 +419,6 @@ export default function fileGenerator(node: any) {
         .filter((x: any) => x.nodeType !== 'NonSecretFunction')
         .flatMap(fileGenerator));
 
-
-
     case 'File':
       return [
         {
