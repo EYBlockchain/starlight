@@ -162,7 +162,6 @@ export default {
           let returnfunctionName: string;
           for ([functionName, parameterList] of Object.entries(state.circuitParams)) {
             if(state.returnpara){
-              console.log('state.returnpara :', state.returnpara);
              for ([returnfunctionName, returnParameterList] of Object.entries(state.returnpara)){
                if(functionName === returnfunctionName ){
                  parameterList = parameterList && returnParameterList ? {... parameterList, ... returnParameterList} : parameterList;
@@ -432,7 +431,6 @@ export default {
        path.traversePathsFast(findCustomInputsVisitor, state);
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
-       console.log('state.customInputs :', state.customInputs);
        state.returnpara[state.functionName].returnParameters = state.customInputs.filter(n => n.isReturn).map(n => n.name );
        const newNode = buildNode(
        node.nodeType,

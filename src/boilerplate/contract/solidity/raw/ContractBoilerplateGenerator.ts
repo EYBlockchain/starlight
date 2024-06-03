@@ -149,7 +149,7 @@ class ContractBoilerplateGenerator {
         }
       }
         else if(type  === 'returnParameters') {
-          console.log('Input:', input);
+
           switch (input) {
             case 'encryption':
               verifyInput.push( `
