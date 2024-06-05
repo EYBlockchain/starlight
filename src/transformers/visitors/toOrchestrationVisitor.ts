@@ -715,6 +715,7 @@ const visitor = {
           }
         }
         // this adds the return parameters which are marked as secret in the tx 
+        
         let returnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
        
         let returnIsSecret: string[] = [];

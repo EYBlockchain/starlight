@@ -832,22 +832,22 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input);
           
         })
-      } else returnInputs.push(`1`) // If there are no return, circuit's default return is true
+      } 
   
       params[0] = sendTransactionBoilerplate(node);
       // params[0] = arr of nullifier root(s)
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
+      (params[0][0][0]) ? params[0][0][0] = ` ${params[0][0][0]}, ` : params[0][0][0] = ` 0 , ` ; // nullifierRoot - array // Default value for the struct
+      (params[0][0][1]) ? params[0][0][1] = ` ${params[0][0][1]}, ` : params[0][0][1] = ` 0, `;
+      (params[0][2][0]) ? params[0][2] = ` ${params[0][2][0]},` : params[0][2] = ` 0 , ` ;  // commitmentRoot - array 
+      (params[0][1][0]) ? params[0][1] = ` [${params[0][1]}],` : params[0][1] = ` [],  `; // nullifiers - array
+      (params[0][3][0]) ? params[0][3] = `[${params[0][3]}],` : params[0][3] = ` [], `; // commitments - array
+      (params[0][4][0]) ? params[0][4] = `[${params[0][4]}],` : params[0][4] = ` [], `; // cipherText - array of arrays
+      (params[0][5][0]) ? params[0][5] = `[${params[0][5]}],`: params[0][5] = ` [], `;// cipherText - array of arrays
       
-       if(lines.length > 0) lines[lines.length -1].push(' ,');
-      (params[0][0][0]) ? params[0][0][0] = `nullifierRoot: ${params[0][0][0]}, ` : params[0][0][0] = ` nullifierRoot: 0 , ` ; // nullifierRoot - array // Default value for the struct
-      (params[0][0][1]) ? params[0][0][1] = `latestNullifierRoot: ${params[0][0][1]}, ` : params[0][0][1] = ` latestNulliferRoot: 0, `;
-      (params[0][2][0]) ? params[0][2] = `commitmentRoot: ${params[0][2][0]},` : params[0][2] = `commitmentRoot: 0 , ` ;  // commitmentRoot - array 
-      (params[0][1][0]) ? params[0][1] = `newNullifiers: [${params[0][1]}],` : params[0][1] = `newNullifiers: [],  `; // nullifiers - array
-      (params[0][3][0]) ? params[0][3] = `newCommitments: [${params[0][3]}],` : params[0][3] = `newCommitments: [], `; // commitments - array
-      (params[0][4][0]) ? params[0][4] = `cipherText: [${params[0][4]}],` : params[0][4] = `cipherText: [], `; // cipherText - array of arrays
-      (params[0][5][0]) ? params[0][5] = `encKeys: [${params[0][5]}],`: params[0][5] = `encKeys: [], `;// cipherText - array of arrays
+       if(!node.returnInputs[0] && !params[0][4]) returnInputs.push(`1`) // If there are no return, circuit's default return is true
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
@@ -856,12 +856,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ]
       }
       
+      
 
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines} {customInputs: [${returnInputs}], ${params[0][0][0]} ${params[0][0][1]} ${params[0][1]}  ${params[0][2]}   ${params[0][3]}  ${params[0][4]}  ${params[0][5]}}, proof).encodeABI();
+          .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,
