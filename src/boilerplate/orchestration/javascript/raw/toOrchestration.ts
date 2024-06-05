@@ -835,6 +835,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       } 
   
       params[0] = sendTransactionBoilerplate(node);
+      if(!node.returnInputs[0] && !params[0][4][0]) returnInputs.push(`1`); // If there are no return, circuit's default return is true
       // params[0] = arr of nullifier root(s)
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
@@ -846,8 +847,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       (params[0][3][0]) ? params[0][3] = `[${params[0][3]}],` : params[0][3] = ` [], `; // commitments - array
       (params[0][4][0]) ? params[0][4] = `[${params[0][4]}],` : params[0][4] = ` [], `; // cipherText - array of arrays
       (params[0][5][0]) ? params[0][5] = `[${params[0][5]}],`: params[0][5] = ` [], `;// cipherText - array of arrays
-      
-       if(!node.returnInputs[0] && !params[0][4]) returnInputs.push(`1`) // If there are no return, circuit's default return is true
+
+       
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
