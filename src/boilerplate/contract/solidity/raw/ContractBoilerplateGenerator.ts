@@ -225,7 +225,7 @@ class ContractBoilerplateGenerator {
            
           }
           
-          if(_params && !(Object.keys(_params).includes('returnParameters'))) verifyInput.push(`
+          if(_params && !(Object.keys(_params).includes('returnParameters')) &&!(Object.keys(_params).includes('encryptionParameters'))) verifyInput.push(`
             inputs[k++] = 1;`) 
       
         verifyInputs.push(`
