@@ -51,7 +51,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
        })
      }
         node.returnParameters = node.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
-        console.log('node.returnParameter:', node.returnParameters);
         node.returnParameters.forEach( (param, index) => {
           if(decStates) {
            if(decStates?.includes(param)){
@@ -60,8 +59,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
         } else if(returnIsSecret[index])
             node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
         })
-
-        console.log(node.returnParameters);
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);

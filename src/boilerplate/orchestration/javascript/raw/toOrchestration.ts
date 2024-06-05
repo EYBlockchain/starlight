@@ -840,7 +840,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
       
-
+       if(lines.length > 0) lines[lines.length -1].push(' ,');
       (params[0][0][0]) ? params[0][0][0] = `nullifierRoot: ${params[0][0][0]}, ` : params[0][0][0] = ` nullifierRoot: 0 , ` ; // nullifierRoot - array // Default value for the struct
       (params[0][0][1]) ? params[0][0][1] = `latestNullifierRoot: ${params[0][0][1]}, ` : params[0][0][1] = ` latestNulliferRoot: 0, `;
       (params[0][2][0]) ? params[0][2] = `commitmentRoot: ${params[0][2][0]},` : params[0][2] = `commitmentRoot: 0 , ` ;  // commitmentRoot - array 
@@ -861,7 +861,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}, {customInputs: [${returnInputs}], ${params[0][0][0]} ${params[0][0][1]} ${params[0][1]}  ${params[0][2]}   ${params[0][3]}  ${params[0][4]}  ${params[0][5]}}, proof).encodeABI();
+          .${node.functionName}(${lines} {customInputs: [${returnInputs}], ${params[0][0][0]} ${params[0][0][1]} ${params[0][1]}  ${params[0][2]}   ${params[0][3]}  ${params[0][4]}  ${params[0][5]}}, proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,

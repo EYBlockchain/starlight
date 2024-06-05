@@ -175,8 +175,7 @@ class ContractBoilerplateGenerator {
           }
         });
         parameterList[ paramtype ] = newList;
-        parameterList = {...parameterList, ...returnpara}; 
-        console.log('circuitParams:', returnpara);   
+        parameterList = {...parameterList, ...returnpara};    
       }
      circuitParams[ functionName ] = parameterList;
      
