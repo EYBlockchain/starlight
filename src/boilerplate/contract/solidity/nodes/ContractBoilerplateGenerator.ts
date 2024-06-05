@@ -127,6 +127,7 @@ class ContractBoilerplateGenerator {
           delete parameterList[ paramtype ];
         }
         const newList: string[] = [];
+        
         params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
@@ -144,8 +145,9 @@ class ContractBoilerplateGenerator {
               if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
               break;
             case 'encryption':
-              returnpara['returnParameters'] ??= [];
-              returnpara['returnParameters'].push(circuitParamNode.bpType);
+              
+              returnpara['encryptionParameters'] ??= [];
+              returnpara['encryptionParameters'].push(circuitParamNode.bpType);
               break;
             case undefined: {
               if (
@@ -173,9 +175,11 @@ class ContractBoilerplateGenerator {
           }
         });
         parameterList[ paramtype ] = newList;
-        parameterList = {...parameterList, ...returnpara};    
+        parameterList = {...parameterList, ...returnpara}; 
+        console.log('circuitParams:', returnpara);   
       }
      circuitParams[ functionName ] = parameterList;
+     
     }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinSplitCommitmentsFunction};
