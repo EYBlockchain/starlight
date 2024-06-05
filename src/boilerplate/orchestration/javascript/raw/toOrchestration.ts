@@ -797,6 +797,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
       case 'EncryptBackupPreimage':
+        lines.push(`let BackupData = [];\n`)
         for ([stateName, stateNode] of Object.entries(node.privateStates)) {
           let stateType;
           if (stateNode.isWhole) {

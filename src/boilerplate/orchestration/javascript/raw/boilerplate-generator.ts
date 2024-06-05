@@ -603,7 +603,9 @@ encryptBackupPreimage = {
           decompressStarlightKey(${stateName}_ephPublicKey)[1].hex(32),
         ]
       ); \n 
-      console.log("${stateName}_plaintext", ${stateName}_plaintext);`];
+      console.log("${stateName}_plaintext", ${stateName}_plaintext);\n
+      ${stateName}_cipherText.push(${stateName}_ephPublicKey.hex(32)); \n 
+      BackupData.push(${stateName}_cipherText);`];
   },
 };
 
