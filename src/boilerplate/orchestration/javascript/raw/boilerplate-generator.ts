@@ -421,7 +421,7 @@ class BoilerplateGenerator {
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
-        `\nimport { decompressStarlightKey, encrypt, poseidonHash } from './common/number-theory.mjs';
+        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
@@ -556,18 +556,54 @@ class BoilerplateGenerator {
 
 encryptBackupPreimage = {
 
-  postStatements({ stateName, encryptionRequired }): string[] {
+  postStatements({ stateName, stateType, encryptionRequired }): string[] {
     if (encryptionRequired) return [``];
+    let valueName = '';
+    let saltName = '';
+    switch (stateType) {
+      case 'increment':
+        valueName = stateName + '_newCommitmentValue';
+        saltName = stateName + '_newSalt';
+        break;
+      case 'decrement':
+        valueName = stateName + '_change';
+        saltName = stateName + '_2_newSalt';
+        break;
+      case 'whole':
+        valueName = stateName;
+        saltName = stateName + '_newSalt';
+        break;
+      default:
+    }
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
-    const ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
+    let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
     let ${stateName}_ephPublicKeyPoint = generalise(
       scalarMult(${stateName}_ephSecretKey.hex(32), config.BABYJUBJUB.GENERATOR)); \n
     let ${stateName}_ephPublicKey = compressStarlightKey(${stateName}_ephPublicKeyPoint); \n
+    while (${stateName}_ephPublicKey === null) { \n
+      ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n
+      ${stateName}_ephPublicKeyPoint = generalise(
+        scalarMult(${stateName}_ephSecretKey.hex(32), config.BABYJUBJUB.GENERATOR)
+      ); \n
+      ${stateName}_ephPublicKey = compressStarlightKey(${stateName}_ephPublicKeyPoint);\n
+    } \n   
     const ${stateName}_cipherText = encrypt(
       [BigInt(${stateName}_stateVarId),
-      BigInt(${stateName}),
-      BigInt(${stateName}_newSalt)],
-      ${stateName}_ephSecretKey,  ${stateName}_ephPublicKey);`];
+      BigInt(${valueName}.hex(32)),
+      BigInt(${saltName}.hex(32))],
+      ${stateName}_ephSecretKey.hex(32), [
+        decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].hex(32),
+        decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].hex(32)
+      ]); \n
+      const ${stateName}_plaintext = decrypt(
+        ${stateName}_cipherText,
+        secretKey.hex(32),
+        [
+          decompressStarlightKey(${stateName}_ephPublicKey)[0].hex(32),
+          decompressStarlightKey(${stateName}_ephPublicKey)[1].hex(32),
+        ]
+      ); \n 
+      console.log("${stateName}_plaintext", ${stateName}_plaintext);`];
   },
 };
 
