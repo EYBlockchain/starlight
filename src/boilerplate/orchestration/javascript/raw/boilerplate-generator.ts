@@ -556,7 +556,7 @@ class BoilerplateGenerator {
 
 encryptBackupPreimage = {
 
-  postStatements({ stateName, stateType, structProperties, encryptionRequired }): string[] {
+  postStatements({ stateName, stateType, structProperties, encryptionRequired, mappingName, mappingKey }): string[] {
     if (encryptionRequired) return [``];
     let valueName = '';
     let saltName = '';
@@ -604,7 +604,7 @@ encryptBackupPreimage = {
         ]
       ); \n 
       console.log("${stateName}_plaintext", ${stateName}_plaintext);\n
-      let ${stateName}_cipherText_combined = [${stateName}_cipherText, ${stateName}_ephPublicKey.hex(32)];\n
+      let ${stateName}_cipherText_combined = {varName: "${mappingName}", cipherText:  ${stateName}_cipherText, ephPublicKey: ${stateName}_ephPublicKey.hex(32)};\n 
       BackupData.push(${stateName}_cipherText_combined);`];
   },
 };

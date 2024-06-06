@@ -813,6 +813,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               stateType,
               structProperties: stateNode.structProperties,
               encryptionRequired: stateNode.encryptionRequired,
+              mappingName: stateNode.mappingName || stateName,
+              mappingKey: stateNode.mappingKey,
             }));
         }
         return {

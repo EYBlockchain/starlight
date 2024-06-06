@@ -45,7 +45,13 @@ class ContractBoilerplateGenerator {
           event EncryptedData(uint256[] cipherText, uint256[2] ephPublicKey);`] : []),
 
         ...(newCommitmentsRequired ? [`
-          event EncryptedBackupData(uint256[] cipherText, uint256 ephPublicKey);`] : []),
+        struct BackupDataElement {
+          string varName;
+          uint256[] cipherText;
+          uint256 ephPublicKey;
+      } \n
+          event EncryptedBackupData(BackupDataElement encPreimage); 
+          `] : []),
 
         ...nullifiersRequired ? [`
           uint256 public newNullifierRoot;`] : [],

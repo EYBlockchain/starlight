@@ -145,7 +145,15 @@ class FunctionBoilerplateGenerator {
             uint256[2] memory ephKeyToEmit = ephPubKeys[j];
             uint256[] memory cipherToEmit = cipherText[j];
             emit EncryptedData(cipherToEmit, ephKeyToEmit);
-          }`] : []),
+          }`]
+          : []),
+        ...(newCommitments ? [`
+          for (uint j; j < BackupData.length; j++) {
+            // this seems silly (it is) but its the only way to get the event to emit properly
+            BackupDataElement memory encPreimage = BackupData[j];
+            emit EncryptedBackupData(encPreimage);
+          }`]
+          : []),
       ];
     },
   };

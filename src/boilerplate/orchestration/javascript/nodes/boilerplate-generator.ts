@@ -159,6 +159,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         privateStateName,
         stateVarId: id,
         increment,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
