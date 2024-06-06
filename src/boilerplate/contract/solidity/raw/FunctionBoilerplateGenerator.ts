@@ -96,21 +96,25 @@ class FunctionBoilerplateGenerator {
     
       let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
 
-      //customInputs = customInputs?.flat(Infinity).filter(p => p.inCircuit);
-
+      customInputs = customInputs?.flat(Infinity).filter(p => p.inCircuit);
+      const addCustomInputs = customInputs?.length == 1 && customInputs[0].name == '1' ? false : true;
       return [
         // `
         //   Inputs memory inputs;`,
-// inputs.customInputs = new uint[](${customInputs.flat(Infinity).length}); (removed Line from below)
-        // ...(customInputs?.length ?
-        //   [`
-           
-        // 	${customInputs.flat(Infinity).map((input: any, i: number) => {
-        //     if (input.type === 'address') return `inputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
-        //     if ((input.type === 'bool' || input.typeName?.name === 'bool' ) && !['0', '1'].includes(input.name)) return `inputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
-        //     return `inputs.customInputs[${i}] = ${input.name};`;
-        //   }).join('\n')}`]
-        //   : []),
+  
+        ...(addCustomInputs ?
+          [`
+          Inputs memory updatedInputs = inputs;
+          updatedInputs.customInputs = new uint[](${customInputs.flat(Infinity).length});
+        	${customInputs.flat(Infinity).map((input: any, i: number) => {
+            if (input.type === 'address') return `updatedInputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
+            if ((input.type === 'bool' || input.typeName?.name === 'bool' ) && !['0', '1'].includes(input.name)) return `updatedInputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
+            return `updatedInputs.customInputs[${i}] = ${input.name};`;
+          }).join('\n')}
+          
+          verify(proof, uint(FunctionNames.${functionName}), updatedInputs);`]
+          : [` 
+          verify(proof, uint(FunctionNames.${functionName}), inputs);`]),
 
         //   ...(newNullifiers ? [`
         // //   inputs.nullifierRoot = nullifierRoot; `] : []),
@@ -136,9 +140,7 @@ class FunctionBoilerplateGenerator {
         //   inputs.encKeys = ephPubKeys;`] : []),
         // `
         //   ${msgSigCheck.join('\n')}`,
-        `
-          verify(proof, uint(FunctionNames.${functionName}), inputs);`,
-
+        
         ...(encryptionRequired ? [`
           for (uint j; j < inputs.cipherText.length; j++) {
             // this seems silly (it is) but its the only way to get the event to emit properly
