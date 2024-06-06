@@ -136,7 +136,7 @@ const prepareIntegrationApiServices = (node: any) => {
   let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
     /CONTRACT_NAME/g,
     node.contractName,
-  );
+  ); 
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
 
   relevantFunctions.forEach((fn: any) => {

@@ -714,9 +714,12 @@ integrationApiServicesBoilerplate = {
       }
       }`
     },
-  postStatements(): string {
-    return `// eslint-disable-next-line func-names \n ${
-        (fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`
+  postStatements(): string[] {
+    return [`// eslint-disable-next-line func-names \n ${
+        (fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`,
+
+        `// eslint-disable-next-line func-names \n ${
+        (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`];
   },
 
   commitments(): string {
