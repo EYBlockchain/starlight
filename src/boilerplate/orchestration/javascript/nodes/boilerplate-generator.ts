@@ -267,6 +267,21 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         publicInputs,
       };
     }
+    case 'FunctionDefinitionPublic': {
+      const {
+        functionName,
+        contractName,
+        publicInputs = [],
+        privateStates = {},
+      } = fields;
+      return {
+        nodeType,
+        privateStates,
+        functionName,
+        contractName,
+        publicInputs,
+      };
+    }
     case 'SetupCommonFilesBoilerplate': {
       const {
         contractName,

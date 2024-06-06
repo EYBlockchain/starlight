@@ -12,7 +12,8 @@ import { traversePathsFast } from '../../traverse/traverse.js';
 // 5 - CalculateCommitment - newCommitmentsRequired - per state
 // 6 - GenerateProof - all - per function
 // 7 - SendTransaction - all - per function
-// 8 - WritePreimage - all - per state
+// 8 - FunctionDefinitionPublic - all - per function
+// 9 - WritePreimage - all - per state
 
 export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator, path: NodePath) => {
   const { node, parent } = path;
@@ -39,6 +40,10 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
     circuitName: node.fileName,
   });
   newNodes.sendTransactionNode = buildNode('SendTransaction', {
+    functionName: node.fileName,
+    contractName,
+  });
+  newNodes.functionPublicNode = buildNode('FunctionDefinitionPublic', {
     functionName: node.fileName,
     contractName,
   });

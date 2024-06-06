@@ -264,6 +264,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'CalculateCommitment':
     case 'GenerateProof':
     case 'SendTransaction':
+      case 'FunctionDefinitionPublic':
     case 'SetupCommonFilesBoilerplate':
     case 'EditableCommitmentCommonFilesBoilerplate':
     case 'IntegrationTestBoilerplate':
