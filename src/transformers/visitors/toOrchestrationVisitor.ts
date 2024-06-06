@@ -319,8 +319,60 @@ const visitor = {
           );
         }
         }
-      } 
-      else {
+      } else if (!scope.modifiesSecretState()){
+        const contractName = `${parent.name}Shield`;
+        const fnName = path.getUniqueFunctionName();
+        node.fileName = fnName; 
+        const newNode = buildNode('File', {
+          fileName: fnName, // the name of this function
+          fileExtension: '.mjs',
+          nodes: [
+            buildNode('Imports'),
+            buildNode('FunctionDefinition', { name: node.name, contractName }),
+          ],
+        })
+
+
+       /* newNode.sendTransactionNode = buildNode('FunctionDefinitionPublic', {
+          functionName: node.fileName,
+          contractName,
+        });
+        console.log('Node in vistor:', node);
+        node.parameters.parameters.forEach(para =>{
+        newNode.sendTransactionNode.publicInputs.push(para.name);
+})*/
+
+//newNode.nodes.push(newNode.sendTransactionNode);
+
+       // Ajout des entrées publiques
+   /*    node.parameters.parameters.forEach(para => {
+        if (!newNode.nodes[1].publicInputs) {
+          newNode.nodes[1].publicInputs = [];
+      }
+        newNode.nodes[1].publicInputs.push(para.name);
+    });*/
+
+        node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
+        parent._newASTPointer.push(newNode);
+        for (const file of parent._newASTPointer) {
+        if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationPublicApiServiceFunction', {
+              name: fnName,
+              parameters: [],
+              returnParameters:[],
+            }),
+          );
+        } 
+        if (file.nodes?.[0].nodeType === 'IntegrationApiRoutesBoilerplate') {
+          file.nodes[0].functions.push(
+            buildNode('IntegrationApiRoutesFunction', {
+              name: fnName,
+              parameters: [],
+            }),
+          );
+        }}
+      } else {
         state.skipSubNodes = true;
       }
 

@@ -239,7 +239,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'CalculateCommitment':
     case 'GenerateProof':
     case 'SendTransaction':
-    case 'FunctionDefinitionPublic':
+    //case 'FunctionDefinitionPublic':
     case 'Imports':
     case 'KeyRegistrationFunction':
       return `${OrchestrationCodeBoilerPlate(node).statements.join('')}`;

@@ -264,7 +264,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'CalculateCommitment':
     case 'GenerateProof':
     case 'SendTransaction':
-      case 'FunctionDefinitionPublic':
+    
     case 'SetupCommonFilesBoilerplate':
     case 'EditableCommitmentCommonFilesBoilerplate':
     case 'IntegrationTestBoilerplate':
@@ -272,6 +272,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'IntegrationApiRoutesBoilerplate':
     case 'IntegrationTestFunction':
     case 'IntegrationApiServiceFunction':
+    case 'IntegrationPublicApiServiceFunction':
     case 'IntegrationApiRoutesFunction':
     case 'Boilerplate': {
       // This nodeType will be understood by the codeGenerator, where raw boilerplate code will be inserted.
