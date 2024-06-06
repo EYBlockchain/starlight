@@ -556,21 +556,21 @@ class BoilerplateGenerator {
 
 encryptBackupPreimage = {
 
-  postStatements({ stateName, stateType, encryptionRequired }): string[] {
+  postStatements({ stateName, stateType, structProperties, encryptionRequired }): string[] {
     if (encryptionRequired) return [``];
     let valueName = '';
     let saltName = '';
     switch (stateType) {
       case 'increment':
-        valueName = stateName + '_newCommitmentValue';
+        valueName = `BigInt(${stateName}_newCommitmentValue.hex(32))`;
         saltName = stateName + '_newSalt';
         break;
       case 'decrement':
-        valueName = stateName + '_change';
+        valueName = structProperties ? `...${stateName}_change.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_change.hex(32))`;
         saltName = stateName + '_2_newSalt';
         break;
       case 'whole':
-        valueName = stateName;
+        valueName = structProperties ? structProperties.map(p => `BigInt(${stateName}.${p}.hex(32))`) :` BigInt(${stateName}.hex(32))`;
         saltName = stateName + '_newSalt';
         break;
       default:
@@ -589,7 +589,7 @@ encryptBackupPreimage = {
     } \n   
     const ${stateName}_cipherText = encrypt(
       [BigInt(${stateName}_stateVarId),
-      BigInt(${valueName}.hex(32)),
+      ${valueName},
       BigInt(${saltName}.hex(32))],
       ${stateName}_ephSecretKey.hex(32), [
         decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].hex(32),
@@ -604,8 +604,8 @@ encryptBackupPreimage = {
         ]
       ); \n 
       console.log("${stateName}_plaintext", ${stateName}_plaintext);\n
-      ${stateName}_cipherText.push(${stateName}_ephPublicKey.hex(32)); \n 
-      BackupData.push(${stateName}_cipherText);`];
+      let ${stateName}_cipherText_combined = [${stateName}_cipherText, ${stateName}_ephPublicKey.hex(32)];\n
+      BackupData.push(${stateName}_cipherText_combined);`];
   },
 };
 

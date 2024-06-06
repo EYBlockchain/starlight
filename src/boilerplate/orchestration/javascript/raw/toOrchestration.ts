@@ -811,6 +811,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.encryptBackupPreimage.postStatements( {
               stateName,
               stateType,
+              structProperties: stateNode.structProperties,
               encryptionRequired: stateNode.encryptionRequired,
             }));
         }

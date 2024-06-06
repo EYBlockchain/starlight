@@ -44,6 +44,9 @@ class ContractBoilerplateGenerator {
         ...(encryptionRequired ? [`
           event EncryptedData(uint256[] cipherText, uint256[2] ephPublicKey);`] : []),
 
+        ...(newCommitmentsRequired ? [`
+          event EncryptedBackupData(uint256[] cipherText, uint256 ephPublicKey);`] : []),
+
         ...nullifiersRequired ? [`
           uint256 public newNullifierRoot;`] : [],
 
