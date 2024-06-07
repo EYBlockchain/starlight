@@ -575,6 +575,17 @@ encryptBackupPreimage = {
         break;
       default:
     }
+    let plainText;
+    if (mappingKey){
+      plainText = `[BigInt(${mappingKey}.hex(32)),
+        BigInt(${stateName}_stateVarId),
+        ${valueName},
+        BigInt(${saltName}.hex(32))]`;
+    } else{
+      plainText = `[BigInt(${stateName}_stateVarId),
+        ${valueName},
+        BigInt(${saltName}.hex(32))]`;
+    }
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
     let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
     let ${stateName}_ephPublicKeyPoint = generalise(
@@ -588,9 +599,7 @@ encryptBackupPreimage = {
       ${stateName}_ephPublicKey = compressStarlightKey(${stateName}_ephPublicKeyPoint);\n
     } \n   
     const ${stateName}_cipherText = encrypt(
-      [BigInt(${stateName}_stateVarId),
-      ${valueName},
-      BigInt(${saltName}.hex(32))],
+      ${plainText},
       ${stateName}_ephSecretKey.hex(32), [
         decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].hex(32),
         decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].hex(32)
@@ -604,7 +613,7 @@ encryptBackupPreimage = {
         ]
       ); \n 
       console.log("${stateName}_plaintext", ${stateName}_plaintext);\n
-      let ${stateName}_cipherText_combined = {varName: "${mappingName}", cipherText:  ${stateName}_cipherText, ephPublicKey: ${stateName}_ephPublicKey.hex(32)};\n 
+      let ${stateName}_cipherText_combined = {varName: "${stateName}", cipherText:  ${stateName}_cipherText, ephPublicKey: ${stateName}_ephPublicKey.hex(32)};\n 
       BackupData.push(${stateName}_cipherText_combined);`];
   },
 };
