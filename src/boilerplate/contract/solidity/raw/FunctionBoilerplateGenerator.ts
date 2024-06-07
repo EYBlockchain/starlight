@@ -90,10 +90,8 @@ class FunctionBoilerplateGenerator {
         }
         if (input.structName) customInputs[i] = input.properties;
       });
-
     
       let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
-
       customInputs = customInputs?.flat(Infinity).filter(p => p.inCircuit);
       const addCustomInputs = !customInputs  || (customInputs?.length == 1 && customInputs[0].name == '1') ? false : true;
       return [
@@ -107,6 +105,7 @@ class FunctionBoilerplateGenerator {
         	${customInputs.flat(Infinity).map((input: any, i: number) => {
             if (input.type === 'address') return `updatedInputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
             if ((input.type === 'bool' || input.typeName?.name === 'bool' ) && !['0', '1'].includes(input.name)) return `updatedInputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
+            if (input.isCommitment) return ``;
             return `updatedInputs.customInputs[${i}] = ${input.name};`;
           }).join('\n')}
           
