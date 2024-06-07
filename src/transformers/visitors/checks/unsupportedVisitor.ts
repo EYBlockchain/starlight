@@ -102,11 +102,17 @@ export default {
     
   VariableDeclaration: {
     enter(node: any) {
-      if (node.name.startsWith('_'))
+      if (node.name.startsWith('_') && node.isSecret)
         throw new ZKPError(
           `Zokrates does not support variables that begin with an underscore such as as _value.`,
           node
         );
+      if (node.name === 'key'){
+        throw new ZKPError(
+          `Zokrates does not support variables with the name key, please choose a different name.`,
+          node
+        );
+      }
     },
   },
 };

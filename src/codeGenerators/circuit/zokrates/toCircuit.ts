@@ -118,7 +118,6 @@ function codeGenerator(node: any) {
 
     case 'ParameterList': {
       const paramList = CircuitBP.uniqueify(node.parameters.flatMap(codeGenerator));
-
       // we also need to identify and remove duplicate params prefixed with conflicting 'public'/'private' keywords (prioritising 'public')
       const slicedParamList = paramList.map(p =>
         p.replace('public ', '').replace('private ', ''),
@@ -170,13 +169,18 @@ function codeGenerator(node: any) {
 
     case 'Block': {
       const preStatements = CircuitBP.uniqueify(node.preStatements.flatMap(codeGenerator));
-      const statements = CircuitBP.uniqueify(node.statements.flatMap(codeGenerator));
+      // TO DO: We don't remove duplicate statements below because of duplicate statements in the contract. This could cause issues.
+      const statements = node.statements.flatMap(codeGenerator);
       const postStatements = CircuitBP.uniqueify(node.postStatements.flatMap(codeGenerator));
       return [...preStatements, ...statements, ...postStatements].join('\n\n');
     }
 
     case 'ExpressionStatement': {
       if (node.isVarDec) {
+        if (node.expression?.leftHandSide?.typeName === 'bool'){
+          return `
+          bool ${codeGenerator(node.expression)}`;
+        }
         return `
         field ${codeGenerator(node.expression)}`;
       }
@@ -209,6 +213,9 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
 
     case 'UnaryOperation':
+      if (node.subExpression?.typeName?.name === 'bool' && node.operator === '!'){
+        return `${node.operator}${node.subExpression.name}`;
+      }
       return `${codeGenerator(node.initialValue)} = ${codeGenerator(node.subExpression)} ${node.operator[0]} 1`
 
     case 'BinaryOperation':

@@ -105,6 +105,7 @@ class BoilerplateGenerator {
   isMapping: boolean;
   isStruct: boolean;
   structProperties?: string[];
+  structPropertiesTypes?: string[];
   typeName?: string;
   mappingKeyTypeName?: string;
   thisIndicator: any;
@@ -184,13 +185,13 @@ class BoilerplateGenerator {
         if (!mappingKeyIndicator.keyPath.isMsg() &&
         (mappingKeyIndicator.keyPath.node.nodeType === 'Literal'|| mappingKeyIndicator.keyPath.isLocalStackVariable() || !mappingKeyIndicator.keyPath.isSecret))
           this.mappingKeyTypeName = 'local';
-
         this.mappingName = this.indicators.name;
         this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
 
         if (mappingKeyIndicator.isStruct && mappingKeyIndicator.isParent) {
           this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
-          this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name)
+          this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
+          this.structPropertiesTypes = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => ({ name: m.name, typeName: m.typeName.name }));
         } else if (mappingKeyIndicator.referencingPaths[0]?.node.typeDescriptions.typeString.includes('struct ')) {
           // somewhat janky way to include referenced structs not separated by property
           this.typeName = mappingKeyIndicator.referencingPaths[0]?.getStructDeclaration()?.name;
@@ -198,9 +199,16 @@ class BoilerplateGenerator {
         this.generateBoilerplate();
       }
     } else {
-      if (indicators instanceof StateVariableIndicator && indicators.structProperties) {
-        this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
-        this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+      if (indicators instanceof StateVariableIndicator) {
+        if (indicators.structProperties){
+          this.structPropertiesTypes = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => ({ name: m.name, typeName: m.typeName.name }));
+          this.structProperties = indicators.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name);
+          this.typeName = indicators.referencingPaths[0]?.getStructDeclaration()?.name;
+        } else {
+          if (indicators.referencingPaths[0]?.node.typeDescriptions?.typeString === 'bool'){
+            this.typeName = 'bool';
+          }
+        }
       }
       this.assignIndicators(indicators);
       this.generateBoilerplate();
@@ -255,6 +263,7 @@ class BoilerplateGenerator {
           ...(this.isNullified && { isNullified: this.isNullified }),
           ...(this.isMapping && { isMapping: this.isMapping }),
           ...(this.isStruct && { structProperties: this.structProperties}),
+          ...(this.isStruct && this.structPropertiesTypes && { structPropertiesTypes: this.structPropertiesTypes}),
           ...(this.typeName && { typeName: this.typeName}),
           ...(this.mappingKeyName && { mappingKeyTypeName: this.mappingKeyTypeName }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),

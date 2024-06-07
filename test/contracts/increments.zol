@@ -7,17 +7,17 @@ contract MyContract {
     secret uint256 private a;
     secret mapping(uint256 => uint256) private b;
 
-    function assign(secret uint256 param1, uint256 key, secret uint256 c) public {
+    function assign(secret uint256 param1, uint256 ky, secret uint256 c) public {
         unknown a += param1;
-        unknown b[key] += c;
+        unknown b[ky] += c;
     }
 
     function decra(secret uint256 param2) public {
       a -= param2;
     }
 
-    function decrb(secret uint256 param2, uint256 key) public {
-      b[key] -= param2;
+    function decrb(secret uint256 param2, uint256 ky) public {
+      b[ky] -= param2;
     }
 
     function incra(secret uint256 param3) public {
