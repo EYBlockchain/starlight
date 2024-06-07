@@ -133,16 +133,37 @@ const prepareIntegrationApiServices = (node: any) => {
   // import generic test skeleton
   const genericApiServiceFile: any = Orchestrationbp.integrationApiServicesBoilerplate;
   // replace references to contract and functions with ours
-  let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
+  /*let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
     /CONTRACT_NAME/g,
     node.contractName,
-  ); 
+  ); */
+  let outputApiServiceFile = ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+      /**
+    NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
+    minus() cannot be called before an initial add(). */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let leafIndex;
+    let encryption = {};
+    // eslint-disable-next-line func-names
+    export async function ${node.contractName}(){
+      try {
+        await web3.connect();
+      } catch (err) {
+        throw new Error(err);
+    }
+  }`
+
+
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
 
   relevantFunctions.forEach((fn: any) => {
-  let fnboilerplate = genericApiServiceFile.postStatements()
+  let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
+  genericApiServiceFile.postStatements()[0]
     .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name);
+    .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
+    .replace(/CONTRACT_NAME/g, node.contractName)
+    .replace(/FUNCTION_NAME/g, fn.name) ;
+    console.log("fnboilerplate :", fnboilerplate);
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
