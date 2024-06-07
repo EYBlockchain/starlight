@@ -431,7 +431,7 @@ export default {
        path.traversePathsFast(findCustomInputsVisitor, state);
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
-       state.returnpara[state.functionName].returnParameters = state.customInputs.map(n => n.name);
+       state.returnpara[state.functionName].returnParameters = state.customInputs?.map(n => n.name);
        const newNode = buildNode(
        node.nodeType,
        { value: node.expression.value });
@@ -896,15 +896,8 @@ DoWhileStatement: {
            state.fnParameters.push(args[index]);
 
          });
-         const params = [...(internalfnDefIndicators.nullifiersRequired? [`nullifierRoot`] : []),
-               ...(internalfnDefIndicators.nullifiersRequired? [`latestNullifierRoot`] : []),
-               ...(internalfnDefIndicators.nullifiersRequired?  [`newNullifiers`] : []), 
-               ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
-               ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
-               ...(internalfnDefIndicators.containsAccessedOnlyState ? [`checkNullifiers`] : []),
-               ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
-               ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
-               `proof`,
+         const params = [
+               `inputs, proof`,
          ]
 
          state.fnParameters = state.fnParameters.concat(params);

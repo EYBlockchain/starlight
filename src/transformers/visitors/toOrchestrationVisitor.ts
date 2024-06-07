@@ -714,7 +714,27 @@ const visitor = {
             } else newNodes.sendTransactionNode.publicInputs.push(param.name);
           }
         }
-
+        // this adds the return parameters which are marked as secret in the tx 
+        
+        let returnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+       
+        let returnIsSecret: string[] = [];
+          const decStates = node._newASTPointer.decrementedSecretStates;
+          if( node._newASTPointer.returnParameters.parameters) {
+            node._newASTPointer.returnParameters.parameters.forEach( node => {
+            returnIsSecret.push(node.isSecret);
+          })
+        }
+        returnPara.forEach( (param, index) => {
+          if(decStates) {
+           if(decStates?.includes(param)){
+            returnPara[index] = returnPara[index]+'_2_newCommitment';
+          }
+        } else if(returnIsSecret[index])
+        returnPara[index] = returnPara[index] +'_newCommitment';
+        })
+        newNodes.sendTransactionNode.returnInputs = returnPara;
+       
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         // UNLESS they are public accessed states...
         let earliestPublicAccessIndex = newFunctionDefinitionNode.body.preStatements.findIndex(

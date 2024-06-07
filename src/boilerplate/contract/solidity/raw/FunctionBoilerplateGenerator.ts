@@ -43,12 +43,12 @@ class FunctionBoilerplateGenerator {
       if (isConstructor && encryptionRequired) throw new Error(`There shouldn't be any secret states that require sharing encrypted data in the constructor.`)
       const visibility = isConstructor ? 'memory' : 'calldata';
       return [
-        ...(newNullifiers ? [`uint256 nullifierRoot, uint256 latestNullifierRoot,uint256[] ${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
-        ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
-        ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
-        ...(encryptionRequired ? [`uint256[][] calldata cipherText`] : []),
-        ...(encryptionRequired ? [`uint256[2][] calldata ephPubKeys`] : []),
-        ...(newCommitments || newNullifiers ? [`uint256[] ${visibility} proof`] : []),
+        // ...(newNullifiers ? [`uint256 nullifierRoot, uint256 latestNullifierRoot,uint256[] ${visibility} newNullifiers`] : []), // nullifiers and nullifier root exist together
+        // ...(commitmentRoot ? [`uint256 commitmentRoot`] : []),
+        // ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
+        // ...(encryptionRequired ? [`uint256[][] calldata cipherText`] : []),
+        // ...(encryptionRequired ? [`uint256[2][] calldata ephPubKeys`] : []),
+        ...(newCommitments || newNullifiers ? [`Inputs calldata inputs, uint256[] ${visibility} proof`] : []),
       ];
     },
 
@@ -97,53 +97,55 @@ class FunctionBoilerplateGenerator {
       let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
 
       customInputs = customInputs?.flat(Infinity).filter(p => p.inCircuit);
-
+      const addCustomInputs = customInputs?.length == 1 && customInputs[0].name == '1' ? false : true;
       return [
-        `
-          Inputs memory inputs;`,
-
-        ...(customInputs?.length ?
+        // `
+        //   Inputs memory inputs;`,
+  
+        ...(addCustomInputs ?
           [`
-          inputs.customInputs = new uint[](${customInputs.flat(Infinity).length});
+          Inputs memory updatedInputs = inputs;
+          updatedInputs.customInputs = new uint[](${customInputs.flat(Infinity).length});
         	${customInputs.flat(Infinity).map((input: any, i: number) => {
-            if (input.type === 'address') return `inputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
-            if ((input.type === 'bool' || input.typeName?.name === 'bool' ) && !['0', '1'].includes(input.name)) return `inputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
-            return `inputs.customInputs[${i}] = ${input.name};`;
-          }).join('\n')}`]
-          : []),
+            if (input.type === 'address') return `updatedInputs.customInputs[${i}] = uint256(uint160(address(${input.name})));`;
+            if ((input.type === 'bool' || input.typeName?.name === 'bool' ) && !['0', '1'].includes(input.name)) return `updatedInputs.customInputs[${i}] = ${input.name} == false ? 0 : 1;`;
+            return `updatedInputs.customInputs[${i}] = ${input.name};`;
+          }).join('\n')}
+          
+          verify(proof, uint(FunctionNames.${functionName}), updatedInputs);`]
+          : [` 
+          verify(proof, uint(FunctionNames.${functionName}), inputs);`]),
 
-          ...(newNullifiers ? [`
-          inputs.nullifierRoot = nullifierRoot; `] : []),
+        //   ...(newNullifiers ? [`
+        // //   inputs.nullifierRoot = nullifierRoot; `] : []),
 
-          ...(newNullifiers ? [`
-          inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
+        //   ...(newNullifiers ? [`
+        //   inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
 
 
-        ...(newNullifiers ? [`
-          inputs.newNullifiers = newNullifiers;
-           `] : []),
+        // ...(newNullifiers ? [`
+        //   inputs.newNullifiers = newNullifiers;
+        //    `] : []),
 
-        ...(commitmentRoot ? [`
-          inputs.commitmentRoot = commitmentRoot;`] : []),
+        // ...(commitmentRoot ? [`
+        //   inputs.commitmentRoot = commitmentRoot;`] : []),
 
-        ...(newCommitments ? [`
-          inputs.newCommitments = newCommitments;`] : []),
+        // ...(newCommitments ? [`
+        //   inputs.newCommitments = newCommitments;`] : []),
 
+        // ...(encryptionRequired ? [`
+        //   inputs.cipherText = cipherText;`] : []),
+
+        // ...(encryptionRequired ? [`
+        //   inputs.encKeys = ephPubKeys;`] : []),
+        // `
+        //   ${msgSigCheck.join('\n')}`,
+        
         ...(encryptionRequired ? [`
-          inputs.cipherText = cipherText;`] : []),
-
-        ...(encryptionRequired ? [`
-          inputs.encKeys = ephPubKeys;`] : []),
-        `
-          ${msgSigCheck.join('\n')}`,
-        `
-          verify(proof, uint(FunctionNames.${functionName}), inputs);`,
-
-        ...(encryptionRequired ? [`
-          for (uint j; j < cipherText.length; j++) {
+          for (uint j; j < inputs.cipherText.length; j++) {
             // this seems silly (it is) but its the only way to get the event to emit properly
-            uint256[2] memory ephKeyToEmit = ephPubKeys[j];
-            uint256[] memory cipherToEmit = cipherText[j];
+            uint256[2] memory ephKeyToEmit = inputs.encKeys[j];
+            uint256[] memory cipherToEmit = inputs.cipherText[j];
             emit EncryptedData(cipherToEmit, ephKeyToEmit);
           }`]
           : []),

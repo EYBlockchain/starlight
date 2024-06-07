@@ -429,6 +429,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const params:any[] = [];
   const states: string[] = [];
   const rtnparams: string[] = [];
+  let returnInputs: string[] = [];
   let stateName: string;
   let stateNode: any;
 
@@ -836,35 +837,46 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input}.integer`);
           }           
         });
-        lines[lines.length - 1] += `, `;
       }
+      returnInputs = returnInputs.concat(lines);
+
+      if(node.returnInputs[0]) {
+        node.returnInputs.forEach((input: any) => { 
+          input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input);
+          
+        })
+      } 
+  
       params[0] = sendTransactionBoilerplate(node);
+      if(!node.returnInputs[0] && !params[0][4][0]) returnInputs.push(`1`); // If there are no return, circuit's default return is true
       // params[0] = arr of nullifier root(s)
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-      
+      (params[0][0][0]) ? params[0][0][0] = ` ${params[0][0][0]}, ` : params[0][0][0] = ` 0 , ` ; // nullifierRoot - array // Default value for the struct
+      (params[0][0][1]) ? params[0][0][1] = ` ${params[0][0][1]}, ` : params[0][0][1] = ` 0, `;
+      (params[0][2][0]) ? params[0][2] = ` ${params[0][2][0]},` : params[0][2] = ` 0 , ` ;  // commitmentRoot - array 
+      (params[0][1][0]) ? params[0][1] = ` [${params[0][1]}],` : params[0][1] = ` [],  `; // nullifiers - array
+      (params[0][3][0]) ? params[0][3] = `[${params[0][3]}],` : params[0][3] = ` [], `; // commitments - array
+      (params[0][4][0]) ? params[0][4] = `[${params[0][4]}],` : params[0][4] = ` [], `; // cipherText - array of arrays
+      (params[0][5][0]) ? params[0][5] = `[${params[0][5]}],`: params[0][5] = ` [], `;// cipherText - array of arrays
 
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
-      if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
-      if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
-      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
-      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
-      if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
-
+       
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [{nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}}, proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
+      
+      
 
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,
