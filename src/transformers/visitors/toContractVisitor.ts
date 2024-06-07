@@ -332,7 +332,7 @@ export default {
             customInputs: state.customInputs,
           }),
         );
-
+      
       if (path.scope.containsSecret)
         postStatements.push(
           ...buildNode('FunctionBoilerplate', {

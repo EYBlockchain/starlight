@@ -48,7 +48,7 @@ class FunctionBoilerplateGenerator {
         // ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
         // ...(encryptionRequired ? [`uint256[][] calldata cipherText`] : []),
         // ...(encryptionRequired ? [`uint256[2][] calldata ephPubKeys`] : []),
-        ...(newCommitments || newNullifiers ? [`Inputs calldata inputs, uint256[] ${visibility} proof`] : []),
+        ...(newCommitments || newNullifiers ? [`Inputs calldata inputs, uint256[] ${visibility} proof, BackupDataElement[] memory BackupData`] : []),
       ];
     },
 
@@ -63,7 +63,6 @@ class FunctionBoilerplateGenerator {
       encryptionRequired
     }): string[] {
       // prettier-ignore
-
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
         .map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.isConstantArray ? `${input.type}[${input.isConstantArray}]` : input.type) : []), // TODO arrays of structs/ structs of arrays
@@ -76,7 +75,6 @@ class FunctionBoilerplateGenerator {
       ...(encryptionRequired ? [`uint256[2][]`] : []),
       `uint256[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
-
       customInputs?.forEach((input, i) => {
         if (input.isConstantArray) {
           const expanded = [];
@@ -97,7 +95,7 @@ class FunctionBoilerplateGenerator {
       let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
 
       customInputs = customInputs?.flat(Infinity).filter(p => p.inCircuit);
-      const addCustomInputs = customInputs?.length == 1 && customInputs[0].name == '1' ? false : true;
+      const addCustomInputs = !customInputs  || (customInputs?.length == 1 && customInputs[0].name == '1') ? false : true;
       return [
         // `
         //   Inputs memory inputs;`,
@@ -150,11 +148,8 @@ class FunctionBoilerplateGenerator {
           }`]
           : []),
         ...(newCommitments ? [`
-          for (uint j; j < BackupData.length; j++) {
             // this seems silly (it is) but its the only way to get the event to emit properly
-            BackupDataElement memory encPreimage = BackupData[j];
-            emit EncryptedBackupData(encPreimage);
-          }`]
+            emit EncryptedBackupData(BackupData);`]
           : []),
       ];
     },

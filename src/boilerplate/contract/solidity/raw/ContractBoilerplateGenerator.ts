@@ -50,7 +50,7 @@ class ContractBoilerplateGenerator {
           uint256[] cipherText;
           uint256 ephPublicKey;
       } \n
-          event EncryptedBackupData(BackupDataElement encPreimage); 
+          event EncryptedBackupData(BackupDataElement[] encPreimages); 
           `] : []),
 
         ...nullifiersRequired ? [`

@@ -876,7 +876,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof).encodeABI();
+          .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,
