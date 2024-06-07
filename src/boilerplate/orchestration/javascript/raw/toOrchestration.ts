@@ -495,7 +495,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           return {
             signature: [
               `\nexport default async function ${node.name}(${params} ${states}) {`,
-              `\n return  { tx, encEvent };
+              `\n return  { tx, encEvent, encBackupEvent };
             \n}`,
             ],
             statements: lines,
@@ -506,7 +506,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         return {
           signature: [
             `\nexport default async function ${node.name}(${params} ${states}) {`,
-            `\n const bool = true; \n return  { tx, encEvent,  ${rtnparams} };
+            `\n const bool = true; \n return  { tx, encEvent, encBackupEvent, ${rtnparams} };
           \n}`,
           ],
           statements: lines,
@@ -516,7 +516,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         signature: [
           `\nexport default async function ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx, encEvent, ${rtnparams} };
+          `\nreturn  { tx, encEvent, encBackupEvent, ${rtnparams} };
         \n}`,
         ],
         statements: lines,
@@ -898,6 +898,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n  encEvent = await instance.getPastEvents("EncryptedData");
             \n } catch (err) {
             \n  console.log('No encrypted event');
+            \n}
+            \nlet encBackupEvent = '';
+            \n try {
+            \n  encBackupEvent = await instance.getPastEvents("EncryptedBackupData");
+            \n } catch (err) {
+            \n  console.log('No encrypted backup event');
             \n}`,
 
           // .send({
