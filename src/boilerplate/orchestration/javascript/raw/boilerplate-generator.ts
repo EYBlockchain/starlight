@@ -420,12 +420,12 @@ class BoilerplateGenerator {
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
-        `\nimport Web3 from './common/web3.mjs';`,
+        `\nimport web3Instance from './common/web3.mjs';`,
         `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
-        `const web3 = Web3.connection();`,
+        `const web3 = web3Instance.getConnection();`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -684,7 +684,7 @@ integrationTestBoilerplate = {
        describe('CONTRACT_NAME', async function () {
         this.timeout(3660000);
         try {
-          await web3.connect();
+          await web3Instance.connect();
         } catch (err) {
           throw new Error(err);
         }`
@@ -705,7 +705,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\nimport web3Instance from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -718,7 +718,7 @@ integrationApiServicesBoilerplate = {
       export async function CONTRACT_NAME(){
 
       	try {
-      		await web3.connect();
+      		await web3Instance.connect();
       	} catch (err) {
       		throw new Error(err);
       }

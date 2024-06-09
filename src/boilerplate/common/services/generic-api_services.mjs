@@ -8,6 +8,7 @@ import logger from "./common/logger.mjs";
 import { decrypt } from "./common/number-theory.mjs";
 import { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";
 import web3 from "./common/web3.mjs";
+import web3Instance from "../web3.mjs";
 
 /**
       Welcome to your zApp's integration test!
@@ -25,8 +26,8 @@ let encryption = {};
 
 export async function service_FUNCTION_NAME (req, res, next){
   try {
-    await web3.connect();
-    await new Promise((resolve) => setTimeout(() => resolve(), 3000));
+    await web3Instance.connect();
+    //await new Promise((resolve) => setTimeout(() => resolve(), 3000));
   } catch (err) {
     throw new Error(err);
   }
