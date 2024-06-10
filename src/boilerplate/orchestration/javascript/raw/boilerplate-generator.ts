@@ -443,6 +443,7 @@ class BoilerplateGenerator {
       accessedOnly,
       isSharedSecret,
       nullifierRootRequired,
+      newNullifierRootRequired,
       initialisationRequired,
       encryptionRequired,
       rootRequired,
@@ -470,7 +471,7 @@ class BoilerplateGenerator {
               \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
               \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
               ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-              ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
+              ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
               \t${stateName}_0_nullifier_updatedpath.integer,
@@ -505,7 +506,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
+                      ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
                       \t${stateName}_nullifier_updatedpath.integer,
@@ -533,7 +534,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? ${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`}: generalise(0).integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
+                      ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
                       \t${stateName}_nullifier_updatedpath.integer,

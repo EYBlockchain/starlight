@@ -293,14 +293,30 @@ export default {
 
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
-
-      if (!path.containsSecret) return;
+      if (!path.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret) return;
       const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
 
       state.circuitParams ??= {};
       state.circuitParams[path.getUniqueFunctionName()] ??= {};
       state.circuitParams[path.getUniqueFunctionName()].parameters = circuitParams;
+      // Delete repeated circuit parameters
+      let deletedIndexes = [];
+      state.circuitParams[path.getUniqueFunctionName()].parameters.forEach((circParam1, index1) => {
+        state.circuitParams[path.getUniqueFunctionName()].parameters.forEach((circParam2, index2) => {
+          if (circParam1.bpType === 'nullification' && circParam2.bpType === 'nullification' && circParam1.name === circParam2.name && index1 > index2) {
+            deletedIndexes.push(index1);
+          }
+          if (circParam1.bpType === 'newCommitment' && circParam2.bpType === 'newCommitment' && circParam1.name === circParam2.name && index1 > index2) {
+            deletedIndexes.push(index1);
+          }
+        });
+      });
+      deletedIndexes = [...new Set(deletedIndexes)];
+      deletedIndexes.sort((a, b) => b - a);
+      deletedIndexes.forEach(index => {
+        state.circuitParams[path.getUniqueFunctionName()].parameters.splice(index, 1);
+      });
     },
 
     exit(path: NodePath, state: any) {
@@ -315,7 +331,7 @@ export default {
      
 
       // if contract is entirely public, we don't want zkp related boilerplate
-      if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
+      if (!path.scope.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret && !(node.kind === 'constructor')) return;
 
       parameters.push(
         ...buildNode('FunctionBoilerplate', {
@@ -332,8 +348,7 @@ export default {
             customInputs: state.customInputs,
           }),
         );
-
-      if (path.scope.containsSecret)
+      if (path.scope.containsSecret || path.scope.indicators.internalFunctionInteractsWithSecret)
         postStatements.push(
           ...buildNode('FunctionBoilerplate', {
             bpSection: 'postStatements',
@@ -896,16 +911,15 @@ DoWhileStatement: {
            state.fnParameters.push(args[index]);
 
          });
-          const params = [...(internalfnDefIndicators.nullifiersRequired? [`nullifierRoot`] : []),
-          ...(internalfnDefIndicators.nullifiersRequired? [`latestNullifierRoot`] : []),
-          ...(internalfnDefIndicators.nullifiersRequired?  [`newNullifiers`] : []), 
-          ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
-          ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
-          ...(internalfnDefIndicators.containsAccessedOnlyState ? [`checkNullifiers`] : []),
-          ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
-          ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
-          `proof`,
-    ]
+         const params = [...(internalfnDefIndicators.nullifiersRequired? [`nullifierRoot`] : []),
+               ...(internalfnDefIndicators.nullifiersRequired? [`latestNullifierRoot`] : []),
+               ...(internalfnDefIndicators.nullifiersRequired?  [`newNullifiers`] : []), 
+               ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
+               ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
+               ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
+               ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
+               `proof`,
+         ]
 
          state.fnParameters = state.fnParameters.concat(params);
 

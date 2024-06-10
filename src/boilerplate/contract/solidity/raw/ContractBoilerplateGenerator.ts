@@ -126,7 +126,9 @@ class ContractBoilerplateGenerator {
         switch (input) {
           case 'nullifierRoot':  
             verifyInput.push( `
-            inputs[k++] = _inputs.nullifierRoot;`); 
+            inputs[k++] = _inputs.nullifierRoot;`);  
+            break; 
+          case 'newNullifierRoot':  
             verifyInput.push( `
             inputs[k++] = _inputs.latestNullifierRoot;`); 
             break; 
@@ -220,7 +222,6 @@ class ContractBoilerplateGenerator {
               newCommitments: 0,
               encryption: 0,
             };
-
             _inputs.map(i => verifyInputsMap(type, i, counter));
            
 
