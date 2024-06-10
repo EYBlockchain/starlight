@@ -693,6 +693,9 @@ DoWhileStatement: {
         visibility: node.visibility,
         storageLocation: node.storageLocation,
       });
+      if (newNode.isSecret === undefined ){
+        newNode.isSecret = scope.getIndicatorByName(node.name)?.isSecret;
+      }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
