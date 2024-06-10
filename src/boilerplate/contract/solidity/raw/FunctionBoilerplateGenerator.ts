@@ -48,7 +48,7 @@ class FunctionBoilerplateGenerator {
         // ...(newCommitments ? [`uint256[] ${visibility} newCommitments`] : []),
         // ...(encryptionRequired ? [`uint256[][] calldata cipherText`] : []),
         // ...(encryptionRequired ? [`uint256[2][] calldata ephPubKeys`] : []),
-        ...(newCommitments || newNullifiers ? [`Inputs calldata inputs, uint256[] ${visibility} proof, BackupDataElement[] memory BackupData`] : []),
+        ...(newCommitments || newNullifiers ? [`Inputs ${visibility} inputs, uint256[] ${visibility} proof, BackupDataElement[] memory BackupData`] : []),
       ];
     },
 
