@@ -911,7 +911,7 @@ DoWhileStatement: {
 
          });
          const params = [
-               `inputs, proof`,
+               `inputs, proof, BackupData`,
          ]
          state.fnParameters = state.fnParameters.concat(params);
          newNode = buildNode('InternalFunctionCall', {
