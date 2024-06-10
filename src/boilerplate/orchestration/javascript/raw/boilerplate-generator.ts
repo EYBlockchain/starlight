@@ -716,13 +716,14 @@ integrationApiServicesBoilerplate = {
       // eslint-disable-next-line func-names
 
       export async function CONTRACT_NAME(){
-
+        if (!web3Instance.isConnected()) {
       	try {
-      		await web3Instance.connect();
-      	} catch (err) {
+      	   await web3Instance.connect();
+	      	}
+      	 catch (err) {
       		throw new Error(err);
       }
-      }`
+      }}`
     },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${

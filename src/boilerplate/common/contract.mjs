@@ -11,7 +11,7 @@ import {
 	poseidonHash,
 } from './number-theory.mjs';
 
-const web3 = web3Instance.connection();
+const web3 = web3Instance.getConnection();
 const { generalise } = GN;
 const keyDb = '/app/orchestration/common/db/key.json';
 

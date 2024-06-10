@@ -26,8 +26,11 @@ let encryption = {};
 
 export async function service_FUNCTION_NAME (req, res, next){
   try {
-    await web3Instance.connect();
+    //await web3Instance.connect();
     //await new Promise((resolve) => setTimeout(() => resolve(), 3000));
+    if (!web3Instance.isConnected()) {
+			await web3Instance.connect();
+		}
   } catch (err) {
     throw new Error(err);
   }
