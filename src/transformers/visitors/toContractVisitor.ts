@@ -913,14 +913,13 @@ DoWhileStatement: {
          const params = [
                `inputs, proof`,
          ]
-
          state.fnParameters = state.fnParameters.concat(params);
-
          newNode = buildNode('InternalFunctionCall', {
          name: node.expression.name,
          internalFunctionInteractsWithSecret: state.internalFunctionInteractsWithSecret,
          parameters: state.fnParameters,
         });
+        newNode.encryptionRequired = internalfnDefIndicators.encryptionRequired;
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;

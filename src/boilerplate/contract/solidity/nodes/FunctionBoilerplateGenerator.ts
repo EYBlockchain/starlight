@@ -117,8 +117,8 @@ class FunctionBoilerplateGenerator {
 
       path.node._newASTPointer.body.statements?.forEach((node) => {
         if(node.expression?.nodeType === 'InternalFunctionCall'){
-          if(node.expression.parameters.includes('cipherText') ) 
-           internalFunctionEncryptionRequired = true 
+          if(node.expression.encryptionRequired) 
+           internalFunctionEncryptionRequired = true; 
 
         }
         
