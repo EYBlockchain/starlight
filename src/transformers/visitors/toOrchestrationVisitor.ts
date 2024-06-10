@@ -333,24 +333,24 @@ const visitor = {
         })
 
 
-       /* newNode.sendTransactionNode = buildNode('FunctionDefinitionPublic', {
+        newNode.sendTransactionNode = buildNode('SendTransaction', {
           functionName: node.fileName,
           contractName,
         });
         console.log('Node in vistor:', node);
         node.parameters.parameters.forEach(para =>{
         newNode.sendTransactionNode.publicInputs.push(para.name);
-})*/
+})
 
-//newNode.nodes.push(newNode.sendTransactionNode);
+/newNode.nodes.push(newNode.sendTransactionNode);
 
        // Ajout des entrées publiques
-   /*    node.parameters.parameters.forEach(para => {
+       node.parameters.parameters.forEach(para => {
         if (!newNode.nodes[1].publicInputs) {
           newNode.nodes[1].publicInputs = [];
       }
         newNode.nodes[1].publicInputs.push(para.name);
-    });*/
+    });
 
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
