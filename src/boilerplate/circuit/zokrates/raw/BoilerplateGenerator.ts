@@ -124,9 +124,9 @@ class BoilerplateGenerator {
       if(isAccessed && !isNullified) 
       lines = [
         `
-        // Create the Nullifier  for ${x} and no need to nnullify it as its accessed only:
+        // Create the Nullifier  for ${x} and no need to nullify it as its accessed only:
 
-        field ${x}_oldCommitment_nullifier = poseidon([\\
+        field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
           ${x}_stateVarId_field,\\
           ${x}_oldCommitment_owner_secretKey,\\
           ${x}_oldCommitment_salt\\
@@ -137,7 +137,7 @@ class BoilerplateGenerator {
         assert(\\
           nullifierRoot == checkproof(\\
             ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
+            ${x}_oldCommitment_nullifier_check_field\\
            )\
        )
         `,
