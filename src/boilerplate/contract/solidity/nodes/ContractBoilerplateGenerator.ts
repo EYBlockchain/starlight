@@ -10,9 +10,7 @@ class ContractBoilerplateGenerator {
   scope : Scope;
   constructor(scope: Scope) {
     if (bpCache.has(scope)) return bpCache.get(scope);
-
     this.scope = scope;
-
     bpCache.set(scope, this);
   }
 
@@ -80,7 +78,7 @@ class ContractBoilerplateGenerator {
         indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
       } = scope;
       const fnDefBindings = scope.filterBindings(
-        (b: any) => b.kind === 'FunctionDefinition' && b.path.containsSecret,
+        (b: any) => b.kind === 'FunctionDefinition' && (b.path.containsSecret || b.path.scope.indicators.internalFunctionInteractsWithSecret),
       );
       let functionNames = Object.values(fnDefBindings).map((b: any) => b.path.getUniqueFunctionName());
       if (isjoinSplitCommitmentsFunction.includes('true')) { 
@@ -118,7 +116,7 @@ class ContractBoilerplateGenerator {
       let paramtype: string;
       let params : any[];
       let functionName: string;
-      
+
       for ([functionName, parameterList] of Object.entries(circuitParams)) {
         for ([paramtype, params] of Object.entries(parameterList)){
         const returnpara = {};
@@ -131,9 +129,11 @@ class ContractBoilerplateGenerator {
         params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
+              if (!newList.includes('nullifierRoot')) 
+                  newList.push('nullifierRoot');
               if (circuitParamNode.isNullified) {
-                if (!newList.includes('nullifierRoot')) 
-                  newList.push('nullifierRoot')
+                if (!newList.includes('newNullifierRoot')) 
+                  newList.push('newNullifierRoot');
                 newList.push('nullifier');
  
               } 
@@ -180,7 +180,7 @@ class ContractBoilerplateGenerator {
      circuitParams[ functionName ] = parameterList;
      
     }
-      const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor')
+      const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor');
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinSplitCommitmentsFunction};
     },
 

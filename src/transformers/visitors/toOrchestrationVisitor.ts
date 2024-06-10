@@ -258,7 +258,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
 
     // if the node is the indexExpression, we dont need its value in the circuit
     state.publicInputs ??= [];
-    if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);   
+    if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);
   } 
 
     if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) addPublicInput(NodePath.getPath(node.indexExpression), state, null);
@@ -598,7 +598,6 @@ const visitor = {
               indicator: stateVarIndicator,
             });
           }
-
           if (secretModified || accessedOnly) {
             newNodes.generateProofNode.privateStates[
               name
@@ -1398,8 +1397,18 @@ const visitor = {
       // we now have a param or a local var dec
       let interactsWithSecret = false;
 
-      if (scope.bindings[node.id].referencingPaths.some(refPath => refPath.node.interactsWithSecret))
-        interactsWithSecret = true;
+      scope.bindings[node.id].referencingPaths.forEach(refPath => {
+        interactsWithSecret ||= refPath.node.interactsWithSecret;
+        // check for internal function call if the parameter passed in the function call interacts with secret or not
+        if(refPath.parentPath.isInternalFunctionCall()){
+          refPath.parentPath.node.arguments?.forEach((element, index) => {
+            if(node.id === element.referencedDeclaration) {
+             let key = (Object.keys((refPath.getReferencedPath(refPath.parentPath.node?.expression) || refPath.parentPath).scope.bindings)[index]);
+             interactsWithSecret ||= refPath.getReferencedPath(refPath.parentPath.node?.expression)?.scope.indicators[key]?.interactsWithSecret
+            }
+          })
+        }
+      });
 
       if (
         parent.nodeType === 'VariableDeclarationStatement' &&

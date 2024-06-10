@@ -29,13 +29,13 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
           item.expression.components.forEach(element => {
             if(element.kind === 'bool'){
               thisState.customInputs ??= [];
-              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, inCircuit: true});
+              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, isReturn: true});
             }
           });
         } else {
           if(item.expression.kind === 'bool'){
             thisState.customInputs ??= [];
-            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, inCircuit: true});
+            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, isReturn: true});
           }
         }
       }
@@ -43,8 +43,8 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   }
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
-   if(thisState.variableName.includes(indicator.node.name)){
-    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}, inCircuit: true, isCommitment: true});}
+   if(thisState.variableName.includes(indicator.node.name))
+    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}, isReturn: true, isCommitment: true});
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -61,7 +61,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
     if (!thisState.customInputs.some((input: any) => input.name === indicator?.name))
-      thisState.customInputs.push({name: indicator?.name, typeName: {name: type}, isConstantArray: thisPath.isConstantArray() ? thisPath.node.typeName.length.value : false, inCircuit: true });
+      thisState.customInputs.push({name: indicator?.name, typeName: {name: type}, isConstantArray: thisPath.isConstantArray() ? thisPath.node.typeName.length.value : false, inCircuit: true, isReturn: false });
   }
 };
 
@@ -293,14 +293,30 @@ export default {
 
       node._newASTPointer = newNode;
       parent._newASTPointer.push(newNode);
-
-      if (!path.containsSecret) return;
+      if (!path.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret) return;
       const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
 
       state.circuitParams ??= {};
       state.circuitParams[path.getUniqueFunctionName()] ??= {};
       state.circuitParams[path.getUniqueFunctionName()].parameters = circuitParams;
+      // Delete repeated circuit parameters
+      let deletedIndexes = [];
+      state.circuitParams[path.getUniqueFunctionName()].parameters.forEach((circParam1, index1) => {
+        state.circuitParams[path.getUniqueFunctionName()].parameters.forEach((circParam2, index2) => {
+          if (circParam1.bpType === 'nullification' && circParam2.bpType === 'nullification' && circParam1.name === circParam2.name && index1 > index2) {
+            deletedIndexes.push(index1);
+          }
+          if (circParam1.bpType === 'newCommitment' && circParam2.bpType === 'newCommitment' && circParam1.name === circParam2.name && index1 > index2) {
+            deletedIndexes.push(index1);
+          }
+        });
+      });
+      deletedIndexes = [...new Set(deletedIndexes)];
+      deletedIndexes.sort((a, b) => b - a);
+      deletedIndexes.forEach(index => {
+        state.circuitParams[path.getUniqueFunctionName()].parameters.splice(index, 1);
+      });
     },
 
     exit(path: NodePath, state: any) {
@@ -315,7 +331,7 @@ export default {
      
 
       // if contract is entirely public, we don't want zkp related boilerplate
-      if (!path.scope.containsSecret && !(node.kind === 'constructor')) return;
+      if (!path.scope.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret && !(node.kind === 'constructor')) return;
 
       parameters.push(
         ...buildNode('FunctionBoilerplate', {
@@ -331,8 +347,7 @@ export default {
             customInputs: state.customInputs,
           }),
         );
-      
-      if (path.scope.containsSecret)
+      if (path.scope.containsSecret || path.scope.indicators.internalFunctionInteractsWithSecret)
         postStatements.push(
           ...buildNode('FunctionBoilerplate', {
             bpSection: 'postStatements',
@@ -430,7 +445,7 @@ export default {
        path.traversePathsFast(findCustomInputsVisitor, state);
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
-       state.returnpara[state.functionName].returnParameters = state.customInputs?.map(n => n.name);
+       state.returnpara[state.functionName].returnParameters = state.customInputs.filter(n => n.isReturn).map(n => n.name );
        const newNode = buildNode(
        node.nodeType,
        { value: node.expression.value });

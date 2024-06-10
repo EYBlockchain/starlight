@@ -86,6 +86,7 @@ export const internalFunctionCallVisitor = (thisPath: NodePath, thisState: any) 
   if((params.length !== 0) && (params.some(node => (node.isSecret || node._newASTPointer?.interactsWithSecret))))
   {
     thisState.internalFunctionInteractsWithSecret = true;
+    thisPath.scope.indicators.internalFunctionInteractsWithSecret = true;
 } else
 thisState.internalFunctionInteractsWithSecret = false;
   oldStateArray = params.map(param => (param.name) );
