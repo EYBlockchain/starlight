@@ -91,19 +91,19 @@ export const sendTransactionBoilerplate = (node: any) => {
         break;
       case false:
       default:
-        // whole
+        // whole 
         if (!stateNode.reinitialisedOnly)
           output[2].push(`${privateStateName}_root.integer`);
-          if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
-            output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
-          }
-          if (!stateNode.accessedOnly && !stateNode.burnedOnly)
-            output[3].push(`${privateStateName}_newCommitment.integer`);
-          if (stateNode.encryptionRequired) {
-            output[4].push(`${privateStateName}_cipherText`);
-            output[5].push(`${privateStateName}_encKey`);
-          }
+        if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
+          output[1].push(`${privateStateName}_nullifier.integer`);
+          output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
+        }
+        if (!stateNode.accessedOnly && !stateNode.burnedOnly)
+          output[3].push(`${privateStateName}_newCommitment.integer`);
+        if (stateNode.encryptionRequired) {
+          output[4].push(`${privateStateName}_cipherText`);
+          output[5].push(`${privateStateName}_encKey`);
+        }
 
         break;
     }
@@ -117,6 +117,7 @@ export const generateProofBoilerplate = (node: any) => {
   const cipherTextLength: number[] = [];
   let containsRoot = false;
   let containsNullifierRoot = false;
+  let containsNewNullifierRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
   let stateNode: any;
@@ -135,8 +136,18 @@ export const generateProofBoilerplate = (node: any) => {
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
 
     const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
+
+    // Check if the mapping is already included in the parameters
+    let name: string;
+    let state: any;
+    let isIncluded = false;
+    for ([name, state] of Object.entries(node.privateStates)) {
+      if (stateNode.stateVarId[0] === state.stateVarId[0] && stateName != name && node.parameters.includes(state.stateVarId[1]) ) {
+        isIncluded = true;
+      }
+    }
     const stateVarIdLines =
-      stateNode.isMapping && !node.parameters.includes(stateNode.stateVarId[1]) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
+      stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !isIncluded && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];
     // we add any extra params the circuit needs
@@ -171,13 +182,15 @@ export const generateProofBoilerplate = (node: any) => {
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
             nullifierRootRequired: !containsNullifierRoot,
+            newNullifierRootRequired: !containsNewNullifierRoot,
             initialisationRequired: stateNode.initialisationRequired,
             encryptionRequired: stateNode.encryptionRequired,
             rootRequired: !containsRoot,
             parameters,
           })
         );
-        if(stateNode.nullifierRequired) containsNullifierRoot = true;
+        if(stateNode.nullifierRequired || stateNode.accessedOnly) containsNullifierRoot = true;
+        if(stateNode.nullifierRequired) containsNewNullifierRoot = true;
         if (!stateNode.reinitialisedOnly) containsRoot = true;
         break;
 
@@ -206,6 +219,7 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 nullifierRootRequired: !containsNullifierRoot,
+                newNullifierRootRequired: !containsNewNullifierRoot,
                 initialisationRequired: false,
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: !containsRoot,
@@ -214,6 +228,7 @@ export const generateProofBoilerplate = (node: any) => {
               })
             );
             containsNullifierRoot = true;
+            containsNewNullifierRoot = true;
             containsRoot = true;
             break;
           case false:
@@ -237,6 +252,7 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 nullifierRootRequired: false,
+                newNullifierRootRequired: false,
                 initialisationRequired: false,
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: false,
@@ -790,10 +806,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
-            lines.push(`[${input.properties.map(p => `${input.name}${input.isConstantArray ? '.all' : ''}.${p}.integer`).join(',')}]`)
+            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
           } else if (input.isConstantArray) {
             lines.push(`${input.name}.all.integer`);
-          } else {
+          } else if(input.isBool) {
+            lines.push(`(parseInt(${input.name}.integer, 10) === 1) ? true : false`);
+          }
+          else {
             lines.push(`${input}.integer`);
           }           
         });
@@ -804,15 +823,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-      
 
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
+      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array
       if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
       if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
       if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
       if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
-
 
       if (node.functionName === 'cnstrctr') return {
         statements: [

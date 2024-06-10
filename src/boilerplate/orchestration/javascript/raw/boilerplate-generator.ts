@@ -166,6 +166,18 @@ class BoilerplateGenerator {
             \nlet ${stateName}_witness_0;
             \nlet ${stateName}_witness_1;
 
+            if(${stateName}_1_oldCommitment === null && ${stateName}_commitmentFlag){
+              \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3);
+               ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
+
+               [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+                publicKey.hex(32),
+                ${stateName}_newCommitmentValue.integer,
+                ${stateName}_preimage,
+              );
+            }
+
             while(${stateName}_commitmentFlag === false) {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
@@ -406,7 +418,7 @@ class BoilerplateGenerator {
         `\nimport fs from 'fs';
         \n`,
         `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
-        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
+        `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
         `\nimport Web3 from './common/web3.mjs';`,
@@ -428,6 +440,7 @@ class BoilerplateGenerator {
       burnedOnly,
       accessedOnly,
       nullifierRootRequired,
+      newNullifierRootRequired,
       initialisationRequired,
       encryptionRequired,
       rootRequired,
@@ -455,7 +468,7 @@ class BoilerplateGenerator {
               \tsecretKey.integer,
               \tsecretKey.integer,
               ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-              ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
+              ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
               \t${stateName}_0_nullifier_path.integer,
               \t${stateName}_0_nullifier_updatedpath.integer,
@@ -490,7 +503,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \tsecretKey.integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
+                      ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
                       \t${stateName}_nullifier_updatedpath.integer,
@@ -518,7 +531,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
-                      ${nullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
+                      ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
                       \t${stateName}_nullifier_path.integer,
                       \t${stateName}_nullifier_updatedpath.integer,
@@ -625,7 +638,6 @@ sendTransaction = {
     },
 };
 
-
 integrationTestBoilerplate = {
   import(): string {
     return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
@@ -695,7 +707,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -738,11 +750,20 @@ integrationApiServicesBoilerplate = {
         try {
       
           const sum = await getBalance();
-          //res.status(200).json({ sum });
-          res.send({ sum });
+          res.send( {" Total Balance": sum} );
         } catch (error) {
           console.error("Error in calculation :", error);
-          //res.status(500).json({ error: "Erreur lors du calcul de la somme des commitments nullified." });
+          res.status(500).send({ error: err.message });
+        }
+      }
+
+      export async function service_getBalanceByState(req, res, next) {
+        try {
+          const { name, mappingKey } = req.body;
+          const balance = await getBalanceByState(name, mappingKey);
+          res.send( {" Total Balance": balance} );
+        } catch (error) {
+          console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });
         }
       }
@@ -791,14 +812,14 @@ integrationApiRoutesBoilerplate = {
         (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getBalance } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getBalance, service_getBalanceByState } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
     router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
-    //route ti get sum of values of nullified commitments
     router.get("/getBalance", service_getBalance);
+    router.get("/getBalanceByState", service_getBalanceByState);
     // nullifier route
     router.post("/reinstateNullifiers", service_reinstateNullifiers);
     `;

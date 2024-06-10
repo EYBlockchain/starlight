@@ -4,8 +4,75 @@ import NodePath from '../../traverse/NodePath.js';
 import { FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import buildNode from '../../types/orchestration-types.js'
 
+// We need to ensure that parameters appear in the same order as in the .mjs file if the same state variables are used in multiple function calls.
+// All parameters relating to the same state variable should be grouped together.
+const reorderParameters = (parameterList: any) => {
+  parameterList.forEach((param, index) => {
+    parameterList.forEach((newParam, newIndex) => {
+      if (param.name === newParam.name && param.bpType === 'nullification' && newParam.bpType === 'nullification') {
+        if (newIndex > index && param.isAccessed && !param.isNullified && (newParam.isNullified || !newParam.isAccessed) ){
+          parameterList[index] = newParam;
+        }
+      } 
+      if (param.name === newParam.name && param.bpType === 'oldCommitmentExistence' && newParam.bpType === 'oldCommitmentExistence') {
+        if (newIndex > index && (!param.isWhole || !param.initialisationRequired) && (newParam.isWhole && newParam.initialisationRequired) ){
+          parameterList[index] = newParam;
+        }
+      }
+    });
+  });
+  let newBPName: string;
+  let currentIndex: number;
+  let newCommitment = {};
+  parameterList.forEach((param, index) => {
+    if (param.name != newBPName && param.bpType){
+      newBPName = param.name;
+      currentIndex = index;
+      newCommitment[newBPName] = newCommitment[newBPName] ? newCommitment[newBPName] : [];
+      newCommitment[newBPName].push({"firstIndex": currentIndex, "isNewCommitment": false });
+    }
+    if (param.bpType === 'newCommitment'){
+      newCommitment[newBPName][newCommitment[newBPName].length -1].isNewCommitment = true;
+      newCommitment[newBPName][newCommitment[newBPName].length -1].newCommitmentIndex = index;
+    }
+    if (param.bpType === 'mapping'){
+      newCommitment[newBPName][newCommitment[newBPName].length -1].mappingIndex = index;
+    }
+    if (param.bpType === 'oldCommitmentExistence'){
+      newCommitment[newBPName][newCommitment[newBPName].length -1].oldCommitmentIndex = index;
+    }
+  });
+  let elementsToAdd = [];
+  Object.keys(newCommitment).forEach((varName) => {
+    if (newCommitment[varName][0].isNewCommitment === false && newCommitment[varName].length > 1){
+      let isSwapped = false;
+      newCommitment[varName].forEach((element) => {
+        if (element.isNewCommitment === true && !isSwapped){
+          let newIndex = newCommitment[varName][0].oldCommitmentIndex +1 || newCommitment[varName][0].mappingIndex+1 || newCommitment[varName][0].firstIndex +1;
+          let oldIndex = element.newCommitmentIndex;
+          elementsToAdd.push({"element": parameterList[oldIndex], "NewIndex": newIndex});
+        }
+      });
+    }
+  });
+  elementsToAdd.sort((a, b) => b.NewIndex - a.NewIndex );
+  elementsToAdd.forEach((element) => {
+    parameterList.splice(element.NewIndex, 0, element.element);
+  });
+}
 
 
+// We need to ensure that preStatments and postStatements are in the right order.
+const reorderBoilerPlate = (bpStatementList: any) => {
+  let order = ['mapping','PoKoSK', 'nullification', 'oldCommitmentPreimage', 'oldCommitmentExistence', 'newCommitment', 'encryption'];
+  bpStatementList.sort((a, b) => {
+    if (a.name === b.name) {
+      return order.indexOf(a.bpType) - order.indexOf(b.bpType);
+    } else {
+      return 0;
+    }
+  });
+}
 
 // let interactsWithSecret = false; // Added globaly as two objects are accesing it
 
@@ -16,18 +83,22 @@ const internalCallVisitor = {
 
      // Find the Internal Function Node,
      const { node, parent } = path;
+     state.intFnindex = {}; 
       state.internalFncName?.forEach( (name,index) => {
+        if (!state.intFnindex[name]) state.intFnindex[name] = {};
+        let callingFncName = state.callingFncName[index].name;
          node._newASTPointer.forEach(file => {
         if(file.fileName === name) {
-          if(state.circuitImport[index]==='true') {
             file.nodes.forEach(childNode => {
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
                 state.newReturnParameterList = cloneDeep(childNode.returnParameters.parameters);
+                state.newPreStatementList = cloneDeep(childNode.body.preStatements);
+                state.newPostStatementList = cloneDeep(childNode.body.postStatements);
                 
                  state.newParameterList.forEach((node, nodeIndex) => {
                   if(node.nodeType === 'Boilerplate') {
-                    for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                    for(const [id, oldStateName] of  state.oldStateArray[name].entries()) {
                       node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
                       if(node.newCommitmentValue === oldStateName)
                        node.newCommitmentValue = node.newCommitmentValue.replace(oldStateName, state.newStateArray[name][id].name)
@@ -36,7 +107,7 @@ const internalCallVisitor = {
                      }
                    }
                    if(node.nodeType === 'VariableDeclaration'){
-                     for(const [id, oldStateName] of state.oldStateArray.entries()) {
+                     for(const [id, oldStateName] of state.oldStateArray[name].entries()) {
                        if(oldStateName !== state.newStateArray[name][id].name)
                        node.name = state.newStateArray[name][id].name;
                        node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
@@ -46,7 +117,7 @@ const internalCallVisitor = {
                    }
                  })
                  state.newReturnParameterList.forEach((node,nodeIndex) => {
-                  for(const [id, oldStateName] of state.oldStateArray.entries()) {
+                  for(const [id, oldStateName] of state.oldStateArray[name].entries()) {
                     if(oldStateName !== state.newStateArray[name][id].name)
                     node.name = state.newStateArray[name][id].name;
                  node.name = node.name.replace('_'+oldStateName, '_'+state.newStateArray[name][id].name)
@@ -54,9 +125,11 @@ const internalCallVisitor = {
                     state.state.newReturnParameterList.splice(nodeIndex,1);
                   }
                  })
+               } else if (childNode.nodeType === 'ImportStatementList'){
+                state.newImportStatementList = cloneDeep(childNode.imports);            
                }
              })
-
+            if(state.circuitImport[index].isImported ==='true') {
 // Collect the internal call ParameterList
             let internalFncParameters: string[] = [];
             state.newParameterList.forEach(node => {
@@ -71,10 +144,10 @@ const internalCallVisitor = {
                  case 'nullification' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
                   internalFncParameters.push(`nullifierRoot`);
-                  internalFncParameters.push(`newNullifierRoot`);
-                  internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
+                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`newNullifierRoot`);
+                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
                   internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_siblingPath`);
-                  internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_newsiblingPath`);
+                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_newsiblingPath`);
                   break;
                  };
                  case 'oldCommitmentPreimage' : {
@@ -112,19 +185,21 @@ const internalCallVisitor = {
                 state.circuitArguments.push(param);
                }
              });
+            }
 
             node._newASTPointer.forEach(file => {
-              if(file.fileName === state.callingFncName[index].name){
+              if(file.fileName === callingFncName){
                 file.nodes.forEach(childNode => {
-                  if(childNode.nodeType === 'StructDefinition' && !state.isAddStructDefinition)
+                  if(childNode.nodeType === 'StructDefinition' && !state.isAddStructDefinition && state.circuitImport[index].isImported === 'true')
                    file.nodes.splice(file.nodes.indexOf(childNode),1);
                 })
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
-                    childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])]
-                    childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])]
-                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition'){
-                    childNode.body.statements.forEach(node => {
+                    childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])];
+                    reorderParameters(childNode.parameters.parameters);
+                    childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])];
+                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition' && state.circuitImport[index].isImported === 'true'){
+                      childNode.body.statements.forEach(node => {
                       if(node.nodeType === 'ExpressionStatement') {
                         if(node.expression.nodeType === 'InternalFunctionCall' && node.expression.name === name){
                           node.expression.CircuitArguments = node.expression.CircuitArguments.concat(state.circuitArguments);
@@ -133,7 +208,7 @@ const internalCallVisitor = {
                          }
                        }
                      })
-                   } else {
+                   } else if (state.circuitImport[index].isImported === 'true') {
                         childNode.body.statements.forEach(node => {
                           if(node.nodeType === state.callingFncName[index].parent){
                             node.body.statements.forEach(kidNode => {
@@ -153,9 +228,8 @@ const internalCallVisitor = {
                }
 
              })
-           }
 
-          else if(state.circuitImport[index] === 'false'){
+          if(state.circuitImport[index].isImported === 'false'){
             let newExpressionList = [];
             let isPartitioned = false
             let internalFncbpType: string;
@@ -171,7 +245,7 @@ const internalCallVisitor = {
                   if(node.nodeType === 'ExpressionStatement') {
                     if(node.expression.nodeType === 'Assignment') {
                       let  expressionList = cloneDeep(node);
-                      for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                      for(const [id, oldStateName] of  state.oldStateArray[name].entries()) {
                           if(state.newStateArray[name][id].memberName ){
                             if(node.expression.rightHandSide.rightExpression.name === oldStateName)
                              expressionList.expression.rightHandSide.rightExpression.name = expressionList.expression.rightHandSide.rightExpression.name.replace(oldStateName, state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName)
@@ -198,7 +272,7 @@ const internalCallVisitor = {
                  childNode.body.preStatements.forEach(node => {
                    if(node.isPartitioned){
                      commitmentValue = node.newCommitmentValue;
-                     for(const [id, oldStateName] of  state.oldStateArray.entries()) {
+                     for(const [id, oldStateName] of  state.oldStateArray[name].entries()) {
                        if(commitmentValue.includes(oldStateName)){
                          if(state.newStateArray[name][id].memberName)
                            commitmentValue = commitmentValue.replace(oldStateName,state.newStateArray[name][id].name+'.'+state.newStateArray[name][id].memberName);
@@ -211,7 +285,7 @@ const internalCallVisitor = {
                }
              })
              node._newASTPointer.forEach(file => {
-              if(file.fileName === state.callingFncName[index].name) {
+              if(file.fileName === callingFncName) {
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition') {
                     childNode.body.statements.forEach(node => {
@@ -219,13 +293,19 @@ const internalCallVisitor = {
                         callingFncbpType = node.bpType;
                       }
                     })
-                    if(childNode.nodeType === 'FunctionDefinition' && state.callingFncName[index].parent === 'FunctionDefinition')
-                    childNode.body.statements = [...new Set([...childNode.body.statements, ...newExpressionList])];
+                    let oldIndex = state.intFnindex[name][callingFncName] ? state.intFnindex[name][callingFncName] : -1;
+                    if(state.callingFncName[index].parent === 'FunctionDefinition'){
+                      // When merging the statements, we need to ensure that the new statements are added after the InternalFunctionCall statement.
+                      state.intFnindex[name][callingFncName] = childNode.body.statements.findIndex((statement, stIndex) => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name && stIndex > oldIndex);
+                      childNode.body.statements.splice(state.intFnindex[name][callingFncName] +1, 0, ...newExpressionList);
+                    }
                     else{
                       childNode.body.statements.forEach(node => {
-                        if(node.nodeType === state.callingFncName[index].parent)
-                          node.body.statements = [...new Set([...node.body.statements, ...newExpressionList])];
-                           })
+                        if(node.nodeType === state.callingFncName[index].parent){
+                          state.intFnindex[name][callingFncName] = node.body.statements.findIndex((statement, stIndex) => statement.expression?.nodeType === 'InternalFunctionCall' && statement.expression?.name === name && stIndex > oldIndex);
+                          node.body.statements.splice(state.intFnindex[name][callingFncName] +1, 0, ...newExpressionList);
+                        }
+                      })
                     }
                     childNode.body.preStatements.forEach( node => {
                       if(isPartitioned){
@@ -234,8 +314,77 @@ const internalCallVisitor = {
                       else
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
                      }
-                    })
-
+                    });
+                    // We need to merge the pre-statments and post-statements of the internal function with the calling function.
+                    childNode.body.preStatements.forEach(node => {
+                      switch(node.bpType) {
+                        case 'PoKoSK' : {
+                         state.newPreStatementList.forEach(statenode => {
+                           if(statenode.bpType === 'PoKoSK' && statenode.name === node.name){
+                            statenode.isNullified = statenode.isNullified || node.isNullified;
+                            node = Object.assign(node,statenode);
+                          }
+                         });
+                         break;
+                        }
+                        case 'nullification' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'nullification' && statenode.name === node.name){
+                             statenode.isNullified = statenode.isNullified || node.isNullified;
+                             node = Object.assign(node,statenode);
+                           }
+                          });
+                          break;
+                          }
+                        case 'oldCommitmentPreimage' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentPreimage' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        case 'oldCommitmentExistence' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentExistence' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }
+                        case 'newCommitment' : {
+                          state.newPreStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'newCommitment' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        default :
+                        break;
+                      }
+                     });
+                    let nonDuplicatePreStatements = [];
+                    state.newPreStatementList.forEach(stateNode => {
+                      let isDuplicate = false;
+                      let dupIndex =0;
+                      childNode.body.preStatements.forEach((existingNode, exIndex) => {
+                        if(existingNode.bpType === stateNode.bpType && existingNode.name === stateNode.name){
+                          isDuplicate = true;
+                        }
+                        if (existingNode.name === stateNode.name) {
+                          dupIndex = exIndex;
+                        }
+                      });
+                      if (!isDuplicate) nonDuplicatePreStatements.push({node: stateNode, index: dupIndex });
+                    });
+                    nonDuplicatePreStatements.forEach(dupNode => {
+                      childNode.body.preStatements.splice(dupNode.index +1, 0, dupNode.node);
+                    });
+                    reorderBoilerPlate(childNode.body.preStatements);
                     childNode.body.postStatements.forEach( node => {
                       if(isPartitioned){
                       if(internalFncbpType === callingFncbpType)
@@ -244,6 +393,77 @@ const internalCallVisitor = {
                        node.newCommitmentValue = node.newCommitmentValue+' - ('+commitmentValue+')';
                      }
                     })
+                    childNode.body.postStatements.forEach(node => {
+                      switch(node.bpType) {
+                        case 'PoKoSK' : {
+                         state.newPostStatementList.forEach(statenode => {
+                           if(statenode.bpType === 'PoKoSK' && statenode.name === node.name){
+                            statenode.isNullified = statenode.isNullified || node.isNullified;
+                            node = Object.assign(node,statenode);
+                          }
+                         });
+                         break;
+                        }
+                        case 'nullification' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'nullification' && statenode.name === node.name){
+                             statenode.isNullified = statenode.isNullified || node.isNullified;
+                             node = Object.assign(node,statenode);
+                           }
+                          });
+                          break;
+                          }
+                        case 'oldCommitmentPreimage' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentPreimage' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        case 'oldCommitmentExistence' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'oldCommitmentExistence' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }
+                        case 'newCommitment' : {
+                          state.newPostStatementList.forEach(statenode => {
+                            if(statenode.bpType === 'newCommitment' && statenode.name === node.name){
+                              statenode.isNullified = statenode.isNullified || node.isNullified;
+                              node = Object.assign(node,statenode);
+                            }
+                          });
+                          break;
+                          }  
+                        default :
+                        break;
+                      }
+                     });
+                    let nonDuplicatePostStatements = [];
+                    state.newPostStatementList.forEach(stateNode => {
+                       let isDuplicate = false;
+                       let dupIndex = undefined;
+                       childNode.body.postStatements.forEach((existingNode, exIndex) => {
+                         if(existingNode.bpType === stateNode.bpType && existingNode.name === stateNode.name){
+                           isDuplicate = true;
+                         }
+                         if (existingNode.name === stateNode.name) {
+                           dupIndex = exIndex;
+                         }
+                       });
+                       if (!isDuplicate) nonDuplicatePostStatements.push({node: stateNode, index: dupIndex });
+                    });
+                    nonDuplicatePostStatements.forEach(dupNode => {
+                       childNode.body.postStatements.splice(!dupNode.index ? 0 : dupNode.index +1, 0, dupNode.node);
+                    });
+                    reorderBoilerPlate(childNode.body.postStatements);
+                  } else if (childNode.nodeType === 'ImportStatementList'){
+                    childNode.imports = [...new Set([...childNode.imports, ...state.newImportStatementList])];
                   }
 
                  })
@@ -252,7 +472,8 @@ const internalCallVisitor = {
            }
          }
        })
-     })
+     });
+     
    },
  },
 

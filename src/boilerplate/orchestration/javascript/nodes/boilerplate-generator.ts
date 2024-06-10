@@ -177,8 +177,6 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
   }
 }
 
-
-
 /**
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.

@@ -238,6 +238,7 @@ export default {
       const { operator, leftHandSide, rightHandSide } = node;
       const lhsSecret = !!scope.getReferencedBinding(leftHandSide)?.isSecret;
 
+
       if (['bool', 'address'].includes(leftHandSide.typeDescriptions.typeString)) {
         markParentIncrementation(path, state, false, false, leftHandSide);
         const lhsBinding = scope.getReferencedBinding(leftHandSide)
@@ -272,19 +273,17 @@ export default {
       }
 
       // a *= something, a /= something
-      // OR lhs non-secret - we don't care about those
       if (
         operator === '%=' ||
         operator === '/=' ||
-        operator === '*=' ||
-        !lhsSecret
+        operator === '*=' 
       ) {
         markParentIncrementation(path, state, false, false, leftHandSide);
         return;
       }
 
       // after +=, -=, %=, *=, /=, we can only deal with =
-      if (operator !== '=' && operator !== '+=' && operator !== '-=')
+      if ((operator !== '=' && operator !== '+=' && operator !== '-=')  && lhsSecret)
         throw new TODOError(
           `Operator '${operator}' not yet supported. Please open an issue.`,
           node,
@@ -292,7 +291,7 @@ export default {
 
       // then, it depends what's on the RHS of the assignment, so we continue
       // we save the LHS node to help us later
-      state.incrementedIdentifier = leftHandSide.baseExpression || leftHandSide;
+      if (lhsSecret) state.incrementedIdentifier = leftHandSide.baseExpression || leftHandSide;
     },
   },
 

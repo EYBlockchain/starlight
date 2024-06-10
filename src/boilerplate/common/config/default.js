@@ -1,10 +1,10 @@
 module.exports = {
   log_level: 'info',
   zokrates: {
-    url: 'http://zokrates:80',
+    url: process.env.ZOKRATES_URL || 'http://zokrates:80',
   },
   merkleTree: {
-    url: 'http://timber:80',
+    url: process.env.TIMBER_URL || 'http://timber:80',
   },
   // merkle-tree stuff:
   ZERO: '0',

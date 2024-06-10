@@ -12,8 +12,6 @@ export default {
   /**
    * Connects to web3 and then sets proper handlers for events
    */
-
-
   connect() {
     if (this.web3) return this.web3.currentProvider;
 
@@ -45,7 +43,3 @@ export default {
     return false;
   },
 };
-
-
-
- 
