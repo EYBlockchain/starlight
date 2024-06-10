@@ -29,13 +29,13 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
           item.expression.components.forEach(element => {
             if(element.kind === 'bool'){
               thisState.customInputs ??= [];
-              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
+              thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, inCircuit: true});
             }
           });
         } else {
           if(item.expression.kind === 'bool'){
             thisState.customInputs ??= [];
-            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}});
+            thisState.customInputs.push({name: '1', typeName: {name: 'bool'}, inCircuit: true});
           }
         }
       }
@@ -374,9 +374,9 @@ export default {
       });
 
     node.parameters.forEach((node, index) => {
-    if(node.nodeType === 'VariableDeclaration'){
-    node.name = returnName[index];
-  }
+      if(node.nodeType === 'VariableDeclaration'){
+        node.name = returnName[index];
+      }
     });
 
     const newNode = buildNode('ParameterList');
