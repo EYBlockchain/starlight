@@ -2,7 +2,6 @@ import fs from 'fs';
 import config from 'config';
 import GN from 'general-number';
 import utils from 'zkp-utils';
-import Web3 from './web3.mjs';
 import logger from './logger.mjs';
 import web3Instance from './web3.mjs';
 
@@ -12,8 +11,7 @@ import {
 	poseidonHash,
 } from './number-theory.mjs';
 
-//const web3 = Web3.connection();
-const web3 = web3Instance.getConnection();
+const web3 = web3Instance.connection();
 const { generalise } = GN;
 const keyDb = '/app/orchestration/common/db/key.json';
 

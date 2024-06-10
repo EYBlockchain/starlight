@@ -26,7 +26,10 @@ class Web3Service {
   }
 
   getConnection() {
-    return this.web3;
+    if (this.web3) {
+      return this.web3;
+    }
+    throw new Error('Web3 connection not established yet.');
   }
 
   isConnected() {
