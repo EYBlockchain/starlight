@@ -66,14 +66,9 @@ class FunctionBoilerplateGenerator {
       let parameter = [
       ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
         .map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.isConstantArray ? `${input.type}[${input.isConstantArray}]` : input.type) : []), // TODO arrays of structs/ structs of arrays
-      ...(newNullifiers ? [`uint256`] : []),
-      ...(newNullifiers ? [`uint256`] : []),
-      ...(newNullifiers ? [`uint256[]`] : []), 
-      ...(commitmentRoot  ? [`uint256`] : []),
-      ...(newCommitments  ? [`uint256[]`] : []),
-      ...(encryptionRequired  ? [`uint256[][]`] : []),
-      ...(encryptionRequired ? [`uint256[2][]`] : []),
+      `(uint256,uint256,uint256[],uint256,uint256[],uint256[])`,
       `uint256[]`,
+      `(string,uint256[],uint256)[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
       customInputs?.forEach((input, i) => {
         if (input.isConstantArray) {
