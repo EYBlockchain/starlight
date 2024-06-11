@@ -706,7 +706,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, addConstructorNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -824,11 +824,6 @@ integrationApiRoutesBoilerplate = {
 
 zappFilesBoilerplate = () => {
   return [
-    {
-      readPath: pathPrefix + '/bin/startup',
-      writePath: '/bin/startup',
-      generic: true,
-    },
     {
       readPath: pathPrefix + '/bin/startup',
       writePath: '/bin/default_startup',

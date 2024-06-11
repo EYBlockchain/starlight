@@ -458,6 +458,7 @@ const visitor = {
           }
         }
         if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          file.nodes?.[0].functionNames.push(node.fileName);
           for (const fn of file.nodes[0].functions) {
             if (fn.name === node.fileName) thisIntegrationApiServiceFunction = fn;
           }

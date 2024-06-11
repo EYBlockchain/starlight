@@ -879,3 +879,26 @@ export function getupdatedNullifierPaths(nullifier) {
   const witness = { path: membershipPath.path, root: root };
   return witness;
 }
+// This updates the nullifier Tree with constructor inputs
+export async function addConstructorNullifiers() {
+  const constructorInput = JSON.parse(
+    fs.readFileSync("/app/orchestration/common/db/constructorTx.json", "utf-8")
+  );
+  const { nullifiers } = constructorInput;
+  console.log(nullifiers);
+  const { isNullfiersAdded } = constructorInput;
+  if(isNullfiersAdded == false)
+  {
+      nullifiers.forEach(nullifier => {
+      smt_tree = insertLeaf(nullifier, smt_tree);
+    })
+    temp_smt_tree = smt_tree;
+    console.log(getHash(smt_tree));
+    constructorInput.isNullfiersAdded = true;
+    fs.writeFileSync(
+      "/app/orchestration/common/db/constructorTx.json",
+      JSON.stringify(constructorInput, null, 4)
+    );
+  
+  }
+}
