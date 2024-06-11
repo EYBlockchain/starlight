@@ -109,9 +109,9 @@ class FunctionBoilerplateGenerator {
             if (input.isCommitment) return ``;
             return `updatedInputs.customInputs[${i}] = ${input.name};`;
           }).join('\n')}
-          
+          ${msgSigCheck.join('\n')}
           verify(proof, uint(FunctionNames.${functionName}), updatedInputs);`]
-          : [` 
+          : [`${msgSigCheck.join('\n')}
           verify(proof, uint(FunctionNames.${functionName}), inputs);`]),
 
         //   ...(newNullifiers ? [`
@@ -136,8 +136,6 @@ class FunctionBoilerplateGenerator {
 
         // ...(encryptionRequired ? [`
         //   inputs.encKeys = ephPubKeys;`] : []),
-        // `
-        //   ${msgSigCheck.join('\n')}`,
         
         ...(encryptionRequired ? [`
           for (uint j; j < inputs.cipherText.length; j++) {

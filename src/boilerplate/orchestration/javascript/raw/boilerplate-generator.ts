@@ -578,14 +578,12 @@ encryptBackupPreimage = {
     }
     let plainText;
     if (mappingKey){
-      plainText = `[BigInt(${mappingKey}.hex(32)),
+      plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
         BigInt(${stateName}_stateVarId),
-        ${valueName},
-        BigInt(${saltName}.hex(32))]`;
+        ${valueName}]`;
     } else{
-      plainText = `[BigInt(${stateName}_stateVarId),
-        ${valueName},
-        BigInt(${saltName}.hex(32))]`;
+      plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId),
+        ${valueName}]`;
     }
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
     let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
