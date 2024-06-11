@@ -577,13 +577,16 @@ encryptBackupPreimage = {
       default:
     }
     let plainText;
+    let varName = stateName;
     if (mappingKey){
       plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
-        BigInt(${stateName}_stateVarId),
+        BigInt(generalise(${stateName}_stateVarIdInit)), BigInt(${stateName}_stateVarId),
         ${valueName}]`;
+        varName += ` a`;
     } else{
       plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId),
         ${valueName}]`;
+      if (structProperties) varName += ` s`;
     }
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
     let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
@@ -612,7 +615,7 @@ encryptBackupPreimage = {
         ]
       ); \n 
       console.log("${stateName}_plaintext", ${stateName}_plaintext);\n
-      let ${stateName}_cipherText_combined = {varName: "${stateName}", cipherText:  ${stateName}_cipherText, ephPublicKey: ${stateName}_ephPublicKey.hex(32)};\n 
+      let ${stateName}_cipherText_combined = {varName: "${varName}", cipherText:  ${stateName}_cipherText, ephPublicKey: ${stateName}_ephPublicKey.hex(32)};\n 
       BackupData.push(${stateName}_cipherText_combined);`];
   },
 };

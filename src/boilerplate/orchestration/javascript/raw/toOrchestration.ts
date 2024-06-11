@@ -15,7 +15,7 @@ const stateVariableIds = (node: any) => {
   } else {
     // if is a mapping...
     stateVarIds.push(
-      `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
+      `\nlet ${privateStateName}_stateVarIdInit = ${stateNode.stateVarId[0]};`,
     );
     // ... and the mapping key is not msg.sender, but is a parameter
     if (
@@ -42,7 +42,7 @@ const stateVariableIds = (node: any) => {
       );
     }
     stateVarIds.push(
-      `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+      `\nlet ${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarIdInit).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
     );
   }
   return stateVarIds;
