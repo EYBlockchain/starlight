@@ -2,7 +2,7 @@
 
 // Q: how are we merging mapping key and ownerPK in edge case?
 // Q: should we reduce constraints a mapping's commitment's preimage by not having the extra inner hash? Not at the moment, because it adds complexity to transpilation.
-import fs, { stat } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -712,7 +712,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getSharedkeys , getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getSharedSecretskeys , getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
