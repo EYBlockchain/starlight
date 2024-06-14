@@ -1470,12 +1470,16 @@ const visitor = {
   Return: {
      enter(path: NodePath, state: any) {
        const { node, parent } = path;
-       const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
-       node._newASTPointer = newNode;
-       if (Array.isArray(parent._newASTPointer)) {
-         parent._newASTPointer.push(newNode);
-       } else {
-         parent._newASTPointer[path.containerName].push(newNode);
+       if (node.expression.value){
+        const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer)) {
+          parent._newASTPointer.push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName].push(newNode);
+        }
+       } else{
+        state.skipSubNodes = true;
        }
      },
   },
