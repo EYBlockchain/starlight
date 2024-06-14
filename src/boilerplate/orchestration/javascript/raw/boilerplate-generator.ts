@@ -606,15 +606,6 @@ encryptBackupPreimage = {
         decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].hex(32),
         decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].hex(32)
       ]); \n
-      /*const ${stateName}_plaintext = decrypt(
-        ${stateName}_bcipherText,
-        secretKey.hex(32),
-        [
-          decompressStarlightKey(${stateName}_ephPublicKey)[0].hex(32),
-          decompressStarlightKey(${stateName}_ephPublicKey)[1].hex(32),
-        ]
-      ); \n 
-      console.log("${stateName}_plaintext", ${stateName}_plaintext);*/ \n
       let ${stateName}_cipherText_combined = {varName: "${varName}", cipherText:  ${stateName}_bcipherText, ephPublicKey: ${stateName}_ephPublicKey.hex(32)};\n 
       BackupData.push(${stateName}_cipherText_combined);`];
   },

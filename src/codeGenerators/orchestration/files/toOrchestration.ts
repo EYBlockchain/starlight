@@ -558,7 +558,6 @@ const prepareBackupDataRetriever = (node: any) => {
             }
           }
         }
-        console.log(storedCommitments);
         await storeCommitment({
           hash: newCommitment,
           name: name,
