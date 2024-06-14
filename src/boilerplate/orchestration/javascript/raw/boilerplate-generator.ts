@@ -558,7 +558,6 @@ class BoilerplateGenerator {
 encryptBackupPreimage = {
 
   postStatements({ stateName, stateType, structProperties, encryptionRequired, mappingName, mappingKey }): string[] {
-    if (encryptionRequired) return [``];
     let valueName = '';
     let saltName = '';
     switch (stateType) {
@@ -577,10 +576,10 @@ encryptBackupPreimage = {
       default:
     }
     let plainText;
-    let varName = stateName;
+    let varName = mappingName ? mappingName : stateName;
     if (mappingKey){
       plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
-        BigInt(generalise(${stateName}_stateVarIdInit)), BigInt(${stateName}_stateVarId),
+        BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
         ${valueName}]`;
         varName += ` a`;
     } else{
@@ -588,6 +587,7 @@ encryptBackupPreimage = {
         ${valueName}]`;
       if (structProperties) varName += ` s`;
     }
+    if (stateType === 'increment') varName += ` u`;
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
     let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
     let ${stateName}_ephPublicKeyPoint = generalise(
@@ -771,7 +771,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -851,7 +851,18 @@ integrationApiServicesBoilerplate = {
           logger.error(err);
           res.send({ errors: [err.message] });
         }
-      }`
+      }
+      
+      export async function service_backupData(req, res, next) {
+        try {
+            await backupDataRetriever();
+            res.send("Complete");
+            await sleep(10);
+        } catch (err) {
+            logger.error(err);
+            res.send({ errors: [err.message] });
+        }
+    }`
       
       
       ;
@@ -873,7 +884,7 @@ integrationApiRoutesBoilerplate = {
         (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getBalance, service_getBalanceByState } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getBalance, service_getBalanceByState, service_backupData, } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
@@ -883,6 +894,8 @@ integrationApiRoutesBoilerplate = {
     router.get("/getBalanceByState", service_getBalanceByState);
     // nullifier route
     router.post("/reinstateNullifiers", service_reinstateNullifiers);
+    // backup route
+    router.post("/backupDataRetriever", service_backupData);
     `;
   }
 };

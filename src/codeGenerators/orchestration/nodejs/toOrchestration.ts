@@ -251,6 +251,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'IntegrationApiRoutesBoilerplate':
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
+    case 'BackupDataRetrieverBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
     case 'InitialisePreimage':
     case 'InitialiseKeys':
     case 'ReadPreimage':

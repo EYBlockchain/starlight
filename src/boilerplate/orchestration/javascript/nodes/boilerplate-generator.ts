@@ -196,6 +196,29 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       };
     }
 
+    case 'buildBoilerplateReciever': {
+      const { id, increment, privateStateName, indicator = {} } = fields;
+      return {
+        privateStateName,
+        stateVarId: id,
+        increment,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
+        isWhole: indicator.isWhole,
+        isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
+        encryptionRequired: indicator.encryptionRequired,
+        owner: indicator.isOwned
+          ? indicator.owner.node?.name || indicator.owner.name
+          : null,
+        ownerIsSecret: indicator.isOwned
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
+          : null,
+      };
+    }
+
     default:
       throw new TypeError(nodeType);
   }
@@ -401,6 +424,19 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         name,
       };
     }
+
+    case 'BackupDataRetrieverBoilerplate': {
+      const {
+        contractName,
+        privateStates = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        privateStates,
+      };
+    }
+
     default:
       throw new TypeError(nodeType);
   }

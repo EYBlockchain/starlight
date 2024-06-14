@@ -319,6 +319,17 @@ const visitor = {
         ],
       });
       node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'BackupDataRetriever',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('BackupDataRetrieverBoilerplate', {
+            contractName,
+            privateStates: [],
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
       if (scope.indicators.newCommitmentsRequired) {
         const newNode = buildNode('EditableCommitmentCommonFilesBoilerplate');
         node._newASTPointer.push(newNode);
@@ -624,6 +635,22 @@ const visitor = {
               id,
               indicator: stateVarIndicator,
             });
+          }
+
+          if (stateVarIndicator.newCommitmentsRequired) {
+            let contrNode = path.getContractDefinition().node._newASTPointer;
+            for (const file of contrNode) {
+              if (file.nodes?.[0].nodeType === 'BackupDataRetrieverBoilerplate') {
+                let newNode = buildPrivateStateNode('EncryptBackupPreimage', {
+                  privateStateName: name,
+                  id,
+                  indicator: stateVarIndicator,
+                });
+                if (!file.nodes?.[0].privateStates.some((n: any) => n.stateVarId === newNode.stateVarId)){
+                  file.nodes?.[0].privateStates.push(newNode);
+                }
+              }
+            }
           }
 
           if (secretModified || accessedOnly) {
