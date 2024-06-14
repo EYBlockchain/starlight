@@ -837,7 +837,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           } else if (input.isConstantArray) {
             lines.push(`${input.name}.all.integer`);
           } else if(input.isBool) {
-            lines.push(`(parseInt(${input.name}.integer, 10) === 1) ? true : false`);
+            lines.push(`parseInt(${input.name}.integer, 10)`);
           }
           else {
             lines.push(`${input}.integer`);
