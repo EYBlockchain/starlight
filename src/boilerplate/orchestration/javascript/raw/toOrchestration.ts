@@ -871,7 +871,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [{nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}}, proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nBackupData.forEach((element) => {
+            element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
+          });
+          \nconst tx = { proofInput: [{customInputs: [], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}}, proof, BackupData], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
       
