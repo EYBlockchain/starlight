@@ -129,7 +129,7 @@ const prepareIntegrationTest = (node: any) => {
 };
 
 const prepareIntegrationApiServices = (node: any) => {
-  // import generic test skeleton
+  // import generic test skeletonfr
   const genericApiServiceFile: any = Orchestrationbp.integrationApiServicesBoilerplate;
   // replace references to contract and functions with ours
   let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
@@ -141,7 +141,8 @@ const prepareIntegrationApiServices = (node: any) => {
   relevantFunctions.forEach((fn: any) => {
   let fnboilerplate = genericApiServiceFile.postStatements()
     .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name);
+    .replace(/FUNCTION_NAME/g, fn.name)
+    .replace(/CONSTRUCTOR_INPUTS/g, node.functionNames.includes('cnstrctr') ? `await addConstructorNullifiers();` : ``);
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
@@ -354,6 +355,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     customProofImport += `const constructorInput = JSON.parse(
       fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
     );
+
     \nconst { proofInput } = constructorInput;`;
     iwsConstructorParams?.forEach((param: any) => {
       customProofImport += `\nconst { ${param.name} } = constructorInput;`
@@ -375,7 +377,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
  * @param node - a SetupCommonFilesBoilerplate node
  */
 
-const prepareSetupScript = (file: localFile, node: any) => {
+const prepareStartupScript = (file: localFile, node: any) => {
   let constructorCall = ``;
   if (!node.functionNames.includes('cnstrctr')) {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, ``);
@@ -600,8 +602,6 @@ export default function fileGenerator(node: any) {
         .filter((x: any) => x.nodeType !== 'NonSecretFunction')
         .flatMap(fileGenerator));
 
-
-
     case 'File':
       return [
         {
@@ -632,8 +632,11 @@ export default function fileGenerator(node: any) {
         'orchestration',
       );
 
-      const readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
-      const startupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
+      let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
+      const setupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
+      files.push(setupScript);
+      readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup');
+      const startupScript = { filepath: 'bin/startup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(startupScript);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>
@@ -646,7 +649,7 @@ export default function fileGenerator(node: any) {
       if (node.functionNames.includes('cnstrctr')) {
         const redeployPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/redeploy');
         const redeployFile = { filepath: 'bin/redeploy', file: fs.readFileSync(redeployPath, 'utf8') };
-        prepareSetupScript(redeployFile, node);
+        prepareStartupScript(redeployFile, node);
         files.push(redeployFile);
       }
       // replace placeholder values with ours
@@ -660,7 +663,7 @@ export default function fileGenerator(node: any) {
       );
       // build the migrations file
       prepareMigrationsFile(migrationsfile, node);
-      prepareSetupScript(startupScript, node);
+      prepareStartupScript(startupScript, node);
       return files;
     }
 

@@ -599,6 +599,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
                   }));
 
                 break;
@@ -614,6 +615,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
                   }));
 
                 break;
@@ -631,6 +633,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
+                isConstructor: node.isConstructor,
               }));
         }
       }
@@ -874,7 +877,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nBackupData.forEach((element) => {
             element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
           });
-          \nconst tx = { proofInput: [{customInputs: [], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}}, proof, BackupData], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [{customInputs: [], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}}, proof, BackupData], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
       

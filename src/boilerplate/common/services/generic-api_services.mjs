@@ -33,6 +33,7 @@ export async function service_FUNCTION_NAME (req, res, next){
 	try {
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
+    CONSTRUCTOR_INPUTS;
     const { tx , encEvent, encBackupEvent, _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
