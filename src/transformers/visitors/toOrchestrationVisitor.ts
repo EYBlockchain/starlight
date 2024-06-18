@@ -425,6 +425,7 @@ const visitor = {
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
 
+        
         interface PublicParam {
           name: string;
           properties?: { name: string; type: string }[];
@@ -451,87 +452,10 @@ const visitor = {
             }),
           );
         }}
-
-const newNodes: any = {};  
-const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
-  functionName: node.fileName,
-  contractName,
-  publicInputs: [],
-});
+ 
 
 
-
-node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
-  if (!para.isSecret) {
-    if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool')) {
-      let newParam: PublicParam = { name: para.name };
-      if (path.isStructDeclaration(para)) {
-        newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
-      }
-      if (path.isConstantArray(para)) {
-        newParam.isConstantArray = true;
-      }
-      if (para.typeName?.name === 'bool') {
-        newParam.isBool = true;
-      }
-      sendPublicTransactionNode.publicInputs.push(newParam);
-    } else {
-      sendPublicTransactionNode.publicInputs.push(para.name);
-    }
-  }
-});
-
-console.log('sendPublicTransactionNode:', sendPublicTransactionNode);
-
-// Add publics parametres to sendTransactionNode
-
- const newFunctionDefinitionNode = node._newASTPointer;
-// if (!newFunctionDefinitionNode.body.postStatements) {
-//   newFunctionDefinitionNode.body.postStatements = [];
-// }
-
-newFunctionDefinitionNode.body.postStatements.push(sendPublicTransactionNode);
-
-node.parameters.parameters.forEach(para => {
-  if (!newFunctionDefinitionNode.publicInputs) {
-    newFunctionDefinitionNode.publicInputs = [];
-  }
-  newFunctionDefinitionNode.publicInputs.push(para.name);
-});
-
-
-
-
-// if (!newNode.nodes[1].body.postStatements) {
-//   newNode.nodes[1].body.postStatements = [];
-// }
-
-// if (sendPublicTransactionNode) 
-//   {newNode.nodes[1].body.postStatements.push(sendPublicTransactionNode);
-
-// } else {console.error('sendPublicTransactionNode is null or undefined');
-
-// }
-
-// console.log('newNode after adding to postStatements:', JSON.stringify(newNode, null, 2));
-
-//  //newNode.nodes.push(sendPublicTransactionNode);
-
-//   if (!newNode.nodes[1].publicInputs) {
-//       newNode.nodes[1].publicInputs = [];
-//   }
-//   node.parameters.parameters.forEach(para => {
-//   newNode.nodes[1].publicInputs.push(para.name);
-// });
-
-console.log('newNode:', newNode);
-
-
-
-      } else {
-        state.skipSubNodes = true;
-      }
-
+      } 
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
@@ -554,7 +478,53 @@ console.log('newNode:', newNode);
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
+       if(node.containsPublic){
 
+        interface PublicParam {
+          name: string;
+          properties?: { name: string; type: string }[];
+          isConstantArray?: boolean;
+          isBool?: boolean;
+        }
+
+        const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
+          functionName: node.fileName,
+          publicInputs: [],
+        });
+        
+        
+        
+        node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
+          if (!para.isSecret) {
+            if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool')) {
+              let newParam: PublicParam = { name: para.name };
+              if (path.isStructDeclaration(para)) {
+                newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
+              }
+              if (path.isConstantArray(para)) {
+                newParam.isConstantArray = true;
+              }
+              if (para.typeName?.name === 'bool') {
+                newParam.isBool = true;
+              }
+              sendPublicTransactionNode.publicInputs.push(newParam);
+            } else {
+              sendPublicTransactionNode.publicInputs.push(para.name);
+            }
+          }
+        });
+        
+        
+        // Add publics parametres to sendTransactionNode
+        node._newASTPointer.body.postStatements.push(sendPublicTransactionNode);
+          
+        node.parameters.parameters.forEach(para => {
+          node._newASTPointer.publicInputs ??= [];
+          node._newASTPointer.publicInputs.push(para.name);
+        });
+        
+       
+       }
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
       for(const [, indicators ] of Object.entries(functionIndicator)){
