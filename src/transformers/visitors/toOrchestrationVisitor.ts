@@ -485,39 +485,44 @@ console.log('sendPublicTransactionNode:', sendPublicTransactionNode);
 
 // Add publics parametres to sendTransactionNode
 
-// const newFunctionDefinitionNode = node._newASTPointer;
+ const newFunctionDefinitionNode = node._newASTPointer;
 // if (!newFunctionDefinitionNode.body.postStatements) {
 //   newFunctionDefinitionNode.body.postStatements = [];
 // }
-// newFunctionDefinitionNode.body.postStatements.push(newNodes.sendTransactionNode);
 
-// node.parameters.parameters.forEach(para => {
-//   if (!newFunctionDefinitionNode.publicInputs) {
-//     newFunctionDefinitionNode.publicInputs = [];
-//   }
-//   newFunctionDefinitionNode.publicInputs.push(para.name);
-// });
+newFunctionDefinitionNode.body.postStatements.push(sendPublicTransactionNode);
 
-if (!newNode.nodes[1].body.postStatements) {
-  newNode.nodes[1].body.postStatements = [];
-}
-if (sendPublicTransactionNode) 
-  {newNode.nodes[1].body.postStatements.push(sendPublicTransactionNode);
-
-} else {console.error('sendPublicTransactionNode is null or undefined');
-
-}
-
-console.log('newNode after adding to postStatements:', JSON.stringify(newNode, null, 2));
-
- //newNode.nodes.push(sendPublicTransactionNode);
-
-  if (!newNode.nodes[1].publicInputs) {
-      newNode.nodes[1].publicInputs = [];
+node.parameters.parameters.forEach(para => {
+  if (!newFunctionDefinitionNode.publicInputs) {
+    newFunctionDefinitionNode.publicInputs = [];
   }
-  node.parameters.parameters.forEach(para => {
-  newNode.nodes[1].publicInputs.push(para.name);
+  newFunctionDefinitionNode.publicInputs.push(para.name);
 });
+
+
+
+
+// if (!newNode.nodes[1].body.postStatements) {
+//   newNode.nodes[1].body.postStatements = [];
+// }
+
+// if (sendPublicTransactionNode) 
+//   {newNode.nodes[1].body.postStatements.push(sendPublicTransactionNode);
+
+// } else {console.error('sendPublicTransactionNode is null or undefined');
+
+// }
+
+// console.log('newNode after adding to postStatements:', JSON.stringify(newNode, null, 2));
+
+//  //newNode.nodes.push(sendPublicTransactionNode);
+
+//   if (!newNode.nodes[1].publicInputs) {
+//       newNode.nodes[1].publicInputs = [];
+//   }
+//   node.parameters.parameters.forEach(para => {
+//   newNode.nodes[1].publicInputs.push(para.name);
+// });
 
 console.log('newNode:', newNode);
 
