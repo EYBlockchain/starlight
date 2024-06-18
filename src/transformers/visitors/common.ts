@@ -42,10 +42,11 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
     functionName: node.fileName,
     contractName,
   });
- // newNodes.functionPublicNode = buildNode('FunctionDefinitionPublic', {
- //   functionName: node.fileName,
- //   contractName,
-//  });
+  newNodes.sendPublicTransactionNode = buildNode('SendPublicTransaction', {
+    functionName: node.fileName,
+    contractName,
+    publicInputs: [],
+  });
   newNodes.writePreimageNode = buildNode('WritePreimage', {
     contractName,
     onChainKeyRegistry: fnIndicator.onChainKeyRegistry,

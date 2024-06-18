@@ -425,12 +425,12 @@ const visitor = {
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
         parent._newASTPointer.push(newNode);
 
-        interface PublicParam {
-          name: string;
-          properties?: { name: string; type: string }[];
-          isConstantArray?: boolean;
-          isBool?: boolean;
-        }
+        // interface PublicParam {
+        //   name: string;
+        //   properties?: { name: string; type: string }[];
+        //   isConstantArray?: boolean;
+        //   isBool?: boolean;
+        // }
 
 
         for (const file of parent._newASTPointer) {
@@ -452,52 +452,51 @@ const visitor = {
           );
         }}
 
-const newNodes: any = {};  
-const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
-  functionName: node.fileName,
-  contractName,
-  publicInputs: [],
-});
+// let newNodes: any;  //
+// newNodes.sendPublicTransactionNode = buildNode('SendPublicTransaction', {
+//   functionName: node.fileName,
+//   contractName,
+//   publicInputs: [],
+// }); 
 
 
+// node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
+//   if (!para.isSecret) {
+//     if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool')) {
+//       let newParam: PublicParam = { name: para.name };
+//       if (path.isStructDeclaration(para)) {
+//         newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
+//       }
+//       if (path.isConstantArray(para)) {
+//         newParam.isConstantArray = true;
+//       }
+//       if (para.typeName?.name === 'bool') {
+//         newParam.isBool = true;
+//       }
+//       newNodes.sendPublicTransactionNode.publicInputs.push(newParam);
+//     } else {
+//       newNodes.sendPublicTransactionNode.publicInputs.push(para.name);
+//     }
+//   }
+// });
 
-node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
-  if (!para.isSecret) {
-    if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool')) {
-      let newParam: PublicParam = { name: para.name };
-      if (path.isStructDeclaration(para)) {
-        newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
-      }
-      if (path.isConstantArray(para)) {
-        newParam.isConstantArray = true;
-      }
-      if (para.typeName?.name === 'bool') {
-        newParam.isBool = true;
-      }
-      sendPublicTransactionNode.publicInputs.push(newParam);
-    } else {
-      sendPublicTransactionNode.publicInputs.push(para.name);
-    }
-  }
-});
+// console.log('sendPublicTransactionNode:', newNodes.sendPublicTransactionNode);
 
-console.log('sendPublicTransactionNode:', sendPublicTransactionNode);
+// // Add publics parametres to sendTransactionNode
 
-// Add publics parametres to sendTransactionNode
+//  const newFunctionDefinitionNode = node._newASTPointer;
+// // if (!newFunctionDefinitionNode.body.postStatements) {
+// //   newFunctionDefinitionNode.body.postStatements = [];
+// // }
 
- const newFunctionDefinitionNode = node._newASTPointer;
-// if (!newFunctionDefinitionNode.body.postStatements) {
-//   newFunctionDefinitionNode.body.postStatements = [];
-// }
+// newFunctionDefinitionNode.body.postStatements.push(newNodes.sendPublicTransactionNode);
 
-newFunctionDefinitionNode.body.postStatements.push(sendPublicTransactionNode);
-
-node.parameters.parameters.forEach(para => {
-  if (!newFunctionDefinitionNode.publicInputs) {
-    newFunctionDefinitionNode.publicInputs = [];
-  }
-  newFunctionDefinitionNode.publicInputs.push(para.name);
-});
+// node.parameters.parameters.forEach(para => {
+//   if (!newFunctionDefinitionNode.publicInputs) {
+//     newFunctionDefinitionNode.publicInputs = [];
+//   }
+//   newFunctionDefinitionNode.publicInputs.push(para.name);
+// });
 
 
 
@@ -747,6 +746,63 @@ console.log('newNode:', newNode);
               accessedOnly,
             });
           }
+
+          if(!secretModified){
+            
+newNodes.sendPublicTransactionNode = buildNode('SendPublicTransaction', {
+  functionName: node.fileName,
+  publicInputs: [],
+}); 
+
+interface PublicParam {
+  name: string;
+  properties?: { name: string; type: string }[];
+  isConstantArray?: boolean;
+  isBool?: boolean;
+}
+
+
+node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
+  if (!para.isSecret) {
+    if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool')) {
+      let newParam: PublicParam = { name: para.name };
+      if (path.isStructDeclaration(para)) {
+        newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
+      }
+      if (path.isConstantArray(para)) {
+        newParam.isConstantArray = true;
+      }
+      if (para.typeName?.name === 'bool') {
+        newParam.isBool = true;
+      }
+      newNodes.sendPublicTransactionNode.publicInputs.push(newParam);
+    } else {
+      newNodes.sendPublicTransactionNode.publicInputs.push(para.name);
+    }
+  }
+});
+
+console.log('sendPublicTransactionNode:', newNodes.sendPublicTransactionNode);
+
+// Add publics parametres to sendTransactionNode
+
+//  const newFunctionDefinitionNode = node._newASTPointer;
+// // if (!newFunctionDefinitionNode.body.postStatements) {
+// //   newFunctionDefinitionNode.body.postStatements = [];
+// // }
+
+// newFunctionDefinitionNode.body.postStatements.push(newNodes.sendPublicTransactionNode);
+
+// node.parameters.parameters.forEach(para => {
+//   if (!newFunctionDefinitionNode.publicInputs) {
+//     newFunctionDefinitionNode.publicInputs = [];
+//   }
+//   newFunctionDefinitionNode.publicInputs.push(para.name);
+// });
+
+
+
+          }
           if (secretModified && !accessedOnly) {
             // accessedOnly should be false, but just in case...
             if (stateVarIndicator.isDecremented) {
@@ -964,6 +1020,10 @@ console.log('newNode:', newNode);
           newFunctionDefinitionNode.body.postStatements.push(
             newNodes.sendTransactionNode,
           );
+          if (newNodes.sendPublicTransactionNode)
+            newFunctionDefinitionNode.body.postStatements.push(
+              newNodes.sendPublicTransactionNode,
+            );
         if (newNodes.writePreimageNode)
           newFunctionDefinitionNode.body.postStatements.push(newNodes.writePreimageNode);
       }
