@@ -1,0 +1,107 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileId": 29,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "a_0",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "value"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "value"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "a",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "addend": {
+                                    "nodeType": "Identifier",
+                                    "name": "value",
+                                    "typeName": {
+                                        "nodeType": "ElementaryTypeName",
+                                        "name": "uint256"
+                                    }
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "value"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "value",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "value"
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": []
+                    }
+                }
+            ]
+        }
+    ]
+}

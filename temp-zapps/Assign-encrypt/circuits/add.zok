@@ -1,0 +1,65 @@
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "ecc/babyjubjubParams" import BabyJubJubParams
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/casts/u32_to_field" import main as u32_to_field
+from "./common/encryption/kem-dem.zok" import main as enc
+from "./common/encryption/kem-dem.zok" import EncryptedMsgs as EncryptedMsgs
+
+def main(\
+	private field value,\
+	private field b_0_newCommitment_salt,\
+	public field b_0_newCommitment_commitment,\
+	private field b_0_newCommitment_ephSecretKey,\
+	private field[2] b_0_newCommitment_owner_publicKey_point\
+) -> (EncryptedMsgs<3>):
+
+        
+        // We need to hard-code each stateVarId into the circuit:
+        field b_0_stateVarId_field = 5
+
+
+        // calculate b_0_newCommitment_owner_publicKey from its point
+        bool b_0_newCommitment_owner_publicKey_sign = edwardsCompress(b_0_newCommitment_owner_publicKey_point)[0]
+
+        bool[254] b_0_newCommitment_yBits = field_to_bool_256(b_0_newCommitment_owner_publicKey_point[1])[2..256]
+        b_0_newCommitment_yBits[0] = b_0_newCommitment_owner_publicKey_sign
+
+        field b_0_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...b_0_newCommitment_yBits])
+
+// Skipping incrementation of b
+
+
+        // prepare secret state 'b_0' for commitment
+
+        field b_0_newCommitment_value_field = 2 * value
+
+        // b_0_newCommitment_commitment - preimage check
+
+        field b_0_newCommitment_commitment_check_field = poseidon([\
+          b_0_stateVarId_field,\
+          b_0_newCommitment_value_field,\
+          b_0_newCommitment_owner_publicKey,\
+          b_0_newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(b_0_newCommitment_commitment)[8..256] == field_to_bool_256(b_0_newCommitment_commitment_check_field)[8..256]\
+        )
+
+
+        // b_0_newCommitment encryption for owner
+
+        EncryptedMsgs<3> b_0_cipherText = enc(\
+            field_to_bool_256(b_0_newCommitment_ephSecretKey),\
+            b_0_newCommitment_owner_publicKey_point,\
+            [\
+              b_0_stateVarId_field,\
+              b_0_newCommitment_value_field,\
+              b_0_newCommitment_salt\
+            ])
+
+         return b_0_cipherText

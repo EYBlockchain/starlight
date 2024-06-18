@@ -1,0 +1,1871 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "test",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationTestBoilerplate",
+                    "contractName": "AssignShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "add",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "id": 12,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_1",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_2",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_3",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_4",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "remove",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "id": 85,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": true,
+                            "newCommitmentsRequired": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "nodeType": "SetupCommonFilesBoilerplate",
+            "contractName": "AssignShield",
+            "functionNames": [
+                "add",
+                "remove"
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_services",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiServicesBoilerplate",
+                    "contractName": "AssignShield",
+                    "functionNames": [
+                        "add",
+                        "remove"
+                    ],
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "add",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "id": 12,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_1",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_2",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_3",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index_4",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256[] storage ref"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "remove",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "id": 85,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [
+                                "a"
+                            ],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": [],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_routes",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiRoutesBoilerplate",
+                    "contractName": "AssignShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "add"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "remove"
+                        }
+                    ],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "EditableCommitmentCommonFilesBoilerplate"
+        },
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "add",
+                    "contractName": "AssignShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "value",
+                                "id": 12,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "b_index_1",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256[] storage ref"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "b_index_2",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256[] storage ref"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "b_index_3",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256[] storage ref"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "b_index_4",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256[] storage ref"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "AssignShield"
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 0,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "j",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {}
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 0,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "index",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {}
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 17,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "index",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_1",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "UnaryOperation",
+                                        "operator": "++",
+                                        "prefix": false,
+                                        "subExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_1",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 35,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "index",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_2",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index",
+                                            "subType": "uint256"
+                                        },
+                                        "operator": "+",
+                                        "rightExpression": {
+                                            "nodeType": "Literal",
+                                            "value": "1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_2",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 44,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "index",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_3",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "UnaryOperation",
+                                        "operator": "++",
+                                        "prefix": false,
+                                        "subExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_3",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 47,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "j",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "UnaryOperation",
+                                        "operator": "++",
+                                        "prefix": false,
+                                        "subExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "j",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 0,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "j_1",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "j_1",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "j",
+                                        "subType": "generalNumber"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "j",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "j_init",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 61,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "index",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_4",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index",
+                                            "subType": "uint256"
+                                        },
+                                        "operator": "+",
+                                        "rightExpression": {
+                                            "nodeType": "Literal",
+                                            "value": "1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_4",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index_init",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "accessedOnly": false,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "structProperties": null
+                                    },
+                                    "b_index_1": {
+                                        "privateStateName": "b_index_1",
+                                        "stateVarId": [
+                                            6,
+                                            "index_1",
+                                            "index"
+                                        ],
+                                        "accessedOnly": false,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "structProperties": null
+                                    },
+                                    "b_index_2": {
+                                        "privateStateName": "b_index_2",
+                                        "stateVarId": [
+                                            6,
+                                            "index_2",
+                                            "index"
+                                        ],
+                                        "accessedOnly": false,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "structProperties": null
+                                    },
+                                    "b_index_3": {
+                                        "privateStateName": "b_index_3",
+                                        "stateVarId": [
+                                            6,
+                                            "index_3",
+                                            "index"
+                                        ],
+                                        "accessedOnly": false,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "structProperties": null
+                                    },
+                                    "b_index_4": {
+                                        "privateStateName": "b_index_4",
+                                        "stateVarId": [
+                                            6,
+                                            "index_4",
+                                            "index"
+                                        ],
+                                        "accessedOnly": false,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "structProperties": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "increment": "parseInt(value.integer, 10) + parseInt(index.integer, 10)",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "accessedOnly": false,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "b_index_1": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_1",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "b_index_2": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_2",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "b_index_3": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_3",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "b_index_4": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_4",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    }
+                                },
+                                "contractName": "AssignShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "accessedOnly": false,
+                                        "isWhole": true
+                                    },
+                                    "b_index_1": {
+                                        "privateStateName": "b_index_1",
+                                        "isWhole": true
+                                    },
+                                    "b_index_2": {
+                                        "privateStateName": "b_index_2",
+                                        "isWhole": true
+                                    },
+                                    "b_index_3": {
+                                        "privateStateName": "b_index_3",
+                                        "isWhole": true
+                                    },
+                                    "b_index_4": {
+                                        "privateStateName": "b_index_4",
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "AssignShield"
+                            }
+                        ],
+                        "statements": [
+                            null,
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 23,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "a",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "value",
+                                            "subType": "uint256"
+                                        },
+                                        "operator": "+",
+                                        "rightExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index_1",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 29,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b_index_1",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Literal",
+                                        "value": "0"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_1",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_1",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            null,
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 41,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b_index_2",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "value",
+                                        "subType": "uint256"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_2",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_2",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            null,
+                            null,
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 57,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b_index_3",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "BinaryOperation",
+                                            "leftExpression": {
+                                                "nodeType": "Identifier",
+                                                "name": "value",
+                                                "subType": "uint256"
+                                            },
+                                            "operator": "+",
+                                            "rightExpression": {
+                                                "nodeType": "Identifier",
+                                                "name": "index_3",
+                                                "subType": "uint256"
+                                            }
+                                        },
+                                        "operator": "+",
+                                        "rightExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "j_1",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_3",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_3",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            null,
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 67,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "a",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "value",
+                                            "subType": "uint256"
+                                        },
+                                        "operator": "+",
+                                        "rightExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index_4",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 75,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b_index",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b_index_4",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "value",
+                                            "subType": "uint256"
+                                        },
+                                        "operator": "+",
+                                        "rightExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index_4",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_4",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "b_index_4",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 78,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "index",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "UnaryOperation",
+                                        "operator": "++",
+                                        "prefix": false,
+                                        "subExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "index",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 81,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "j",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "UnaryOperation",
+                                        "operator": "++",
+                                        "prefix": false,
+                                        "subExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "j",
+                                            "subType": "uint256"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "a": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    },
+                                    "b_index_1": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    },
+                                    "b_index_2": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    },
+                                    "b_index_3": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    },
+                                    "b_index_4": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_1": {
+                                        "privateStateName": "b_index_1",
+                                        "stateVarId": [
+                                            6,
+                                            "index_1",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_2": {
+                                        "privateStateName": "b_index_2",
+                                        "stateVarId": [
+                                            6,
+                                            "index_2",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_3": {
+                                        "privateStateName": "b_index_3",
+                                        "stateVarId": [
+                                            6,
+                                            "index_3",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_4": {
+                                        "privateStateName": "b_index_4",
+                                        "stateVarId": [
+                                            6,
+                                            "index_4",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "add",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "increment": [
+                                            {
+                                                "name": "value",
+                                                "precedingOperator": "+"
+                                            },
+                                            {
+                                                "name": "index",
+                                                "precedingOperator": "+"
+                                            }
+                                        ],
+                                        "structProperties": null,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_1": {
+                                        "privateStateName": "b_index_1",
+                                        "stateVarId": [
+                                            6,
+                                            "index_1",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_2": {
+                                        "privateStateName": "b_index_2",
+                                        "stateVarId": [
+                                            6,
+                                            "index_2",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_3": {
+                                        "privateStateName": "b_index_3",
+                                        "stateVarId": [
+                                            6,
+                                            "index_3",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_4": {
+                                        "privateStateName": "b_index_4",
+                                        "stateVarId": [
+                                            6,
+                                            "index_4",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "parameters": [
+                                    "a",
+                                    "b_index_1",
+                                    "b_index_2",
+                                    "b_index_3",
+                                    "b_index_4",
+                                    "value",
+                                    "index",
+                                    "j"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "a": {
+                                        "isWhole": true,
+                                        "accessedOnly": false,
+                                        "nullifierRequired": true
+                                    },
+                                    "b_index_1": {
+                                        "isWhole": true,
+                                        "nullifierRequired": true
+                                    },
+                                    "b_index_2": {
+                                        "isWhole": true,
+                                        "nullifierRequired": true
+                                    },
+                                    "b_index_3": {
+                                        "isWhole": true,
+                                        "nullifierRequired": true
+                                    },
+                                    "b_index_4": {
+                                        "isWhole": true,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "add",
+                                "contractName": "AssignShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_1": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_1",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_2": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_2",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_3": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_3",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "b_index_4": {
+                                        "stateVarId": [
+                                            6,
+                                            "index_4",
+                                            "index"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": "index",
+                                        "mappingName": "b",
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "contractName": "AssignShield",
+                                "onChainKeyRegistry": false
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "remove",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "remove",
+                    "contractName": "AssignShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "value",
+                                "id": 85,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "AssignShield"
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "accessedOnly": false,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "structProperties": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "increment": "parseInt(value.integer, 10)",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "accessedOnly": false,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    }
+                                },
+                                "contractName": "AssignShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "accessedOnly": false,
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "AssignShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 91,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "-=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "a",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "value",
+                                        "subType": "uint256"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": "generalNumber"
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "a": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "remove",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "increment": [
+                                            {
+                                                "name": "value",
+                                                "precedingOperator": "-"
+                                            }
+                                        ],
+                                        "structProperties": null,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "parameters": [
+                                    "a",
+                                    "value"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "a": {
+                                        "isWhole": true,
+                                        "accessedOnly": false,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "remove",
+                                "contractName": "AssignShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "contractName": "AssignShield",
+                                "onChainKeyRegistry": false
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "decrementedSecretStates": [
+                        "a"
+                    ],
+                    "decrementsSecretState": true
+                }
+            ]
+        }
+    ]
+}

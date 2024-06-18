@@ -1,0 +1,838 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "test",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationTestBoilerplate",
+                    "contractName": "MyContractShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "cnstrctr",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "admin",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "setAdmin",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "newAdmin",
+                                        "id": 16,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "admin",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": []
+                }
+            ]
+        },
+        {
+            "nodeType": "SetupCommonFilesBoilerplate",
+            "contractName": "MyContractShield",
+            "functionNames": [
+                "cnstrctr",
+                "setAdmin"
+            ],
+            "constructorParams": []
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_services",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiServicesBoilerplate",
+                    "contractName": "MyContractShield",
+                    "functionNames": [
+                        "cnstrctr",
+                        "setAdmin"
+                    ],
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "cnstrctr",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "admin",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "setAdmin",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "newAdmin",
+                                        "id": 16,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "admin",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": [],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_routes",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiRoutesBoilerplate",
+                    "contractName": "MyContractShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "cnstrctr"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "setAdmin"
+                        }
+                    ],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "EditableCommitmentCommonFilesBoilerplate"
+        },
+        {
+            "nodeType": "File",
+            "fileName": "cnstrctr",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "cnstrctr",
+                    "contractName": "MyContractShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "admin",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "address"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "MyContractShield",
+                                "onChainKeyRegistry": false
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "stateVarId": 5,
+                                        "accessedOnly": false,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "structProperties": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "admin": {
+                                        "stateVarId": 5,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    }
+                                },
+                                "contractName": "MyContractShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "MyContractShield",
+                                "isConstructor": true
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 12,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "admin",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "admin",
+                                        "subType": "address"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MsgSender"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "admin",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "admin",
+                                    "subType": "generalNumber"
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "admin": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "stateVarId": 5,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "cnstrctr",
+                                "privateStates": {
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "stateVarId": 5,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "parameters": [
+                                    "msgSender",
+                                    "admin"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "admin": {
+                                        "isWhole": true,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "cnstrctr",
+                                "contractName": "MyContractShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "admin": {
+                                        "stateVarId": 5,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "contractName": "MyContractShield",
+                                "onChainKeyRegistry": false,
+                                "isConstructor": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "msgSenderParam": true
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "setAdmin",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "setAdmin",
+                    "contractName": "MyContractShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "newAdmin",
+                                "id": 16,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "address"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "admin",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "address"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "MyContractShield"
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "accessedOnly": false,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "structProperties": null
+                                    },
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "stateVarId": 5,
+                                        "accessedOnly": false,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "structProperties": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "increment": "parseInt(1, 10)",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "accessedOnly": false,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "admin": {
+                                        "stateVarId": 5,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "accessedOnly": false,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    }
+                                },
+                                "contractName": "MyContractShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "accessedOnly": false,
+                                        "isWhole": true
+                                    },
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "accessedOnly": false,
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "MyContractShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 32,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "admin",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "nodeType": "IfStatement",
+                                "condition": {
+                                    "nodeType": "BinaryOperation",
+                                    "leftExpression": {
+                                        "nodeType": "MsgSender"
+                                    },
+                                    "operator": "==",
+                                    "rightExpression": {
+                                        "nodeType": "Identifier",
+                                        "name": "admin",
+                                        "subType": "address"
+                                    }
+                                },
+                                "trueBody": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "id": 26,
+                                        "expression": {}
+                                    }
+                                ],
+                                "falseBody": [],
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 32,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "admin",
+                                        "subType": "address"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "newAdmin",
+                                        "subType": "address"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "admin",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "admin",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 36,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "a",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Literal",
+                                        "value": "1"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "subType": "generalNumber"
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "a": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    },
+                                    "admin": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "stateVarId": 5,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "setAdmin",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "increment": [
+                                            {
+                                                "name": "1",
+                                                "precedingOperator": "+"
+                                            }
+                                        ],
+                                        "structProperties": null,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "admin": {
+                                        "privateStateName": "admin",
+                                        "stateVarId": 5,
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isWhole": true,
+                                        "initialisationRequired": false,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "parameters": [
+                                    "msgSender",
+                                    "a",
+                                    "admin",
+                                    "newAdmin"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "a": {
+                                        "isWhole": true,
+                                        "accessedOnly": false,
+                                        "nullifierRequired": true
+                                    },
+                                    "admin": {
+                                        "isWhole": true,
+                                        "accessedOnly": false,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "setAdmin",
+                                "contractName": "MyContractShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "admin": {
+                                        "stateVarId": 5,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "contractName": "MyContractShield",
+                                "onChainKeyRegistry": false
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "msgSenderParam": true
+                }
+            ]
+        }
+    ]
+}

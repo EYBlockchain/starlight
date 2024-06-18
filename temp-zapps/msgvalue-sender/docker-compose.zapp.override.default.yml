@@ -1,0 +1,23 @@
+version: '3.5'
+
+services:
+  zapp:
+    environment:
+      DEFAULT_ACCOUNT: ''
+      DEFAULT_ACCOUNT_MNEMONIC: ''
+      RPC_URL: ''
+      KEY: ''
+
+  deployer:
+    environment:
+      DEFAULT_ACCOUNT: ''
+      DEFAULT_ACCOUNT_MNEMONIC: ''
+      RPC_URL: ''
+      KEY: ''
+
+  timber:
+    environment:
+      DEFAULT_ACCOUNT: ''
+      DEFAULT_ACCOUNT_MNEMONIC: ''
+      RPC_URL: ''
+      KEY: ''

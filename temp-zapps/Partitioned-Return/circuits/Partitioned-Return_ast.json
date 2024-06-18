@@ -1,0 +1,625 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "incr",
+            "fileId": 17,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "a_0",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "a",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "addend": {
+                                    "nodeType": "Identifier",
+                                    "name": "param1",
+                                    "typeName": {
+                                        "nodeType": "ElementaryTypeName",
+                                        "name": "uint256"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Return",
+                                "expression": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "typeName": {
+                                        "nodeType": "ElementaryTypeName",
+                                        "name": "uint256"
+                                    }
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "param1",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a",
+                                "isPrivate": true,
+                                "interactsWithSecret": false,
+                                "declarationType": "",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "decr",
+            "fileId": 31,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "a_0",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "a_1",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "a_0",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "a_1",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "a_0",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "a_1",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "a_0",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "a_1",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "a_2",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "param1"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_2",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "decrementation",
+                                "name": "a",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "subtrahend": {
+                                    "nodeType": "Identifier",
+                                    "name": "param1",
+                                    "typeName": {
+                                        "nodeType": "ElementaryTypeName",
+                                        "name": "uint256"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Return",
+                                "expression": {
+                                    "nodeType": "Identifier",
+                                    "name": "a",
+                                    "typeName": {
+                                        "nodeType": "ElementaryTypeName",
+                                        "name": "uint256"
+                                    }
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_2",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "param1",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a_1",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "a_2",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "param1"
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a",
+                                "isPrivate": true,
+                                "interactsWithSecret": false,
+                                "declarationType": "",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "joinCommitments",
+            "fileId": 31,
+            "fileExtension": ".zok",
+            "nodes": []
+        },
+        {
+            "nodeType": "File",
+            "fileName": "splitCommitments",
+            "fileId": 31,
+            "fileExtension": ".zok",
+            "nodes": []
+        }
+    ]
+}

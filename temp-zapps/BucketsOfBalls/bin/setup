@@ -1,0 +1,103 @@
+#!/bin/bash
+set -e
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+while getopts "n:a:m:k:r:s:" arg; do
+  case $arg in
+    n)
+      network=$OPTARG
+      echo networkvalue $OPTARG 
+      ;;
+    a)
+      account=$OPTARG
+      echo accountvalue $OPTARG
+      ;;
+    m)
+      mnemonic=$OPTARG
+      echo mnemonicvalue $OPTARG
+      ;;
+    k)
+      key=$OPTARG
+      echo keyvalue $OPTARG
+      ;;
+    r)
+      rpc=$OPTARG
+      echo rpcvalue $OPTARG
+      ;;
+    s)
+      setup=$OPTARG
+      echo setup $OPTARG
+      ;;
+  esac
+done
+
+cp docker-compose.zapp.override.default.yml docker-compose.zapp.override.yml
+
+cp entrypoint_default.sh entrypoint.sh
+
+
+
+rm -rf proving-files
+
+perl -i -pe "s,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,docker-compose.zapp.yml,g" package.json
+
+if [[ $network == 'mumbai' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]]
+then
+perl -i -pe "s,DEFAULT_ACCOUNT: '',DEFAULT_ACCOUNT: \'$account\',g" docker-compose.zapp.override.yml
+perl -i -pe "s,DEFAULT_ACCOUNT_MNEMONIC: '',DEFAULT_ACCOUNT_MNEMONIC: \'$mnemonic\',g" docker-compose.zapp.override.yml
+perl -i -pe "s,KEY: '',KEY: \'$key\',g" docker-compose.zapp.override.yml
+perl -i -pe "s,docker-compose.zapp.yml up,docker-compose.zapp.yml -f docker-compose.zapp.override.yml up,g" bin/startup
+perl -i -pe "s,docker-compose.zapp.yml,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,g" package.json
+perl -i -pe "s,docker-compose -f docker-compose.zapp.yml up -d ganache, ## up ganache service for ganache,g" bin/startup
+fi
+
+if [[ $network == 'mumbai' ]]
+then
+perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss:\/\/rpc-mumbai.maticvigil.com\/ws\/v1\/$rpc\',g" docker-compose.zapp.override.yml
+perl -i -pe "s,development_ganache,mumbai,g" entrypoint.sh
+perl -i -pe "s,while,##while,g" entrypoint.sh
+perl -i -pe "s,10,60,g" bin/startup
+fi
+
+
+if [[ $network == 'sepolia' ]]
+then
+perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss://sepolia.infura.io/ws/v3//$rpc\',g" docker-compose.zapp.override.yml
+perl -i -pe "s,development_ganache,sepolia,g" entrypoint.sh
+perl -i -pe "s,while,##while,g" entrypoint.sh
+perl -i -pe "s,10,500,g" bin/startup
+fi
+
+if [[ $network == 'goerli' ]]
+then
+perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss://goerli.infura.io/ws/v3/$rpc\',g" docker-compose.zapp.override.yml
+perl -i -pe "s,development_ganache,goerli,g" entrypoint.sh
+perl -i -pe "s,while,##while,g" entrypoint.sh
+perl -i -pe "s,10,500,g" bin/startup
+fi
+
+if [ ! -d "proving-files" ]; then
+  setup='y'
+fi
+
+if [[ ! $setup == 'n' ]]
+then
+printf "\n${GREEN}*** Starting the zokrates container ***${NC}\n"
+
+docker-compose -f docker-compose.zapp.yml up -d zokrates
+
+sleep 5
+
+printf "\n${GREEN}*** Running setup for your ZApp... ***${NC}\n"
+
+docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/orchestration/common/zkp-setup.mjs -i ''
+
+printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}\n"
+
+docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/write-vk.mjs -i ''
+
+fi
+printf "\n${GREEN}*** Finished! ***${NC}\n"

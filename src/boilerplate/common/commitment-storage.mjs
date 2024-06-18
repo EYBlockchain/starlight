@@ -14,7 +14,6 @@ import { sharedSecretKey } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
 import { SumType, reduceTree, toBinArray, poseidonConcatHash,} from './smt_utils.mjs';
 import { hlt } from './hash-lookup.mjs';
-import fs from "fs";
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;

@@ -1,0 +1,314 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "SourceUnit",
+            "name": "MyContract",
+            "license": "CC0",
+            "nodes": [
+                {
+                    "nodeType": "PragmaDirective",
+                    "literals": [
+                        "solidity",
+                        "^",
+                        "0.8",
+                        ".0"
+                    ]
+                },
+                {
+                    "nodeType": "ContractBoilerplate",
+                    "bpSection": "importStatements",
+                    "bpCategory": "contract",
+                    "newCommitmentsRequired": true
+                },
+                {
+                    "nodeType": "ContractDefinition",
+                    "name": "MyContract",
+                    "baseContracts": [
+                        {
+                            "nodeType": "InheritanceSpecifier",
+                            "baseName": {
+                                "name": "MerkleTree"
+                            }
+                        }
+                    ],
+                    "nodes": [
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "stateVariableDeclarations",
+                            "bpCategory": "contract",
+                            "functionNames": [
+                                "assignA",
+                                "assignBZ"
+                            ],
+                            "nullifiersRequired": true,
+                            "oldCommitmentAccessRequired": true,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "constructor",
+                            "bpCategory": "contract",
+                            "nullifiersRequired": true
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "registerZKPPublicKey",
+                            "bpCategory": "contract"
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "verify",
+                            "bpCategory": "contract",
+                            "nullifiersRequired": true,
+                            "oldCommitmentAccessRequired": true,
+                            "newCommitmentsRequired": true,
+                            "constructorContainsSecret": false,
+                            "circuitParams": {
+                                "assignA": {
+                                    "parameters": [
+                                        "msgSender",
+                                        "x_msgSender",
+                                        "newCommitment"
+                                    ]
+                                },
+                                "assignBZ": {
+                                    "parameters": [
+                                        "z",
+                                        "nullifierRoot",
+                                        "newNullifierRoot",
+                                        "nullifier",
+                                        "oldCommitmentExistence",
+                                        "newCommitment"
+                                    ]
+                                }
+                            },
+                            "isjoinSplitCommitmentsFunction": []
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "x",
+                            "visibility": "public",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "mapping(address => uint256)"
+                            },
+                            "typeName": {
+                                "nodeType": "Mapping",
+                                "keyType": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "typeDescriptions": {
+                                        "typeString": "address"
+                                    }
+                                },
+                                "valueType": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "typeDescriptions": {
+                                        "typeString": "uint256"
+                                    }
+                                },
+                                "typeDescriptions": {}
+                            },
+                            "interactsWithSecret": true,
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "z",
+                            "visibility": "public",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "nodeType": "ElementaryTypeName",
+                                "typeDescriptions": {
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "interactsWithSecret": true,
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "a",
+                            "visibility": "private",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "nodeType": "ElementaryTypeName",
+                                "typeDescriptions": {
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "isSecret": true,
+                            "interactsWithSecret": true,
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "b",
+                            "visibility": "private",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "nodeType": "ElementaryTypeName",
+                                "typeDescriptions": {
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "isSecret": true,
+                            "interactsWithSecret": true,
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "FunctionDefinition",
+                            "name": "assignA",
+                            "visibility": "public",
+                            "isConstructor": false,
+                            "kind": "function",
+                            "stateMutability": "",
+                            "msgSigRequired": false,
+                            "body": {
+                                "nodeType": "Block",
+                                "preStatements": [],
+                                "statements": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    }
+                                ],
+                                "postStatements": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "postStatements",
+                                        "bpCategory": "customFunction",
+                                        "customInputs": [
+                                            {
+                                                "name": "msg.sender",
+                                                "type": "address",
+                                                "dummy": true,
+                                                "inCircuit": true
+                                            },
+                                            {
+                                                "name": "x[msg.sender]",
+                                                "typeName": {
+                                                    "name": "uint256"
+                                                },
+                                                "isConstantArray": false,
+                                                "inCircuit": true,
+                                                "isReturn": false
+                                            },
+                                            {
+                                                "name": 1,
+                                                "type": "uint256",
+                                                "dummy": true,
+                                                "inCircuit": true
+                                            }
+                                        ],
+                                        "functionName": "assignA",
+                                        "nullifiersRequired": false,
+                                        "oldCommitmentAccessRequired": false,
+                                        "newCommitmentsRequired": true,
+                                        "msgSenderParam": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "parameters",
+                                        "bpCategory": "customFunction",
+                                        "nullifiersRequired": false,
+                                        "oldCommitmentAccessRequired": false,
+                                        "newCommitmentsRequired": true,
+                                        "msgSenderParam": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": []
+                            }
+                        },
+                        {
+                            "nodeType": "FunctionDefinition",
+                            "name": "assignBZ",
+                            "visibility": "public",
+                            "isConstructor": false,
+                            "kind": "function",
+                            "stateMutability": "",
+                            "msgSigRequired": false,
+                            "body": {
+                                "nodeType": "Block",
+                                "preStatements": [],
+                                "statements": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    }
+                                ],
+                                "postStatements": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "postStatements",
+                                        "bpCategory": "customFunction",
+                                        "customInputs": [
+                                            {
+                                                "name": "z",
+                                                "typeName": {
+                                                    "name": "uint256"
+                                                },
+                                                "isConstantArray": false,
+                                                "inCircuit": true,
+                                                "isReturn": false
+                                            },
+                                            {
+                                                "name": 1,
+                                                "type": "uint256",
+                                                "dummy": true,
+                                                "inCircuit": true
+                                            }
+                                        ],
+                                        "functionName": "assignBZ",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "parameters",
+                                        "bpCategory": "customFunction",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": []
+                            }
+                        }
+                    ],
+                    "isShieldContract": true
+                }
+            ]
+        }
+    ]
+}

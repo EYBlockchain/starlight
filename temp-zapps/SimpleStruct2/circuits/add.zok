@@ -1,0 +1,83 @@
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+
+struct Rct {
+        field amount
+field tax
+      }
+
+def main(\
+	private Rct myrct,\
+	private field msgSender,\
+	private field total_msgSender_0_newCommitment_owner_publicKey,\
+	private field total_msgSender_0_newCommitment_salt,\
+	public field total_msgSender_0_newCommitment_commitment,\
+	private field cmt_0_newCommitment_owner_publicKey,\
+	private field cmt_0_newCommitment_salt,\
+	public field cmt_0_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field total_mappingId = 6
+
+
+        // We need to hard-code each stateVarId into the circuit:
+        field cmt_0_stateVarId_field = 14
+
+// Skipping incrementation of total_msg
+
+// Skipping incrementation of total_msg
+
+// Skipping incrementation of cmt
+
+// Skipping incrementation of cmt
+
+
+        field total_msgSender_0_stateVarId_field = mimc2([total_mappingId, msgSender])
+
+
+        field total_msgSender_1_stateVarId_field = mimc2([total_mappingId, msgSender])
+
+
+          // prepare secret state 'total_msgSender_0' for commitment
+
+          Rct total_msgSender_0_newCommitment_value = Rct {  amount: myrct.amount, tax: myrct.tax }
+
+
+          // total_msgSender_0_newCommitment_commitment - preimage check
+
+          field total_msgSender_0_newCommitment_commitment_check_field = poseidon([\
+            total_msgSender_0_stateVarId_field,\
+            	 total_msgSender_0_newCommitment_value.amount,\
+	 total_msgSender_0_newCommitment_value.tax,\
+            total_msgSender_0_newCommitment_owner_publicKey,\
+            total_msgSender_0_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(total_msgSender_0_newCommitment_commitment)[8..256] == field_to_bool_256(total_msgSender_0_newCommitment_commitment_check_field)[8..256]\
+          )
+
+
+          // prepare secret state 'cmt_0' for commitment
+
+          Rct cmt_0_newCommitment_value = Rct {  amount: myrct.amount, tax: myrct.tax }
+
+
+          // cmt_0_newCommitment_commitment - preimage check
+
+          field cmt_0_newCommitment_commitment_check_field = poseidon([\
+            cmt_0_stateVarId_field,\
+            	 cmt_0_newCommitment_value.amount,\
+	 cmt_0_newCommitment_value.tax,\
+            cmt_0_newCommitment_owner_publicKey,\
+            cmt_0_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(cmt_0_newCommitment_commitment)[8..256] == field_to_bool_256(cmt_0_newCommitment_commitment_check_field)[8..256]\
+          )
+
+         return true

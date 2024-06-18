@@ -1,0 +1,586 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "test",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationTestBoilerplate",
+                    "contractName": "AssignShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "add",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "id": 11,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "result",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "nodeType": "SetupCommonFilesBoilerplate",
+            "contractName": "AssignShield",
+            "functionNames": [
+                "add"
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_services",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiServicesBoilerplate",
+                    "contractName": "AssignShield",
+                    "functionNames": [
+                        "add"
+                    ],
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "add",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "id": 11,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "result",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": [],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_routes",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiRoutesBoilerplate",
+                    "contractName": "AssignShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "add"
+                        }
+                    ],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "EditableCommitmentCommonFilesBoilerplate"
+        },
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "add",
+                    "contractName": "AssignShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "value",
+                                "id": 11,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "result",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "AssignShield"
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 0,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "b",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {}
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 0,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "c",
+                                        "id": 0,
+                                        "isSecret": false,
+                                        "isAccessed": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {}
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "c",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "c_init",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b",
+                                        "subType": "generalNumber"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b_init",
+                                        "subType": "generalNumber"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "result": {
+                                        "privateStateName": "result",
+                                        "stateVarId": 9,
+                                        "accessedOnly": false,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "structProperties": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "increment": "parseInt(value.integer, 10)",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "result": {
+                                        "stateVarId": 9,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "initialised": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    }
+                                },
+                                "contractName": "AssignShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "result": {
+                                        "privateStateName": "result",
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "AssignShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 17,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "a",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "value",
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": false,
+                                "privateStateName": "a",
+                                "increments": "parseInt(value.integer, 10)"
+                            },
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 27,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "result",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": false,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        }
+                                    }
+                                ],
+                                "initialValue": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "result",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "TupleExpression",
+                                        "components": [
+                                            {
+                                                "nodeType": "Conditional",
+                                                "condition": {
+                                                    "nodeType": "BinaryOperation",
+                                                    "leftExpression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "c",
+                                                        "subType": "uint256"
+                                                    },
+                                                    "operator": ">",
+                                                    "rightExpression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "b",
+                                                        "subType": "uint256"
+                                                    }
+                                                },
+                                                "trueExpression": [
+                                                    {
+                                                        "nodeType": "Identifier",
+                                                        "name": "c",
+                                                        "subType": "uint256"
+                                                    }
+                                                ],
+                                                "falseExpression": [
+                                                    {
+                                                        "nodeType": "Identifier",
+                                                        "name": "b",
+                                                        "subType": "uint256"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "result",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "result",
+                                    "subType": "generalNumber"
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "result": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "result": {
+                                        "privateStateName": "result",
+                                        "stateVarId": 9,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "add",
+                                "privateStates": {
+                                    "a": {
+                                        "privateStateName": "a",
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "increment": [
+                                            {
+                                                "name": "value",
+                                                "precedingOperator": "+"
+                                            }
+                                        ],
+                                        "structProperties": null,
+                                        "isPartitioned": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "result": {
+                                        "privateStateName": "result",
+                                        "stateVarId": 9,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isWhole": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "parameters": [
+                                    "a",
+                                    "result",
+                                    "value",
+                                    "c",
+                                    "b"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "a": {
+                                        "isPartitioned": true
+                                    },
+                                    "result": {
+                                        "isWhole": true,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "add",
+                                "contractName": "AssignShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "a": {
+                                        "stateVarId": 3,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "result": {
+                                        "stateVarId": 9,
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": null,
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "contractName": "AssignShield",
+                                "onChainKeyRegistry": false
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    }
+                }
+            ]
+        }
+    ]
+}

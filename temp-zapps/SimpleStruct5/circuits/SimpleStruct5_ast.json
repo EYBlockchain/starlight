@@ -1,0 +1,1111 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileId": 72,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "a",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "a",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "a",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "a",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "a",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "x",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "prop1",
+                                "prop2"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "prop1",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "prop2",
+                                    "typeName": "bool"
+                                }
+                            ],
+                            "typeName": "MyStruct",
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "x",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "prop1",
+                                "prop2"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "prop1",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "prop2",
+                                    "typeName": "bool"
+                                }
+                            ],
+                            "typeName": "MyStruct",
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "x",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "prop1",
+                                "prop2"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "prop1",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "prop2",
+                                    "typeName": "bool"
+                                }
+                            ],
+                            "typeName": "MyStruct",
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "x",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "prop1",
+                                "prop2"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "prop1",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "prop2",
+                                    "typeName": "bool"
+                                }
+                            ],
+                            "typeName": "MyStruct",
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "x",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "prop1",
+                                "prop2"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "prop1",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "prop2",
+                                    "typeName": "bool"
+                                }
+                            ],
+                            "typeName": "MyStruct",
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "StructDefinition",
+                    "name": "MyStruct",
+                    "members": [
+                        {
+                            "name": "prop1",
+                            "type": "field"
+                        },
+                        {
+                            "name": "prop2",
+                            "type": "bool"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "IfStatement",
+                                "condition": {
+                                    "nodeType": "BinaryOperation",
+                                    "leftExpression": {
+                                        "nodeType": "Identifier",
+                                        "name": "value",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    "operator": ">",
+                                    "rightExpression": {
+                                        "nodeType": "Literal",
+                                        "value": "10"
+                                    }
+                                },
+                                "trueBody": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "=",
+                                            "leftHandSide": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "prop1",
+                                                "expression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "x",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "struct Assign.MyStruct storage ref"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "BinaryOperation",
+                                                "leftExpression": {
+                                                    "nodeType": "MemberAccess",
+                                                    "memberName": "prop1",
+                                                    "expression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "x",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "struct Assign.MyStruct storage ref"
+                                                        }
+                                                    },
+                                                    "isStruct": true,
+                                                    "name": "prop1"
+                                                },
+                                                "operator": "+",
+                                                "rightExpression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "uint256"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "isVarDec": false,
+                                        "id": 32,
+                                        "isAccessed": false
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "=",
+                                            "leftHandSide": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "prop2",
+                                                "expression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "x",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "struct Assign.MyStruct storage ref"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "Literal",
+                                                "value": "true"
+                                            }
+                                        },
+                                        "isVarDec": false,
+                                        "id": 38,
+                                        "isAccessed": false
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "=",
+                                            "leftHandSide": {
+                                                "nodeType": "Identifier",
+                                                "name": "a",
+                                                "typeName": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "uint256"
+                                                }
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "BinaryOperation",
+                                                "leftExpression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "uint256"
+                                                    }
+                                                },
+                                                "operator": "*",
+                                                "rightExpression": {
+                                                    "nodeType": "MemberAccess",
+                                                    "memberName": "prop1",
+                                                    "expression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "x",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "struct Assign.MyStruct storage ref"
+                                                        }
+                                                    },
+                                                    "isStruct": true
+                                                }
+                                            }
+                                        },
+                                        "isVarDec": false,
+                                        "id": 45,
+                                        "isAccessed": false
+                                    }
+                                ],
+                                "falseBody": [],
+                                "isRevert": false,
+                                "conditionVars": []
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "prop2",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "x",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Assign.MyStruct storage ref"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "BinaryOperation",
+                                            "leftExpression": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "prop2",
+                                                "expression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "struct_value",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "struct Assign.MyStruct memory"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            },
+                                            "operator": "||",
+                                            "rightExpression": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "prop2",
+                                                "expression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "x",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "struct Assign.MyStruct storage ref"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            }
+                                        },
+                                        "operator": "||",
+                                        "rightExpression": {
+                                            "nodeType": "MemberAccess",
+                                            "memberName": "prop2",
+                                            "expression": {
+                                                "nodeType": "Identifier",
+                                                "name": "struct_value_pub",
+                                                "typeName": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "struct Assign.MyStruct memory"
+                                                }
+                                            },
+                                            "isStruct": true
+                                        }
+                                    }
+                                },
+                                "isVarDec": false,
+                                "id": 60,
+                                "isAccessed": false
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "prop1",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "x",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Assign.MyStruct storage ref"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "MemberAccess",
+                                            "memberName": "prop1",
+                                            "expression": {
+                                                "nodeType": "Identifier",
+                                                "name": "x",
+                                                "typeName": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "struct Assign.MyStruct storage ref"
+                                                }
+                                            },
+                                            "isStruct": true,
+                                            "name": "prop1"
+                                        },
+                                        "operator": "+",
+                                        "rightExpression": {
+                                            "nodeType": "BinaryOperation",
+                                            "leftExpression": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "prop1",
+                                                "expression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "struct_value",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "struct Assign.MyStruct memory"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            },
+                                            "operator": "+",
+                                            "rightExpression": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "prop1",
+                                                "expression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "struct_value_pub",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "struct Assign.MyStruct memory"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            }
+                                        }
+                                    }
+                                },
+                                "isVarDec": false,
+                                "id": 70,
+                                "isAccessed": false
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "value",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "struct_value",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "MyStruct",
+                                    "members": [
+                                        {
+                                            "name": "prop1",
+                                            "type": "field"
+                                        },
+                                        {
+                                            "name": "prop2",
+                                            "type": "bool"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "struct_value_pub",
+                                "isPrivate": false,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "MyStruct",
+                                    "members": [
+                                        {
+                                            "name": "prop1",
+                                            "type": "field"
+                                        },
+                                        {
+                                            "name": "prop2",
+                                            "type": "bool"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "a",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "x",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "prop1",
+                                    "prop2"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "prop1",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "prop2",
+                                        "typeName": "bool"
+                                    }
+                                ],
+                                "typeName": "MyStruct",
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": []
+                    }
+                }
+            ]
+        }
+    ]
+}

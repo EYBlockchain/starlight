@@ -1,0 +1,2163 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileId": 45,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "myrct.amount + myrct.tax",
+                            "mappingName": "total",
+                            "mappingKeyName": "msgSender"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msgSender_1",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "myrct.amount + myrct.tax",
+                            "mappingName": "total",
+                            "mappingKeyName": "msgSender"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "myrct.amount + myrct.tax",
+                            "mappingName": "total",
+                            "mappingKeyName": "msgSender"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "myrct.amount + myrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "StructDefinition",
+                    "name": "Rct",
+                    "members": [
+                        {
+                            "name": "amount",
+                            "type": "field"
+                        },
+                        {
+                            "name": "tax",
+                            "type": "field"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "total_msg",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "addend": {
+                                    "nodeType": "BinaryOperation",
+                                    "leftExpression": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "operator": "+",
+                                    "rightExpression": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    }
+                                },
+                                "isVarDec": false,
+                                "id": 36,
+                                "isAccessed": false
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    }
+                                },
+                                "isVarDec": false,
+                                "id": 43,
+                                "isAccessed": false
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "myrct",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "Rct",
+                                    "members": [
+                                        {
+                                            "name": "amount",
+                                            "type": "field"
+                                        },
+                                        {
+                                            "name": "tax",
+                                            "type": "field"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "myrct.amount + myrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": []
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "remove",
+            "fileId": 75,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                            "mappingName": "total",
+                            "mappingKeyName": "msgSender"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msgSender_1",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                            "mappingName": "total",
+                            "mappingKeyName": "msgSender"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "total_msgSender_2",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                            "mappingName": "total",
+                            "mappingKeyName": "msgSender"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "total_msgSender_1",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "total_msgSender_1",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "total_msgSender_1",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "total_msgSender_0",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "total_msgSender_1",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "total_msgSender_2",
+                            "id": 5,
+                            "isPartitioned": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "cmt",
+                            "id": 13,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "structProperties": [
+                                "amount",
+                                "tax"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "amount",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "tax",
+                                    "typeName": "uint256"
+                                }
+                            ],
+                            "typeName": "Rct",
+                            "initialisationRequired": true
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "StructDefinition",
+                    "name": "Rct",
+                    "members": [
+                        {
+                            "name": "amount",
+                            "type": "field"
+                        },
+                        {
+                            "name": "tax",
+                            "type": "field"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_2",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "total_msgSender_2",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "decrementation",
+                                "name": "total_msg",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isMapping": true,
+                                "subtrahend": {
+                                    "nodeType": "BinaryOperation",
+                                    "leftExpression": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "invalidrct",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "operator": "+",
+                                    "rightExpression": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "invalidrct",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct memory"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Literal",
+                                        "value": "0"
+                                    }
+                                },
+                                "isVarDec": false,
+                                "id": 67,
+                                "isAccessed": false
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "struct Receipt.Rct storage ref"
+                                            }
+                                        },
+                                        "isStruct": true
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Literal",
+                                        "value": "0"
+                                    }
+                                },
+                                "isVarDec": false,
+                                "id": 73,
+                                "isAccessed": false
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_2",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "total_msgSender_2",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "invalidrct",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "Rct",
+                                    "members": [
+                                        {
+                                            "name": "amount",
+                                            "type": "field"
+                                        },
+                                        {
+                                            "name": "tax",
+                                            "type": "field"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "total_msgSender_2",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax",
+                                "mappingName": "total",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total_msgSender_0",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total_msgSender_1",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "total_msgSender_2",
+                                "id": 5,
+                                "isPartitioned": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "invalidrct.amount + invalidrct.tax"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "cmt",
+                                "id": 13,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "structProperties": [
+                                    "amount",
+                                    "tax"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "amount",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "typeName": "uint256"
+                                    }
+                                ],
+                                "typeName": "Rct",
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": []
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "joinCommitments",
+            "fileId": 75,
+            "fileExtension": ".zok",
+            "nodes": []
+        },
+        {
+            "nodeType": "File",
+            "fileName": "splitCommitments",
+            "fileId": 75,
+            "fileExtension": ".zok",
+            "nodes": []
+        }
+    ]
+}

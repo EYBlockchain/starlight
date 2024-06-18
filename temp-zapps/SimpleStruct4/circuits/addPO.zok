@@ -1,0 +1,162 @@
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "./common/hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+struct PO {
+        field count
+field ppunit
+field id
+field owner
+      }
+
+def main(\
+	public field msgSender,\
+	private PO newpo,\
+	private field POs_newpodotid_oldCommitment_owner_secretKey,\
+	public field nullifierRoot,\
+	public field newNullifierRoot,\
+	public field POs_newpodotid_oldCommitment_nullifier,\
+	private field[32] POs_newpodotid_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] POs_newpodotid_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  PO POs_newpodotid_oldCommitment_value,\
+	private field POs_newpodotid_oldCommitment_salt,\
+	private bool POs_newpodotid_oldCommitment_isDummy,\
+	public field commitmentRoot,\
+	private field POs_newpodotid_oldCommitment_membershipWitness_index,\
+	private field[32] POs_newpodotid_oldCommitment_membershipWitness_siblingPath,\
+	private field POs_newpodotid_newCommitment_owner_publicKey,\
+	private field POs_newpodotid_newCommitment_salt,\
+	public field POs_newpodotid_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field POs_mappingId = 6
+
+
+        PO POs_newpodotid = POs_newpodotid_oldCommitment_value
+
+
+        assert(newpo.owner == msgSender)
+
+
+        assert(POs_newpodotid.id == 0)
+
+POs_newpodotid.count = newpo.count
+
+POs_newpodotid.ppunit = newpo.ppunit
+
+POs_newpodotid.id = newpo.id
+
+POs_newpodotid.owner = newpo.owner
+
+
+        field POs_newpodotid_stateVarId_field = mimc2([POs_mappingId, newpo.id])
+
+
+        // POs_newpodotid_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] POs_newpodotid_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(POs_newpodotid_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool POs_newpodotid_oldCommitment_owner_publicKey_sign = edwardsCompress(POs_newpodotid_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] POs_newpodotid_oldCommitment_yBits = field_to_bool_256(POs_newpodotid_oldCommitment_owner_publicKey_point[1])[2..256]
+        POs_newpodotid_oldCommitment_yBits[0] = POs_newpodotid_oldCommitment_owner_publicKey_sign
+
+        field POs_newpodotid_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...POs_newpodotid_oldCommitment_yBits])
+
+
+        // Nullify POs_newpodotid:
+
+        field POs_newpodotid_oldCommitment_nullifier_check_field = poseidon([\
+          POs_newpodotid_stateVarId_field,\
+          POs_newpodotid_oldCommitment_owner_secretKey,\
+          POs_newpodotid_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(POs_newpodotid_oldCommitment_nullifier)[8..256] == field_to_bool_256(POs_newpodotid_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // POs_newpodotid_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            POs_newpodotid_nullifier_nonmembershipWitness_siblingPath,\
+            POs_newpodotid_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          POs_newpodotid_nullifier_nonmembershipWitness_newsiblingPath,\
+          POs_newpodotid_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+          // prepare secret state 'POs_newpodotid' for commitment
+
+          
+          
+          // POs_newpodotid_oldCommitment_commitment: preimage check
+
+          field POs_newpodotid_oldCommitment_commitment_field = poseidon([\
+            POs_newpodotid_stateVarId_field,\
+            	 POs_newpodotid_oldCommitment_value.count,\
+	 POs_newpodotid_oldCommitment_value.ppunit,\
+	 POs_newpodotid_oldCommitment_value.id,\
+	 POs_newpodotid_oldCommitment_value.owner,\
+            POs_newpodotid_oldCommitment_owner_publicKey,\
+            POs_newpodotid_oldCommitment_salt\
+          ])
+
+
+        // POs_newpodotid_oldCommitment_commitment: existence check
+
+
+        field POs_newpodotid_commitmentRoot_check = checkRoot(\
+          POs_newpodotid_oldCommitment_membershipWitness_siblingPath,\
+          POs_newpodotid_oldCommitment_commitment_field,\
+          POs_newpodotid_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        POs_newpodotid_commitmentRoot_check = if POs_newpodotid_oldCommitment_isDummy == true then commitmentRoot else POs_newpodotid_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(POs_newpodotid_commitmentRoot_check)[8..256]\
+        )
+
+
+          // prepare secret state 'POs_newpodotid' for commitment
+
+          PO POs_newpodotid_newCommitment_value = PO {  count: POs_newpodotid.count, ppunit: POs_newpodotid.ppunit, id: POs_newpodotid.id, owner: POs_newpodotid.owner }
+
+
+          // POs_newpodotid_newCommitment_commitment - preimage check
+
+          field POs_newpodotid_newCommitment_commitment_check_field = poseidon([\
+            POs_newpodotid_stateVarId_field,\
+            	 POs_newpodotid_newCommitment_value.count,\
+	 POs_newpodotid_newCommitment_value.ppunit,\
+	 POs_newpodotid_newCommitment_value.id,\
+	 POs_newpodotid_newCommitment_value.owner,\
+            POs_newpodotid_newCommitment_owner_publicKey,\
+            POs_newpodotid_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(POs_newpodotid_newCommitment_commitment)[8..256] == field_to_bool_256(POs_newpodotid_newCommitment_commitment_check_field)[8..256]\
+          )
+
+         return true

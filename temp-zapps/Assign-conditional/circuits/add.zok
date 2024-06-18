@@ -1,0 +1,171 @@
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+def main(\
+	private field value,\
+	public field c,\
+	public field b,\
+	private field a_0_newCommitment_owner_publicKey,\
+	private field a_0_newCommitment_salt,\
+	public field a_0_newCommitment_commitment,\
+	private field result_oldCommitment_owner_secretKey,\
+	public field nullifierRoot,\
+	public field newNullifierRoot,\
+	public field result_oldCommitment_nullifier,\
+	private field[32] result_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] result_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  field result_oldCommitment_value,\
+	private field result_oldCommitment_salt,\
+	private bool result_oldCommitment_isDummy,\
+	public field commitmentRoot,\
+	private field result_oldCommitment_membershipWitness_index,\
+	private field[32] result_oldCommitment_membershipWitness_siblingPath,\
+	private field result_newCommitment_owner_publicKey,\
+	private field result_newCommitment_salt,\
+	public field result_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code each stateVarId into the circuit:
+        field a_0_stateVarId_field = 3
+
+
+        // We need to hard-code each stateVarId into the circuit:
+        field result_stateVarId_field = 9
+
+
+        field result = result_oldCommitment_value
+
+
+        field b_init = b
+
+
+        field c_init = c
+
+// Skipping incrementation of a
+
+result = ((c > b) ? c : b)
+
+c = c_init
+
+b = b_init
+
+
+        // prepare secret state 'a_0' for commitment
+
+        field a_0_newCommitment_value_field = value
+
+        // a_0_newCommitment_commitment - preimage check
+
+        field a_0_newCommitment_commitment_check_field = poseidon([\
+          a_0_stateVarId_field,\
+          a_0_newCommitment_value_field,\
+          a_0_newCommitment_owner_publicKey,\
+          a_0_newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(a_0_newCommitment_commitment)[8..256] == field_to_bool_256(a_0_newCommitment_commitment_check_field)[8..256]\
+        )
+
+
+        // result_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] result_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(result_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool result_oldCommitment_owner_publicKey_sign = edwardsCompress(result_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] result_oldCommitment_yBits = field_to_bool_256(result_oldCommitment_owner_publicKey_point[1])[2..256]
+        result_oldCommitment_yBits[0] = result_oldCommitment_owner_publicKey_sign
+
+        field result_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...result_oldCommitment_yBits])
+
+
+        // Nullify result:
+
+        field result_oldCommitment_nullifier_check_field = poseidon([\
+          result_stateVarId_field,\
+          result_oldCommitment_owner_secretKey,\
+          result_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(result_oldCommitment_nullifier)[8..256] == field_to_bool_256(result_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // result_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            result_nullifier_nonmembershipWitness_siblingPath,\
+            result_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          result_nullifier_nonmembershipWitness_newsiblingPath,\
+          result_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+
+        // prepare secret state 'result' for commitment
+
+          field result_oldCommitment_value_field = result_oldCommitment_value
+          
+        // result_oldCommitment_commitment: preimage check
+
+
+        field result_oldCommitment_commitment_field = poseidon([\
+          result_stateVarId_field,\
+          result_oldCommitment_value_field,\
+          result_oldCommitment_owner_publicKey,\
+          result_oldCommitment_salt        ])
+
+
+        // result_oldCommitment_commitment: existence check
+
+
+        field result_commitmentRoot_check = checkRoot(\
+          result_oldCommitment_membershipWitness_siblingPath,\
+          result_oldCommitment_commitment_field,\
+          result_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        result_commitmentRoot_check = if result_oldCommitment_isDummy == true then commitmentRoot else result_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(result_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'result' for commitment
+
+        field result_newCommitment_value_field = result
+
+        // result_newCommitment_commitment - preimage check
+
+        field result_newCommitment_commitment_check_field = poseidon([\
+          result_stateVarId_field,\
+          result_newCommitment_value_field,\
+          result_newCommitment_owner_publicKey,\
+          result_newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(result_newCommitment_commitment)[8..256] == field_to_bool_256(result_newCommitment_commitment_check_field)[8..256]\
+        )
+
+         return true
