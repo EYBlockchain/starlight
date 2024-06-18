@@ -598,6 +598,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
                   }));
 
                 break;
@@ -613,6 +614,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
                   }));
 
                 break;
@@ -630,6 +632,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
                 structProperties: stateNode.structProperties,
+                isConstructor: node.isConstructor,
               }));
         }
       }
@@ -834,7 +837,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
 

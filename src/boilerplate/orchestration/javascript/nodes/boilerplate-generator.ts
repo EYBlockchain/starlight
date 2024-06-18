@@ -304,6 +304,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
     case 'IntegrationApiServicesBoilerplate': {
       const {
         contractName,
+        functionNames = [],
         functions = [],
         constructorParams = [],
         contractImports = [],
@@ -311,6 +312,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
       return {
         nodeType,
         contractName,
+        functionNames,
         functions,
         constructorParams,
         contractImports,
@@ -350,6 +352,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters = buildNode('ParameterList', fields),
         returnParameters =  buildNode('ParameterList', fields),
         decrementsSecretState = [],
+        isConstructor = false,
       } = fields;
       return {
         nodeType,
@@ -357,6 +360,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
         returnParameters,
         decrementsSecretState,
+        isConstructor
       };
     }
     case 'IntegrationApiRoutesFunction': {
