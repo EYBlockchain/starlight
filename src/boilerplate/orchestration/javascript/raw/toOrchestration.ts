@@ -818,6 +818,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         });
         lines[lines.length - 1] += `, `;
       }
+      
       params[0] = sendTransactionBoilerplate(node);
       // params[0] = arr of nullifier root(s)
       // params[1] = arr of commitment root(s)
@@ -874,14 +875,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ],
       };
 
-      /*case 'FunctionDefinitionPublic': // Nouveau case pour les fonctions publiques
+      case 'SendPublicTransaction': // 
       node.publicInputsString = node.publicInputs.join(', ');
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
-          \nconst instance = await getContractInstance("${node.contractName}");
-          \nconst contractAddr = await getContractAddress("${node.contractName}");
-          \nconst txData = await instance.methods.${node.functionName}(${node.publicInputsString}).encodeABI();
+           \nconst txData = await instance.methods.${node.functionName}(${node.publicInputsString}).encodeABI();
           \nlet txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,
@@ -893,13 +892,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nconst key = config.web3.key;
           \nconst signed = await web3.eth.accounts.signTransaction(txParams, key);
           \nconst sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-          \nlet tx = await instance.getPastEvents("NewLeaves");
-          \ntx = tx[0];
-          \nif (!tx) {
-            throw new Error('Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
-          }`
+         `
         ]
-      };*/
+      };
     default:
       return {};
   }

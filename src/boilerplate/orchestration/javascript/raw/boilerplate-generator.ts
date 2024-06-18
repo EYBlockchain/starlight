@@ -232,6 +232,13 @@ class BoilerplateGenerator {
     },
   };
 
+  // SendPublicTransaction = {
+  //   statements(): string[] {
+  //     return []; // TODO: we might eventually import some underflow/overflow functions.
+  //   },
+  //     // we don't use this builder, because sendtx only requires a few lines which are very custom
+  // };
+
   membershipWitness = {
     postStatements({ stateName,
       contractName,
@@ -562,6 +569,7 @@ sendTransaction = {
   },
     // we don't use this builder, because sendtx only requires a few lines which are very custom
 };
+
   /** Partitioned states need boilerplate for a decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
   writePreimage = {
     postStatements({

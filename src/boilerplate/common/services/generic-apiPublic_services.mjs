@@ -2,7 +2,6 @@
 import config from "config";
 import assert from "assert";
 import FUNCTION_NAME from './FUNCTION_NAME.mjs';
-import startEventFilter from "./common/timber.mjs";
 import fs from "fs";
 import logger from "./common/logger.mjs";
 import web3 from "./common/web3.mjs";
@@ -19,8 +18,7 @@ export async function service_FUNCTION_NAME (req, res, next){
   } catch (err) {
     throw new Error(err);
   }
-	try {
-    await startEventFilter('CONTRACT_NAME');
+	
     const FUNCTION_SIG;
     const { tx , _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
@@ -34,8 +32,4 @@ export async function service_FUNCTION_NAME (req, res, next){
     }
    
     await sleep(10);
-  } catch (err) {
-    logger.error(err);
-    res.send({ errors: [err.message] });
-  }
 }
