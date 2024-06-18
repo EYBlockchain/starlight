@@ -78,8 +78,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue?.nodeType === 'Assignment') {
         if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
+          let varName = node.initialValue.leftHandSide?.name ? node.initialValue.leftHandSide.name : node.declarations[0].name;
           return `${getAccessedValue(
-            node.declarations[0].name,
+            varName,
           )}\n${codeGenerator(node.initialValue)};`;
         }
         if (node.declarations[0].isStruct) return `\n let ${codeGenerator(node.declarations[0])} = {}; \n${codeGenerator(node.initialValue)};`;
