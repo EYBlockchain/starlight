@@ -93,18 +93,17 @@ def main(\
         assert(\
         field_to_bool_256(oldCommitment_0_nullifier)[8..256] == field_to_bool_256(oldCommitment_0_nullifier_check_field)[8..256]\
         )
-       
-       assert(\
+
+        assert(\
           nullifierRoot == checkproof(\
             oldCommitment_0_nullifier_nonmembershipWitness_siblingPath,\
             oldCommitment_0_nullifier\
            )          )
 
-        assert( newNullifierRoot == checkUpdatedPath(oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
+        assert( newNullifierRoot == checkUpdatedPath(\
+         oldCommitment_0_nullifier_nonmembershipWitness_newsiblingPath,\
          oldCommitment_0_nullifier)  )
-  
-        
-
+       
 
         // Nullify oldCommitment_1:
 
@@ -124,8 +123,10 @@ def main(\
             oldCommitment_1_nullifier\
            )          )
         
-        assert( newNullifierRoot == checkUpdatedPath(oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
+        assert( newNullifierRoot == checkUpdatedPath(\
+         oldCommitment_1_nullifier_nonmembershipWitness_newsiblingPath,\
          oldCommitment_1_nullifier)  )
+
 
         // oldCommitment_0_commitment: preimage check
 

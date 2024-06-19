@@ -657,9 +657,12 @@ const visitor = {
               burnedOnly:
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
+              reinitialisedOnly: stateVarIndicator.reinitialisable &&
+              !stateVarIndicator.isNullified,  
             });
           }
         }
+       
 
         if (node.kind === 'constructor') {
           newNodes.writePreimageNode.isConstructor = true;

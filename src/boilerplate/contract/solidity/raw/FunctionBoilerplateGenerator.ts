@@ -60,12 +60,13 @@ class FunctionBoilerplateGenerator {
       nullifiersRequired: newNullifiers,
       oldCommitmentAccessRequired: commitmentRoot,
       newCommitmentsRequired: newCommitments,
+      containsAccessedOnlyState: checkNullifiers,
       encryptionRequired
     }): string[] {
       // prettier-ignore
 
       let parameter = [
-      ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
+        ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
         .map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.isConstantArray ? `${input.type}[${input.isConstantArray}]` : input.type) : []), // TODO arrays of structs/ structs of arrays
       ...(newNullifiers ? [`uint256`] : []),
       ...(newNullifiers ? [`uint256`] : []),
@@ -112,11 +113,11 @@ class FunctionBoilerplateGenerator {
           }).join('\n')}`]
           : []),
 
-          ...(newNullifiers ? [`
-          inputs.nullifierRoot = nullifierRoot; `] : []),
+        ...(newNullifiers ? [`
+        inputs.nullifierRoot = nullifierRoot; `] : []),
 
-          ...(newNullifiers ? [`
-          inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
+        ...(newNullifiers ? [`
+        inputs.latestNullifierRoot = latestNullifierRoot; `] : []),
 
 
         ...(newNullifiers ? [`
