@@ -820,6 +820,11 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
 
             tempRHSPath.traverse(visitor, { skipPublicInputs: true });
             rhsPath.traversePathsFast(publicInputsVisitor, {});
+            path.traversePathsFast(p => {
+              if (p.node.nodeType === 'Identifier' && p.isStruct(p.node)){
+                addStructDefinition(p);
+              }
+            }, state);
             state.skipSubNodes = true;
             parent._newASTPointer.push(newNode);
             return;
@@ -1008,7 +1013,6 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         interactsWithSecret,
         declarationType,
       });
-
 
       if (path.isStruct(node)) {
         state.structNode = addStructDefinition(path);
@@ -1276,7 +1280,6 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
   MemberAccess: {
     enter(path: NodePath, state: any) {
       const { parent, node } = path;
-
       let newNode: any;
 
       if (path.isMsgSender()) {

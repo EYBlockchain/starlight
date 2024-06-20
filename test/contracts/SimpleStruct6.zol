@@ -11,19 +11,26 @@ contract Assign {
   }
 
   secret myStruct public w;
+  secret uint256 public a;
 
   
   uint256 public index;
 
   
   function add(secret uint256 value) public {
+    unknown a += index;
+    index++;
     unknown w.prop1 += value;
     unknown w.prop2 += index;
+    index++;
+    unknown a += value;
   }
 
-  function add1(secret uint256 value) public {
+  function remove(secret uint256 value) public {
+    index++;
     unknown w.prop1 -= value;
-    unknown w.prop2 -= value;
+    unknown w.prop2 -= index;
+    unknown a -= index;
   }
 
 
