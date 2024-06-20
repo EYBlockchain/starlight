@@ -25,7 +25,6 @@ class ContractBoilerplateGenerator {
       oldCommitmentAccessRequired,
       nullifiersRequired,
       newCommitmentsRequired,
-      containsAccessedOnlyState,
       encryptionRequired,
       //isInternalFunctionCall add it
     }): string[] {
@@ -100,6 +99,7 @@ class ContractBoilerplateGenerator {
         }`,
       ];
     },
+
 
     registerZKPPublicKey(): string[] {
       return [
@@ -210,7 +210,7 @@ class ContractBoilerplateGenerator {
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
-            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers , nullifierRoots(old and latest) and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state). and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,
@@ -262,10 +262,10 @@ class ContractBoilerplateGenerator {
       		}`] :
           newCommitments ? [`
             insertLeaves(newCommitments);`] :
-          []
+          []      
         ),
 
-       ...(newNullifiers) ? [`
+        ...(newNullifiers) ? [`
        if (newNullifiers.length > 0) {
         newNullifierRoot = _inputs.latestNullifierRoot;
       }`] : [] 
@@ -316,22 +316,22 @@ class ContractBoilerplateGenerator {
       }`)
        verifyInputs.push(`
 
-         if (functionId == uint(FunctionNames.joinCommitments)) {
+       if (functionId == uint(FunctionNames.joinCommitments)) {
 
           
-          require(newNullifierRoot == _inputs.nullifierRoot, "Input NullifierRoot does not exist.");
+        require(newNullifierRoot == _inputs.nullifierRoot, "Input NullifierRoot does not exist.");
 
-           uint k = 0;
+         uint k = 0;
 
-           inputs[k++] = _inputs.nullifierRoot;
-           inputs[k++] = _inputs.latestNullifierRoot;
-           inputs[k++] = newNullifiers[0];
-           inputs[k++] = newNullifiers[1];
-           inputs[k++] = _inputs.commitmentRoot;
-           inputs[k++] = newCommitments[0];
-           inputs[k++] = 1;
-                
-         }
+         inputs[k++] = _inputs.nullifierRoot;
+         inputs[k++] = _inputs.latestNullifierRoot;
+         inputs[k++] = newNullifiers[0];
+         inputs[k++] = newNullifiers[1];
+         inputs[k++] = _inputs.commitmentRoot;
+         inputs[k++] = newCommitments[0];
+         inputs[k++] = 1;
+              
+       }
          
          if (functionId == uint(FunctionNames.splitCommitments)) {
 

@@ -4,18 +4,21 @@
 Logic for storing and retrieving commitments from a mongo DB.
 */
 import config from 'config';
+import fs from 'fs';
 import gen from 'general-number';
 import mongo from './mongo.mjs';
 import logger from './logger.mjs';
 import utils from 'zkp-utils';
 import { poseidonHash } from './number-theory.mjs';
+import { sharedSecretKey } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-import { SumType, reduceTree, toBinArray, poseidonConcatHash } from './smt_utils.mjs';
+import { SumType, reduceTree, toBinArray, poseidonConcatHash,} from './smt_utils.mjs';
 import { hlt } from './hash-lookup.mjs';
-import fs from "fs";
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
+
+const keyDb = '/app/orchestration/common/db/key.json';
 
 const TRUNC_LENGTH = 32; // Just for testing so we don't make more than 32 deep smt trees.
 const WHOLE_STATES = [WHOLE_STATE_NAMES];
@@ -121,18 +124,18 @@ export async function getNullifiedCommitments() {
  * @returns {Promise<number>} The sum of the values ​​of all non-nullified commitments
  */
 export async function getBalance() {
-    const connection = await mongo.connection(MONGO_URL);
-    const db = connection.db(COMMITMENTS_DB);
-    const commitments = await db
-        .collection(COMMITMENTS_COLLECTION)
-        .find({ isNullified: false }) //  no nullified
-        .toArray();
-    
-    let sumOfValues = 0;
-    commitments.forEach(commitment => {
-        sumOfValues += parseInt(commitment.preimage.value, 10);
-    });
-    return sumOfValues;
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitments = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ isNullified: false }) //  no nullified
+    .toArray();
+
+  let sumOfValues = 0;
+  commitments.forEach(commitment => {
+    sumOfValues += parseInt(commitment.preimage.value, 10);
+  });
+  return sumOfValues;
 }
 
 export async function getBalanceByState(name, mappingKey = null) {
@@ -144,23 +147,27 @@ export async function getBalanceByState(name, mappingKey = null) {
     .collection(COMMITMENTS_COLLECTION)
     .find(query)
     .toArray();
-	let sumOfValues = 0;
-	commitments.forEach(commitment => {
-	  sumOfValues += commitment.isNullified ? 0 :  parseInt(commitment.preimage.value, 10);
-	});
+  let sumOfValues = 0;
+  commitments.forEach(commitment => {
+    sumOfValues += commitment.isNullified
+      ? 0
+      : parseInt(commitment.preimage.value, 10);
+  });
   return sumOfValues;
 }
 
 /**
  * @returns all the commitments existent in this database.
  */
- export async function getAllCommitments() {
-	const connection = await mongo.connection(MONGO_URL);
-	const db = connection.db(COMMITMENTS_DB);
-	const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
-	return allCommitments;
-  }
-  
+export async function getAllCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const allCommitments = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find()
+    .toArray();
+  return allCommitments;
+}
 
 // function to update an existing commitment
 export async function updateCommitment(commitment, updates) {
@@ -679,7 +686,7 @@ export async function splitCommitments(
 
   // Call Zokrates to generate the proof:
   const allInputs = [
-	value.integer,
+    value.integer,
     fromID,
     stateVarID,
     isMapping,
@@ -902,4 +909,41 @@ export async function addConstructorNullifiers() {
     );
   
   }
+}
+export async function getSharedSecretskeys(
+  _recipientAddress,
+  _recipientPublicKey = 0,
+) {
+  const keys = JSON.parse(
+    fs.readFileSync(keyDb, 'utf-8', err => {
+      console.log(err);
+    }),
+  );
+  const secretKey = generalise(keys.secretKey);
+  const publicKey = generalise(keys.publicKey);
+  let recipientPublicKey = generalise(_recipientPublicKey);
+  const recipientAddress = generalise(_recipientAddress);
+  if (_recipientPublicKey === 0) {
+    recipientPublicKey = await this.instance.methods
+      .zkpPublicKeys(recipientAddress.hex(20))
+      .call();
+    recipientPublicKey = generalise(recipientPublicKey);
+
+    if (recipientPublicKey.length === 0) {
+      throw new Error('WARNING: Public key for given  eth address not found.');
+    }
+  }
+
+  const sharedKey = sharedSecretKey(secretKey, recipientPublicKey);
+  console.log('sharedKey:', sharedKey);
+  console.log('sharedKey:', sharedKey[1]);
+  const keyJson = {
+    secretKey: secretKey.integer,
+    publicKey: publicKey.integer,
+    sharedSecretKey: sharedKey[0].integer,
+    sharedPublicKey: sharedKey[1].integer, // not req
+  };
+  fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
+
+  return sharedKey[1];
 }

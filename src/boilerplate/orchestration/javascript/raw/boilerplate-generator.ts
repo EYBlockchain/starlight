@@ -80,7 +80,8 @@ class BoilerplateGenerator {
                     }),
                   );
                 const secretKey = generalise(keys.secretKey);
-                const publicKey = generalise(keys.publicKey);`
+                const publicKey = generalise(keys.publicKey);
+               `
       ];
     },
 
@@ -99,6 +100,7 @@ class BoilerplateGenerator {
       structProperties,
       newOwnerStatment,
       reinitialisedOnly,
+      isSharedSecret,
       accessedOnly,
       stateVarIds
     }): string[] {
@@ -181,12 +183,12 @@ class BoilerplateGenerator {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}', secretKey, publicKey, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', ${isSharedSecret? `sharedSecretKey, sharedPublicKey`: `secretKey, publicKey`}, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
 
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
                 [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
-                  publicKey.hex(32),
+                  ${isSharedSecret ? `sharedPublicKey.hex(32)` : `publicKey.hex(32)`},
                   ${stateName}_newCommitmentValue.integer,
                   ${stateName}_preimage,
                 );
@@ -271,14 +273,14 @@ class BoilerplateGenerator {
 
   calculateNullifier = {
 
-    postStatements({ stateName, accessedOnly, stateType }): string[] {
+    postStatements({ stateName, isSharedSecret, accessedOnly, stateType }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       switch (stateType) {
         
         case 'partitioned':
           return [`
-            let ${stateName}_0_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_0_prevSalt.hex(32))],);
-            let ${stateName}_1_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_1_prevSalt.hex(32))],);
+            let ${stateName}_0_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), ${isSharedSecret ? `BigInt(sharedSecretKey.hex(32))`: `BigInt(secretKey.hex(32))` }, BigInt(${stateName}_0_prevSalt.hex(32))],);
+            let ${stateName}_1_nullifier = poseidonHash([BigInt(${stateName}_stateVarId), ${isSharedSecret ? `BigInt(sharedSecretKey.hex(32))`: `BigInt(secretKey.hex(32))` }, BigInt(${stateName}_1_prevSalt.hex(32))],);
             ${stateName}_0_nullifier = generalise(${stateName}_0_nullifier.hex(32)); // truncate
             ${stateName}_1_nullifier = generalise(${stateName}_1_nullifier.hex(32)); // truncate
             // Non-membership witness for Nullifier
@@ -292,9 +294,8 @@ class BoilerplateGenerator {
         case 'whole':
           if(accessedOnly)
           return [`
-            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), ${isSharedSecret ? `BigInt(sharedSecretKey.hex(32))`: `BigInt(secretKey.hex(32))`}, BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
-
             // Non-membership witness for Nullifier
             const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
 
@@ -302,9 +303,8 @@ class BoilerplateGenerator {
             const ${stateName}_nullifier_path = generalise(${stateName}_nullifier_NonMembership_witness.path).all;
           `];
           return [`
-            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), BigInt(secretKey.hex(32)), BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
+            let ${stateName}_nullifier = ${stateName}_commitmentExists ? poseidonHash([BigInt(${stateName}_stateVarId), ${isSharedSecret ? `BigInt(sharedSecretKey.hex(32))`: `BigInt(secretKey.hex(32))`}, BigInt(${stateName}_prevSalt.hex(32))],) : poseidonHash([BigInt(${stateName}_stateVarId), BigInt(generalise(0).hex(32)), BigInt(${stateName}_prevSalt.hex(32))],);
             \n${stateName}_nullifier = generalise(${stateName}_nullifier.hex(32)); // truncate
-
             // Non-membership witness for Nullifier
             const ${stateName}_nullifier_NonMembership_witness = getnullifierMembershipWitness(${stateName}_nullifier);
 
@@ -372,9 +372,12 @@ class BoilerplateGenerator {
     },
   };
 
+
+  
+
   calculateCommitment = {
 
-    postStatements({ stateName, stateType, structProperties }): string[] {
+    postStatements({ stateName, stateType, isSharedSecret, structProperties }): string[] {
       // once per state
       switch (stateType) {
         case 'increment':
@@ -438,6 +441,7 @@ class BoilerplateGenerator {
       reinitialisedOnly,
       burnedOnly,
       accessedOnly,
+      isSharedSecret,
       nullifierRootRequired,
       newNullifierRootRequired,
       initialisationRequired,
@@ -464,8 +468,8 @@ class BoilerplateGenerator {
           prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
-              \tsecretKey.integer,
-              \tsecretKey.integer,
+              \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
+              \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
               ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
               ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
               \t${stateName}_0_nullifier.integer,
@@ -500,7 +504,7 @@ class BoilerplateGenerator {
                 case true:
                   return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \tsecretKey.integer,
+                      \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
@@ -517,7 +521,7 @@ class BoilerplateGenerator {
                     case true:
                       return [`
                           ${parameters.join('\n')}${stateVarIds.join('\n')}
-                          \tsecretKey.integer,
+                          \t${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`},
                           ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                           \t${stateName}_nullifier_path.integer,
                           ${prev},
@@ -528,7 +532,7 @@ class BoilerplateGenerator {
                     default:
                       return [`
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
-                      \t${stateName}_commitmentExists ? secretKey.integer: generalise(0).integer,
+                      \t${stateName}_commitmentExists ? ${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`}: generalise(0).integer,
                       ${nullifierRootRequired ? `\t${stateName}_nullifierRoot.integer,` : ``}
                       ${newNullifierRootRequired ? `\t${stateName}_newNullifierRoot.integer,` : ``}
                       \t${stateName}_nullifier.integer,
@@ -622,9 +626,11 @@ sendTransaction = {
     postStatements({
       stateName,
       stateType,
+      isSharedSecret,
       mappingName,
       mappingKey,
       burnedOnly,
+      reinitialisedOnly,
       structProperties,
       isConstructor
     }): string[] {
@@ -643,7 +649,7 @@ sendTransaction = {
               \tsalt: ${stateName}_newSalt,
               \tpublicKey: ${stateName}_newOwnerPublicKey,
             },
-            secretKey: ${stateName}_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
+            secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
             isNullified: false,
           });`];
         case 'decrement':
@@ -661,7 +667,7 @@ sendTransaction = {
                 \tsalt: ${stateName}_2_newSalt,
                 \tpublicKey: ${stateName}_newOwnerPublicKey,
               },
-              secretKey: ${stateName}_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
+              secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
               isNullified: false,
             });`];
         case 'whole':
@@ -672,8 +678,8 @@ sendTransaction = {
             default:
               value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}`)} }` : `${stateName}`;
               return [`
-                \nif (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32));
-                \n else await updateNullifierTree(); // Else we always update it in markNullified
+                \n${reinitialisedOnly ? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32)); 
+                \n else await updateNullifierTree(); // Else we always update it in markNullified`}
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
@@ -684,7 +690,7 @@ sendTransaction = {
                     \tsalt: ${stateName}_newSalt,
                     \tpublicKey: ${stateName}_newOwnerPublicKey,
                   },
-                  secretKey: ${stateName}_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
+                  secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
                   isNullified: false,
                 });`];
           }
@@ -763,7 +769,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, addConstructorNullifiers } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getSharedSecretskeys , getBalanceByState, addConstructorNullifiers } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -854,7 +860,19 @@ integrationApiServicesBoilerplate = {
             logger.error(err);
             res.send({ errors: [err.message] });
         }
-    }`
+      }
+      export async function service_getSharedKeys(req, res, next) {
+        try {
+          const { recipientAddress } = req.body;
+          const recipientPubKey = req.body.recipientPubKey || 0
+          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey );
+          res.send({ SharedKeys });
+          await sleep(10);
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }`
       
       
       ;
@@ -876,7 +894,7 @@ integrationApiRoutesBoilerplate = {
         (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getBalance, service_getBalanceByState, service_backupData, } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
@@ -886,6 +904,7 @@ integrationApiRoutesBoilerplate = {
     router.get("/getBalanceByState", service_getBalanceByState);
     // nullifier route
     router.post("/reinstateNullifiers", service_reinstateNullifiers);
+    router.post("/getSharedKeys", service_getSharedKeys);
     // backup route
     router.post("/backupDataRetriever", service_backupData);
     `;
