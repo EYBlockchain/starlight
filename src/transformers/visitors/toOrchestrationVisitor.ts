@@ -37,6 +37,7 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
   for (const inc of stateVarIndicator.increments || []) {
     if (inc.nodeType === 'IndexAccess' || inc.nodeType === 'MemberAccess') inc.name = getIndexAccessName(inc);
     if (!inc.name) inc.name = inc.value;
+    // Note: modName defined in circuit
     let modName =  inc.modName ? inc.modName : inc.name;
     if (incrementsArray.some(existingInc => inc.name === existingInc.name ))
       continue;
@@ -81,43 +82,6 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
   }
   return { incrementsArray, incrementsString };
 };
-
-// Adjusts names of indicator.increment so that they match the names of the corresponding indicators i.e. index_1 instead of index
-const incrementNames = (path: NodePath, indicator: any) => {
-  const { node } = path;
-  if (node._newASTPointer.incrementsSecretState && (!node._newASTPointer.decrementsSecretState)){
-    let rhsNode = node._newASTPointer.expression?.rightHandSide;
-    if (rhsNode && rhsNode.nodeType === 'Identifier'){
-      if (!indicator.increments.some((inc: any) => inc.name === rhsNode.name)){
-        let lastUnderscoreIndex = rhsNode.name.lastIndexOf("_");
-        let origName = rhsNode.name.substring(0, lastUnderscoreIndex); 
-        let count =0;
-        indicator.increments.forEach((inc: any) => {
-          if (origName === inc.name && !inc.modName && count === 0){
-            inc.modName = rhsNode.name;
-            count++;
-          }
-        });
-      }
-    }
-  } else if (node._newASTPointer.decrementsSecretState){
-    let rhsNode = node._newASTPointer.expression?.rightHandSide;
-    if (rhsNode && rhsNode.nodeType === 'Identifier'){
-      if (!indicator.decrements.some((dec: any) => dec.name === rhsNode.name)){
-        let lastUnderscoreIndex = rhsNode.name.lastIndexOf("_");
-        let origName = rhsNode.name.substring(0, lastUnderscoreIndex); 
-        let count =0;
-        indicator.decrements.forEach((dec: any) => {
-          if (origName === dec.name && !dec.modName && count === 0){
-            dec.modName = rhsNode.name;
-            count++;
-          }
-        });
-      }
-    }
-  }
-};
-
 
 // gathers public inputs we need to extract from the contract
 // i.e. public 'accessed' variables
@@ -1323,7 +1287,6 @@ const visitor = {
       // reset
       delete state.interactsWithSecret;
       if (node._newASTPointer?.incrementsSecretState && indicator) {
-        incrementNames(path, indicator);
         let increments = collectIncrements(indicator);
         path.node._newASTPointer.increments = increments.incrementsString;
       } else if (indicator?.isWhole && node._newASTPointer) {

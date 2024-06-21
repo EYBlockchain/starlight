@@ -21,10 +21,11 @@ contract Assign {
     unknown a += index;
     index++;
     unknown w.prop1 += value;
-    unknown w.prop2 += index;
+    unknown w.prop2 += index + value;
     index++;
     unknown a += value;
   }
+
 
   function remove(secret uint256 value) public {
     index++;
