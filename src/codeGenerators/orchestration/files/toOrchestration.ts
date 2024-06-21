@@ -162,7 +162,7 @@ const prepareIntegrationApiServices = (node: any) => {
     .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
     .replace(/CONTRACT_NAME/g, node.contractName)
     .replace(/FUNCTION_NAME/g, fn.name) ;
-    console.log("fnboilerplate :", fnboilerplate);
+  
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);

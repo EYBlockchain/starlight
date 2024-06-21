@@ -445,8 +445,6 @@ const visitor = {
             }),
           );
         }}
- 
-
 
       } 
       if (node.kind === 'constructor') {
@@ -472,7 +470,7 @@ const visitor = {
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
        if(node.containsPublic){
-
+        
         interface PublicParam {
           name: string;
           properties?: { name: string; type: string }[];
@@ -545,7 +543,10 @@ const visitor = {
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
-          file.functionNames.push(node.fileName);
+          if(scope.modifiesSecretState()){
+            file.functionNames.push(node.fileName);
+          }
+          
         }
       }
 

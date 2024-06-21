@@ -14,7 +14,7 @@ contract Assign {
      a -= value;
   }
  
-  function removePublic( uint256 value) public {
+  function addPublic( uint256 value) public {
      b += value;
   }
 }
