@@ -447,6 +447,9 @@ export default function fileGenerator(node: any) {
       readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup');
       const startupScript = { filepath: 'bin/startup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(startupScript);
+      readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup-double');
+      const startupScriptDouble = { filepath: 'bin/startup-double', file: fs.readFileSync(readPath, 'utf8') };
+      files.push(startupScriptDouble);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>
         obj.filepath.includes(`zkp-setup`),
@@ -473,6 +476,7 @@ export default function fileGenerator(node: any) {
       // build the migrations file
       prepareMigrationsFile(migrationsfile, node);
       prepareStartupScript(startupScript, node);
+      prepareStartupScript(startupScriptDouble, node);
       return files;
     }
 
