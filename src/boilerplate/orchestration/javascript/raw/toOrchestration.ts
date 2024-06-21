@@ -906,7 +906,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
       case 'SendPublicTransaction': // 
-      node.publicInputsString = node.publicInputs.join(', ');
+      node.publicInputsString = node.publicInputs.map(input =>
+        (typeof input === 'object' && !Array.isArray(input)) ? JSON.stringify(input) : input
+      ).join(',');
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
