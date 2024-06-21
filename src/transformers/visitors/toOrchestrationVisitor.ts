@@ -538,6 +538,7 @@ const visitor = {
           }
         }
         if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+          file.nodes?.[0].functionNames.push(node.fileName);
           for (const fn of file.nodes[0].functions) {
             if (fn.name === node.fileName) thisIntegrationApiServiceFunction = fn;
           }
@@ -739,9 +740,12 @@ const visitor = {
               burnedOnly:
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
+              reinitialisedOnly: stateVarIndicator.reinitialisable &&
+              !stateVarIndicator.isNullified,  
             });
           }
         }
+       
 
         if (node.kind === 'constructor') {
           newNodes.writePreimageNode.isConstructor = true;

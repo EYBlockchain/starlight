@@ -38,7 +38,9 @@ cp docker-compose.zapp.override.default.yml docker-compose.zapp.override.yml
 
 cp entrypoint_default.sh entrypoint.sh
 
-cp bin/default_startup bin/startup
+
+
+rm -rf proving-files
 
 perl -i -pe "s,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,docker-compose.zapp.yml,g" package.json
 
@@ -96,8 +98,6 @@ docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/orchestration
 printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}\n"
 
 docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/write-vk.mjs -i ''
-
-CONSTRUCTOR_CALL
 
 fi
 printf "\n${GREEN}*** Finished! ***${NC}\n"

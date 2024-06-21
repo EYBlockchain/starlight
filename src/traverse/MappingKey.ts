@@ -16,6 +16,7 @@ export default class MappingKey {
   node: any;
   path: NodePath;
   isSecret: boolean;
+  isSharedSecret: boolean;
 
   isReferenced?: boolean;
   referenceCount: number = 0;
@@ -110,6 +111,7 @@ export default class MappingKey {
     this.referencedKeyIsParam = keyPath.isFunctionParameter(); // is a function parameter - used for finding owner
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
+    this.isSharedSecret = container.isSharedSecret;
 
     this.isMapping = container.isMapping;
     this.isStruct = container.isStruct; // keyPath.isStruct();

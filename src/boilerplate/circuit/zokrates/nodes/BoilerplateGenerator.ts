@@ -98,6 +98,7 @@ class BoilerplateGenerator {
   isPartitioned?: boolean;
   isNullified?: boolean;
   isAccessed?: boolean;
+  reinitialisable?: boolean;
   initialisationRequired?: boolean;
   newCommitmentsRequired?: boolean;
   encryptionRequired?: boolean;
@@ -113,12 +114,12 @@ class BoilerplateGenerator {
   mappingName: string;
   indicators: any;
   newCommitmentValue: any;
+  containsAccessedOnlyStates: boolean
 
 
   bpSections: string[] = ['importStatements', 'parameters', 'preStatements', 'postStatements'];
 
   constructor(indicators: StateVariableIndicator) {
-
     // Through prior traversals, a BoilerplateGenerator class for this set of indicators might already be stored in memory:
     if (bpCache.has(indicators)) return bpCache.get(indicators);
 
@@ -141,6 +142,7 @@ class BoilerplateGenerator {
       isPartitioned,
       isNullified,
       isAccessed,
+      reinitialisable,
       newCommitmentsRequired,
       isMapping,
       isStruct,
@@ -155,6 +157,7 @@ class BoilerplateGenerator {
       isPartitioned,
       isNullified,
       isAccessed,
+      reinitialisable,
       newCommitmentsRequired,
       isMapping,
       isStruct,
@@ -264,6 +267,7 @@ class BoilerplateGenerator {
           ...(this.typeName && { typeName: this.typeName}),
           ...(this.mappingKeyName && { mappingKeyTypeName: this.mappingKeyTypeName }),
           ...(this.isAccessed && { isAccessed: this.isAccessed }),
+          ...(this.reinitialisable && { reinitialisable: this.reinitialisable }),
           ...(this.initialisationRequired && { initialisationRequired: this.initialisationRequired }),
           ...(this.newCommitmentValue && { newCommitmentValue: this.newCommitmentValue }),
           // ...(this.burnedOnly && { burnedOnly: this.burnedOnly }), // TODO
@@ -309,6 +313,9 @@ class BoilerplateGenerator {
       addBP('nullification');
       addBP('oldCommitmentPreimage');
       addBP('oldCommitmentExistence');
+    }
+    if(this.reinitialisable){
+      addBP('oldCommitmentPreimage');
     }
     if (this.newCommitmentsRequired && !this.burnedOnly) {
       addBP('newCommitment');
