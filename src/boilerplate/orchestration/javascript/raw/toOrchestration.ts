@@ -891,7 +891,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           };
           \nconst key = config.web3.key;
           \nconst signed = await web3.eth.accounts.signTransaction(txParams, key);
-          \nconst sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+          \nconst tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+          \nconst encEvent = {};
          `
         ]
       };

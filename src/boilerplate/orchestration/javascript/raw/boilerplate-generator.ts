@@ -232,12 +232,7 @@ class BoilerplateGenerator {
     },
   };
 
-  // SendPublicTransaction = {
-  //   statements(): string[] {
-  //     return []; // TODO: we might eventually import some underflow/overflow functions.
-  //   },
-  //     // we don't use this builder, because sendtx only requires a few lines which are very custom
-  // };
+ 
 
   membershipWitness = {
     postStatements({ stateName,
