@@ -1,0 +1,469 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileId": 29,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "a_0",
+                            "id": 3,
+                            "isPartitioned": true,
+                            "initialisationRequired": true,
+                            "newCommitmentValue": "value"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "result",
+                            "id": 9,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "result",
+                            "id": 9,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "result",
+                            "id": 9,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "result",
+                            "id": 9,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "result",
+                            "id": 9,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "initialisationRequired": true
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "value"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b_init",
+                                        "typeName": null
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b",
+                                        "typeName": null
+                                    }
+                                },
+                                "isVarDec": true
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "c_init",
+                                        "typeName": null
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "c",
+                                        "typeName": null
+                                    }
+                                },
+                                "isVarDec": true
+                            },
+                            {
+                                "nodeType": "BoilerplateStatement",
+                                "bpSection": "statements",
+                                "bpType": "incrementation",
+                                "name": "a",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "addend": {
+                                    "nodeType": "Identifier",
+                                    "name": "value",
+                                    "typeName": {
+                                        "nodeType": "ElementaryTypeName",
+                                        "name": "uint256"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "result",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "TupleExpression",
+                                        "components": [
+                                            {
+                                                "nodeType": "Conditional",
+                                                "condition": {
+                                                    "nodeType": "BinaryOperation",
+                                                    "leftExpression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "c",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "uint256"
+                                                        }
+                                                    },
+                                                    "operator": ">",
+                                                    "rightExpression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "b",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "uint256"
+                                                        }
+                                                    }
+                                                },
+                                                "trueExpression": [
+                                                    {
+                                                        "nodeType": "Identifier",
+                                                        "name": "c",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "uint256"
+                                                        }
+                                                    }
+                                                ],
+                                                "falseExpression": [
+                                                    {
+                                                        "nodeType": "Identifier",
+                                                        "name": "b",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "uint256"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                "isVarDec": false,
+                                "id": 27,
+                                "isAccessed": false
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "c",
+                                        "typeName": null
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "c_init",
+                                        "typeName": null
+                                    }
+                                },
+                                "isVarDec": false,
+                                "isEndInit": true
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b",
+                                        "typeName": null
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b_init",
+                                        "typeName": null
+                                    }
+                                },
+                                "isVarDec": false,
+                                "isEndInit": true
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "value"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "value",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "c",
+                                "isPrivate": false,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                },
+                                "id": 7
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "b",
+                                "isPrivate": false,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                },
+                                "id": 5
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "a_0",
+                                "id": 3,
+                                "isPartitioned": true,
+                                "initialisationRequired": true,
+                                "newCommitmentValue": "value"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "result",
+                                "id": 9,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": []
+                    }
+                }
+            ]
+        }
+    ]
+}

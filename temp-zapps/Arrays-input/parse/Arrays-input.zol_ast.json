@@ -23,6 +23,7 @@
         {
             "abstract": false,
             "baseContracts": [],
+            "canonicalName": "Assign",
             "contractDependencies": [],
             "contractKind": "contract",
             "fullyImplemented": true,
@@ -31,6 +32,7 @@
                 52
             ],
             "name": "Assign",
+            "nameLocation": "71:6:0",
             "nodeType": "ContractDefinition",
             "nodes": [
                 {
@@ -38,6 +40,7 @@
                     "id": 3,
                     "mutability": "mutable",
                     "name": "a",
+                    "nameLocation": "99:1:0",
                     "nodeType": "VariableDeclaration",
                     "scope": 52,
                     "src": "83:17:0",
@@ -66,6 +69,7 @@
                     "id": 7,
                     "mutability": "mutable",
                     "name": "b",
+                    "nameLocation": "123:1:0",
                     "nodeType": "VariableDeclaration",
                     "scope": 52,
                     "src": "105:19:0",
@@ -295,6 +299,7 @@
                                             "id": 23,
                                             "mutability": "mutable",
                                             "name": "index",
+                                            "nameLocation": "245:5:0",
                                             "nodeType": "VariableDeclaration",
                                             "scope": 39,
                                             "src": "237:13:0",
@@ -337,6 +342,7 @@
                                     "nodeType": "VariableDeclarationStatement",
                                     "src": "237:17:0"
                                 },
+                                "isSimpleCounterLoop": true,
                                 "loopExpression": {
                                     "expression": {
                                         "id": 30,
@@ -380,6 +386,7 @@
                     "kind": "function",
                     "modifiers": [],
                     "name": "add",
+                    "nameLocation": "140:3:0",
                     "nodeType": "FunctionDefinition",
                     "parameters": {
                         "id": 16,
@@ -390,6 +397,7 @@
                                 "id": 11,
                                 "mutability": "mutable",
                                 "name": "value",
+                                "nameLocation": "164:5:0",
                                 "nodeType": "VariableDeclaration",
                                 "scope": 41,
                                 "src": "144:25:0",
@@ -442,6 +450,7 @@
                                 "id": 15,
                                 "mutability": "mutable",
                                 "name": "publicValue",
+                                "nameLocation": "191:11:0",
                                 "nodeType": "VariableDeclaration",
                                 "scope": 41,
                                 "src": "171:31:0",
@@ -560,6 +569,7 @@
                     "kind": "function",
                     "modifiers": [],
                     "name": "remove",
+                    "nameLocation": "316:6:0",
                     "nodeType": "FunctionDefinition",
                     "parameters": {
                         "id": 44,
@@ -570,6 +580,7 @@
                                 "id": 43,
                                 "mutability": "mutable",
                                 "name": "value",
+                                "nameLocation": "331:5:0",
                                 "nodeType": "VariableDeclaration",
                                 "scope": 51,
                                 "src": "323:13:0",
@@ -609,7 +620,9 @@
                 }
             ],
             "scope": 53,
-            "src": "62:303:0"
+            "src": "62:303:0",
+            "usedErrors": [],
+            "usedEvents": []
         }
     ],
     "src": "35:332:0"

@@ -115,6 +115,10 @@
                 {
                     "nodeType": "IntegrationApiServicesBoilerplate",
                     "contractName": "AssignShield",
+                    "functionNames": [
+                        "add",
+                        "remove"
+                    ],
                     "functions": [
                         {
                             "nodeType": "IntegrationApiServiceFunction",
@@ -168,6 +172,7 @@
                                 "modifiedStateVariables": []
                             },
                             "decrementsSecretState": [],
+                            "isConstructor": false,
                             "newCommitmentsRequired": true
                         },
                         {
@@ -211,6 +216,7 @@
                             "decrementsSecretState": [
                                 "a"
                             ],
+                            "isConstructor": false,
                             "newCommitmentsRequired": true
                         }
                     ],
@@ -326,6 +332,7 @@
                                     "a": {
                                         "increment": "parseInt(value_index.integer, 10)",
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "structProperties": null,
                                         "mappingKey": null,
@@ -526,6 +533,7 @@
                                 "privateStates": {
                                     "a": {
                                         "accessedOnly": false,
+                                        "isSharedSecret": false,
                                         "isWhole": true
                                     }
                                 }
@@ -536,6 +544,7 @@
                                     "a": {
                                         "privateStateName": "a",
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "nullifierRequired": true,
                                         "structProperties": null,
@@ -552,6 +561,7 @@
                                         "privateStateName": "a",
                                         "stateVarId": 3,
                                         "accessedOnly": false,
+                                        "isSharedSecret": false,
                                         "nullifierRequired": true,
                                         "increment": [
                                             {
@@ -594,6 +604,7 @@
                                 "privateStates": {
                                     "a": {
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "structProperties": null,
                                         "mappingKey": null,
@@ -689,6 +700,7 @@
                                     "a": {
                                         "increment": "parseInt(value.integer, 10)",
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "structProperties": null,
                                         "mappingKey": null,
@@ -769,6 +781,7 @@
                                 "privateStates": {
                                     "a": {
                                         "accessedOnly": false,
+                                        "isSharedSecret": false,
                                         "isWhole": true
                                     }
                                 }
@@ -779,6 +792,7 @@
                                     "a": {
                                         "privateStateName": "a",
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "nullifierRequired": true,
                                         "structProperties": null,
@@ -795,6 +809,7 @@
                                         "privateStateName": "a",
                                         "stateVarId": 3,
                                         "accessedOnly": false,
+                                        "isSharedSecret": false,
                                         "nullifierRequired": true,
                                         "increment": [
                                             {
@@ -832,6 +847,7 @@
                                 "privateStates": {
                                     "a": {
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "structProperties": null,
                                         "mappingKey": null,

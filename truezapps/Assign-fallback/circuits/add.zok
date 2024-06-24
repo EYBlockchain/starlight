@@ -1,0 +1,35 @@
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+
+def main(\
+	private field value,\
+	private field a_0_newCommitment_owner_publicKey,\
+	private field a_0_newCommitment_salt,\
+	public field a_0_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code each stateVarId into the circuit:
+        field a_0_stateVarId_field = 3
+
+// Skipping incrementation of a
+
+
+        // prepare secret state 'a_0' for commitment
+
+        field a_0_newCommitment_value_field = value
+
+        // a_0_newCommitment_commitment - preimage check
+
+        field a_0_newCommitment_commitment_check_field = poseidon([\
+          a_0_stateVarId_field,\
+          a_0_newCommitment_value_field,\
+          a_0_newCommitment_owner_publicKey,\
+          a_0_newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(a_0_newCommitment_commitment)[8..256] == field_to_bool_256(a_0_newCommitment_commitment_check_field)[8..256]\
+        )
+
+         return true

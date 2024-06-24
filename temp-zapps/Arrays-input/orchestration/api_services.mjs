@@ -44,9 +44,9 @@ export async function service_add(req, res, next) {
 		const { value } = req.body;
 		const { publicValue } = req.body;
 		const a_newOwnerPublicKey = req.body.a_newOwnerPublicKey || 0;
-		CONSTRUCTOR_INPUTS;
 		const { tx, encEvent } = await add(value, publicValue, a_newOwnerPublicKey);
-
+		// prints the tx
+		console.log(tx);
 		res.send({ tx, encEvent });
 		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {
@@ -80,9 +80,9 @@ export async function service_remove(req, res, next) {
 		await startEventFilter("AssignShield");
 		const { value } = req.body;
 		const a_newOwnerPublicKey = req.body.a_newOwnerPublicKey || 0;
-		CONSTRUCTOR_INPUTS;
 		const { tx, encEvent } = await remove(value, a_newOwnerPublicKey);
-
+		// prints the tx
+		console.log(tx);
 		res.send({ tx, encEvent });
 		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {
@@ -151,6 +151,21 @@ export async function service_reinstateNullifiers(req, res, next) {
 	try {
 		await reinstateNullifiers();
 		res.send("Complete");
+		await sleep(10);
+	} catch (err) {
+		logger.error(err);
+		res.send({ errors: [err.message] });
+	}
+}
+export async function service_getSharedKeys(req, res, next) {
+	try {
+		const { recipientAddress } = req.body;
+		const recipientPubKey = req.body.recipientPubKey || 0;
+		const SharedKeys = await getSharedSecretskeys(
+			recipientAddress,
+			recipientPubKey
+		);
+		res.send({ SharedKeys });
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);

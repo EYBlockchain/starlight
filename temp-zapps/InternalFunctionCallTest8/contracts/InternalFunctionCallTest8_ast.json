@@ -1,0 +1,740 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "SourceUnit",
+            "name": "Assign",
+            "license": "CC0",
+            "nodes": [
+                {
+                    "nodeType": "PragmaDirective",
+                    "literals": [
+                        "solidity",
+                        "^",
+                        "0.8",
+                        ".0"
+                    ]
+                },
+                {
+                    "nodeType": "ContractBoilerplate",
+                    "bpSection": "importStatements",
+                    "bpCategory": "contract",
+                    "newCommitmentsRequired": true
+                },
+                {
+                    "nodeType": "ContractDefinition",
+                    "name": "Assign",
+                    "baseContracts": [
+                        {
+                            "nodeType": "InheritanceSpecifier",
+                            "baseName": {
+                                "name": "MerkleTree"
+                            }
+                        }
+                    ],
+                    "nodes": [
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "stateVariableDeclarations",
+                            "bpCategory": "contract",
+                            "functionNames": [
+                                "addB",
+                                "addA",
+                                "remove3",
+                                "remove4"
+                            ],
+                            "nullifiersRequired": true,
+                            "oldCommitmentAccessRequired": true,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "constructor",
+                            "bpCategory": "contract",
+                            "nullifiersRequired": true
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "registerZKPPublicKey",
+                            "bpCategory": "contract"
+                        },
+                        {
+                            "nodeType": "ContractBoilerplate",
+                            "bpSection": "verify",
+                            "bpCategory": "contract",
+                            "nullifiersRequired": true,
+                            "oldCommitmentAccessRequired": true,
+                            "newCommitmentsRequired": true,
+                            "constructorContainsSecret": false,
+                            "circuitParams": {
+                                "addB": {
+                                    "parameters": [
+                                        "value",
+                                        "nullifierRoot",
+                                        "newNullifierRoot",
+                                        "nullifier",
+                                        "oldCommitmentExistence",
+                                        "newCommitment"
+                                    ]
+                                },
+                                "addA": {
+                                    "parameters": [
+                                        "value",
+                                        "nullifierRoot",
+                                        "newNullifierRoot",
+                                        "nullifier",
+                                        "oldCommitmentExistence",
+                                        "newCommitment"
+                                    ]
+                                },
+                                "remove3": {
+                                    "parameters": [
+                                        "value",
+                                        "value1",
+                                        "nullifierRoot",
+                                        "newNullifierRoot",
+                                        "nullifier",
+                                        "oldCommitmentExistence",
+                                        "newCommitment",
+                                        "nullifier",
+                                        "newCommitment"
+                                    ]
+                                },
+                                "remove4": {
+                                    "parameters": [
+                                        "value",
+                                        "value1",
+                                        "nullifierRoot",
+                                        "newNullifierRoot",
+                                        "nullifier",
+                                        "oldCommitmentExistence",
+                                        "newCommitment",
+                                        "nullifier",
+                                        "newCommitment"
+                                    ]
+                                }
+                            },
+                            "isjoinSplitCommitmentsFunction": []
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "a",
+                            "visibility": "private",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "nodeType": "ElementaryTypeName",
+                                "typeDescriptions": {
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "isSecret": true,
+                            "interactsWithSecret": true,
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "b",
+                            "visibility": "private",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "nodeType": "ElementaryTypeName",
+                                "typeDescriptions": {
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "isSecret": true,
+                            "interactsWithSecret": true,
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "VariableDeclaration",
+                            "name": "c",
+                            "visibility": "public",
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                                "typeString": "uint256"
+                            },
+                            "typeName": {
+                                "nodeType": "ElementaryTypeName",
+                                "typeDescriptions": {
+                                    "typeString": "uint256"
+                                }
+                            },
+                            "declarationType": "state"
+                        },
+                        {
+                            "nodeType": "FunctionDefinition",
+                            "name": "addB",
+                            "visibility": "public",
+                            "isConstructor": false,
+                            "kind": "function",
+                            "stateMutability": "",
+                            "msgSigRequired": true,
+                            "body": {
+                                "nodeType": "Block",
+                                "preStatements": [],
+                                "statements": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "+=",
+                                            "leftHandSide": {
+                                                "nodeType": "Identifier",
+                                                "name": "c"
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "Identifier",
+                                                "name": "value1"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    }
+                                ],
+                                "postStatements": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "postStatements",
+                                        "bpCategory": "customFunction",
+                                        "customInputs": [
+                                            {
+                                                "name": "value",
+                                                "type": "uint256",
+                                                "isParam": true,
+                                                "isConstantArray": false,
+                                                "inCircuit": true
+                                            },
+                                            {
+                                                "name": "value1",
+                                                "type": "uint256",
+                                                "isParam": true,
+                                                "isConstantArray": false
+                                            },
+                                            {
+                                                "name": 1,
+                                                "type": "uint256",
+                                                "dummy": true,
+                                                "inCircuit": true
+                                            }
+                                        ],
+                                        "functionName": "addB",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter"
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value1",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "declarationType": "parameter"
+                                    },
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "parameters",
+                                        "bpCategory": "customFunction",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": []
+                            }
+                        },
+                        {
+                            "nodeType": "FunctionDefinition",
+                            "name": "addA",
+                            "visibility": "public",
+                            "isConstructor": false,
+                            "kind": "function",
+                            "stateMutability": "",
+                            "msgSigRequired": true,
+                            "body": {
+                                "nodeType": "Block",
+                                "preStatements": [],
+                                "statements": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    }
+                                ],
+                                "postStatements": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "postStatements",
+                                        "bpCategory": "customFunction",
+                                        "customInputs": [
+                                            {
+                                                "name": "value",
+                                                "type": "uint256",
+                                                "isParam": true,
+                                                "isConstantArray": false,
+                                                "inCircuit": true
+                                            },
+                                            {
+                                                "name": 1,
+                                                "type": "uint256",
+                                                "dummy": true,
+                                                "inCircuit": true
+                                            }
+                                        ],
+                                        "functionName": "addA",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter"
+                                    },
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "parameters",
+                                        "bpCategory": "customFunction",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": []
+                            }
+                        },
+                        {
+                            "nodeType": "FunctionDefinition",
+                            "name": "remove3",
+                            "visibility": "public",
+                            "isConstructor": false,
+                            "kind": "function",
+                            "stateMutability": "",
+                            "msgSigRequired": false,
+                            "body": {
+                                "nodeType": "Block",
+                                "preStatements": [],
+                                "statements": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "InternalFunctionCall",
+                                            "name": "addA",
+                                            "internalFunctionInteractsWithSecret": true,
+                                            "parameters": [
+                                                "value1",
+                                                "nullifierRoot",
+                                                "latestNullifierRoot",
+                                                "newNullifiers",
+                                                "commitmentRoot",
+                                                "newCommitments",
+                                                "proof"
+                                            ],
+                                            "arguments": [
+                                                {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value1"
+                                                }
+                                            ],
+                                            "expression": {
+                                                "nodeType": "Identifier",
+                                                "name": "addA"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "InternalFunctionCall",
+                                            "name": "addB",
+                                            "internalFunctionInteractsWithSecret": true,
+                                            "parameters": [
+                                                "value",
+                                                "value1",
+                                                "nullifierRoot",
+                                                "latestNullifierRoot",
+                                                "newNullifiers",
+                                                "commitmentRoot",
+                                                "newCommitments",
+                                                "proof"
+                                            ],
+                                            "arguments": [
+                                                {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value"
+                                                },
+                                                {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value1"
+                                                }
+                                            ],
+                                            "expression": {
+                                                "nodeType": "Identifier",
+                                                "name": "addB"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    }
+                                ],
+                                "postStatements": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "postStatements",
+                                        "bpCategory": "customFunction",
+                                        "customInputs": [
+                                            {
+                                                "name": "value",
+                                                "type": "uint256",
+                                                "isParam": true,
+                                                "isConstantArray": false,
+                                                "inCircuit": true
+                                            },
+                                            {
+                                                "name": "value1",
+                                                "type": "uint256",
+                                                "isParam": true,
+                                                "isConstantArray": false,
+                                                "inCircuit": true
+                                            },
+                                            {
+                                                "name": 1,
+                                                "type": "uint256",
+                                                "dummy": true,
+                                                "inCircuit": true
+                                            }
+                                        ],
+                                        "functionName": "remove3",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value1",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true
+                                    },
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "parameters",
+                                        "bpCategory": "customFunction",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": []
+                            }
+                        },
+                        {
+                            "nodeType": "FunctionDefinition",
+                            "name": "remove4",
+                            "visibility": "public",
+                            "isConstructor": false,
+                            "kind": "function",
+                            "stateMutability": "",
+                            "msgSigRequired": false,
+                            "body": {
+                                "nodeType": "Block",
+                                "preStatements": [],
+                                "statements": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "InternalFunctionCall",
+                                            "name": "addA",
+                                            "internalFunctionInteractsWithSecret": true,
+                                            "parameters": [
+                                                "value1",
+                                                "nullifierRoot",
+                                                "latestNullifierRoot",
+                                                "newNullifiers",
+                                                "commitmentRoot",
+                                                "newCommitments",
+                                                "proof"
+                                            ],
+                                            "arguments": [
+                                                {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value1"
+                                                }
+                                            ],
+                                            "expression": {
+                                                "nodeType": "Identifier",
+                                                "name": "addA"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "InternalFunctionCall",
+                                            "name": "addB",
+                                            "internalFunctionInteractsWithSecret": true,
+                                            "parameters": [
+                                                "value",
+                                                "value1",
+                                                "nullifierRoot",
+                                                "latestNullifierRoot",
+                                                "newNullifiers",
+                                                "commitmentRoot",
+                                                "newCommitments",
+                                                "proof"
+                                            ],
+                                            "arguments": [
+                                                {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value"
+                                                },
+                                                {
+                                                    "nodeType": "Identifier",
+                                                    "name": "value1"
+                                                }
+                                            ],
+                                            "expression": {
+                                                "nodeType": "Identifier",
+                                                "name": "addB"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {}
+                                    }
+                                ],
+                                "postStatements": [
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "postStatements",
+                                        "bpCategory": "customFunction",
+                                        "customInputs": [
+                                            {
+                                                "name": "value",
+                                                "type": "uint256",
+                                                "isParam": true,
+                                                "isConstantArray": false,
+                                                "inCircuit": true
+                                            },
+                                            {
+                                                "name": "value1",
+                                                "type": "uint256",
+                                                "isParam": true,
+                                                "isConstantArray": false,
+                                                "inCircuit": true
+                                            },
+                                            {
+                                                "name": 1,
+                                                "type": "uint256",
+                                                "dummy": true,
+                                                "inCircuit": true
+                                            }
+                                        ],
+                                        "functionName": "remove4",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "value1",
+                                        "visibility": "internal",
+                                        "storageLocation": "default",
+                                        "typeDescriptions": {
+                                            "typeString": "uint256"
+                                        },
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "typeDescriptions": {
+                                                "typeString": "uint256"
+                                            }
+                                        },
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true
+                                    },
+                                    {
+                                        "nodeType": "FunctionBoilerplate",
+                                        "bpSection": "parameters",
+                                        "bpCategory": "customFunction",
+                                        "nullifiersRequired": true,
+                                        "oldCommitmentAccessRequired": true,
+                                        "newCommitmentsRequired": true,
+                                        "isConstructor": false
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": []
+                            }
+                        }
+                    ],
+                    "isShieldContract": true
+                }
+            ]
+        }
+    ]
+}

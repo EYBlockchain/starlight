@@ -1,0 +1,1463 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileId": 108,
+            "fileExtension": ".zok",
+            "nodes": [
+                {
+                    "nodeType": "ImportStatementList",
+                    "imports": [
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "total",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "total",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "total",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "total",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "total",
+                            "id": 3,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isAccessed": true,
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "mapping",
+                            "name": "structs_msgSender",
+                            "id": 8,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "a",
+                                "b",
+                                "c"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "a",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "b",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "c",
+                                    "typeName": "address"
+                                }
+                            ],
+                            "typeName": "SomeStruct",
+                            "initialisationRequired": true,
+                            "mappingName": "structs",
+                            "mappingKeyName": "msgSender"
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "PoKoSK",
+                            "name": "structs_msgSender",
+                            "id": 8,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "a",
+                                "b",
+                                "c"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "a",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "b",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "c",
+                                    "typeName": "address"
+                                }
+                            ],
+                            "typeName": "SomeStruct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "nullification",
+                            "name": "structs_msgSender",
+                            "id": 8,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "a",
+                                "b",
+                                "c"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "a",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "b",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "c",
+                                    "typeName": "address"
+                                }
+                            ],
+                            "typeName": "SomeStruct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentPreimage",
+                            "name": "structs_msgSender",
+                            "id": 8,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "a",
+                                "b",
+                                "c"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "a",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "b",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "c",
+                                    "typeName": "address"
+                                }
+                            ],
+                            "typeName": "SomeStruct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "oldCommitmentExistence",
+                            "name": "structs_msgSender",
+                            "id": 8,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "a",
+                                "b",
+                                "c"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "a",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "b",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "c",
+                                    "typeName": "address"
+                                }
+                            ],
+                            "typeName": "SomeStruct",
+                            "initialisationRequired": true
+                        },
+                        {
+                            "nodeType": "Boilerplate",
+                            "bpSection": "importStatements",
+                            "bpType": "newCommitment",
+                            "name": "structs_msgSender",
+                            "id": 8,
+                            "isWhole": true,
+                            "isNullified": true,
+                            "isMapping": true,
+                            "structProperties": [
+                                "a",
+                                "b",
+                                "c"
+                            ],
+                            "structPropertiesTypes": [
+                                {
+                                    "name": "a",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "b",
+                                    "typeName": "uint256"
+                                },
+                                {
+                                    "name": "c",
+                                    "typeName": "address"
+                                }
+                            ],
+                            "typeName": "SomeStruct",
+                            "initialisationRequired": true
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "StructDefinition",
+                    "name": "SomeStruct",
+                    "members": [
+                        {
+                            "name": "a",
+                            "type": "field"
+                        },
+                        {
+                            "name": "b",
+                            "type": "field"
+                        },
+                        {
+                            "name": "c",
+                            "type": "field"
+                        }
+                    ]
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "main",
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "mapping",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true,
+                                "mappingName": "structs",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "PoKoSK",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "nullification",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "preStatements",
+                                "bpType": "newCommitment",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "ForStatement",
+                                "condition": {
+                                    "nodeType": "BinaryOperation",
+                                    "leftExpression": {
+                                        "nodeType": "Identifier",
+                                        "name": "i",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    "operator": "<",
+                                    "rightExpression": {
+                                        "nodeType": "Literal",
+                                        "value": "5"
+                                    }
+                                },
+                                "initializationExpression": {
+                                    "nodeType": "ExpressionStatement",
+                                    "expression": {
+                                        "nodeType": "Assignment",
+                                        "operator": "=",
+                                        "leftHandSide": {
+                                            "nodeType": "Identifier",
+                                            "name": "i",
+                                            "typeName": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "uint256"
+                                            }
+                                        },
+                                        "rightHandSide": {
+                                            "nodeType": "Literal",
+                                            "value": "0"
+                                        }
+                                    },
+                                    "isVarDec": false,
+                                    "id": 28,
+                                    "isAccessed": false
+                                },
+                                "loopExpression": {
+                                    "nodeType": "ExpressionStatement",
+                                    "expression": {
+                                        "nodeType": "UnaryOperation",
+                                        "operator": "++",
+                                        "prefix": false,
+                                        "subExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "i",
+                                            "typeName": null
+                                        },
+                                        "initialValue": {
+                                            "nodeType": "Identifier",
+                                            "name": "i",
+                                            "typeName": null
+                                        }
+                                    },
+                                    "isVarDec": false,
+                                    "id": 34,
+                                    "isAccessed": false
+                                },
+                                "body": {
+                                    "nodeType": "Block",
+                                    "preStatements": [],
+                                    "statements": [
+                                        {
+                                            "nodeType": "IfStatement",
+                                            "condition": {
+                                                "nodeType": "BinaryOperation",
+                                                "leftExpression": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "iterate",
+                                                    "typeName": {
+                                                        "nodeType": "ElementaryTypeName",
+                                                        "name": "bool"
+                                                    }
+                                                },
+                                                "operator": "==",
+                                                "rightExpression": {
+                                                    "nodeType": "Literal",
+                                                    "value": "true"
+                                                }
+                                            },
+                                            "trueBody": [
+                                                {
+                                                    "nodeType": "ExpressionStatement",
+                                                    "expression": {
+                                                        "nodeType": "Assignment",
+                                                        "operator": "=",
+                                                        "leftHandSide": {
+                                                            "nodeType": "Identifier",
+                                                            "name": "total",
+                                                            "typeName": {
+                                                                "nodeType": "ElementaryTypeName",
+                                                                "name": "uint256"
+                                                            }
+                                                        },
+                                                        "rightHandSide": {
+                                                            "nodeType": "BinaryOperation",
+                                                            "leftExpression": {
+                                                                "nodeType": "Identifier",
+                                                                "name": "total",
+                                                                "typeName": {
+                                                                    "nodeType": "ElementaryTypeName",
+                                                                    "name": "uint256"
+                                                                }
+                                                            },
+                                                            "operator": "+",
+                                                            "rightExpression": {
+                                                                "nodeType": "Identifier",
+                                                                "name": "j",
+                                                                "typeName": {
+                                                                    "nodeType": "ElementaryTypeName",
+                                                                    "name": "uint256"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "isVarDec": false,
+                                                    "id": 41,
+                                                    "isAccessed": false
+                                                },
+                                                {
+                                                    "nodeType": "ExpressionStatement",
+                                                    "expression": {
+                                                        "nodeType": "Assignment",
+                                                        "operator": "=",
+                                                        "leftHandSide": {
+                                                            "nodeType": "MemberAccess",
+                                                            "memberName": "a",
+                                                            "expression": {
+                                                                "nodeType": "IndexAccess",
+                                                                "baseExpression": {
+                                                                    "nodeType": "Identifier",
+                                                                    "name": "structs",
+                                                                    "typeName": {
+                                                                        "nodeType": "ElementaryTypeName",
+                                                                        "name": "mapping(address => struct Test.SomeStruct storage ref)"
+                                                                    }
+                                                                },
+                                                                "indexExpression": {
+                                                                    "nodeType": "MsgSender"
+                                                                }
+                                                            },
+                                                            "isStruct": true
+                                                        },
+                                                        "rightHandSide": {
+                                                            "nodeType": "BinaryOperation",
+                                                            "leftExpression": {
+                                                                "nodeType": "Literal",
+                                                                "value": "5"
+                                                            },
+                                                            "operator": "*",
+                                                            "rightExpression": {
+                                                                "nodeType": "Identifier",
+                                                                "name": "j",
+                                                                "typeName": {
+                                                                    "nodeType": "ElementaryTypeName",
+                                                                    "name": "uint256"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "isVarDec": false,
+                                                    "id": 51,
+                                                    "isAccessed": false
+                                                },
+                                                {
+                                                    "nodeType": "ExpressionStatement",
+                                                    "expression": {
+                                                        "nodeType": "Assignment",
+                                                        "operator": "=",
+                                                        "leftHandSide": {
+                                                            "nodeType": "MemberAccess",
+                                                            "memberName": "b",
+                                                            "expression": {
+                                                                "nodeType": "IndexAccess",
+                                                                "baseExpression": {
+                                                                    "nodeType": "Identifier",
+                                                                    "name": "structs",
+                                                                    "typeName": {
+                                                                        "nodeType": "ElementaryTypeName",
+                                                                        "name": "mapping(address => struct Test.SomeStruct storage ref)"
+                                                                    }
+                                                                },
+                                                                "indexExpression": {
+                                                                    "nodeType": "MsgSender"
+                                                                }
+                                                            },
+                                                            "isStruct": true
+                                                        },
+                                                        "rightHandSide": {
+                                                            "nodeType": "Identifier",
+                                                            "name": "total",
+                                                            "typeName": {
+                                                                "nodeType": "ElementaryTypeName",
+                                                                "name": "uint256"
+                                                            }
+                                                        }
+                                                    },
+                                                    "isVarDec": false,
+                                                    "id": 59,
+                                                    "isAccessed": false
+                                                },
+                                                {
+                                                    "nodeType": "ExpressionStatement",
+                                                    "expression": {
+                                                        "nodeType": "Assignment",
+                                                        "operator": "=",
+                                                        "leftHandSide": {
+                                                            "nodeType": "MemberAccess",
+                                                            "memberName": "c",
+                                                            "expression": {
+                                                                "nodeType": "IndexAccess",
+                                                                "baseExpression": {
+                                                                    "nodeType": "Identifier",
+                                                                    "name": "structs",
+                                                                    "typeName": {
+                                                                        "nodeType": "ElementaryTypeName",
+                                                                        "name": "mapping(address => struct Test.SomeStruct storage ref)"
+                                                                    }
+                                                                },
+                                                                "indexExpression": {
+                                                                    "nodeType": "MsgSender"
+                                                                }
+                                                            },
+                                                            "isStruct": true
+                                                        },
+                                                        "rightHandSide": {
+                                                            "nodeType": "MsgSender"
+                                                        }
+                                                    },
+                                                    "isVarDec": false,
+                                                    "id": 68,
+                                                    "isAccessed": false
+                                                }
+                                            ],
+                                            "falseBody": [],
+                                            "isRevert": false,
+                                            "conditionVars": []
+                                        }
+                                    ],
+                                    "postStatements": []
+                                }
+                            },
+                            {
+                                "nodeType": "IfStatement",
+                                "condition": {
+                                    "nodeType": "BinaryOperation",
+                                    "leftExpression": {
+                                        "nodeType": "Identifier",
+                                        "name": "iterate",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "bool"
+                                        }
+                                    },
+                                    "operator": "==",
+                                    "rightExpression": {
+                                        "nodeType": "Literal",
+                                        "value": "false"
+                                    }
+                                },
+                                "trueBody": [
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "=",
+                                            "leftHandSide": {
+                                                "nodeType": "Identifier",
+                                                "name": "total",
+                                                "typeName": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "uint256"
+                                                }
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "Identifier",
+                                                "name": "j",
+                                                "typeName": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "uint256"
+                                                }
+                                            }
+                                        },
+                                        "isVarDec": false,
+                                        "id": 79,
+                                        "isAccessed": false
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "=",
+                                            "leftHandSide": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "a",
+                                                "expression": {
+                                                    "nodeType": "IndexAccess",
+                                                    "baseExpression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "structs",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "mapping(address => struct Test.SomeStruct storage ref)"
+                                                        }
+                                                    },
+                                                    "indexExpression": {
+                                                        "nodeType": "MsgSender"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "Identifier",
+                                                "name": "j",
+                                                "typeName": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "uint256"
+                                                }
+                                            }
+                                        },
+                                        "isVarDec": false,
+                                        "id": 87,
+                                        "isAccessed": false
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "=",
+                                            "leftHandSide": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "b",
+                                                "expression": {
+                                                    "nodeType": "IndexAccess",
+                                                    "baseExpression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "structs",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "mapping(address => struct Test.SomeStruct storage ref)"
+                                                        }
+                                                    },
+                                                    "indexExpression": {
+                                                        "nodeType": "MsgSender"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "Identifier",
+                                                "name": "total",
+                                                "typeName": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "uint256"
+                                                }
+                                            }
+                                        },
+                                        "isVarDec": false,
+                                        "id": 95,
+                                        "isAccessed": false
+                                    },
+                                    {
+                                        "nodeType": "ExpressionStatement",
+                                        "expression": {
+                                            "nodeType": "Assignment",
+                                            "operator": "=",
+                                            "leftHandSide": {
+                                                "nodeType": "MemberAccess",
+                                                "memberName": "c",
+                                                "expression": {
+                                                    "nodeType": "IndexAccess",
+                                                    "baseExpression": {
+                                                        "nodeType": "Identifier",
+                                                        "name": "structs",
+                                                        "typeName": {
+                                                            "nodeType": "ElementaryTypeName",
+                                                            "name": "mapping(address => struct Test.SomeStruct storage ref)"
+                                                        }
+                                                    },
+                                                    "indexExpression": {
+                                                        "nodeType": "MsgSender"
+                                                    }
+                                                },
+                                                "isStruct": true
+                                            },
+                                            "rightHandSide": {
+                                                "nodeType": "MsgSender"
+                                            }
+                                        },
+                                        "isVarDec": false,
+                                        "id": 104,
+                                        "isAccessed": false
+                                    }
+                                ],
+                                "falseBody": [],
+                                "isRevert": false,
+                                "conditionVars": []
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "mapping",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true,
+                                "mappingName": "structs",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "PoKoSK",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "nullification",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "postStatements",
+                                "bpType": "newCommitment",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "msgSender",
+                                "isPrivate": false,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "j",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "field"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "iterate",
+                                "isPrivate": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "bool"
+                                }
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "total",
+                                "id": 3,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isAccessed": true,
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "mapping",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true,
+                                "mappingName": "structs",
+                                "mappingKeyName": "msgSender"
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "PoKoSK",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "nullification",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentPreimage",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "oldCommitmentExistence",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            },
+                            {
+                                "nodeType": "Boilerplate",
+                                "bpSection": "parameters",
+                                "bpType": "newCommitment",
+                                "name": "structs_msgSender",
+                                "id": 8,
+                                "isWhole": true,
+                                "isNullified": true,
+                                "isMapping": true,
+                                "structProperties": [
+                                    "a",
+                                    "b",
+                                    "c"
+                                ],
+                                "structPropertiesTypes": [
+                                    {
+                                        "name": "a",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "b",
+                                        "typeName": "uint256"
+                                    },
+                                    {
+                                        "name": "c",
+                                        "typeName": "address"
+                                    }
+                                ],
+                                "typeName": "SomeStruct",
+                                "initialisationRequired": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": []
+                    }
+                }
+            ]
+        }
+    ]
+}

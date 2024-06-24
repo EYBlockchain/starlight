@@ -361,6 +361,7 @@ const visitor = {
   },
 
   FunctionDefinition: {
+  
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (scope.modifiesSecretState()) {
@@ -410,9 +411,19 @@ const visitor = {
         }
         }
       } else if (!scope.modifiesSecretState()){
+        console.log(`Entering function: ${node.kind}`);
+
+       
+        if (node.kind === 'fallback' || node.kind === 'receive' || !node.name) {
+          console.log(`Ignoring function: ${node.kind}`);
+        console.log(`Processing function: ${node.name || node.kind}`);
+        return;}
+
+        
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName; 
+
         const newNode = buildNode('File', {
           fileName: fnName, // the name of this function
           fileExtension: '.mjs',
@@ -445,6 +456,7 @@ const visitor = {
             }),
           );
         }}
+     
 
       } 
       if (node.kind === 'constructor') {

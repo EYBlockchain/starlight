@@ -1,0 +1,45 @@
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "../../concatenate/order-left-right-1x1.zok" import main as orderLeftRight
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+
+def main(field[32] siblingPath, field value) -> (field):
+
+
+field accValue = 0 // checking against zero element
+field[2] preimage = [0, 0]
+bool[32] valueIndex = field_to_bool_256(value)[2..34]
+
+
+for u32 i in 0..32 do
+  u32 j = i // iterator for the siblingPath
+  u32 k = 31 - i // iterator for the leafIndexBits
+  preimage = orderLeftRight(valueIndex[k], accValue, siblingPath[j])
+  accValue = poseidon([\
+    preimage[0],\
+    preimage[1]\
+    ])
+  endfor
+
+return accValue
+
+
+def checkUpdatedPath(field[32] siblingPath, field value) -> (field):
+
+
+field accValue = value // checking against zero element
+field[2] preimage = [0, 0]
+bool[32] valueIndex = field_to_bool_256(value)[2..34]
+
+
+for u32 i in 0..32 do
+  u32 j = i // iterator for the siblingPath
+  u32 k = 31 - i // iterator for the leafIndexBits
+  preimage = orderLeftRight(valueIndex[k], accValue, siblingPath[j])
+  accValue = poseidon([\
+    preimage[0],\
+    preimage[1]\
+    ])
+  endfor
+
+
+return accValue
