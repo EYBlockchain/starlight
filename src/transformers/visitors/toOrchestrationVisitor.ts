@@ -1253,24 +1253,21 @@ const visitor = {
           return;
         }
       }
-      if (node.expression.expression?.name !== 'require') {
-        // We no longer check indicator?.interactsWithSecret because in most cases interactsWithSecret is set to true in addPublicInput anyway. 
-        // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
-        const newNode = buildNode(node.nodeType, {
-          interactsWithSecret: interactsWithSecret,
-          //|| indicator?.interactsWithSecret,
-          oldASTId: node.id,
-        });
-
-        node._newASTPointer = newNode;
-        if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
-          parent._newASTPointer.push(newNode);
-        } else if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
-        } else {
-          parent._newASTPointer[path.containerName] = newNode;
-        }
-      }
+      // We no longer check indicator?.interactsWithSecret because in most cases interactsWithSecret is set to true in addPublicInput anyway. 
+      // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
+      const newNode = buildNode(node.nodeType, {
+        interactsWithSecret: interactsWithSecret,
+        //|| indicator?.interactsWithSecret,
+        oldASTId: node.id,
+      });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
+        parent._newASTPointer.push(newNode);
+      } else if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }    
     },
 
     exit(path: NodePath, state: any) {
@@ -1551,8 +1548,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { value: node.value });
-
-      parent._newASTPointer[path.containerName] = newNode;
+      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
   },
 
@@ -1607,6 +1603,17 @@ const visitor = {
   FunctionCall: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      if (node.expression?.name === 'require') {
+        const newNode = buildNode('RequireStatement', {
+        });
+        parent._newASTPointer[path.containerName] = newNode;
+        node._newASTPointer = newNode.condition;
+        if (node.arguments[0]) NodePath.getPath(node.arguments[0]).traverse(visitor, {});
+        node._newASTPointer = newNode.message;
+        if (node.arguments[1]) NodePath.getPath(node.arguments[1]).traverse(visitor, {});
+        state.skipSubNodes = true;
+        return;
+      }
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;
         return;
