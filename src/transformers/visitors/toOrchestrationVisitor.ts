@@ -1295,11 +1295,6 @@ const visitor = {
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
         path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
         if(indicator){
-          console.log(buildNode('Assignment', {
-            leftHandSide: buildNode('Identifier', { name }),
-            operator: '=',
-            rightHandSide: buildNode('Identifier', {  name, subType: 'generalNumber'})
-          }));
           path.getAncestorOfType('Block')?.node._newASTPointer.push(
             buildNode('Assignment', {
               leftHandSide: buildNode('Identifier', { name }),
