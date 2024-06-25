@@ -319,6 +319,19 @@ const visitor = {
         ],
       });
       node._newASTPointer.push(newNode);
+      if (scope.indicators.encryptionRequired) {
+        newNode = buildNode('File', {
+          fileName: 'encrypted-data-listener',
+          fileExtension: '.mjs',
+          nodes: [
+            buildNode('IntegrationEncryptedListenerBoilerplate', {
+              contractName,
+            }),
+          ],
+        });
+      }
+      
+      node._newASTPointer.push(newNode);
       if (scope.indicators.newCommitmentsRequired) {
         const newNode = buildNode('EditableCommitmentCommonFilesBoilerplate');
         node._newASTPointer.push(newNode);
@@ -435,6 +448,7 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
+       
 
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
@@ -447,8 +461,22 @@ const visitor = {
            state.isjoinSplitCommitmentsFunction ??= [];
            state.isjoinSplitCommitmentsFunction?.push('true');
          }
+         if((indicators instanceof StateVariableIndicator) && indicators.encryptionRequired) {
+          for (const file of parent._newASTPointer) {
+            if(file.nodes?.[0].nodeType === 'IntegrationEncryptedListenerBoilerplate') {
+          if(indicators.isMapping) {
+            for(const [name, mappingKey ] of Object.entries(indicators.mappingKeys)){ 
+              if(mappingKey.encryptionRequired) {
+                console.log(mappingKey);
+                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name});
+            }
+          }
+         }
+        }
       }
-
+      }
+    }
+      
       let thisIntegrationTestFunction: any = {};
       let thisIntegrationApiServiceFunction: any = {};
       for (const file of parent._newASTPointer) {

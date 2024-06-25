@@ -23,7 +23,7 @@ contract Escrow {
 
     function transfer(secret address recipient, secret uint256 amount) public {
         balances[msg.sender] -= amount;
-        unknown balances[recipient] += amount;
+        encrypt unknown balances[recipient] += amount;
     }
 
     function withdraw(uint256 amount) public {

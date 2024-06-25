@@ -235,6 +235,19 @@ const prepareIntegrationApiRoutes = (node: any) => {
   return outputApiRoutesFile;
 };
 
+const prepareIntegrationEncryptedListener = (file: localFile, node: any) => {
+console.log(node);
+file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
+node.stateVariable?.forEach(
+  variable => {
+    file.file = file.file.replace(/VAR_NAME/g, variable.name);
+    if(variable.isMapping) {
+      file.file = file.file.replace(/VARIABLE_ID/g, `generalise(utils.mimcHash([generalise(${variable.name}_stateVarId).bigInt, ${variable.mappingKey}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);` );
+    }
+  }
+)
+}
+
 /**
  * @param file - a generic migrations file skeleton to mutate
  * @param contextDirPath - a SetupCommonFilesBoilerplate node
@@ -491,6 +504,12 @@ export default function fileGenerator(node: any) {
     case 'IntegrationApiRoutesBoilerplate': {
       const api_routes = prepareIntegrationApiRoutes(node);
       return api_routes;
+    }
+    case 'IntegrationEncryptedListenerBoilerplate': {
+      let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/encrypted-data-listener.mjs');
+      const encryptedListener = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };
+       prepareIntegrationEncryptedListener(encryptedListener, node);
+      return encryptedListener;
     }
     default:
       throw new TypeError(`I dont recognise this type: ${node.nodeType}`);
