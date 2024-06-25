@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Owner {
+  secret uint256 private gm_account;
+  secret uint256 private admin12;
+  secret address private admin;
+  secret address private gamer;
+
+  constructor() {
+      admin = msg.sender;
+      gamer = msg.sender;
+    }
+  modifier onlyOwner(address _account , address _player) {
+      gm_account =gm_account+3;
+      admin12 = 3;
+   require(msg.sender ==_account);
+   require(msg.sender ==_player);
+    _;
+    }
+  function alpha() private onlyOwner(admin , gamer) {
+    admin12+=1;
+    }
+}

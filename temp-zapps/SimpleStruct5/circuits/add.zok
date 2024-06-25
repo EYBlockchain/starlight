@@ -1,0 +1,261 @@
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+struct MyStruct {
+        field prop1
+bool prop2
+      }
+
+def main(\
+	private field value,\
+	private MyStruct struct_value,\
+	public MyStruct struct_value_pub,\
+	private field a_oldCommitment_owner_secretKey,\
+	public field nullifierRoot,\
+	public field newNullifierRoot,\
+	public field a_oldCommitment_nullifier,\
+	private field[32] a_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] a_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  field a_oldCommitment_value,\
+	private field a_oldCommitment_salt,\
+	private bool a_oldCommitment_isDummy,\
+	public field commitmentRoot,\
+	private field a_oldCommitment_membershipWitness_index,\
+	private field[32] a_oldCommitment_membershipWitness_siblingPath,\
+	private field a_newCommitment_owner_publicKey,\
+	private field a_newCommitment_salt,\
+	public field a_newCommitment_commitment,\
+	private field x_oldCommitment_owner_secretKey,\
+	public field x_oldCommitment_nullifier,\
+	private field[32] x_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] x_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  MyStruct x_oldCommitment_value,\
+	private field x_oldCommitment_salt,\
+	private bool x_oldCommitment_isDummy,\
+	private field x_oldCommitment_membershipWitness_index,\
+	private field[32] x_oldCommitment_membershipWitness_siblingPath,\
+	private field x_newCommitment_owner_publicKey,\
+	private field x_newCommitment_salt,\
+	public field x_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code each stateVarId into the circuit:
+        field a_stateVarId_field = 3
+
+
+        field a = a_oldCommitment_value
+
+
+        // We need to hard-code each stateVarId into the circuit:
+        field x_stateVarId_field = 13
+
+
+        MyStruct x = x_oldCommitment_value
+
+
+        x.prop1 = if value > 10 then x.prop1 + value else x.prop1 fi
+        x.prop2 = if value > 10 then true else x.prop2 fi
+        a = if value > 10 then value * x.prop1 else a fi
+
+x.prop2 = struct_value.prop2 || x.prop2 || struct_value_pub.prop2
+
+x.prop1 = x.prop1 + struct_value.prop1 + struct_value_pub.prop1
+
+
+        // a_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] a_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(a_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool a_oldCommitment_owner_publicKey_sign = edwardsCompress(a_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] a_oldCommitment_yBits = field_to_bool_256(a_oldCommitment_owner_publicKey_point[1])[2..256]
+        a_oldCommitment_yBits[0] = a_oldCommitment_owner_publicKey_sign
+
+        field a_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...a_oldCommitment_yBits])
+
+
+        // Nullify a:
+
+        field a_oldCommitment_nullifier_check_field = poseidon([\
+          a_stateVarId_field,\
+          a_oldCommitment_owner_secretKey,\
+          a_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(a_oldCommitment_nullifier)[8..256] == field_to_bool_256(a_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // a_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            a_nullifier_nonmembershipWitness_siblingPath,\
+            a_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          a_nullifier_nonmembershipWitness_newsiblingPath,\
+          a_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+
+        // prepare secret state 'a' for commitment
+
+          field a_oldCommitment_value_field = a_oldCommitment_value
+          
+        // a_oldCommitment_commitment: preimage check
+
+
+        field a_oldCommitment_commitment_field = poseidon([\
+          a_stateVarId_field,\
+          a_oldCommitment_value_field,\
+          a_oldCommitment_owner_publicKey,\
+          a_oldCommitment_salt        ])
+
+
+        // a_oldCommitment_commitment: existence check
+
+
+        field a_commitmentRoot_check = checkRoot(\
+          a_oldCommitment_membershipWitness_siblingPath,\
+          a_oldCommitment_commitment_field,\
+          a_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        a_commitmentRoot_check = if a_oldCommitment_isDummy == true then commitmentRoot else a_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'a' for commitment
+
+        field a_newCommitment_value_field = a
+
+        // a_newCommitment_commitment - preimage check
+
+        field a_newCommitment_commitment_check_field = poseidon([\
+          a_stateVarId_field,\
+          a_newCommitment_value_field,\
+          a_newCommitment_owner_publicKey,\
+          a_newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(a_newCommitment_commitment)[8..256] == field_to_bool_256(a_newCommitment_commitment_check_field)[8..256]\
+        )
+
+
+        // x_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] x_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(x_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool x_oldCommitment_owner_publicKey_sign = edwardsCompress(x_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] x_oldCommitment_yBits = field_to_bool_256(x_oldCommitment_owner_publicKey_point[1])[2..256]
+        x_oldCommitment_yBits[0] = x_oldCommitment_owner_publicKey_sign
+
+        field x_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...x_oldCommitment_yBits])
+
+
+        // Nullify x:
+
+        field x_oldCommitment_nullifier_check_field = poseidon([\
+          x_stateVarId_field,\
+          x_oldCommitment_owner_secretKey,\
+          x_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(x_oldCommitment_nullifier)[8..256] == field_to_bool_256(x_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // x_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            x_nullifier_nonmembershipWitness_siblingPath,\
+            x_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          x_nullifier_nonmembershipWitness_newsiblingPath,\
+          x_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+          // prepare secret state 'x' for commitment
+
+          field x_oldCommitment_value_prop2_field = if x_oldCommitment_value.prop2 then 1 else 0 fi
+          
+          // x_oldCommitment_commitment: preimage check
+
+          field x_oldCommitment_commitment_field = poseidon([\
+            x_stateVarId_field,\
+            	 x_oldCommitment_value.prop1,\
+	 	 	 	 	 	x_oldCommitment_value_prop2_field,\
+            x_oldCommitment_owner_publicKey,\
+            x_oldCommitment_salt\
+          ])
+
+
+        // x_oldCommitment_commitment: existence check
+
+
+        field x_commitmentRoot_check = checkRoot(\
+          x_oldCommitment_membershipWitness_siblingPath,\
+          x_oldCommitment_commitment_field,\
+          x_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        x_commitmentRoot_check = if x_oldCommitment_isDummy == true then commitmentRoot else x_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(x_commitmentRoot_check)[8..256]\
+        )
+
+
+          // prepare secret state 'x' for commitment
+
+          MyStruct x_newCommitment_value = MyStruct {  prop1: x.prop1, prop2: x.prop2 }
+
+	 	 	 	 field x_newCommitment_value_prop2_field = if x_newCommitment_value.prop2 then 1 else 0 fi
+
+          // x_newCommitment_commitment - preimage check
+
+          field x_newCommitment_commitment_check_field = poseidon([\
+            x_stateVarId_field,\
+            	 x_newCommitment_value.prop1,\
+	 	 	 	 	 	x_newCommitment_value_prop2_field,\
+            x_newCommitment_owner_publicKey,\
+            x_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(x_newCommitment_commitment)[8..256] == field_to_bool_256(x_newCommitment_commitment_check_field)[8..256]\
+          )
+
+         return true

@@ -1,0 +1,39 @@
+from "./addA.zok" import main as addA 
+
+def main(\
+	private field value,\
+	private field a_oldCommitment_owner_secretKey,\
+	public field nullifierRoot,\
+	public field newNullifierRoot,\
+	public field a_oldCommitment_nullifier,\
+	private field[32] a_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] a_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  field a_oldCommitment_value,\
+	private field a_oldCommitment_salt,\
+	private bool a_oldCommitment_isDummy,\
+	public field commitmentRoot,\
+	private field a_oldCommitment_membershipWitness_index,\
+	private field[32] a_oldCommitment_membershipWitness_siblingPath,\
+	private field a_newCommitment_owner_publicKey,\
+	private field a_newCommitment_salt,\
+	public field a_newCommitment_commitment\
+) -> (bool):
+
+        assert(addA(value,\
+ 	a_oldCommitment_owner_secretKey,\
+ 	nullifierRoot,\
+ 	newNullifierRoot,\
+ 	a_oldCommitment_nullifier,\
+ 	a_nullifier_nonmembershipWitness_siblingPath,\
+ 	a_nullifier_nonmembershipWitness_newsiblingPath,\
+ 	a_oldCommitment_value,\
+ 	a_oldCommitment_salt,\
+ 	a_oldCommitment_isDummy,\
+ 	commitmentRoot,\
+ 	a_oldCommitment_membershipWitness_index,\
+ 	a_oldCommitment_membershipWitness_siblingPath,\
+ 	a_newCommitment_owner_publicKey,\
+ 	a_newCommitment_salt,\
+ 	a_newCommitment_commitment)) 
+
+         return true

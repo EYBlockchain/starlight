@@ -1,0 +1,223 @@
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+def main(\
+	private field addr,\
+	private field param3,\
+	private field a_addr_0_oldCommitment_owner_secretKey,\
+	private field a_addr_1_oldCommitment_owner_secretKey,\
+	public field nullifierRoot,\
+	public field newNullifierRoot,\
+	public field a_addr_0_oldCommitment_nullifier,\
+	private field[32] a_addr_0_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] a_addr_0_nullifier_nonmembershipWitness_newsiblingPath,\
+	public field a_addr_1_oldCommitment_nullifier,\
+	private field[32] a_addr_1_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] a_addr_1_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  field a_addr_0_oldCommitment_value,\
+	private field a_addr_0_oldCommitment_salt,\
+	private  field a_addr_1_oldCommitment_value,\
+	private field a_addr_1_oldCommitment_salt,\
+	public field commitmentRoot,\
+	private field a_addr_0_oldCommitment_membershipWitness_index,\
+	private field[32] a_addr_0_oldCommitment_membershipWitness_siblingPath,\
+	private field a_addr_1_oldCommitment_membershipWitness_index,\
+	private field[32] a_addr_1_oldCommitment_membershipWitness_siblingPath,\
+	private field a_addr_2_newCommitment_owner_publicKey,\
+	private field a_addr_2_newCommitment_salt,\
+	public field a_addr_2_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field a_mappingId = 5
+
+
+        field a_addr_0 = a_addr_0_oldCommitment_value
+
+
+        field a_addr_1 = a_addr_1_oldCommitment_value
+
+// Moved decrementation of a_addr
+
+
+        field a_addr_0_stateVarId_field = mimc2([a_mappingId, addr])
+
+
+        field a_addr_1_stateVarId_field = mimc2([a_mappingId, addr])
+
+
+        field a_addr_2_stateVarId_field = mimc2([a_mappingId, addr])
+
+
+        // a_addr_0_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] a_addr_0_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(a_addr_0_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool a_addr_0_oldCommitment_owner_publicKey_sign = edwardsCompress(a_addr_0_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] a_addr_0_oldCommitment_yBits = field_to_bool_256(a_addr_0_oldCommitment_owner_publicKey_point[1])[2..256]
+        a_addr_0_oldCommitment_yBits[0] = a_addr_0_oldCommitment_owner_publicKey_sign
+
+        field a_addr_0_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...a_addr_0_oldCommitment_yBits])
+
+
+        // a_addr_1_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] a_addr_1_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(a_addr_1_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool a_addr_1_oldCommitment_owner_publicKey_sign = edwardsCompress(a_addr_1_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] a_addr_1_oldCommitment_yBits = field_to_bool_256(a_addr_1_oldCommitment_owner_publicKey_point[1])[2..256]
+        a_addr_1_oldCommitment_yBits[0] = a_addr_1_oldCommitment_owner_publicKey_sign
+
+        field a_addr_1_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...a_addr_1_oldCommitment_yBits])
+
+
+        // Nullify a_addr_0:
+
+        field a_addr_0_oldCommitment_nullifier_check_field = poseidon([\
+          a_addr_0_stateVarId_field,\
+          a_addr_0_oldCommitment_owner_secretKey,\
+          a_addr_0_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(a_addr_0_oldCommitment_nullifier)[8..256] == field_to_bool_256(a_addr_0_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // a_addr_0_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            a_addr_0_nullifier_nonmembershipWitness_siblingPath,\
+            a_addr_0_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          a_addr_0_nullifier_nonmembershipWitness_newsiblingPath,\
+          a_addr_0_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+        // Nullify a_addr_1:
+
+        field a_addr_1_oldCommitment_nullifier_check_field = poseidon([\
+          a_addr_1_stateVarId_field,\
+          a_addr_1_oldCommitment_owner_secretKey,\
+          a_addr_1_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(a_addr_1_oldCommitment_nullifier)[8..256] == field_to_bool_256(a_addr_1_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // a_addr_1_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            a_addr_1_nullifier_nonmembershipWitness_siblingPath,\
+            a_addr_1_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          a_addr_1_nullifier_nonmembershipWitness_newsiblingPath,\
+          a_addr_1_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+
+        // prepare secret state 'a_addr_0' for commitment
+
+          field a_addr_0_oldCommitment_value_field = a_addr_0_oldCommitment_value
+          
+        // a_addr_0_oldCommitment_commitment: preimage check
+
+
+        field a_addr_0_oldCommitment_commitment_field = poseidon([\
+          a_addr_0_stateVarId_field,\
+          a_addr_0_oldCommitment_value_field,\
+          a_addr_0_oldCommitment_owner_publicKey,\
+          a_addr_0_oldCommitment_salt        ])
+
+
+
+        // prepare secret state 'a_addr_1' for commitment
+
+          field a_addr_1_oldCommitment_value_field = a_addr_1_oldCommitment_value
+          
+        // a_addr_1_oldCommitment_commitment: preimage check
+
+
+        field a_addr_1_oldCommitment_commitment_field = poseidon([\
+          a_addr_1_stateVarId_field,\
+          a_addr_1_oldCommitment_value_field,\
+          a_addr_1_oldCommitment_owner_publicKey,\
+          a_addr_1_oldCommitment_salt        ])
+
+
+        // a_addr_0_oldCommitment_commitment: existence check
+
+
+        field a_addr_0_commitmentRoot_check = checkRoot(\
+          a_addr_0_oldCommitment_membershipWitness_siblingPath,\
+          a_addr_0_oldCommitment_commitment_field,\
+          a_addr_0_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_addr_0_commitmentRoot_check)[8..256]\
+        )
+
+
+        // a_addr_1_oldCommitment_commitment: existence check
+
+
+        field a_addr_1_commitmentRoot_check = checkRoot(\
+          a_addr_1_oldCommitment_membershipWitness_siblingPath,\
+          a_addr_1_oldCommitment_commitment_field,\
+          a_addr_1_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(a_addr_1_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'a_addr_2' for commitment
+
+        assert(a_addr_0 + a_addr_1 > param3)
+            // TODO: assert no under/overflows
+
+            field a_addr_2_newCommitment_value_field = (a_addr_0 + a_addr_1) - (param3)
+
+        // a_addr_2_newCommitment_commitment - preimage check
+
+        field a_addr_2_newCommitment_commitment_check_field = poseidon([\
+          a_addr_2_stateVarId_field,\
+          a_addr_2_newCommitment_value_field,\
+          a_addr_2_newCommitment_owner_publicKey,\
+          a_addr_2_newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(a_addr_2_newCommitment_commitment)[8..256] == field_to_bool_256(a_addr_2_newCommitment_commitment_check_field)[8..256]\
+        )
+
+         return true

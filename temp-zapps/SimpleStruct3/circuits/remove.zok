@@ -1,0 +1,346 @@
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+struct Rct {
+        field amount
+field tax
+      }
+
+def main(\
+	private Rct invalidrct,\
+	private field msgSender,\
+	private field total_msgSender_0_oldCommitment_owner_secretKey,\
+	private field total_msgSender_1_oldCommitment_owner_secretKey,\
+	public field nullifierRoot,\
+	public field newNullifierRoot,\
+	public field total_msgSender_0_oldCommitment_nullifier,\
+	private field[32] total_msgSender_0_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] total_msgSender_0_nullifier_nonmembershipWitness_newsiblingPath,\
+	public field total_msgSender_1_oldCommitment_nullifier,\
+	private field[32] total_msgSender_1_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] total_msgSender_1_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  field total_msgSender_0_oldCommitment_value,\
+	private field total_msgSender_0_oldCommitment_salt,\
+	private  field total_msgSender_1_oldCommitment_value,\
+	private field total_msgSender_1_oldCommitment_salt,\
+	public field commitmentRoot,\
+	private field total_msgSender_0_oldCommitment_membershipWitness_index,\
+	private field[32] total_msgSender_0_oldCommitment_membershipWitness_siblingPath,\
+	private field total_msgSender_1_oldCommitment_membershipWitness_index,\
+	private field[32] total_msgSender_1_oldCommitment_membershipWitness_siblingPath,\
+	private field total_msgSender_2_newCommitment_owner_publicKey,\
+	private field total_msgSender_2_newCommitment_salt,\
+	public field total_msgSender_2_newCommitment_commitment,\
+	private field cmt_oldCommitment_owner_secretKey,\
+	public field cmt_oldCommitment_nullifier,\
+	private field[32] cmt_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] cmt_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  Rct cmt_oldCommitment_value,\
+	private field cmt_oldCommitment_salt,\
+	private bool cmt_oldCommitment_isDummy,\
+	private field cmt_oldCommitment_membershipWitness_index,\
+	private field[32] cmt_oldCommitment_membershipWitness_siblingPath,\
+	private field cmt_newCommitment_owner_publicKey,\
+	private field cmt_newCommitment_salt,\
+	public field cmt_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field total_mappingId = 5
+
+
+        field total_msgSender_0 = total_msgSender_0_oldCommitment_value
+
+
+        field total_msgSender_1 = total_msgSender_1_oldCommitment_value
+
+
+        // We need to hard-code each stateVarId into the circuit:
+        field cmt_stateVarId_field = 13
+
+
+        Rct cmt = cmt_oldCommitment_value
+
+// Moved decrementation of total_msg
+
+cmt.amount = 0
+
+cmt.tax = 0
+
+
+        field total_msgSender_0_stateVarId_field = mimc2([total_mappingId, msgSender])
+
+
+        field total_msgSender_1_stateVarId_field = mimc2([total_mappingId, msgSender])
+
+
+        field total_msgSender_2_stateVarId_field = mimc2([total_mappingId, msgSender])
+
+
+        // total_msgSender_0_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] total_msgSender_0_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(total_msgSender_0_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool total_msgSender_0_oldCommitment_owner_publicKey_sign = edwardsCompress(total_msgSender_0_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] total_msgSender_0_oldCommitment_yBits = field_to_bool_256(total_msgSender_0_oldCommitment_owner_publicKey_point[1])[2..256]
+        total_msgSender_0_oldCommitment_yBits[0] = total_msgSender_0_oldCommitment_owner_publicKey_sign
+
+        field total_msgSender_0_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...total_msgSender_0_oldCommitment_yBits])
+
+
+        // total_msgSender_1_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] total_msgSender_1_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(total_msgSender_1_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool total_msgSender_1_oldCommitment_owner_publicKey_sign = edwardsCompress(total_msgSender_1_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] total_msgSender_1_oldCommitment_yBits = field_to_bool_256(total_msgSender_1_oldCommitment_owner_publicKey_point[1])[2..256]
+        total_msgSender_1_oldCommitment_yBits[0] = total_msgSender_1_oldCommitment_owner_publicKey_sign
+
+        field total_msgSender_1_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...total_msgSender_1_oldCommitment_yBits])
+
+
+        // Nullify total_msgSender_0:
+
+        field total_msgSender_0_oldCommitment_nullifier_check_field = poseidon([\
+          total_msgSender_0_stateVarId_field,\
+          total_msgSender_0_oldCommitment_owner_secretKey,\
+          total_msgSender_0_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(total_msgSender_0_oldCommitment_nullifier)[8..256] == field_to_bool_256(total_msgSender_0_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // total_msgSender_0_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            total_msgSender_0_nullifier_nonmembershipWitness_siblingPath,\
+            total_msgSender_0_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          total_msgSender_0_nullifier_nonmembershipWitness_newsiblingPath,\
+          total_msgSender_0_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+        // Nullify total_msgSender_1:
+
+        field total_msgSender_1_oldCommitment_nullifier_check_field = poseidon([\
+          total_msgSender_1_stateVarId_field,\
+          total_msgSender_1_oldCommitment_owner_secretKey,\
+          total_msgSender_1_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(total_msgSender_1_oldCommitment_nullifier)[8..256] == field_to_bool_256(total_msgSender_1_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // total_msgSender_1_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            total_msgSender_1_nullifier_nonmembershipWitness_siblingPath,\
+            total_msgSender_1_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          total_msgSender_1_nullifier_nonmembershipWitness_newsiblingPath,\
+          total_msgSender_1_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+
+        // prepare secret state 'total_msgSender_0' for commitment
+
+          field total_msgSender_0_oldCommitment_value_field = total_msgSender_0_oldCommitment_value
+          
+        // total_msgSender_0_oldCommitment_commitment: preimage check
+
+
+        field total_msgSender_0_oldCommitment_commitment_field = poseidon([\
+          total_msgSender_0_stateVarId_field,\
+          total_msgSender_0_oldCommitment_value_field,\
+          total_msgSender_0_oldCommitment_owner_publicKey,\
+          total_msgSender_0_oldCommitment_salt        ])
+
+
+
+        // prepare secret state 'total_msgSender_1' for commitment
+
+          field total_msgSender_1_oldCommitment_value_field = total_msgSender_1_oldCommitment_value
+          
+        // total_msgSender_1_oldCommitment_commitment: preimage check
+
+
+        field total_msgSender_1_oldCommitment_commitment_field = poseidon([\
+          total_msgSender_1_stateVarId_field,\
+          total_msgSender_1_oldCommitment_value_field,\
+          total_msgSender_1_oldCommitment_owner_publicKey,\
+          total_msgSender_1_oldCommitment_salt        ])
+
+
+        // total_msgSender_0_oldCommitment_commitment: existence check
+
+
+        field total_msgSender_0_commitmentRoot_check = checkRoot(\
+          total_msgSender_0_oldCommitment_membershipWitness_siblingPath,\
+          total_msgSender_0_oldCommitment_commitment_field,\
+          total_msgSender_0_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(total_msgSender_0_commitmentRoot_check)[8..256]\
+        )
+
+
+        // total_msgSender_1_oldCommitment_commitment: existence check
+
+
+        field total_msgSender_1_commitmentRoot_check = checkRoot(\
+          total_msgSender_1_oldCommitment_membershipWitness_siblingPath,\
+          total_msgSender_1_oldCommitment_commitment_field,\
+          total_msgSender_1_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(total_msgSender_1_commitmentRoot_check)[8..256]\
+        )
+
+
+        // prepare secret state 'total_msgSender_2' for commitment
+
+        assert(total_msgSender_0 + total_msgSender_1 > invalidrct.amount + invalidrct.tax)
+            // TODO: assert no under/overflows
+
+            field total_msgSender_2_newCommitment_value_field = (total_msgSender_0 + total_msgSender_1) - (invalidrct.amount + invalidrct.tax)
+
+        // total_msgSender_2_newCommitment_commitment - preimage check
+
+        field total_msgSender_2_newCommitment_commitment_check_field = poseidon([\
+          total_msgSender_2_stateVarId_field,\
+          total_msgSender_2_newCommitment_value_field,\
+          total_msgSender_2_newCommitment_owner_publicKey,\
+          total_msgSender_2_newCommitment_salt\
+        ])
+
+        assert(\
+          field_to_bool_256(total_msgSender_2_newCommitment_commitment)[8..256] == field_to_bool_256(total_msgSender_2_newCommitment_commitment_check_field)[8..256]\
+        )
+
+
+        // cmt_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] cmt_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(cmt_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool cmt_oldCommitment_owner_publicKey_sign = edwardsCompress(cmt_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] cmt_oldCommitment_yBits = field_to_bool_256(cmt_oldCommitment_owner_publicKey_point[1])[2..256]
+        cmt_oldCommitment_yBits[0] = cmt_oldCommitment_owner_publicKey_sign
+
+        field cmt_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...cmt_oldCommitment_yBits])
+
+
+        // Nullify cmt:
+
+        field cmt_oldCommitment_nullifier_check_field = poseidon([\
+          cmt_stateVarId_field,\
+          cmt_oldCommitment_owner_secretKey,\
+          cmt_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(cmt_oldCommitment_nullifier)[8..256] == field_to_bool_256(cmt_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // cmt_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            cmt_nullifier_nonmembershipWitness_siblingPath,\
+            cmt_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          cmt_nullifier_nonmembershipWitness_newsiblingPath,\
+          cmt_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+          // prepare secret state 'cmt' for commitment
+
+          
+          
+          // cmt_oldCommitment_commitment: preimage check
+
+          field cmt_oldCommitment_commitment_field = poseidon([\
+            cmt_stateVarId_field,\
+            	 cmt_oldCommitment_value.amount,\
+	 cmt_oldCommitment_value.tax,\
+            cmt_oldCommitment_owner_publicKey,\
+            cmt_oldCommitment_salt\
+          ])
+
+
+        // cmt_oldCommitment_commitment: existence check
+
+
+        field cmt_commitmentRoot_check = checkRoot(\
+          cmt_oldCommitment_membershipWitness_siblingPath,\
+          cmt_oldCommitment_commitment_field,\
+          cmt_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        cmt_commitmentRoot_check = if cmt_oldCommitment_isDummy == true then commitmentRoot else cmt_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(cmt_commitmentRoot_check)[8..256]\
+        )
+
+
+          // prepare secret state 'cmt' for commitment
+
+          Rct cmt_newCommitment_value = Rct {  amount: cmt.amount, tax: cmt.tax }
+
+
+          // cmt_newCommitment_commitment - preimage check
+
+          field cmt_newCommitment_commitment_check_field = poseidon([\
+            cmt_stateVarId_field,\
+            	 cmt_newCommitment_value.amount,\
+	 cmt_newCommitment_value.tax,\
+            cmt_newCommitment_owner_publicKey,\
+            cmt_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(cmt_newCommitment_commitment)[8..256] == field_to_bool_256(cmt_newCommitment_commitment_check_field)[8..256]\
+          )
+
+         return true

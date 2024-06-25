@@ -1,0 +1,693 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "test",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationTestBoilerplate",
+                    "contractName": "MyContractShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "increment",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "param2",
+                                        "id": 18,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a_msgSender",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => uint256)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "encryptionRequired": true,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "decrement",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "addr",
+                                        "id": 31,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "param3",
+                                        "id": 33,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a_addr",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => uint256)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": true,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": []
+                }
+            ]
+        },
+        {
+            "nodeType": "SetupCommonFilesBoilerplate",
+            "contractName": "MyContractShield",
+            "functionNames": [
+                "increment",
+                "decrement",
+                "joinCommitments",
+                "splitCommitments"
+            ],
+            "constructorParams": []
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_services",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiServicesBoilerplate",
+                    "contractName": "MyContractShield",
+                    "functionNames": [
+                        "increment",
+                        "decrement"
+                    ],
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "increment",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "param2",
+                                        "id": 18,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a_msgSender",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => uint256)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true,
+                            "encryptionRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "decrement",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "addr",
+                                        "id": 31,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "address"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "param3",
+                                        "id": 33,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "a_addr",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => uint256)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [
+                                "a_addr"
+                            ],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": [],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_routes",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiRoutesBoilerplate",
+                    "contractName": "MyContractShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "increment"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "decrement"
+                        }
+                    ],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "EditableCommitmentCommonFilesBoilerplate"
+        },
+        {
+            "nodeType": "File",
+            "fileName": "increment",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "increment",
+                    "contractName": "MyContractShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "param2",
+                                "id": 18,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a_msgSender",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "mapping(address => uint256)"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "MyContractShield",
+                                "onChainKeyRegistry": true
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "a_msgSender": {
+                                        "increment": "parseInt(param2.integer, 10)",
+                                        "stateVarId": [
+                                            5,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": null,
+                                        "mappingKey": "msg",
+                                        "mappingName": "a",
+                                        "nullifierRequired": false,
+                                        "isOwned": true,
+                                        "owner": "admin",
+                                        "ownerIsParam": false
+                                    }
+                                },
+                                "contractName": "MyContractShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 27,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "a_msgSender",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "param2",
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": false,
+                                "privateStateName": "a_msgSender",
+                                "increments": "parseInt(param2.integer, 10)"
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "a_msgSender": {
+                                        "privateStateName": "a_msgSender",
+                                        "stateVarId": [
+                                            5,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "nullifierRequired": false,
+                                        "structProperties": null,
+                                        "isOwned": true,
+                                        "owner": "admin"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "increment",
+                                "privateStates": {
+                                    "a_msgSender": {
+                                        "privateStateName": "a_msgSender",
+                                        "stateVarId": [
+                                            5,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": false,
+                                        "increment": [
+                                            {
+                                                "name": "param2",
+                                                "precedingOperator": "+"
+                                            }
+                                        ],
+                                        "structProperties": null,
+                                        "isMapping": true,
+                                        "isPartitioned": true,
+                                        "isOwned": true,
+                                        "initialisationRequired": true,
+                                        "encryptionRequired": true,
+                                        "owner": "admin"
+                                    }
+                                },
+                                "parameters": [
+                                    "a_msgSender",
+                                    "param2"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "a_msgSender": {
+                                        "isPartitioned": true,
+                                        "encryptionRequired": true,
+                                        "nullifierRequired": false
+                                    }
+                                },
+                                "functionName": "increment",
+                                "contractName": "MyContractShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "a_msgSender": {
+                                        "stateVarId": [
+                                            5,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": null,
+                                        "mappingKey": "msg",
+                                        "mappingName": "a",
+                                        "nullifierRequired": false,
+                                        "isOwned": true,
+                                        "owner": "admin"
+                                    }
+                                },
+                                "contractName": "MyContractShield",
+                                "onChainKeyRegistry": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "decrement",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "decrement",
+                    "contractName": "MyContractShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "addr",
+                                "id": 31,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "address"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "param3",
+                                "id": 33,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "a_addr",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "mapping(address => uint256)"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "MyContractShield",
+                                "onChainKeyRegistry": true
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {}
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "a_addr": {
+                                        "increment": "parseInt(param3.integer, 10)",
+                                        "stateVarId": [
+                                            5,
+                                            "addr",
+                                            "addr"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": null,
+                                        "mappingKey": "addr",
+                                        "mappingName": "a",
+                                        "nullifierRequired": true,
+                                        "isOwned": true,
+                                        "owner": "admin",
+                                        "ownerIsParam": false
+                                    }
+                                },
+                                "contractName": "MyContractShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "a_addr": {
+                                        "privateStateName": "a_addr",
+                                        "isPartitioned": true
+                                    }
+                                },
+                                "contractName": "MyContractShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 48,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "-=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "a_addr",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "param3",
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": true,
+                                "privateStateName": "a_addr",
+                                "increments": "parseInt(param3.integer, 10)"
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "a_addr": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "a_addr": {
+                                        "privateStateName": "a_addr",
+                                        "stateVarId": [
+                                            5,
+                                            "addr",
+                                            "addr"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": null,
+                                        "isOwned": true,
+                                        "owner": "admin"
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "decrement",
+                                "privateStates": {
+                                    "a_addr": {
+                                        "privateStateName": "a_addr",
+                                        "stateVarId": [
+                                            5,
+                                            "addr",
+                                            "addr"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "increment": [
+                                            {
+                                                "name": "param3",
+                                                "precedingOperator": "-"
+                                            }
+                                        ],
+                                        "structProperties": null,
+                                        "isMapping": true,
+                                        "isPartitioned": true,
+                                        "isOwned": true,
+                                        "initialisationRequired": true,
+                                        "owner": "admin"
+                                    }
+                                },
+                                "parameters": [
+                                    "a_addr",
+                                    "addr",
+                                    "param3"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "a_addr": {
+                                        "isPartitioned": true,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "decrement",
+                                "contractName": "MyContractShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "a_addr": {
+                                        "stateVarId": [
+                                            5,
+                                            "addr",
+                                            "addr"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": null,
+                                        "mappingKey": "addr",
+                                        "mappingName": "a",
+                                        "nullifierRequired": true,
+                                        "isOwned": true,
+                                        "owner": "admin"
+                                    }
+                                },
+                                "contractName": "MyContractShield",
+                                "onChainKeyRegistry": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "decrementedSecretStates": [
+                        "a_addr"
+                    ],
+                    "decrementsSecretState": true
+                }
+            ]
+        }
+    ]
+}

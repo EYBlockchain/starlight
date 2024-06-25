@@ -1,0 +1,240 @@
+from "./common/hashes/mimc/altbn254/mimc2.zok" import main as mimc2
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "./common/hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import main as checkproof
+from "./common/merkle-tree/sparse-merkle-tree/checkproof.zok" import checkUpdatedPath as checkUpdatedPath
+from "./common/merkle-tree/mimc/altbn254/verify-membership/height32.zok" import main as checkRoot
+
+struct PO {
+        field count
+field ppunit
+field id
+field owner
+      }
+
+struct Invoice {
+        field amount
+field id
+      }
+
+def main(\
+	private Invoice inv,\
+	private field POs_invdotid_oldCommitment_owner_secretKey,\
+	public field nullifierRoot,\
+	private field[32] POs_invdotid_nullifier_nonmembershipWitness_siblingPath,\
+	private  PO POs_invdotid_oldCommitment_value,\
+	private field POs_invdotid_oldCommitment_salt,\
+	public field commitmentRoot,\
+	private field POs_invdotid_oldCommitment_membershipWitness_index,\
+	private field[32] POs_invdotid_oldCommitment_membershipWitness_siblingPath,\
+	private field invoices_invdotid_oldCommitment_owner_secretKey,\
+	public field newNullifierRoot,\
+	public field invoices_invdotid_oldCommitment_nullifier,\
+	private field[32] invoices_invdotid_nullifier_nonmembershipWitness_siblingPath,\
+	private field[32] invoices_invdotid_nullifier_nonmembershipWitness_newsiblingPath,\
+	private  Invoice invoices_invdotid_oldCommitment_value,\
+	private field invoices_invdotid_oldCommitment_salt,\
+	private bool invoices_invdotid_oldCommitment_isDummy,\
+	private field invoices_invdotid_oldCommitment_membershipWitness_index,\
+	private field[32] invoices_invdotid_oldCommitment_membershipWitness_siblingPath,\
+	private field invoices_invdotid_newCommitment_owner_publicKey,\
+	private field invoices_invdotid_newCommitment_salt,\
+	public field invoices_invdotid_newCommitment_commitment\
+) -> (bool):
+
+        
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field POs_mappingId = 6
+
+
+        PO POs_invdotid = POs_invdotid_oldCommitment_value
+
+
+        // We need to hard-code the mappingId's of mappings into the circuit:
+        field invoices_mappingId = 11
+
+
+        Invoice invoices_invdotid = invoices_invdotid_oldCommitment_value
+
+
+        assert(invoices_invdotid.id == 0)
+
+invoices_invdotid.amount = inv.amount
+
+invoices_invdotid.id = inv.id
+
+
+        assert(POs_invdotid.count != 0)
+
+
+        assert(inv.amount == POs_invdotid.count * POs_invdotid.ppunit)
+
+
+        field POs_invdotid_stateVarId_field = mimc2([POs_mappingId, inv.id])
+
+
+        // POs_invdotid_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] POs_invdotid_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(POs_invdotid_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool POs_invdotid_oldCommitment_owner_publicKey_sign = edwardsCompress(POs_invdotid_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] POs_invdotid_oldCommitment_yBits = field_to_bool_256(POs_invdotid_oldCommitment_owner_publicKey_point[1])[2..256]
+        POs_invdotid_oldCommitment_yBits[0] = POs_invdotid_oldCommitment_owner_publicKey_sign
+
+        field POs_invdotid_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...POs_invdotid_oldCommitment_yBits])
+
+
+        // Create the Nullifier  for POs_invdotid and no need to nullify it as its accessed only:
+
+        field POs_invdotid_oldCommitment_nullifier_check_field = poseidon([\
+          POs_invdotid_stateVarId_field,\
+          POs_invdotid_oldCommitment_owner_secretKey,\
+          POs_invdotid_oldCommitment_salt\
+        ])
+
+        // POs_invdotid_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            POs_invdotid_nullifier_nonmembershipWitness_siblingPath,\
+            POs_invdotid_oldCommitment_nullifier_check_field\
+           )       )
+        
+
+
+          // prepare secret state 'POs_invdotid' for commitment
+
+          
+          
+          // POs_invdotid_oldCommitment_commitment: preimage check
+
+          field POs_invdotid_oldCommitment_commitment_field = poseidon([\
+            POs_invdotid_stateVarId_field,\
+            	 POs_invdotid_oldCommitment_value.count,\
+	 POs_invdotid_oldCommitment_value.ppunit,\
+	 POs_invdotid_oldCommitment_value.id,\
+	 POs_invdotid_oldCommitment_value.owner,\
+            POs_invdotid_oldCommitment_owner_publicKey,\
+            POs_invdotid_oldCommitment_salt\
+          ])
+
+
+        // POs_invdotid_oldCommitment_commitment: existence check
+
+
+        field POs_invdotid_commitmentRoot_check = checkRoot(\
+          POs_invdotid_oldCommitment_membershipWitness_siblingPath,\
+          POs_invdotid_oldCommitment_commitment_field,\
+          POs_invdotid_oldCommitment_membershipWitness_index\
+        )
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(POs_invdotid_commitmentRoot_check)[8..256]\
+        )
+
+
+        field invoices_invdotid_stateVarId_field = mimc2([invoices_mappingId, inv.id])
+
+
+        // invoices_invdotid_oldCommitment - PoKoSK:
+        // The correctness of this secret key will be constrained within the oldCommitment existence check.
+
+        field[2] invoices_invdotid_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(invoices_invdotid_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+
+        bool invoices_invdotid_oldCommitment_owner_publicKey_sign = edwardsCompress(invoices_invdotid_oldCommitment_owner_publicKey_point)[0]
+
+        bool[254] invoices_invdotid_oldCommitment_yBits = field_to_bool_256(invoices_invdotid_oldCommitment_owner_publicKey_point[1])[2..256]
+        invoices_invdotid_oldCommitment_yBits[0] = invoices_invdotid_oldCommitment_owner_publicKey_sign
+
+        field invoices_invdotid_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...invoices_invdotid_oldCommitment_yBits])
+
+
+        // Nullify invoices_invdotid:
+
+        field invoices_invdotid_oldCommitment_nullifier_check_field = poseidon([\
+          invoices_invdotid_stateVarId_field,\
+          invoices_invdotid_oldCommitment_owner_secretKey,\
+          invoices_invdotid_oldCommitment_salt\
+        ])
+
+        assert(\
+        field_to_bool_256(invoices_invdotid_oldCommitment_nullifier)[8..256] == field_to_bool_256(invoices_invdotid_oldCommitment_nullifier_check_field)[8..256]\
+        )
+        // invoices_invdotid_oldCommitment_nullifier : non-existence check
+        
+        assert(\
+          nullifierRoot == checkproof(\
+            invoices_invdotid_nullifier_nonmembershipWitness_siblingPath,\
+            invoices_invdotid_oldCommitment_nullifier\
+           )       )
+
+       assert(\
+        newNullifierRoot == checkUpdatedPath(\
+          invoices_invdotid_nullifier_nonmembershipWitness_newsiblingPath,\
+          invoices_invdotid_oldCommitment_nullifier\
+        )        )
+
+        
+
+
+          // prepare secret state 'invoices_invdotid' for commitment
+
+          
+          
+          // invoices_invdotid_oldCommitment_commitment: preimage check
+
+          field invoices_invdotid_oldCommitment_commitment_field = poseidon([\
+            invoices_invdotid_stateVarId_field,\
+            	 invoices_invdotid_oldCommitment_value.amount,\
+	 invoices_invdotid_oldCommitment_value.id,\
+            invoices_invdotid_oldCommitment_owner_publicKey,\
+            invoices_invdotid_oldCommitment_salt\
+          ])
+
+
+        // invoices_invdotid_oldCommitment_commitment: existence check
+
+
+        field invoices_invdotid_commitmentRoot_check = checkRoot(\
+          invoices_invdotid_oldCommitment_membershipWitness_siblingPath,\
+          invoices_invdotid_oldCommitment_commitment_field,\
+          invoices_invdotid_oldCommitment_membershipWitness_index\
+        )
+
+
+        // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
+        invoices_invdotid_commitmentRoot_check = if invoices_invdotid_oldCommitment_isDummy == true then commitmentRoot else invoices_invdotid_commitmentRoot_check fi
+
+
+        assert(\
+          field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(invoices_invdotid_commitmentRoot_check)[8..256]\
+        )
+
+
+          // prepare secret state 'invoices_invdotid' for commitment
+
+          Invoice invoices_invdotid_newCommitment_value = Invoice {  amount: invoices_invdotid.amount, id: invoices_invdotid.id }
+
+
+          // invoices_invdotid_newCommitment_commitment - preimage check
+
+          field invoices_invdotid_newCommitment_commitment_check_field = poseidon([\
+            invoices_invdotid_stateVarId_field,\
+            	 invoices_invdotid_newCommitment_value.amount,\
+	 invoices_invdotid_newCommitment_value.id,\
+            invoices_invdotid_newCommitment_owner_publicKey,\
+            invoices_invdotid_newCommitment_salt\
+          ])
+
+          assert(\
+            field_to_bool_256(invoices_invdotid_newCommitment_commitment)[8..256] == field_to_bool_256(invoices_invdotid_newCommitment_commitment_check_field)[8..256]\
+          )
+
+         return true

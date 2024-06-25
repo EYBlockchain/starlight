@@ -1,0 +1,1236 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "test",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationTestBoilerplate",
+                    "contractName": "ReceiptShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "add",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "myrct",
+                                        "id": 17,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "Rct",
+                                            "properties": [
+                                                {
+                                                    "name": "amount",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "tax",
+                                                    "type": "uint256"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "total_msgSender",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => struct Receipt.Rct storage ref)"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "cmt",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "struct Receipt.Rct storage ref"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "remove",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "myrct",
+                                        "id": 56,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "Rct",
+                                            "properties": [
+                                                {
+                                                    "name": "amount",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "tax",
+                                                    "type": "uint256"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "total_msgSender",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => struct Receipt.Rct storage ref)"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "cmt",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "struct Receipt.Rct storage ref"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": true,
+                            "newCommitmentsRequired": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "nodeType": "SetupCommonFilesBoilerplate",
+            "contractName": "ReceiptShield",
+            "functionNames": [
+                "add",
+                "remove"
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_services",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiServicesBoilerplate",
+                    "contractName": "ReceiptShield",
+                    "functionNames": [
+                        "add",
+                        "remove"
+                    ],
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "add",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "myrct",
+                                        "id": 17,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "Rct",
+                                            "properties": [
+                                                {
+                                                    "name": "amount",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "tax",
+                                                    "type": "uint256"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "total_msgSender",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => struct Receipt.Rct storage ref)"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "cmt",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "struct Receipt.Rct storage ref"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "remove",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "myrct",
+                                        "id": 56,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "Rct",
+                                            "properties": [
+                                                {
+                                                    "name": "amount",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "tax",
+                                                    "type": "uint256"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "total_msgSender",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(address => struct Receipt.Rct storage ref)"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "cmt",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "struct Receipt.Rct storage ref"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [
+                                "total_msgSender",
+                                "cmt"
+                            ],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": [],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_routes",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiRoutesBoilerplate",
+                    "contractName": "ReceiptShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "add"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "remove"
+                        }
+                    ],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "EditableCommitmentCommonFilesBoilerplate"
+        },
+        {
+            "nodeType": "File",
+            "fileName": "add",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "add",
+                    "contractName": "ReceiptShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "myrct",
+                                "id": 17,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "Rct",
+                                    "properties": [
+                                        {
+                                            "name": "amount",
+                                            "type": "uint256"
+                                        },
+                                        {
+                                            "name": "tax",
+                                            "type": "uint256"
+                                        }
+                                    ],
+                                    "isStruct": true
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "total_msgSender",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "mapping(address => struct Receipt.Rct storage ref)"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "cmt",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "struct Receipt.Rct storage ref"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "ReceiptShield"
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "increment": {
+                                            "amount": "parseInt(myrct.amount.integer, 10)",
+                                            "tax": "parseInt(myrct.tax.integer, 10)"
+                                        },
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": "msg",
+                                        "mappingName": "total",
+                                        "nullifierRequired": false,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "cmt": {
+                                        "increment": {
+                                            "amount": "parseInt(myrct.amount.integer, 10)",
+                                            "tax": "parseInt(myrct.tax.integer, 10)"
+                                        },
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 28,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "total_msgSender",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "total_msgSender",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": false,
+                                "privateStateName": "total_msgSender",
+                                "increments": {
+                                    "amount": "parseInt(myrct.amount.integer, 10)",
+                                    "tax": "parseInt(myrct.tax.integer, 10)"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 37,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "total_msgSender",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "total_msgSender",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": false,
+                                "privateStateName": "total_msgSender",
+                                "increments": {
+                                    "amount": "parseInt(myrct.amount.integer, 10)",
+                                    "tax": "parseInt(myrct.tax.integer, 10)"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 44,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "cmt",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": false,
+                                "privateStateName": "cmt.amount",
+                                "increments": "parseInt(myrct.amount.integer, 10)"
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 51,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "+=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "cmt",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": false,
+                                "privateStateName": "cmt.tax",
+                                "increments": "parseInt(myrct.tax.integer, 10)"
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "privateStateName": "total_msgSender",
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "nullifierRequired": false,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "cmt": {
+                                        "privateStateName": "cmt",
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "add",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "privateStateName": "total_msgSender",
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": false,
+                                        "increment": {
+                                            "amount": [
+                                                {
+                                                    "name": "myrct.amount",
+                                                    "precedingOperator": "+"
+                                                }
+                                            ],
+                                            "tax": [
+                                                {
+                                                    "name": "myrct.tax",
+                                                    "precedingOperator": "+"
+                                                }
+                                            ]
+                                        },
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "isMapping": true,
+                                        "isPartitioned": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "cmt": {
+                                        "privateStateName": "cmt",
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "increment": {
+                                            "amount": [
+                                                {
+                                                    "name": "myrct.amount",
+                                                    "precedingOperator": "+"
+                                                }
+                                            ],
+                                            "tax": [
+                                                {
+                                                    "name": "myrct.tax",
+                                                    "precedingOperator": "+"
+                                                }
+                                            ]
+                                        },
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "isPartitioned": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "parameters": [
+                                    "total_msgSender",
+                                    "cmt",
+                                    "myrct.amount",
+                                    "myrct.tax"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "isPartitioned": true,
+                                        "nullifierRequired": false
+                                    },
+                                    "cmt": {
+                                        "isPartitioned": true
+                                    }
+                                },
+                                "functionName": "add",
+                                "contractName": "ReceiptShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": "msg",
+                                        "mappingName": "total",
+                                        "nullifierRequired": false,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "cmt": {
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": false
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "remove",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "remove",
+                    "contractName": "ReceiptShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "myrct",
+                                "id": 56,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "Rct",
+                                    "properties": [
+                                        {
+                                            "name": "amount",
+                                            "type": "uint256"
+                                        },
+                                        {
+                                            "name": "tax",
+                                            "type": "uint256"
+                                        }
+                                    ],
+                                    "isStruct": true
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "total_msgSender",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "mapping(address => struct Receipt.Rct storage ref)"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "cmt",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "struct Receipt.Rct storage ref"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "ReceiptShield"
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {}
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "increment": {
+                                            "amount": "parseInt(myrct.amount.integer, 10)",
+                                            "tax": "parseInt(myrct.tax.integer, 10)"
+                                        },
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": "msg",
+                                        "mappingName": "total",
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    },
+                                    "cmt": {
+                                        "increment": {
+                                            "amount": "parseInt(myrct.amount.integer, 10)",
+                                            "tax": "parseInt(myrct.tax.integer, 10)"
+                                        },
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null,
+                                        "ownerIsParam": null
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "privateStateName": "total_msgSender",
+                                        "isPartitioned": true
+                                    },
+                                    "cmt": {
+                                        "privateStateName": "cmt",
+                                        "isPartitioned": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 67,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "-=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "total_msgSender",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "total_msgSender",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": true,
+                                "privateStateName": "total_msgSender",
+                                "increments": {
+                                    "amount": "parseInt(myrct.amount.integer, 10)",
+                                    "tax": "parseInt(myrct.tax.integer, 10)"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 76,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "-=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "total_msgSender",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "total_msgSender",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": true,
+                                "privateStateName": "total_msgSender",
+                                "increments": {
+                                    "amount": "parseInt(myrct.amount.integer, 10)",
+                                    "tax": "parseInt(myrct.tax.integer, 10)"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 83,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "-=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "cmt",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": true,
+                                "privateStateName": "cmt.amount",
+                                "increments": "parseInt(myrct.amount.integer, 10)"
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 90,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "-=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "cmt",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "cmt",
+                                            "subType": "struct Receipt.Rct storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "myrct",
+                                        "memberName": "tax",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "myrct",
+                                            "subType": "struct Receipt.Rct memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true,
+                                "incrementsSecretState": true,
+                                "decrementsSecretState": true,
+                                "privateStateName": "cmt.tax",
+                                "increments": "parseInt(myrct.tax.integer, 10)"
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true
+                                    },
+                                    "cmt": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "privateStateName": "total_msgSender",
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "cmt": {
+                                        "privateStateName": "cmt",
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "remove",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "privateStateName": "total_msgSender",
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "increment": {
+                                            "amount": [
+                                                {
+                                                    "name": "myrct.amount",
+                                                    "precedingOperator": "-"
+                                                }
+                                            ],
+                                            "tax": [
+                                                {
+                                                    "name": "myrct.tax",
+                                                    "precedingOperator": "-"
+                                                }
+                                            ]
+                                        },
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "isMapping": true,
+                                        "isPartitioned": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "cmt": {
+                                        "privateStateName": "cmt",
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "increment": {
+                                            "amount": [
+                                                {
+                                                    "name": "myrct.amount",
+                                                    "precedingOperator": "-"
+                                                }
+                                            ],
+                                            "tax": [
+                                                {
+                                                    "name": "myrct.tax",
+                                                    "precedingOperator": "-"
+                                                }
+                                            ]
+                                        },
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "isPartitioned": true,
+                                        "initialisationRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "parameters": [
+                                    "total_msgSender",
+                                    "cmt",
+                                    "myrct.amount",
+                                    "myrct.tax"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "isPartitioned": true,
+                                        "nullifierRequired": true
+                                    },
+                                    "cmt": {
+                                        "isPartitioned": true,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "remove",
+                                "contractName": "ReceiptShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "total_msgSender": {
+                                        "stateVarId": [
+                                            6,
+                                            "msg",
+                                            "msg"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": "msg",
+                                        "mappingName": "total",
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    },
+                                    "cmt": {
+                                        "stateVarId": 14,
+                                        "isSharedSecret": false,
+                                        "isPartitioned": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "tax"
+                                        ],
+                                        "mappingKey": null,
+                                        "mappingName": null,
+                                        "nullifierRequired": true,
+                                        "owner": null,
+                                        "ownerIsSecret": null
+                                    }
+                                },
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": false
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "decrementedSecretStates": [
+                        "total_msgSender",
+                        "cmt"
+                    ],
+                    "decrementsSecretState": true
+                }
+            ]
+        }
+    ]
+}

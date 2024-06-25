@@ -1,0 +1,1623 @@
+{
+    "nodeType": "Folder",
+    "files": [
+        {
+            "nodeType": "File",
+            "fileName": "test",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationTestBoilerplate",
+                    "contractName": "ReceiptShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "addPO",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "newpo",
+                                        "id": 28,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "PO",
+                                            "properties": [
+                                                {
+                                                    "name": "count",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "ppunit",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "id",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "owner",
+                                                    "type": "address"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "POs_newpodotid",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(uint256 => struct Receipt.PO storage ref)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "addInvoice",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "inv",
+                                        "id": 89,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "Invoice",
+                                            "properties": [
+                                                {
+                                                    "name": "amount",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "id",
+                                                    "type": "uint256"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "invoices_invdotid",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(uint256 => struct Receipt.Invoice storage ref)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationTestFunction",
+                            "name": "pay",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "id",
+                                        "id": 150,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "amount",
+                                        "id": 152,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "invoices_id",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(uint256 => struct Receipt.Invoice storage ref)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "decrementsSecretState": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "nodeType": "SetupCommonFilesBoilerplate",
+            "contractName": "ReceiptShield",
+            "functionNames": [
+                "addPO",
+                "addInvoice",
+                "pay"
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_services",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiServicesBoilerplate",
+                    "contractName": "ReceiptShield",
+                    "functionNames": [
+                        "addPO",
+                        "addInvoice",
+                        "pay"
+                    ],
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "addPO",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "newpo",
+                                        "id": 28,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "PO",
+                                            "properties": [
+                                                {
+                                                    "name": "count",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "ppunit",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "id",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "owner",
+                                                    "type": "address"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "POs_newpodotid",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(uint256 => struct Receipt.PO storage ref)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "addInvoice",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "inv",
+                                        "id": 89,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "Invoice",
+                                            "properties": [
+                                                {
+                                                    "name": "amount",
+                                                    "type": "uint256"
+                                                },
+                                                {
+                                                    "name": "id",
+                                                    "type": "uint256"
+                                                }
+                                            ],
+                                            "isStruct": true
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "invoices_invdotid",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(uint256 => struct Receipt.Invoice storage ref)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationApiServiceFunction",
+                            "name": "pay",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "id",
+                                        "id": 150,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    },
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "amount",
+                                        "id": 152,
+                                        "isSecret": true,
+                                        "interactsWithSecret": true,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "invoices_id",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "mapping(uint256 => struct Receipt.Invoice storage ref)"
+                                        }
+                                    }
+                                ]
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "decrementsSecretState": [],
+                            "isConstructor": false,
+                            "newCommitmentsRequired": true
+                        }
+                    ],
+                    "constructorParams": [],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "api_routes",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "IntegrationApiRoutesBoilerplate",
+                    "contractName": "ReceiptShield",
+                    "functions": [
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "addPO"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "addInvoice"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "pay"
+                        }
+                    ],
+                    "contractImports": []
+                }
+            ]
+        },
+        {
+            "nodeType": "EditableCommitmentCommonFilesBoilerplate"
+        },
+        {
+            "nodeType": "File",
+            "fileName": "addPO",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "addPO",
+                    "contractName": "ReceiptShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "newpo",
+                                "id": 28,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "PO",
+                                    "properties": [
+                                        {
+                                            "name": "count",
+                                            "type": "uint256"
+                                        },
+                                        {
+                                            "name": "ppunit",
+                                            "type": "uint256"
+                                        },
+                                        {
+                                            "name": "id",
+                                            "type": "uint256"
+                                        },
+                                        {
+                                            "name": "owner",
+                                            "type": "address"
+                                        }
+                                    ],
+                                    "isStruct": true
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "POs_newpodotid",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "mapping(uint256 => struct Receipt.PO storage ref)"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": true
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "privateStateName": "POs_newpodotid",
+                                        "stateVarId": [
+                                            6,
+                                            "newpo.id",
+                                            null
+                                        ],
+                                        "accessedOnly": false,
+                                        "mappingKey": "newpo.id",
+                                        "mappingName": "POs",
+                                        "structProperties": [
+                                            "id",
+                                            "count",
+                                            "ppunit",
+                                            "owner"
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "stateVarId": [
+                                            6,
+                                            "newpo.id",
+                                            null
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "id",
+                                            "count",
+                                            "ppunit",
+                                            "owner"
+                                        ],
+                                        "mappingKey": "newpo.id",
+                                        "mappingName": "POs",
+                                        "nullifierRequired": true,
+                                        "accessedOnly": false,
+                                        "initialised": true,
+                                        "isOwned": true,
+                                        "ownerIsParam": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "privateStateName": "POs_newpodotid",
+                                        "accessedOnly": false,
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 57,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "POs_newpodotid",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        },
+                                        "isStruct": true
+                                    }
+                                ]
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 57,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "POs_newpodotid",
+                                        "memberName": "count",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "POs_newpodotid",
+                                            "subType": "struct Receipt.PO storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "newpo",
+                                        "memberName": "count",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "newpo",
+                                            "subType": "struct Receipt.PO memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 66,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "POs_newpodotid",
+                                        "memberName": "ppunit",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "POs_newpodotid",
+                                            "subType": "struct Receipt.PO storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "newpo",
+                                        "memberName": "ppunit",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "newpo",
+                                            "subType": "struct Receipt.PO memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 75,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "POs_newpodotid",
+                                        "memberName": "id",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "POs_newpodotid",
+                                            "subType": "struct Receipt.PO storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "newpo",
+                                        "memberName": "id",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "newpo",
+                                            "subType": "struct Receipt.PO memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 84,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "POs_newpodotid",
+                                        "memberName": "owner",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "POs_newpodotid",
+                                            "subType": "struct Receipt.PO storage ref"
+                                        },
+                                        "subType": "address"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "newpo",
+                                        "memberName": "owner",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "newpo",
+                                            "subType": "struct Receipt.PO memory"
+                                        },
+                                        "subType": "address"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "POs_newpodotid",
+                                    "subType": "generalNumber"
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "privateStateName": "POs_newpodotid",
+                                        "stateVarId": [
+                                            6,
+                                            "newpo.id",
+                                            null
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "count",
+                                            "ppunit",
+                                            "id",
+                                            "owner"
+                                        ],
+                                        "isOwned": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "addPO",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "privateStateName": "POs_newpodotid",
+                                        "stateVarId": [
+                                            6,
+                                            "newpo.id",
+                                            null
+                                        ],
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "count",
+                                            "ppunit",
+                                            "id",
+                                            "owner"
+                                        ],
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "isOwned": true,
+                                        "initialisationRequired": true
+                                    }
+                                },
+                                "parameters": [
+                                    "msgSender",
+                                    "POs_newpodotid",
+                                    "newpo.count",
+                                    "newpo.ppunit",
+                                    "newpo.id",
+                                    "newpo.owner"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "isWhole": true,
+                                        "accessedOnly": false,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "addPO",
+                                "contractName": "ReceiptShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "POs_newpodotid": {
+                                        "stateVarId": [
+                                            6,
+                                            "newpo.id",
+                                            null
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "count",
+                                            "ppunit",
+                                            "id",
+                                            "owner"
+                                        ],
+                                        "mappingKey": "newpo.id",
+                                        "mappingName": "POs",
+                                        "nullifierRequired": true,
+                                        "isOwned": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "msgSenderParam": true
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "addInvoice",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "addInvoice",
+                    "contractName": "ReceiptShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "inv",
+                                "id": 89,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "Invoice",
+                                    "properties": [
+                                        {
+                                            "name": "amount",
+                                            "type": "uint256"
+                                        },
+                                        {
+                                            "name": "id",
+                                            "type": "uint256"
+                                        }
+                                    ],
+                                    "isStruct": true
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "invoices_invdotid",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "mapping(uint256 => struct Receipt.Invoice storage ref)"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": true
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "POs_invdotid": {
+                                        "privateStateName": "POs_invdotid",
+                                        "stateVarId": [
+                                            6,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "accessedOnly": true,
+                                        "mappingKey": "inv.id",
+                                        "mappingName": "POs",
+                                        "structProperties": [
+                                            "count",
+                                            "ppunit"
+                                        ]
+                                    },
+                                    "invoices_invdotid": {
+                                        "privateStateName": "invoices_invdotid",
+                                        "stateVarId": [
+                                            11,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "accessedOnly": false,
+                                        "mappingKey": "inv.id",
+                                        "mappingName": "invoices",
+                                        "structProperties": [
+                                            "id",
+                                            "amount"
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "POs_invdotid": {
+                                        "stateVarId": [
+                                            6,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "count",
+                                            "ppunit"
+                                        ],
+                                        "mappingKey": "inv.id",
+                                        "mappingName": "POs",
+                                        "nullifierRequired": false,
+                                        "accessedOnly": true,
+                                        "initialised": true,
+                                        "isOwned": true,
+                                        "ownerIsParam": true
+                                    },
+                                    "invoices_invdotid": {
+                                        "stateVarId": [
+                                            11,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "id",
+                                            "amount"
+                                        ],
+                                        "mappingKey": "inv.id",
+                                        "mappingName": "invoices",
+                                        "nullifierRequired": true,
+                                        "accessedOnly": false,
+                                        "initialised": true,
+                                        "isOwned": true,
+                                        "ownerIsSecret": true,
+                                        "ownerIsParam": false
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "POs_invdotid": {
+                                        "privateStateName": "POs_invdotid",
+                                        "accessedOnly": true,
+                                        "isWhole": true
+                                    },
+                                    "invoices_invdotid": {
+                                        "privateStateName": "invoices_invdotid",
+                                        "accessedOnly": false,
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 110,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "invoices_invdotid",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        },
+                                        "isStruct": true
+                                    }
+                                ]
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 110,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "invoices_invdotid",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "invoices_invdotid",
+                                            "subType": "struct Receipt.Invoice storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "inv",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "inv",
+                                            "subType": "struct Receipt.Invoice memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "invoices_invdotid",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "invoices_invdotid",
+                                    "subType": "generalNumber"
+                                }
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 119,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "invoices_invdotid",
+                                        "memberName": "id",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "invoices_invdotid",
+                                            "subType": "struct Receipt.Invoice storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "inv",
+                                        "memberName": "id",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "inv",
+                                            "subType": "struct Receipt.Invoice memory"
+                                        },
+                                        "subType": "uint256"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "invoices_invdotid",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "invoices_invdotid",
+                                    "subType": "generalNumber"
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "POs_invdotid": {
+                                        "accessedOnly": true,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    },
+                                    "invoices_invdotid": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "invoices_invdotid": {
+                                        "privateStateName": "invoices_invdotid",
+                                        "stateVarId": [
+                                            11,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "id"
+                                        ],
+                                        "isOwned": true,
+                                        "ownerIsSecret": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "addInvoice",
+                                "privateStates": {
+                                    "POs_invdotid": {
+                                        "privateStateName": "POs_invdotid",
+                                        "stateVarId": [
+                                            6,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "accessedOnly": true,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": false,
+                                        "structProperties": [
+                                            "count",
+                                            "ppunit",
+                                            "id",
+                                            "owner"
+                                        ],
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "isOwned": true
+                                    },
+                                    "invoices_invdotid": {
+                                        "privateStateName": "invoices_invdotid",
+                                        "stateVarId": [
+                                            11,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "id"
+                                        ],
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "isOwned": true,
+                                        "initialisationRequired": true,
+                                        "ownerIsSecret": true
+                                    }
+                                },
+                                "parameters": [
+                                    "invoices_invdotid",
+                                    "inv.amount",
+                                    "inv.id"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "POs_invdotid": {
+                                        "isWhole": true,
+                                        "accessedOnly": true,
+                                        "nullifierRequired": false
+                                    },
+                                    "invoices_invdotid": {
+                                        "isWhole": true,
+                                        "accessedOnly": false,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "addInvoice",
+                                "contractName": "ReceiptShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "invoices_invdotid": {
+                                        "stateVarId": [
+                                            11,
+                                            "inv.id",
+                                            null
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "id"
+                                        ],
+                                        "mappingKey": "inv.id",
+                                        "mappingName": "invoices",
+                                        "nullifierRequired": true,
+                                        "isOwned": true,
+                                        "ownerIsSecret": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "pay",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "pay",
+                    "contractName": "ReceiptShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "id",
+                                "id": 150,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            },
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "amount",
+                                "id": 152,
+                                "isSecret": true,
+                                "interactsWithSecret": true,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "invoices_id",
+                                "id": 0,
+                                "isSecret": true,
+                                "declarationType": "state",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "mapping(uint256 => struct Receipt.Invoice storage ref)"
+                                }
+                            }
+                        ]
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [
+                            {
+                                "nodeType": "InitialiseKeys",
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": true
+                            },
+                            {
+                                "nodeType": "InitialisePreimage",
+                                "privateStates": {
+                                    "POs_id": {
+                                        "privateStateName": "POs_id",
+                                        "stateVarId": [
+                                            6,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "accessedOnly": true,
+                                        "mappingKey": "id",
+                                        "mappingName": "POs",
+                                        "structProperties": [
+                                            "count",
+                                            "owner"
+                                        ]
+                                    },
+                                    "invoices_id": {
+                                        "privateStateName": "invoices_id",
+                                        "stateVarId": [
+                                            11,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "accessedOnly": false,
+                                        "mappingKey": "id",
+                                        "mappingName": "invoices",
+                                        "structProperties": [
+                                            "amount"
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "ReadPreimage",
+                                "privateStates": {
+                                    "POs_id": {
+                                        "stateVarId": [
+                                            6,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "count",
+                                            "owner"
+                                        ],
+                                        "mappingKey": "id",
+                                        "mappingName": "POs",
+                                        "nullifierRequired": false,
+                                        "accessedOnly": true,
+                                        "initialised": true,
+                                        "isOwned": true,
+                                        "ownerIsParam": true
+                                    },
+                                    "invoices_id": {
+                                        "stateVarId": [
+                                            11,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "amount"
+                                        ],
+                                        "mappingKey": "id",
+                                        "mappingName": "invoices",
+                                        "nullifierRequired": true,
+                                        "accessedOnly": false,
+                                        "initialised": true,
+                                        "isOwned": true,
+                                        "ownerIsSecret": true,
+                                        "ownerIsParam": false
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            },
+                            {
+                                "nodeType": "MembershipWitness",
+                                "privateStates": {
+                                    "POs_id": {
+                                        "privateStateName": "POs_id",
+                                        "accessedOnly": true,
+                                        "isWhole": true
+                                    },
+                                    "invoices_id": {
+                                        "privateStateName": "invoices_id",
+                                        "accessedOnly": false,
+                                        "isWhole": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield"
+                            }
+                        ],
+                        "statements": [
+                            {
+                                "nodeType": "VariableDeclarationStatement",
+                                "id": 170,
+                                "interactsWithSecret": true,
+                                "declarations": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "invoices_id",
+                                        "id": 0,
+                                        "isSecret": true,
+                                        "isAccessed": true,
+                                        "declarationType": "state",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName"
+                                        },
+                                        "isStruct": true
+                                    }
+                                ]
+                            },
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 170,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "MemberAccess",
+                                        "name": "invoices_id",
+                                        "memberName": "amount",
+                                        "expression": {
+                                            "nodeType": "Identifier",
+                                            "name": "invoices_id",
+                                            "subType": "struct Receipt.Invoice storage ref"
+                                        },
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "Literal",
+                                        "value": "0"
+                                    }
+                                },
+                                "interactsWithSecret": true
+                            },
+                            {
+                                "nodeType": "Assignment",
+                                "operator": "=",
+                                "leftHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "invoices_id",
+                                    "subType": ""
+                                },
+                                "rightHandSide": {
+                                    "nodeType": "Identifier",
+                                    "name": "invoices_id",
+                                    "subType": "generalNumber"
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "CalculateNullifier",
+                                "privateStates": {
+                                    "POs_id": {
+                                        "accessedOnly": true,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    },
+                                    "invoices_id": {
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "isWhole": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "CalculateCommitment",
+                                "privateStates": {
+                                    "invoices_id": {
+                                        "privateStateName": "invoices_id",
+                                        "stateVarId": [
+                                            11,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "id"
+                                        ],
+                                        "isOwned": true,
+                                        "ownerIsSecret": true
+                                    }
+                                }
+                            },
+                            {
+                                "nodeType": "GenerateProof",
+                                "circuitName": "pay",
+                                "privateStates": {
+                                    "POs_id": {
+                                        "privateStateName": "POs_id",
+                                        "stateVarId": [
+                                            6,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "accessedOnly": true,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": false,
+                                        "structProperties": [
+                                            "count",
+                                            "ppunit",
+                                            "id",
+                                            "owner"
+                                        ],
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "isOwned": true
+                                    },
+                                    "invoices_id": {
+                                        "privateStateName": "invoices_id",
+                                        "stateVarId": [
+                                            11,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "accessedOnly": false,
+                                        "isSharedSecret": false,
+                                        "nullifierRequired": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "id"
+                                        ],
+                                        "isMapping": true,
+                                        "isWhole": true,
+                                        "isOwned": true,
+                                        "initialisationRequired": true,
+                                        "ownerIsSecret": true
+                                    }
+                                },
+                                "parameters": [
+                                    "msgSender",
+                                    "invoices_id",
+                                    "id",
+                                    "amount"
+                                ]
+                            },
+                            {
+                                "nodeType": "SendTransaction",
+                                "privateStates": {
+                                    "POs_id": {
+                                        "isWhole": true,
+                                        "accessedOnly": true,
+                                        "nullifierRequired": false
+                                    },
+                                    "invoices_id": {
+                                        "isWhole": true,
+                                        "accessedOnly": false,
+                                        "nullifierRequired": true
+                                    }
+                                },
+                                "functionName": "pay",
+                                "contractName": "ReceiptShield",
+                                "publicInputs": []
+                            },
+                            {
+                                "nodeType": "WritePreimage",
+                                "privateStates": {
+                                    "invoices_id": {
+                                        "stateVarId": [
+                                            11,
+                                            "id",
+                                            "id"
+                                        ],
+                                        "isSharedSecret": false,
+                                        "isWhole": true,
+                                        "structProperties": [
+                                            "amount",
+                                            "id"
+                                        ],
+                                        "mappingKey": "id",
+                                        "mappingName": "invoices",
+                                        "nullifierRequired": true,
+                                        "isOwned": true,
+                                        "ownerIsSecret": true
+                                    }
+                                },
+                                "contractName": "ReceiptShield",
+                                "onChainKeyRegistry": true
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "msgSenderParam": true
+                }
+            ]
+        }
+    ]
+}

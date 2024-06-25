@@ -1,0 +1,15 @@
+FROM node:18.19
+
+WORKDIR /app
+
+RUN apt-get update -y
+RUN apt-get install -y netcat-openbsd
+
+COPY ./package.json ./package-lock.json ./
+COPY entrypoint.sh entrypoint.sh
+COPY contracts contracts
+COPY migrations migrations
+COPY truffle-config.js truffle-config.js
+RUN chmod +x entrypoint.sh
+RUN npm ci
+ENTRYPOINT ["./entrypoint.sh"]

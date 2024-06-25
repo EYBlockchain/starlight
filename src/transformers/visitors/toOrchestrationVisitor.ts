@@ -411,13 +411,13 @@ const visitor = {
         }
         }
       } else if (!scope.modifiesSecretState()){
-        console.log(`Entering function: ${node.kind}`);
+        
 
        
         if (node.kind === 'fallback' || node.kind === 'receive' || !node.name) {
-          console.log(`Ignoring function: ${node.kind}`);
-        console.log(`Processing function: ${node.name || node.kind}`);
-        return;}
+        state.skipSubNodes = true;
+        return;
+      }
 
         
         const contractName = `${parent.name}Shield`;
@@ -439,6 +439,7 @@ const visitor = {
         
 
         for (const file of parent._newASTPointer) {
+
         if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
           file.nodes[0].functions.push(
             buildNode('IntegrationPublicApiServiceFunction', {

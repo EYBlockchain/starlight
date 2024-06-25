@@ -1,0 +1,2 @@
+FROM mongo
+COPY setup-admin-user.js /docker-entrypoint-initdb.d/setup_admin_user.js
