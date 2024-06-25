@@ -23,8 +23,8 @@ contract Assign {
     known a += index + value;
   }
 
-   function add(secret uint256 value) public {
-    require(index < 100); 
+   function add1(secret uint256 value) public {
+    require(index < 5); 
     index++;
     known a += index + value;
   }
@@ -34,7 +34,7 @@ contract Assign {
     a -= value;
   }
 
-  function remove(secret uint256 value) public {
+  function remove1(secret uint256 value) public {
     require(index < 10, "index is too high"); 
     a -= value;
   }
