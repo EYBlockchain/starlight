@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,7 +33,7 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function remove(
@@ -41,17 +45,9 @@ export default async function remove(
 ) {
 	// Initialisation of variables:
 
-	const contract = new Contract("ReceiptShield");
+	const instance = await getContractInstance("ReceiptShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("ReceiptShield");
 
 	const msgValue = 0;
 	const invalidrct = generalise(_invalidrct);
@@ -60,16 +56,10 @@ export default async function remove(
 	);
 	let cmt_newOwnerPublicKey = generalise(_cmt_newOwnerPublicKey);
 
-	// Initialize the contract
-
-	const contract = new Contract("ReceiptShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "ReceiptShield", false);
+		await registerKey(utils.randomHex(31), "ReceiptShield", false);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -207,19 +197,6 @@ export default async function remove(
 			web3
 		);
 
-		const tx = await joinCommitments(
-			"ReceiptShield",
-			"total",
-			secretKey,
-			publicKey,
-			[5, total_msgSender_stateVarId_key],
-			[total_msgSender_0_oldCommitment, total_msgSender_1_oldCommitment],
-			[total_msgSender_witness_0, total_msgSender_witness_1],
-			instance,
-			contractAddr,
-			web3
-		);
-
 		total_msgSender_preimage = await getCommitmentsById(
 			total_msgSender_stateVarId
 		);
@@ -229,7 +206,6 @@ export default async function remove(
 			total_msgSender_0_oldCommitment,
 			total_msgSender_1_oldCommitment,
 		] = getInputCommitments(
-			publicKey.hex(32),
 			publicKey.hex(32),
 			total_msgSender_newCommitmentValue.integer,
 			total_msgSender_preimage
@@ -311,16 +287,6 @@ export default async function remove(
 		BigInt(secretKey.hex(32)),
 		BigInt(total_msgSender_1_prevSalt.hex(32)),
 	]);
-	let total_msgSender_0_nullifier = poseidonHash([
-		BigInt(total_msgSender_stateVarId),
-		BigInt(secretKey.hex(32)),
-		BigInt(total_msgSender_0_prevSalt.hex(32)),
-	]);
-	let total_msgSender_1_nullifier = poseidonHash([
-		BigInt(total_msgSender_stateVarId),
-		BigInt(secretKey.hex(32)),
-		BigInt(total_msgSender_1_prevSalt.hex(32)),
-	]);
 	total_msgSender_0_nullifier = generalise(total_msgSender_0_nullifier.hex(32)); // truncate
 	total_msgSender_1_nullifier = generalise(total_msgSender_1_nullifier.hex(32)); // truncate
 	// Non-membership witness for Nullifier
@@ -341,17 +307,6 @@ export default async function remove(
 		total_msgSender_1_nullifier_NonMembership_witness.path
 	).all;
 
-	let cmt_nullifier = cmt_commitmentExists
-		? poseidonHash([
-				BigInt(cmt_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(cmt_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(cmt_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(cmt_prevSalt.hex(32)),
-		  ]);
 	let cmt_nullifier = cmt_commitmentExists
 		? poseidonHash([
 				BigInt(cmt_stateVarId),
@@ -456,10 +411,7 @@ export default async function remove(
 		total_msgSender_stateVarId_key.integer,
 		secretKey.integer,
 		secretKey.integer,
-		secretKey.integer,
-		secretKey.integer,
 		total_msgSender_nullifierRoot.integer,
-		total_msgSender_newNullifierRoot.integer,
 		total_msgSender_newNullifierRoot.integer,
 		total_msgSender_0_nullifier.integer,
 		total_msgSender_0_nullifier_path.integer,
@@ -480,7 +432,6 @@ export default async function remove(
 		total_msgSender_2_newSalt.integer,
 		total_msgSender_2_newCommitment.integer,
 
-		cmt_commitmentExists ? secretKey.integer : generalise(0).integer,
 		cmt_commitmentExists ? secretKey.integer : generalise(0).integer,
 
 		cmt_nullifier.integer,
@@ -578,16 +529,8 @@ export default async function remove(
 			total_msgSender_newOwnerPublicKey.integer === publicKey.integer
 				? secretKey
 				: null,
-		secretKey:
-			total_msgSender_newOwnerPublicKey.integer === publicKey.integer
-				? secretKey
-				: null,
 		isNullified: false,
 	});
-
-	if (cmt_commitmentExists)
-		await markNullified(cmt_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
 
 	if (cmt_commitmentExists)
 		await markNullified(cmt_currentCommitment, secretKey.hex(32));
@@ -603,8 +546,6 @@ export default async function remove(
 			salt: cmt_newSalt,
 			publicKey: cmt_newOwnerPublicKey,
 		},
-		secretKey:
-			cmt_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		secretKey:
 			cmt_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		isNullified: false,

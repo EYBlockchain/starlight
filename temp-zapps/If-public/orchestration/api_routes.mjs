@@ -1,5 +1,7 @@
 import { service_add } from "./api_services.mjs";
 
+import { service_donw } from "./api_services.mjs";
+
 import {
 	service_allCommitments,
 	service_getCommitmentsByState,
@@ -16,6 +18,9 @@ const router = express.Router();
 // eslint-disable-next-line func-names
 router.post("/add", service_add);
 
+// eslint-disable-next-line func-names
+router.post("/donw", service_donw);
+
 // commitment getter routes
 router.get("/getAllCommitments", service_allCommitments);
 router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
@@ -23,7 +28,6 @@ router.get("/getBalance", service_getBalance);
 router.get("/getBalanceByState", service_getBalanceByState);
 // nullifier route
 router.post("/reinstateNullifiers", service_reinstateNullifiers);
-router.post("/getSharedKeys", service_getSharedKeys);
 router.post("/getSharedKeys", service_getSharedKeys);
 
 export default router;

@@ -35,7 +35,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("AssignShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("addB", async function () {
 		this.timeout(3660000);
@@ -53,7 +58,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await addB(73, 91);
+					const { tx, encEvent } = await addB(22, 73);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -93,7 +98,7 @@ describe("AssignShield", async function () {
 			it("should call addB again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await addB(67, 92);
+					const { tx } = await addB(181, 44);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -123,7 +128,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await addA(199);
+					const { tx, encEvent } = await addA(68);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -163,7 +168,7 @@ describe("AssignShield", async function () {
 			it("should call addA again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await addA(95);
+					const { tx } = await addA(166);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -193,7 +198,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await addC(82, 14);
+					const { tx, encEvent } = await addC(110, 106);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -233,7 +238,7 @@ describe("AssignShield", async function () {
 			it("should call addC again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await addC(194, 4);
+					const { tx } = await addC(128, 15);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -263,7 +268,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await remove(75, 103);
+					const { tx, encEvent } = await remove(76, 119);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -303,7 +308,7 @@ describe("AssignShield", async function () {
 			it("should call remove again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await remove(169, 91);
+					const { tx } = await remove(91, 98);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -333,7 +338,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await remove1(75, 161);
+					const { tx, encEvent } = await remove1(100, 14);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -373,7 +378,7 @@ describe("AssignShield", async function () {
 			it("should call remove1 again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await remove1(97, 189);
+					const { tx } = await remove1(76, 17);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);

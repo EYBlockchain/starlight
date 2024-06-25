@@ -41,9 +41,9 @@ export async function service_add(req, res, next) {
 		await startEventFilter("TestShield");
 		const { j } = req.body;
 		const z_newOwnerPublicKey = req.body.z_newOwnerPublicKey || 0;
-		CONSTRUCTOR_INPUTS;
 		const { tx, encEvent } = await add(j, z_newOwnerPublicKey);
-
+		// prints the tx
+		console.log(tx);
 		res.send({ tx, encEvent });
 		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {
@@ -112,6 +112,21 @@ export async function service_reinstateNullifiers(req, res, next) {
 	try {
 		await reinstateNullifiers();
 		res.send("Complete");
+		await sleep(10);
+	} catch (err) {
+		logger.error(err);
+		res.send({ errors: [err.message] });
+	}
+}
+export async function service_getSharedKeys(req, res, next) {
+	try {
+		const { recipientAddress } = req.body;
+		const recipientPubKey = req.body.recipientPubKey || 0;
+		const SharedKeys = await getSharedSecretskeys(
+			recipientAddress,
+			recipientPubKey
+		);
+		res.send({ SharedKeys });
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);

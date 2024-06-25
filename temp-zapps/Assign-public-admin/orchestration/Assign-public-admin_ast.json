@@ -46,8 +46,7 @@
                             "decrementsSecretState": false,
                             "newCommitmentsRequired": true
                         }
-                    ],
-                    "constructorParams": []
+                    ]
                 }
             ]
         },
@@ -56,8 +55,7 @@
             "contractName": "MyContractShield",
             "functionNames": [
                 "assign"
-            ],
-            "constructorParams": []
+            ]
         },
         {
             "nodeType": "File",
@@ -284,6 +282,12 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "assign",
+                                "publicInputs": []
+                            },
+                            {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {
                                     "a": {
@@ -365,7 +369,10 @@
                         "nodeType": "ParameterList",
                         "parameters": [],
                         "modifiedStateVariables": []
-                    }
+                    },
+                    "publicInputs": [
+                        "param1"
+                    ]
                 }
             ]
         }

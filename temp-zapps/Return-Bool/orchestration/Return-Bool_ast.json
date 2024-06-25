@@ -771,6 +771,17 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "add",
+                                "publicInputs": [
+                                    {
+                                        "name": "value_publicbool",
+                                        "isBool": true
+                                    }
+                                ]
+                            },
+                            {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {
                                     "a": {
@@ -919,7 +930,12 @@
                             }
                         ],
                         "modifiedStateVariables": []
-                    }
+                    },
+                    "publicInputs": [
+                        "value",
+                        "value_bool",
+                        "value_publicbool"
+                    ]
                 }
             ]
         }

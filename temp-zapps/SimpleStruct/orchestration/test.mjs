@@ -29,7 +29,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("AssignShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("add", async function () {
 		this.timeout(3660000);
@@ -47,7 +52,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await add({ prop1: 124, prop2: true });
+					const { tx, encEvent } = await add({ prop1: 75, prop2: true });
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -87,7 +92,7 @@ describe("AssignShield", async function () {
 			it("should call add again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await add({ prop1: 34, prop2: true });
+					const { tx } = await add({ prop1: 159, prop2: true });
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -117,7 +122,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await remove({ prop1: 73, prop2: true });
+					const { tx, encEvent } = await remove({ prop1: 148, prop2: true });
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -157,7 +162,7 @@ describe("AssignShield", async function () {
 			it("should call remove again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await remove({ prop1: 177, prop2: true });
+					const { tx } = await remove({ prop1: 30, prop2: true });
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);

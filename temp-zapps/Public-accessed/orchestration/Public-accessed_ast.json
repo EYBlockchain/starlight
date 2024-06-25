@@ -276,6 +276,12 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "assignA",
+                                "publicInputs": []
+                            },
+                            {
                                 "nodeType": "CalculateCommitment",
                                 "privateStates": {
                                     "a": {
@@ -525,6 +531,12 @@
                             }
                         ],
                         "postStatements": [
+                            {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "assignBZ",
+                                "publicInputs": []
+                            },
                             {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {

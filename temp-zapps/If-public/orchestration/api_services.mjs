@@ -2,6 +2,8 @@
 import config from "config";
 import assert from "assert";
 
+import donw from "./donw.mjs";
+
 import add from "./add.mjs";
 
 import { startEventFilter, getSiblingPath } from "./common/timber.mjs";
@@ -12,39 +14,33 @@ import {
 	getAllCommitments,
 	getCommitmentsByState,
 	reinstateNullifiers,
-	getBalance,
-	getBalanceByState,
 } from "./common/commitment-storage.mjs";
-import Contract from "./common/contract.mjs";
-import web3Instance from "./common/web3.mjs";
+import web3 from "./common/web3.mjs";
 
 /**
-      NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
-      minus() cannot be called before an initial add(). */
-
+    NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
+    minus() cannot be called before an initial add(). */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
-
 export async function TestShield() {
-	const web3 = web3Instance.getConnection();
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 }
 // eslint-disable-next-line func-names
 export async function service_add(req, res, next) {
 	try {
-		// Initialize the contract
-		const contract = new Contract("TestShield");
-		await contract.init();
-
-		// Use the initialized Web3 instance and contract instance
+		await web3.connect();
+		await new Promise((resolve) => setTimeout(() => resolve(), 3000));
+	} catch (err) {
+		throw new Error(err);
+	}
+	try {
 		await startEventFilter("TestShield");
-
-		const contractInstance = contract.getInstance();
-		if (!contractInstance) {
-			throw new Error("Failed to get contract instance");
-		}
-
 		const { y } = req.body;
 		const x_msgSender_newOwnerPublicKey =
 			req.body.x_msgSender_newOwnerPublicKey || 0;
@@ -57,27 +53,48 @@ export async function service_add(req, res, next) {
 		// prints the tx
 		console.log(tx);
 		res.send({ tx, encEvent });
-
-		// Update leafIndex with the first commitment added by this function
+		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {
 			leafIndex = tx.returnValues[0];
-			// Print the new leaves (commitments) added by this function call
+			// prints the new leaves (commitments) added by this function call
 			console.log(`Merkle tree event returnValues:`);
 			console.log(tx.returnValues);
 		}
-
 		if (encEvent.event) {
 			encryption.msgs = encEvent[0].returnValues[0];
 			encryption.key = encEvent[0].returnValues[1];
 			console.log("EncryptedMsgs:");
 			console.log(encEvent[0].returnValues[0]);
 		}
-
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);
 		res.send({ errors: [err.message] });
 	}
+}
+
+// eslint-disable-next-line func-names
+export async function service_donw(req, res, next) {
+	try {
+		await web3.connect();
+		await new Promise((resolve) => setTimeout(() => resolve(), 3000));
+	} catch (err) {
+		throw new Error(err);
+	}
+
+	const { p } = req.body;
+	const { tx } = await donw(p);
+	// prints the tx
+	console.log(tx);
+	res.send({ tx });
+	// reassigns leafIndex to the index of the first commitment added by this function
+	if (tx.event) {
+		// prints the new leaves (commitments) added by this function call
+		console.log(`Merkle tree event returnValues:`);
+		console.log(tx.returnValues);
+	}
+
+	await sleep(10);
 }
 
 export async function service_allCommitments(req, res, next) {
@@ -127,21 +144,6 @@ export async function service_reinstateNullifiers(req, res, next) {
 	try {
 		await reinstateNullifiers();
 		res.send("Complete");
-		await sleep(10);
-	} catch (err) {
-		logger.error(err);
-		res.send({ errors: [err.message] });
-	}
-}
-export async function service_getSharedKeys(req, res, next) {
-	try {
-		const { recipientAddress } = req.body;
-		const recipientPubKey = req.body.recipientPubKey || 0;
-		const SharedKeys = await getSharedSecretskeys(
-			recipientAddress,
-			recipientPubKey
-		);
-		res.send({ SharedKeys });
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);

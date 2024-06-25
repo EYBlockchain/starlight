@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,38 +33,24 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function add(_y, _z_newOwnerPublicKey = 0) {
 	// Initialisation of variables:
 
-	const contract = new Contract("TestShield");
+	const instance = await getContractInstance("TestShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("TestShield");
 
 	const msgValue = 0;
 	const y = generalise(_y);
 	let z_newOwnerPublicKey = generalise(_z_newOwnerPublicKey);
 
-	// Initialize the contract
-
-	const contract = new Contract("TestShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "TestShield", false);
+		await registerKey(utils.randomHex(31), "TestShield", false);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -125,19 +115,29 @@ export default async function add(_y, _z_newOwnerPublicKey = 0) {
 
 	z = generalise(z);
 
+	// Send transaction to the blockchain:
+
+	const txData = await instance.methods.add(y).encodeABI();
+
+	let txParams = {
+		from: config.web3.options.defaultAccount,
+		to: contractAddr,
+		gas: config.web3.options.defaultGas,
+		gasPrice: config.web3.options.defaultGasPrice,
+		data: txData,
+		chainId: await web3.eth.net.getId(),
+	};
+
+	const key = config.web3.key;
+
+	const signed = await web3.eth.accounts.signTransaction(txParams, key);
+
+	const tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+	const encEvent = {};
+
 	// Calculate nullifier(s):
 
-	let z_nullifier = z_commitmentExists
-		? poseidonHash([
-				BigInt(z_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(z_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(z_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(z_prevSalt.hex(32)),
-		  ]);
 	let z_nullifier = z_commitmentExists
 		? poseidonHash([
 				BigInt(z_stateVarId),
@@ -191,9 +191,7 @@ export default async function add(_y, _z_newOwnerPublicKey = 0) {
 	const allInputs = [
 		y.integer,
 		z_commitmentExists ? secretKey.integer : generalise(0).integer,
-		z_commitmentExists ? secretKey.integer : generalise(0).integer,
 		z_nullifierRoot.integer,
-		z_newNullifierRoot.integer,
 		z_newNullifierRoot.integer,
 		z_nullifier.integer,
 		z_nullifier_path.integer,
@@ -266,10 +264,6 @@ export default async function add(_y, _z_newOwnerPublicKey = 0) {
 		await markNullified(z_currentCommitment, secretKey.hex(32));
 	else await updateNullifierTree(); // Else we always update it in markNullified
 
-	if (z_commitmentExists)
-		await markNullified(z_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
-
 	await storeCommitment({
 		hash: z_newCommitment,
 		name: "z",
@@ -280,8 +274,6 @@ export default async function add(_y, _z_newOwnerPublicKey = 0) {
 			salt: z_newSalt,
 			publicKey: z_newOwnerPublicKey,
 		},
-		secretKey:
-			z_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		secretKey:
 			z_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		isNullified: false,

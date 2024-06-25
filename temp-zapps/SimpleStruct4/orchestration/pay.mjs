@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,7 +33,7 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function pay(
@@ -39,17 +43,9 @@ export default async function pay(
 ) {
 	// Initialisation of variables:
 
-	const contract = new Contract("ReceiptShield");
+	const instance = await getContractInstance("ReceiptShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("ReceiptShield");
 
 	const msgSender = generalise(config.web3.options.defaultAccount);
 
@@ -60,16 +56,10 @@ export default async function pay(
 		_invoices_id_newOwnerPublicKey
 	);
 
-	// Initialize the contract
-
-	const contract = new Contract("ReceiptShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "ReceiptShield", true);
+		await registerKey(utils.randomHex(31), "ReceiptShield", true);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -198,17 +188,6 @@ export default async function pay(
 				BigInt(generalise(0).hex(32)),
 				BigInt(POs_id_prevSalt.hex(32)),
 		  ]);
-	let POs_id_nullifier = POs_id_commitmentExists
-		? poseidonHash([
-				BigInt(POs_id_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(POs_id_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(POs_id_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(POs_id_prevSalt.hex(32)),
-		  ]);
 
 	POs_id_nullifier = generalise(POs_id_nullifier.hex(32)); // truncate
 	// Non-membership witness for Nullifier
@@ -223,17 +202,6 @@ export default async function pay(
 		POs_id_nullifier_NonMembership_witness.path
 	).all;
 
-	let invoices_id_nullifier = invoices_id_commitmentExists
-		? poseidonHash([
-				BigInt(invoices_id_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(invoices_id_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(invoices_id_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(invoices_id_prevSalt.hex(32)),
-		  ]);
 	let invoices_id_nullifier = invoices_id_commitmentExists
 		? poseidonHash([
 				BigInt(invoices_id_stateVarId),
@@ -298,7 +266,6 @@ export default async function pay(
 		id.integer,
 		amount.integer,
 		secretKey.integer,
-		secretKey.integer,
 		POs_id_nullifierRoot.integer,
 		POs_id_nullifier_path.integer,
 		POs_id_prev.count.integer,
@@ -311,9 +278,7 @@ export default async function pay(
 		POs_id_path.integer,
 
 		invoices_id_commitmentExists ? secretKey.integer : generalise(0).integer,
-		invoices_id_commitmentExists ? secretKey.integer : generalise(0).integer,
 
-		invoices_id_newNullifierRoot.integer,
 		invoices_id_newNullifierRoot.integer,
 		invoices_id_nullifier.integer,
 		invoices_id_nullifier_path.integer,
@@ -386,10 +351,6 @@ export default async function pay(
 		await markNullified(invoices_id_currentCommitment, secretKey.hex(32));
 	else await updateNullifierTree(); // Else we always update it in markNullified
 
-	if (invoices_id_commitmentExists)
-		await markNullified(invoices_id_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
-
 	await storeCommitment({
 		hash: invoices_id_newCommitment,
 		name: "invoices",
@@ -400,10 +361,6 @@ export default async function pay(
 			salt: invoices_id_newSalt,
 			publicKey: invoices_id_newOwnerPublicKey,
 		},
-		secretKey:
-			invoices_id_newOwnerPublicKey.integer === publicKey.integer
-				? secretKey
-				: null,
 		secretKey:
 			invoices_id_newOwnerPublicKey.integer === publicKey.integer
 				? secretKey

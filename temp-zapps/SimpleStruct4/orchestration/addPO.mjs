@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,7 +33,7 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function addPO(
@@ -38,17 +42,9 @@ export default async function addPO(
 ) {
 	// Initialisation of variables:
 
-	const contract = new Contract("ReceiptShield");
+	const instance = await getContractInstance("ReceiptShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("ReceiptShield");
 
 	const msgSender = generalise(config.web3.options.defaultAccount);
 
@@ -58,16 +54,10 @@ export default async function addPO(
 		_POs_newpodotid_newOwnerPublicKey
 	);
 
-	// Initialize the contract
-
-	const contract = new Contract("ReceiptShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "ReceiptShield", true);
+		await registerKey(utils.randomHex(31), "ReceiptShield", true);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -172,17 +162,6 @@ export default async function addPO(
 				BigInt(generalise(0).hex(32)),
 				BigInt(POs_newpodotid_prevSalt.hex(32)),
 		  ]);
-	let POs_newpodotid_nullifier = POs_newpodotid_commitmentExists
-		? poseidonHash([
-				BigInt(POs_newpodotid_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(POs_newpodotid_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(POs_newpodotid_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(POs_newpodotid_prevSalt.hex(32)),
-		  ]);
 
 	POs_newpodotid_nullifier = generalise(POs_newpodotid_nullifier.hex(32)); // truncate
 	// Non-membership witness for Nullifier
@@ -250,9 +229,7 @@ export default async function addPO(
 		newpo.id.integer,
 		newpo.owner.integer,
 		POs_newpodotid_commitmentExists ? secretKey.integer : generalise(0).integer,
-		POs_newpodotid_commitmentExists ? secretKey.integer : generalise(0).integer,
 		POs_newpodotid_nullifierRoot.integer,
-		POs_newpodotid_newNullifierRoot.integer,
 		POs_newpodotid_newNullifierRoot.integer,
 		POs_newpodotid_nullifier.integer,
 		POs_newpodotid_nullifier_path.integer,
@@ -327,10 +304,6 @@ export default async function addPO(
 		await markNullified(POs_newpodotid_currentCommitment, secretKey.hex(32));
 	else await updateNullifierTree(); // Else we always update it in markNullified
 
-	if (POs_newpodotid_commitmentExists)
-		await markNullified(POs_newpodotid_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
-
 	await storeCommitment({
 		hash: POs_newpodotid_newCommitment,
 		name: "POs",
@@ -346,10 +319,6 @@ export default async function addPO(
 			salt: POs_newpodotid_newSalt,
 			publicKey: POs_newpodotid_newOwnerPublicKey,
 		},
-		secretKey:
-			POs_newpodotid_newOwnerPublicKey.integer === publicKey.integer
-				? secretKey
-				: null,
 		secretKey:
 			POs_newpodotid_newOwnerPublicKey.integer === publicKey.integer
 				? secretKey

@@ -474,6 +474,12 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "add",
+                                "publicInputs": []
+                            },
+                            {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {
                                     "a": {
@@ -564,7 +570,10 @@
                         "nodeType": "ParameterList",
                         "parameters": [],
                         "modifiedStateVariables": []
-                    }
+                    },
+                    "publicInputs": [
+                        "value"
+                    ]
                 }
             ]
         },
@@ -878,6 +887,12 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "remove",
+                                "publicInputs": []
+                            },
+                            {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {
                                     "b": {
@@ -1017,7 +1032,10 @@
                         "nodeType": "ParameterList",
                         "parameters": [],
                         "modifiedStateVariables": []
-                    }
+                    },
+                    "publicInputs": [
+                        "value"
+                    ]
                 }
             ]
         }

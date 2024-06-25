@@ -44,7 +44,6 @@ export async function service_add(req, res, next) {
 		const { value_publicbool } = req.body;
 		const a_newOwnerPublicKey = req.body.a_newOwnerPublicKey || 0;
 		const c_newOwnerPublicKey = req.body.c_newOwnerPublicKey || 0;
-		CONSTRUCTOR_INPUTS;
 		const { tx, encEvent } = await add(
 			value,
 			value_bool,
@@ -52,7 +51,8 @@ export async function service_add(req, res, next) {
 			a_newOwnerPublicKey,
 			c_newOwnerPublicKey
 		);
-
+		// prints the tx
+		console.log(tx);
 		res.send({ tx, encEvent });
 		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {

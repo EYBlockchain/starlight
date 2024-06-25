@@ -106,9 +106,7 @@
                     "contractName": "AssignShield",
                     "functionNames": [
                         "add",
-                        "remove",
-                        "",
-                        "_1"
+                        "remove"
                     ],
                     "functions": [
                         {
@@ -196,36 +194,6 @@
                             ],
                             "isConstructor": false,
                             "newCommitmentsRequired": true
-                        },
-                        {
-                            "nodeType": "IntegrationPublicApiServiceFunction",
-                            "name": "",
-                            "parameters": {
-                                "nodeType": "ParameterList",
-                                "parameters": [],
-                                "modifiedStateVariables": []
-                            },
-                            "returnParameters": {
-                                "nodeType": "ParameterList",
-                                "parameters": [],
-                                "modifiedStateVariables": []
-                            },
-                            "newCommitmentsRequired": false
-                        },
-                        {
-                            "nodeType": "IntegrationPublicApiServiceFunction",
-                            "name": "_1",
-                            "parameters": {
-                                "nodeType": "ParameterList",
-                                "parameters": [],
-                                "modifiedStateVariables": []
-                            },
-                            "returnParameters": {
-                                "nodeType": "ParameterList",
-                                "parameters": [],
-                                "modifiedStateVariables": []
-                            },
-                            "newCommitmentsRequired": false
                         }
                     ],
                     "constructorParams": [],
@@ -249,14 +217,6 @@
                         {
                             "nodeType": "IntegrationApiRoutesFunction",
                             "name": "remove"
-                        },
-                        {
-                            "nodeType": "IntegrationApiRoutesFunction",
-                            "name": ""
-                        },
-                        {
-                            "nodeType": "IntegrationApiRoutesFunction",
-                            "name": "_1"
                         }
                     ],
                     "contractImports": []
@@ -642,134 +602,6 @@
                         "a"
                     ],
                     "decrementsSecretState": true
-                }
-            ]
-        },
-        {
-            "nodeType": "File",
-            "fileName": "",
-            "fileExtension": ".mjs",
-            "nodes": [
-                {
-                    "nodeType": "Imports",
-                    "imports": []
-                },
-                {
-                    "nodeType": "FunctionDefinition",
-                    "name": "",
-                    "contractName": "AssignShield",
-                    "parameters": {
-                        "nodeType": "ParameterList",
-                        "parameters": [],
-                        "modifiedStateVariables": []
-                    },
-                    "body": {
-                        "nodeType": "Block",
-                        "preStatements": [],
-                        "statements": [
-                            {
-                                "nodeType": "ExpressionStatement",
-                                "id": 37,
-                                "expression": {
-                                    "nodeType": "Assignment",
-                                    "operator": "=",
-                                    "leftHandSide": {
-                                        "nodeType": "Identifier",
-                                        "name": "balance_msgSender",
-                                        "subType": "uint256"
-                                    },
-                                    "rightHandSide": {
-                                        "nodeType": "BinaryOperation",
-                                        "leftExpression": {
-                                            "nodeType": "Identifier",
-                                            "subType": "uint256"
-                                        },
-                                        "operator": "+",
-                                        "rightExpression": {
-                                            "nodeType": "MsgValue"
-                                        }
-                                    }
-                                }
-                            }
-                        ],
-                        "postStatements": [
-                            {
-                                "nodeType": "SendPublicTransaction",
-                                "privateStates": {},
-                                "functionName": "",
-                                "publicInputs": []
-                            }
-                        ]
-                    },
-                    "returnParameters": {
-                        "nodeType": "ParameterList",
-                        "parameters": [],
-                        "modifiedStateVariables": []
-                    }
-                }
-            ]
-        },
-        {
-            "nodeType": "File",
-            "fileName": "_1",
-            "fileExtension": ".mjs",
-            "nodes": [
-                {
-                    "nodeType": "Imports",
-                    "imports": []
-                },
-                {
-                    "nodeType": "FunctionDefinition",
-                    "name": "",
-                    "contractName": "AssignShield",
-                    "parameters": {
-                        "nodeType": "ParameterList",
-                        "parameters": [],
-                        "modifiedStateVariables": []
-                    },
-                    "body": {
-                        "nodeType": "Block",
-                        "preStatements": [],
-                        "statements": [
-                            {
-                                "nodeType": "ExpressionStatement",
-                                "id": 49,
-                                "expression": {
-                                    "nodeType": "Assignment",
-                                    "operator": "=",
-                                    "leftHandSide": {
-                                        "nodeType": "Identifier",
-                                        "name": "balance_msgSender",
-                                        "subType": "uint256"
-                                    },
-                                    "rightHandSide": {
-                                        "nodeType": "BinaryOperation",
-                                        "leftExpression": {
-                                            "nodeType": "Identifier",
-                                            "subType": "uint256"
-                                        },
-                                        "operator": "+",
-                                        "rightExpression": {
-                                            "nodeType": "MsgValue"
-                                        }
-                                    }
-                                }
-                            }
-                        ],
-                        "postStatements": [
-                            {
-                                "nodeType": "SendPublicTransaction",
-                                "privateStates": {},
-                                "functionName": "_1",
-                                "publicInputs": []
-                            }
-                        ]
-                    },
-                    "returnParameters": {
-                        "nodeType": "ParameterList",
-                        "parameters": [],
-                        "modifiedStateVariables": []
-                    }
                 }
             ]
         }

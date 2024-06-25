@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,7 +33,7 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function remove(
@@ -43,17 +47,9 @@ export default async function remove(
 ) {
 	// Initialisation of variables:
 
-	const contract = new Contract("AssignShield");
+	const instance = await getContractInstance("AssignShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("AssignShield");
 
 	const msgValue = 0;
 	const value = generalise(_value);
@@ -66,16 +62,10 @@ export default async function remove(
 		_buckets_toBucketId_newOwnerPublicKey
 	);
 
-	// Initialize the contract
-
-	const contract = new Contract("AssignShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "AssignShield", false);
+		await registerKey(utils.randomHex(31), "AssignShield", false);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -192,22 +182,6 @@ export default async function remove(
 			web3
 		);
 
-		const tx = await joinCommitments(
-			"AssignShield",
-			"buckets",
-			secretKey,
-			publicKey,
-			[7, buckets_fromBucketId_stateVarId_key],
-			[
-				buckets_fromBucketId_0_oldCommitment,
-				buckets_fromBucketId_1_oldCommitment,
-			],
-			[buckets_fromBucketId_witness_0, buckets_fromBucketId_witness_1],
-			instance,
-			contractAddr,
-			web3
-		);
-
 		buckets_fromBucketId_preimage = await getCommitmentsById(
 			buckets_fromBucketId_stateVarId
 		);
@@ -217,7 +191,6 @@ export default async function remove(
 			buckets_fromBucketId_0_oldCommitment,
 			buckets_fromBucketId_1_oldCommitment,
 		] = getInputCommitments(
-			publicKey.hex(32),
 			publicKey.hex(32),
 			buckets_fromBucketId_newCommitmentValue.integer,
 			buckets_fromBucketId_preimage
@@ -293,16 +266,6 @@ export default async function remove(
 
 	// Calculate nullifier(s):
 
-	let buckets_fromBucketId_0_nullifier = poseidonHash([
-		BigInt(buckets_fromBucketId_stateVarId),
-		BigInt(secretKey.hex(32)),
-		BigInt(buckets_fromBucketId_0_prevSalt.hex(32)),
-	]);
-	let buckets_fromBucketId_1_nullifier = poseidonHash([
-		BigInt(buckets_fromBucketId_stateVarId),
-		BigInt(secretKey.hex(32)),
-		BigInt(buckets_fromBucketId_1_prevSalt.hex(32)),
-	]);
 	let buckets_fromBucketId_0_nullifier = poseidonHash([
 		BigInt(buckets_fromBucketId_stateVarId),
 		BigInt(secretKey.hex(32)),
@@ -401,10 +364,7 @@ export default async function remove(
 		toBucketId.integer,
 		secretKey.integer,
 		secretKey.integer,
-		secretKey.integer,
-		secretKey.integer,
 		buckets_fromBucketId_nullifierRoot.integer,
-		buckets_fromBucketId_newNullifierRoot.integer,
 		buckets_fromBucketId_newNullifierRoot.integer,
 		buckets_fromBucketId_0_nullifier.integer,
 		buckets_fromBucketId_0_nullifier_path.integer,
@@ -512,10 +472,6 @@ export default async function remove(
 			buckets_fromBucketId_newOwnerPublicKey.integer === publicKey.integer
 				? secretKey
 				: null,
-		secretKey:
-			buckets_fromBucketId_newOwnerPublicKey.integer === publicKey.integer
-				? secretKey
-				: null,
 		isNullified: false,
 	});
 
@@ -529,10 +485,6 @@ export default async function remove(
 			salt: buckets_toBucketId_newSalt,
 			publicKey: buckets_toBucketId_newOwnerPublicKey,
 		},
-		secretKey:
-			buckets_toBucketId_newOwnerPublicKey.integer === publicKey.integer
-				? secretKey
-				: null,
 		secretKey:
 			buckets_toBucketId_newOwnerPublicKey.integer === publicKey.integer
 				? secretKey

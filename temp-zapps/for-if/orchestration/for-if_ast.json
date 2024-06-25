@@ -65,6 +65,9 @@
                 {
                     "nodeType": "IntegrationApiServicesBoilerplate",
                     "contractName": "TestShield",
+                    "functionNames": [
+                        "add"
+                    ],
                     "functions": [
                         {
                             "nodeType": "IntegrationApiServiceFunction",
@@ -105,6 +108,7 @@
                                 "modifiedStateVariables": []
                             },
                             "decrementsSecretState": [],
+                            "isConstructor": false,
                             "newCommitmentsRequired": true
                         }
                     ],
@@ -203,6 +207,7 @@
                                     "z": {
                                         "increment": "parseInt(j.integer, 10)",
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "structProperties": null,
                                         "mappingKey": null,
@@ -408,6 +413,7 @@
                                 "privateStates": {
                                     "z": {
                                         "accessedOnly": false,
+                                        "isSharedSecret": false,
                                         "isWhole": true
                                     }
                                 }
@@ -418,6 +424,7 @@
                                     "z": {
                                         "privateStateName": "z",
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "nullifierRequired": true,
                                         "structProperties": null,
@@ -434,6 +441,7 @@
                                         "privateStateName": "z",
                                         "stateVarId": 3,
                                         "accessedOnly": false,
+                                        "isSharedSecret": false,
                                         "nullifierRequired": true,
                                         "increment": [
                                             {
@@ -473,6 +481,7 @@
                                 "privateStates": {
                                     "z": {
                                         "stateVarId": 3,
+                                        "isSharedSecret": false,
                                         "isWhole": true,
                                         "structProperties": null,
                                         "mappingKey": null,

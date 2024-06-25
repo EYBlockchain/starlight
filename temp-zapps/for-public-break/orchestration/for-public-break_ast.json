@@ -457,6 +457,15 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "add",
+                                "publicInputs": [
+                                    "j",
+                                    "m"
+                                ]
+                            },
+                            {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {
                                     "k": {
@@ -549,7 +558,11 @@
                         "nodeType": "ParameterList",
                         "parameters": [],
                         "modifiedStateVariables": []
-                    }
+                    },
+                    "publicInputs": [
+                        "j",
+                        "m"
+                    ]
                 }
             ]
         }

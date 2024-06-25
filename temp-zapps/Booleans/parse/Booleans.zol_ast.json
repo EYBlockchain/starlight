@@ -23,6 +23,7 @@
         {
             "abstract": false,
             "baseContracts": [],
+            "canonicalName": "Assign",
             "contractDependencies": [],
             "contractKind": "contract",
             "fullyImplemented": true,
@@ -31,6 +32,7 @@
                 72
             ],
             "name": "Assign",
+            "nameLocation": "71:6:0",
             "nodeType": "ContractDefinition",
             "nodes": [
                 {
@@ -38,6 +40,7 @@
                     "id": 3,
                     "mutability": "mutable",
                     "name": "a",
+                    "nameLocation": "96:1:0",
                     "nodeType": "VariableDeclaration",
                     "scope": 72,
                     "src": "83:14:0",
@@ -65,6 +68,7 @@
                     "id": 5,
                     "mutability": "mutable",
                     "name": "c",
+                    "nameLocation": "113:1:0",
                     "nodeType": "VariableDeclaration",
                     "scope": 72,
                     "src": "100:14:0",
@@ -93,6 +97,7 @@
                     "id": 7,
                     "mutability": "mutable",
                     "name": "d",
+                    "nameLocation": "129:1:0",
                     "nodeType": "VariableDeclaration",
                     "scope": 72,
                     "src": "117:13:0",
@@ -120,6 +125,7 @@
                     "id": 9,
                     "mutability": "mutable",
                     "name": "g",
+                    "nameLocation": "145:1:0",
                     "nodeType": "VariableDeclaration",
                     "scope": 72,
                     "src": "133:13:0",
@@ -157,6 +163,7 @@
                                         "id": 19,
                                         "mutability": "mutable",
                                         "name": "l",
+                                        "nameLocation": "237:1:0",
                                         "nodeType": "VariableDeclaration",
                                         "scope": 70,
                                         "src": "232:6:0",
@@ -210,6 +217,7 @@
                                         "id": 23,
                                         "mutability": "mutable",
                                         "name": "m",
+                                        "nameLocation": "253:1:0",
                                         "nodeType": "VariableDeclaration",
                                         "scope": 70,
                                         "src": "248:6:0",
@@ -805,6 +813,7 @@
                     "kind": "function",
                     "modifiers": [],
                     "name": "add",
+                    "nameLocation": "162:3:0",
                     "nodeType": "FunctionDefinition",
                     "parameters": {
                         "id": 16,
@@ -815,6 +824,7 @@
                                 "id": 11,
                                 "mutability": "mutable",
                                 "name": "value",
+                                "nameLocation": "175:5:0",
                                 "nodeType": "VariableDeclaration",
                                 "scope": 71,
                                 "src": "167:13:0",
@@ -842,6 +852,7 @@
                                 "id": 13,
                                 "mutability": "mutable",
                                 "name": "value_bool",
+                                "nameLocation": "187:10:0",
                                 "nodeType": "VariableDeclaration",
                                 "scope": 71,
                                 "src": "182:15:0",
@@ -869,6 +880,7 @@
                                 "id": 15,
                                 "mutability": "mutable",
                                 "name": "value_publicbool",
+                                "nameLocation": "204:16:0",
                                 "nodeType": "VariableDeclaration",
                                 "scope": 71,
                                 "src": "199:21:0",
@@ -907,7 +919,9 @@
                 }
             ],
             "scope": 73,
-            "src": "62:346:0"
+            "src": "62:346:0",
+            "usedErrors": [],
+            "usedEvents": []
         }
     ],
     "src": "35:377:0"

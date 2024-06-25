@@ -31,7 +31,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("MyContractShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("setb", async function () {
 		this.timeout(3660000);
@@ -49,7 +54,7 @@ describe("MyContractShield", async function () {
 					await startEventFilter("MyContractShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await setb(13);
+					const { tx, encEvent } = await setb(184);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -89,7 +94,7 @@ describe("MyContractShield", async function () {
 			it("should call setb again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await setb(98);
+					const { tx } = await setb(171);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -119,7 +124,7 @@ describe("MyContractShield", async function () {
 					await startEventFilter("MyContractShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await incr(80, 55);
+					const { tx, encEvent } = await incr(152, 165);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -159,7 +164,7 @@ describe("MyContractShield", async function () {
 			it("should call incr again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await incr(151, 200);
+					const { tx } = await incr(196, 74);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -189,7 +194,7 @@ describe("MyContractShield", async function () {
 					await startEventFilter("MyContractShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await decr(48);
+					const { tx, encEvent } = await decr(162);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function

@@ -27,7 +27,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("AssignShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("add", async function () {
 		this.timeout(3660000);
@@ -46,9 +51,9 @@ describe("AssignShield", async function () {
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
 					const { tx, encEvent } = await add(
-						187,
-						{ prop1: 37, prop2: true },
-						{ prop1: 16, prop2: true }
+						147,
+						{ prop1: 92, prop2: true },
+						{ prop1: 140, prop2: true }
 					);
 					// prints the tx
 					console.log(tx);
@@ -90,9 +95,9 @@ describe("AssignShield", async function () {
 				try {
 					// this calls your function a second time for incremental cases
 					const { tx } = await add(
-						46,
-						{ prop1: 91, prop2: true },
-						{ prop1: 108, prop2: true }
+						9,
+						{ prop1: 141, prop2: true },
+						{ prop1: 48, prop2: true }
 					);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);

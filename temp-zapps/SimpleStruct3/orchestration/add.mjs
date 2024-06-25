@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,7 +33,7 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function add(
@@ -39,17 +43,9 @@ export default async function add(
 ) {
 	// Initialisation of variables:
 
-	const contract = new Contract("ReceiptShield");
+	const instance = await getContractInstance("ReceiptShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("ReceiptShield");
 
 	const msgValue = 0;
 	const myrct = generalise(_myrct);
@@ -58,16 +54,10 @@ export default async function add(
 	);
 	let cmt_newOwnerPublicKey = generalise(_cmt_newOwnerPublicKey);
 
-	// Initialize the contract
-
-	const contract = new Contract("ReceiptShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "ReceiptShield", false);
+		await registerKey(utils.randomHex(31), "ReceiptShield", false);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -172,17 +162,6 @@ export default async function add(
 				BigInt(generalise(0).hex(32)),
 				BigInt(cmt_prevSalt.hex(32)),
 		  ]);
-	let cmt_nullifier = cmt_commitmentExists
-		? poseidonHash([
-				BigInt(cmt_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(cmt_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(cmt_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(cmt_prevSalt.hex(32)),
-		  ]);
 
 	cmt_nullifier = generalise(cmt_nullifier.hex(32)); // truncate
 	// Non-membership witness for Nullifier
@@ -251,9 +230,7 @@ export default async function add(
 		total_msgSender_newCommitment.integer,
 
 		cmt_commitmentExists ? secretKey.integer : generalise(0).integer,
-		cmt_commitmentExists ? secretKey.integer : generalise(0).integer,
 		cmt_nullifierRoot.integer,
-		cmt_newNullifierRoot.integer,
 		cmt_newNullifierRoot.integer,
 		cmt_nullifier.integer,
 		cmt_nullifier_path.integer,
@@ -336,16 +313,8 @@ export default async function add(
 			total_msgSender_newOwnerPublicKey.integer === publicKey.integer
 				? secretKey
 				: null,
-		secretKey:
-			total_msgSender_newOwnerPublicKey.integer === publicKey.integer
-				? secretKey
-				: null,
 		isNullified: false,
 	});
-
-	if (cmt_commitmentExists)
-		await markNullified(cmt_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
 
 	if (cmt_commitmentExists)
 		await markNullified(cmt_currentCommitment, secretKey.hex(32));
@@ -361,8 +330,6 @@ export default async function add(
 			salt: cmt_newSalt,
 			publicKey: cmt_newOwnerPublicKey,
 		},
-		secretKey:
-			cmt_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		secretKey:
 			cmt_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		isNullified: false,

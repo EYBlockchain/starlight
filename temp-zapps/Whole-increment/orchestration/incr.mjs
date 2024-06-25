@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,38 +33,24 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function incr(_param1, _a_newOwnerPublicKey = 0) {
 	// Initialisation of variables:
 
-	const contract = new Contract("MyContractShield");
+	const instance = await getContractInstance("MyContractShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("MyContractShield");
 
 	const msgValue = 0;
 	const param1 = generalise(_param1);
 	let a_newOwnerPublicKey = generalise(_a_newOwnerPublicKey);
 
-	// Initialize the contract
-
-	const contract = new Contract("MyContractShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "MyContractShield", false);
+		await registerKey(utils.randomHex(31), "MyContractShield", false);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -136,17 +126,6 @@ export default async function incr(_param1, _a_newOwnerPublicKey = 0) {
 				BigInt(generalise(0).hex(32)),
 				BigInt(a_prevSalt.hex(32)),
 		  ]);
-	let a_nullifier = a_commitmentExists
-		? poseidonHash([
-				BigInt(a_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(a_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(a_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(a_prevSalt.hex(32)),
-		  ]);
 
 	a_nullifier = generalise(a_nullifier.hex(32)); // truncate
 	// Non-membership witness for Nullifier
@@ -189,9 +168,7 @@ export default async function incr(_param1, _a_newOwnerPublicKey = 0) {
 	const allInputs = [
 		param1.integer,
 		a_commitmentExists ? secretKey.integer : generalise(0).integer,
-		a_commitmentExists ? secretKey.integer : generalise(0).integer,
 		a_nullifierRoot.integer,
-		a_newNullifierRoot.integer,
 		a_newNullifierRoot.integer,
 		a_nullifier.integer,
 		a_nullifier_path.integer,
@@ -263,10 +240,6 @@ export default async function incr(_param1, _a_newOwnerPublicKey = 0) {
 		await markNullified(a_currentCommitment, secretKey.hex(32));
 	else await updateNullifierTree(); // Else we always update it in markNullified
 
-	if (a_commitmentExists)
-		await markNullified(a_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
-
 	await storeCommitment({
 		hash: a_newCommitment,
 		name: "a",
@@ -277,8 +250,6 @@ export default async function incr(_param1, _a_newOwnerPublicKey = 0) {
 			salt: a_newSalt,
 			publicKey: a_newOwnerPublicKey,
 		},
-		secretKey:
-			a_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		secretKey:
 			a_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		isNullified: false,

@@ -31,7 +31,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("ReceiptShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("addPO", async function () {
 		this.timeout(3660000);
@@ -50,9 +55,9 @@ describe("ReceiptShield", async function () {
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
 					const { tx, encEvent } = await addPO({
-						count: 144,
-						ppunit: 132,
-						id: 22,
+						count: 179,
+						ppunit: 77,
+						id: 110,
 						owner: config.web3.options.defaultAccount,
 					});
 					// prints the tx
@@ -95,9 +100,9 @@ describe("ReceiptShield", async function () {
 				try {
 					// this calls your function a second time for incremental cases
 					const { tx } = await addPO({
-						count: 3,
-						ppunit: 135,
-						id: 141,
+						count: 32,
+						ppunit: 60,
+						id: 134,
 						owner: config.web3.options.defaultAccount,
 					});
 					if (tx.event) {
@@ -129,7 +134,7 @@ describe("ReceiptShield", async function () {
 					await startEventFilter("ReceiptShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await addInvoice({ amount: 70, id: 138 });
+					const { tx, encEvent } = await addInvoice({ amount: 68, id: 193 });
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -169,7 +174,7 @@ describe("ReceiptShield", async function () {
 			it("should call addInvoice again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await addInvoice({ amount: 167, id: 86 });
+					const { tx } = await addInvoice({ amount: 126, id: 97 });
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -199,7 +204,7 @@ describe("ReceiptShield", async function () {
 					await startEventFilter("ReceiptShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await pay(138, 32);
+					const { tx, encEvent } = await pay(196, 147);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -239,7 +244,7 @@ describe("ReceiptShield", async function () {
 			it("should call pay again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await pay(12, 47);
+					const { tx } = await pay(61, 69);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);

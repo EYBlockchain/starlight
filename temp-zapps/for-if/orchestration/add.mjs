@@ -129,7 +129,6 @@ export default async function add(_j, _z_newOwnerPublicKey = 0) {
 		  ]);
 
 	z_nullifier = generalise(z_nullifier.hex(32)); // truncate
-
 	// Non-membership witness for Nullifier
 	const z_nullifier_NonMembership_witness = getnullifierMembershipWitness(
 		z_nullifier

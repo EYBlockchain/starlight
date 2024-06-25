@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,7 +33,7 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function remove4(
@@ -39,33 +43,19 @@ export default async function remove4(
 ) {
 	// Initialisation of variables:
 
-	const contract = new Contract("AssignShield");
+	const instance = await getContractInstance("AssignShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("AssignShield");
 
 	const msgValue = 0;
 	const value = generalise(_value);
 	const value1 = generalise(_value1);
 	let d_newOwnerPublicKey = generalise(_d_newOwnerPublicKey);
 
-	// Initialize the contract
-
-	const contract = new Contract("AssignShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "AssignShield", false);
+		await registerKey(utils.randomHex(31), "AssignShield", false);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -172,17 +162,6 @@ export default async function remove4(
 				BigInt(generalise(0).hex(32)),
 				BigInt(a_prevSalt.hex(32)),
 		  ]);
-	let a_nullifier = a_commitmentExists
-		? poseidonHash([
-				BigInt(a_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(a_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(a_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(a_prevSalt.hex(32)),
-		  ]);
 
 	a_nullifier = generalise(a_nullifier.hex(32)); // truncate
 	// Non-membership witness for Nullifier
@@ -194,17 +173,6 @@ export default async function remove4(
 	const a_nullifier_path = generalise(a_nullifier_NonMembership_witness.path)
 		.all;
 
-	let d_nullifier = d_commitmentExists
-		? poseidonHash([
-				BigInt(d_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(d_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(d_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(d_prevSalt.hex(32)),
-		  ]);
 	let d_nullifier = d_commitmentExists
 		? poseidonHash([
 				BigInt(d_stateVarId),
@@ -259,7 +227,6 @@ export default async function remove4(
 		value.integer,
 		value1.integer,
 		secretKey.integer,
-		secretKey.integer,
 		a_nullifierRoot.integer,
 		a_nullifier_path.integer,
 		a_prev.integer,
@@ -269,9 +236,7 @@ export default async function remove4(
 		a_path.integer,
 
 		d_commitmentExists ? secretKey.integer : generalise(0).integer,
-		d_commitmentExists ? secretKey.integer : generalise(0).integer,
 
-		d_newNullifierRoot.integer,
 		d_newNullifierRoot.integer,
 		d_nullifier.integer,
 		d_nullifier_path.integer,
@@ -345,10 +310,6 @@ export default async function remove4(
 		await markNullified(d_currentCommitment, secretKey.hex(32));
 	else await updateNullifierTree(); // Else we always update it in markNullified
 
-	if (d_commitmentExists)
-		await markNullified(d_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
-
 	await storeCommitment({
 		hash: d_newCommitment,
 		name: "d",
@@ -359,8 +320,6 @@ export default async function remove4(
 			salt: d_newSalt,
 			publicKey: d_newOwnerPublicKey,
 		},
-		secretKey:
-			d_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		secretKey:
 			d_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		isNullified: false,

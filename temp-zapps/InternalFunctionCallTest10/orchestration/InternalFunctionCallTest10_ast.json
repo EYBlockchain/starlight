@@ -794,6 +794,15 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "addB",
+                                "publicInputs": [
+                                    "value",
+                                    "value1"
+                                ]
+                            },
+                            {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {
                                     "a": {
@@ -886,7 +895,11 @@
                         "nodeType": "ParameterList",
                         "parameters": [],
                         "modifiedStateVariables": []
-                    }
+                    },
+                    "publicInputs": [
+                        "value",
+                        "value1"
+                    ]
                 }
             ]
         },
@@ -1391,6 +1404,15 @@
                         ],
                         "postStatements": [
                             {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "addC",
+                                "publicInputs": [
+                                    "value",
+                                    "value1"
+                                ]
+                            },
+                            {
                                 "nodeType": "CalculateNullifier",
                                 "privateStates": {
                                     "a": {
@@ -1495,7 +1517,11 @@
                         "nodeType": "ParameterList",
                         "parameters": [],
                         "modifiedStateVariables": []
-                    }
+                    },
+                    "publicInputs": [
+                        "value",
+                        "value1"
+                    ]
                 }
             ]
         },

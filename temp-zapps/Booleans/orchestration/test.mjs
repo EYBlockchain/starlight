@@ -50,7 +50,7 @@ describe("AssignShield", async function () {
 					await startEventFilter("AssignShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await add(93, true, true);
+					const { tx, encEvent } = await add(96, true, true);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -90,7 +90,7 @@ describe("AssignShield", async function () {
 			it("should call add again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await add(59, true, true);
+					const { tx } = await add(96, true, true);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);

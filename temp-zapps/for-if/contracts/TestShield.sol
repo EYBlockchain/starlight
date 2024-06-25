@@ -110,9 +110,9 @@ contract TestShield is MerkleTree {
         	inputs.customInputs[0] = j;
 inputs.customInputs[1] = 1;
 
-          inputs.nullifierRoot = nullifierRoot; 
+        inputs.nullifierRoot = nullifierRoot; 
 
-          inputs.latestNullifierRoot = latestNullifierRoot; 
+        inputs.latestNullifierRoot = latestNullifierRoot; 
 
           inputs.newNullifiers = newNullifiers;
            

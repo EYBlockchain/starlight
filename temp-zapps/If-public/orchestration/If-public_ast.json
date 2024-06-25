@@ -77,7 +77,8 @@
                     "nodeType": "IntegrationApiServicesBoilerplate",
                     "contractName": "TestShield",
                     "functionNames": [
-                        "add"
+                        "add",
+                        "donw"
                     ],
                     "functions": [
                         {
@@ -132,6 +133,33 @@
                             "decrementsSecretState": [],
                             "isConstructor": false,
                             "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationPublicApiServiceFunction",
+                            "name": "donw",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "p",
+                                        "id": 43,
+                                        "isSecret": false,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": []
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "newCommitmentsRequired": false
                         }
                     ],
                     "constructorParams": [],
@@ -151,6 +179,10 @@
                         {
                             "nodeType": "IntegrationApiRoutesFunction",
                             "name": "add"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "donw"
                         }
                     ],
                     "contractImports": []
@@ -583,6 +615,62 @@
                         "parameters": [],
                         "modifiedStateVariables": []
                     }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "donw",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "donw",
+                    "contractName": "TestShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "p",
+                                "id": 43,
+                                "isSecret": false,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": []
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [],
+                        "statements": [],
+                        "postStatements": [
+                            {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "donw",
+                                "publicInputs": [
+                                    "p"
+                                ]
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "publicInputs": [
+                        "p"
+                    ]
                 }
             ]
         }

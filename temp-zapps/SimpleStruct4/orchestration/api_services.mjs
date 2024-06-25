@@ -16,39 +16,33 @@ import {
 	getAllCommitments,
 	getCommitmentsByState,
 	reinstateNullifiers,
-	getBalance,
-	getBalanceByState,
 } from "./common/commitment-storage.mjs";
-import Contract from "./common/contract.mjs";
-import web3Instance from "./common/web3.mjs";
+import web3 from "./common/web3.mjs";
 
 /**
-      NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
-      minus() cannot be called before an initial add(). */
-
+    NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
+    minus() cannot be called before an initial add(). */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
-
 export async function ReceiptShield() {
-	const web3 = web3Instance.getConnection();
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 }
 // eslint-disable-next-line func-names
 export async function service_addPO(req, res, next) {
 	try {
-		// Initialize the contract
-		const contract = new Contract("ReceiptShield");
-		await contract.init();
-
-		// Use the initialized Web3 instance and contract instance
+		await web3.connect();
+		await new Promise((resolve) => setTimeout(() => resolve(), 3000));
+	} catch (err) {
+		throw new Error(err);
+	}
+	try {
 		await startEventFilter("ReceiptShield");
-
-		const contractInstance = contract.getInstance();
-		if (!contractInstance) {
-			throw new Error("Failed to get contract instance");
-		}
-
 		const newpo = {
 			count: req.body.newpo.count,
 			ppunit: req.body.newpo.ppunit,
@@ -64,22 +58,19 @@ export async function service_addPO(req, res, next) {
 		// prints the tx
 		console.log(tx);
 		res.send({ tx, encEvent });
-
-		// Update leafIndex with the first commitment added by this function
+		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {
 			leafIndex = tx.returnValues[0];
-			// Print the new leaves (commitments) added by this function call
+			// prints the new leaves (commitments) added by this function call
 			console.log(`Merkle tree event returnValues:`);
 			console.log(tx.returnValues);
 		}
-
 		if (encEvent.event) {
 			encryption.msgs = encEvent[0].returnValues[0];
 			encryption.key = encEvent[0].returnValues[1];
 			console.log("EncryptedMsgs:");
 			console.log(encEvent[0].returnValues[0]);
 		}
-
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);
@@ -90,18 +81,13 @@ export async function service_addPO(req, res, next) {
 // eslint-disable-next-line func-names
 export async function service_addInvoice(req, res, next) {
 	try {
-		// Initialize the contract
-		const contract = new Contract("ReceiptShield");
-		await contract.init();
-
-		// Use the initialized Web3 instance and contract instance
+		await web3.connect();
+		await new Promise((resolve) => setTimeout(() => resolve(), 3000));
+	} catch (err) {
+		throw new Error(err);
+	}
+	try {
 		await startEventFilter("ReceiptShield");
-
-		const contractInstance = contract.getInstance();
-		if (!contractInstance) {
-			throw new Error("Failed to get contract instance");
-		}
-
 		const inv = { amount: req.body.inv.amount, id: req.body.inv.id };
 		const invoices_invdotid_newOwnerPublicKey =
 			req.body.invoices_invdotid_newOwnerPublicKey || 0;
@@ -112,22 +98,19 @@ export async function service_addInvoice(req, res, next) {
 		// prints the tx
 		console.log(tx);
 		res.send({ tx, encEvent });
-
-		// Update leafIndex with the first commitment added by this function
+		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {
 			leafIndex = tx.returnValues[0];
-			// Print the new leaves (commitments) added by this function call
+			// prints the new leaves (commitments) added by this function call
 			console.log(`Merkle tree event returnValues:`);
 			console.log(tx.returnValues);
 		}
-
 		if (encEvent.event) {
 			encryption.msgs = encEvent[0].returnValues[0];
 			encryption.key = encEvent[0].returnValues[1];
 			console.log("EncryptedMsgs:");
 			console.log(encEvent[0].returnValues[0]);
 		}
-
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);
@@ -138,18 +121,13 @@ export async function service_addInvoice(req, res, next) {
 // eslint-disable-next-line func-names
 export async function service_pay(req, res, next) {
 	try {
-		// Initialize the contract
-		const contract = new Contract("ReceiptShield");
-		await contract.init();
-
-		// Use the initialized Web3 instance and contract instance
+		await web3.connect();
+		await new Promise((resolve) => setTimeout(() => resolve(), 3000));
+	} catch (err) {
+		throw new Error(err);
+	}
+	try {
 		await startEventFilter("ReceiptShield");
-
-		const contractInstance = contract.getInstance();
-		if (!contractInstance) {
-			throw new Error("Failed to get contract instance");
-		}
-
 		const { id } = req.body;
 		const { amount } = req.body;
 		const invoices_id_newOwnerPublicKey =
@@ -162,22 +140,19 @@ export async function service_pay(req, res, next) {
 		// prints the tx
 		console.log(tx);
 		res.send({ tx, encEvent });
-
-		// Update leafIndex with the first commitment added by this function
+		// reassigns leafIndex to the index of the first commitment added by this function
 		if (tx.event) {
 			leafIndex = tx.returnValues[0];
-			// Print the new leaves (commitments) added by this function call
+			// prints the new leaves (commitments) added by this function call
 			console.log(`Merkle tree event returnValues:`);
 			console.log(tx.returnValues);
 		}
-
 		if (encEvent.event) {
 			encryption.msgs = encEvent[0].returnValues[0];
 			encryption.key = encEvent[0].returnValues[1];
 			console.log("EncryptedMsgs:");
 			console.log(encEvent[0].returnValues[0]);
 		}
-
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);
@@ -232,21 +207,6 @@ export async function service_reinstateNullifiers(req, res, next) {
 	try {
 		await reinstateNullifiers();
 		res.send("Complete");
-		await sleep(10);
-	} catch (err) {
-		logger.error(err);
-		res.send({ errors: [err.message] });
-	}
-}
-export async function service_getSharedKeys(req, res, next) {
-	try {
-		const { recipientAddress } = req.body;
-		const recipientPubKey = req.body.recipientPubKey || 0;
-		const SharedKeys = await getSharedSecretskeys(
-			recipientAddress,
-			recipientPubKey
-		);
-		res.send({ SharedKeys });
 		await sleep(10);
 	} catch (err) {
 		logger.error(err);

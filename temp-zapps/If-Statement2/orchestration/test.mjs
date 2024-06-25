@@ -29,7 +29,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("TestShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("fn1", async function () {
 		this.timeout(3660000);
@@ -47,7 +52,7 @@ describe("TestShield", async function () {
 					await startEventFilter("TestShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await fn1(180);
+					const { tx, encEvent } = await fn1(80);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -87,7 +92,7 @@ describe("TestShield", async function () {
 			it("should call fn1 again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await fn1(61);
+					const { tx } = await fn1(12);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -117,7 +122,7 @@ describe("TestShield", async function () {
 					await startEventFilter("TestShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await fn2(38);
+					const { tx, encEvent } = await fn2(48);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -157,7 +162,7 @@ describe("TestShield", async function () {
 			it("should call fn2 again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await fn2(34);
+					const { tx } = await fn2(81);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);

@@ -27,7 +27,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("MyContractShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("incrb", async function () {
 		this.timeout(3660000);

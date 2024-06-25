@@ -52,7 +52,7 @@ describe("FakeBankShield", async function () {
 					await startEventFilter("FakeBankShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await deposit(70, 107);
+					const { tx, encEvent } = await deposit(146, 199);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -92,7 +92,7 @@ describe("FakeBankShield", async function () {
 			it("should call deposit again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await deposit(178, 43);
+					const { tx } = await deposit(118, 56);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -122,7 +122,7 @@ describe("FakeBankShield", async function () {
 					await startEventFilter("FakeBankShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await transfer(90, 79, 185);
+					const { tx, encEvent } = await transfer(148, 116, 103);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function

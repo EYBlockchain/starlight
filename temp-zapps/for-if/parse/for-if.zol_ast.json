@@ -23,6 +23,7 @@
         {
             "abstract": false,
             "baseContracts": [],
+            "canonicalName": "Test",
             "contractDependencies": [],
             "contractKind": "contract",
             "fullyImplemented": true,
@@ -31,6 +32,7 @@
                 34
             ],
             "name": "Test",
+            "nameLocation": "71:4:0",
             "nodeType": "ContractDefinition",
             "nodes": [
                 {
@@ -38,6 +40,7 @@
                     "id": 3,
                     "mutability": "mutable",
                     "name": "z",
+                    "nameLocation": "97:1:0",
                     "nodeType": "VariableDeclaration",
                     "scope": 34,
                     "src": "81:17:0",
@@ -76,6 +79,7 @@
                                         "id": 9,
                                         "mutability": "mutable",
                                         "name": "i",
+                                        "nameLocation": "145:1:0",
                                         "nodeType": "VariableDeclaration",
                                         "scope": 32,
                                         "src": "137:9:0",
@@ -305,6 +309,7 @@
                                     "nodeType": "ExpressionStatement",
                                     "src": "153:4:0"
                                 },
+                                "isSimpleCounterLoop": true,
                                 "loopExpression": {
                                     "expression": {
                                         "id": 19,
@@ -348,6 +353,7 @@
                     "kind": "function",
                     "modifiers": [],
                     "name": "add",
+                    "nameLocation": "112:3:0",
                     "nodeType": "FunctionDefinition",
                     "parameters": {
                         "id": 6,
@@ -358,6 +364,7 @@
                                 "id": 5,
                                 "mutability": "mutable",
                                 "name": "j",
+                                "nameLocation": "124:1:0",
                                 "nodeType": "VariableDeclaration",
                                 "scope": 33,
                                 "src": "116:9:0",
@@ -396,7 +403,9 @@
                 }
             ],
             "scope": 35,
-            "src": "62:142:0"
+            "src": "62:142:0",
+            "usedErrors": [],
+            "usedEvents": []
         }
     ],
     "src": "35:171:0"

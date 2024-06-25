@@ -66,7 +66,8 @@
                     "nodeType": "IntegrationApiServicesBoilerplate",
                     "contractName": "AssignShield",
                     "functionNames": [
-                        "add"
+                        "add",
+                        "remove"
                     ],
                     "functions": [
                         {
@@ -110,6 +111,33 @@
                             "decrementsSecretState": [],
                             "isConstructor": false,
                             "newCommitmentsRequired": true
+                        },
+                        {
+                            "nodeType": "IntegrationPublicApiServiceFunction",
+                            "name": "remove",
+                            "parameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [
+                                    {
+                                        "nodeType": "VariableDeclaration",
+                                        "name": "remval",
+                                        "id": 23,
+                                        "isSecret": false,
+                                        "declarationType": "parameter",
+                                        "typeName": {
+                                            "nodeType": "ElementaryTypeName",
+                                            "name": "uint256"
+                                        }
+                                    }
+                                ],
+                                "modifiedStateVariables": []
+                            },
+                            "returnParameters": {
+                                "nodeType": "ParameterList",
+                                "parameters": [],
+                                "modifiedStateVariables": []
+                            },
+                            "newCommitmentsRequired": false
                         }
                     ],
                     "constructorParams": [],
@@ -129,6 +157,10 @@
                         {
                             "nodeType": "IntegrationApiRoutesFunction",
                             "name": "add"
+                        },
+                        {
+                            "nodeType": "IntegrationApiRoutesFunction",
+                            "name": "remove"
                         }
                     ],
                     "contractImports": []
@@ -389,6 +421,106 @@
                         "parameters": [],
                         "modifiedStateVariables": []
                     }
+                }
+            ]
+        },
+        {
+            "nodeType": "File",
+            "fileName": "remove",
+            "fileExtension": ".mjs",
+            "nodes": [
+                {
+                    "nodeType": "Imports",
+                    "imports": []
+                },
+                {
+                    "nodeType": "FunctionDefinition",
+                    "name": "remove",
+                    "contractName": "AssignShield",
+                    "parameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                            {
+                                "nodeType": "VariableDeclaration",
+                                "name": "remval",
+                                "id": 23,
+                                "isSecret": false,
+                                "declarationType": "parameter",
+                                "typeName": {
+                                    "nodeType": "ElementaryTypeName",
+                                    "name": "uint256"
+                                }
+                            }
+                        ],
+                        "modifiedStateVariables": []
+                    },
+                    "body": {
+                        "nodeType": "Block",
+                        "preStatements": [],
+                        "statements": [
+                            {
+                                "nodeType": "ExpressionStatement",
+                                "id": 35,
+                                "expression": {
+                                    "nodeType": "Assignment",
+                                    "operator": "=",
+                                    "leftHandSide": {
+                                        "nodeType": "Identifier",
+                                        "name": "b",
+                                        "subType": "uint256"
+                                    },
+                                    "rightHandSide": {
+                                        "nodeType": "BinaryOperation",
+                                        "leftExpression": {
+                                            "nodeType": "Identifier",
+                                            "name": "b",
+                                            "subType": "uint256"
+                                        },
+                                        "operator": "-",
+                                        "rightExpression": {
+                                            "nodeType": "TypeConversion",
+                                            "type": "uint256",
+                                            "arguments": {
+                                                "nodeType": "TypeConversion",
+                                                "type": "uint128",
+                                                "arguments": {
+                                                    "nodeType": "Identifier",
+                                                    "name": "remval",
+                                                    "subType": "uint256"
+                                                },
+                                                "expression": {
+                                                    "nodeType": "ElementaryTypeName",
+                                                    "name": "uint128"
+                                                }
+                                            },
+                                            "expression": {
+                                                "nodeType": "ElementaryTypeName",
+                                                "name": "uint"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "postStatements": [
+                            {
+                                "nodeType": "SendPublicTransaction",
+                                "privateStates": {},
+                                "functionName": "remove",
+                                "publicInputs": [
+                                    "remval"
+                                ]
+                            }
+                        ]
+                    },
+                    "returnParameters": {
+                        "nodeType": "ParameterList",
+                        "parameters": [],
+                        "modifiedStateVariables": []
+                    },
+                    "publicInputs": [
+                        "remval"
+                    ]
                 }
             ]
         }

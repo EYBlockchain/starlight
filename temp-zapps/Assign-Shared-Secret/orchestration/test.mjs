@@ -56,7 +56,7 @@ describe("SwapShield", async function () {
 					await startEventFilter("SwapShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await deposit(119, 10);
+					const { tx, encEvent } = await deposit(186, 17);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -96,7 +96,7 @@ describe("SwapShield", async function () {
 			it("should call deposit again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await deposit(59, 115);
+					const { tx } = await deposit(90, 57);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -128,10 +128,10 @@ describe("SwapShield", async function () {
 					// you can replace the values below - numbers are randomly generated
 					const { tx, encEvent } = await startSwap(
 						config.web3.options.defaultAccount,
-						145,
-						144,
-						15,
-						101
+						195,
+						117,
+						172,
+						158
 					);
 					// prints the tx
 					console.log(tx);
@@ -188,10 +188,10 @@ describe("SwapShield", async function () {
 					const { tx, encEvent } = await completeSwap(
 						config.web3.options.defaultAccount,
 						config.web3.options.defaultAccount,
-						94,
-						77,
-						193,
-						116
+						101,
+						5,
+						16,
+						34
 					);
 					// prints the tx
 					console.log(tx);
@@ -247,8 +247,8 @@ describe("SwapShield", async function () {
 					// you can replace the values below - numbers are randomly generated
 					const { tx, encEvent } = await quitSwap(
 						config.web3.options.defaultAccount,
-						76,
-						101
+						79,
+						188
 					);
 					// prints the tx
 					console.log(tx);

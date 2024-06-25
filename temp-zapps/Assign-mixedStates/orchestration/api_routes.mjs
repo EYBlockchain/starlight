@@ -34,6 +34,5 @@ router.get("/getBalanceByState", service_getBalanceByState);
 // nullifier route
 router.post("/reinstateNullifiers", service_reinstateNullifiers);
 router.post("/getSharedKeys", service_getSharedKeys);
-router.post("/getSharedKeys", service_getSharedKeys);
 
 export default router;

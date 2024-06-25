@@ -29,7 +29,12 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 describe("BucketsOfBallsShield", async function () {
-	const web3 = web3Instance.getConnection();
+	this.timeout(3660000);
+	try {
+		await web3.connect();
+	} catch (err) {
+		throw new Error(err);
+	}
 	// eslint-disable-next-line func-names
 	describe("deposit", async function () {
 		this.timeout(3660000);
@@ -47,7 +52,7 @@ describe("BucketsOfBallsShield", async function () {
 					await startEventFilter("BucketsOfBallsShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await deposit(147, 128);
+					const { tx, encEvent } = await deposit(155, 5);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function
@@ -87,7 +92,7 @@ describe("BucketsOfBallsShield", async function () {
 			it("should call deposit again", async () => {
 				try {
 					// this calls your function a second time for incremental cases
-					const { tx } = await deposit(178, 24);
+					const { tx } = await deposit(109, 140);
 					if (tx.event) {
 						console.log(`Merkle tree event returnValues:`);
 						console.log(tx.returnValues[0]);
@@ -117,7 +122,7 @@ describe("BucketsOfBallsShield", async function () {
 					await startEventFilter("BucketsOfBallsShield");
 					// this calls your function! It returns the tx from the shield contract
 					// you can replace the values below - numbers are randomly generated
-					const { tx, encEvent } = await transfer(60, 103);
+					const { tx, encEvent } = await transfer(95, 99);
 					// prints the tx
 					console.log(tx);
 					// reassigns leafIndex to the index of the first commitment added by this function

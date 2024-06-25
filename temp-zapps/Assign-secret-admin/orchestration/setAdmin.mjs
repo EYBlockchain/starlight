@@ -4,7 +4,11 @@ import utils from "zkp-utils";
 import GN from "general-number";
 import fs from "fs";
 
-import Contract from "./common/contract.mjs";
+import {
+	getContractInstance,
+	getContractAddress,
+	registerKey,
+} from "./common/contract.mjs";
 import {
 	storeCommitment,
 	getCurrentWholeCommitment,
@@ -21,7 +25,7 @@ import {
 } from "./common/commitment-storage.mjs";
 import { generateProof } from "./common/zokrates.mjs";
 import { getMembershipWitness, getRoot } from "./common/timber.mjs";
-import web3Instance from "./common/web3.mjs";
+import Web3 from "./common/web3.mjs";
 import {
 	decompressStarlightKey,
 	poseidonHash,
@@ -29,7 +33,7 @@ import {
 
 const { generalise } = GN;
 const db = "/app/orchestration/common/db/preimage.json";
-const web3 = web3Instance.getConnection();
+const web3 = Web3.connection();
 const keyDb = "/app/orchestration/common/db/key.json";
 
 export default async function setAdmin(
@@ -38,17 +42,9 @@ export default async function setAdmin(
 ) {
 	// Initialisation of variables:
 
-	const contract = new Contract("MyContractShield");
+	const instance = await getContractInstance("MyContractShield");
 
-	await contract.init();
-
-	const instance = contract.getInstance();
-
-	if (!instance) {
-		throw new Error("Contract instance is not initialized");
-	}
-
-	const contractAddr = await contract.getContractAddress();
+	const contractAddr = await getContractAddress("MyContractShield");
 
 	const msgSender = generalise(config.web3.options.defaultAccount);
 
@@ -56,16 +52,10 @@ export default async function setAdmin(
 	const newAdmin = generalise(_newAdmin);
 	let admin_newOwnerPublicKey = generalise(_admin_newOwnerPublicKey);
 
-	// Initialize the contract
-
-	const contract = new Contract("MyContractShield");
-
-	await contract.init();
-
 	// Read dbs for keys and previous commitment values:
 
 	if (!fs.existsSync(keyDb))
-		await contract.registerKey(utils.randomHex(31), "MyContractShield", true);
+		await registerKey(utils.randomHex(31), "MyContractShield", true);
 	const keys = JSON.parse(
 		fs.readFileSync(keyDb, "utf-8", (err) => {
 			console.log(err);
@@ -142,17 +132,6 @@ export default async function setAdmin(
 				BigInt(generalise(0).hex(32)),
 				BigInt(admin_prevSalt.hex(32)),
 		  ]);
-	let admin_nullifier = admin_commitmentExists
-		? poseidonHash([
-				BigInt(admin_stateVarId),
-				BigInt(secretKey.hex(32)),
-				BigInt(admin_prevSalt.hex(32)),
-		  ])
-		: poseidonHash([
-				BigInt(admin_stateVarId),
-				BigInt(generalise(0).hex(32)),
-				BigInt(admin_prevSalt.hex(32)),
-		  ]);
 
 	admin_nullifier = generalise(admin_nullifier.hex(32)); // truncate
 	// Non-membership witness for Nullifier
@@ -199,9 +178,7 @@ export default async function setAdmin(
 		msgSender.integer,
 		newAdmin.integer,
 		admin_commitmentExists ? secretKey.integer : generalise(0).integer,
-		admin_commitmentExists ? secretKey.integer : generalise(0).integer,
 		admin_nullifierRoot.integer,
-		admin_newNullifierRoot.integer,
 		admin_newNullifierRoot.integer,
 		admin_nullifier.integer,
 		admin_nullifier_path.integer,
@@ -273,10 +250,6 @@ export default async function setAdmin(
 		await markNullified(admin_currentCommitment, secretKey.hex(32));
 	else await updateNullifierTree(); // Else we always update it in markNullified
 
-	if (admin_commitmentExists)
-		await markNullified(admin_currentCommitment, secretKey.hex(32));
-	else await updateNullifierTree(); // Else we always update it in markNullified
-
 	await storeCommitment({
 		hash: admin_newCommitment,
 		name: "admin",
@@ -287,8 +260,6 @@ export default async function setAdmin(
 			salt: admin_newSalt,
 			publicKey: admin_newOwnerPublicKey,
 		},
-		secretKey:
-			admin_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		secretKey:
 			admin_newOwnerPublicKey.integer === publicKey.integer ? secretKey : null,
 		isNullified: false,
