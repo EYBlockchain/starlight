@@ -1,59 +1,53 @@
-/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */
-import config from "config";
-import assert from "assert";
-import FUNCTION_NAME from './FUNCTION_NAME.mjs';
-import { startEventFilter, getSiblingPath } from "./common/timber.mjs";
-import fs from "fs";
-import logger from "./common/logger.mjs";
-import { decrypt } from "./common/number-theory.mjs";
-import { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";
-import web3 from "./common/web3.mjs";
-import web3Instance from "../web3.mjs";
+import web3Instance from './common/web3.mjs';
+import { startEventFilter, getSiblingPath } from './common/timber.mjs';
+import fs from 'fs';
+import logger from './common/logger.mjs';
+import { decrypt } from './common/number-theory.mjs';
+import { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState } from './common/commitment-storage.mjs';
+import Contract from './common/contract.mjs';
 
-/**
-      Welcome to your zApp's integration test!
-      Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
-      e.g. Your input contract has two functions, add() and minus(). minus() cannot be called before an initial add() - the compiler won't know this! You'll need to rearrange the below.
-      e.g. The function add() only takes numbers greater than 100. The compiler won't know this, so you'll need to change the call to add() below.
-      The transpiler automatically fills in any ZKP inputs for you and provides some dummy values for the original zol function.
-      NOTE: if any non-secret functions need to be called first, the transpiler won't know! You'll need to add those calls below.
-      NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
-      */
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const { generalise } = GN;
 let leafIndex;
 let encryption = {};
-// eslint-disable-next-line func-names
 
-export async function service_FUNCTION_NAME (req, res, next){
+// Example API service function
+export async function service_FUNCTION_NAME(req, res, next) {
   try {
-    //await web3Instance.connect();
-    //await new Promise((resolve) => setTimeout(() => resolve(), 3000));
-    if (!web3Instance.isConnected()) {
-			await web3Instance.connect();
-		}
-  } catch (err) {
-    throw new Error(err);
-  }
-	try {
+    // Initialize the contract
+    const contract = new Contract('CONTRACT_NAME');
+    await contract.init();
+    
+    // Use the initialized Web3 instance and contract instance
     await startEventFilter('CONTRACT_NAME');
+
+    const contractInstance = contract.getInstance();
+    if (!contractInstance) {
+      throw new Error('Failed to get contract instance');
+    }
+
     const FUNCTION_SIG;
-    const { tx , encEvent, _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
-    // prints the tx
+    const { tx, encEvent, _RESPONSE_ } = await FUNCTION_NAME(FUNCTION_SIG, contractInstance);
+
+    // Print the transaction details
     console.log(tx);
-    res.send({tx, encEvent, _RESPONSE_});
-    // reassigns leafIndex to the index of the first commitment added by this function
+    res.send({ tx, encEvent, _RESPONSE_ });
+    
+    // Update leafIndex with the first commitment added by this function
     if (tx.event) {
       leafIndex = tx.returnValues[0];
-      // prints the new leaves (commitments) added by this function call
+      // Print the new leaves (commitments) added by this function call
       console.log(`Merkle tree event returnValues:`);
       console.log(tx.returnValues);
     }
+    
     if (encEvent.event) {
       encryption.msgs = encEvent[0].returnValues[0];
       encryption.key = encEvent[0].returnValues[1];
       console.log("EncryptedMsgs:");
       console.log(encEvent[0].returnValues[0]);
-  }
+    }
+    
     await sleep(10);
   } catch (err) {
     logger.error(err);

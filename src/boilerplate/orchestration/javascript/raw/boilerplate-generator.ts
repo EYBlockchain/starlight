@@ -72,8 +72,10 @@ class BoilerplateGenerator {
     postStatements(contractName, onChainKeyRegistry): string[] {
       return [
         `
+        \n\n// Initialize the contract
+
         \n\n// Read dbs for keys and previous commitment values:
-        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry});
+        \nif (!fs.existsSync(keyDb)) await contract.registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry});
         const keys = JSON.parse(
                     fs.readFileSync(keyDb, 'utf-8', err => {
                       console.log(err);
@@ -416,7 +418,8 @@ class BoilerplateGenerator {
         `\nimport GN from 'general-number';`,
         `\nimport fs from 'fs';
         \n`,
-        `\nimport { getContractInstance, getContractAddress, registerKey } from './common/contract.mjs';`,
+
+        `\nimport Contract  from './common/contract.mjs';`,
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
@@ -425,7 +428,7 @@ class BoilerplateGenerator {
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
-        `const web3 = web3Instance.getConnection();`,
+        `\nconst web3 = web3Instance.getConnection();`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -682,12 +685,7 @@ integrationTestBoilerplate = {
       let encryption = {};
       // eslint-disable-next-line func-names
        describe('CONTRACT_NAME', async function () {
-        this.timeout(3660000);
-        try {
-          await web3Instance.connect();
-        } catch (err) {
-          throw new Error(err);
-        }`
+        const web3 = web3Instance.getConnection();`
 
 
 
@@ -705,7 +703,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\nimport web3Instance from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getBalanceByState, } from "./common/commitment-storage.mjs";\nimport Contract from './common/contract.mjs';\nimport web3Instance from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -716,14 +714,7 @@ integrationApiServicesBoilerplate = {
       // eslint-disable-next-line func-names
 
       export async function CONTRACT_NAME(){
-        if (!web3Instance.isConnected()) {
-      	try {
-      	   await web3Instance.connect();
-	      	}
-      	 catch (err) {
-      		throw new Error(err);
-      }
-      }}`
+        const web3 = web3Instance.getConnection();}`
     },
   postStatements(): string {
     return `// eslint-disable-next-line func-names \n ${
