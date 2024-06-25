@@ -5,21 +5,33 @@ contract Assign {
   secret uint256 private b;
   uint256 public c;
 
-
-
   function addB( uint256 value, uint256 value1) public {
     c += value1;
     known a += value;
-
   }
   function addA( uint256 value) public {
     known a += value;
   }
   function remove( uint256 value, uint256 value1 ) public {
-    unknown b += value;
-    addB( value, value1);
     addA(value1);
+    addB( value, value1);
   }
+
+  function remove1( uint256 value, uint256 value1 ) public {
+    known b += value +a;
+    addA(value1);
+    addB( value, value1);
+  }
+
+  function remove2( uint256 value, uint256 value1 ) public {
+     known b += value +a;
+    known a += value;
+    addA(value1);
+    addB( value, value1);
+     known b += value +a;
+  }
+
+
 
 
 }

@@ -27,9 +27,9 @@ export async function service_FUNCTION_NAME(req, res, next) {
     }
 
     const FUNCTION_SIG;
-    const { tx, encEvent, _RESPONSE_ } = await FUNCTION_NAME(FUNCTION_SIG, contractInstance);
-
-    // Print the transaction details
+    CONSTRUCTOR_INPUTS;
+    const { tx , encEvent, _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
+    // prints the tx
     console.log(tx);
     res.send({ tx, encEvent, _RESPONSE_ });
     

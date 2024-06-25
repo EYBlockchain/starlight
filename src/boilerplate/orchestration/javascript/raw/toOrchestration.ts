@@ -91,19 +91,19 @@ export const sendTransactionBoilerplate = (node: any) => {
         break;
       case false:
       default:
-        // whole
+        // whole 
         if (!stateNode.reinitialisedOnly)
           output[2].push(`${privateStateName}_root.integer`);
-          if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
-            output[1].push(`${privateStateName}_nullifier.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
-          }
-          if (!stateNode.accessedOnly && !stateNode.burnedOnly)
-            output[3].push(`${privateStateName}_newCommitment.integer`);
-          if (stateNode.encryptionRequired) {
-            output[4].push(`${privateStateName}_cipherText`);
-            output[5].push(`${privateStateName}_encKey`);
-          }
+        if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
+          output[1].push(`${privateStateName}_nullifier.integer`);
+          output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
+        }
+        if (!stateNode.accessedOnly && !stateNode.burnedOnly)
+          output[3].push(`${privateStateName}_newCommitment.integer`);
+        if (stateNode.encryptionRequired) {
+          output[4].push(`${privateStateName}_cipherText`);
+          output[5].push(`${privateStateName}_encKey`);
+        }
 
         break;
     }
@@ -117,6 +117,7 @@ export const generateProofBoilerplate = (node: any) => {
   const cipherTextLength: number[] = [];
   let containsRoot = false;
   let containsNullifierRoot = false;
+  let containsNewNullifierRoot = false;
   const privateStateNames = Object.keys(node.privateStates);
   let stateName: string;
   let stateNode: any;
@@ -180,14 +181,17 @@ export const generateProofBoilerplate = (node: any) => {
             reinitialisedOnly: stateNode.reinitialisedOnly,
             burnedOnly: stateNode.burnedOnly,
             accessedOnly: stateNode.accessedOnly,
+            isSharedSecret: stateNode.isSharedSecret,
             nullifierRootRequired: !containsNullifierRoot,
+            newNullifierRootRequired: !containsNewNullifierRoot,
             initialisationRequired: stateNode.initialisationRequired,
             encryptionRequired: stateNode.encryptionRequired,
             rootRequired: !containsRoot,
             parameters,
           })
         );
-        if(stateNode.nullifierRequired) containsNullifierRoot = true;
+        if(stateNode.nullifierRequired || stateNode.accessedOnly) containsNullifierRoot = true;
+        if(stateNode.nullifierRequired) containsNewNullifierRoot = true;
         if (!stateNode.reinitialisedOnly) containsRoot = true;
         break;
 
@@ -216,14 +220,17 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 nullifierRootRequired: !containsNullifierRoot,
+                newNullifierRootRequired: !containsNewNullifierRoot,
                 initialisationRequired: false,
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: !containsRoot,
                 accessedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 parameters,
               })
             );
             containsNullifierRoot = true;
+            containsNewNullifierRoot = true;
             containsRoot = true;
             break;
           case false:
@@ -247,10 +254,12 @@ export const generateProofBoilerplate = (node: any) => {
                 reinitialisedOnly: false,
                 burnedOnly: false,
                 nullifierRootRequired: false,
+                newNullifierRootRequired: false,
                 initialisationRequired: false,
                 encryptionRequired: stateNode.encryptionRequired,
                 rootRequired: false,
                 accessedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 parameters,
               })
             );
@@ -297,6 +306,7 @@ export const preimageBoilerPlate = (node: any) => {
           reinitialisedOnly: false,
           initialised: stateNode.initialised,
           structProperties: stateNode.structProperties,
+          isSharedSecret: stateNode.isSharedSecret,
           accessedOnly: true,
           stateVarIds,
         }));
@@ -312,6 +322,9 @@ export const preimageBoilerPlate = (node: any) => {
     let newOwnerStatment: string;
     switch (newOwner) {
       case null:
+        if(stateNode.isSharedSecret)
+        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+        else
         newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         break;
       case 'msg':
@@ -330,6 +343,9 @@ export const preimageBoilerPlate = (node: any) => {
           }
           \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
+          if(stateNode.isSharedSecret)
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+          else
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
         }
         break;
@@ -342,6 +358,9 @@ export const preimageBoilerPlate = (node: any) => {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         } else {
           // is secret - we just use the users to avoid revealing the secret owner
+          if(stateNode.isSharedSecret)
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+          else
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`
 
           // BELOW reveals the secret owner as we check the public key in the contract
@@ -364,6 +383,7 @@ export const preimageBoilerPlate = (node: any) => {
             reinitialisedOnly: stateNode.reinitialisedOnly,
             increment: stateNode.increment,
             newOwnerStatment,
+            isSharedSecret: stateNode.isSharedSecret,
             accessedOnly: false,
             stateVarIds,
           }));
@@ -388,6 +408,7 @@ export const preimageBoilerPlate = (node: any) => {
                 newOwnerStatment,
                 initialised: false,
                 reinitialisedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 accessedOnly: false,
                 stateVarIds,
               }));
@@ -408,6 +429,7 @@ export const preimageBoilerPlate = (node: any) => {
                 structProperties: stateNode.structProperties,
                 initialised: false,
                 reinitialisedOnly: false,
+                isSharedSecret: stateNode.isSharedSecret,
                 accessedOnly: false,
                 stateVarIds,
               }));
@@ -594,12 +616,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'decrement',
+                    isSharedSecret: stateNode.isSharedSecret,
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
+                    reinitialisedOnly: false,
                   }));
 
                 break;
@@ -609,12 +634,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
+                    isSharedSecret: stateNode.isSharedSecret,
                     mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
                       ? `${stateName}_stateVarId_key.integer`
                       : ``,
                     burnedOnly: false,
                     structProperties: stateNode.structProperties,
+                    isConstructor: node.isConstructor,
+                    reinitialisedOnly: stateNode.reinitialisedOnly,
                   }));
 
                 break;
@@ -626,12 +654,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
+                isSharedSecret: stateNode.isSharedSecret,
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
                   ? `${stateName}_stateVarId_key.integer`
                   : ``,
                 burnedOnly: stateNode.burnedOnly,
+                reinitialisedOnly: stateNode.reinitialisedOnly,
                 structProperties: stateNode.structProperties,
+                isConstructor: node.isConstructor,
               }));
         }
       }
@@ -684,67 +715,69 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [`\n// Extract set membership witness: \n\n`, ...lines],
       };
 
-    case 'CalculateNullifier':
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.calculateNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'partitioned',
-            }));
-
-        } else {
-          lines.push(
-            Orchestrationbp.calculateNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'whole',
-            }));
+      case 'CalculateNullifier':
+        for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+          if (stateNode.isPartitioned) {
+            lines.push(
+              Orchestrationbp.calculateNullifier.postStatements({
+                stateName,
+                isSharedSecret: stateNode.isSharedSecret,
+                accessedOnly: stateNode.accessedOnly,
+                stateType: 'partitioned',
+              }));
+  
+          } else {
+            lines.push(
+              Orchestrationbp.calculateNullifier.postStatements({
+                stateName,
+                isSharedSecret: stateNode.isSharedSecret,
+                accessedOnly: stateNode.accessedOnly,
+                stateType: 'whole',
+              }));
+          }
         }
-      }
-
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'partitioned',
-            }));
-
-        } else {
-          lines.push(
-            Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'whole',
-            }));
+  
+        for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+          if (stateNode.isPartitioned) {
+            lines.push(
+              Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+                stateName,
+                accessedOnly: stateNode.accessedOnly,
+                stateType: 'partitioned',
+              }));
+  
+          } else {
+            lines.push(
+              Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+                stateName,
+                accessedOnly: stateNode.accessedOnly,
+                stateType: 'whole',
+              }));
+          }
         }
-      }
-
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'partitioned',
-            }));
-
-        } else {
-          lines.push(
-            Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-              stateName,
-              accessedOnly: stateNode.accessedOnly,
-              stateType: 'whole',
-            }));
+  
+        for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+          if (stateNode.isPartitioned) {
+            lines.push(
+              Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+                stateName,
+                accessedOnly: stateNode.accessedOnly,
+                stateType: 'partitioned',
+              }));
+  
+          } else {
+            lines.push(
+              Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+                stateName,
+                accessedOnly: stateNode.accessedOnly,
+                stateType: 'whole',
+              }));
+          }
         }
-      }
-
-      return {
-        statements: [`\n// Calculate nullifier(s): \n`, ...lines],
-      };
+  
+        return {
+          statements: [`\n// Calculate nullifier(s): \n`, ...lines],
+        };
 
     case 'CalculateCommitment':
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
@@ -755,6 +788,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               Orchestrationbp.calculateCommitment.postStatements( {
                 stateName,
                 stateType: 'whole',
+                isSharedSecret: stateNode.isSharedSecret,
                 structProperties: stateNode.structProperties,
               }));
 
@@ -768,6 +802,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'decrement',
+                    isSharedSecret: stateNode.isSharedSecret,
                     structProperties: stateNode.structProperties,
                   }));
 
@@ -779,6 +814,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.calculateCommitment.postStatements( {
                     stateName,
                     stateType: 'increment',
+                    isSharedSecret: stateNode.isSharedSecret,
                     structProperties: stateNode.structProperties,
                   }));
 
@@ -804,14 +840,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ],
       };
 
-    case 'SendTransaction':
-      if (node.publicInputs[0]) {
-        node.publicInputs.forEach((input: any) => {
-          if (input.properties) {
-            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
-          } else if (input.isConstantArray) {
-            lines.push(`${input.name}.all.integer`);
-          } else if(input.isBool) {
+      case 'SendTransaction':
+        if (node.publicInputs[0]) {
+          node.publicInputs.forEach((input: any) => {
+            if (input.properties) {
+              lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
+            } else if (input.isConstantArray) {
+              lines.push(`${input.name}.all.integer`);
+            } else if(input.isBool) {
             lines.push(`(parseInt(${input.name}.integer, 10) === 1) ? true : false`);
           }
           else {
@@ -825,20 +861,18 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-      
 
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array 
+      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array
       if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
       if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
       if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
       if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
       if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
 
-
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
 

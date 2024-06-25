@@ -10,6 +10,8 @@ docker-compose -f docker-compose.zapp.yml up -d zokrates
 
 sleep 5
 
+CONSTRUCTOR_CALL
+
 docker-compose -f docker-compose.zapp.yml up -d deployer
 
 sleep 25

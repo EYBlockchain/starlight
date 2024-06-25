@@ -30,6 +30,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
@@ -51,10 +52,11 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'WritePreimage': {
-      const { id, increment, burnedOnly, indicator = {} } = fields;
+      const { id, increment, burnedOnly, reinitialisedOnly, indicator = {} } = fields
       return {
         increment,
         stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
@@ -62,6 +64,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
         burnedOnly,
+        reinitialisedOnly,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -92,6 +95,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         accessedOnly,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         
@@ -103,6 +107,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         privateStateName,
         stateVarId: id,
         increment,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
@@ -134,6 +139,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        isSharedSecret: indicator.isSharedSecret,
         nullifierRequired: indicator.isNullified,
         increment,
         structProperties,
@@ -304,6 +310,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
     case 'IntegrationApiServicesBoilerplate': {
       const {
         contractName,
+        functionNames = [],
         functions = [],
         constructorParams = [],
         contractImports = [],
@@ -311,6 +318,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
       return {
         nodeType,
         contractName,
+        functionNames,
         functions,
         constructorParams,
         contractImports,
@@ -350,6 +358,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters = buildNode('ParameterList', fields),
         returnParameters =  buildNode('ParameterList', fields),
         decrementsSecretState = [],
+        isConstructor = false,
       } = fields;
       return {
         nodeType,
@@ -357,6 +366,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
         returnParameters,
         decrementsSecretState,
+        isConstructor
       };
     }
     case 'IntegrationApiRoutesFunction': {

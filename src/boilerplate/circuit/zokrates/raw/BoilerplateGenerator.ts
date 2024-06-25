@@ -124,9 +124,9 @@ class BoilerplateGenerator {
       if(isAccessed && !isNullified) 
       lines = [
         `
-        // Create the Nullifier  for ${x} and no need to nnullify it as its accessed only:
+        // Create the Nullifier  for ${x} and no need to nullify it as its accessed only:
 
-        field ${x}_oldCommitment_nullifier = poseidon([\\
+        field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
           ${x}_stateVarId_field,\\
           ${x}_oldCommitment_owner_secretKey,\\
           ${x}_oldCommitment_salt\\
@@ -137,7 +137,7 @@ class BoilerplateGenerator {
         assert(\\
           nullifierRoot == checkproof(\\
             ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
+            ${x}_oldCommitment_nullifier_check_field\\
            )\
        )
         `,
@@ -166,25 +166,28 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, typeName }): string[] {
+    parameters({ name: x, typeName, reinitialisable }): string[] {
       // prettier-ignore
+      if(!reinitialisable)
       return [
         `private  ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
         `private field ${x}_oldCommitment_salt`,
       ];
     },
 
-    preStatements({ name: x, typeName }): string[] {
+    preStatements({ name: x, typeName, reinitialisable }): string[] {
       // For a state variable, we'll have passed in `${x}_oldCommitment_value` as a parameter. But our AST nodes will be using `${x}`. This line resolves the two.
+      if (reinitialisable)
+      return [ `${typeName ? typeName : 'field'} ${x} = 0`];
       return [
         `
         ${typeName ? typeName : 'field'} ${x} = ${x}_oldCommitment_value`,
       ];
     },
 
-    postStatements({ name: x, structProperties, structPropertiesTypes, typeName }): string[] {
+    postStatements({ name: x, structProperties, reinitialisable, structPropertiesTypes, typeName }): string[] {
       const lines: string[] = [];
-      if (!structProperties ) {
+      if (!structProperties && !reinitialisable ) {
         if (typeName === 'bool'){
           lines.push(`field ${x}_oldCommitment_value_field = if ${x}_oldCommitment_value then 1 else 0 fi`);
         } else {
@@ -216,6 +219,7 @@ class BoilerplateGenerator {
           ])`,
         ];
       }
+      if(!reinitialisable)  
       return [
 
         `
