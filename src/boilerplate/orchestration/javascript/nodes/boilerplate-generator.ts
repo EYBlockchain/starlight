@@ -276,11 +276,9 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functionName,
         contractName,
         publicInputs = [],
-        privateStates = {},
       } = fields;
       return {
         nodeType,
-        privateStates,
         functionName,
         contractName,
         publicInputs,
@@ -389,12 +387,14 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         name,
         parameters = buildNode('ParameterList', fields),
         returnParameters =  buildNode('ParameterList', fields),
+        isConstructor = false,
       } = fields;
       return {
         nodeType,
         name,
         parameters,
         returnParameters,
+        isConstructor,
       };
     }
     case 'IntegrationApiRoutesFunction': {
