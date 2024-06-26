@@ -4,10 +4,14 @@ Module to set up zkp elements of compiler output, along with writing the vks to 
 
 import fs from 'fs';
 import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { generateKeys } from './zokrates.mjs';
 
 // const { generalise } = GN;
-const { argv } = yargs.usage('Usage: $0 -i <input file>').demandOption(['i']);
+const argv = yargs(hideBin(process.argv))
+  .usage('Usage: $0 -i <input file>')
+  .demandOption(['i'])
+  .argv;
 const functionNames = [FUNCTION_NAMES];
 
 export const setup = async functionName => {
