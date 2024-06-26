@@ -316,8 +316,14 @@ const internalCallVisitor = {
                             }
                            });
                           childNode.body.statements[id-1].initialValue =undefined;
+                          } else{
+                            node.body.statements.forEach(kidNode =>{
+                              if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
+                                 kidNode.expression = Object.assign(kidNode.expression,statenode.expression);
+                              }
+                             });
                           }
-                        }
+                        } 
                        });
                       });
                       // remove multiple variable declarations
