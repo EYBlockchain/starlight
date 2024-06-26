@@ -459,7 +459,10 @@ const visitor = {
         }}
      
 
-      } 
+      }   else {
+        state.skipSubNodes = true;
+    }
+    
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
