@@ -1,5 +1,0 @@
-#!/bin/sh
-set -e
-read -p "Please enter your constructor parameters separated by commas:" inputs
-
-  docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(${inputs})))" && docker-compose -f docker-compose.zapp.yml up -d deployer
