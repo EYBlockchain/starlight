@@ -266,6 +266,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'CalculateNullifier':
     case 'CalculateCommitment':
     case 'GenerateProof':
+    case 'EncryptBackupPreimage':
     case 'SendTransaction':
     case 'SendPublicTransaction':
     case 'SetupCommonFilesBoilerplate':
@@ -273,6 +274,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'IntegrationTestBoilerplate':
     case 'IntegrationApiServicesBoilerplate':
     case 'IntegrationApiRoutesBoilerplate':
+    case 'BackupDataRetrieverBoilerplate':
     case 'IntegrationTestFunction':
     case 'IntegrationApiServiceFunction':
     case 'IntegrationPublicApiServiceFunction':

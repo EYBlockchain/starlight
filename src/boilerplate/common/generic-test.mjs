@@ -36,7 +36,7 @@ describe('FUNCTION_NAME', async function () {
         await startEventFilter('CONTRACT_NAME');
         // this calls your function! It returns the tx from the shield contract
         // you can replace the values below - numbers are randomly generated
-        const { tx , encEvent } = await FUNCTION_NAME(FUNCTION_SIG_1);
+        const { tx , encEvent, encBackupEvent } = await FUNCTION_NAME(FUNCTION_SIG_1);
         // prints the tx
         console.log(tx);
         // reassigns leafIndex to the index of the first commitment added by this function
