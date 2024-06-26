@@ -18,9 +18,6 @@ contract Test {
     for(i =0 ; i<5 ; i++) {
         if(iterate == true) {
           total += j;
-          structs[msg.sender].a = 5*j;
-          structs[msg.sender].b = total;
-          structs[msg.sender].c = msg.sender;
         }
     }
     if (iterate == false) {
