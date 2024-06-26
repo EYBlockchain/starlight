@@ -410,7 +410,7 @@ const visitor = {
           );
         }
         }
-      } else if (!scope.modifiesSecretState()) {
+      } else if (!scope.modifiesSecretState() && !node.interactsWithSecret) {
         if (node.kind === 'fallback' || node.kind === 'receive' || !node.name) {
           state.skipSubNodes = true;
           return;
