@@ -15,5 +15,6 @@ contract Assign {
   }
   function add(secret uint256 value) public {
     known a += value;
+    //a += 1;
   }
 }
