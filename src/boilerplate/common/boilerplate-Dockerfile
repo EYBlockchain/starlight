@@ -7,7 +7,6 @@ RUN npm i
 COPY circuits ./circuits
 COPY config ./config
 COPY orchestration ./orchestration
-COPY orchestration/public ./orchestration/public
 COPY proving-files ./proving-files
 
 EXPOSE 3000

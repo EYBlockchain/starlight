@@ -467,10 +467,12 @@ const visitor = {
           if(indicators.isMapping) {
             for(const [name, mappingKey ] of Object.entries(indicators.mappingKeys)){ 
               if(mappingKey.encryptionRequired) {
-                console.log(mappingKey);
-                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name});
+                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, id: mappingKey.node.referencedDeclaration});
             }
           }
+         } else {
+          console.log(indicators.node);
+          file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: false,  id: indicators.node.referencedDeclaration});
          }
         }
       }

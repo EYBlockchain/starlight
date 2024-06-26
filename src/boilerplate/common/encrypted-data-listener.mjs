@@ -2,9 +2,9 @@ import fs from 'fs';
 import utils from 'zkp-utils';
 import config from 'config';
 import { generalise } from 'general-number';
-import { getContractAddress, getContractInstance, registerKey } from './contract.mjs';
-import { storeCommitment } from './commitment-storage.mjs';
-import { decrypt } from './number-theory.mjs';
+import { getContractAddress, getContractInstance, registerKey } from './common/contract.mjs';
+import { storeCommitment } from './common/commitment-storage.mjs';
+import { decrypt } from './common/number-theory.mjs';
 
 const keyDb = '/app/orchestration/common/db/key.json';
 
@@ -97,35 +97,7 @@ export default class EncryptedDataEventListener {
     const stateVarId = generalise(decrypted[0]);
     const salt = generalise(decrypted[decrypted.length - 1]);
 
-    const VARNAME_stateVarId = VARIABLE_ID;
-
-    if (stateVarId.integer === VARNAME_stateVarId.integer) {
-      try {
-        await storeCommitment({
-          hash: newCommitment,
-          name: 'VARNAME',
-          source: 'encrypted data',
-          mappingKey: stateVarId.integer,
-          preimage: {
-            stateVarId,
-            value,
-            salt,
-            publicKey: self.publicKey,
-          },
-          secretKey: self.secretKey,
-          isNullified: false,
-        });
-        console.log('Added commitment', newCommitment.hex(32));
-      } catch (e) {
-        if (e.toString().includes('E11000 duplicate key')) {
-          console.log(
-            'encrypted-data-listener -',
-            'receiving EncryptedData event with balances.',
-            'This balance already exists. Ignore it.',
-          );
-        }
-      }
-    }
+    ENCRYPTEDVARIABLE_CODE
   }
 
   async reconnect() {

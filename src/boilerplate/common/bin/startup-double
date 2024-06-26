@@ -30,3 +30,8 @@ docker compose -f docker-compose.zapp-double.yml up -d zapp zapp2  --build --wai
 echo "Waiting for 2 seconds before running the tests..."
 sleep 2
 echo "All services have been started."
+echo "----------------------------------------------------"
+echo " Run  these commands in two terminal to get the logs"
+echo "docker compose -f docker-compose.zapp-double.yml logs -f -n 1000 zapp zokrates timber"
+echo "docker compose -f docker-compose.zapp-double.yml logs -f -n 1000 zapp2 zokrates2 timber2"
+echo "-----------------------------------------------------"

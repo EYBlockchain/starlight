@@ -235,17 +235,84 @@ const prepareIntegrationApiRoutes = (node: any) => {
   return outputApiRoutesFile;
 };
 
-const prepareIntegrationEncryptedListener = (file: localFile, node: any) => {
+const prepareIntegrationEncryptedListener = ( node: any) => {
 console.log(node);
+let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/encrypted-data-listener.mjs')
+const file = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };
 file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
-node.stateVariable?.forEach(
+let encryptedCode = '';
+node.stateVariables?.forEach(
   variable => {
-    file.file = file.file.replace(/VAR_NAME/g, variable.name);
     if(variable.isMapping) {
-      file.file = file.file.replace(/VARIABLE_ID/g, `generalise(utils.mimcHash([generalise(${variable.name}_stateVarId).bigInt, ${variable.mappingKey}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);` );
+       encryptedCode += `
+      const ${variable.name}_stateVarId = generalise(utils.mimcHash([generalise(${variable.id}).bigInt, self.ethAddress.bigInt], 'ALT_BN_254')).hex(32);
+
+    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      try {
+        await storeCommitment({
+          hash: newCommitment,
+          name: '${variable.name}',
+          source: 'encrypted data',
+          mappingKey: stateVarId.integer,
+          preimage: {
+            stateVarId,
+            value,
+            salt,
+            publicKey: self.publicKey,
+          },
+          secretKey: self.secretKey,
+          isNullified: false,
+        });
+        console.log('Added commitment', newCommitment.hex(32));
+      } catch (e) {
+        if (e.toString().includes('E11000 duplicate key')) {
+          console.log(
+            'encrypted-data-listener -',
+            'receiving EncryptedData event with balances.',
+            'This ${variable.name} already exists. Ignore it.',
+          );
+        }
+      }
+    }`;
+      
+    } else {
+      encryptedCode += `
+      const ${variable.name}_stateVarId = ${variable.id}
+    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      try {
+        await storeCommitment({
+          hash: newCommitment,
+          name: '${variable.name}',
+          source: 'encrypted data',
+          mappingKey: stateVarId.integer,
+          preimage: {
+            stateVarId,
+            value,
+            salt,
+            publicKey: self.publicKey,
+          },
+          secretKey: self.secretKey,
+          isNullified: false,
+        });
+        console.log('Added commitment', newCommitment.hex(32));
+      } catch (e) {
+        if (e.toString().includes('E11000 duplicate key')) {
+          console.log(
+            'encrypted-data-listener -',
+            'receiving EncryptedData event with balances.',
+            'This ${variable.name} already exists. Ignore it.',
+          );
+        }
+      }
     }
+` ;
+
+    }
+   
   }
 )
+file.file = file.file.replace(/ENCRYPTEDVARIABLE_CODE/g, encryptedCode);
+return file.file;
 }
 
 /**
@@ -506,9 +573,8 @@ export default function fileGenerator(node: any) {
       return api_routes;
     }
     case 'IntegrationEncryptedListenerBoilerplate': {
-      let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/encrypted-data-listener.mjs');
-      const encryptedListener = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };
-       prepareIntegrationEncryptedListener(encryptedListener, node);
+     
+       const encryptedListener = prepareIntegrationEncryptedListener(node);
       return encryptedListener;
     }
     default:
