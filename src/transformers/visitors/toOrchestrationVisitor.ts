@@ -329,9 +329,10 @@ const visitor = {
             }),
           ],
         });
+        node._newASTPointer.push(newNode);
       }
       
-      node._newASTPointer.push(newNode);
+     
       if (scope.indicators.newCommitmentsRequired) {
         const newNode = buildNode('EditableCommitmentCommonFilesBoilerplate');
         node._newASTPointer.push(newNode);
