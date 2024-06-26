@@ -11,8 +11,9 @@ import { traversePathsFast } from '../../traverse/traverse.js';
 // 4 - CalculateNullifier - nullifiersRequired - per state
 // 5 - CalculateCommitment - newCommitmentsRequired - per state
 // 6 - GenerateProof - all - per function
-// 7 - SendTransaction - all - per function
-// 8 - WritePreimage - all - per state
+// 7 - EncryptBackupPreimage -newCommitmentsRequired - per state
+// 8 - SendTransaction - all - per function
+// 9 - WritePreimage - all - per state
 
 export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator, path: NodePath) => {
   const { node, parent } = path;
@@ -35,9 +36,11 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
   }
   if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
     newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
-    newNodes.generateProofNode = buildNode('GenerateProof', {
+  newNodes.generateProofNode = buildNode('GenerateProof', {
     circuitName: node.fileName,
   });
+  if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
+    newNodes.encryptBackupPreimageNode = buildNode('EncryptBackupPreimage');
   newNodes.sendTransactionNode = buildNode('SendTransaction', {
     functionName: node.fileName,
     contractName,

@@ -166,25 +166,28 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ name: x, typeName }): string[] {
+    parameters({ name: x, typeName, reinitialisable }): string[] {
       // prettier-ignore
+      if(!reinitialisable)
       return [
         `private  ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
         `private field ${x}_oldCommitment_salt`,
       ];
     },
 
-    preStatements({ name: x, typeName }): string[] {
+    preStatements({ name: x, typeName, reinitialisable }): string[] {
       // For a state variable, we'll have passed in `${x}_oldCommitment_value` as a parameter. But our AST nodes will be using `${x}`. This line resolves the two.
+      if (reinitialisable)
+      return [ `${typeName ? typeName : 'field'} ${x} = 0`];
       return [
         `
         ${typeName ? typeName : 'field'} ${x} = ${x}_oldCommitment_value`,
       ];
     },
 
-    postStatements({ name: x, structProperties, structPropertiesTypes, typeName }): string[] {
+    postStatements({ name: x, structProperties, reinitialisable, structPropertiesTypes, typeName }): string[] {
       const lines: string[] = [];
-      if (!structProperties ) {
+      if (!structProperties && !reinitialisable ) {
         if (typeName === 'bool'){
           lines.push(`field ${x}_oldCommitment_value_field = if ${x}_oldCommitment_value then 1 else 0 fi`);
         } else {
@@ -216,6 +219,7 @@ class BoilerplateGenerator {
           ])`,
         ];
       }
+      if(!reinitialisable)  
       return [
 
         `

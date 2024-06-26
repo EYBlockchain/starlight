@@ -30,6 +30,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
@@ -51,10 +52,11 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'WritePreimage': {
-      const { id, increment, burnedOnly, indicator = {} } = fields;
+      const { id, increment, burnedOnly, reinitialisedOnly, indicator = {} } = fields
       return {
         increment,
         stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
@@ -62,6 +64,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
         burnedOnly,
+        reinitialisedOnly,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -92,6 +95,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         accessedOnly,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         
@@ -103,6 +107,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         privateStateName,
         stateVarId: id,
         increment,
+        isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
@@ -134,6 +139,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         reinitialisedOnly,
         burnedOnly,
         accessedOnly,
+        isSharedSecret: indicator.isSharedSecret,
         nullifierRequired: indicator.isNullified,
         increment,
         structProperties,
@@ -143,6 +149,30 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         initialisationRequired: indicator.initialisationRequired,
+        encryptionRequired: indicator.encryptionRequired,
+        owner: indicator.isOwned
+          ? indicator.owner.node?.name || indicator.owner.name
+          : null,
+        ownerIsSecret: indicator.isOwned
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
+          : null,
+      };
+    }
+
+    case 'EncryptBackupPreimage': {
+      const { id, increment, privateStateName, indicator = {} } = fields;
+      return {
+        privateStateName,
+        stateVarId: id,
+        increment,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
+        isWhole: indicator.isWhole,
+        isPartitioned: indicator.isPartitioned,
+        nullifierRequired: indicator.isNullified,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
         encryptionRequired: indicator.encryptionRequired,
         owner: indicator.isOwned
           ? indicator.owner.node?.name || indicator.owner.name
@@ -169,6 +199,29 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         encryptionRequired: indicator.encryptionRequired,
         nullifierRequired: indicator.isNullified,
+      };
+    }
+
+    case 'buildBoilerplateReciever': {
+      const { id, increment, privateStateName, indicator = {} } = fields;
+      return {
+        privateStateName,
+        stateVarId: id,
+        increment,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
+        isWhole: indicator.isWhole,
+        isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
+        encryptionRequired: indicator.encryptionRequired,
+        owner: indicator.isOwned
+          ? indicator.owner.node?.name || indicator.owner.name
+          : null,
+        ownerIsSecret: indicator.isOwned
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
+          : null,
       };
     }
 
@@ -250,11 +303,19 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
       };
     }
+    case 'EncryptBackupPreimage': {
+      const { privateStates = {} } = fields;
+      return {
+        nodeType,
+        privateStates,
+      };
+    }
     case 'SendTransaction': {
       const {
         functionName,
         contractName,
         publicInputs = [],
+        returnInputs = [],
         privateStates = {},
       } = fields;
       return {
@@ -263,6 +324,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functionName,
         contractName,
         publicInputs,
+        returnInputs,
       };
     }
     case 'SetupCommonFilesBoilerplate': {
@@ -383,6 +445,19 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         name,
       };
     }
+
+    case 'BackupDataRetrieverBoilerplate': {
+      const {
+        contractName,
+        privateStates = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        privateStates,
+      };
+    }
+
     default:
       throw new TypeError(nodeType);
   }

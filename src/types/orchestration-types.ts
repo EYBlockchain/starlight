@@ -72,12 +72,13 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'VariableDeclaration': {
-      const { name, type, interactsWithSecret, isSecret, isAccessed, declarationType = 'state', oldASTId = 0 } = fields;
+      const { name, type, interactsWithSecret, isSecret,isSharedSecret, isAccessed, declarationType = 'state', oldASTId = 0 } = fields;
       return {
         nodeType,
         name,
         id: oldASTId,
         isSecret,
+        isSharedSecret,
         isAccessed,
         interactsWithSecret,
         declarationType,
@@ -152,6 +153,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         name,
         isAccessed = false,
         isSecret = false,
+        isSharedSecret = false,
       } = fields;
       return {
         nodeType,
@@ -160,6 +162,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         indexExpression,
         isAccessed,
         isSecret,
+        isSharedSecret,
       };
     }
     case 'MemberAccess': {
@@ -263,12 +266,14 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'CalculateNullifier':
     case 'CalculateCommitment':
     case 'GenerateProof':
+    case 'EncryptBackupPreimage':
     case 'SendTransaction':
     case 'SetupCommonFilesBoilerplate':
     case 'EditableCommitmentCommonFilesBoilerplate':
     case 'IntegrationTestBoilerplate':
     case 'IntegrationApiServicesBoilerplate':
     case 'IntegrationApiRoutesBoilerplate':
+    case 'BackupDataRetrieverBoilerplate':
     case 'IntegrationEncryptedListenerBoilerplate':
     case 'IntegrationTestFunction':
     case 'IntegrationApiServiceFunction':

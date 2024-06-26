@@ -319,6 +319,17 @@ const visitor = {
         ],
       });
       node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'BackupDataRetriever',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('BackupDataRetrieverBoilerplate', {
+            contractName,
+            privateStates: [],
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
       if (scope.indicators.encryptionRequired) {
         newNode = buildNode('File', {
           fileName: 'encrypted-data-listener',
@@ -645,6 +656,35 @@ const visitor = {
               accessedOnly,
               indicator: stateVarIndicator,
             });
+          }
+
+          if (stateVarIndicator.newCommitmentsRequired) {
+            newNodes.encryptBackupPreimageNode.privateStates[
+              name
+            ] = buildPrivateStateNode('EncryptBackupPreimage', {
+              privateStateName: name,
+              id,
+              indicator: stateVarIndicator,
+            });
+          }
+
+          if (stateVarIndicator.newCommitmentsRequired) {
+            let contrNode = path.getContractDefinition().node._newASTPointer;
+            for (const file of contrNode) {
+              if (file.nodes?.[0].nodeType === 'BackupDataRetrieverBoilerplate') {
+                let newNode = buildPrivateStateNode('EncryptBackupPreimage', {
+                  privateStateName: name,
+                  id,
+                  indicator: stateVarIndicator,
+                });
+                if (!file.nodes?.[0].privateStates.some((n: any) => n.stateVarId === newNode.stateVarId)){
+                  file.nodes?.[0].privateStates.push(newNode);
+                }
+              }
+            }
+          }
+
+          if (secretModified || accessedOnly) {
 
             newNodes.sendTransactionNode.privateStates[
               name
@@ -687,9 +727,12 @@ const visitor = {
               burnedOnly:
                 stateVarIndicator.isBurned &&
                 !stateVarIndicator.newCommitmentsRequired,
+              reinitialisedOnly: stateVarIndicator.reinitialisable &&
+              !stateVarIndicator.isNullified,  
             });
           }
         }
+       
 
         if (node.kind === 'constructor') {
           newNodes.writePreimageNode.isConstructor = true;
@@ -731,7 +774,27 @@ const visitor = {
             } else newNodes.sendTransactionNode.publicInputs.push(param.name);
           }
         }
-
+        // this adds the return parameters which are marked as secret in the tx 
+        
+        let returnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+       
+        let returnIsSecret: string[] = [];
+          const decStates = node._newASTPointer.decrementedSecretStates;
+          if( node._newASTPointer.returnParameters.parameters) {
+            node._newASTPointer.returnParameters.parameters.forEach( node => {
+            returnIsSecret.push(node.isSecret);
+          })
+        }
+        returnPara.forEach( (param, index) => {
+          if(decStates) {
+           if(decStates?.includes(param)){
+            returnPara[index] = returnPara[index]+'_2_newCommitment';
+          }
+        } else if(returnIsSecret[index])
+        returnPara[index] = returnPara[index] +'_newCommitment';
+        })
+        newNodes.sendTransactionNode.returnInputs = returnPara;
+       
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         // UNLESS they are public accessed states...
         let earliestPublicAccessIndex = newFunctionDefinitionNode.body.preStatements.findIndex(
@@ -851,8 +914,9 @@ const visitor = {
         // 4 - CalculateNullifier - nullifiersRequired - per state
         // 5 - CalculateCommitment - newCommitmentsRequired - per state
         // 6 - GenerateProof - all - per function
-        // 7 - SendTransaction - all - per function
-        // 8 - WritePreimage - all - per state
+        // 7 - EncryptBackupPreimage -newCommitmentsRequired - per state
+        // 8 - SendTransaction - all - per function
+        // 9 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
         newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
         if (newNodes.membershipWitnessNode)
@@ -872,6 +936,8 @@ const visitor = {
           );
         if (newNodes.generateProofNode)
           newFunctionDefinitionNode.body.postStatements.push(newNodes.generateProofNode);
+        if (newNodes.encryptBackupPreimageNode)
+          newFunctionDefinitionNode.body.postStatements.push(newNodes.encryptBackupPreimageNode);
         if (newNodes.sendTransactionNode)
           newFunctionDefinitionNode.body.postStatements.push(
             newNodes.sendTransactionNode,
@@ -1438,12 +1504,16 @@ const visitor = {
   Return: {
      enter(path: NodePath, state: any) {
        const { node, parent } = path;
-       const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
-       node._newASTPointer = newNode;
-       if (Array.isArray(parent._newASTPointer)) {
-         parent._newASTPointer.push(newNode);
-       } else {
-         parent._newASTPointer[path.containerName].push(newNode);
+       if (node.expression.value){
+        const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer)) {
+          parent._newASTPointer.push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName].push(newNode);
+        }
+       } else{
+        state.skipSubNodes = true;
        }
      },
   },
