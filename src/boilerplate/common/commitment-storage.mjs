@@ -886,7 +886,6 @@ export async function addConstructorNullifiers() {
     fs.readFileSync("/app/orchestration/common/db/constructorTx.json", "utf-8")
   );
   const { nullifiers } = constructorInput;
-  console.log(nullifiers);
   const { isNullfiersAdded } = constructorInput;
   if(isNullfiersAdded == false)
   {
@@ -894,7 +893,6 @@ export async function addConstructorNullifiers() {
       smt_tree = insertLeaf(nullifier, smt_tree);
     })
     temp_smt_tree = smt_tree;
-    console.log(getHash(smt_tree));
     constructorInput.isNullfiersAdded = true;
     fs.writeFileSync(
       "/app/orchestration/common/db/constructorTx.json",

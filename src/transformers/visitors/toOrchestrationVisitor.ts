@@ -472,7 +472,6 @@ const visitor = {
             }
           }
          } else {
-          console.log(indicators.node);
           file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: false,  id: indicators.node.referencedDeclaration});
          }
         }

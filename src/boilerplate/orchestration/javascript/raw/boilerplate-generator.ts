@@ -903,7 +903,7 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
-      generic: true,
+      generic: false,
     },
     {
       readPath: pathPrefix + '/commitment-storage.mjs',

@@ -236,9 +236,8 @@ const prepareIntegrationApiRoutes = (node: any) => {
 };
 
 const prepareIntegrationEncryptedListener = ( node: any) => {
-console.log(node);
 let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/encrypted-data-listener.mjs')
-const file = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };
+const file = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };  
 file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
 let encryptedCode = '';
 node.stateVariables?.forEach(
@@ -313,7 +312,7 @@ node.stateVariables?.forEach(
 )
 file.file = file.file.replace(/ENCRYPTEDVARIABLE_CODE/g, encryptedCode);
 return file.file;
-}
+} 
 
 /**
  * @param file - a generic migrations file skeleton to mutate
@@ -573,8 +572,7 @@ export default function fileGenerator(node: any) {
       return api_routes;
     }
     case 'IntegrationEncryptedListenerBoilerplate': {
-     
-       const encryptedListener = prepareIntegrationEncryptedListener(node);
+       const  encryptedListener = prepareIntegrationEncryptedListener(node); 
       return encryptedListener;
     }
     default:
