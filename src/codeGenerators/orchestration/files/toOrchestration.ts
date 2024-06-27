@@ -156,7 +156,8 @@ const prepareIntegrationApiServices = (node: any) => {
     .replace(/CONTRACT_NAME/g, node.contractName)
     .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
     .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name) ;
+    .replace(/FUNCTION_NAME/g, fn.name) 
+    .replace(/CONSTRUCTOR_INPUTS/g, node.functionNames.includes('cnstrctr') ? `await addConstructorNullifiers();` : ``);
   
   let fnParam: string[] = [];
   let structparams;

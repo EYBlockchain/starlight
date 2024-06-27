@@ -20,11 +20,10 @@ export async function service_FUNCTION_NAME (req, res, next){
   }
 	
     const FUNCTION_SIG;
-    CONSTRUCTOR_INPUTS;
-    const { tx ,  encBackupEvent, _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
+    const { tx , _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
-    res.send({tx, encBackupEvent, _RESPONSE_});
+    res.send({tx, _RESPONSE_});
    
     if (tx.event) {
       console.log(tx.returnValues);
