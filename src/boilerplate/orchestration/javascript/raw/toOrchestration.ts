@@ -973,6 +973,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nconst signed = await web3.eth.accounts.signTransaction(txParams, key);
           \nconst tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
           \nconst encEvent = {};
+          \nconst encBackupEvent ={};
          `
         ]
       }
