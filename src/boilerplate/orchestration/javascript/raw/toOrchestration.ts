@@ -874,19 +874,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           }           
         });
       }
-<<<<<<< HEAD
-      
-=======
       returnInputs = returnInputs.concat(lines);
 
       if(node.returnInputs[0]) {
         node.returnInputs.forEach((input: any) => { 
           input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input);
-          
+
         })
-      } 
-  
->>>>>>> master
+      }
+      
       params[0] = sendTransactionBoilerplate(node);
       if(!node.returnInputs[0] && !params[0][4][0]) returnInputs.push(`1`); // If there are no return, circuit's default return is true
       // params[0] = arr of nullifier root(s)
