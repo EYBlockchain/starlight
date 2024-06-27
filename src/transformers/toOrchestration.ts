@@ -83,7 +83,7 @@ export default function toOrchestration(ast: any, options: any) {
       file = file.replace(/FUNCTION_NAME/g, options.zappName);
       file = file.replace(/WHOLE_STATE_NAMES/g, wholeStateNames ? wholeStateNames.map(n => `'${n}'`).join(', ') : '');
       file = file = file.replace(/ENCRYPTEDLISTENER_IMPORT/g, encryptedListener ?
-      `import { EncryptedDataEventListener } from './encrypted-data-listener.mjs'` : ` `);
+      `import  EncryptedDataEventListener  from './encrypted-data-listener.mjs'` : ` `);
     
       file = file.replace(/ENCRYPTEDLISTENER_CALL/g, encryptedListener ?
       ` const eventListener = new EncryptedDataEventListener(web3)

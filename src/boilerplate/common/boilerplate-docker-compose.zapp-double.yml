@@ -16,7 +16,6 @@ services:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
       - ./migrations/:/app/migrations/
-      - ./orchestration/common/db/key1.json:/app/orchestration/common/db/key.json
       - ./truffle-config.js:/app/truffle-config.js
       - ./circuits/:/app/circuits:delegated
       - ./orchestration/:/app/orchestration:delegated
@@ -52,7 +51,6 @@ services:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
       - ./migrations/:/app/migrations/
-      - ./orchestration/common/db/key2.json:/app/orchestration/common/db/key.json
       - ./truffle-config.js:/app/truffle-config.js
       - ./circuits/:/app/circuits:delegated
       - ./orchestration/:/app/orchestration:delegated
@@ -199,7 +197,7 @@ services:
     ports:
       - "2023:27017"   
     volumes:
-      - timber-mongo-volume1:/data/db
+      - timber-mongo-volume2:/data/db
     networks:
       - zapp_network  
 
@@ -230,7 +228,7 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=admin
       - MONGO_INITDB_DATABASE=zapp_db
     volumes:
-      - zapp-commitment-volume1:/data/db
+      - zapp-commitment-volume2:/data/db
     networks:
       - zapp_network    
 
