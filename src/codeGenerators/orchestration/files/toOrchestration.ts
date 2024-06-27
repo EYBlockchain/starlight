@@ -393,7 +393,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
  * @param node - a SetupCommonFilesBoilerplate node
  */
 
-const prepareSetupScript = (file: localFile, node: any) => {
+const prepareStartupScript = (file: localFile, node: any) => {
   let constructorCall = ``;
   if (!node.functionNames.includes('cnstrctr')) {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, ``);
@@ -404,9 +404,9 @@ const prepareSetupScript = (file: localFile, node: any) => {
     return;
   }
   constructorCall += `read -p "Please enter your constructor parameters separated by commas:" inputs
-
+ 
   docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
-
+ 
   file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
 }
 
@@ -649,9 +649,12 @@ export default function fileGenerator(node: any) {
         ].join('\n'),
         'orchestration',
       );
-
-      const readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
-      const startupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
+ 
+      let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
+      const setupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
+      files.push(setupScript);
+      readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup');
+      const startupScript = { filepath: 'bin/startup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(startupScript);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>
@@ -660,11 +663,11 @@ export default function fileGenerator(node: any) {
       const migrationsfile = files.filter(obj =>
         obj.filepath.includes(`shield`),
       )[0];
-
+ 
       if (node.functionNames.includes('cnstrctr')) {
         const redeployPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/redeploy');
         const redeployFile = { filepath: 'bin/redeploy', file: fs.readFileSync(redeployPath, 'utf8') };
-        prepareSetupScript(redeployFile, node);
+        prepareStartupScript(redeployFile, node);
         files.push(redeployFile);
       }
       // replace placeholder values with ours
@@ -678,7 +681,7 @@ export default function fileGenerator(node: any) {
       );
       // build the migrations file
       prepareMigrationsFile(migrationsfile, node);
-      prepareSetupScript(startupScript, node);
+      prepareStartupScript(startupScript, node);
       return files;
     }
 
