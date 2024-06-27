@@ -28,6 +28,5 @@ export async function service_FUNCTION_NAME (req, res, next){
     if (tx.event) {
       console.log(tx.returnValues);
     }
-   
     await sleep(10);
 }
