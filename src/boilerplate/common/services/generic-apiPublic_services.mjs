@@ -24,10 +24,8 @@ export async function service_FUNCTION_NAME (req, res, next){
     // prints the tx
     console.log(tx);
     res.send({tx, _RESPONSE_});
-    // reassigns leafIndex to the index of the first commitment added by this function
+   
     if (tx.event) {
-      // prints the new leaves (commitments) added by this function call
-      console.log(`Merkle tree event returnValues:`);
       console.log(tx.returnValues);
     }
    

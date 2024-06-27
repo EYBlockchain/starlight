@@ -408,6 +408,8 @@ const prepareSetupScript = (file: localFile, node: any) => {
   file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
 }
 
+<<<<<<< HEAD
+=======
 const prepareBackupDataRetriever = (node: any) => {
   // import generic test skeleton
   let genericApiServiceFile: any = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */
@@ -600,6 +602,7 @@ const prepareBackupDataRetriever = (node: any) => {
   return outputApiServiceFile;
 };
 
+>>>>>>> master
 /**
  * @param {string} file - a stringified file
  * @param {string} contextDirPath - the import statements of the `file` will be

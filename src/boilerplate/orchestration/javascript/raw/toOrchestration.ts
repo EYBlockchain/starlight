@@ -874,6 +874,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           }           
         });
       }
+<<<<<<< HEAD
+      
+=======
       returnInputs = returnInputs.concat(lines);
 
       if(node.returnInputs[0]) {
@@ -883,6 +886,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         })
       } 
   
+>>>>>>> master
       params[0] = sendTransactionBoilerplate(node);
       if(!node.returnInputs[0] && !params[0][4][0]) returnInputs.push(`1`); // If there are no return, circuit's default return is true
       // params[0] = arr of nullifier root(s)
