@@ -154,10 +154,11 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
   genericApiServiceFile.postStatements()[0]
     .replace(/CONTRACT_NAME/g, node.contractName)
+    .replace(/CONSTRUCTOR_INPUTS/g, node.functionNames.includes('cnstrctr') ? `await addConstructorNullifiers();` : ``)
     .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
     .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name) 
-    .replace(/CONSTRUCTOR_INPUTS/g, node.functionNames.includes('cnstrctr') ? `await addConstructorNullifiers();` : ``);
+    .replace(/FUNCTION_NAME/g, fn.name) ;
+   
   
   let fnParam: string[] = [];
   let structparams;
