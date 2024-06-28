@@ -51,14 +51,14 @@ export default function codeGenerator(node: any, options: any = {}): any {
        })
      }
         node.returnParameters = node.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
-        node.returnParameters.forEach( (param, index) => {
-          if(decStates) {
-           if(decStates?.includes(param)){
-            node.returnParameters[index] = node.returnParameters[index]+'_2_newCommitment';
-          }
-        } else if(returnIsSecret[index])
-            node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
-        })
+        // node.returnParameters.forEach( (param, index) => {
+        //   if(decStates) {
+        //    if(decStates?.includes(param)){
+        //     node.returnParameters[index] = node.returnParameters[index]+'.integer';
+        //   }
+        // } else if(returnIsSecret[index])
+        //     node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
+        // })
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);
