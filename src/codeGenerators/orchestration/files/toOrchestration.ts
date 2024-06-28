@@ -240,11 +240,24 @@ let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/
 const file = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };  
 file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
 let encryptedCode = '';
+let encryptedStateVarId = '';
+let encryptedValue = ''
 node.stateVariables?.forEach(
   variable => {
-    if(variable.isMapping) {
-       encryptedCode += `
-      const ${variable.name}_stateVarId = generalise(utils.mimcHash([generalise(${variable.id}).bigInt, self.ethAddress.bigInt], 'ALT_BN_254')).hex(32);
+    variable.isMapping ?  encryptedStateVarId = `const ${variable.name}_stateVarId = generalise(utils.mimcHash([generalise(${variable.id}).bigInt, self.ethAddress.bigInt], 'ALT_BN_254')).hex(32);`
+  : `const ${variable.name}_stateVarId = ${variable.id}`;
+    variable.isStruct ?  variable.structProperty.forEach( (structProp, index) => {
+       encryptedValue += `
+       const ${structProp} = generalise(decrypted[${index+1}]);`
+    }) : encryptedValue += ` const value =  generalise(decrypted[1]); `;
+    if(variable.isStruct) {
+    encryptedCode += `
+    const newCommitment = poseidonHash([
+      BigInt(stateVarId.hex(32)),
+      ${variable.structProperty.map(structProp => `BigInt(${structProp}.hex(32))`).join(', \n')},
+      BigInt(self.publicKey.hex(32)),
+      BigInt(salt.hex(32))
+    ]);
 
     if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
       try {
@@ -255,7 +268,9 @@ node.stateVariables?.forEach(
           mappingKey: stateVarId.integer,
           preimage: {
             stateVarId,
-            value,
+            value: {
+              ${variable.structProperty.map((structProp, index) => `${structProp}`).join(', ')}
+            },
             salt,
             publicKey: self.publicKey,
           },
@@ -276,7 +291,14 @@ node.stateVariables?.forEach(
       
     } else {
       encryptedCode += `
-      const ${variable.name}_stateVarId = ${variable.id}
+
+      const newCommitment = poseidonHash([
+        BigInt(stateVarId.hex(32)),
+        BigInt(value.hex(32)),
+        BigInt(self.publicKey.hex(32)),
+        BigInt(salt.hex(32))
+      ]);
+  
     if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
       try {
         await storeCommitment({
@@ -310,6 +332,7 @@ node.stateVariables?.forEach(
    
   }
 )
+encryptedCode = encryptedStateVarId + encryptedValue + encryptedCode;
 file.file = file.file.replace(/ENCRYPTEDVARIABLE_CODE/g, encryptedCode);
 return file.file;
 } 

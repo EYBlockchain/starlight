@@ -479,6 +479,9 @@ const visitor = {
           if(indicators.isMapping) {
             for(const [name, mappingKey ] of Object.entries(indicators.mappingKeys)){ 
               if(mappingKey.encryptionRequired) {
+                mappingKey.isStruct ? 
+                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, isStruct: true, structProperty: Object.keys(mappingKey.structProperties), id: mappingKey.node.referencedDeclaration}) :
+                
                 file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, id: mappingKey.node.referencedDeclaration});
             }
           }
