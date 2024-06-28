@@ -18,7 +18,7 @@ contract Assign {
 
   
   function add(secret uint256 value) public { 
-    require(a + value > 10, "a + value too low);
+    require(a + value > 10, "a + value too low");
     index++;
     require(a + index > 10, "a + index too low");
     known a += value;
