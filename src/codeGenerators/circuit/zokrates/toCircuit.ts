@@ -94,8 +94,9 @@ function codeGenerator(node: any) {
 
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
-        if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
+        if((node.isPrivate === true && node.typeName.name != 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
+        if(node.isPrivate === true && node.typeName.name === 'bool') returnType.push('field');
       });
  
       if(returnStatement.length === 0){
