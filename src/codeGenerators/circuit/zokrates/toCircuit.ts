@@ -77,9 +77,8 @@ function codeGenerator(node: any) {
         });
 
         node.returnParameters.parameters.forEach((node) => {
-          console.log(node);
           if (node.typeName.name === 'bool')
-            returnStatement.push(`${node.name}_newCommitment_commitment`);
+          node.isPrivate? returnStatement.push(`${node.name}_newCommitment_commitment`): returnStatement.push(`${node.name}`);
           else if (node.typeName.name.includes('EncryptedMsgs') && node.isPartitioned)
             returnStatement.push( `${node.name}_0_cipherText`);
           else if (node.typeName.name.includes('EncryptedMsgs'))

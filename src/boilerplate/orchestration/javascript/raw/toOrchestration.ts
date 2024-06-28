@@ -495,7 +495,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       }
 
       node.returnParameters.forEach( (param, index) => {
-        console.log(param);
        if(param === 'true')
         rtnparams?.push('bool: bool');
        else
