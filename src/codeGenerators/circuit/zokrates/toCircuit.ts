@@ -96,7 +96,7 @@ function codeGenerator(node: any) {
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true && node.typeName.name != 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
-        if(node.isPrivate === true && node.typeName.name === 'bool') returnType.push('field');
+        if( node.typeName.name === 'bool') node.isPrivate === true? returnType.push('field') : returnType.push('bool');
       });
  
       if(returnStatement.length === 0){
