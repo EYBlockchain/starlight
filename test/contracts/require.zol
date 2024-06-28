@@ -18,20 +18,32 @@ contract Assign {
 
   
   function add(secret uint256 value) public { 
-    require(a < 10);
+    require(a + value > 10, "a + value too low);
     index++;
+    require(a + index > 10, "a + index too low");
+    known a += value;
+  }
+
+  function add2(secret uint256 value) public { 
+    require(a + index > 10, "original a + index too low");
+    index++;
+    a += index;
+    require(a + index > 10, "new a + index too low");
     known a += index + value;
   }
 
    function add1(secret uint256 value) public {
-    require(index < 5); 
+    require(index < 5) ; 
     index++;
     known a += index + value;
   }
 
+
+
   function remove(secret uint256 value) public {
-    require(a > 5, "a is too low");
+    require(a > 5, "original value of a is too low");
     a -= value;
+    require(a > index, "new value of a is too low");
   }
 
   function remove1(secret uint256 value) public {
