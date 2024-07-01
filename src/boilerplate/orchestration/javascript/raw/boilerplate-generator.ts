@@ -582,10 +582,17 @@ encryptBackupPreimage = {
     let plainText;
     let varName = mappingName ? mappingName : stateName;
     if (mappingKey){
-      plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
-        BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
-        ${valueName}]`;
-        varName += ` a`;
+      if (mappingKey === 'msg'){
+        plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId_key.hex(32)),
+          BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
+          ${valueName}]`;
+          varName += ` a`;
+      } else {
+        plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
+          BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
+          ${valueName}]`;
+          varName += ` a`;
+      }
     } else{
       plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId),
         ${valueName}]`;
@@ -939,6 +946,11 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
+      readPath: pathPrefix + '/boilerplate-docker-compose.zapp-double.yml',
+      writePath: './docker-compose.zapp-double.yml',
+      generic: true,
+    },
+    {
       readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
       writePath: './docker-compose.zapp.override.yml',
       generic: true,
@@ -986,7 +998,7 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
-      generic: true,
+      generic: false,
     },
     {
       readPath: pathPrefix + '/commitment-storage.mjs',
