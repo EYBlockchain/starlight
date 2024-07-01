@@ -685,6 +685,10 @@ export default function fileGenerator(node: any) {
       const api_services = prepareIntegrationApiServices(node);
       return api_services;
     }
+    case 'IntegrationApiServicesBoilerplate': {
+      const api_services = prepareIntegrationApiServices(node);
+      return api_services;
+    }
     case 'IntegrationApiRoutesBoilerplate': {
       const api_routes = prepareIntegrationApiRoutes(node);
       return api_routes;
