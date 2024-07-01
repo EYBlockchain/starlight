@@ -147,7 +147,9 @@ const prepareIntegrationApiServices = (node: any) => {
     }
   }`
 
+
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+
   relevantFunctions.forEach((fn: any) => {
   let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
   genericApiServiceFile.postStatements()[0]
@@ -169,10 +171,12 @@ const prepareIntegrationApiServices = (node: any) => {
         fnParam.push( `const { ${p.name} } = req.body;\n`);
       }
     });
+
     fn.parameters.modifiedStateVariables.forEach(m => {
       fnParam.push(`const ${m.name}_newOwnerPublicKey = req.body.${m.name}_newOwnerPublicKey || 0;\n`);
       paramName.push(`${m.name}_newOwnerPublicKey`);
     });
+
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
@@ -196,7 +200,9 @@ const prepareIntegrationApiServices = (node: any) => {
       /FUNCTION_SIG/g,
       paramName,
     );
+
     fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
+
     // replace function imports at top of file
     const fnimport = genericApiServiceFile.import().replace(
       /FUNCTION_NAME/g,
@@ -204,6 +210,7 @@ const prepareIntegrationApiServices = (node: any) => {
     );
     // for each function, add the new imports and boilerplate to existing test
     outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
+
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
@@ -685,10 +692,7 @@ export default function fileGenerator(node: any) {
       const api_services = prepareIntegrationApiServices(node);
       return api_services;
     }
-    case 'IntegrationApiServicesBoilerplate': {
-      const api_services = prepareIntegrationApiServices(node);
-      return api_services;
-    }
+
     case 'IntegrationApiRoutesBoilerplate': {
       const api_routes = prepareIntegrationApiRoutes(node);
       return api_routes;

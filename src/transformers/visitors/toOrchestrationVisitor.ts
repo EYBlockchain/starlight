@@ -489,7 +489,7 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
-       if(node.containsPublic || !scope.modifiesSecretState){
+       if(node.containsPublic && !scope.modifiesSecretState){
         
         interface PublicParam {
           name: string;
@@ -1005,10 +1005,6 @@ const visitor = {
           newFunctionDefinitionNode.body.postStatements.push(
             newNodes.sendTransactionNode,
           );
-          if (newNodes.sendPublicTransactionNode)
-            newFunctionDefinitionNode.body.postStatements.push(
-              newNodes.sendPublicTransactionNode,
-            );
         if (newNodes.writePreimageNode)
           newFunctionDefinitionNode.body.postStatements.push(newNodes.writePreimageNode);
       }
