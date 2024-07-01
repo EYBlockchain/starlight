@@ -267,6 +267,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'GenerateProof':
     case 'EncryptBackupPreimage':
     case 'SendTransaction':
+    case 'SendPublicTransaction':
     case 'Imports':
     case 'KeyRegistrationFunction':
       return `${OrchestrationCodeBoilerPlate(node).statements.join('')}`;

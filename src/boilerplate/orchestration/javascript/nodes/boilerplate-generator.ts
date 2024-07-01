@@ -327,6 +327,19 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         returnInputs,
       };
     }
+    case 'SendPublicTransaction': {
+      const {
+        functionName,
+        contractName,
+        publicInputs = [],
+      } = fields;
+      return {
+        nodeType,
+        functionName,
+        contractName,
+        publicInputs,
+      };
+    }
     case 'SetupCommonFilesBoilerplate': {
       const {
         contractName,
@@ -434,6 +447,21 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         returnParameters,
         decrementsSecretState,
         isConstructor
+      };
+    }
+    case 'IntegrationPublicApiServiceFunction': {
+      const {
+        name,
+        parameters = buildNode('ParameterList', fields),
+        returnParameters =  buildNode('ParameterList', fields),
+        isConstructor = false,
+      } = fields;
+      return {
+        nodeType,
+        name,
+        parameters,
+        returnParameters,
+        isConstructor,
       };
     }
     case 'IntegrationApiRoutesFunction': {
