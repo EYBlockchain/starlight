@@ -330,6 +330,20 @@ const visitor = {
         ],
       });
       node._newASTPointer.push(newNode);
+      if (scope.indicators.encryptionRequired) {
+        newNode = buildNode('File', {
+          fileName: 'encrypted-data-listener',
+          fileExtension: '.mjs',
+          nodes: [
+            buildNode('IntegrationEncryptedListenerBoilerplate', {
+              contractName,
+            }),
+          ],
+        });
+        node._newASTPointer.push(newNode);
+      }
+      
+     
       if (scope.indicators.newCommitmentsRequired) {
         const newNode = buildNode('EditableCommitmentCommonFilesBoilerplate');
         node._newASTPointer.push(newNode);
@@ -548,8 +562,26 @@ const visitor = {
            state.isjoinSplitCommitmentsFunction ??= [];
            state.isjoinSplitCommitmentsFunction?.push('true');
          }
+         if((indicators instanceof StateVariableIndicator) && indicators.encryptionRequired) {
+          for (const file of parent._newASTPointer) {
+            if(file.nodes?.[0].nodeType === 'IntegrationEncryptedListenerBoilerplate') {
+          if(indicators.isMapping) {
+            for(const [name, mappingKey ] of Object.entries(indicators.mappingKeys)){ 
+              if(mappingKey.encryptionRequired) {
+                mappingKey.isStruct ? 
+                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, isStruct: true, structProperty: Object.keys(mappingKey.structProperties), id: mappingKey.node.referencedDeclaration}) :
+                
+                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, id: mappingKey.node.referencedDeclaration});
+            }
+          }
+         } else {
+          file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: false,  id: indicators.node.referencedDeclaration});
+         }
+        }
       }
-
+      }
+    }
+      
       let thisIntegrationTestFunction: any = {};
       let thisIntegrationApiServiceFunction: any = {};
       for (const file of parent._newASTPointer) {
