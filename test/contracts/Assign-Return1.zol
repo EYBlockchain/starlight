@@ -5,10 +5,10 @@ pragma solidity ^0.8.0;
 contract Assign {
 
   secret uint256 private a;
-
-  function add( uint256 value) public  returns (bool) {
+  
+  function add( uint256 value) public  returns (uint256) {
     a += value;
-    return true;
+    return a;
   }
 
   function remove(secret uint256 value) public {

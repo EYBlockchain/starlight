@@ -54,10 +54,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
         node.returnParameters.forEach( (param, index) => {
           if(decStates) {
            if(decStates?.includes(param)){
-            node.returnParameters[index] = node.returnParameters[index]+'_2_newCommitment';
+            node.returnParameters[index] = node.returnParameters[index]+'_change';
           }
         } else if(returnIsSecret[index])
-            node.returnParameters[index] = node.returnParameters[index]+'_newCommitment';
+            node.returnParameters[index] = node.returnParameters[index];
         })
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
@@ -264,6 +264,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'IntegrationApiRoutesBoilerplate':
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
+    case 'BackupDataRetrieverBoilerplate':
+      // Separate files are handled by the fileGenerator
+      return fileGenerator(node);
+    case 'IntegrationEncryptedListenerBoilerplate':  
+    return fileGenerator(node);
     case 'InitialisePreimage':
     case 'InitialiseKeys':
     case 'ReadPreimage':
@@ -272,6 +277,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'CalculateNullifier':
     case 'CalculateCommitment':
     case 'GenerateProof':
+    case 'EncryptBackupPreimage':
     case 'SendTransaction':
     case 'Imports':
     case 'KeyRegistrationFunction':

@@ -167,10 +167,8 @@ const prepareIntegrationApiServices = (node: any) => {
       let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
       if(returnParamsName.length > 0){
       returnParamsName.forEach(param => {
-        if(fn.decrementsSecretState.includes(param)) 
-           returnParams.push(param+'_2_newCommitment');
-        else if(param !== 'true') 
-         returnParams.push(param+'_newCommitment');
+        if(param !== 'true') 
+         returnParams.push(param+'_newCommitmentValue');
          else 
          returnParams.push('bool');
       });
@@ -234,6 +232,108 @@ const prepareIntegrationApiRoutes = (node: any) => {
   // add linting and config
   return outputApiRoutesFile;
 };
+
+const prepareIntegrationEncryptedListener = ( node: any) => {
+let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/encrypted-data-listener.mjs')
+const file = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };  
+file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
+let encryptedCode = '';
+let encryptedStateVarId = '';
+let encryptedValue = ''
+node.stateVariables?.forEach(
+  variable => {
+    variable.isMapping ?  encryptedStateVarId = `const ${variable.name}_stateVarId = generalise(utils.mimcHash([generalise(${variable.id}).bigInt, self.ethAddress.bigInt], 'ALT_BN_254')).hex(32);`
+  : `const ${variable.name}_stateVarId = ${variable.id}`;
+    variable.isStruct ?  variable.structProperty.forEach( (structProp, index) => {
+       encryptedValue += `
+       const ${structProp} = generalise(decrypted[${index+1}]);`
+    }) : encryptedValue += ` const value =  generalise(decrypted[1]); `;
+    if(variable.isStruct) {
+    encryptedCode += `
+    const newCommitment = poseidonHash([
+      BigInt(stateVarId.hex(32)),
+      ${variable.structProperty.map(structProp => `BigInt(${structProp}.hex(32))`).join(', \n')},
+      BigInt(self.publicKey.hex(32)),
+      BigInt(salt.hex(32))
+    ]);
+
+    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      try {
+        await storeCommitment({
+          hash: newCommitment,
+          name: '${variable.name}',
+          source: 'encrypted data',
+          mappingKey: stateVarId.integer,
+          preimage: {
+            stateVarId,
+            value: {
+              ${variable.structProperty.map((structProp, index) => `${structProp}`).join(', ')}
+            },
+            salt,
+            publicKey: self.publicKey,
+          },
+          secretKey: self.secretKey,
+          isNullified: false,
+        });
+        console.log('Added commitment', newCommitment.hex(32));
+      } catch (e) {
+        if (e.toString().includes('E11000 duplicate key')) {
+          console.log(
+            'encrypted-data-listener -',
+            'receiving EncryptedData event with balances.',
+            'This ${variable.name} already exists. Ignore it.',
+          );
+        }
+      }
+    }`;
+      
+    } else {
+      encryptedCode += `
+
+      const newCommitment = poseidonHash([
+        BigInt(stateVarId.hex(32)),
+        BigInt(value.hex(32)),
+        BigInt(self.publicKey.hex(32)),
+        BigInt(salt.hex(32))
+      ]);
+  
+    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      try {
+        await storeCommitment({
+          hash: newCommitment,
+          name: '${variable.name}',
+          source: 'encrypted data',
+          mappingKey: stateVarId.integer,
+          preimage: {
+            stateVarId,
+            value,
+            salt,
+            publicKey: self.publicKey,
+          },
+          secretKey: self.secretKey,
+          isNullified: false,
+        });
+        console.log('Added commitment', newCommitment.hex(32));
+      } catch (e) {
+        if (e.toString().includes('E11000 duplicate key')) {
+          console.log(
+            'encrypted-data-listener -',
+            'receiving EncryptedData event with balances.',
+            'This ${variable.name} already exists. Ignore it.',
+          );
+        }
+      }
+    }
+` ;
+
+    }
+   
+  }
+)
+encryptedCode = encryptedStateVarId + encryptedValue + encryptedCode;
+file.file = file.file.replace(/ENCRYPTEDVARIABLE_CODE/g, encryptedCode);
+return file.file;
+} 
 
 /**
  * @param file - a generic migrations file skeleton to mutate
@@ -394,6 +494,197 @@ const prepareStartupScript = (file: localFile, node: any) => {
   file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
 }
 
+const prepareBackupDataRetriever = (node: any) => {
+  // import generic test skeleton
+  let genericApiServiceFile: any = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */
+  import config from "config";
+  import utils from "zkp-utils";
+  import GN from "general-number";
+  import fs from "fs";
+  import mongo from './common/mongo.mjs';
+  
+  import {
+    storeCommitment,
+    markNullified,
+  } from "./common/commitment-storage.mjs";
+  
+  import {
+    getContractInstance,
+    getContractAddress,
+  } from "./common/contract.mjs";
+  
+  import Web3 from "./common/web3.mjs";
+  import {
+    decompressStarlightKey,
+    compressStarlightKey,
+    encrypt,
+    decrypt,
+    poseidonHash,
+    scalarMult,
+  } from "./common/number-theory.mjs";
+  
+  const { generalise } = GN;
+  const web3 = Web3.connection();
+  const keyDb = "/app/orchestration/common/db/key.json";
+  const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
+
+  
+  export async function backupDataRetriever() {
+
+    const connection = await mongo.connection(MONGO_URL);
+    const db = connection.db(COMMITMENTS_DB);
+
+    try {
+      // Get the list of all collections in the database
+      const collections = await db.listCollections().toArray();
+
+      // Drop each collection
+      for (let collection of collections) {
+        await db.collection(collection.name).drop();
+      }
+      console.log("Database emptied");
+    } catch (err) {
+      console.error("Error emptying database:", err);
+    }
+  
+    const instance = await getContractInstance("CONTRACT_NAME");
+  
+    const contractAddr = await getContractAddress("CONTRACT_NAME");
+  
+    const backDataEvent =   await instance.getPastEvents('EncryptedBackupData',{fromBlock: 0, toBlock: 'latest'} );
+  
+    const keys = JSON.parse(
+      fs.readFileSync(keyDb, "utf-8", (err) => {
+        console.log(err);
+      })
+    );
+    const secretKey = generalise(keys.secretKey);
+    const publicKey = generalise(keys.publicKey);
+    let storedCommitments = [];
+    for (const log of backDataEvent) {
+      for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
+        let cipherText = log.returnValues.encPreimages[i].cipherText;
+        let ephPublicKey = log.returnValues.encPreimages[i].ephPublicKey;
+        let varName = log.returnValues.encPreimages[i].varName;
+        let name = varName.replace(" a", "").replace(" s", "").replace(" u", "");
+        let isArray = false;
+        let isStruct = false;
+        if (varName.includes(" a")) {
+          isArray = true;
+        } else if (varName.includes(" s")) {
+          isStruct = true;
+        }
+        const plainText = decrypt(
+          cipherText,
+          secretKey.hex(32),
+          [
+            decompressStarlightKey(generalise(ephPublicKey))[0].hex(32),
+            decompressStarlightKey(generalise(ephPublicKey))[1].hex(32),
+          ]
+        );	
+        let mappingKey = null;
+        let stateVarId;
+        let value;
+        console.log("Decrypted pre-image of commitment for variable name: " + name + ": ");
+        let salt = generalise(plainText[0]);
+        console.log(\`\\tSalt: \${salt.integer}\`);
+        if (isArray){
+          console.log(\`\\tState variable StateVarId: \${plainText[2]}\`);
+          mappingKey = generalise(plainText[1]);
+          console.log(\`\\tMapping Key: \${mappingKey.integer}\`);
+          let reGenStateVarId = generalise(
+            utils.mimcHash(
+              [
+                generalise(plainText[2]).bigInt,
+                generalise(plainText[1]).bigInt,
+              ],
+              "ALT_BN_254"
+            )
+          );
+          stateVarId = reGenStateVarId;
+          console.log(\`Regenerated StateVarId: \${reGenStateVarId.bigInt}\`);
+          value = generalise(plainText[3]);
+          console.log(\`\\tValue: \${value.integer}\`);
+        } else {
+          stateVarId = generalise(plainText[1]);
+          console.log(\`\\tStateVarId: \${plainText[1]}\`);
+          if (isStruct){
+            value = {};`;
+
+            node.privateStates.forEach((stateVar: any) => {
+              if (stateVar.structProperties){
+                let propCount = 2;
+                genericApiServiceFile += `\nif (stateVarId.integer === '${stateVar.stateVarId}') {`
+                stateVar.structProperties.forEach((prop: any) => {
+                  genericApiServiceFile += `value.${prop} = plainText[${propCount}];\n`;
+                  propCount++;
+                });
+                genericApiServiceFile += `}\n`;
+              }
+            });
+        
+            genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
+          } else {
+            value = generalise(plainText[2]);
+            console.log(\`\\tValue: \${value.integer}\`);
+          }
+        }
+        let newCommitment;
+        if (isStruct){
+          let hashInput = [BigInt(stateVarId.hex(32))];
+          for (let i = 2; i < plainText.length; i++) {
+            hashInput.push(BigInt(generalise(plainText[i]).hex(32)));
+          }
+          hashInput.push(BigInt(publicKey.hex(32)));
+          hashInput.push(BigInt(salt.hex(32)));
+          newCommitment = generalise(poseidonHash(hashInput));
+        } else {
+          newCommitment = generalise(poseidonHash([
+            BigInt(stateVarId.hex(32)),
+            BigInt(value.hex(32)),
+            BigInt(publicKey.hex(32)),
+            BigInt(salt.hex(32)),
+          ]));
+        }
+        if (!varName.includes(" u")){
+          let oldCommitments = storedCommitments.filter(
+            (element) =>
+              element.stateVarId.integer === stateVarId.integer &&
+              (!mappingKey || element.mappingKey === mappingKey?.integer)
+            );
+          for (const oldCommitment of oldCommitments){
+            await markNullified(oldCommitment.hash, secretKey.hex(32));
+            let index = storedCommitments.findIndex(element => element === oldCommitment);
+            if (index !== -1) {
+            storedCommitments.splice(index, 1);
+            }
+          }
+        }
+        await storeCommitment({
+          hash: newCommitment,
+          name: name,
+          mappingKey: mappingKey?.integer,
+          preimage: {
+            stateVarId: stateVarId,
+            value: value,
+            salt: salt,
+            publicKey: publicKey,
+          },
+          secretKey: secretKey,
+          isNullified: false,
+        });
+        storedCommitments.push({stateVarId: stateVarId, hash: newCommitment, mappingKey: mappingKey?.integer});
+      }
+    };
+  }`;
+  
+  // replace references to contract and functions with ours
+  let outputApiServiceFile = genericApiServiceFile.replace(
+    /CONTRACT_NAME/g,
+    node.contractName,
+  );
+  return outputApiServiceFile;
+};
 
 /**
  * @param {string} file - a stringified file
@@ -447,6 +738,9 @@ export default function fileGenerator(node: any) {
       readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup');
       const startupScript = { filepath: 'bin/startup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(startupScript);
+      readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup-double');
+      const startupScriptDouble = { filepath: 'bin/startup-double', file: fs.readFileSync(readPath, 'utf8') };
+      files.push(startupScriptDouble);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>
         obj.filepath.includes(`zkp-setup`),
@@ -473,6 +767,7 @@ export default function fileGenerator(node: any) {
       // build the migrations file
       prepareMigrationsFile(migrationsfile, node);
       prepareStartupScript(startupScript, node);
+      prepareStartupScript(startupScriptDouble, node);
       return files;
     }
 
@@ -487,6 +782,14 @@ export default function fileGenerator(node: any) {
     case 'IntegrationApiRoutesBoilerplate': {
       const api_routes = prepareIntegrationApiRoutes(node);
       return api_routes;
+    }
+    case 'BackupDataRetrieverBoilerplate': {
+      const backupDataRetriever = prepareBackupDataRetriever(node);
+      return backupDataRetriever;
+    }
+    case 'IntegrationEncryptedListenerBoilerplate': {
+       const  encryptedListener = prepareIntegrationEncryptedListener(node); 
+      return encryptedListener;
     }
     default:
       throw new TypeError(`I dont recognise this type: ${node.nodeType}`);

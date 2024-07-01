@@ -643,7 +643,7 @@ export class Scope {
     let indicator: StateVariableIndicator;
     const indicators: StateVariableIndicator[] = Object.values(this.indicators);
     for (indicator of indicators) {
-      if (indicator.name === name) return indicator;
+      if (indicator && indicator.name === name) return indicator;
     }
     return null;
   }

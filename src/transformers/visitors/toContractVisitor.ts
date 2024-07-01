@@ -44,7 +44,7 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   if(thisPath.getAncestorOfType('Return') && binding instanceof VariableBinding && binding.isSecret){
    thisState.customInputs ??= [];
    if(thisState.variableName.includes(indicator.node.name))
-    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}, isReturn: true});
+    thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}, isReturn: true, isCommitment: true});
   }
 
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
@@ -339,7 +339,6 @@ export default {
           scope,
         }),
       );
-
       if (node.kind === 'constructor')
         preStatements.push(
           ...buildNode('FunctionBoilerplate', {
@@ -390,9 +389,9 @@ export default {
       });
 
     node.parameters.forEach((node, index) => {
-    if(node.nodeType === 'VariableDeclaration'){
-    node.name = returnName[index];
-  }
+      if(node.nodeType === 'VariableDeclaration'){
+        node.name = returnName[index];
+      }
     });
 
     const newNode = buildNode('ParameterList');
@@ -446,7 +445,7 @@ export default {
        path.traversePathsFast(findCustomInputsVisitor, state);
        state.returnpara ??= {};
        state.returnpara[state.functionName] ??= {};
-       state.returnpara[state.functionName].returnParameters = state.customInputs.filter(n => n.isReturn).map(n => n.name );
+       state.returnpara[state.functionName].returnParameters = state.customInputs?.filter(n => n.isReturn).map(n => n.name );
        const newNode = buildNode(
        node.nodeType,
        { value: node.expression.value });
@@ -694,6 +693,9 @@ DoWhileStatement: {
         visibility: node.visibility,
         storageLocation: node.storageLocation,
       });
+      if (newNode.isSecret === undefined ){
+        newNode.isSecret = scope.getIndicatorByName(node.name)?.isSecret;
+      }
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
@@ -911,23 +913,16 @@ DoWhileStatement: {
            state.fnParameters.push(args[index]);
 
          });
-         const params = [...(internalfnDefIndicators.nullifiersRequired? [`nullifierRoot`] : []),
-               ...(internalfnDefIndicators.nullifiersRequired? [`latestNullifierRoot`] : []),
-               ...(internalfnDefIndicators.nullifiersRequired?  [`newNullifiers`] : []), 
-               ...(internalfnDefIndicators.oldCommitmentAccessRequired ? [`commitmentRoot`] : []),
-               ...(internalfnDefIndicators.newCommitmentsRequired ? [`newCommitments`] : []),
-               ...(internalfnDefIndicators.encryptionRequired ? [`cipherText`] : []),
-               ...(internalfnDefIndicators.encryptionRequired ? [`ephPubKeys`] : []),
-               `proof`,
+         const params = [
+               `inputs, proof, BackupData`,
          ]
-
          state.fnParameters = state.fnParameters.concat(params);
-
          newNode = buildNode('InternalFunctionCall', {
          name: node.expression.name,
          internalFunctionInteractsWithSecret: state.internalFunctionInteractsWithSecret,
          parameters: state.fnParameters,
         });
+        newNode.encryptionRequired = internalfnDefIndicators.encryptionRequired;
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;
