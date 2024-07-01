@@ -497,10 +497,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       node.returnParameters.forEach( (param, index) => {
        if(param === 'true')
         rtnparams?.push('bool: bool');
-       else if(param?.includes('Commitment'))
-        rtnparams?.push( ` ${param} : ${param}.integer  `);
-       else
-        rtnparams.push(`   ${param} :${param}.integer`);
+       else 
+       rtnparams?.push( ` ${param.replace('_change', '')}_newCommitmentValue : ${param}.integer  `);
      });
       if (params) params[params.length - 1] += `,`;
 

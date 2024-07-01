@@ -167,10 +167,8 @@ const prepareIntegrationApiServices = (node: any) => {
       let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
       if(returnParamsName.length > 0){
       returnParamsName.forEach(param => {
-        if(fn.decrementsSecretState.includes(param)) 
-           returnParams.push(param+'_2_newCommitment');
-        else if(param !== 'true') 
-         returnParams.push(param+'_newCommitment');
+        if(param !== 'true') 
+         returnParams.push(param+'_newCommitmentValue');
          else 
          returnParams.push('bool');
       });
