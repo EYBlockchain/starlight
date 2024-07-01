@@ -946,6 +946,11 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
+      readPath: pathPrefix + '/boilerplate-docker-compose.zapp-double.yml',
+      writePath: './docker-compose.zapp-double.yml',
+      generic: true,
+    },
+    {
       readPath: pathPrefix + '/boilerplate-Docker-compose.zapp.override.yml',
       writePath: './docker-compose.zapp.override.yml',
       generic: true,
@@ -993,7 +998,7 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
-      generic: true,
+      generic: false,
     },
     {
       readPath: pathPrefix + '/commitment-storage.mjs',

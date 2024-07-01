@@ -235,6 +235,108 @@ const prepareIntegrationApiRoutes = (node: any) => {
   return outputApiRoutesFile;
 };
 
+const prepareIntegrationEncryptedListener = ( node: any) => {
+let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/encrypted-data-listener.mjs')
+const file = { filepath: 'orchestration/common/encrypted-data-listener.mjs', file: fs.readFileSync(readPath, 'utf8') };  
+file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
+let encryptedCode = '';
+let encryptedStateVarId = '';
+let encryptedValue = ''
+node.stateVariables?.forEach(
+  variable => {
+    variable.isMapping ?  encryptedStateVarId = `const ${variable.name}_stateVarId = generalise(utils.mimcHash([generalise(${variable.id}).bigInt, self.ethAddress.bigInt], 'ALT_BN_254')).hex(32);`
+  : `const ${variable.name}_stateVarId = ${variable.id}`;
+    variable.isStruct ?  variable.structProperty.forEach( (structProp, index) => {
+       encryptedValue += `
+       const ${structProp} = generalise(decrypted[${index+1}]);`
+    }) : encryptedValue += ` const value =  generalise(decrypted[1]); `;
+    if(variable.isStruct) {
+    encryptedCode += `
+    const newCommitment = poseidonHash([
+      BigInt(stateVarId.hex(32)),
+      ${variable.structProperty.map(structProp => `BigInt(${structProp}.hex(32))`).join(', \n')},
+      BigInt(self.publicKey.hex(32)),
+      BigInt(salt.hex(32))
+    ]);
+
+    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      try {
+        await storeCommitment({
+          hash: newCommitment,
+          name: '${variable.name}',
+          source: 'encrypted data',
+          mappingKey: stateVarId.integer,
+          preimage: {
+            stateVarId,
+            value: {
+              ${variable.structProperty.map((structProp, index) => `${structProp}`).join(', ')}
+            },
+            salt,
+            publicKey: self.publicKey,
+          },
+          secretKey: self.secretKey,
+          isNullified: false,
+        });
+        console.log('Added commitment', newCommitment.hex(32));
+      } catch (e) {
+        if (e.toString().includes('E11000 duplicate key')) {
+          console.log(
+            'encrypted-data-listener -',
+            'receiving EncryptedData event with balances.',
+            'This ${variable.name} already exists. Ignore it.',
+          );
+        }
+      }
+    }`;
+      
+    } else {
+      encryptedCode += `
+
+      const newCommitment = poseidonHash([
+        BigInt(stateVarId.hex(32)),
+        BigInt(value.hex(32)),
+        BigInt(self.publicKey.hex(32)),
+        BigInt(salt.hex(32))
+      ]);
+  
+    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      try {
+        await storeCommitment({
+          hash: newCommitment,
+          name: '${variable.name}',
+          source: 'encrypted data',
+          mappingKey: stateVarId.integer,
+          preimage: {
+            stateVarId,
+            value,
+            salt,
+            publicKey: self.publicKey,
+          },
+          secretKey: self.secretKey,
+          isNullified: false,
+        });
+        console.log('Added commitment', newCommitment.hex(32));
+      } catch (e) {
+        if (e.toString().includes('E11000 duplicate key')) {
+          console.log(
+            'encrypted-data-listener -',
+            'receiving EncryptedData event with balances.',
+            'This ${variable.name} already exists. Ignore it.',
+          );
+        }
+      }
+    }
+` ;
+
+    }
+   
+  }
+)
+encryptedCode = encryptedStateVarId + encryptedValue + encryptedCode;
+file.file = file.file.replace(/ENCRYPTEDVARIABLE_CODE/g, encryptedCode);
+return file.file;
+} 
+
 /**
  * @param file - a generic migrations file skeleton to mutate
  * @param contextDirPath - a SetupCommonFilesBoilerplate node
@@ -638,6 +740,9 @@ export default function fileGenerator(node: any) {
       readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup');
       const startupScript = { filepath: 'bin/startup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(startupScript);
+      readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup-double');
+      const startupScriptDouble = { filepath: 'bin/startup-double', file: fs.readFileSync(readPath, 'utf8') };
+      files.push(startupScriptDouble);
       const vkfile = files.filter(obj => obj.filepath.includes(`write-vk`))[0];
       const setupfile = files.filter(obj =>
         obj.filepath.includes(`zkp-setup`),
@@ -664,6 +769,7 @@ export default function fileGenerator(node: any) {
       // build the migrations file
       prepareMigrationsFile(migrationsfile, node);
       prepareStartupScript(startupScript, node);
+      prepareStartupScript(startupScriptDouble, node);
       return files;
     }
 
@@ -682,6 +788,10 @@ export default function fileGenerator(node: any) {
     case 'BackupDataRetrieverBoilerplate': {
       const backupDataRetriever = prepareBackupDataRetriever(node);
       return backupDataRetriever;
+    }
+    case 'IntegrationEncryptedListenerBoilerplate': {
+       const  encryptedListener = prepareIntegrationEncryptedListener(node); 
+      return encryptedListener;
     }
     default:
       throw new TypeError(`I dont recognise this type: ${node.nodeType}`);

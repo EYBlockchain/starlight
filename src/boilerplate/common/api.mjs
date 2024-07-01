@@ -1,5 +1,7 @@
 import express from 'express';
 import router from "./api_routes.mjs"; // import the routes
+import Web3 from './common/web3.mjs'
+ENCRYPTEDLISTENER_IMPORT
 
 const app = express();
 
@@ -18,7 +20,10 @@ function gracefulshutdown() {
 process.on("SIGTERM", gracefulshutdown);
 process.on("SIGINT", gracefulshutdown);
 
+const web3 = Web3.connection()
+ENCRYPTEDLISTENER_CALL
 
+ 
 const listener = app.listen(process.env.PORT || 3000, () => {
     console.log('Your app is listening on port ' + listener.address().port)
 })

@@ -393,6 +393,17 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractImports,
       };
     }
+    case 'IntegrationEncryptedListenerBoilerplate': {
+      const {
+        contractName,
+        stateVariables = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        stateVariables
+      };
+    }
     case 'IntegrationTestFunction': {
       const {
         name,
