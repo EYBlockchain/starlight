@@ -9,7 +9,8 @@ contract Assign {
 
   function addB(secret uint256 value) public {
     known b += value;
-  
+    
+
   }
 
   function addA( uint256 value) public {

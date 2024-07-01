@@ -421,7 +421,7 @@ const visitor = {
           );
         }
         }
-      } else if (!scope.modifiesSecretState()) {
+      } else if (!scope.modifiesSecretState() && node.containsPublic) {
         if (node.kind === 'fallback' || node.kind === 'receive' || !node.name) {
           state.skipSubNodes = true;
           return;
@@ -489,7 +489,7 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
-       if(node.containsPublic){
+       if(node.containsPublic || !scope.modifiesSecretState){
         
         interface PublicParam {
           name: string;
