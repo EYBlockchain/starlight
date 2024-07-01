@@ -687,7 +687,6 @@ const visitor = {
             if (!newNodes.generateProofNode.parameters.includes(input.name))
               newNodes.generateProofNode.parameters.push(input.name);
           })
-
           delete state.publicInputs; // reset
         }
         if (state.constructorStatements && state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
@@ -1608,9 +1607,9 @@ const visitor = {
         });
         parent._newASTPointer[path.containerName] = newNode;
         node._newASTPointer = newNode.condition;
-        if (node.arguments[0]) NodePath.getPath(node.arguments[0]).traverse(visitor, {});
+        if (node.arguments[0]) NodePath.getPath(node.arguments[0]).traverse(visitor, state);
         node._newASTPointer = newNode.message;
-        if (node.arguments[1]) NodePath.getPath(node.arguments[1]).traverse(visitor, {});
+        if (node.arguments[1]) NodePath.getPath(node.arguments[1]).traverse(visitor, state);
         state.skipSubNodes = true;
         return;
       }
