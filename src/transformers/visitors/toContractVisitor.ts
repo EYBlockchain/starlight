@@ -46,7 +46,6 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
    if(thisState.variableName.includes(indicator.node.name))
     thisState.customInputs.push({name: 'newCommitments['+(thisState.variableName.indexOf(indicator.node.name))+']', typeName: {name: 'uint256'}, isReturn: true, isCommitment: true});
   }
-
   // for some reason, node.interactsWithSecret has disappeared here but not in toCircuit
   // below: we have a public state variable we need as a public input to the circuit
   // local variable decs and parameters are dealt with elsewhere
@@ -849,6 +848,9 @@ DoWhileStatement: {
         const subState = { interactsWithSecret: false };
         path.traversePathsFast(interactsWithSecretVisitor, subState);
         if (subState.interactsWithSecret) {
+          if (path.isRequireStatement()){
+            NodePath.getPath(node.arguments[0]).traversePathsFast(findCustomInputsVisitor, state);
+          }
           state.skipSubNodes = true;
           return;
         }

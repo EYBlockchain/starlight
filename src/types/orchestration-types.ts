@@ -258,6 +258,14 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         name,
       };
     }
+    case 'RequireStatement': {
+      const {} = fields;
+      return {
+        nodeType,
+        condition: [],
+        message: [],
+      };
+    }
     case 'InitialisePreimage':
     case 'InitialiseKeys':
     case 'ReadPreimage':
