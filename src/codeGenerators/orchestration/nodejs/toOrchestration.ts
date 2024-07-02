@@ -124,9 +124,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `\n${codeGenerator(node.expression)};`;
       }
 
-      if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret) && !node.expression.leftHandSide.memberName){
-        return  `\nconst ${node.privateStateName}_newCommitmentValue = generalise(${node.increments})
-        \n;`;
+      if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret) ){
+        let privateStateName = node.privateStateName.replace(/\./g, '_');
+        return  `\nconst ${privateStateName}_newCommitmentValue = generalise(${node.increments});\n`;
       }
 
       if (!node.interactsWithSecret)

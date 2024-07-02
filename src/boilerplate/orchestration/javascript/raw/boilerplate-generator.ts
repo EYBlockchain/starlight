@@ -119,7 +119,6 @@ class BoilerplateGenerator {
               \n\n// read preimage for incremented state
               ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
               ${stateVarIds.join('\n')}
-              \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
               \n
             `];
           return [`
@@ -380,8 +379,13 @@ class BoilerplateGenerator {
       // once per state
       switch (stateType) {
         case 'increment':
+          let newComValue = ``;
+          if (structProperties){
+            newComValue = `\nconst ${stateName}_newCommitmentValue = generalise([${Object.values(structProperties).map((sp) => `${stateName}_${sp}_newCommitmentValue`)}]).all;`;
+          }
           return [`
           \nconst ${stateName}_newSalt = generalise(utils.randomHex(31));
+          ${newComValue} 
           \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_newCommitmentValue.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_newCommitmentValue.hex(32))`}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
           \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];
         case 'decrement':
