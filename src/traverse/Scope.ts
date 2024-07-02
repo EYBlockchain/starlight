@@ -756,10 +756,10 @@ export class Scope {
     if (keyBinding?.isModified) {
       let i = 0;
       // Consider each time the variable (which becomes the mapping's key) is edited throughout the scope:
-      for (const modifyingPath of keyBinding.modifyingPaths) {
+      let filteredModifyingPaths = keyBinding.modifyingPaths.filter(modifyingPath => modifyingPath.scope.scopeName === indexAccessPath.scope.scopeName);
+      for (const modifyingPath of filteredModifyingPaths) {
         // we have found the 'current' state (relative to the input node), so we don't need to move any further
         if (indexAccessNode.id < modifyingPath.node.id && i === 0) break;
-
         i++;
 
         if (

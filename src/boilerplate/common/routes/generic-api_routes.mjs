@@ -1,6 +1,17 @@
 import express from 'express';
-import {service_FUNCTION_NAME} from "./api_services.mjs";
-const router  = express.Router();
+
+export class Router {
+    constructor(serviceMgr){
+        this.serviceMgr =serviceMgr;
+    }
+
+    addRoutes() {
+
+        const router  = express.Router();
 
 //router.get('/database', serviceController.getAllCommitment);
-router.post('/FUNCTION_NAME', service_FUNCTION_NAME);
+router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);
+
+    }
+}
+

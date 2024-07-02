@@ -62,6 +62,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);
+
         return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
           fn.signature[1]
       }`;

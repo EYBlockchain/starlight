@@ -131,24 +131,22 @@ const prepareIntegrationTest = (node: any) => {
 const prepareIntegrationApiServices = (node: any) => {
   // import generic test skeleton
   const genericApiServiceFile: any = Orchestrationbp.integrationApiServicesBoilerplate;
-  let outputApiServiceFile = ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
-      /**
-    NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
-    minus() cannot be called before an initial add(). */
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    let leafIndex;
-    let encryption = {};
-    // eslint-disable-next-line func-names
-    export async function ${node.contractName}(){
-      try {
-        await web3.connect();
-      } catch (err) {
-        throw new Error(err);
-    }
-  }`
-
-
+  // replace references to contract and functions with ours
+  let outputApiServiceFile = genericApiServiceFile.preStatements();
+  
+  `
+    this.FUNCTION_NAME = new FUNCTION_NAMEManager(web3);
+    `
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+  relevantFunctions.forEach((fn: any) => {
+    outputApiServiceFile = `${outputApiServiceFile} \n this.${fn.name} = new ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager(web3)`
+  })
+  outputApiServiceFile = `${outputApiServiceFile}} \n async init() { \n`;
+  relevantFunctions.forEach((fn: any) => {
+    outputApiServiceFile = `${outputApiServiceFile} \n await this.${fn.name}.init();`
+  })
+  outputApiServiceFile = `${outputApiServiceFile}} \n`;
+
 
   relevantFunctions.forEach((fn: any) => {
   let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
@@ -202,17 +200,15 @@ const prepareIntegrationApiServices = (node: any) => {
     fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
 
     // replace function imports at top of file
-    const fnimport = genericApiServiceFile.import().replace(
-      /FUNCTION_NAME/g,
-      fn.name,
-    );
+    const fnimport = ` import { ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager } from './${fn.name}.mjs' ;`
+    
     // for each function, add the new imports and boilerplate to existing test
     outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
 
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
-  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`; 
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}}\n ${genericApiServiceFile.commitments()}\n`; 
   return outputApiServiceFile;
 };
 const prepareIntegrationApiRoutes = (node: any) => {
@@ -230,21 +226,14 @@ const prepareIntegrationApiRoutes = (node: any) => {
     let fnboilerplate = genericApiRoutesFile.postStatements()
       .replace(/FUNCTION_NAME/g, fn.name);
 
-    // replace function imports at top of file
-     fnimport = genericApiRoutesFile.import().replace(
-      /FUNCTION_NAME/g,
-      fn.name,
-    );
-
-    // for each function, add the new imports and boilerplate to existing test
-    outputApiRoutesimport = `${outputApiRoutesimport}\n${fnimport}\n`;
+    
     outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
   });
   // add getters for commitments
   outputApiRoutesimport = `${outputApiRoutesimport}\n${genericApiRoutesFile.commitmentImports()}\n`;
   outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${genericApiRoutesFile.commitmentRoutes()}\n`
   const fnprestatement = genericApiRoutesFile.preStatements();
-  const postfix = `export default router;`;
+  const postfix = `return router; \n} \n }`;
   outputApiRoutesFile = `${outputApiRoutesimport}\n${fnprestatement}\n${outputApiRoutesboilerplate}\n ${postfix}`;
   // add linting and config
   return outputApiRoutesFile;
