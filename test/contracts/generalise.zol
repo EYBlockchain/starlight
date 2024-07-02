@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+contract SyntheticPpa {
+    secret uint256 private a;
+    address public immutable owner;
+    secret mapping(uint256 => uint256) private b;
+    secret mapping(uint256 => uint256) private c;
+
+    struct myStruct {
+        uint256 prop1;
+        uint256 prop2;
+        uint256 prop3;
+    }
+    secret myStruct private d;
+
+
+    modifier onlyOwner() {
+        require(
+            msg.sender == owner
+        );
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+
+    function add(secret uint256 value, secret uint256 index) public onlyOwner {
+        a = value;
+        if (a > 5) {
+            b[index] = a;
+        } else {
+            c[index] = a +3;
+        }
+        secret uint256 index1 = 0;
+        if (c[index] > 0) { 
+            d.prop1 = value;
+            d.prop2 = value +1;
+            d.prop3 = value +2;
+        } 
+    }
+
+
+
+
+
+    
+}
