@@ -782,7 +782,8 @@ integrationApiServicesBoilerplate = {
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
-
+      
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       let leafIndex;
       let encryption = {};
       // eslint-disable-next-line func-names
@@ -796,7 +797,7 @@ integrationApiServicesBoilerplate = {
       return [`// eslint-disable-next-line func-names \n ${
           (fs.readFileSync(apiServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`,
           `// eslint-disable-next-line func-names \n ${
-          (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`];
+          (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`];
     },
   commitments(): string {
     return `

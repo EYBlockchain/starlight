@@ -139,7 +139,7 @@ const prepareIntegrationApiServices = (node: any) => {
     `
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
   relevantFunctions.forEach((fn: any) => {
-    outputApiServiceFile = `${outputApiServiceFile} \n this.${fn.name} = ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager(web3)`
+    outputApiServiceFile = `${outputApiServiceFile} \n this.${fn.name} = new ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager(web3)`
   })
   outputApiServiceFile = `${outputApiServiceFile}} \n async init() { \n`;
   relevantFunctions.forEach((fn: any) => {
@@ -200,7 +200,7 @@ const prepareIntegrationApiServices = (node: any) => {
     fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
 
     // replace function imports at top of file
-    const fnimport = ` import { ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager } from "${fn.name}.mjs" ;`
+    const fnimport = ` import { ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager } from './${fn.name}.mjs' ;`
     
     // for each function, add the new imports and boilerplate to existing test
     outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
