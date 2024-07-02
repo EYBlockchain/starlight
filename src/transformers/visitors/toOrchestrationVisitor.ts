@@ -503,8 +503,7 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
-       if(node.containsPublic && !scope.modifiesSecretState){
-        
+       if(node.containsPublic && !scope.modifiesSecretState()){
         interface PublicParam {
           name: string;
           properties?: { name: string; type: string }[];

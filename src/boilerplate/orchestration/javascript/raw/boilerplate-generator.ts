@@ -424,12 +424,10 @@ class BoilerplateGenerator {
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
-        `\nimport Web3 from './common/web3.mjs';`,
         `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
-        `const web3 = Web3.connection();`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -466,6 +464,7 @@ class BoilerplateGenerator {
               decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}
             `];
         case 'decrement':
+
           prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
@@ -773,7 +772,7 @@ postStatements(): string {
 };
 integrationApiServicesBoilerplate = {
   import(): string {
-    return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
+    return  `import { FUNCTION_NAME } from './FUNCTION_NAME.mjs';\n
     `
   },
   preStatements(): string{
@@ -781,26 +780,22 @@ integrationApiServicesBoilerplate = {
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
-
-      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       let leafIndex;
       let encryption = {};
       // eslint-disable-next-line func-names
 
-      export async function CONTRACT_NAME(){
-
-      	try {
-      		await web3.connect();
-      	} catch (err) {
-      		throw new Error(err);
-      }
-      }`
+      export class ServiceManager{
+        constructor(web3){
+          this.web3 =web3;
+          `
     },
     postStatements(): string[] {
       return [`// eslint-disable-next-line func-names \n ${
-          (fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`,
+          (fs.readFileSync(apiServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`,
           `// eslint-disable-next-line func-names \n ${
-          (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`];
+          (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`];
     },
   commitments(): string {
     return `
@@ -890,17 +885,18 @@ integrationApiServicesBoilerplate = {
 
 };
 integrationApiRoutesBoilerplate = {
-  import(): string {
-    return  `import {service_FUNCTION_NAME} from "./api_services.mjs";\n
-    `
-  },
   preStatements(): string{
     return ` import express from 'express';\n
-    \nconst router  = express.Router();`
+    \nexport class Router {
+      constructor(serviceMgr) {
+        this.serviceMgr = serviceMgr;
+      }
+      addRoutes() {
+        const router  = express.Router();
+      `
   },
   postStatements(): string {
-    return `// eslint-disable-next-line func-names \n ${
-        (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
+    return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
     return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, } from "./api_services.mjs";\n`;

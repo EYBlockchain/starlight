@@ -1,29 +1,33 @@
+
 import express from 'express';
-import router from "./api_routes.mjs"; // import the routes
-import Web3 from './common/web3.mjs'
+import { ServiceManager } from './api_services.mjs';
+import { Router } from './api_routes.mjs'; 
+import Web3 from './common/web3.mjs';
 ENCRYPTEDLISTENER_IMPORT
 
-const app = express();
-
-app.use(express.json());
-
-app.use('/', router); //to use the routes
-
 function gracefulshutdown() {
-    console.log("Shutting down");
-    listener.close(() => {
-        console.log("HTTP server closed.");      
-        process.exit(0); 
-    });
+  console.log('Shutting down');
+  listener.close(() => {
+    console.log('HTTP server closed.');
+    process.exit(0);
+  });
 }
 
-process.on("SIGTERM", gracefulshutdown);
-process.on("SIGINT", gracefulshutdown);
+process.on('SIGTERM', gracefulshutdown);
+process.on('SIGINT', gracefulshutdown);
 
-const web3 = Web3.connection()
-ENCRYPTEDLISTENER_CALL
+const app = express();
+app.use(express.json());
 
- 
-const listener = app.listen(process.env.PORT || 3000, () => {
-    console.log('Your app is listening on port ' + listener.address().port)
-})
+const web3 = Web3.connection();
+const serviceMgr = new ServiceManager(web3);
+serviceMgr.init().then(async () => {
+  ENCRYPTEDLISTENER_CALL
+
+  const router = new Router(serviceMgr);
+  const r = router.addRoutes();
+  app.use('/', r);
+  const listener = app.listen(process.env.PORT || 3000, () => {
+    console.log('Your app is listening on port ' + listener.address().port);
+  });
+});
