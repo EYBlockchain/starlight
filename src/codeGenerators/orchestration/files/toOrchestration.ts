@@ -129,7 +129,7 @@ const prepareIntegrationTest = (node: any) => {
 };
 
 const prepareIntegrationApiServices = (node: any) => {
-  // import generic test skeletonfr
+  // import generic test skeleton
   const genericApiServiceFile: any = Orchestrationbp.integrationApiServicesBoilerplate;
   // replace references to contract and functions with ours
   let outputApiServiceFile = genericApiServiceFile.preStatements();
@@ -149,11 +149,15 @@ const prepareIntegrationApiServices = (node: any) => {
 
 
   relevantFunctions.forEach((fn: any) => {
-
-  let fnboilerplate = genericApiServiceFile.postStatements()
+  let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
+  genericApiServiceFile.postStatements()[0]
     .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name)
-    .replace(/CONSTRUCTOR_INPUTS/g, node.functionNames.includes('cnstrctr') ? `await addConstructorNullifiers();` : ``);
+    .replace(/CONSTRUCTOR_INPUTS/g, node.functionNames.includes('cnstrctr') ? `await addConstructorNullifiers();` : ``)
+    .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
+    .replace(/CONTRACT_NAME/g, node.contractName)
+    .replace(/FUNCTION_NAME/g, fn.name) ;
+   
+  
   let fnParam: string[] = [];
   let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
@@ -782,6 +786,7 @@ export default function fileGenerator(node: any) {
       const api_services = prepareIntegrationApiServices(node);
       return api_services;
     }
+
     case 'IntegrationApiRoutesBoilerplate': {
       const api_routes = prepareIntegrationApiRoutes(node);
       return api_routes;
