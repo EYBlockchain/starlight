@@ -4,9 +4,18 @@ contract Assign {
   secret uint256 private a;
   secret uint256 private b;
 
+  struct MyStruct {
+    uint256 prop1;
+    uint256 prop2;
+  }
+
+  secret MyStruct public x;
+
   
-  function giveAmounttoCharity( uint256 value ) public {
+  function add( uint256 value ) public {
     unknown b += value +a;
+    unknown x.prop1 += value + a;
+    unknown x.prop2 += value + a;
     a+= value;
   }
 

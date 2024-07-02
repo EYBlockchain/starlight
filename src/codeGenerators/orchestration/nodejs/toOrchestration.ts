@@ -122,6 +122,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         return `\n${codeGenerator(node.expression)};`;
       }
+
+      if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret) && !node.expression.leftHandSide.memberName){
+        return  `\nconst ${node.privateStateName}_newCommitmentValue = generalise(${node.increments})
+        \n;`;
+      }
+
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       return `\n// increment would go here but has been filtered out`;
