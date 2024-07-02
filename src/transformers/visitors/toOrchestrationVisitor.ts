@@ -386,6 +386,7 @@ const visitor = {
   },
 
   FunctionDefinition: {
+  
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (scope.modifiesSecretState()) {
@@ -434,10 +435,52 @@ const visitor = {
           );
         }
         }
+      } else if (!scope.modifiesSecretState() && node.containsPublic) {
+        if (node.kind === 'fallback' || node.kind === 'receive' || !node.name) {
+          state.skipSubNodes = true;
+          return;
+        }
+     
+        const contractName = `${parent.name}Shield`;
+        const fnName = path.getUniqueFunctionName();
+        node.fileName = fnName;
+  
+        const newNode = buildNode('File', {
+          fileName: fnName,
+          fileExtension: '.mjs',
+          nodes: [
+            buildNode('Imports'),
+            buildNode('FunctionDefinition', { name: node.name, contractName }),
+          ],
+        });
+  
+        node._newASTPointer = newNode.nodes[1];
+        parent._newASTPointer.push(newNode);
+  
+        for (const file of parent._newASTPointer) {
+          if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+            file.nodes[0].functions.push(
+              buildNode('IntegrationPublicApiServiceFunction', {
+                name: fnName,
+                parameters: [],
+                returnParameters: [],
+              }),
+            );
+          }
+          if (file.nodes?.[0].nodeType === 'IntegrationApiRoutesBoilerplate') {
+            file.nodes[0].functions.push(
+              buildNode('IntegrationApiRoutesFunction', {
+                name: fnName,
+                parameters: [],
+              }),
+            );
+          }
+        }
+
       } else {
         state.skipSubNodes = true;
-      }
-
+      }  
+  
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
@@ -460,7 +503,53 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
-       
+       if(node.containsPublic && !scope.modifiesSecretState){
+        
+        interface PublicParam {
+          name: string;
+          properties?: { name: string; type: string }[];
+          isConstantArray?: boolean;
+          isBool?: boolean;
+        }
+
+        const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
+          functionName: node.fileName,
+          publicInputs: [],
+        });
+        
+        
+        
+        node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
+          if (!para.isSecret) {
+            if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool')) {
+              let newParam: PublicParam = { name: para.name };
+              if (path.isStructDeclaration(para)) {
+                newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
+              }
+              if (path.isConstantArray(para)) {
+                newParam.isConstantArray = true;
+              }
+              if (para.typeName?.name === 'bool') {
+                newParam.isBool = true;
+              }
+              sendPublicTransactionNode.publicInputs.push(newParam);
+            } else {
+              sendPublicTransactionNode.publicInputs.push(para.name);
+            }
+          }
+        });
+        
+        
+        // Add publics parametres to sendTransactionNode
+        node._newASTPointer.body.postStatements.push(sendPublicTransactionNode);
+          
+        node.parameters.parameters.forEach(para => {
+          node._newASTPointer.publicInputs ??= [];
+          node._newASTPointer.publicInputs.push(para.name);
+        });
+      
+       }
+      
 
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
@@ -508,7 +597,10 @@ const visitor = {
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
-          file.functionNames.push(node.fileName);
+          if(scope.modifiesSecretState()){
+            file.functionNames.push(node.fileName);
+          }
+          
         }
       }
 

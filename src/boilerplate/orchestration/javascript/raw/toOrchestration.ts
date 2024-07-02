@@ -949,8 +949,34 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           //   });\n`,
         ],
       };
-    default:
-      return {};
+  
+
+      case 'SendPublicTransaction':  
+      node.publicInputsString = node.publicInputs.map(input =>
+        (typeof input === 'object' && !Array.isArray(input)) ? JSON.stringify(input) : input
+      ).join(',');
+      return {
+        statements: [
+          `\n\n// Send transaction to the blockchain:
+           \nconst txData = await instance.methods.${node.functionName}(${node.publicInputsString}).encodeABI();
+          \nlet txParams = {
+            from: config.web3.options.defaultAccount,
+            to: contractAddr,
+            gas: config.web3.options.defaultGas,
+            gasPrice: config.web3.options.defaultGasPrice,
+            data: txData,
+            chainId: await web3.eth.net.getId(),
+          };
+          \nconst key = config.web3.key;
+          \nconst signed = await web3.eth.accounts.signTransaction(txParams, key);
+          \nconst tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+          \nconst encEvent = {};
+          \nconst encBackupEvent ={};
+         `
+        ]
+      }
+      default:
+        return {};
   }
 };
 
