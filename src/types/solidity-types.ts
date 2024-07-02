@@ -71,6 +71,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'ModifierDefinition':
     case 'Break':
     case 'Continue':
+    case 'MsgSender':
       return [];
 
     // And again, if we haven't recognized the nodeType then we'll throw an

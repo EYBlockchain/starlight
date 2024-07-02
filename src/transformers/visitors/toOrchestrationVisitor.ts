@@ -35,10 +35,11 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
     return structIncs;
   }
   for (const inc of stateVarIndicator.increments || []) {
-
     if (inc.nodeType === 'IndexAccess' || inc.nodeType === 'MemberAccess') inc.name = getIndexAccessName(inc);
     if (!inc.name) inc.name = inc.value;
-    if (incrementsArray.some(existingInc => inc.name === existingInc.name))
+    // Note: modName defined in circuit
+    let modName =  inc.modName ? inc.modName : inc.name;
+    if (incrementsArray.some(existingInc => inc.name === existingInc.name ))
       continue;
     incrementsArray.push({
       name: inc.name,
@@ -48,17 +49,18 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 
     if (inc === stateVarIndicator.increments?.[0]) {
       incrementsString += inc.value
-        ? `parseInt(${inc.name}, 10)`
-        : `parseInt(${inc.name}.integer, 10)`;
+        ? `parseInt(${modName}, 10)`
+        : `parseInt(${modName}.integer, 10)`;
     } else {
       incrementsString += inc.value
-        ? ` ${inc.precedingOperator} parseInt(${inc.name}, 10)`
-        : ` ${inc.precedingOperator} parseInt(${inc.name}.integer, 10)`;
+        ? ` ${inc.precedingOperator} parseInt(${modName}, 10)`
+        : ` ${inc.precedingOperator} parseInt(${modName}.integer, 10)`;
     }
   }
   for (const dec of stateVarIndicator.decrements || []) {
     if (dec.nodeType === 'IndexAccess' || dec.nodeType === 'MemberAccess') dec.name = getIndexAccessName(dec);
     if (!dec.name) dec.name = dec.value;
+    let modName =  dec.modName ? dec.modName : dec.name;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
       continue;
     incrementsArray.push({
@@ -68,14 +70,14 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 
     if (!stateVarIndicator.decrements?.[1] && !stateVarIndicator.increments?.[0]) {
       incrementsString += dec.value
-        ? `parseInt(${dec.name}, 10)`
-        : `parseInt(${dec.name}.integer, 10)`;
+        ? `parseInt(${modName}, 10)`
+        : `parseInt(${modName}.integer, 10)`;
     } else {
       // if we have decrements, this str represents the value we must take away
       // => it's a positive value with +'s
       incrementsString += dec.value
-        ? ` + parseInt(${dec.name}, 10)`
-        : ` + parseInt(${dec.name}.integer, 10)`;
+        ? ` + parseInt(${modName}, 10)`
+        : ` + parseInt(${modName}.integer, 10)`;
     }
   }
   return { incrementsArray, incrementsString };
@@ -676,10 +678,10 @@ const visitor = {
             state.wholeNullified ??= [];
             if (!state.wholeNullified.includes(name)) state.wholeNullified.push(name)
           }
-          
-          let { incrementsArray, incrementsString } = isIncremented
+          let increments = isIncremented
             ? collectIncrements(stateVarIndicator)
             : { incrementsArray: null, incrementsString: null };
+          let {incrementsArray, incrementsString} = increments;
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
@@ -1475,8 +1477,8 @@ const visitor = {
       // reset
       delete state.interactsWithSecret;
       if (node._newASTPointer?.incrementsSecretState && indicator) {
-        const increments = collectIncrements(indicator).incrementsString;
-        path.node._newASTPointer.increments = increments;
+        let increments = collectIncrements(indicator);
+        path.node._newASTPointer.increments = increments.incrementsString;
       } else if (indicator?.isWhole && node._newASTPointer) {
         // we add a general number statement after each whole state edit
         const tempNode = node._newASTPointer;
