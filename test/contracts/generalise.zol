@@ -34,7 +34,6 @@ contract SyntheticPpa {
         } else {
             c[index] = a +3;
         }
-        secret uint256 index1 = 0;
         if (c[index] > 0) { 
             d.prop1 = value;
             d.prop2 = value +1;
