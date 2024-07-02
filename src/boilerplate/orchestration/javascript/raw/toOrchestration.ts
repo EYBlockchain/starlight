@@ -137,6 +137,20 @@ export const generateProofBoilerplate = (node: any) => {
 
     const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
 
+    // We are keeping this code in comments, for future if have any issue with extra mapping keys getting added for a zapp we can come to this
+    
+    // let name: string;
+    // let state: any;
+    // let isIncluded = false;
+    // console.log(node.privateStates);
+    // for ([name, state] of Object.entries(node.privateStates)) {
+    //   if (stateNode.stateVarId[0] === state.stateVarId[0] && stateName != name && node.parameters.includes(state.stateVarId[1]) ) {
+    //     console.log(stateNode.stateVarId, stateName, name);
+    //     console.log(node.parameters);
+    //     isIncluded = true;
+    //   }
+    // }
+
     const stateVarIdLines =
       stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
@@ -273,7 +287,6 @@ export const generateProofBoilerplate = (node: any) => {
    // extract the nullifier Root
 
   output.push(`\n].flat(Infinity);`);
-  console.log(output);
   return [output, [enc]];
 };
 
