@@ -24,14 +24,17 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 
-export async function service_FUNCTION_NAME (req, res, next){
-  // try {
-  //   await web3.connect();
-  //   await new Promise((resolve) => setTimeout(() => resolve(), 3000));
-  // } catch (err) {
-  //   throw new Error(err);
-  // }
-  //const serviceManager = req.serviceManager; 
+export class ServiceManager{
+  constructor(web3){
+    this.web3 =web3;
+    this.FUNCTION_NAME = new FUNCTION_NAME(web3);
+  }
+
+  async init(){
+    await this.FUNCTION_NAME.init();
+  }
+
+ async service_FUNCTION_NAME (req, res, next){
 	try {
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;

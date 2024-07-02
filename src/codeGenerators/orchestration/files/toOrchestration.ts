@@ -132,13 +132,24 @@ const prepareIntegrationApiServices = (node: any) => {
   // import generic test skeletonfr
   const genericApiServiceFile: any = Orchestrationbp.integrationApiServicesBoilerplate;
   // replace references to contract and functions with ours
-  let outputApiServiceFile = genericApiServiceFile.preStatements().replace(
-    /CONTRACT_NAME/g,
-    node.contractName,
-  );
+  let outputApiServiceFile = genericApiServiceFile.preStatements();
+  
+  `
+    this.FUNCTION_NAME = new FUNCTION_NAMEManager(web3);
+    `
   const relevantFunctions = node.functions.filter((fn: any) => fn.name !== 'cnstrctr');
+  relevantFunctions.forEach((fn: any) => {
+    outputApiServiceFile = `${outputApiServiceFile} \n this.${fn.name} = ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager(web3)`
+  })
+  outputApiServiceFile = `${outputApiServiceFile}} \n async init() { \n`;
+  relevantFunctions.forEach((fn: any) => {
+    outputApiServiceFile = `${outputApiServiceFile} \n await this.${fn.name}.init();`
+  })
+  outputApiServiceFile = `${outputApiServiceFile}} \n`;
+
 
   relevantFunctions.forEach((fn: any) => {
+
   let fnboilerplate = genericApiServiceFile.postStatements()
     .replace(/CONTRACT_NAME/g, node.contractName)
     .replace(/FUNCTION_NAME/g, fn.name)
@@ -185,17 +196,15 @@ const prepareIntegrationApiServices = (node: any) => {
     fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
 
     // replace function imports at top of file
-    const fnimport = genericApiServiceFile.import().replace(
-      /FUNCTION_NAME/g,
-      fn.name,
-    );
+    const fnimport = ` import { ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager } from "${fn.name}.mjs" ;`
+    
     // for each function, add the new imports and boilerplate to existing test
     outputApiServiceFile = `${fnimport}\n${outputApiServiceFile}\n${fnboilerplate}`;
 
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
-  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}\n ${genericApiServiceFile.commitments()}\n`; 
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}}\n ${genericApiServiceFile.commitments()}\n`; 
   return outputApiServiceFile;
 };
 const prepareIntegrationApiRoutes = (node: any) => {
@@ -213,21 +222,15 @@ const prepareIntegrationApiRoutes = (node: any) => {
     let fnboilerplate = genericApiRoutesFile.postStatements()
       .replace(/FUNCTION_NAME/g, fn.name);
 
-    // replace function imports at top of file
-     fnimport = genericApiRoutesFile.import().replace(
-      /FUNCTION_NAME/g,
-      fn.name,
-    );
-
-    // for each function, add the new imports and boilerplate to existing test
-    outputApiRoutesimport = `${outputApiRoutesimport}\n${fnimport}\n`;
+    
     outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
   });
+  console.log(outputApiRoutesboilerplate);
   // add getters for commitments
   outputApiRoutesimport = `${outputApiRoutesimport}\n${genericApiRoutesFile.commitmentImports()}\n`;
   outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${genericApiRoutesFile.commitmentRoutes()}\n`
   const fnprestatement = genericApiRoutesFile.preStatements();
-  const postfix = `export default router;`;
+  const postfix = `return router; \n} \n }`;
   outputApiRoutesFile = `${outputApiRoutesimport}\n${fnprestatement}\n${outputApiRoutesboilerplate}\n ${postfix}`;
   // add linting and config
   return outputApiRoutesFile;
