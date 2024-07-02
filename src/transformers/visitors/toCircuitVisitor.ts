@@ -25,12 +25,29 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
   
   // If there is a statment where a secret variable interacts with a public one, we need to adjust previous statements where the public variable was modified.
 
+  // New test starts from here
+
+  const interactsWithSecret = node.interactsWithSecret || node.baseExpression?.interactsWithSecret;
+  const interactsWithPublic = node.interactsWithPublic || node.baseExpression?.interactsWithPublic;
+
+  // Journalisation pour le débogage
+  console.log(`Node: ${node.name}, interactsWithSecret: ${interactsWithSecret}, interactsWithPublic: ${interactsWithPublic}`);
+
+  // Traiter seulement si la variable interagit avec les variables secrètes et publiques
   if (
     binding instanceof VariableBinding &&
-    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
-    binding.stateVariable && !binding.isSecret 
-  ) {
+    interactsWithSecret &&
+    interactsWithPublic &&
+    binding.stateVariable && !binding.isSecret
+  ) 
+
+  // if (
+  //   binding instanceof VariableBinding &&
+  //   (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
+  //   (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+  //   binding.stateVariable && !binding.isSecret 
+  // ) 
+  {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
     if (!fnDefNode) throw new Error(`Not in a function`);
 
