@@ -229,7 +229,6 @@ const prepareIntegrationApiRoutes = (node: any) => {
     
     outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
   });
-  console.log(outputApiRoutesboilerplate);
   // add getters for commitments
   outputApiRoutesimport = `${outputApiRoutesimport}\n${genericApiRoutesFile.commitmentImports()}\n`;
   outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${genericApiRoutesFile.commitmentRoutes()}\n`
