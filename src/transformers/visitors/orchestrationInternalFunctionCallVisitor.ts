@@ -304,7 +304,44 @@ const internalCallVisitor = {
                         }
                       });
                       childNode.body.statements = childNode.body.statements.filter(item => item !== null && item !== undefined);
-                     } else{
+                     } else if (state.callingFncName[index].parent === 'ForStatement'){
+                       state.newStatementList.forEach((statenode, stateid) => {
+                        childNode.body.statements.forEach((node, id)=> {
+                         if(node.nodeType === state.callingFncName[index].parent){
+                          if(statenode.nodeType === 'VariableDeclarationStatement'){
+                            childNode.body.statements[id-1] = statenode;
+                           node.body.statements.forEach(kidNode =>{
+                            if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
+                               kidNode.expression = Object.assign(kidNode.expression,statenode.initialValue);
+                            }
+                           });
+                          childNode.body.statements[id-1].initialValue =undefined;
+                          } else{
+                            node.body.statements.forEach(kidNode =>{
+                              if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
+                                 kidNode.expression = Object.assign(kidNode.expression,statenode.expression);
+                              }
+                             });
+                          }
+                        } 
+                       });
+                      });
+                      // remove multiple variable declarations
+                      childNode.body.statements.forEach((node1, index1)=> {
+                        let isDecDeleted = false;
+                        if(node1.nodeType === 'VariableDeclarationStatement'){
+                         childNode.body.statements.forEach((node2, index2)=> {
+                           if(!isDecDeleted && index2 < index1 && node2 && node2.nodeType === 'VariableDeclarationStatement'){
+                             if ((node1.declarations[0].name === node2.declarations[0].name)){
+                               childNode.body.statements.splice(index1, 1, node1.initialValue);
+                               isDecDeleted = true;
+                             }
+                           }
+                         });
+                       }
+                     });
+                     childNode.body.statements = childNode.body.statements.filter(item => item !== null && item !== undefined );
+                     } else {
                        state.newStatementList.forEach((statenode, stateid) => {
                         childNode.body.statements.forEach((node, id)=> {
                          if(node.nodeType === state.callingFncName[index].parent){
