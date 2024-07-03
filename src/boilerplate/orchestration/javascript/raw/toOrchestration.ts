@@ -686,7 +686,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'MembershipWitness':
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        const stateVarIds = stateVariableIds({ stateName, stateNode });
+        const stateVarIds = stateVariableIds({ privateStateName: stateName, stateNode });
         if (node.isConstructor) {
           lines.push([`
             const ${stateName}_index = generalise(0);
