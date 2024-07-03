@@ -1015,12 +1015,14 @@ const visitor = {
         // 9 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
         newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
+      
+        if(newNodes.VariableDeclarationStatement)
+        newFunctionDefinitionNode.body.preStatements.push(newNodes.VariableDeclarationStatement);
+
         if (newNodes.membershipWitnessNode)
-          newFunctionDefinitionNode.body.preStatements.push(
-            newNodes.membershipWitnessNode,
-          );
-          if(newNodes.VariableDeclarationStatement)
-          newFunctionDefinitionNode.body.preStatements.push(newNodes.VariableDeclarationStatement);
+        newFunctionDefinitionNode.body.postStatements.push(
+          newNodes.membershipWitnessNode,
+        );
 
         if (newNodes.calculateNullifierNode)
           newFunctionDefinitionNode.body.postStatements.push(

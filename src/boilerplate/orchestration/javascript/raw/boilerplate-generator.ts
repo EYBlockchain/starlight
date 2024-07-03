@@ -155,7 +155,7 @@ class BoilerplateGenerator {
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
             \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
-            // \n const ${stateName}_newCommitmentValue = generalise(${increment});
+            \n const ${stateName}_newCommitmentValue = generalise(${increment});
             // First check if required commitments exist or not
             \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
               publicKey.hex(32),
