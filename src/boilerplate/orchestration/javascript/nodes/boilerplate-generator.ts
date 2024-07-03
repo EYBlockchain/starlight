@@ -158,6 +158,30 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
           : null,
       };
     }
+
+    case 'EncryptBackupPreimage': {
+      const { id, increment, privateStateName, indicator = {} } = fields;
+      return {
+        privateStateName,
+        stateVarId: id,
+        increment,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
+        isWhole: indicator.isWhole,
+        isPartitioned: indicator.isPartitioned,
+        nullifierRequired: indicator.isNullified,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
+        encryptionRequired: indicator.encryptionRequired,
+        owner: indicator.isOwned
+          ? indicator.owner.node?.name || indicator.owner.name
+          : null,
+        ownerIsSecret: indicator.isOwned
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
+          : null,
+      };
+    }
     case 'SendTransaction': {
       const {
         increment,
@@ -175,6 +199,29 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         encryptionRequired: indicator.encryptionRequired,
         nullifierRequired: indicator.isNullified,
+      };
+    }
+
+    case 'buildBoilerplateReciever': {
+      const { id, increment, privateStateName, indicator = {} } = fields;
+      return {
+        privateStateName,
+        stateVarId: id,
+        increment,
+        mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
+        isWhole: indicator.isWhole,
+        isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        isOwned: indicator.isOwned,
+        mappingOwnershipType: indicator.mappingOwnershipType,
+        encryptionRequired: indicator.encryptionRequired,
+        owner: indicator.isOwned
+          ? indicator.owner.node?.name || indicator.owner.name
+          : null,
+        ownerIsSecret: indicator.isOwned
+          ? indicator.owner.isSecret || indicator.owner.node?.isSecret
+          : null,
       };
     }
 
@@ -256,16 +303,38 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
       };
     }
+    case 'EncryptBackupPreimage': {
+      const { privateStates = {} } = fields;
+      return {
+        nodeType,
+        privateStates,
+      };
+    }
     case 'SendTransaction': {
       const {
         functionName,
         contractName,
         publicInputs = [],
+        returnInputs = [],
         privateStates = {},
       } = fields;
       return {
         nodeType,
         privateStates,
+        functionName,
+        contractName,
+        publicInputs,
+        returnInputs,
+      };
+    }
+    case 'SendPublicTransaction': {
+      const {
+        functionName,
+        contractName,
+        publicInputs = [],
+      } = fields;
+      return {
+        nodeType,
         functionName,
         contractName,
         publicInputs,
@@ -337,6 +406,17 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractImports,
       };
     }
+    case 'IntegrationEncryptedListenerBoilerplate': {
+      const {
+        contractName,
+        stateVariables = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        stateVariables
+      };
+    }
     case 'IntegrationTestFunction': {
       const {
         name,
@@ -369,6 +449,21 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         isConstructor
       };
     }
+    case 'IntegrationPublicApiServiceFunction': {
+      const {
+        name,
+        parameters = buildNode('ParameterList', fields),
+        returnParameters =  buildNode('ParameterList', fields),
+        isConstructor = false,
+      } = fields;
+      return {
+        nodeType,
+        name,
+        parameters,
+        returnParameters,
+        isConstructor,
+      };
+    }
     case 'IntegrationApiRoutesFunction': {
       const {
         name,
@@ -378,6 +473,19 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         name,
       };
     }
+
+    case 'BackupDataRetrieverBoilerplate': {
+      const {
+        contractName,
+        privateStates = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        privateStates,
+      };
+    }
+
     default:
       throw new TypeError(nodeType);
   }

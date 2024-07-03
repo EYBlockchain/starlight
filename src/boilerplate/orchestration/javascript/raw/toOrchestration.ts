@@ -15,7 +15,7 @@ const stateVariableIds = (node: any) => {
   } else {
     // if is a mapping...
     stateVarIds.push(
-      `\nlet ${privateStateName}_stateVarId = ${stateNode.stateVarId[0]};`,
+      `\nlet ${privateStateName}_stateVarIdInit = ${stateNode.stateVarId[0]};`,
     );
     // ... and the mapping key is not msg.sender, but is a parameter
     if (
@@ -42,7 +42,7 @@ const stateVariableIds = (node: any) => {
       );
     }
     stateVarIds.push(
-      `\n${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarId).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+      `\nlet ${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarIdInit).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
     );
   }
   return stateVarIds;
@@ -451,6 +451,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const params:any[] = [];
   const states: string[] = [];
   const rtnparams: string[] = [];
+  const functionSig: string[] = [];
+  let returnInputs: string[] = [];
   let stateName: string;
   let stateNode: any;
 
@@ -459,12 +461,24 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return { statements:  Orchestrationbp.generateProof.import() }
 
     case 'FunctionDefinition':
-      // the main function
-      if (node.name !== 'cnstrctr') lines.push(
-        `\n\n// Initialisation of variables:
-        \nconst instance = await getContractInstance('${node.contractName}');
-        \nconst contractAddr = await getContractAddress('${node.contractName}');        `,
+      // the main function class
+      if (node.name !== 'cnstrctr') {functionSig.push(
+        `export class ${(node.name).charAt(0).toUpperCase() + node.name.slice(1)}Manager {
+          constructor(web3) {
+            this.web3 = web3;
+          }
+          
+          async init() {
+            this.instance = await getContractInstance('${node.contractName}');
+            this.contractAddr = await getContractAddress('${node.contractName}');
+          }
+        `
       );
+      lines.push(`
+      const instance = this.instance;
+      const contractAddr = this.contractAddr;
+      const web3 =  this.web3;`)
+    }
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
@@ -496,17 +510,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       node.returnParameters.forEach( (param, index) => {
        if(param === 'true')
         rtnparams?.push('bool: bool');
-       else if(param?.includes('Commitment'))
-        rtnparams?.push( ` ${param} : ${param}.integer  `);
-       else
-        rtnparams.push(`   ${param} :${param}.integer`);
+       else 
+       rtnparams?.push( ` ${param.replace('_change', '')}_newCommitmentValue : ${param}.integer  `);
      });
       if (params) params[params.length - 1] += `,`;
 
       if (node.name === 'cnstrctr')
         return {
           signature: [
-            `\nexport default async function ${node.name}(${params} ${states}) {`,
+            `\n export default async function ${node.name}(${params} ${states}) {`,
             `\nprocess.exit(0);
           \n}`,
           ],
@@ -515,8 +527,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         if(rtnparams.length == 0) {
           return {
             signature: [
-              `\nexport default async function ${node.name}(${params} ${states}) {`,
-              `\n return  { tx, encEvent };
+              `${functionSig}
+              \n async  ${node.name}(${params} ${states}) {`,
+              `\n return  { tx, encEvent, encBackupEvent };
+              \n}
             \n}`,
             ],
             statements: lines,
@@ -526,8 +540,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if(rtnparams.includes('bool: bool')) {
         return {
           signature: [
-            `\nexport default async function ${node.name}(${params} ${states}) {`,
-            `\n const bool = true; \n return  { tx, encEvent,  ${rtnparams} };
+            `
+            \n async  ${node.name}(${params} ${states}) {`,
+            `\n const bool = true; \n return  { tx, encEvent, encBackupEvent, ${rtnparams} };
+            \n}
           \n}`,
           ],
           statements: lines,
@@ -536,8 +552,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
       return {
         signature: [
-          `\nexport default async function ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx, encEvent, ${rtnparams} };
+          ` ${functionSig}
+          \n async ${node.name}(${params} ${states}) {`,
+          `\nreturn  { tx, encEvent, encBackupEvent, ${rtnparams} };
+          \n}
         \n}`,
         ],
         statements: lines,
@@ -832,47 +850,88 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ],
       };
 
-      case 'SendTransaction':
-        if (node.publicInputs[0]) {
-          node.publicInputs.forEach((input: any) => {
-            if (input.properties) {
-              lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
-            } else if (input.isConstantArray) {
-              lines.push(`${input.name}.all.integer`);
-            } else if(input.isBool) {
-            lines.push(`(parseInt(${input.name}.integer, 10) === 1) ? true : false`);
+      case 'EncryptBackupPreimage':
+        lines.push(`let BackupData = [];\n`)
+        for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+          let stateType;
+          if (stateNode.isWhole) {
+            stateType = 'whole';
+          } else if (stateNode.nullifierRequired) {
+            stateType = 'decrement';
+          } else {
+            stateType = 'increment';
+          }
+          lines.push(
+            Orchestrationbp.encryptBackupPreimage.postStatements( {
+              stateName,
+              stateType,
+              structProperties: stateNode.structProperties,
+              encryptionRequired: stateNode.encryptionRequired,
+              mappingName: stateNode.mappingName || stateName,
+              mappingKey: stateNode.mappingKey,
+            }));
+        }
+        return {
+          statements: lines,
+        };
+  
+
+    case 'SendTransaction':
+      if (node.publicInputs[0]) {
+        node.publicInputs.forEach((input: any) => {
+          if (input.properties) {
+            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
+          } else if (input.isConstantArray) {
+            lines.push(`${input.name}.all.integer`);
+          } else if(input.isBool) {
+            lines.push(`parseInt(${input.name}.integer, 10)`);
           }
           else {
             lines.push(`${input}.integer`);
           }           
         });
-        lines[lines.length - 1] += `, `;
       }
+      returnInputs = returnInputs.concat(lines);
+
+      if(node.returnInputs[0]) {
+        node.returnInputs.forEach((input: any) => { 
+          input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input);
+          
+        })
+      } 
+  
       params[0] = sendTransactionBoilerplate(node);
+      if(!node.returnInputs[0] && !params[0][4][0]) returnInputs.push(`1`); // If there are no return, circuit's default return is true
       // params[0] = arr of nullifier root(s)
       // params[1] = arr of commitment root(s)
       // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-
-      if (params[0][0][0]) params[0][0] = `${params[0][0][0]},${params[0][0][1]},`; // nullifierRoot - array
-      if (params[0][2][0]) params[0][2] = `${params[0][2][0]},`; // commitmentRoot - array 
-      if (params[0][1][0]) params[0][1] = `[${params[0][1]}],`; // nullifiers - array
-      if (params[0][3][0]) params[0][3] = `[${params[0][3]}],`; // commitments - array
-      if (params[0][4][0]) params[0][4] = `[${params[0][4]}],`; // cipherText - array of arrays
-      if (params[0][5][0]) params[0][5] = `[${params[0][5]}],`; // cipherText - array of arrays
+      (params[0][0][0]) ? params[0][0][0] = ` ${params[0][0][0]}, ` : params[0][0][0] = ` 0 , ` ; // nullifierRoot - array // Default value for the struct
+      (params[0][0][1]) ? params[0][0][1] = ` ${params[0][0][1]}, ` : params[0][0][1] = ` 0, `;
+      (params[0][2][0]) ? params[0][2] = ` ${params[0][2][0]},` : params[0][2] = ` 0 , ` ;  // commitmentRoot - array 
+      (params[0][1][0]) ? params[0][1] = ` [${params[0][1]}],` : params[0][1] = ` [],  `; // nullifiers - array
+      (params[0][3][0]) ? params[0][3] = `[${params[0][3]}],` : params[0][3] = ` [], `; // commitments - array
+      (params[0][4][0]) ? params[0][4] = `[${params[0][4]}],` : params[0][4] = ` [], `; // cipherText - array of arrays
+      (params[0][5][0]) ? params[0][5] = `[${params[0][5]}],`: params[0][5] = ` [], `;// cipherText - array of arrays
+       
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { proofInput: [${params[0][0]}${params[0][1]} ${params[0][2]} ${params[0][3]} proof], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nBackupData.forEach((element) => {
+            element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
+          });
+          \nconst tx = { proofInput: [{customInputs: [${returnInputs}], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}}, proof, BackupData], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
+      
+      
 
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines}${params[0][0]} ${params[0][1]} ${params[0][2]} ${params[0][3]} ${params[0][4]} ${params[0][5]} proof).encodeABI();
+          .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], nullifierRoot: ${params[0][0][0]} latestNullifierRoot:${params[0][0][1]} newNullifiers: ${params[0][1]}  commitmentRoot:${params[0][2]} newCommitments: ${params[0][3]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,
@@ -894,6 +953,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n  encEvent = await instance.getPastEvents("EncryptedData");
             \n } catch (err) {
             \n  console.log('No encrypted event');
+            \n}
+            \nlet encBackupEvent = '';
+            \n try {
+            \n  encBackupEvent = await instance.getPastEvents("EncryptedBackupData");
+            \n } catch (err) {
+            \n  console.log('No encrypted backup event');
             \n}`,
 
           // .send({
@@ -903,8 +968,34 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           //   });\n`,
         ],
       };
-    default:
-      return {};
+  
+
+      case 'SendPublicTransaction':  
+      node.publicInputsString = node.publicInputs.map(input =>
+        (typeof input === 'object' && !Array.isArray(input)) ? JSON.stringify(input) : input
+      ).join(',');
+      return {
+        statements: [
+          `\n\n// Send transaction to the blockchain:
+           \nconst txData = await instance.methods.${node.functionName}(${node.publicInputsString}).encodeABI();
+          \nlet txParams = {
+            from: config.web3.options.defaultAccount,
+            to: contractAddr,
+            gas: config.web3.options.defaultGas,
+            gasPrice: config.web3.options.defaultGasPrice,
+            data: txData,
+            chainId: await web3.eth.net.getId(),
+          };
+          \nconst key = config.web3.key;
+          \nconst signed = await web3.eth.accounts.signTransaction(txParams, key);
+          \nconst tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+          \nconst encEvent = {};
+          \nconst encBackupEvent ={};
+         `
+        ]
+      }
+      default:
+        return {};
   }
 };
 

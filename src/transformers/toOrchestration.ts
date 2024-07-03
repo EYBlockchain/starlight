@@ -64,6 +64,7 @@ export default function toOrchestration(ast: any, options: any) {
     contractNode.name.charAt(0).toUpperCase() + contractNode.name.slice(1)
   }Shield`;
   const wholeStateNames = contractNode._newASTPointer.wholeNullified;
+  let encryptedListener = contractNode._newASTPointer.some(node => node.fileName === 'encrypted-data-listener');
 
   // copy over existing backend files to the output dir:
   logger.verbose(
@@ -81,6 +82,12 @@ export default function toOrchestration(ast: any, options: any) {
       file = file.replace(/CONTRACT_NAME/g, contractName);
       file = file.replace(/FUNCTION_NAME/g, options.zappName);
       file = file.replace(/WHOLE_STATE_NAMES/g, wholeStateNames ? wholeStateNames.map(n => `'${n}'`).join(', ') : '');
+      file = file = file.replace(/ENCRYPTEDLISTENER_IMPORT/g, encryptedListener ?
+      `import  EncryptedDataEventListener  from './encrypted-data-listener.mjs'` : ` `);
+    
+      file = file.replace(/ENCRYPTEDLISTENER_CALL/g, encryptedListener ?
+      ` const eventListener = new EncryptedDataEventListener(web3)
+      await eventListener.start()` : ` `);
     }
     const dir = pathjs.dirname(filepath);
     logger.debug(`About to save to ${filepath}...`);

@@ -35,10 +35,11 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
     return structIncs;
   }
   for (const inc of stateVarIndicator.increments || []) {
-
     if (inc.nodeType === 'IndexAccess' || inc.nodeType === 'MemberAccess') inc.name = getIndexAccessName(inc);
     if (!inc.name) inc.name = inc.value;
-    if (incrementsArray.some(existingInc => inc.name === existingInc.name))
+    // Note: modName defined in circuit
+    let modName =  inc.modName ? inc.modName : inc.name;
+    if (incrementsArray.some(existingInc => inc.name === existingInc.name ))
       continue;
     incrementsArray.push({
       name: inc.name,
@@ -48,17 +49,18 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 
     if (inc === stateVarIndicator.increments?.[0]) {
       incrementsString += inc.value
-        ? `parseInt(${inc.name}, 10)`
-        : `parseInt(${inc.name}.integer, 10)`;
+        ? `parseInt(${modName}, 10)`
+        : `parseInt(${modName}.integer, 10)`;
     } else {
       incrementsString += inc.value
-        ? ` ${inc.precedingOperator} parseInt(${inc.name}, 10)`
-        : ` ${inc.precedingOperator} parseInt(${inc.name}.integer, 10)`;
+        ? ` ${inc.precedingOperator} parseInt(${modName}, 10)`
+        : ` ${inc.precedingOperator} parseInt(${modName}.integer, 10)`;
     }
   }
   for (const dec of stateVarIndicator.decrements || []) {
     if (dec.nodeType === 'IndexAccess' || dec.nodeType === 'MemberAccess') dec.name = getIndexAccessName(dec);
     if (!dec.name) dec.name = dec.value;
+    let modName =  dec.modName ? dec.modName : dec.name;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
       continue;
     incrementsArray.push({
@@ -68,14 +70,14 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 
     if (!stateVarIndicator.decrements?.[1] && !stateVarIndicator.increments?.[0]) {
       incrementsString += dec.value
-        ? `parseInt(${dec.name}, 10)`
-        : `parseInt(${dec.name}.integer, 10)`;
+        ? `parseInt(${modName}, 10)`
+        : `parseInt(${modName}.integer, 10)`;
     } else {
       // if we have decrements, this str represents the value we must take away
       // => it's a positive value with +'s
       incrementsString += dec.value
-        ? ` + parseInt(${dec.name}, 10)`
-        : ` + parseInt(${dec.name}.integer, 10)`;
+        ? ` + parseInt(${modName}, 10)`
+        : ` + parseInt(${modName}.integer, 10)`;
     }
   }
   return { incrementsArray, incrementsString };
@@ -319,6 +321,31 @@ const visitor = {
         ],
       });
       node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'BackupDataRetriever',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('BackupDataRetrieverBoilerplate', {
+            contractName,
+            privateStates: [],
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
+      if (scope.indicators.encryptionRequired) {
+        newNode = buildNode('File', {
+          fileName: 'encrypted-data-listener',
+          fileExtension: '.mjs',
+          nodes: [
+            buildNode('IntegrationEncryptedListenerBoilerplate', {
+              contractName,
+            }),
+          ],
+        });
+        node._newASTPointer.push(newNode);
+      }
+      
+     
       if (scope.indicators.newCommitmentsRequired) {
         const newNode = buildNode('EditableCommitmentCommonFilesBoilerplate');
         node._newASTPointer.push(newNode);
@@ -361,6 +388,7 @@ const visitor = {
   },
 
   FunctionDefinition: {
+  
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (scope.modifiesSecretState()) {
@@ -409,10 +437,52 @@ const visitor = {
           );
         }
         }
+      } else if (!scope.modifiesSecretState() && node.containsPublic) {
+        if (node.kind === 'fallback' || node.kind === 'receive' || !node.name) {
+          state.skipSubNodes = true;
+          return;
+        }
+     
+        const contractName = `${parent.name}Shield`;
+        const fnName = path.getUniqueFunctionName();
+        node.fileName = fnName;
+  
+        const newNode = buildNode('File', {
+          fileName: fnName,
+          fileExtension: '.mjs',
+          nodes: [
+            buildNode('Imports'),
+            buildNode('FunctionDefinition', { name: node.name, contractName }),
+          ],
+        });
+  
+        node._newASTPointer = newNode.nodes[1];
+        parent._newASTPointer.push(newNode);
+  
+        for (const file of parent._newASTPointer) {
+          if (file.nodes?.[0].nodeType === 'IntegrationApiServicesBoilerplate') {
+            file.nodes[0].functions.push(
+              buildNode('IntegrationPublicApiServiceFunction', {
+                name: fnName,
+                parameters: [],
+                returnParameters: [],
+              }),
+            );
+          }
+          if (file.nodes?.[0].nodeType === 'IntegrationApiRoutesBoilerplate') {
+            file.nodes[0].functions.push(
+              buildNode('IntegrationApiRoutesFunction', {
+                name: fnName,
+                parameters: [],
+              }),
+            );
+          }
+        }
+
       } else {
         state.skipSubNodes = true;
-      }
-
+      }  
+  
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
@@ -435,6 +505,52 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
+       if(node.containsPublic && !scope.modifiesSecretState()){
+        interface PublicParam {
+          name: string;
+          properties?: { name: string; type: string }[];
+          isConstantArray?: boolean;
+          isBool?: boolean;
+        }
+
+        const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
+          functionName: node.fileName,
+          publicInputs: [],
+        });
+        
+        
+        
+        node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
+          if (!para.isSecret) {
+            if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool')) {
+              let newParam: PublicParam = { name: para.name };
+              if (path.isStructDeclaration(para)) {
+                newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
+              }
+              if (path.isConstantArray(para)) {
+                newParam.isConstantArray = true;
+              }
+              if (para.typeName?.name === 'bool') {
+                newParam.isBool = true;
+              }
+              sendPublicTransactionNode.publicInputs.push(newParam);
+            } else {
+              sendPublicTransactionNode.publicInputs.push(para.name);
+            }
+          }
+        });
+        
+        
+        // Add publics parametres to sendTransactionNode
+        node._newASTPointer.body.postStatements.push(sendPublicTransactionNode);
+          
+        node.parameters.parameters.forEach(para => {
+          node._newASTPointer.publicInputs ??= [];
+          node._newASTPointer.publicInputs.push(para.name);
+        });
+      
+       }
+      
 
       // By this point, we've added a corresponding FunctionDefinition node to the newAST, with the same nodes as the original Solidity function, with some renaming here and there, and stripping out unused data from the oldAST.
       const functionIndicator: FunctionDefinitionIndicator = scope.indicators;
@@ -447,8 +563,26 @@ const visitor = {
            state.isjoinSplitCommitmentsFunction ??= [];
            state.isjoinSplitCommitmentsFunction?.push('true');
          }
+         if((indicators instanceof StateVariableIndicator) && indicators.encryptionRequired) {
+          for (const file of parent._newASTPointer) {
+            if(file.nodes?.[0].nodeType === 'IntegrationEncryptedListenerBoilerplate') {
+          if(indicators.isMapping) {
+            for(const [name, mappingKey ] of Object.entries(indicators.mappingKeys)){ 
+              if(mappingKey.encryptionRequired) {
+                mappingKey.isStruct ? 
+                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, isStruct: true, structProperty: Object.keys(mappingKey.structProperties), id: mappingKey.node.referencedDeclaration}) :
+                
+                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, id: mappingKey.node.referencedDeclaration});
+            }
+          }
+         } else {
+          file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: false,  id: indicators.node.referencedDeclaration});
+         }
+        }
       }
-
+      }
+    }
+      
       let thisIntegrationTestFunction: any = {};
       let thisIntegrationApiServiceFunction: any = {};
       for (const file of parent._newASTPointer) {
@@ -464,7 +598,10 @@ const visitor = {
           }
         }
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
-          file.functionNames.push(node.fileName);
+          if(scope.modifiesSecretState()){
+            file.functionNames.push(node.fileName);
+          }
+          
         }
       }
 
@@ -541,10 +678,10 @@ const visitor = {
             state.wholeNullified ??= [];
             if (!state.wholeNullified.includes(name)) state.wholeNullified.push(name)
           }
-          
-          let { incrementsArray, incrementsString } = isIncremented
+          let increments = isIncremented
             ? collectIncrements(stateVarIndicator)
             : { incrementsArray: null, incrementsString: null };
+          let {incrementsArray, incrementsString} = increments;
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
@@ -615,6 +752,35 @@ const visitor = {
               accessedOnly,
               indicator: stateVarIndicator,
             });
+          }
+
+          if (stateVarIndicator.newCommitmentsRequired) {
+            newNodes.encryptBackupPreimageNode.privateStates[
+              name
+            ] = buildPrivateStateNode('EncryptBackupPreimage', {
+              privateStateName: name,
+              id,
+              indicator: stateVarIndicator,
+            });
+          }
+
+          if (stateVarIndicator.newCommitmentsRequired) {
+            let contrNode = path.getContractDefinition().node._newASTPointer;
+            for (const file of contrNode) {
+              if (file.nodes?.[0].nodeType === 'BackupDataRetrieverBoilerplate') {
+                let newNode = buildPrivateStateNode('EncryptBackupPreimage', {
+                  privateStateName: name,
+                  id,
+                  indicator: stateVarIndicator,
+                });
+                if (!file.nodes?.[0].privateStates.some((n: any) => n.stateVarId === newNode.stateVarId)){
+                  file.nodes?.[0].privateStates.push(newNode);
+                }
+              }
+            }
+          }
+
+          if (secretModified || accessedOnly) {
 
             newNodes.sendTransactionNode.privateStates[
               name
@@ -704,7 +870,27 @@ const visitor = {
             } else newNodes.sendTransactionNode.publicInputs.push(param.name);
           }
         }
-
+        // this adds the return parameters which are marked as secret in the tx 
+        
+        let returnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+       
+        let returnIsSecret: string[] = [];
+          const decStates = node._newASTPointer.decrementedSecretStates;
+          if( node._newASTPointer.returnParameters.parameters) {
+            node._newASTPointer.returnParameters.parameters.forEach( node => {
+            returnIsSecret.push(node.isSecret);
+          })
+        }
+        returnPara.forEach( (param, index) => {
+          if(decStates) {
+           if(decStates?.includes(param)){
+            returnPara[index] = returnPara[index]+'_2_newCommitment';
+          }
+        } else if(returnIsSecret[index])
+        returnPara[index] = returnPara[index] +'_newCommitment';
+        })
+        newNodes.sendTransactionNode.returnInputs = returnPara;
+       
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         // UNLESS they are public accessed states...
         let earliestPublicAccessIndex = newFunctionDefinitionNode.body.preStatements.findIndex(
@@ -824,8 +1010,9 @@ const visitor = {
         // 4 - CalculateNullifier - nullifiersRequired - per state
         // 5 - CalculateCommitment - newCommitmentsRequired - per state
         // 6 - GenerateProof - all - per function
-        // 7 - SendTransaction - all - per function
-        // 8 - WritePreimage - all - per state
+        // 7 - EncryptBackupPreimage -newCommitmentsRequired - per state
+        // 8 - SendTransaction - all - per function
+        // 9 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
         newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
         if (newNodes.membershipWitnessNode)
@@ -845,6 +1032,8 @@ const visitor = {
           );
         if (newNodes.generateProofNode)
           newFunctionDefinitionNode.body.postStatements.push(newNodes.generateProofNode);
+        if (newNodes.encryptBackupPreimageNode)
+          newFunctionDefinitionNode.body.postStatements.push(newNodes.encryptBackupPreimageNode);
         if (newNodes.sendTransactionNode)
           newFunctionDefinitionNode.body.postStatements.push(
             newNodes.sendTransactionNode,
@@ -1288,8 +1477,8 @@ const visitor = {
       // reset
       delete state.interactsWithSecret;
       if (node._newASTPointer?.incrementsSecretState && indicator) {
-        const increments = collectIncrements(indicator).incrementsString;
-        path.node._newASTPointer.increments = increments;
+        let increments = collectIncrements(indicator);
+        path.node._newASTPointer.increments = increments.incrementsString;
       } 
 
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
@@ -1399,12 +1588,16 @@ const visitor = {
   Return: {
      enter(path: NodePath, state: any) {
        const { node, parent } = path;
-       const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
-       node._newASTPointer = newNode;
-       if (Array.isArray(parent._newASTPointer)) {
-         parent._newASTPointer.push(newNode);
-       } else {
-         parent._newASTPointer[path.containerName].push(newNode);
+       if (node.expression.value){
+        const newNode = buildNode(node.expression.nodeType, { value: node.expression.value });
+        node._newASTPointer = newNode;
+        if (Array.isArray(parent._newASTPointer)) {
+          parent._newASTPointer.push(newNode);
+        } else {
+          parent._newASTPointer[path.containerName].push(newNode);
+        }
+       } else{
+        state.skipSubNodes = true;
        }
      },
   },

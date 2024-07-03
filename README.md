@@ -329,6 +329,9 @@ You can also filter these commitments by variable name. Using the example above,
 ```
 as a GET request to `http://localhost:3000/getCommitmentsByVariableName`.
 
+If the commitment database that stores commitment preimages is lost you can restore the DB (by decrypting the onchain encryptions of the preimages) by sending a POST request to `http://localhost:3000/backupDataRetriever`.
+
+
 #### Using secret states in the constructor
 
 Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Any user supplied inputs will be prompted for in the command line when running `./bin/setup`.

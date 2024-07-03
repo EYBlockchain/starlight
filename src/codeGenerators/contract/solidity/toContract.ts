@@ -67,6 +67,8 @@ function codeGenerator(node: any) {
     case 'FunctionDefinition': {
       // prettier-ignore
       let functionType: string = ``;
+      let returnType: string[] = [];
+      let returnParams: string[] = [];
       switch (node.kind)
       {
         case 'fallback':
@@ -82,7 +84,15 @@ function codeGenerator(node: any) {
 
       }
 
-      const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} {`;
+      // add any public return here,
+      node.returnParameters.parameters.forEach(params => {
+        // We check that params.name is defined because otherwise this is a commitment 
+        if(!params.isSecret && params.name != undefined && params.typeDescriptions.typeString != 'bool') {
+          returnType.push(params.typeDescriptions.typeString);
+          returnParams.push(params.name);
+        }
+      })
+      const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} ${returnType.length > 0 ? `returns (${returnType})`: ``}{`;
       let body = codeGenerator(node.body);
       let msgSigCheck = body.slice(body.indexOf('bytes4 sig'), body.indexOf('verify') )
       if(!node.msgSigRequired)
@@ -91,6 +101,7 @@ function codeGenerator(node: any) {
       ${functionSignature}
 
         ${body}
+        ${returnType.length == 1 ? `return ${returnParams};` : returnType.length > 1  ? `return (${returnParams});` : `` }
       }`;
     }
 

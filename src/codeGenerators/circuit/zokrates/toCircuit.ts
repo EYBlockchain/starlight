@@ -78,7 +78,7 @@ function codeGenerator(node: any) {
 
         node.returnParameters.parameters.forEach((node) => {
           if (node.typeName.name === 'bool')
-            returnStatement.push(`${node.name}`);
+          node.isPrivate? returnStatement.push(`${node.name}_newCommitment_commitment`): returnStatement.push(`${node.name}`);
           else if (node.typeName.name.includes('EncryptedMsgs') && node.isPartitioned)
             returnStatement.push( `${node.name}_0_cipherText`);
           else if (node.typeName.name.includes('EncryptedMsgs'))
@@ -94,8 +94,9 @@ function codeGenerator(node: any) {
 
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
-        if((node.isPrivate === true || node.typeName.name === 'bool') || node.typeName.name.includes('EncryptedMsgs'))
+        if((node.isPrivate === true && node.typeName.name != 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
+        if( node.typeName.name === 'bool') node.isPrivate === true? returnType.push('field') : returnType.push('bool');
       });
  
       if(returnStatement.length === 0){

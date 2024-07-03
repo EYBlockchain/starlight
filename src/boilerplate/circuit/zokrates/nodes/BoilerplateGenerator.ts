@@ -45,7 +45,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     }
     if (inc.nodeType === 'MemberAccess') inc.name ??= `${inc.expression.name}.${inc.memberName}`;
     if (!inc.name) inc.name = inc.value;
-
+    let modName =  inc.modName ? inc.modName : inc.name;
     if (incrementsArray.some(existingInc => inc.name === existingInc.name))
       continue;
     incrementsArray.push({
@@ -54,9 +54,9 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     });
 
     if (inc === stateVarIndicator.increments[0]) {
-      incrementsString += `${inc.name}`;
+      incrementsString += `${modName}`;
     } else {
-      incrementsString += ` ${inc.precedingOperator} ${inc.name}`;
+      incrementsString += ` ${inc.precedingOperator} ${modName}`;
     }
   }
   for (const dec of stateVarIndicator.decrements) {
@@ -72,17 +72,18 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     if (!dec.name) dec.name = dec.value;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
       continue;
+    let modName =  dec.modName ? dec.modName : dec.name;
     incrementsArray.push({
       name: dec.name,
       precedingOperator: dec.precedingOperator,
     });
 
     if (!stateVarIndicator.decrements[1] && !stateVarIndicator.increments[0]) {
-      incrementsString += `${dec.name}`;
+      incrementsString += `${modName}`;
     } else {
       // if we have decrements, this str represents the value we must take away
       // => it's a positive value with +'s
-      incrementsString += ` + ${dec.name}`;
+      incrementsString += ` + ${modName}`;
     }
   }
   return { incrementsArray, incrementsString };

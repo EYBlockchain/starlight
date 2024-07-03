@@ -24,11 +24,12 @@ const literalOneNode = {
 const collectIncrements = (increments: any, incrementedIdentifier: any) => {
   const { operands, precedingOperator } = increments;
   const newIncrements: any[] = [];
+  const Idname = incrementedIdentifier.name || incrementedIdentifier.expression?.name;
   for (const [index, operand] of operands.entries()) {
     operand.precedingOperator = precedingOperator[index];
     if (
-      operand.name !== incrementedIdentifier.name &&
-      operand.baseExpression?.name !== incrementedIdentifier.name &&
+      operand.name !== Idname &&
+      operand.baseExpression?.name !== Idname &&
       !newIncrements.some(inc => inc.id === operand.id)
     )
       newIncrements.push(operand);

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 const testReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/generic-test.mjs');
 const pathPrefix = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/');
 const apiServiceReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/services/generic-api_services.mjs');
+const apiPublicServiceReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/services/genericpublic-api_services.mjs');
 const apiRoutesReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/routes/generic-api_routes.mjs');
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
@@ -423,12 +424,10 @@ class BoilerplateGenerator {
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified,getnullifierMembershipWitness,getupdatedNullifierPaths,temporaryUpdateNullifier,updateNullifierTree} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
-        `\nimport Web3 from './common/web3.mjs';`,
-        `\nimport { decompressStarlightKey, poseidonHash } from './common/number-theory.mjs';
+        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
-        `const web3 = Web3.connection();`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -465,6 +464,7 @@ class BoilerplateGenerator {
               decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].integer]` : ``}
             `];
         case 'decrement':
+
           prev = (index: number) => structProperties ? structProperties.map(p => `\t${stateName}_${index}_prev.${p}.integer`) : `\t${stateName}_${index}_prev.integer`;
           return [`
               ${parameters.join('\n')}${stateVarIds.join('\n')}
@@ -556,6 +556,69 @@ class BoilerplateGenerator {
       }
     }
     return []; // here to stop ts complaining
+  },
+};
+
+encryptBackupPreimage = {
+
+  postStatements({ stateName, stateType, structProperties, encryptionRequired, mappingName, mappingKey }): string[] {
+    let valueName = '';
+    let saltName = '';
+    switch (stateType) {
+      case 'increment':
+        valueName = `BigInt(${stateName}_newCommitmentValue.hex(32))`;
+        saltName = stateName + '_newSalt';
+        break;
+      case 'decrement':
+        valueName = structProperties ? `...${stateName}_change.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_change.hex(32))`;
+        saltName = stateName + '_2_newSalt';
+        break;
+      case 'whole':
+        valueName = structProperties ? structProperties.map(p => `BigInt(${stateName}.${p}.hex(32))`) :` BigInt(${stateName}.hex(32))`;
+        saltName = stateName + '_newSalt';
+        break;
+      default:
+    }
+    let plainText;
+    let varName = mappingName ? mappingName : stateName;
+    if (mappingKey){
+      if (mappingKey === 'msg'){
+        plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId_key.hex(32)),
+          BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
+          ${valueName}]`;
+          varName += ` a`;
+      } else {
+        plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
+          BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
+          ${valueName}]`;
+          varName += ` a`;
+      }
+    } else{
+      plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId),
+        ${valueName}]`;
+      if (structProperties) varName += ` s`;
+    }
+    if (stateType === 'increment') varName += ` u`;
+    return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
+    let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
+    let ${stateName}_ephPublicKeyPoint = generalise(
+      scalarMult(${stateName}_ephSecretKey.hex(32), config.BABYJUBJUB.GENERATOR)); \n
+    let ${stateName}_ephPublicKey = compressStarlightKey(${stateName}_ephPublicKeyPoint); \n
+    while (${stateName}_ephPublicKey === null) { \n
+      ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n
+      ${stateName}_ephPublicKeyPoint = generalise(
+        scalarMult(${stateName}_ephSecretKey.hex(32), config.BABYJUBJUB.GENERATOR)
+      ); \n
+      ${stateName}_ephPublicKey = compressStarlightKey(${stateName}_ephPublicKeyPoint);\n
+    } \n   
+    const ${stateName}_bcipherText = encrypt(
+      ${plainText},
+      ${stateName}_ephSecretKey.hex(32), [
+        decompressStarlightKey(${stateName}_newOwnerPublicKey)[0].hex(32),
+        decompressStarlightKey(${stateName}_newOwnerPublicKey)[1].hex(32)
+      ]); \n
+      let ${stateName}_cipherText_combined = {varName: "${varName}", cipherText:  ${stateName}_bcipherText, ephPublicKey: ${stateName}_ephPublicKey.hex(32)};\n 
+      BackupData.push(${stateName}_cipherText_combined);`];
   },
 };
 
@@ -709,34 +772,31 @@ postStatements(): string {
 };
 integrationApiServicesBoilerplate = {
   import(): string {
-    return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
+    return  `import { FUNCTION_NAME } from './FUNCTION_NAME.mjs';\n
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getSharedSecretskeys , getBalance, getBalanceByState, addConstructorNullifiers } from "./common/commitment-storage.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getSharedSecretskeys , getBalanceByState, addConstructorNullifiers } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
-
-      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       let leafIndex;
       let encryption = {};
       // eslint-disable-next-line func-names
 
-      export async function CONTRACT_NAME(){
-
-      	try {
-      		await web3.connect();
-      	} catch (err) {
-      		throw new Error(err);
-      }
-      }`
+      export class ServiceManager{
+        constructor(web3){
+          this.web3 =web3;
+          `
     },
-  postStatements(): string {
-    return `// eslint-disable-next-line func-names \n ${
-        (fs.readFileSync(apiServiceReadPath, 'utf8').match(/export?[\s\S]*/g)|| [])[0]}`
-  },
-
+    postStatements(): string[] {
+      return [`// eslint-disable-next-line func-names \n ${
+          (fs.readFileSync(apiServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`,
+          `// eslint-disable-next-line func-names \n ${
+          (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`];
+    },
   commitments(): string {
     return `
       export async function service_allCommitments(req, res, next) {
@@ -794,6 +854,17 @@ integrationApiServicesBoilerplate = {
           res.send({ errors: [err.message] });
         }
       }
+      
+      export async function service_backupData(req, res, next) {
+        try {
+            await backupDataRetriever();
+            res.send("Complete");
+            await sleep(10);
+        } catch (err) {
+            logger.error(err);
+            res.send({ errors: [err.message] });
+        }
+      }
       export async function service_getSharedKeys(req, res, next) {
         try {
           const { recipientAddress } = req.body;
@@ -814,20 +885,21 @@ integrationApiServicesBoilerplate = {
 
 };
 integrationApiRoutesBoilerplate = {
-  import(): string {
-    return  `import {service_FUNCTION_NAME} from "./api_services.mjs";\n
-    `
-  },
   preStatements(): string{
     return ` import express from 'express';\n
-    \nconst router  = express.Router();`
+    \nexport class Router {
+      constructor(serviceMgr) {
+        this.serviceMgr = serviceMgr;
+      }
+      addRoutes() {
+        const router  = express.Router();
+      `
   },
   postStatements(): string {
-    return `// eslint-disable-next-line func-names \n ${
-        (fs.readFileSync(apiRoutesReadPath, 'utf8').match(/router.post?[\s\S]*/g)|| [])[0]}`
+    return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getSharedKeys, service_getBalance, service_getBalanceByState } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
@@ -838,6 +910,8 @@ integrationApiRoutesBoilerplate = {
     // nullifier route
     router.post("/reinstateNullifiers", service_reinstateNullifiers);
     router.post("/getSharedKeys", service_getSharedKeys);
+    // backup route
+    router.post("/backupDataRetriever", service_backupData);
     `;
   }
 };
@@ -867,6 +941,11 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/boilerplate-docker-compose.yml',
       writePath: './docker-compose.zapp.yml',
+      generic: true,
+    },
+    {
+      readPath: pathPrefix + '/boilerplate-docker-compose.zapp-double.yml',
+      writePath: './docker-compose.zapp-double.yml',
       generic: true,
     },
     {
@@ -917,7 +996,7 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/api.mjs',
       writePath: './orchestration/api.mjs',
-      generic: true,
+      generic: false,
     },
     {
       readPath: pathPrefix + '/commitment-storage.mjs',
