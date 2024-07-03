@@ -126,6 +126,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
       if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         let privateStateName = node.privateStateName.replace(/\./g, '_');
+        if (typeof node.increments === 'object' && node.increments !== null) {
+          if (node.expression.leftHandSide.nodeType === 'MemberAccess'){
+            let propName = node.expression.leftHandSide.memberName;
+            return  `\nconst ${privateStateName}_newCommitmentValue = generalise(${node.increments[propName]});\n`;
+          }
+        };
         return  `\nconst ${privateStateName}_newCommitmentValue = generalise(${node.increments});\n`;
       }
 
