@@ -1479,19 +1479,7 @@ const visitor = {
       if (node._newASTPointer?.incrementsSecretState && indicator) {
         let increments = collectIncrements(indicator);
         path.node._newASTPointer.increments = increments.incrementsString;
-      } else if (indicator?.isWhole && node._newASTPointer) {
-        // we add a general number statement after each whole state edit
-        const tempNode = node._newASTPointer;
-        name = tempNode.initialValue && tempNode.initialValue.leftHandSide ? tempNode.initialValue.leftHandSide.name : name;
-        if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition')?.node._newASTPointer.body.statements.push(
-          buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name }),
-              operator: '=',
-              rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
-            }
-          )
-        );
-      }
+      } 
 
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
         path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
