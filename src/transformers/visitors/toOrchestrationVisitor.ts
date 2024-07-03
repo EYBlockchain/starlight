@@ -715,6 +715,7 @@ const visitor = {
             newNodes.membershipWitnessNode.privateStates[
               name
             ] = buildPrivateStateNode('MembershipWitness', {
+              id,
               privateStateName: name,
               indicator: stateVarIndicator,
               accessedOnly,

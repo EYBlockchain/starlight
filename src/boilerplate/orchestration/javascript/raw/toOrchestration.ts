@@ -686,6 +686,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'MembershipWitness':
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        const stateVarIds = stateVariableIds({ stateName, stateNode });
         if (node.isConstructor) {
           lines.push([`
             const ${stateName}_index = generalise(0);
@@ -700,6 +701,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               stateName,
               contractName: node.contractName,
               stateType: 'partitioned',
+              mappingName: stateNode.mappingName || stateName,
+              structProperties: stateNode.structProperties,
+              isSharedSecret: stateNode.isSharedSecret,
+              stateVarIds
             }));
 
         }
@@ -709,6 +714,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               stateName,
               contractName: node.contractName,
               stateType: 'accessedOnly',
+              mappingName: stateNode.mappingName || stateName,
+              structProperties: stateNode.structProperties,
+              isSharedSecret: stateNode.isSharedSecret,
+              stateVarIds
             }));
 
         } else if (stateNode.isWhole) {
@@ -717,6 +726,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               stateName,
               contractName: node.contractName,
               stateType: 'whole',
+              mappingName: stateNode.mappingName || stateName,
+              structProperties: stateNode.structProperties,
+              isSharedSecret: stateNode.isSharedSecret,
+              stateVarIds
             }));
 
         }
