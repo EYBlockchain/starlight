@@ -1331,7 +1331,9 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;
       const { value } = node;
-
+      if (parentPath.isRequireStatement() && node.kind === 'string'){
+        return;
+      };
       if (node.kind !== 'number' && node.kind !== 'bool' && !path.getAncestorOfType('Return'))
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
