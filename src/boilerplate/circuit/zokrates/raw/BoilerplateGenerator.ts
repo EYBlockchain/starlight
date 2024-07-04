@@ -320,6 +320,10 @@ class BoilerplateGenerator {
         const x_name = x.slice(0, -2);
         let type = typeName ? typeName : 'field';
         decLine = `${type} ${x_name} = ${structProperties ? `${type} {${structProperties.map(p => ` ${p}: ${x0}.${p} + ${x1}.${p}`)}}` :`${x0} + ${x1}`} `;
+      } else if (!isWhole){
+        const x_name = x.slice(0, -2);
+        let type = typeName ? typeName : 'field';
+        decLine = `${type} ${x_name} = ${structProperties ? `${type} {${structProperties.map(p => ` ${p}: 0`)}}` :`0`} `;
       }
       return [
         `${decLine}
@@ -332,32 +336,30 @@ class BoilerplateGenerator {
 
     postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, structPropertiesTypes, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-      let y = isWhole ? x : newCommitmentValue;
+      let y = isWhole ? x : x.slice(0, -2);
       const lines: string[] = [];
       if (!isWhole && isNullified) {
         // decrement
         const i = parseInt(x.slice(-1), 10);
         const x0 = x.slice(0, -1) + `${i-2}`;
         const x1 = x.slice(0, -1) + `${i-1}`;
-        const x_name = x.slice(0, -2);
         if (!structProperties) {
           lines.push(
-            `assert(${x_name} >0)
+            `assert(${y} >0)
             // TODO: assert no under/overflows
 
-            field ${x}_newCommitment_value_field = ${x_name}`
+            field ${x}_newCommitment_value_field = ${y}`
           );
         } else {
           // TODO types for each structProperty
           lines.push(
-            `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${x_name}.${p} > 0)`).join('\n')}
+            `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${y}.${p} > 0)`).join('\n')}
             // TODO: assert no under/overflows
 
-            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${x_name}.${p}`)} }`
+            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} }`
           );
         }
       } else {
-        y = isWhole ? x : x.slice(0, -2);
         if (!structProperties ) {
           if (typeName === 'bool'){
             lines.push(`field ${x}_newCommitment_value_field = if ${y} then 1 else 0 fi`);
@@ -522,12 +524,10 @@ class BoilerplateGenerator {
     },
 
     statements({ name: x, addend, newCommitmentValue, structProperties, memberName}): string[] {
-      let typeName = 'field';
-      if (addend.typeName?.name === 'bool' || addend.leftExpression?.typeName?.name === 'bool') typeName = 'bool';
       if (structProperties) {
-        return [`${typeName} ${x}_${memberName} = ${x}_${memberName} + ${newCommitmentValue[memberName]}`]
+        return [`${x}.${memberName} = ${x}.${memberName} + ${newCommitmentValue[memberName]}`]
       }
-      return [`${typeName} ${x} = ${x} + ${newCommitmentValue}`];
+      return [`${x} = ${x} + ${newCommitmentValue}`];
       //return [
       //  `// Skipping incrementation of ${x}`
         // `
@@ -543,7 +543,7 @@ class BoilerplateGenerator {
 
     statements({ name: x, subtrahend, newCommitmentValue, structProperties, memberName}): string[] {
       if (structProperties) {
-        return [`${x}.${memberName} = ${newCommitmentValue[memberName]}`]
+        return [`${x}.${memberName} = ${x}.${memberName} - ${newCommitmentValue[memberName]}`]
       }
       return [`${x} =  ${x} - (${newCommitmentValue})`];
       // const y = codeGenerator(subtrahend);

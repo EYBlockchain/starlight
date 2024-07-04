@@ -16,6 +16,8 @@ contract Assign {
     unknown b += value +a;
     unknown x.prop1 += value + a;
     unknown x.prop2 += value;
+    unknown b += value;
+    unknown x.prop1 += value ;
     a+= value;
   }
 
