@@ -310,10 +310,20 @@ class BoilerplateGenerator {
       ];
     },
 
-    preStatements({ name: x, id, isMapping }): string[] {
+    preStatements({ name: x, id, isMapping, isWhole, isNullified, typeName, structProperties }): string[] {
       if (isMapping) return [];
+      let decLine = '';
+      if (!isWhole && isNullified) {
+        const i = parseInt(x.slice(-1), 10);
+        const x0 = x.slice(0, -1) + `${i-2}`;
+        const x1 = x.slice(0, -1) + `${i-1}`;
+        const x_name = x.slice(0, -2);
+        let type = typeName ? typeName : 'field';
+        decLine = `${type} ${x_name} = ${structProperties ? `${type} {${structProperties.map(p => ` ${p}: ${x0}.${p} + ${x1}.${p}`)}}` :`${x0} + ${x1}`} `;
+      }
       return [
-        `
+        `${decLine}
+        \n
         // We need to hard-code each stateVarId into the circuit:
         field ${x}_stateVarId_field = ${id}`,
         // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
@@ -322,30 +332,32 @@ class BoilerplateGenerator {
 
     postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, structPropertiesTypes, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
-      const y = isWhole ? x : newCommitmentValue;
+      let y = isWhole ? x : newCommitmentValue;
       const lines: string[] = [];
       if (!isWhole && isNullified) {
         // decrement
         const i = parseInt(x.slice(-1), 10);
         const x0 = x.slice(0, -1) + `${i-2}`;
         const x1 = x.slice(0, -1) + `${i-1}`;
+        const x_name = x.slice(0, -2);
         if (!structProperties) {
           lines.push(
-            `assert(${x0} + ${x1} > ${y})
+            `assert(${x_name} >0)
             // TODO: assert no under/overflows
 
-            field ${x}_newCommitment_value_field = (${x0} + ${x1}) - (${y})`
+            field ${x}_newCommitment_value_field = ${x_name}`
           );
         } else {
           // TODO types for each structProperty
           lines.push(
-            `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${x0}.${p} + ${x1}.${p} >= ${y[p]})`).join('\n')}
+            `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${x_name}.${p} > 0)`).join('\n')}
             // TODO: assert no under/overflows
 
-            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: (${x0}.${p} + ${x1}.${p}) - (${y[p]})`)} }`
+            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${x_name}.${p}`)} }`
           );
         }
       } else {
+        y = isWhole ? x : x.slice(0, -2);
         if (!structProperties ) {
           if (typeName === 'bool'){
             lines.push(`field ${x}_newCommitment_value_field = if ${y} then 1 else 0 fi`);
@@ -355,7 +367,7 @@ class BoilerplateGenerator {
           
         }
         else {
-          lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y[p]}`}`)} }\n`);
+          lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y}_${p}`}`)} }\n`);
           if (structPropertiesTypes) {
             structPropertiesTypes.forEach(property => {
               if (property.typeName === 'bool'){
@@ -509,22 +521,17 @@ class BoilerplateGenerator {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
 
-    statements({ name: x}): string[] {
-      // let y = codeGenerator(addends[0]);
-      //
-      // for (const addend of addends) {
-      //   if (addend !== addend[0])
-      //     y += `${addend.precedingOperator} ${codeGenerator(addend)}`;
-      // }
-
-
-      return [
-        `// Skipping incrementation of ${x}`
+    statements({ name: x, addend, newCommitmentValue, structProperties, memberName}): string[] {
+      let typeName = 'field';
+      if (addend.typeName?.name === 'bool' || addend.leftExpression?.typeName?.name === 'bool') typeName = 'bool';
+      if (structProperties) {
+        return [`${typeName} ${x}_${memberName} = ${x}_${memberName} + ${newCommitmentValue[memberName]}`]
+      }
+      return [`${typeName} ${x} = ${x} + ${newCommitmentValue}`];
+      //return [
+      //  `// Skipping incrementation of ${x}`
         // `
-        // // The below represents the incrementation '${x} = ${x} + ${y}':
-        //
-        // field ${x}_${i} = ${y}`,
-      ];
+      //];
     },
   };
 
@@ -534,15 +541,19 @@ class BoilerplateGenerator {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
 
-    statements({ name: x }): string[] {
+    statements({ name: x, subtrahend, newCommitmentValue, structProperties, memberName}): string[] {
+      if (structProperties) {
+        return [`${x}.${memberName} = ${newCommitmentValue[memberName]}`]
+      }
+      return [`${x} =  ${x} - (${newCommitmentValue})`];
       // const y = codeGenerator(subtrahend);
       // let i = startIndex;
       // const x0 = `${x}_${i++}`;
       // const x1 = `${x}_${i++}`;
       // const x2 = `${x}_${i}`;
 
-      return [
-        `// Moved decrementation of ${x}`
+      //return [
+        //`// Moved decrementation of ${x}`
         // `
         // // The below represents the decrementation '${x} = ${x} - ${y}':
         //
@@ -550,7 +561,7 @@ class BoilerplateGenerator {
         // // TODO: assert no under/overflows
         //
         // field ${x2} = (${x0} + ${x1}) - ${y}`,
-      ];
+      //];
     },
   };
   internalFunctionCall = {

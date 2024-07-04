@@ -376,18 +376,24 @@ class BoilerplateGenerator {
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
-  incrementation = () => {
+  incrementation = (extraParams) => {
     //const startIndex = this.getIndex({ addendId });
     return {
       // startIndex,
+      newCommitmentValue: this.newCommitmentValue,
+      structProperties: (this.isStruct && { structProperties: this.structProperties}),
+      memberName: extraParams.memberName,
       addend: {},
     };
   };
 
-  decrementation = () => {
+  decrementation = (extraParams) => {
     //const startIndex = this.getIndex({ subtrahendId });
     return {
       // startIndex,
+      newCommitmentValue: this.newCommitmentValue,
+      structProperties: (this.isStruct && { structProperties: this.structProperties}),
+      memberName: extraParams.memberName,
       subtrahend: {},
     };
   };

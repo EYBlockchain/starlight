@@ -854,6 +854,9 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
+                ...(lhsIndicator.isStruct && {
+                  memberName: lhs.memberName 
+                }),
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
               node._newASTPointer = newNode.subtrahend;
@@ -868,6 +871,9 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
+                ...(lhsIndicator.isStruct && {
+                  memberName: lhs.memberName 
+                }),
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
               node._newASTPointer = newNode.addend;
