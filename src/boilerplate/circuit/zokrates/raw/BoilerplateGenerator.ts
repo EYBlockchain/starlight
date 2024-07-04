@@ -324,6 +324,13 @@ class BoilerplateGenerator {
         const x_name = x.slice(0, -2);
         let type = typeName ? typeName : 'field';
         decLine = `${type} ${x_name} = ${structProperties ? `${type} {${structProperties.map(p => ` ${p}: 0`)}}` :`0`} `;
+      } else{
+        return [
+          `
+        // We need to hard-code each stateVarId into the circuit:
+        field ${x}_stateVarId_field = ${id}`,
+          // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
+        ];
       }
       return [
         `${decLine}
