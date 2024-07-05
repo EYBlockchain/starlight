@@ -312,6 +312,13 @@ function codeGenerator(node: any) {
       return Circuitbp.generateBoilerplate(node);
 
     case 'BoilerplateStatement': {
+      let newComValue = '';
+      if (node.bpType === 'incrementation') newComValue  = codeGenerator(node.addend);
+      if (node.bpType === 'decrementation') newComValue  = codeGenerator(node.subtrahend);
+      console.log(node.newCommitmentValue);
+      console.log(node.addend);
+      console.log(newComValue);
+      node.newCommitmentValue = newComValue;
       return Circuitbp.generateBoilerplate(node);
     }
 

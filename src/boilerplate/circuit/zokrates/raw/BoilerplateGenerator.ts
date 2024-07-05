@@ -529,10 +529,9 @@ class BoilerplateGenerator {
     importStatements(): string[] {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
-
     statements({ name: x, addend, newCommitmentValue, structProperties, memberName}): string[] {
       if (structProperties) {
-        return [`${x}.${memberName} = ${x}.${memberName} + ${newCommitmentValue[memberName]}`]
+        return [`${x}.${memberName} = ${x}.${memberName} + ${newCommitmentValue}`]
       }
       return [`${x} = ${x} + ${newCommitmentValue}`];
       //return [
