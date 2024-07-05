@@ -311,7 +311,7 @@ class BoilerplateGenerator {
     },
 
     preStatements({ name: x, id, isMapping, isWhole, isNullified, typeName, structProperties }): string[] {
-      if (isMapping) return [];
+      if (isMapping && isWhole) return [];
       let decLine = '';
       if (!isWhole && isNullified) {
         const i = parseInt(x.slice(-1), 10);

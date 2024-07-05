@@ -231,7 +231,7 @@ class BoilerplateGenerator {
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
-
+    this.initialise(this.indicators);
     return {
       nodeType: 'BoilerplateStatement',
       bpSection: 'statements',
