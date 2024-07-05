@@ -11,7 +11,7 @@ import MappingKey from '../../../../traverse/MappingKey.js';
 const collectIncrements = (bpg: BoilerplateGenerator) => {
   const stateVarIndicator = bpg.thisIndicator || bpg.indicators;
   const incrementsArray: any[] = [];
-  let incrementsString = '';
+  let incrementsString: string[] = [];
 
   if (stateVarIndicator.isStruct && (
       stateVarIndicator instanceof StateVariableIndicator ||
@@ -27,7 +27,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
         bpg.thisIndicator = stateVarIndicator;
       } else {
         structIncs.incrementsArray[sp] = [];
-        structIncs.incrementsString[sp] = '0';
+        structIncs.incrementsString[sp] = ['0'];
       }
     }
     return structIncs;
@@ -35,6 +35,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
 
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
+  let counter =-1;
   for (const inc of stateVarIndicator.increments) {
     if (inc.nodeType === 'IndexAccess') {
       const mappingKeyName = NodePath.getPath(inc).scope.getMappingKeyName(inc);
@@ -53,12 +54,16 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
       precedingOperator: inc.precedingOperator,
     });
 
-    if (inc === stateVarIndicator.increments[0]) {
-      incrementsString += `${modName}`;
+    if (counter != inc.counter) {
+      incrementsString[inc.counter] += `${modName}`;
     } else {
-      incrementsString += ` ${inc.precedingOperator} ${modName}`;
+      incrementsString[inc.counter] += ` ${inc.precedingOperator} ${modName}`;
     }
+    counter = inc.counter;
   }
+  let incCounter;
+  (counter === -1) ?  incCounter = 0 : incCounter = counter +1;
+  counter = -1;
   for (const dec of stateVarIndicator.decrements) {
     if (dec.nodeType === 'IndexAccess') {
       const mappingKeyName = NodePath.getPath(dec).scope.getMappingKeyName(dec);
@@ -78,13 +83,14 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
       precedingOperator: dec.precedingOperator,
     });
 
-    if (!stateVarIndicator.decrements[1] && !stateVarIndicator.increments[0]) {
-      incrementsString += `${modName}`;
+    if (counter != dec.counter) {
+      incrementsString[dec.counter + incCounter] += `${modName}`;
     } else {
       // if we have decrements, this str represents the value we must take away
       // => it's a positive value with +'s
-      incrementsString += ` + ${modName}`;
+      incrementsString[dec.counter + incCounter] += `${dec.precedingOperator} ${modName}`;
     }
+    counter = dec.counter;
   }
   return { incrementsArray, incrementsString };
 };
