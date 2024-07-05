@@ -549,7 +549,7 @@ class BoilerplateGenerator {
 
     statements({ name: x, subtrahend, newCommitmentValue, structProperties, memberName}): string[] {
       if (structProperties) {
-        return [`${x}.${memberName} = ${x}.${memberName} - ${newCommitmentValue}`]
+        return [`${x}.${memberName} = ${x}.${memberName} - (${newCommitmentValue})`]
       }
       return [`${x} =  ${x} - (${newCommitmentValue})`];
       // const y = codeGenerator(subtrahend);
