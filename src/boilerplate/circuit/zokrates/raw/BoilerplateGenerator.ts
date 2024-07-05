@@ -313,6 +313,10 @@ class BoilerplateGenerator {
     preStatements({ name: x, id, isMapping, isWhole, isNullified, typeName, structProperties }): string[] {
       if (isMapping && isWhole) return [];
       let decLine = '';
+      let stateVarIdLine = ``;
+      if (!isMapping) stateVarIdLine = `
+      // We need to hard-code each stateVarId into the circuit:
+      field ${x}_stateVarId_field = ${id}`;
       if (!isWhole && isNullified) {
         const i = parseInt(x.slice(-1), 10);
         const x0 = x.slice(0, -1) + `${i-2}`;
@@ -325,18 +329,14 @@ class BoilerplateGenerator {
         let type = typeName ? typeName : 'field';
         decLine = `${type} ${x_name} = ${structProperties ? `${type} {${structProperties.map(p => ` ${p}: 0`)}}` :`0`} `;
       } else{
-        return [
-          `
+        return [`
         // We need to hard-code each stateVarId into the circuit:
-        field ${x}_stateVarId_field = ${id}`,
-          // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
-        ];
+        field ${x}_stateVarId_field = ${id}`];
       }
       return [
         `${decLine}
         \n
-        // We need to hard-code each stateVarId into the circuit:
-        field ${x}_stateVarId_field = ${id}`,
+        ${stateVarIdLine}`,
         // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
