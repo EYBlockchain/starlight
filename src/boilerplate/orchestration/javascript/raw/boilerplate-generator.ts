@@ -119,7 +119,9 @@ class BoilerplateGenerator {
             \n\n// read preimage for incremented state
             ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
-            \n`];
+            \n
+            let ${stateName}_newCommitmentValue = generalise(0);
+            `];
         case 'decrement':
           if (structProperties)
             return [`

@@ -376,7 +376,7 @@ class BoilerplateGenerator {
           
         }
         else {
-          lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${isWhole ? `${y}.${p}` : `${y}_${p}`}`)} }\n`);
+          lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} }\n`);
           if (structPropertiesTypes) {
             structPropertiesTypes.forEach(property => {
               if (property.typeName === 'bool'){
