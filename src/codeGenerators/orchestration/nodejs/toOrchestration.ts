@@ -131,8 +131,16 @@ export default function codeGenerator(node: any, options: any = {}): any {
           increments = codeGenerator(node.expression.rightHandSide);
           return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
         }
+        if (node.expression.operator === '-='){
+          increments = codeGenerator(node.expression.rightHandSide);
+          return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + (${increments}));\n`;
+        }
         if (node.expression.operator === '='){
           increments = codeGenerator(node.expression.rightHandSide);
+          if (node.decrementsSecretState){
+            increments = increments.replace(new RegExp(`${privateStateName}.integer`, 'g'), `0`);
+            return `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) - (${increments}));\n`;
+          } 
           increments = increments.replace(new RegExp(privateStateName, 'g'), `${privateStateName}_newCommitmentValue`);
           return  `\n${privateStateName}_newCommitmentValue = generalise(${increments});\n`;
         }

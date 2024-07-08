@@ -131,13 +131,15 @@ class BoilerplateGenerator {
               ${stateVarIds.join('\n')}
               \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
               \n
+              ${structProperties.map(sp => `let ${stateName}_${sp}_newCommitmentValue = generalise(0);\n`).join('')}
             `];
           return [`
             \n\n// read preimage for decremented state
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
             \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
-            \n`  ];
+            \n
+            let ${stateName}_newCommitmentValue = generalise(0);`  ];
         case 'whole':
           switch (reinitialisedOnly) {
             case true:
