@@ -151,6 +151,15 @@ export default {
         node.accessedSecretState = true;
         return;
       }
+      // We need to ouput an error if a partitioned state is being accessed. 
+      //This seems difficult to support because we need the sum of the value of every commitment,  how do we enforce that the prover inputs every commitment to the circuit?
+      else if (rightAncestor){
+        const indicator = scope.getReferencedIndicator(node);
+        if (indicator instanceof StateVariableIndicator) throw new TODOError(
+          `A partitioned state variable cannot be accessed`,
+          node,
+        );
+      }
       // below: check if the identifier is on the LHS and is NOT partitioned AND requires the LHS value e.g. a *= b
       // we don't check all the types of LHS container, because a +=,*=,-= b is always an Assignment with a .leftHandSide
       const leftAncestor = path.getAncestorContainedWithin('leftHandSide');
