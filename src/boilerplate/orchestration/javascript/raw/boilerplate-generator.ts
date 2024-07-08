@@ -114,6 +114,7 @@ class BoilerplateGenerator {
               ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
               ${stateVarIds.join('\n')}
               \n
+              ${structProperties.map(sp => `let ${stateName}_${sp}_newCommitmentValue = generalise(0);\n`).join('')}
             `];
           return [`
             \n\n// read preimage for incremented state

@@ -126,14 +126,16 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
       if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         let privateStateName = node.privateStateName.replace(/\./g, '_');
-        let increments = codeGenerator(node.expression.rightHandSide);
-        if (typeof node.increments === 'object' && node.increments !== null) {
-          if (node.expression.leftHandSide.nodeType === 'MemberAccess'){
-            let propName = node.expression.leftHandSide.memberName;
-            return  `\n${privateStateName}_newCommitmentValue = generalise(${node.increments[propName]});\n`;
-          }
-        };
-        return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
+        let increments;
+        if (node.expression.operator === '+='){
+          increments = codeGenerator(node.expression.rightHandSide);
+          return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
+        }
+        if (node.expression.operator === '='){
+          increments = codeGenerator(node.expression.rightHandSide);
+          increments = increments.replace(new RegExp(privateStateName, 'g'), `${privateStateName}_newCommitmentValue`);
+          return  `\n${privateStateName}_newCommitmentValue = generalise(${increments});\n`;
+        }
       }
 
       if (!node.interactsWithSecret)

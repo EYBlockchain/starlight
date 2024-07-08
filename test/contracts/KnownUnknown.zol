@@ -13,11 +13,11 @@ contract Assign {
 
   
   function add( uint256 value ) public {
-    unknown b += value +a;
+    unknown b = b + value +a;
     unknown x.prop1 += value + a;
     unknown x.prop2 += value;
     unknown b += value;
-    unknown x.prop1 += value;
+    unknown x.prop1 += a;
     a+= value;
   }
 
