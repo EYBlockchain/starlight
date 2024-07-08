@@ -156,7 +156,7 @@ export default {
       else if (rightAncestor){
         const indicator = scope.getReferencedIndicator(node);
         if (indicator instanceof StateVariableIndicator) throw new TODOError(
-          `A partitioned state variable cannot be accessed`,
+          `A partitioned state variable cannot be accessed. Only incrementations/ decrementations of form +=, -= are allowed.`,
           node,
         );
       }

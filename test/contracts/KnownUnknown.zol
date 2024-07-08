@@ -13,7 +13,8 @@ contract Assign {
 
   
   function add( uint256 value ) public {
-    unknown b = b + value +a;
+    //unknown b = b + value +a;
+    unknown b += value +a;
     unknown x.prop1 += value + a;
     unknown x.prop2 += value;
     unknown b += value;
@@ -23,8 +24,9 @@ contract Assign {
   }
 
   function remove( uint256 value ) public {
-    unknown b = b - value +a;
-    unknown b = b - (value +a);
+    //unknown b = b - value +a;
+    unknown b -= value +a;
+    //unknown b = b - (value +a);
     unknown x.prop1 -= value + a;
     unknown x.prop2 -= value;
     unknown b -= value;
