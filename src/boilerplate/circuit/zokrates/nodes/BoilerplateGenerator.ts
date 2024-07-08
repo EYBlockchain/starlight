@@ -227,8 +227,10 @@ class BoilerplateGenerator {
     this.assignIndicators(mappingKeyIndicator);
     this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
     if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName.replace('.', 'dot');
+    if(this.mappingKeyName == 'msg')
+        this.mappingKeyName = this.mappingKeyName+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
     this.mappingName = this.indicators.name;
-    this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
+    this.name = `${this.mappingName}_${this.mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
   }
 
   generateBoilerplateStatement(bpType: string, extraParams?: any) {
@@ -237,7 +239,6 @@ class BoilerplateGenerator {
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
-    this.initialise(this.indicators);
     return {
       nodeType: 'BoilerplateStatement',
       bpSection: 'statements',
