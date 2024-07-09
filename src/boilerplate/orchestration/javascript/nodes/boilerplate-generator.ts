@@ -131,6 +131,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         privateStateName,
         indicator = {},
+        localMappingKey,
       } = fields;
       const structProperties = !indicator.isStruct ? null : indicator.isAccessed ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : Object.keys(indicator.structProperties);
       return {
@@ -156,6 +157,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         ownerIsSecret: indicator.isOwned
           ? indicator.owner.isSecret || indicator.owner.node?.isSecret
           : null,
+        localMappingKey: localMappingKey,
       };
     }
 

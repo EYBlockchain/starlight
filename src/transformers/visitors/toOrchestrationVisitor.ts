@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign, no-shadow, no-unused-vars, no-continue */
 import NodePath from '../../traverse/NodePath.js';
-import { StateVariableIndicator, FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
+import { StateVariableIndicator, FunctionDefinitionIndicator, LocalVariableIndicator } from '../../traverse/Indicator.js';
 import { VariableBinding } from '../../traverse/Binding.js';
 import MappingKey from '../../traverse/MappingKey.js';
 import cloneDeep from 'lodash.clonedeep';
@@ -737,6 +737,12 @@ const visitor = {
             });
           }
           if (secretModified || accessedOnly) {
+            let localMappingKey = false;
+            if (stateVarIndicator[`keyPath`]){
+              const keyIndicator = path.scope.getReferencedIndicator(stateVarIndicator[`keyPath`].node, true);
+              if (keyIndicator instanceof LocalVariableIndicator && !keyIndicator.isParam) localMappingKey = true;
+            }
+
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -751,6 +757,7 @@ const visitor = {
               increment: isIncremented ? incrementsArray : undefined,
               accessedOnly,
               indicator: stateVarIndicator,
+              localMappingKey: localMappingKey,
             });
           }
 
