@@ -14,12 +14,12 @@ contract MyContract {
       pubAdmin = msg.sender;
     }
 
-    function setSecretAdmin(secret address newAdmin) public {
+    function setSecretAdmin(secret address newAdmin, uint256 value) public {
       if(msg.sender != admin) {
       revert("the msg sender is not admin ");
       }
       admin = newAdmin;
-      a+= 1;
+      a+= value;
     }
 
     function setSecretAdmin1(secret address newAdmin) public {

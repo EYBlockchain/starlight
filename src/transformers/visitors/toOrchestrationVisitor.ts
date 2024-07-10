@@ -863,15 +863,16 @@ const visitor = {
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
           if (!param.isSecret) {
-            if (path.isStructDeclaration(param) || path.isConstantArray(param)  ||( param.typeName && param.typeName.name === 'bool') || ( param.typeName && param.typeName.name === 'address')) {
+            //if (path.isStructDeclaration(param) || path.isConstantArray(param)  ||( param.typeName && param.typeName.name === 'bool') || ( param.typeName && param.typeName.name === 'address')) {
               let newParam: any = {};
               newParam.name = param.name;
+              if (param._newASTPointer.interactsWithSecret) newParam.inCircuit = true;
               if (path.isStructDeclaration(param)) newParam.properties = param._newASTPointer.typeName.properties.map(p => ({"name" : p.name, "type" : p.type }));
               if (path.isConstantArray(param)) newParam.isConstantArray = true;
               if (param.typeName?.name === 'bool') newParam.isBool = true;
               if (param.typeName?.name === 'address') newParam.isAddress = true;
               newNodes.sendTransactionNode.publicInputs.push(newParam);
-            } else newNodes.sendTransactionNode.publicInputs.push(param.name);
+            //} else newNodes.sendTransactionNode.publicInputs.push(param.name);
           }
         }
         // this adds the return parameters which are marked as secret in the tx 
