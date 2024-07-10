@@ -251,7 +251,7 @@ function codeGenerator(node: any) {
         if(node.condition.leftExpression.nodeType == 'Identifier')
         node.condition.leftExpression.name = node.condition.leftExpression.name.replace('_temp','');
       initialStatements+= `
-      assert(${codeGenerator(node.condition)})`;
+      assert(!(${codeGenerator(node.condition)}))`;
       return initialStatements;
       }
       // we use our list of condition vars to init temp variables. 

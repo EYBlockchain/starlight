@@ -1794,6 +1794,15 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
+      if (node.expression?.name === 'revert') {
+        const newNode = buildNode('RevertStatement', {
+        });
+        parent._newASTPointer[path.containerName] = newNode;
+        if (node.arguments[0]) newNode.message = node.arguments[0].value;
+        parent._newASTPointer.interactsWithSecret = path.getAncestorOfType('IfStatement').node._newASTPointer.interactsWithSecret;
+        state.skipSubNodes = true;
+        return;
+      }
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;
         return;
