@@ -45,4 +45,11 @@ contract MyContract {
       pubAdmin = newAdmin;
       a+= 1;
     }
+
+    function setPublicAdmin2(address newAdmin) public {
+      if(msg.sender != pubAdmin) {
+      revert();
+      }
+      pubAdmin = newAdmin;
+    }
 }
