@@ -894,26 +894,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input.name}.hex(20)`);
           }
           else {
-            lines.push(`${input.name}.integer`);
+            lines.push(`${input}.integer`);
           }           
-        });
-      }
-      if (node.publicInputs[0]) {
-        node.publicInputs.forEach((input: any) => {
-          if (input.inCircuit){
-            if (input.properties) {
-              returnInputs.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
-            } else if (input.isConstantArray) {
-              returnInputs.push(`${input.name}.all.integer`);
-            } else if(input.isBool) {
-              returnInputs.push(`parseInt(${input.name}.integer, 10)`);
-            } else if(input.isAddress) {
-              returnInputs.push(`${input.name}.hex(20)`);
-            }
-            else {
-              returnInputs.push(`${input.name}.integer`);
-            }           
-          }
         });
       }
 
