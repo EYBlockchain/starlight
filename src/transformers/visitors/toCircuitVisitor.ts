@@ -772,6 +772,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if(path.getAncestorOfType('ForStatement') && expression.containsPublic ){
         childOfSecret = false;
       }
+
       const thisState = { interactsWithSecretInScope: false };
 
       path.traverseNodesFast(n => {
@@ -780,10 +781,29 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         }
 
       }, thisState);
+
+    const leftHandSideInteracts = expression.leftHandSide && scope.getReferencedIndicator(expression.leftHandSide)?.interactsWithSecret;
+    const rightHandSideInteracts = expression.rightHandSide && scope.getReferencedIndicator(expression.rightHandSide)?.interactsWithSecret;
+
+    expression.leftHandSide.containsSecret = false;
+    expression.rightHandSide.containsSecret = false;
+
+    // Mark leftHandSide and rightHandSide if they interact with a secret
+    if (leftHandSideInteracts) {
+      expression.leftHandSide.containsSecret = true;
+    }
+    if (rightHandSideInteracts) {
+      expression.rightHandSide.containsSecret = true;
+    }
+      
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
         state.skipSubNodes = true;
         return;
+      // if (!expression.leftHandSide.containsSecret && !expression.rightHandSide.containsSecret && !thisState.interactsWithSecretInScope) {
+      //   state.skipSubNodes = true;
+      //   return;
       }
+
       const { isIncremented, isDecremented } = expression;
       let newNode: any;
 
