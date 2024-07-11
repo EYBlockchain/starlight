@@ -270,7 +270,6 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       const {} = fields;
       return {
         nodeType,
-        message: [],
       };
     }
     case 'InitialisePreimage':
