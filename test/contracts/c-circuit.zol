@@ -9,7 +9,8 @@ uint256 public c;
 
 function addB( uint256 value) public {
 c += value;
-known a += value;
+c++;
+known a += c;
 }
 
 }

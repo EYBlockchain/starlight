@@ -757,7 +757,7 @@ const visitor = {
     }
   },
 
-  ExpressionStatement: {
+  ExpressionStatement: {    
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const { expression } = node;
@@ -768,40 +768,35 @@ const visitor = {
       if((scope.getReferencedNode(expression.expression))?.containsSecret)
       node.containsSecret = 'true';
     }
-let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+     let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if(path.getAncestorOfType('ForStatement') && expression.containsPublic ){
         childOfSecret = false;
       }
 
       const thisState = { interactsWithSecretInScope: false };
 
-      path.traverseNodesFast(n => {
-        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret){
-          thisState.interactsWithSecretInScope = true;
+      const leftHandSideInteracts = expression.leftHandSide && scope.getReferencedIndicator(expression.leftHandSide)?.interactsWithSecret;
+
+  
+      if (leftHandSideInteracts) {
+        thisState.interactsWithSecretInScope = true; // Update thisState flag
+      }
+
+      if (expression.nodeType === 'UnaryOperation') {
+        const { operator, subExpression } = expression;
+        if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
+          const referencedIndicator = scope.getReferencedIndicator(subExpression);
+          if (referencedIndicator?.interactsWithSecret) {
+            thisState.interactsWithSecretInScope = true;
+          }
         }
-
-      }, thisState);
-
-    const leftHandSideInteracts = expression.leftHandSide && scope.getReferencedIndicator(expression.leftHandSide)?.interactsWithSecret;
-    const rightHandSideInteracts = expression.rightHandSide && scope.getReferencedIndicator(expression.rightHandSide)?.interactsWithSecret;
-
-    expression.leftHandSide.containsSecret = false;
-    expression.rightHandSide.containsSecret = false;
-
-    // Mark leftHandSide and rightHandSide if they interact with a secret
-    if (leftHandSideInteracts) {
-      expression.leftHandSide.containsSecret = true;
-    }
-    if (rightHandSideInteracts) {
-      expression.rightHandSide.containsSecret = true;
-    }
+      }
+    
       
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
         state.skipSubNodes = true;
         return;
-      // if (!expression.leftHandSide.containsSecret && !expression.rightHandSide.containsSecret && !thisState.interactsWithSecretInScope) {
-      //   state.skipSubNodes = true;
-      //   return;
+ 
       }
 
       const { isIncremented, isDecremented } = expression;
@@ -919,7 +914,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         }  
         if (referencedIndicator instanceof LocalVariableIndicator &&  firstInstanceOfNewName && names[names.length - 1].name !== referencedIndicator.name){
           isVarDec = true;
-        }       
+        }    
       }
       let nodeID = node.id;
       newNode = buildNode('ExpressionStatement', { isVarDec });
