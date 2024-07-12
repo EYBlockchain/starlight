@@ -844,15 +844,15 @@ const visitor = {
         thisState.interactsWithSecretInScope = true; // Update thisState flag
       }
 
-      if (expression.nodeType === 'UnaryOperation') {
-        const { operator, subExpression } = expression;
-        if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
-          const referencedIndicator = scope.getReferencedIndicator(subExpression);
-          if (referencedIndicator?.interactsWithSecret) {
-            thisState.interactsWithSecretInScope = true;
-          }
-        }
-      }
+      // if (expression.nodeType === 'UnaryOperation') {
+      //   const { operator, subExpression } = expression;
+      //   if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
+      //     const referencedIndicator = scope.getReferencedIndicator(subExpression);
+      //     if (referencedIndicator?.interactsWithSecret) {
+      //       thisState.interactsWithSecretInScope = true;
+      //     }
+      //   }
+      // }
     
       
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
