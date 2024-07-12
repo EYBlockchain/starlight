@@ -68,12 +68,14 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
   
   // If there is a statment where a secret variable interacts with a public one, we need to adjust previous statements where the public variable was modified.
 
+  
   if (
     binding instanceof VariableBinding &&
     (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
     binding.stateVariable && !binding.isSecret 
-  ) {
+  ) 
+  {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
     if (!fnDefNode) throw new Error(`Not in a function`);
 
@@ -803,7 +805,7 @@ const visitor = {
     }
   },
 
-  ExpressionStatement: {
+  ExpressionStatement: {    
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       const { expression } = node;
@@ -814,22 +816,37 @@ const visitor = {
       if((scope.getReferencedNode(expression.expression))?.containsSecret)
       node.containsSecret = 'true';
     }
-let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
+     let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
       if(path.getAncestorOfType('ForStatement') && expression.containsPublic ){
         childOfSecret = false;
       }
+
       const thisState = { interactsWithSecretInScope: false };
 
-      path.traverseNodesFast(n => {
-        if (n.nodeType === 'Identifier' && scope.getReferencedIndicator(n)?.interactsWithSecret){
-          thisState.interactsWithSecretInScope = true;
-        }
+      const leftHandSideInteracts = expression.leftHandSide && scope.getReferencedIndicator(expression.leftHandSide)?.interactsWithSecret;
 
-      }, thisState);
+  
+      if (leftHandSideInteracts) {
+        thisState.interactsWithSecretInScope = true; // Update thisState flag
+      }
+
+      if (expression.nodeType === 'UnaryOperation') {
+        const { operator, subExpression } = expression;
+        if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
+          const referencedIndicator = scope.getReferencedIndicator(subExpression);
+          if (referencedIndicator?.interactsWithSecret) {
+            thisState.interactsWithSecretInScope = true;
+          }
+        }
+      }
+    
+      
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
         state.skipSubNodes = true;
         return;
+ 
       }
+
       const { isIncremented, isDecremented } = expression;
       let newNode: any;
 
@@ -950,7 +967,7 @@ let childOfSecret =  path.getAncestorOfType('ForStatement')?.containsSecret;
         }  
         if (referencedIndicator instanceof LocalVariableIndicator &&  firstInstanceOfNewName && names[names.length - 1].name !== referencedIndicator.name){
           isVarDec = true;
-        }       
+        }    
       }
       let nodeID = node.id;
       newNode = buildNode('ExpressionStatement', { isVarDec });
