@@ -252,6 +252,16 @@ export default function codeGenerator(node: any, options: any = {}): any {
         "Require statement not satisfied: ${node.message[0].value}"
       );}\n`;
 
+    case 'RevertStatement':
+      if (!node.message){
+        return `throw new Error(
+          "Revert statement."
+        );\n`;
+      }
+      return `throw new Error(
+        "Reverted due to the following: ${node.message}"
+      );\n`;
+
     case 'Folder':
     case 'File':
     case 'EditableCommitmentCommonFilesBoilerplate':

@@ -6,17 +6,50 @@ contract MyContract {
 
     secret uint256 private a;
     secret address private admin;
+    address private pubAdmin;
 
 
     constructor() {
       admin = msg.sender;
+      pubAdmin = msg.sender;
     }
 
-    function setAdmin(secret address newAdmin) public {
-      if(msg.sender == admin) {
-      revert(" revert ");
+    function setSecretAdmin(secret address newAdmin, uint256 value) public {
+      if(msg.sender != admin) {
+      revert("the msg sender is not admin ");
+      }
+      admin = newAdmin;
+      a+= value;
+    }
+
+    function setSecretAdmin1(secret address newAdmin) public {
+      if(msg.sender != admin) {
+      revert();
       }
       admin = newAdmin;
       a+= 1;
+    }
+
+    function setPublicAdmin(address newAdmin) public {
+      if(msg.sender != pubAdmin) {
+      revert("the msg sender is not admin ");
+      }
+      pubAdmin = newAdmin;
+      a+= 1;
+    }
+
+    function setPublicAdmin1(address newAdmin) public {
+      if(msg.sender != pubAdmin) {
+      revert();
+      }
+      pubAdmin = newAdmin;
+      a+= 1;
+    }
+
+    function setPublicAdmin2(address newAdmin) public {
+      if(msg.sender != pubAdmin) {
+      revert();
+      }
+      pubAdmin = newAdmin;
     }
 }

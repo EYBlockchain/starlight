@@ -266,6 +266,12 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         message: [],
       };
     }
+    case 'RevertStatement': {
+      const {} = fields;
+      return {
+        nodeType,
+      };
+    }
     case 'InitialisePreimage':
     case 'InitialiseKeys':
     case 'ReadPreimage':
