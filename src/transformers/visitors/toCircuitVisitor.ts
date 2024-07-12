@@ -94,7 +94,8 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
         if (expNode && !expNode.isAccessed) {
           expNode.isAccessed = true;
           if((expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
-          (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name)){
+          (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name) ||
+          (expNode.expression.initialValue &&  expNode.expression.initialValue.name === node.name)){
             if (num_modifiers !=0){
               const initInnerNode = buildNode('Assignment', {
                 leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
