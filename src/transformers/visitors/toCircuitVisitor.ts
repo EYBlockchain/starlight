@@ -68,22 +68,7 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
   
   // If there is a statment where a secret variable interacts with a public one, we need to adjust previous statements where the public variable was modified.
 
-  // New test starts from here
-
-  const interactsWithSecret = node.interactsWithSecret || node.baseExpression?.interactsWithSecret;
-  const interactsWithPublic = node.interactsWithPublic || node.baseExpression?.interactsWithPublic;
-
-  // Journalisation pour le débogage
-  console.log(`Node: ${node.name}, interactsWithSecret: ${interactsWithSecret}, interactsWithPublic: ${interactsWithPublic}`);
-
-  // Traiter seulement si la variable interagit avec les variables secrètes et publiques
-  // if (
-  //   binding instanceof VariableBinding &&
-  //   interactsWithSecret &&
-  //   interactsWithPublic &&
-  //   binding.stateVariable && !binding.isSecret
-  // ) 
-
+  
   if (
     binding instanceof VariableBinding &&
     (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
@@ -940,16 +925,6 @@ const visitor = {
         let { leftHandSide: lhs } = node.expression;
         if (!lhs) lhs = node.expression.subExpression;
         const referencedIndicator = scope.getReferencedIndicator(lhs, true);
-
-        // if (expression.nodeType === 'UnaryOperation') {
-        //   const { operator, subExpression } = expression;
-        //   if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
-        //     const referencedIndicator = scope.getReferencedIndicator(subExpression);
-        //     if (referencedIndicator?.interactsWithSecret) {
-        //       state.thisState.interactsWithSecretInScope = true;
-        //     }
-        //   }
-        // }
 
         const name = referencedIndicator?.isMapping
           ? referencedIndicator.name
