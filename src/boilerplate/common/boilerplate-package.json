@@ -5,7 +5,7 @@
     "test": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
     "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
     "start": "./bin/startup",
-    "restart": "docker rm apiservice && docker-compose -f docker-compose.zapp.yml run --name apiservice -p 3000:3000 zapp node orchestration/api.mjs",
+    "restart": "docker-compose -f docker-compose.zapp.yml restart && docker compose -f docker-compose.zapp-double.yml logs -f -n 1000 zapp zokrates timber",
     "apitest": "./bin/setup && ./bin/startup && docker-compose -f docker-compose.zapp.yml run --name apiservice -d -p 3000:3000 zapp node orchestration/api.mjs"
   },
   "keywords": [

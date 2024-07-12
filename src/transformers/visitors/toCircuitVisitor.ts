@@ -3,7 +3,7 @@
 import cloneDeep from 'lodash.clonedeep';
 import { buildNode } from '../../types/zokrates-types.js';
 import { TODOError } from '../../error/errors.js';
-import { traversePathsFast } from '../../traverse/traverse.js';
+import { traversePathsFast, traverseNodesFast } from '../../traverse/traverse.js';
 import NodePath from '../../traverse/NodePath.js';
 import explode from './explode.js';
 import internalCallVisitor from './circuitInternalFunctionCallVisitor.js';
@@ -14,8 +14,51 @@ import { interactsWithSecretVisitor, internalFunctionCallVisitor, parentnewASTPo
 
 
 
+
+// Adjusts names of indicator.increment so that they match the names of the corresponding indicators i.e. index_1 instead of index
+const incrementNames = (node: any, indicator: any) => {
+  if (node.bpType === 'incrementation'){
+    let rhsNode = node.addend;
+    const adjustIncrementsVisitor = (thisNode: any) => {
+      if (thisNode.nodeType === 'Identifier'){
+        if (!indicator.increments.some((inc: any) => inc.name === thisNode.name)){
+          let lastUnderscoreIndex = thisNode.name.lastIndexOf("_");
+          let origName = thisNode.name.substring(0, lastUnderscoreIndex); 
+          let count =0;
+          indicator.increments.forEach((inc: any) => {
+            if (origName === inc.name && !inc.modName && count === 0){
+              inc.modName = thisNode.name;
+              count++;
+            }
+          });
+        }
+      }     
+    }
+    if (rhsNode) traverseNodesFast(rhsNode, adjustIncrementsVisitor);
+  } else if (node.bpType === 'decrementation'){
+    let rhsNode = node.subtrahend;
+    const adjustDecrementsVisitor = (thisNode: any) => {
+      if (thisNode.nodeType === 'Identifier'){
+        if (!indicator.decrements.some((dec: any) => dec.name === thisNode.name)){
+          let lastUnderscoreIndex = thisNode.name.lastIndexOf("_");
+          let origName = thisNode.name.substring(0, lastUnderscoreIndex); 
+          let count =0;
+          indicator.decrements.forEach((dec: any) => {
+            if (origName === dec.name && !dec.modName && count === 0){
+              dec.modName = thisNode.name;
+              count++;
+            }
+          });
+        }
+      }     
+    }
+    if (rhsNode) traverseNodesFast(rhsNode, adjustDecrementsVisitor);
+  }
+};
+
+
 // public variables that interact with the secret also need to be modified within the circuit.
-const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
+const publicVariables = (path: NodePath, state: any, IDnode: any) => {
   const {parent, node } = path;
   // Break if the identifier is a mapping or array. 
   if ( parent.indexExpression && parent.baseExpression === node ) {
@@ -52,7 +95,6 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
     if (!fnDefNode) throw new Error(`Not in a function`);
 
     const modifiedBeforePaths = path.scope.getReferencedIndicator(node, true)?.modifyingPaths?.filter((p: NodePath) => p.node.id < node.id);
-
     const statements = fnDefNode.node._newASTPointer.body.statements;
 
     let num_modifiers=0;
@@ -148,8 +190,26 @@ const publicVariablesVisitor = (path: NodePath, state: any, IDnode: any) => {
     fnDefNode.node._newASTPointer.body.statements.push(endNode);
   }
   // We no longer need this because index expression nodes are not input. 
-    //if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) publicVariablesVisitor(NodePath.getPath(node.indexExpression), state, null);
+    //if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) publicVariables(NodePath.getPath(node.indexExpression), state, null);
 }
+
+//Visitor for publicVariables
+const publicVariablesVisitor = (thisPath: NodePath, thisState: any) => {
+  const { node } = thisPath;
+  let { name } = node;
+  if (!['Identifier', 'IndexAccess'].includes(thisPath.nodeType)) return;
+  const binding = thisPath.getReferencedBinding(node);
+      if ( (binding instanceof VariableBinding) && !binding.isSecret && 
+      binding.stateVariable && thisPath.getAncestorContainedWithin('rightHandSide') ){
+      } else{
+        name = thisPath.scope.getIdentifierMappingKeyName(node);
+      }
+      const newNode = buildNode(
+        node.nodeType,
+        { name, type: node.typeDescriptions?.typeString },
+      );
+  publicVariables(thisPath, thisState, newNode);
+};
 
 
 // below stub will only work with a small subtree - passing a whole AST will always give true!
@@ -327,6 +387,7 @@ const visitor = {
         // a non secret function - we skip it for circuits
         state.skipSubNodes = true;
       }
+
     },
 
     exit(path: NodePath, state: any) {
@@ -334,6 +395,7 @@ const visitor = {
       const { indicators } = scope;
       const newFunctionDefinitionNode = node._newASTPointer;
 
+      
       // We need to ensure the correctness of the circuitImport flag for each internal function call. The state may have been updated due to later function calls that modify the same secret state.
       let importStatementList: any;
       parent._newASTPointer.forEach((file: any) => {
@@ -808,14 +870,12 @@ const visitor = {
           case 'Assignment': {
             const { leftHandSide: lhs, rightHandSide: rhs } = expression;
             const lhsIndicator = scope.getReferencedIndicator(lhs);
-
             if (!lhsIndicator?.isPartitioned) break;
 
             const rhsPath = NodePath.getPath(rhs);
             // We need to _clone_ the path, because we want to temporarily modify some of its properties for this traversal. For future AST transformations, we'll want to revert to the original path.
             const tempRHSPath = cloneDeep(rhsPath);
             const tempRHSParent = tempRHSPath.parent;
-
             if (isDecremented) {
               newNode = buildNode('BoilerplateStatement', {
                 bpType: 'decrementation',
@@ -852,8 +912,15 @@ const visitor = {
 
             tempRHSPath.traverse(visitor, { skipPublicInputs: true });
             rhsPath.traversePathsFast(publicInputsVisitor, {});
+            rhsPath.traversePathsFast(publicVariablesVisitor, {});
+            path.traversePathsFast(p => {
+              if (p.node.nodeType === 'Identifier' && p.isStruct(p.node)){
+                addStructDefinition(p);
+              }
+            }, state);
             state.skipSubNodes = true;
             parent._newASTPointer.push(newNode);
+            incrementNames(newNode, lhsIndicator);
             return;
           }
           default:
@@ -929,12 +996,11 @@ const visitor = {
       const fnDefNode = path.getAncestorOfType('FunctionDefinition');
       // We ensure the original variable name is set to the initial value only at the end of the statements. 
       //E.g index = index_init should only appear at the end of all the modifying statements. 
-      let ind = fnDefNode.node._newASTPointer.body.statements.length - 2;
-      while (ind >= 0  && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name && fnDefNode.node._newASTPointer.body.statements[ind].expression?.rightHandSide?.name.includes("_init")){
-        let temp = fnDefNode.node._newASTPointer.body.statements[ind+1];
-        fnDefNode.node._newASTPointer.body.statements[ind+1] = fnDefNode.node._newASTPointer.body.statements[ind];
-        fnDefNode.node._newASTPointer.body.statements[ind] = temp;
-        ind--;
+      for (let i = fnDefNode.node._newASTPointer.body.statements.length - 1; i >= 0; i--) {
+        if (fnDefNode.node._newASTPointer.body.statements[i].isEndInit) {
+          let element = fnDefNode.node._newASTPointer.body.statements.splice(i, 1)[0];
+          fnDefNode.node._newASTPointer.body.statements.push(element);
+        }
       }
     }
   },
@@ -1041,7 +1107,6 @@ const visitor = {
         declarationType,
       });
 
-
       if (path.isStruct(node)) {
         state.structNode = addStructDefinition(path);
         newNode.typeName.name = state.structNode.name;
@@ -1132,7 +1197,7 @@ const visitor = {
         { name, type: node.typeDescriptions?.typeString },
       );
       if (path.isStruct(node)) addStructDefinition(path);
-      publicVariablesVisitor(path, state,newNode);
+      publicVariables(path, state,newNode);
       if (path.getAncestorOfType('IfStatement')) node._newASTPointer = newNode;
       // no pointer needed, because this is a leaf, so we won't be recursing any further.
       // UNLESS we must add and rename if conditionals 
@@ -1292,7 +1357,9 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent , parentPath } = path;
       const { value } = node;
-
+      if (parentPath.isRequireStatement() && node.kind === 'string'){
+        return;
+      };
       if (node.kind !== 'number' && node.kind !== 'bool' && !path.getAncestorOfType('Return'))
         throw new Error(
           `Only literals of kind "number" are currently supported. Found literal of kind '${node.kind}'. Please open an issue.`,
@@ -1308,7 +1375,6 @@ const visitor = {
   MemberAccess: {
     enter(path: NodePath, state: any) {
       const { parent, node } = path;
-
       let newNode: any;
 
       if (path.isMsgSender()) {
@@ -1343,7 +1409,7 @@ const visitor = {
       const newNode = buildNode('IndexAccess');
       if (path.isConstantArray(node) && (path.isLocalStackVariable(node) || path.isFunctionParameter(node))) newNode.isConstantArray = true;
       // We don't need this because index access expressions always contain identifiers. 
-      //publicVariablesVisitor(path, state,newNode);
+      //publicVariables(path, state,newNode);
       node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },

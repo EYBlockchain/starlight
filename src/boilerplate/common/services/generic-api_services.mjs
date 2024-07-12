@@ -7,6 +7,7 @@ import fs from "fs";
 import logger from "./common/logger.mjs";
 import { decrypt } from "./common/number-theory.mjs";
 import { getAllCommitments, getCommitmentsByState } from "./common/commitment-storage.mjs";
+import ServiceManager from './common/serviceManager.mjs'
 import web3 from "./common/web3.mjs";
 
 /**
@@ -23,18 +24,22 @@ let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 
-export async function service_FUNCTION_NAME (req, res, next){
-  try {
-    await web3.connect();
-    await new Promise((resolve) => setTimeout(() => resolve(), 3000));
-  } catch (err) {
-    throw new Error(err);
+export class ServiceManager{
+  constructor(web3){
+    this.web3 =web3;
+    this.FUNCTION_NAME = new FUNCTION_NAME(web3);
   }
+
+  async init(){
+    await this.FUNCTION_NAME.init();
+  }
+
+ async service_FUNCTION_NAME (req, res, next){
 	try {
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
     CONSTRUCTOR_INPUTS;
-    const { tx , encEvent, encBackupEvent, _RESPONSE_} = await FUNCTION_NAME(FUNCTION_SIG);
+    const { tx , encEvent, encBackupEvent, _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
     res.send({tx, encEvent, encBackupEvent, _RESPONSE_});

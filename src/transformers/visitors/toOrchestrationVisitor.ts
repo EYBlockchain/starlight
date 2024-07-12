@@ -35,10 +35,11 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
     return structIncs;
   }
   for (const inc of stateVarIndicator.increments || []) {
-
     if (inc.nodeType === 'IndexAccess' || inc.nodeType === 'MemberAccess') inc.name = getIndexAccessName(inc);
     if (!inc.name) inc.name = inc.value;
-    if (incrementsArray.some(existingInc => inc.name === existingInc.name))
+    // Note: modName defined in circuit
+    let modName =  inc.modName ? inc.modName : inc.name;
+    if (incrementsArray.some(existingInc => inc.name === existingInc.name ))
       continue;
     incrementsArray.push({
       name: inc.name,
@@ -48,17 +49,18 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 
     if (inc === stateVarIndicator.increments?.[0]) {
       incrementsString += inc.value
-        ? `parseInt(${inc.name}, 10)`
-        : `parseInt(${inc.name}.integer, 10)`;
+        ? `parseInt(${modName}, 10)`
+        : `parseInt(${modName}.integer, 10)`;
     } else {
       incrementsString += inc.value
-        ? ` ${inc.precedingOperator} parseInt(${inc.name}, 10)`
-        : ` ${inc.precedingOperator} parseInt(${inc.name}.integer, 10)`;
+        ? ` ${inc.precedingOperator} parseInt(${modName}, 10)`
+        : ` ${inc.precedingOperator} parseInt(${modName}.integer, 10)`;
     }
   }
   for (const dec of stateVarIndicator.decrements || []) {
     if (dec.nodeType === 'IndexAccess' || dec.nodeType === 'MemberAccess') dec.name = getIndexAccessName(dec);
     if (!dec.name) dec.name = dec.value;
+    let modName =  dec.modName ? dec.modName : dec.name;
     if (incrementsArray.some(existingInc => dec.name === existingInc.name))
       continue;
     incrementsArray.push({
@@ -68,14 +70,14 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 
     if (!stateVarIndicator.decrements?.[1] && !stateVarIndicator.increments?.[0]) {
       incrementsString += dec.value
-        ? `parseInt(${dec.name}, 10)`
-        : `parseInt(${dec.name}.integer, 10)`;
+        ? `parseInt(${modName}, 10)`
+        : `parseInt(${modName}.integer, 10)`;
     } else {
       // if we have decrements, this str represents the value we must take away
       // => it's a positive value with +'s
       incrementsString += dec.value
-        ? ` + parseInt(${dec.name}, 10)`
-        : ` + parseInt(${dec.name}.integer, 10)`;
+        ? ` + parseInt(${modName}, 10)`
+        : ` + parseInt(${modName}.integer, 10)`;
     }
   }
   return { incrementsArray, incrementsString };
@@ -503,8 +505,7 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
-       if(node.containsPublic && !scope.modifiesSecretState){
-        
+       if(node.containsPublic && !scope.modifiesSecretState()){
         interface PublicParam {
           name: string;
           properties?: { name: string; type: string }[];
@@ -677,10 +678,10 @@ const visitor = {
             state.wholeNullified ??= [];
             if (!state.wholeNullified.includes(name)) state.wholeNullified.push(name)
           }
-          
-          let { incrementsArray, incrementsString } = isIncremented
+          let increments = isIncremented
             ? collectIncrements(stateVarIndicator)
             : { incrementsArray: null, incrementsString: null };
+          let {incrementsArray, incrementsString} = increments;
           if (!incrementsString) incrementsString = null;
           if (!incrementsArray) incrementsArray = null;
 
@@ -852,7 +853,6 @@ const visitor = {
             if (!newNodes.generateProofNode.parameters.includes(input.name))
               newNodes.generateProofNode.parameters.push(input.name);
           })
-
           delete state.publicInputs; // reset
         }
         if (state.constructorStatements && state.constructorStatements[0] && node.kind === 'constructor') newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
@@ -1441,24 +1441,21 @@ const visitor = {
           return;
         }
       }
-      if (node.expression.expression?.name !== 'require') {
-        // We no longer check indicator?.interactsWithSecret because in most cases interactsWithSecret is set to true in addPublicInput anyway. 
-        // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
-        const newNode = buildNode(node.nodeType, {
-          interactsWithSecret: interactsWithSecret,
-          //|| indicator?.interactsWithSecret,
-          oldASTId: node.id,
-        });
-
-        node._newASTPointer = newNode;
-        if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
-          parent._newASTPointer.push(newNode);
-        } else if (Array.isArray(parent._newASTPointer[path.containerName])) {
-          parent._newASTPointer[path.containerName].push(newNode);
-        } else {
-          parent._newASTPointer[path.containerName] = newNode;
-        }
-      }
+      // We no longer check indicator?.interactsWithSecret because in most cases interactsWithSecret is set to true in addPublicInput anyway. 
+      // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
+      const newNode = buildNode(node.nodeType, {
+        interactsWithSecret: interactsWithSecret,
+        //|| indicator?.interactsWithSecret,
+        oldASTId: node.id,
+      });
+      node._newASTPointer = newNode;
+      if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
+        parent._newASTPointer.push(newNode);
+      } else if (Array.isArray(parent._newASTPointer[path.containerName])) {
+        parent._newASTPointer[path.containerName].push(newNode);
+      } else {
+        parent._newASTPointer[path.containerName] = newNode;
+      }    
     },
 
     exit(path: NodePath, state: any) {
@@ -1476,21 +1473,9 @@ const visitor = {
       // reset
       delete state.interactsWithSecret;
       if (node._newASTPointer?.incrementsSecretState && indicator) {
-        const increments = collectIncrements(indicator).incrementsString;
-        path.node._newASTPointer.increments = increments;
-      } else if (indicator?.isWhole && node._newASTPointer) {
-        // we add a general number statement after each whole state edit
-        const tempNode = node._newASTPointer;
-        name = tempNode.initialValue && tempNode.initialValue.leftHandSide ? tempNode.initialValue.leftHandSide.name : name;
-        if (node._newASTPointer.interactsWithSecret) path.getAncestorOfType('FunctionDefinition')?.node._newASTPointer.body.statements.push(
-          buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name }),
-              operator: '=',
-              rightHandSide: buildNode('Identifier', { name, subType: 'generalNumber' })
-            }
-          )
-        );
-      }
+        let increments = collectIncrements(indicator);
+        path.node._newASTPointer.increments = increments.incrementsString;
+      } 
 
       if (node._newASTPointer?.interactsWithSecret && path.getAncestorOfType('ForStatement'))  {
         path.getAncestorOfType('ForStatement').node._newASTPointer.interactsWithSecret = true;
@@ -1743,8 +1728,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { value: node.value });
-
-      parent._newASTPointer[path.containerName] = newNode;
+      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
   },
 
@@ -1799,6 +1783,17 @@ const visitor = {
   FunctionCall: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      if (node.expression?.name === 'require') {
+        const newNode = buildNode('RequireStatement', {
+        });
+        parent._newASTPointer[path.containerName] = newNode;
+        node._newASTPointer = newNode.condition;
+        if (node.arguments[0]) NodePath.getPath(node.arguments[0]).traverse(visitor, state);
+        node._newASTPointer = newNode.message;
+        if (node.arguments[1]) NodePath.getPath(node.arguments[1]).traverse(visitor, state);
+        state.skipSubNodes = true;
+        return;
+      }
       if (node.kind !== 'typeConversion') {
         state.skipSubNodes = true;
         return;

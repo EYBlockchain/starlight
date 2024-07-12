@@ -137,19 +137,24 @@ export const generateProofBoilerplate = (node: any) => {
 
     const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
 
-    // Check if the mapping is already included in the parameters
-    let name: string;
-    let state: any;
-    let isIncluded = false;
-    for ([name, state] of Object.entries(node.privateStates)) {
-      if (stateNode.stateVarId[0] === state.stateVarId[0] && stateName != name && node.parameters.includes(state.stateVarId[1]) ) {
-        isIncluded = true;
-      }
-    }
+    // We are keeping this code in comments, for future if have any issue with extra mapping keys getting added for a zapp we can come to this
+    
+    // let name: string;
+    // let state: any;
+    // let isIncluded = false;
+    // console.log(node.privateStates);
+    // for ([name, state] of Object.entries(node.privateStates)) {
+    //   if (stateNode.stateVarId[0] === state.stateVarId[0] && stateName != name && node.parameters.includes(state.stateVarId[1]) ) {
+    //     console.log(stateNode.stateVarId, stateName, name);
+    //     console.log(node.parameters);
+    //     isIncluded = true;
+    //   }
+    // }
+
     const stateVarIdLines =
-      stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !isIncluded && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
+      stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
-        : [];
+        : [];  
     // we add any extra params the circuit needs
     node.parameters
       .filter(
@@ -451,6 +456,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   const params:any[] = [];
   const states: string[] = [];
   const rtnparams: string[] = [];
+  const functionSig: string[] = [];
   let returnInputs: string[] = [];
   let stateName: string;
   let stateNode: any;
@@ -460,12 +466,24 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return { statements:  Orchestrationbp.generateProof.import() }
 
     case 'FunctionDefinition':
-      // the main function
-      if (node.name !== 'cnstrctr') lines.push(
-        `\n\n// Initialisation of variables:
-        \nconst instance = await getContractInstance('${node.contractName}');
-        \nconst contractAddr = await getContractAddress('${node.contractName}');        `,
+      // the main function class
+      if (node.name !== 'cnstrctr') {functionSig.push(
+        `export class ${(node.name).charAt(0).toUpperCase() + node.name.slice(1)}Manager {
+          constructor(web3) {
+            this.web3 = web3;
+          }
+          
+          async init() {
+            this.instance = await getContractInstance('${node.contractName}');
+            this.contractAddr = await getContractAddress('${node.contractName}');
+          }
+        `
       );
+      lines.push(`
+      const instance = this.instance;
+      const contractAddr = this.contractAddr;
+      const web3 =  this.web3;`)
+    }
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
@@ -505,7 +523,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.name === 'cnstrctr')
         return {
           signature: [
-            `\nexport default async function ${node.name}(${params} ${states}) {`,
+            `\n export default async function ${node.name}(${params} ${states}) {`,
             `\nprocess.exit(0);
           \n}`,
           ],
@@ -514,8 +532,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         if(rtnparams.length == 0) {
           return {
             signature: [
-              `\nexport default async function ${node.name}(${params} ${states}) {`,
+              `${functionSig}
+              \n async  ${node.name}(${params} ${states}) {`,
               `\n return  { tx, encEvent, encBackupEvent };
+              \n}
             \n}`,
             ],
             statements: lines,
@@ -525,8 +545,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if(rtnparams.includes('bool: bool')) {
         return {
           signature: [
-            `\nexport default async function ${node.name}(${params} ${states}) {`,
+            `
+            \n async  ${node.name}(${params} ${states}) {`,
             `\n const bool = true; \n return  { tx, encEvent, encBackupEvent, ${rtnparams} };
+            \n}
           \n}`,
           ],
           statements: lines,
@@ -535,8 +557,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
       return {
         signature: [
-          `\nexport default async function ${node.name}(${params} ${states}) {`,
+          ` ${functionSig}
+          \n async ${node.name}(${params} ${states}) {`,
           `\nreturn  { tx, encEvent, encBackupEvent, ${rtnparams} };
+          \n}
         \n}`,
         ],
         statements: lines,

@@ -21,3 +21,9 @@ docker-compose -f docker-compose.zapp.yml up -d timber
 sleep 10
 
 docker-compose -f docker-compose.zapp.yml up -d zapp
+
+echo "All services have been started."
+echo "----------------------------------------------------"
+echo " Run  these commands in the terminal to get the logs"
+echo "docker compose -f docker-compose.zapp-double.yml logs -f -n 1000 zapp zokrates timber"
+echo "-----------------------------------------------------"

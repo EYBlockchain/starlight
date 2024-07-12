@@ -62,6 +62,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);
+
         return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
           fn.signature[1]
       }`;
@@ -103,7 +104,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
         // local var dec
         if (node.initialValue.nodeType === 'Literal' && !node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
-        return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
+        return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
       } 
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
@@ -238,7 +239,19 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'MemberAccess':
       if (options?.lhs) return `${node.name}.${node.memberName}`;
       return codeGenerator({ nodeType: 'Identifier', name: `${node.name}.${node.memberName}`, subType: node.subType });
-  
+
+    case 'RequireStatement':
+      if (!node.message[0]){
+        return `if(!(${codeGenerator(node.condition[0])})){
+          throw new Error(
+          "Require statement not satisfied."
+        );}\n`;
+      }
+      return `if(!(${codeGenerator(node.condition[0])})){
+        throw new Error(
+        "Require statement not satisfied: ${node.message[0].value}"
+      );}\n`;
+
     case 'Folder':
     case 'File':
     case 'EditableCommitmentCommonFilesBoilerplate':

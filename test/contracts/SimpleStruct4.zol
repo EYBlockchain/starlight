@@ -20,23 +20,23 @@ contract Receipt {
   }
 
   function addPO(secret PO memory newpo) public {
-    require(newpo.owner == msg.sender);
-    require(POs[newpo.id].id == 0); // inv shouldnt exist
+    require(newpo.owner == msg.sender, "owner of new PO is not the message sender");
+    require(POs[newpo.id].id == 0, "PO should not exist"); // inv shouldnt exist
     POs[newpo.id] = newpo;
   }
 
   function addInvoice(secret Invoice memory inv) public {
-    require(invoices[inv.id].id == 0); // inv shouldnt exist
+    require(invoices[inv.id].id == 0, "invoice does not exist"); // inv shouldnt exist
     invoices[inv.id] = inv;
-    require(POs[inv.id].count != 0);
-    require(inv.amount == POs[inv.id].count * POs[inv.id].ppunit);
+    require(POs[inv.id].count != 0, "PO count equals 0");
+    require(inv.amount == POs[inv.id].count * POs[inv.id].ppunit, "amount incorrect");
   }
 
   function pay(secret uint256 id, secret uint256 amount) public {
     // imagine a real payment here
-    require(invoices[id].amount == amount);
+    require(invoices[id].amount == amount, "amount incorrect");
     invoices[id].amount = 0;
-    require(POs[id].count != 0);
-    require(POs[id].owner == msg.sender);
+    require(POs[id].count != 0, "PO count equals 0");
+    require(POs[id].owner == msg.sender, "owner of PO is not the message sender");
   }
 }
