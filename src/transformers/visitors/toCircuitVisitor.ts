@@ -77,19 +77,19 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
   console.log(`Node: ${node.name}, interactsWithSecret: ${interactsWithSecret}, interactsWithPublic: ${interactsWithPublic}`);
 
   // Traiter seulement si la variable interagit avec les variables secrètes et publiques
-  if (
-    binding instanceof VariableBinding &&
-    interactsWithSecret &&
-    interactsWithPublic &&
-    binding.stateVariable && !binding.isSecret
-  ) 
-
   // if (
   //   binding instanceof VariableBinding &&
-  //   (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
-  //   (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
-  //   binding.stateVariable && !binding.isSecret 
+  //   interactsWithSecret &&
+  //   interactsWithPublic &&
+  //   binding.stateVariable && !binding.isSecret
   // ) 
+
+  if (
+    binding instanceof VariableBinding &&
+    (node.interactsWithSecret || node.baseExpression?.interactsWithSecret) &&
+    (node.interactsWithPublic || node.baseExpression?.interactsWithPublic) &&
+    binding.stateVariable && !binding.isSecret 
+  ) 
   {
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
     if (!fnDefNode) throw new Error(`Not in a function`);
@@ -844,15 +844,15 @@ const visitor = {
         thisState.interactsWithSecretInScope = true; // Update thisState flag
       }
 
-      // if (expression.nodeType === 'UnaryOperation') {
-      //   const { operator, subExpression } = expression;
-      //   if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
-      //     const referencedIndicator = scope.getReferencedIndicator(subExpression);
-      //     if (referencedIndicator?.interactsWithSecret) {
-      //       thisState.interactsWithSecretInScope = true;
-      //     }
-      //   }
-      // }
+      if (expression.nodeType === 'UnaryOperation') {
+        const { operator, subExpression } = expression;
+        if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
+          const referencedIndicator = scope.getReferencedIndicator(subExpression);
+          if (referencedIndicator?.interactsWithSecret) {
+            thisState.interactsWithSecretInScope = true;
+          }
+        }
+      }
     
       
       if (!node.containsSecret && !childOfSecret && !thisState.interactsWithSecretInScope) {
@@ -939,6 +939,16 @@ const visitor = {
         let { leftHandSide: lhs } = node.expression;
         if (!lhs) lhs = node.expression.subExpression;
         const referencedIndicator = scope.getReferencedIndicator(lhs, true);
+
+        // if (expression.nodeType === 'UnaryOperation') {
+        //   const { operator, subExpression } = expression;
+        //   if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
+        //     const referencedIndicator = scope.getReferencedIndicator(subExpression);
+        //     if (referencedIndicator?.interactsWithSecret) {
+        //       state.thisState.interactsWithSecretInScope = true;
+        //     }
+        //   }
+        // }
 
         const name = referencedIndicator?.isMapping
           ? referencedIndicator.name
