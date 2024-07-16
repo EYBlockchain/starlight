@@ -1,4 +1,5 @@
 /* eslint-disable import/no-cycle, no-param-reassign, consistent-return */
+import cloneDeep from 'lodash.clonedeep';
 import {OrchestrationCodeBoilerPlate}  from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
 import fileGenerator from '../files/toOrchestration.js';
 
@@ -75,6 +76,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return node.name;
      
     case 'VariableDeclarationStatement': {
+      if (node.outsideIf){
+        return `${codeGenerator(node.initialValue)}`;
+      }
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue?.nodeType === 'Assignment') {
@@ -168,14 +172,23 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return ` `;
 
       case 'IfStatement': {
+        let preIfStatements = node.trueBody.filter((node: any) => node.outsideIf).concat(node.falseBody.filter((node: any) => node.outsideIf));
+        let newPreIfStatements = [];
+        preIfStatements.forEach((node: any) => {
+          newPreIfStatements.push(cloneDeep(node));
+          newPreIfStatements[newPreIfStatements.length - 1].outsideIf = false;
+        });
+        let preIfStatementsString =  newPreIfStatements.flatMap(codeGenerator).join('\n');
         if(node.falseBody.length)
-        return `if (${codeGenerator(node.condition)}) {
+        return `${preIfStatementsString}
+          if (${codeGenerator(node.condition)}) {
             ${node.trueBody.flatMap(codeGenerator).join('\n')}
           } else {
             ${node.falseBody.flatMap(codeGenerator).join('\n')}
           }`
           else
-          return `if (${codeGenerator(node.condition)}) {
+          return `${preIfStatementsString}
+            if (${codeGenerator(node.condition)}) {
               ${node.trueBody.flatMap(codeGenerator).join('\n')}
             }`
         }

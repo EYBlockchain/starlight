@@ -115,7 +115,6 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
         if (path.containerName !== 'indexExpression') {
           num_modifiers++;
         } 
-        findStatementId(statements,expressionId);
         let {expNode, location} = findStatementId(statements, expressionId);
         if (expNode && !expNode.isAccessed) {
           expNode.isAccessed = true;
