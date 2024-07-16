@@ -57,6 +57,30 @@ const incrementNames = (node: any, indicator: any) => {
 };
 
 
+//Finds a statement with the correct ID 
+const findStatementId = (statements: any, ID: number) => {
+  let expNode = statements.find((n:any) => n?.id === ID);
+  let index_expNode = statements.indexOf(expNode);
+  let location = {index: index_expNode, trueIndex: -1, falseIndex: -1};
+  statements.forEach((st:any) => {
+    if (st.trueBody){
+      if (!expNode) {
+        expNode = st.trueBody.find((n:any) => n?.id === ID);
+        location.index = statements.indexOf(st);
+        location.trueIndex = st.trueBody.indexOf(expNode);
+      }
+    } else if (st.falseBody){
+      if (!expNode) {
+        expNode = st.falseBody.find((n:any) => n?.id === ID);
+        location.index = statements.indexOf(st);
+        location.falseIndex = st.falseBody.indexOf(expNode);
+      } 
+    }
+  });
+  return {expNode, location};
+};
+
+
 // public variables that interact with the secret also need to be modified within the circuit.
 const publicVariables = (path: NodePath, state: any, IDnode: any) => {
   const {parent, node } = path;
@@ -91,8 +115,8 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
         if (path.containerName !== 'indexExpression') {
           num_modifiers++;
         } 
-        let expNode = statements.find((n:any) => n?.id === expressionId);
-        let index_expNode = fnDefNode.node._newASTPointer.body.statements.indexOf(expNode);
+        findStatementId(statements,expressionId);
+        let {expNode, location} = findStatementId(statements, expressionId);
         if (expNode && !expNode.isAccessed) {
           expNode.isAccessed = true;
           if((expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
@@ -109,8 +133,11 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
                   interactsWithSecret: true,
                   isVarDec: true,
               });
-              if (index_expNode !== -1) {
-                fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+              newNode1.outsideIf = true;
+              if (location.index!== -1) {
+                if (location.trueIndex !== -1){ fnDefNode.node._newASTPointer.body.statements[location.index].trueBody.splice(location.trueIndex + 1, 0, newNode1); }
+                else if (location.falseIndex !== -1){ fnDefNode.node._newASTPointer.body.statements[location.index].falseBody.splice(location.falseIndex + 1, 0, newNode1); }
+                else {fnDefNode.node._newASTPointer.body.statements.splice(location.index + 1, 0, newNode1);}
               }
             }
           } else{
@@ -124,8 +151,11 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
               expression: InnerNode,
               interactsWithSecret: true,
             });
-            if (index_expNode !== -1) {
-              fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 1, 0, newNode1);
+            newNode1.outsideIf = true;
+            if (location.index!== -1) {
+              if (location.trueIndex !== -1){ fnDefNode.node._newASTPointer.body.statements[location.index].trueBody.splice(location.trueIndex + 1, 0, newNode1); }
+              else if (location.falseIndex !== -1){ fnDefNode.node._newASTPointer.body.statements[location.index].falseBody.splice(location.falseIndex + 1, 0, newNode1); }
+              else {fnDefNode.node._newASTPointer.body.statements.splice(location.index + 1, 0, newNode1);}
             }
             if (`${modName}` !== `${node.name}_${num_modifiers}` && num_modifiers !==0){
               const initInnerNode1 = buildNode('Assignment', {
@@ -138,8 +168,11 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
                   interactsWithSecret: true,
                   isVarDec: true,
               });
-              if (index_expNode !== -1) {
-                fnDefNode.node._newASTPointer.body.statements.splice(index_expNode + 2, 0, newNode2);
+              newNode2.outsideIf = true;
+              if (location.index!== -1) {
+                if (location.trueIndex !== -1){ fnDefNode.node._newASTPointer.body.statements[location.index].trueBody.splice(location.trueIndex + 2, 0, newNode2); }
+                else if (location.falseIndex !== -1){ fnDefNode.node._newASTPointer.body.statements[location.index].falseBody.splice(location.falseIndex + 2, 0, newNode2); }
+                else {fnDefNode.node._newASTPointer.body.statements.splice(location.index + 2, 0, newNode2);}
               }
             }
           }
@@ -1193,9 +1226,34 @@ const visitor = {
 
   IfStatement: {
     enter(path: NodePath, state: any) {
-      const { node, parent } = path;
+      const { node, parent, scope } = path;
       let isIfStatementSecret;
-      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || !node.condition?.containsPublic)
+      let interactsWithSecret = false;
+      function bodyInteractsWithSecrets(statements) {
+        statements.forEach((st) => {
+          if (st.nodeType === 'ExpressionStatement') {
+            if (st.expression.nodeType === 'UnaryOperation') {
+              const { operator, subExpression } = st.expression;
+              if ((operator === '++' || operator === '--') && subExpression.nodeType === 'Identifier') {
+                const referencedIndicator = scope.getReferencedIndicator(subExpression);
+                if (referencedIndicator?.interactsWithSecret) {
+                  interactsWithSecret = true;
+                }
+              }
+            } else {
+              const referencedIndicator = scope.getReferencedIndicator(st.expression.leftHandSide);
+                if (referencedIndicator?.interactsWithSecret) {
+                  interactsWithSecret = true;
+                }
+            }
+          }
+        });
+      }
+      if (node.trueBody?.statements) bodyInteractsWithSecrets(node.trueBody?.statements);
+      if (node.falseBody?.statements) bodyInteractsWithSecrets(node.falseBody?.statements);
+
+
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || interactsWithSecret ||  !node.condition?.containsPublic)
         isIfStatementSecret = true;
       if(isIfStatementSecret) {
       if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')
