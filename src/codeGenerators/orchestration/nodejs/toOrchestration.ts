@@ -172,6 +172,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return ` `;
 
       case 'IfStatement': {
+        let comment = (node.inPreStatements)  ? "// the public statements of this if statement have been moved to pre-statements here, any statements that involve secret variables appear later" : '';
         let preIfStatements = node.trueBody.filter((node: any) => node.outsideIf).concat(node.falseBody.filter((node: any) => node.outsideIf));
         let newPreIfStatements = [];
         preIfStatements.forEach((node: any) => {
@@ -180,14 +181,16 @@ export default function codeGenerator(node: any, options: any = {}): any {
         });
         let preIfStatementsString =  newPreIfStatements.flatMap(codeGenerator).join('\n');
         if(node.falseBody.length)
-        return `${preIfStatementsString}
+        return `${comment}
+        ${preIfStatementsString}
           if (${codeGenerator(node.condition)}) {
             ${node.trueBody.flatMap(codeGenerator).join('\n')}
           } else {
             ${node.falseBody.flatMap(codeGenerator).join('\n')}
           }`
           else
-          return `${preIfStatementsString}
+          return `${comment}
+          ${preIfStatementsString}
             if (${codeGenerator(node.condition)}) {
               ${node.trueBody.flatMap(codeGenerator).join('\n')}
             }`

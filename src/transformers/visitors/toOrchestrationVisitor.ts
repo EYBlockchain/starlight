@@ -206,6 +206,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
             else if (locIf.index !== -1 && location.falseIndex !== -1) fnDefNode.node._newASTPointer.body.preStatements[locIf.index].falseBody.push(moveExpNode);
             else if (!locIf.index || locIf.index === -1 ){
               let newIfNode = cloneDeep(location.ifNode);
+              newIfNode.inPreStatements = true;
               newIfNode.trueBody = [];
               newIfNode.falseBody = [];
               if (location.trueIndex !== -1)  newIfNode.trueBody.push(moveExpNode);
