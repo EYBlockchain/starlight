@@ -223,7 +223,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
               delete statements[location.index];
             }
           }
-          if ((statements[location.index].trueBody && statements[location.index].trueBody.every(element => element === null || element === undefined)) && (statements[location.index].falseBody && statements[location.index].falseBody.every(element => element === null || element === undefined))) {
+          if ((statements[location.index]?.trueBody && statements[location.index].trueBody.every(element => element === null || element === undefined)) && (statements[location.index]?.falseBody && statements[location.index].falseBody.every(element => element === null || element === undefined))) {
             delete statements[location.index];
           }      
           
