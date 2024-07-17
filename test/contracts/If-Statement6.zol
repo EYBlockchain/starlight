@@ -45,22 +45,6 @@ contract MyContract {
        a += b + value;
      }
 
-    function add3(uint256 value) public {
-      if(b < 5) {
-       b += 1;
-        b++;
-      }
-      a += b + value;
-    }
-
-    function add4(uint256 value) public {
-      if(a < b) {
-      revert("a less than b");
-      }
-      a+= value;
-      b += 20;
-    }
-
 
     
 

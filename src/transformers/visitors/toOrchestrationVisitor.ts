@@ -929,16 +929,18 @@ const visitor = {
                 originalName = falseNode.initialValue.rightHandSide.name;
               }
             });
-            const InnerNode = buildNode('Assignment', {
-              leftHandSide: buildNode('Identifier', { name: finalName, subType: 'generalNumber'  }),
-              operator: '=',
-              rightHandSide: buildNode('Identifier', { name: originalName, subType: 'generalNumber' })
-            });
-            const finalIfNode = buildNode('ExpressionStatement', {
-              expression: InnerNode,
-              interactsWithSecret: true,
-            });
-            nodesToAdd.push({node: finalIfNode, index: index+1});
+            if (finalName && originalName){
+              const InnerNode = buildNode('Assignment', {
+                leftHandSide: buildNode('Identifier', { name: finalName, subType: 'generalNumber'  }),
+                operator: '=',
+                rightHandSide: buildNode('Identifier', { name: originalName, subType: 'generalNumber' })
+              });
+              const finalIfNode = buildNode('ExpressionStatement', {
+                expression: InnerNode,
+                interactsWithSecret: true,
+              });
+              nodesToAdd.push({node: finalIfNode, index: index+1});
+            }
           }
         });
         for (let i = nodesToAdd.length - 1; i >= 0; i--) {
