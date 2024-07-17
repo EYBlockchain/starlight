@@ -279,11 +279,11 @@ function codeGenerator(node: any) {
       }
       for (let j =0; j<node.falseBody.length; j++) {
         if (node.falseBody[j].outsideIf) {
-          trueStatements += `${codeGenerator(node.falseBody[j])}`;
+          falseStatements += `${codeGenerator(node.falseBody[j])}`;
         } else {
           if (node.falseBody[j].expression.nodeType === 'UnaryOperation'){
             falseStatements+= `
-            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 else ${codeGenerator(node.falseBody[j].expression.subExpression)} fi`
+            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.subExpression)}  else  ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 fi`
           } else {
             falseStatements+= `
             ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.leftHandSide)} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)} fi`
