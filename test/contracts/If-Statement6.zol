@@ -5,7 +5,8 @@ pragma solidity ^0.8.0;
 contract MyContract {
 
     secret uint256 private a;
-    uint256 private b;
+    uint256 public b;
+    uint256 public c;
     secret address private admin;
     address private pubAdmin;
 
@@ -18,18 +19,32 @@ contract MyContract {
     function add(uint256 value) public {
       if(b < 5) {
        b += 1;
-      }
-      a += b + value;
-    }
-
-    function add1(uint256 value) public {
-      if(b < 5) {
+        b++;
+      } else{
         b++;
       }
       a += b + value;
     }
 
+
+    function add1(uint256 value) public {
+      if(b < 5) {
+       b += 1;
+        b++;
+      }
+      a += value;
+    }
+
+
     function add2(uint256 value) public {
+      if(b < 5) {
+       b += 1;
+       c += 1;
+      }
+      a += b + value;
+    }
+
+    function add3(uint256 value) public {
       if(b < 5) {
        b += 1;
         b++;
@@ -37,12 +52,12 @@ contract MyContract {
       a += b + value;
     }
 
-    function add3(uint256 value) public {
+    function add4(uint256 value) public {
       if(a < b) {
-      revert("a less than 5");
+      revert("a less than b");
       }
       a+= value;
-      b += 1;
+      b += 20;
     }
 
 

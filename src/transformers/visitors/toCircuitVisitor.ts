@@ -1252,7 +1252,7 @@ const visitor = {
       if (node.falseBody?.statements) bodyInteractsWithSecrets(node.falseBody?.statements);
 
 
-      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || interactsWithSecret ||  !node.condition?.containsPublic)
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || interactsWithSecret ||  node.condition?.containsSecret)
         isIfStatementSecret = true;
       if(isIfStatementSecret) {
       if(node.trueBody.statements[0].expression.nodeType === 'FunctionCall')

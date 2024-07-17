@@ -1835,7 +1835,7 @@ const visitor = {
       }
       if (node.trueBody?.statements) bodyInteractsWithSecrets(node.trueBody?.statements);
       if (node.falseBody?.statements) bodyInteractsWithSecrets(node.falseBody?.statements);
-      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || interactsWithSecret ||  !node.condition?.containsPublic)
+      if(node.falseBody?.containsSecret || node.trueBody?.containsSecret || interactsWithSecret ||  node.condition?.containsSecret)
         isIfStatementSecret = true;
       if(!isIfStatementSecret) {
         state.skipSubNodes = true;
