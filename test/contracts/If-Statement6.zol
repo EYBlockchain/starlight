@@ -21,6 +21,7 @@ contract MyContract {
        b += 1;
         b++;
       } else{
+        b = b+2;
         b++;
       }
       a += b + value;
@@ -36,13 +37,13 @@ contract MyContract {
     }
 
 
-    function add2(uint256 value) public {
-      if(b < 5) {
-       b += 1;
-       c += 1;
-      }
-      a += b + value;
-    }
+     function add2(uint256 value) public {
+       if(b < 5) {
+        b += 1;
+        c += 1;
+       }
+       a += b + value;
+     }
 
     function add3(uint256 value) public {
       if(b < 5) {

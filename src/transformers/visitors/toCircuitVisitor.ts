@@ -69,7 +69,8 @@ const findStatementId = (statements: any, ID: number) => {
         location.index = statements.indexOf(st);
         location.trueIndex = st.trueBody.indexOf(expNode);
       }
-    } else if (st.falseBody){
+    } 
+    if (st.falseBody){
       if (!expNode) {
         expNode = st.falseBody.find((n:any) => n?.id === ID);
         location.index = statements.indexOf(st);

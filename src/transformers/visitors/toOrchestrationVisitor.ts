@@ -96,7 +96,8 @@ const findStatementId = (statements: any, ID: number) => {
         location.trueIndex = st.trueBody.indexOf(expNode);
         location.ifNode = st;
       }
-    } else if (st.falseBody){
+    } 
+    if (st.falseBody){
       if (!expNode) {
         expNode = st.falseBody.find((n:any) => n?.id === ID);
         location.index = statements.indexOf(st);
@@ -569,6 +570,8 @@ const visitor = {
       node._newASTPointer.msgSenderParam ??= state.msgSenderParam;
       node._newASTPointer.msgValueParam ??= state.msgValueParam;
 
+      
+
        if(node.containsPublic && !scope.modifiesSecretState()){
         interface PublicParam {
           name: string;
@@ -911,6 +914,36 @@ const visitor = {
         }
 
         const newFunctionDefinitionNode = node._newASTPointer;
+
+        // In If Statements we might have non-secret statements editing variables that later interact with a secret variable. 
+        // We therefore have statements of the form b_6 = b so that b_6 can be used later. 
+        // We need to add the final such statement from the false body to after the if statement so that e.g. b_6 can be used even if the true body is executed. 
+        let nodesToAdd = [];
+        newFunctionDefinitionNode.body.preStatements.forEach((n: any, index: number) => {
+          if (n.nodeType === 'IfStatement'){
+            let finalName;
+            let originalName;
+            n.falseBody.forEach((falseNode: any) => {
+              if (falseNode.outsideIf){
+                finalName = falseNode.initialValue.leftHandSide.name;
+                originalName = falseNode.initialValue.rightHandSide.name;
+              }
+            });
+            const InnerNode = buildNode('Assignment', {
+              leftHandSide: buildNode('Identifier', { name: finalName, subType: 'generalNumber'  }),
+              operator: '=',
+              rightHandSide: buildNode('Identifier', { name: originalName, subType: 'generalNumber' })
+            });
+            const finalIfNode = buildNode('ExpressionStatement', {
+              expression: InnerNode,
+              interactsWithSecret: true,
+            });
+            nodesToAdd.push({node: finalIfNode, index: index+1});
+          }
+        });
+        for (let i = nodesToAdd.length - 1; i >= 0; i--) {
+          newFunctionDefinitionNode.body.preStatements.splice(nodesToAdd[i].index, 0, nodesToAdd[i].node);
+        }
 
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
