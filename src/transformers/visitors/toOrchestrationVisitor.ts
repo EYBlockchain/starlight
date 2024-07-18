@@ -199,9 +199,11 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
         // we have to go back and mark any editing statements as interactsWithSecret so they show up
           expNode.interactsWithSecret = true;
           const moveExpNode = cloneDeep(expNode);
+          // We now move the statement in expNode to preStatements. 
+          //If the statement is within an if statement we need to find the correct if statement in preStatements or create a new one.
           let ifPreIndex = null;
           if (location.ifNode) {
-            let {expNode: newIfnode, location: locIf } = findStatementId(fnDefNode.node._newASTPointer.body.preStatements, location.ifNode.id);
+            let {location: locIf } = findStatementId(fnDefNode.node._newASTPointer.body.preStatements, location.ifNode.id);
             ifPreIndex = locIf.index;
             if (locIf.index !== -1 && location.trueIndex !== -1) fnDefNode.node._newASTPointer.body.preStatements[locIf.index].trueBody.push(moveExpNode);
             else if (locIf.index !== -1 && location.falseIndex !== -1) fnDefNode.node._newASTPointer.body.preStatements[locIf.index].falseBody.push(moveExpNode);
@@ -218,6 +220,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
           } else{
             fnDefNode.node._newASTPointer.body.preStatements.push(moveExpNode);
           }
+          // We now remove the statement from the statements array.
           if (location.index!== -1) {
             if (location.trueIndex !== -1){ delete statements[location.index].trueBody[location.trueIndex]; }
             else if (location.falseIndex !== -1){ delete  statements[location.index].falseBody[location.falseIndex]; }

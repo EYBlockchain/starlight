@@ -76,6 +76,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return node.name;
      
     case 'VariableDeclarationStatement': {
+      // If the statement is inside an if statement but declared outside.
       if (node.outsideIf){
         return `${codeGenerator(node.initialValue)}`;
       }
@@ -172,7 +173,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return ` `;
 
       case 'IfStatement': {
-        let comment = (node.inPreStatements)  ? "// the public statements of this if statement have been moved to pre-statements here, any statements that involve secret variables appear later" : '';
+        let comment = (node.inPreStatements)  ? "// some public statements of this if statement have been moved to pre-statements here, any other statements appear later" : '';
+
+        // We need to declare some variables before the if statement begins (because they are used outside the if statement). 
         let preIfStatements = node.trueBody.filter((node: any) => node.outsideIf).concat(node.falseBody.filter((node: any) => node.outsideIf));
         let newPreIfStatements = [];
         preIfStatements.forEach((node: any) => {
@@ -180,6 +183,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
           newPreIfStatements[newPreIfStatements.length - 1].outsideIf = false;
         });
         let preIfStatementsString =  newPreIfStatements.flatMap(codeGenerator).join('\n');
+
         if(node.falseBody.length)
         return `${comment}
         ${preIfStatementsString}
