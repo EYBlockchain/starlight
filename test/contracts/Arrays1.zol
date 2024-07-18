@@ -18,7 +18,10 @@ contract Assign {
     index++;
     a = a + index;
     index++;
+    j =j + 2;
+    j++;
     b[index] = value;
+    a += j;
   }
 
   function remove(secret uint256 value) public {

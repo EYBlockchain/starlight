@@ -25,7 +25,7 @@ const internalCallVisitor = {
       let sendTransactionNode : any;
       let newdecrementedSecretStates = [];
       node._newASTPointer.forEach(file => {
-        state.intFnindex = {}; 
+       state.intFnindex = {}; 
        state.internalFncName?.forEach( (name, index)=> {
         let callingFncName = state.callingFncName[index].name;
          if(file.fileName === name && file.nodeType === 'File') {

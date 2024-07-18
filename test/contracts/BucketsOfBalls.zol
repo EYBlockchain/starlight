@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 contract BucketsOfBalls {
 
     secret mapping(address => uint256) public buckets;
+    secret uint256 private a;
 
     function deposit( uint256 amountDeposit) public {
         buckets[msg.sender] += amountDeposit;
@@ -12,6 +13,7 @@ contract BucketsOfBalls {
 
     function transfer(secret address toBucketId, secret uint256 numberOfBalls) public {
         buckets[msg.sender] -= numberOfBalls;
-        encrypt unknown buckets[toBucketId] += numberOfBalls;
+        unknown buckets[toBucketId] += numberOfBalls;
+        a += buckets[toBucketId] + numberOfBalls;
     }
 }

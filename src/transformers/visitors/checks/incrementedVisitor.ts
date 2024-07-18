@@ -56,6 +56,7 @@ const markParentIncrementation = (
   parent.node.expression.incrementedDeclaration = parent.incrementedDeclaration;
   state.unmarkedIncrementation = false;
   state.incrementedIdentifier = incrementedIdentifier;
+  
   if (increments?.operands)
     increments = collectIncrements(increments, incrementedIdentifier);
   increments?.forEach((inc: any) => {
@@ -106,6 +107,8 @@ const binOpToIncrements = (path: NodePath, state: any) => {
   );
   const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
   const assignmentOp = parentExpressionStatement?.node.expression?.operator;
+  console.log(assignmentOp);
+  console.log(path.node);
   const { operator, leftExpression, rightExpression } = path.node;
   const operands = [leftExpression, rightExpression];
   const precedingOperator = ['+', operator];
@@ -153,6 +156,7 @@ export default {
   ExpressionStatement: {
     enter(path: NodePath, state: any) {
       // starts here - if the path hasn't yet been marked as incremented, we find out if it is
+      
       if (path.isIncremented === undefined) {
         state.unmarkedIncrementation = true;
         state.increments = [];
@@ -175,7 +179,8 @@ export default {
       const { isIncremented, isDecremented } = path;
       expressionNode.isIncremented = isIncremented;
       expressionNode.isDecremented = isDecremented;
-
+      //  console.log('expression Node:', expressionNode)
+      //  console.log(state);
       // print if in debug mode
       if (logger.level === 'debug') backtrace.getSourceCode(node.src);
       logger.debug(`statement is incremented? ${isIncremented}`);
@@ -237,7 +242,6 @@ export default {
       const { node, scope } = path;
       const { operator, leftHandSide, rightHandSide } = node;
       const lhsSecret = !!scope.getReferencedBinding(leftHandSide)?.isSecret;
-
 
       if (['bool', 'address'].includes(leftHandSide.typeDescriptions.typeString)) {
         markParentIncrementation(path, state, false, false, leftHandSide);
@@ -394,7 +398,6 @@ export default {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
           }
-
           // a = something - a
           if (
             nameMatch &&
@@ -416,17 +419,22 @@ export default {
         ) {
           // a = a + b - c - d counts as an incrementation since the 1st operator is a plus
           // the mixed operators warning will have been given
+          // length of operator will be more than 2 in case of mixed operators
           if (
+            precedingOperator.length > 2 &&
             precedingOperator.includes('+') &&
             precedingOperator.includes('-') &&
             precedingOperator[0] === '+'
-          )
+          ){
             isIncremented.decremented = false;
+
+          }     
+            
             markParentIncrementation(
               path,
               state,
               isIncremented.incremented,
-              false,
+              isIncremented.decremented,
               lhsNode.baseExpression || lhsNode,
               { operands, precedingOperator },
             );
