@@ -107,7 +107,7 @@ const binOpToIncrements = (path: NodePath, state: any) => {
   );
   const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
   const assignmentOp = parentExpressionStatement?.node.expression?.operator;
-  console.log(assignmentOp);
+  console.log("assignmentOp", assignmentOp);
   console.log(path.node);
   const { operator, leftExpression, rightExpression } = path.node;
   const operands = [leftExpression, rightExpression];
