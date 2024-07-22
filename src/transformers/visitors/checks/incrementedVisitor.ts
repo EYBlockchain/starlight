@@ -21,10 +21,16 @@ const literalOneNode = {
   precedingOperator: '',
 };
 
-const collectIncrements = (increments: any, incrementedIdentifier: any) => {
+const collectIncrements = (increments: any, incrementedIdentifier: any, assignmentOperator: any) => {
+
+  console.log("assignmentOperator", assignmentOperator);
   const { operands, precedingOperator } = increments;
   const newIncrements: any[] = [];
   for (const [index, operand] of operands.entries()) {
+    if(assignmentOperator === '=' && precedingOperator[1] === '-' && index != 0){
+      operand.precedingOperator = precedingOperator[index] === '+' ? '-' : '+';
+    }   
+  else
     operand.precedingOperator = precedingOperator[index];
     if (
       operand.name !== incrementedIdentifier.name &&
@@ -34,6 +40,14 @@ const collectIncrements = (increments: any, incrementedIdentifier: any) => {
       newIncrements.push(operand);
   }
   return newIncrements;
+};
+
+const mixedOperatorsWarning = (path: NodePath) => {
+  backtrace.getSourceCode(path.node.src);
+  logger.warn(
+    `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Make sure that incrementing (a = a + ...) always increases the secret state value while decrementing (a = a - ...) decreases it. 
+    \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c. Similarly, we assume a = a - b + c is a decrementation, so c - b < a.`,
+  );
 };
 
 // marks the parent ExpressionStatement
@@ -50,6 +64,7 @@ const markParentIncrementation = (
     : incrementedIdentifier;
   const parent = path.getAncestorOfType('ExpressionStatement');
   if (!parent) throw new Error(`No parent of node ${path.node.name} found`);
+  const assignmentOp = parent?.node.expression?.operator;
   parent.isIncremented = isIncremented;
   parent.isDecremented = isDecremented;
   parent.incrementedDeclaration = incrementedIdentifier.referencedDeclaration;
@@ -58,7 +73,7 @@ const markParentIncrementation = (
   state.incrementedIdentifier = incrementedIdentifier;
   
   if (increments?.operands)
-    increments = collectIncrements(increments, incrementedIdentifier);
+    increments = collectIncrements(increments, incrementedIdentifier, assignmentOp);
   increments?.forEach((inc: any) => {
     if (
       inc.precedingOperator === '-' &&
@@ -94,12 +109,7 @@ const getIncrementedPath = (path: NodePath, state: any) => {
   state.stopTraversal = !!state.incrementedPath?.node;
 };
 
-const mixedOperatorsWarning = (path: NodePath) => {
-  backtrace.getSourceCode(path.node.src);
-  logger.warn(
-    `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Make sure that incrementing (a = a + ...) always increases the secret state value while decrementing (a = a - ...) decreases it. \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c. Similarly, we assume a = a - b + c is a decrementation, so c - b < a.`,
-  );
-};
+
 
 const binOpToIncrements = (path: NodePath, state: any) => {
   const parentExpressionStatement = path.getAncestorOfType(
@@ -107,9 +117,7 @@ const binOpToIncrements = (path: NodePath, state: any) => {
   );
   const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
   const assignmentOp = parentExpressionStatement?.node.expression?.operator;
-  console.log("assignmentOp", assignmentOp);
-  console.log(path.node);
-  const { operator, leftExpression, rightExpression } = path.node;
+  const { operator, leftExpression, rightExpression } = path.node ;
   const operands = [leftExpression, rightExpression];
   const precedingOperator = ['+', operator];
 
@@ -129,8 +137,8 @@ const binOpToIncrements = (path: NodePath, state: any) => {
   for (const [index, operand] of operands.entries()) {
     if (operand.nodeType === 'BinaryOperation') {
       operands[index] = operand.leftExpression;
-      operands.push(operand.rightExpression);
-      precedingOperator.push(operand.operator);
+      operands.splice(index+1, 0, operand.rightExpression);
+      precedingOperator.splice(index+1, 0, operand.operator);
     }
   }
   // if we have mixed operators, we may have an underflow or not be able to tell whether this is increasing (incrementation) or decreasing (decrementation) the secret value
@@ -354,7 +362,6 @@ export default {
       }
 
       const { operands, precedingOperator } = binOpToIncrements(path, state) || {};
-
       if (!operands || !precedingOperator) return;
 
       // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a = b + 2a)
@@ -423,11 +430,10 @@ export default {
           if (
             precedingOperator.length > 2 &&
             precedingOperator.includes('+') &&
-            precedingOperator.includes('-') &&
-            precedingOperator[0] === '+'
+            precedingOperator.includes('-')
           ){
-            isIncremented.decremented = false;
-
+            
+            isIncremented.decremented = precedingOperator[1] === '+' ? false : true;
           }     
             
             markParentIncrementation(
