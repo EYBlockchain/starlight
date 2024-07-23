@@ -566,7 +566,7 @@ encryptBackupPreimage = {
     let saltName = '';
     switch (stateType) {
       case 'increment':
-        valueName = `BigInt(${stateName}_newCommitmentValue.hex(32))`;
+        valueName = structProperties ? `...${stateName}_newCommitmentValue.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_newCommitmentValue.hex(32))`;
         saltName = stateName + '_newSalt';
         break;
       case 'decrement':
