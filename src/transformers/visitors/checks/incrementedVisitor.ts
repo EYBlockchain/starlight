@@ -178,16 +178,16 @@ const binOpToIncrements = (path: NodePath, state: any) => {
         `Whenever you have multiple operands in an expression, such as a = a - b - c + d, it's better to use parentheses for clarity. For example, rewrite it as a = a - (b + c - d). This makes the expression easier to understand. `,
       );
 }
-if(assignmentOp === '=') {
+if(assignmentOp === '=' && precedingOperator.length > 2) {
       if(isTupleExpression) {
         operands.splice(0, 0, path.node.leftExpression);
       } else {
+         if(operands[0].rightExpression){
         operands.splice(1, 0, operands[0].rightExpression);
         precedingOperator.splice(1, 0, operands[0].operator);
-        operands[0] = operands[0].leftExpression;
+        operands[0] = operands[0].leftExpression;}
       }
   }
-  
   return { operands, precedingOperator };
 };
 

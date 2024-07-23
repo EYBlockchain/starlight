@@ -20,7 +20,7 @@ contract Assign {
     b[index] = value;
     index++;
     j++;
-    b[index] = value  +index +j;
+    b[index] = value +index +j;
     index += 1;
     a += value + index;
     b[index] = value + index;
