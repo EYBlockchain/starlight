@@ -16,15 +16,15 @@ contract Assign {
     b -= value + value1;
   }
 
-  function add1(secret uint256 value, secret uint256 value1, secret uint256 value2, secret uint256 value3) public {
+  function add1(secret uint256 value, secret uint256 value1, secret uint256 value2, secret uint256 value3, secret uint256 value4) public {
    a = a + value - value1 + value3;
-   unknown b = b + value1 - value2 - value3;
+   unknown b = b + (value1 - value2 - value3 + value4);
 }
 
 
-function remove1(secret uint256 value, secret uint256 value1, secret uint256 value2, secret uint256 value3) public { 
+function remove1(secret uint256 value, secret uint256 value1, secret uint256 value2, secret uint256 value3, secret uint256 value4) public { 
    a = a - value - value1 + value3;
-    b = b - (value1 - value2 + value3);
+    b = b - value1 - value2 + value3 - value4;
 }
 
 }

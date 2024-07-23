@@ -25,6 +25,8 @@ const collectIncrements = (increments: any, incrementedIdentifier: any, assignme
   const { operands, precedingOperator } = increments;
   const newIncrements: any[] = [];
   for (const [index, operand] of operands.entries()) {
+// This Logic, changes the sign in case of decrements when don't have a tuple expression as in the circuits/Orchestration we 
+// translate a = a - b + c - d as a = a - (b - c + d)
     if(assignmentOperator === '=' && precedingOperator[1] === '-' && index != 0){
       if(index == 1)
       operand.precedingOperator =  '+';
@@ -118,14 +120,15 @@ const getIncrementedPath = (path: NodePath, state: any) => {
 
 
 const binOpToIncrements = (path: NodePath, state: any) => {
-  const parentExpressionStatement = path.getAncestorOfType(
+  let parentExpressionStatement = path.getAncestorOfType(
     'ExpressionStatement',
   );
   const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
   const assignmentOp = parentExpressionStatement?.node.expression?.operator;
   const { operator, leftExpression, rightExpression } = path.node ;
 
-  const operands = [leftExpression, rightExpression];
+  let operands = [leftExpression, rightExpression];
+
   const precedingOperator = ['+', operator];
   const isTupleExpression = operands[1].nodeType === 'TupleExpression';
   // if we dont have any + or -, it can't be an incrementation
@@ -139,32 +142,37 @@ const binOpToIncrements = (path: NodePath, state: any) => {
     return;
   }
   // correct the operands for case when a = a - (b + c + d).
-  if(assignmentOp === '=' && isTupleExpression) {
-    
-    operands[0] =  operands[1].components[0].leftExpression;
+  if(isTupleExpression) {
+    operands[0] =  operands[1].components[0].rightExpression;
     precedingOperator.push(operands[1].components[0].operator);
-    operands[1] =  operands[1].components[0].rightExpression;
+    operands[1] =  operands[1].components[0].leftExpression;
 
     for (const [index, operand] of operands.entries()) {
       if (operand.nodeType === 'BinaryOperation') {
         operands[index] = operand.leftExpression;
-        operands.splice(index+1, 0, operand.rightExpression);
-        precedingOperator.splice(index+2, 0, operand.operator);
+        operands.splice(0, 0, operand.rightExpression);
+        precedingOperator.splice(2, 0, operand.operator);
       }
     }
+   operands.splice(0, 0, operands[operands.length -1]).slice(0, -1);
     
   }
   // fills an array of operands
   // e.g. if we have a = b - c + a + d, operands = [b, c, a, d]
   if(!isTupleExpression){
+    operands = operands.reverse();
   for (const [index, operand] of operands.entries()) {
     if (operand.nodeType === 'BinaryOperation') {
       operands[index] = operand.leftExpression;
-      operands.splice(index+1, 0, operand.rightExpression);
-      precedingOperator.splice(index+1, 0, operand.operator);
+      operands.splice(0, 0, operand.rightExpression);
+      precedingOperator.splice(1, 0, operand.operator);
     }
-  }}
+  }
+  operands.splice(0, 0, operands[operands.length -1]);
+}
+
   // if we have mixed operators, we may have an underflow or not be able to tell whether this is increasing (incrementation) or decreasing (decrementation) the secret value
+  // Here we give out a warning when we don't use parentheses.
   if (
     precedingOperator.length > 2 &&
     precedingOperator.includes('+') &&
