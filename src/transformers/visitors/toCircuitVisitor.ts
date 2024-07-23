@@ -1227,7 +1227,7 @@ const visitor = {
   IfStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      let isIfStatementSecret;
+      let isIfStatementSecret: boolean;
       let interactsWithSecret = false;
       function bodyInteractsWithSecrets(statements) {
         statements.forEach((st) => {
