@@ -194,6 +194,9 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.expression)}(${codeGenerator(node.arguments)})`;
 
     case 'UnaryOperation':
+      if (node.operator === '!'){
+        return `${node.operator}${codeGenerator(node.subExpression)}`;
+      }
       return `${codeGenerator(node.subExpression)} ${node.operator};`;
 
     case 'EmitStatement':

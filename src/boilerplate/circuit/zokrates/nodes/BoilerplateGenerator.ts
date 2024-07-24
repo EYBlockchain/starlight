@@ -92,6 +92,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     }
     counter = dec.counter;
   }
+  
   return { incrementsArray, incrementsString };
 };
 
@@ -361,7 +362,6 @@ class BoilerplateGenerator {
     } else {
       throw new Error('This should be unreachable.');
     }
-
     return index;
   }
 

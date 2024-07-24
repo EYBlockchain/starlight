@@ -150,9 +150,8 @@ export const generateProofBoilerplate = (node: any) => {
     //     isIncluded = true;
     //   }
     // }
-
     const stateVarIdLines =
-      stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
+    !stateNode.localMappingKey && stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];  
     // we add any extra params the circuit needs
@@ -903,13 +902,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input.name}.all.integer`);
           } else if(input.isBool) {
             lines.push(`parseInt(${input.name}.integer, 10)`);
+          } else if(input.isAddress) {
+            lines.push(`${input.name}.hex(20)`);
           }
           else {
             lines.push(`${input}.integer`);
           }           
         });
       }
-      returnInputs = returnInputs.concat(lines);
 
       if(node.returnInputs[0]) {
         node.returnInputs.forEach((input: any) => { 
@@ -989,13 +989,26 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
   
 
       case 'SendPublicTransaction':  
-      node.publicInputsString = node.publicInputs.map(input =>
-        (typeof input === 'object' && !Array.isArray(input)) ? JSON.stringify(input) : input
-      ).join(',');
+      if (node.publicInputs[0]) {
+        node.publicInputs.forEach((input: any) => {
+          if (input.properties) {
+            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
+          } else if (input.isConstantArray) {
+            lines.push(`${input.name}.all.integer`);
+          } else if(input.isBool) {
+            lines.push(`parseInt(${input.name}.integer, 10)`);
+          } else if(input.isAddress) {
+            lines.push(`${input.name}.hex(20)`);
+          }
+          else {
+            lines.push(`${input}.integer`);
+          }           
+        });
+      }
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
-           \nconst txData = await instance.methods.${node.functionName}(${node.publicInputsString}).encodeABI();
+           \nconst txData = await instance.methods.${node.functionName}(${lines}).encodeABI();
           \nlet txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,

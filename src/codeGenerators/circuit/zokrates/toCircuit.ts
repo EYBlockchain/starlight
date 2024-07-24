@@ -251,7 +251,7 @@ function codeGenerator(node: any) {
         if(node.condition.leftExpression.nodeType == 'Identifier')
         node.condition.leftExpression.name = node.condition.leftExpression.name.replace('_temp','');
       initialStatements+= `
-      assert(${codeGenerator(node.condition)})`;
+      assert(!(${codeGenerator(node.condition)}))`;
       return initialStatements;
       }
       // we use our list of condition vars to init temp variables. 
@@ -264,12 +264,31 @@ function codeGenerator(node: any) {
         }
       });
       for (let i =0; i<node.trueBody.length; i++) {
-        trueStatements+= `
-        ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${codeGenerator(node.trueBody[i].expression.leftHandSide)} fi`
+        // We may have a statement that is not within the If statement but included due to the ordering (e.g. b_1 =b)
+        if (node.trueBody[i].outsideIf) {
+          trueStatements += `${codeGenerator(node.trueBody[i])}`;
+        } else {
+          if (node.trueBody[i].expression.nodeType === 'UnaryOperation'){
+            trueStatements+= `
+            ${codeGenerator(node.trueBody[i].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.subExpression)} ${node.trueBody[i].expression.operator[0]} 1 else ${codeGenerator(node.trueBody[i].expression.subExpression)} fi`
+          } else {
+            trueStatements+= `
+            ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${codeGenerator(node.trueBody[i].expression.leftHandSide)} fi`
+          }
+        }
       }
       for (let j =0; j<node.falseBody.length; j++) {
-        falseStatements+= `
-        ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.leftHandSide)} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)} fi`
+        if (node.falseBody[j].outsideIf) {
+          falseStatements += `${codeGenerator(node.falseBody[j])}`;
+        } else {
+          if (node.falseBody[j].expression.nodeType === 'UnaryOperation'){
+            falseStatements+= `
+            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.subExpression)}  else  ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 fi`
+          } else {
+            falseStatements+= `
+            ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.leftHandSide)} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)} fi`
+          }
+        }
       }
       return initialStatements + trueStatements + falseStatements;
 
