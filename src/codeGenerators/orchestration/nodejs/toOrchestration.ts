@@ -1,4 +1,5 @@
 /* eslint-disable import/no-cycle, no-param-reassign, consistent-return */
+import cloneDeep from 'lodash.clonedeep';
 import {OrchestrationCodeBoilerPlate}  from '../../../boilerplate/orchestration/javascript/raw/toOrchestration.js';
 import fileGenerator from '../files/toOrchestration.js';
 
@@ -75,6 +76,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return node.name;
      
     case 'VariableDeclarationStatement': {
+      // If the statement is inside an if statement but declared outside.
+      if (node.outsideIf){
+        return `${codeGenerator(node.initialValue)}`;
+      }
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       if (node.initialValue?.nodeType === 'Assignment') {
@@ -103,7 +108,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.initialValue.operator) {
         if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
         // local var dec
-        if (node.initialValue.nodeType === 'Literal' && !node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
+        if (node.initialValue.nodeType === 'Literal' && node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
       } 
       return `\nlet ${codeGenerator(node.initialValue)};`;
@@ -168,14 +173,29 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return ` `;
 
       case 'IfStatement': {
+        let comment = (node.inPreStatements)  ? "// some public statements of this if statement have been moved to pre-statements here, any other statements appear later" : '';
+
+        // We need to declare some variables before the if statement begins (because they are used outside the if statement). 
+        let preIfStatements = node.trueBody.filter((node: any) => node.outsideIf).concat(node.falseBody.filter((node: any) => node.outsideIf));
+        let newPreIfStatements = [];
+        preIfStatements.forEach((node: any) => {
+          newPreIfStatements.push(cloneDeep(node));
+          newPreIfStatements[newPreIfStatements.length - 1].outsideIf = false;
+        });
+        let preIfStatementsString =  newPreIfStatements.flatMap(codeGenerator).join('\n');
+
         if(node.falseBody.length)
-        return `if (${codeGenerator(node.condition)}) {
+        return `${comment}
+        ${preIfStatementsString}
+          if (${codeGenerator(node.condition)}) {
             ${node.trueBody.flatMap(codeGenerator).join('\n')}
           } else {
             ${node.falseBody.flatMap(codeGenerator).join('\n')}
           }`
           else
-          return `if (${codeGenerator(node.condition)}) {
+          return `${comment}
+          ${preIfStatementsString}
+            if (${codeGenerator(node.condition)}) {
               ${node.trueBody.flatMap(codeGenerator).join('\n')}
             }`
         }
