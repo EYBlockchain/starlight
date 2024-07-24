@@ -13,6 +13,6 @@ contract Assign {
   }
 
   function remove(uint256 remval) public {
-     b -= uint(uint128(remval));
+     b += uint(uint128(remval));
   }
 }

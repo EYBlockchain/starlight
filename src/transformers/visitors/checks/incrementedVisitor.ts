@@ -435,9 +435,9 @@ export default {
           if (
             nameMatch &&
             precedingOperator[index + 1]?.includes('+') && // we have ... + a + ...
-            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
+            (index ===0) 
+            //precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
-            discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: false };
           }
 
@@ -445,17 +445,16 @@ export default {
           if (
             nameMatch &&
             precedingOperator[index + 1]?.includes('-') && // we have ... + a - ...
-            precedingOperator[index]?.includes('+') // otherwise we have a = b - a
+            (index ===0)
+            //precedingOperator[index]?.includes('+') // otherwise we have a = b - a
           ) {
-            discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
           }
-          // a = something - a
+
           if (
-            nameMatch &&
-            precedingOperator[index]?.includes('-') // we have a = b - a
+            nameMatch 
           ) {
-            discoveredLHS -= 1;
+            discoveredLHS += 1;
           }
           // if none, go to the next operand
           if (operand.indexExpression?.expression?.name === 'msg')

@@ -91,6 +91,7 @@ export default {
         if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
         return;
       }
+
       // if this state is on the rhs AND isn't incremented OR is in an incrementation, but its not being incremented:
       if (
         rightAncestor &&
@@ -153,10 +154,13 @@ export default {
       }
       // We need to ouput an error if a partitioned state is being accessed. 
       //This seems difficult to support because we need the sum of the value of every commitment,  how do we enforce that the prover inputs every commitment to the circuit?
-      else if (rightAncestor){
+      else if (rightAncestor && 
+        referencedBinding.isPartitioned 
+        && (lhsNode.name !== node.name || !state.inIncrementation)
+        ){
         const indicator = scope.getReferencedIndicator(node);
         if (indicator instanceof StateVariableIndicator) throw new TODOError(
-          `A partitioned state variable cannot be accessed. Only incrementations/ decrementations of form +=, -= are allowed.`,
+          `A partitioned state variable cannot be accessed. Only incrementations/ decrementations such as +=, -= are allowed.`,
           node,
         );
       }
