@@ -12,6 +12,6 @@ contract BucketsOfBalls {
 
     function transfer(secret address toBucketId, secret uint256 numberOfBalls) public {
         buckets[msg.sender] -= numberOfBalls;
-        encrypt unknown buckets[toBucketId] += numberOfBalls;
+        unknown buckets[toBucketId] += numberOfBalls;
     }
 }

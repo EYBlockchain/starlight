@@ -86,6 +86,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
       incrementsString += ` + ${modName}`;
     }
   }
+  
   return { incrementsArray, incrementsString };
 };
 
@@ -354,7 +355,6 @@ class BoilerplateGenerator {
     } else {
       throw new Error('This should be unreachable.');
     }
-
     return index;
   }
 

@@ -21,11 +21,24 @@ const literalOneNode = {
   precedingOperator: '',
 };
 
-const collectIncrements = (increments: any, incrementedIdentifier: any) => {
+const collectIncrements = (increments: any, incrementedIdentifier: any, assignmentOperator: any, isTupleExpression: boolean) => {
   const { operands, precedingOperator } = increments;
   const newIncrements: any[] = [];
   const Idname = incrementedIdentifier.name || incrementedIdentifier.expression?.name;
   for (const [index, operand] of operands.entries()) {
+// This Logic, changes the sign in case of decrements when don't have a tuple expression as in the circuits/Orchestration we 
+// translate a = a - b + c - d as a = a - (b - c + d)
+    if(assignmentOperator === '=' && precedingOperator[1] === '-' && index != 0){
+      if(index == 1)
+      operand.precedingOperator =  '+';
+      else {
+      if(!isTupleExpression)
+      operand.precedingOperator = precedingOperator[index] === '+' ? '-' : '+';
+      else
+      operand.precedingOperator = precedingOperator[index];
+      }
+    }   
+  else
     operand.precedingOperator = precedingOperator[index];
     if (
       operand.name !== Idname &&
@@ -35,6 +48,15 @@ const collectIncrements = (increments: any, incrementedIdentifier: any) => {
       newIncrements.push(operand);
   }
   return newIncrements;
+};
+
+const mixedOperatorsWarning = (path: NodePath) => {
+  backtrace.getSourceCode(path.node.src);
+  logger.warn(
+    `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Make sure that incrementing (a = a + ...) always increases the secret state value while decrementing (a = a - ...) decreases it. 
+    \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c. Similarly, we assume a = a - b + c is a decrementation, so c - b < a.`,
+  );
+ 
 };
 
 // marks the parent ExpressionStatement
@@ -51,6 +73,8 @@ const markParentIncrementation = (
     : incrementedIdentifier;
   const parent = path.getAncestorOfType('ExpressionStatement');
   if (!parent) throw new Error(`No parent of node ${path.node.name} found`);
+  const isTupleExpression = parent?.node.expression?.rightHandSide?.nodeType === 'TupleExpression' || parent?.node.expression?.rightHandSide?.rightExpression?.nodeType === 'TupleExpression'
+  const assignmentOp = parent?.node.expression?.operator;
   parent.isIncremented = isIncremented;
   parent.isDecremented = isDecremented;
   parent.incrementedDeclaration = incrementedIdentifier.referencedDeclaration;
@@ -58,7 +82,7 @@ const markParentIncrementation = (
   state.unmarkedIncrementation = false;
   state.incrementedIdentifier = incrementedIdentifier;
   if (increments?.operands)
-    increments = collectIncrements(increments, incrementedIdentifier);
+    increments = collectIncrements(increments, incrementedIdentifier, assignmentOp, isTupleExpression);
   increments?.forEach((inc: any) => {
     if (
       inc.precedingOperator === '-' &&
@@ -94,23 +118,20 @@ const getIncrementedPath = (path: NodePath, state: any) => {
   state.stopTraversal = !!state.incrementedPath?.node;
 };
 
-const mixedOperatorsWarning = (path: NodePath) => {
-  backtrace.getSourceCode(path.node.src);
-  logger.warn(
-    `When we mix positive and negative operands in assigning to a secret variable, we may encounter underflow errors. Make sure that incrementing (a = a + ...) always increases the secret state value while decrementing (a = a - ...) decreases it. \nWhenever we see something like a = a + b - c, we assume it's a positive incrementation, so b > c. Similarly, we assume a = a - b + c is a decrementation, so c - b < a.`,
-  );
-};
+
 
 const binOpToIncrements = (path: NodePath, state: any) => {
-  const parentExpressionStatement = path.getAncestorOfType(
+  let parentExpressionStatement = path.getAncestorOfType(
     'ExpressionStatement',
   );
   const lhsNode = parentExpressionStatement?.node.expression?.leftHandSide;
   const assignmentOp = parentExpressionStatement?.node.expression?.operator;
-  const { operator, leftExpression, rightExpression } = path.node;
-  const operands = [leftExpression, rightExpression];
-  const precedingOperator = ['+', operator];
+  const { operator, leftExpression, rightExpression } = path.node ;
 
+  let operands = [leftExpression, rightExpression];
+
+  const precedingOperator = ['+', operator];
+  const isTupleExpression = operands[1].nodeType === 'TupleExpression';
   // if we dont have any + or -, it can't be an incrementation
   if (
     !operator.includes('+') &&
@@ -121,25 +142,61 @@ const binOpToIncrements = (path: NodePath, state: any) => {
     markParentIncrementation(path, state, false, false, lhsNode);
     return;
   }
+  // correct the operands for case when a = a - (b + c + d).
+  if(isTupleExpression) {
+    operands[0] =  operands[1].components[0].rightExpression;
+    precedingOperator.push(operands[1].components[0].operator);
+    operands[1] =  operands[1].components[0].leftExpression;
 
+    for (const [index, operand] of operands.entries()) {
+      if (operand.nodeType === 'BinaryOperation') {
+        operands[index] = operand.leftExpression;
+        operands.splice(0, 0, operand.rightExpression);
+        precedingOperator.splice(2, 0, operand.operator);
+      }
+    }
+   operands.splice(0, 0, operands[operands.length -1]).slice(0, -1);
+    
+  }
   // fills an array of operands
   // e.g. if we have a = b - c + a + d, operands = [b, c, a, d]
+  if(!isTupleExpression){
+    operands = operands.reverse();
   for (const [index, operand] of operands.entries()) {
     if (operand.nodeType === 'BinaryOperation') {
       operands[index] = operand.leftExpression;
-      operands.push(operand.rightExpression);
-      precedingOperator.push(operand.operator);
+      operands.splice(0, 0, operand.rightExpression);
+      precedingOperator.splice(1, 0, operand.operator);
     }
   }
+  operands.splice(0, 0, operands[operands.length -1]);
+}
+
   // if we have mixed operators, we may have an underflow or not be able to tell whether this is increasing (incrementation) or decreasing (decrementation) the secret value
+  // Here we give out a warning when we don't use parentheses.
   if (
     precedingOperator.length > 2 &&
     precedingOperator.includes('+') &&
     precedingOperator.includes('-') &&
     parentExpressionStatement
   )
-    mixedOperatorsWarning(parentExpressionStatement);
-
+    {
+      mixedOperatorsWarning(parentExpressionStatement);
+      if(!isTupleExpression)
+      logger.warn(
+        `Whenever you have multiple operands in an expression, such as a = a - b - c + d, it's better to use parentheses for clarity. For example, rewrite it as a = a - (b + c - d). This makes the expression easier to understand. `,
+      );
+}
+if(assignmentOp === '=' && precedingOperator.length > 2) {
+      if(isTupleExpression) {
+        operands.splice(0, 0, path.node.leftExpression);
+      } else {
+         if(operands[0].rightExpression){
+        operands.splice(1, 0, operands[0].rightExpression);
+        precedingOperator.splice(1, 0, operands[0].operator);
+        operands[0] = operands[0].leftExpression;}
+      }
+  }
   return { operands, precedingOperator };
 };
 
@@ -154,6 +211,7 @@ export default {
   ExpressionStatement: {
     enter(path: NodePath, state: any) {
       // starts here - if the path hasn't yet been marked as incremented, we find out if it is
+      
       if (path.isIncremented === undefined) {
         state.unmarkedIncrementation = true;
         state.increments = [];
@@ -176,7 +234,6 @@ export default {
       const { isIncremented, isDecremented } = path;
       expressionNode.isIncremented = isIncremented;
       expressionNode.isDecremented = isDecremented;
-
       // print if in debug mode
       if (logger.level === 'debug') backtrace.getSourceCode(node.src);
       logger.debug(`statement is incremented? ${isIncremented}`);
@@ -238,7 +295,6 @@ export default {
       const { node, scope } = path;
       const { operator, leftHandSide, rightHandSide } = node;
       const lhsSecret = !!scope.getReferencedBinding(leftHandSide)?.isSecret;
-
 
       if (['bool', 'address'].includes(leftHandSide.typeDescriptions.typeString)) {
         markParentIncrementation(path, state, false, false, leftHandSide);
@@ -351,7 +407,6 @@ export default {
       }
 
       const { operands, precedingOperator } = binOpToIncrements(path, state) || {};
-
       if (!operands || !precedingOperator) return;
 
       // if we find our lhs variable (a) on the rhs (a = a + b), then we make sure we don't find it again (a = a + b + a = b + 2a)
@@ -395,7 +450,6 @@ export default {
             discoveredLHS += 1;
             isIncremented = { incremented: true, decremented: true };
           }
-
           // a = something - a
           if (
             nameMatch &&
@@ -417,17 +471,19 @@ export default {
         ) {
           // a = a + b - c - d counts as an incrementation since the 1st operator is a plus
           // the mixed operators warning will have been given
+          // length of operator will be more than 2 in case of mixed operators
           if (
+            precedingOperator.length > 2 &&
             precedingOperator.includes('+') &&
-            precedingOperator.includes('-') &&
-            precedingOperator[0] === '+'
-          )
-            isIncremented.decremented = false;
+            precedingOperator.includes('-')
+          ){
+            isIncremented.decremented = precedingOperator[1] === '+' ? false : true;
+          }     
             markParentIncrementation(
               path,
               state,
               isIncremented.incremented,
-              false,
+              isIncremented.decremented,
               lhsNode.baseExpression || lhsNode,
               { operands, precedingOperator },
             );

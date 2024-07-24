@@ -9,9 +9,8 @@ contract Assign {
     unknown a += value;
   }
 
-  function remove(secret uint256 value) public returns (uint256) {
-     a -= value;
-     return a;
+  function remove(secret uint256 value) public {
+    a -= value ;
   }
   
 }
