@@ -26,7 +26,8 @@ export default {
         state.incrementedDeclaration = path.incrementedDeclaration;
       }
     },
-    exit(state: any) {
+    // path is unused here but if unincluded we cannot acccess the state object
+    exit(path: NodePath, state: any) {
       state.inIncrementation = false;
       state.incrementedDeclaration = null;
     },
@@ -41,7 +42,7 @@ export default {
       // e.g. a = a + b --> b accessed
       // e.g. a += 10, a whole --> a accessed
       // e.g. myMapping[a] = x --> a accessed
-      const { node, scope } = path;
+      const { node, scope} = path;
       if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
       if (path.isExportedSymbol()) return; // the node represents an external contract name
@@ -91,7 +92,6 @@ export default {
         if (indicator instanceof StateVariableIndicator) indicator.updateAccessed(path);
         return;
       }
-
       // if this state is on the rhs AND isn't incremented OR is in an incrementation, but its not being incremented:
       if (
         rightAncestor &&
@@ -151,18 +151,6 @@ export default {
         // @Node new property
         node.accessedSecretState = true;
         return;
-      }
-      // We need to ouput an error if a partitioned state is being accessed. 
-      //This seems difficult to support because we need the sum of the value of every commitment,  how do we enforce that the prover inputs every commitment to the circuit?
-      else if (rightAncestor && 
-        referencedBinding.isPartitioned 
-        && (lhsNode.name !== node.name || !state.inIncrementation)
-        ){
-        const indicator = scope.getReferencedIndicator(node);
-        if (indicator instanceof StateVariableIndicator) throw new TODOError(
-          `A partitioned state variable cannot be accessed. Only incrementations/ decrementations such as +=, -= are allowed.`,
-          node,
-        );
       }
       // below: check if the identifier is on the LHS and is NOT partitioned AND requires the LHS value e.g. a *= b
       // we don't check all the types of LHS container, because a +=,*=,-= b is always an Assignment with a .leftHandSide
