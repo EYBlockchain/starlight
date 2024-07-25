@@ -155,7 +155,8 @@ const binOpToIncrements = (path: NodePath, state: any) => {
         precedingOperator.splice(2, 0, operand.operator);
       }
     }
-   operands.splice(0, 0, operands[operands.length -1]).slice(0, -1);
+   operands.splice(0, 0, operands[operands.length -1]);
+   operands.pop();
     
   }
   // fills an array of operands
@@ -170,8 +171,8 @@ const binOpToIncrements = (path: NodePath, state: any) => {
     }
   }
   operands.splice(0, 0, operands[operands.length -1]);
+  operands.pop();
 }
-
   // if we have mixed operators, we may have an underflow or not be able to tell whether this is increasing (incrementation) or decreasing (decrementation) the secret value
   // Here we give out a warning when we don't use parentheses.
   if (
@@ -187,6 +188,7 @@ const binOpToIncrements = (path: NodePath, state: any) => {
         `Whenever you have multiple operands in an expression, such as a = a - b - c + d, it's better to use parentheses for clarity. For example, rewrite it as a = a - (b + c - d). This makes the expression easier to understand. `,
       );
 }
+
 if(assignmentOp === '=' && precedingOperator.length > 2) {
       if(isTupleExpression) {
         operands.splice(0, 0, path.node.leftExpression);
