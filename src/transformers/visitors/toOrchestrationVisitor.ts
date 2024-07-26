@@ -12,6 +12,7 @@ import { interactsWithSecretVisitor, parentnewASTPointer, initialiseOrchestratio
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
+// This function appears to be unused - consider removing it?
 const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
   const incrementsArray: any[] = [];
   let incrementsString = '';
@@ -817,7 +818,6 @@ const visitor = {
               const keyIndicator = path.scope.getReferencedIndicator(stateVarIndicator[`keyPath`].node, true);
               if (keyIndicator instanceof LocalVariableIndicator && !keyIndicator.isParam) localMappingKey = true;
             }
-
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {

@@ -205,16 +205,17 @@ export const generateProofBoilerplate = (node: any) => {
           case true:
             // decrement
             if (stateNode.structProperties) stateNode.increment = Object.values(stateNode.increment).flat(Infinity);
-            stateNode.increment.forEach((inc: any) => {
+            // Below has been removed as it does not appear to be needed. Revisit if issues arise.
+            /*stateNode.increment.forEach((inc: any) => {
               // +inc.name tries to convert into a number -  we don't want to add constants here
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
                 !parameters.includes(`\t${inc.name}.integer,`) &&
                 !privateStateNames.includes(inc.name) && !inc.accessed &&
-                !+inc.name
+                !+inc.name && inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
-            });
+            });*/
             output.push(
               Orchestrationbp.generateProof.parameters({
                 stateName,
@@ -241,14 +242,15 @@ export const generateProofBoilerplate = (node: any) => {
           default:
             // increment
             if (stateNode.structProperties) stateNode.increment = Object.values(stateNode.increment).flat(Infinity);
-            stateNode.increment.forEach((inc: any) => {
+            // Below has been removed as it does not appear to be needed. Revisit if issues arise.
+            /*stateNode.increment.forEach((inc: any) => {
               if (
                 !output.join().includes(`\t${inc.name}.integer`) &&
                 !parameters.includes(`\t${inc.name}.integer,`) && !inc.accessed &&
                 !+inc.name
               )
                 output.push(`\n\t\t\t\t\t\t\t\t${inc.name}.integer`);
-            });
+            });*/
             output.push(
               Orchestrationbp.generateProof.parameters( {
                 stateName,

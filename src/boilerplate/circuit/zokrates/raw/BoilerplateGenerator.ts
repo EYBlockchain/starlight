@@ -530,10 +530,17 @@ class BoilerplateGenerator {
       return []; // TODO: we might eventually import some underflow/overflow functions.
     },
     statements({ name: x, addend, newCommitmentValue, structProperties, memberName}): string[] {
-      if (structProperties) {
-        return [`${x}.${memberName} = ${x}.${memberName} + ${newCommitmentValue}`]
+      if (addend.incrementType === '+='){
+        if (structProperties) {
+          return [`${x}.${memberName} = ${x}.${memberName} + ${newCommitmentValue}`]
+        }
+        return [`${x} = ${x} + ${newCommitmentValue}`];
+      } else if (addend.incrementType === '='){
+        if (structProperties) {
+          return [`${x}.${memberName} = ${newCommitmentValue}`]
+        }
+        return [`${x} = ${newCommitmentValue}`];
       }
-      return [`${x} = ${x} + ${newCommitmentValue}`];
       //return [
       //  `// Skipping incrementation of ${x}`
         // `
@@ -548,10 +555,18 @@ class BoilerplateGenerator {
     },
 
     statements({ name: x, subtrahend, newCommitmentValue, structProperties, memberName}): string[] {
-      if (structProperties) {
-        return [`${x}.${memberName} = ${x}.${memberName} - (${newCommitmentValue})`]
+      if (subtrahend.decrementType === '-='){
+        if (structProperties) {
+          return [`${x}.${memberName} = ${x}.${memberName} - (${newCommitmentValue})`]
+        }
+        return [`${x} =  ${x} - (${newCommitmentValue})`];
+      } else if (subtrahend.decrementType === '='){
+        if (structProperties) {
+          return [`${x}.${memberName} = ${newCommitmentValue}`]
+        }
+        return [`${x} = ${newCommitmentValue}`];
       }
-      return [`${x} =  ${x} - (${newCommitmentValue})`];
+      
       // const y = codeGenerator(subtrahend);
       // let i = startIndex;
       // const x0 = `${x}_${i++}`;

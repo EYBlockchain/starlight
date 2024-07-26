@@ -128,7 +128,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         return `\n${codeGenerator(node.expression)};`;
       }
-
       if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         let privateStateName = node.privateStateName.replace(/\./g, '_');
         let increments;
