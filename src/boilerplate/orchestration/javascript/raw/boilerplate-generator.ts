@@ -605,7 +605,7 @@ encryptBackupPreimage = {
           ${valueName}]`;
           varName += ` a`;
       } else {
-        plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
+        plainText = `[BigInt(${saltName}.hex(32)), BigInt(generalise(${mappingKey}).hex(32)),
           BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
           ${valueName}]`;
           varName += ` a`;
