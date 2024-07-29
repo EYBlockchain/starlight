@@ -94,9 +94,12 @@ export const sendTransactionBoilerplate = (node: any) => {
         // whole 
         if (!stateNode.reinitialisedOnly)
           output[2].push(`${privateStateName}_root.integer`);
-        if (!stateNode.accessedOnly && !stateNode.reinitialisedOnly) {
-          output[1].push(`${privateStateName}_nullifier.integer`);
-          output[0].push(`${privateStateName}_nullifierRoot.integer`,`${privateStateName}_newNullifierRoot.integer`);
+        if (!stateNode.reinitialisedOnly) {
+          output[0].push(`${privateStateName}_nullifierRoot.integer`)
+          if (!stateNode.accessedOnly) {
+            output[1].push(`${privateStateName}_nullifier.integer`);
+            output[0].push(`${privateStateName}_newNullifierRoot.integer`);
+          } 
         }
         if (!stateNode.accessedOnly && !stateNode.burnedOnly)
           output[3].push(`${privateStateName}_newCommitment.integer`);

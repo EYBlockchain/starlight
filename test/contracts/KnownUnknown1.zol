@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 contract Assign {
   secret uint256 private a;
   secret uint256 private b;
- mapping(address => uint256) private c;
+ secret mapping(uint256 => uint256) private c;
 
   struct MyStruct {
     uint256 prop1;
@@ -15,20 +15,28 @@ contract Assign {
   function add( uint256 value ) public {
     a+= value;
     unknown b += value +a;
+    c[0] += value;
   }
 
   function add1(secret uint256 value ) public {
     unknown b += value +a;
-    unknown b += c[msg.sender];
+    unknown b += c[0];
+  }
+
+  function add2(secret uint256 value ) public {
+    unknown b = b + a -value;
+    unknown b += (a - value);
   }
 
 
   function remove( uint256 value ) public {
     a -= 15;
-    unknown b = b - a + value;
-    b -= a - value;
-    b -= a + value;
-    b -= (a+ value);
+    //unknown b = b - a + value;
+    //unknown b = b - a - value;
+    //b -= a - value;
+    //b -= a + value;
+    //b -= (a+ value);
+    b -= (a - value);
   }
 
 }
