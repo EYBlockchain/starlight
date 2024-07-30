@@ -88,8 +88,21 @@ const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKe
 const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
   const { node } = path;
   let { name } = path.scope.getReferencedIndicator(node, true) || path.node;
+
+  if (!name) {
+    console.error('Name is not defined for node:', node);
+    return;
+}
+
+
   const binding = path.getReferencedBinding(node);
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
+
+  if (!node.baseExpression || !node.baseExpression.interactsWithPublic) {
+    console.error('Base expression is not defined or does not interact with public:', node);
+    return;
+} 
+
   const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('ForStatement')?.containsSecret;
   const isInitializationExpression = !!path.getAncestorContainedWithin('initializationExpression') && path.getAncestorOfType('ForStatement')?.containsSecret;
