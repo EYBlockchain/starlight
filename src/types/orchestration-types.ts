@@ -183,8 +183,9 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
       }
     }
     case 'IfStatement': {
-      const { condition = {} , trueBody= [] , falseBody= [] } = fields;
+      const { condition = {} , trueBody= [] , falseBody= [], oldASTId, } = fields;
       return {
+        id: oldASTId,
         nodeType,
         condition,
         trueBody,

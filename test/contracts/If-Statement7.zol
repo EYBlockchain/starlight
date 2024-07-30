@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract MyContract {
+
+    secret uint256 private a;
+    uint256 public b;
+    uint256 public c;
+    secret address private admin;
+    address private pubAdmin;
+
+
+    constructor() {
+      admin = msg.sender;
+      pubAdmin = msg.sender;
+    }
+
+    
+
+    function add3(uint256 value) public {
+      if(b < 5) {
+       b += 1;
+        b++;
+      }
+      a += b + value;
+    }
+
+    function add4(uint256 value) public {
+      if(a < b) {
+      revert("a less than b");
+      }
+      a+= value;
+      b += 20;
+    }
+
+
+    
+
+}
