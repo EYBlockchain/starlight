@@ -133,7 +133,9 @@ export default function codeGenerator(node: any, options: any = {}): any {
         let increments;
         if (node.expression.operator === '+='){
           increments = codeGenerator(node.expression.rightHandSide);
-          return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
+          // Although we have += in the case that the indicator is decremented elsewhere in the function, we need to subtract the increments.
+          if (!node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
+          if (node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) - (${increments}));\n`;
         }
         if (node.expression.operator === '-='){
           increments = codeGenerator(node.expression.rightHandSide);
@@ -146,7 +148,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
             return `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) - (${increments}));\n`;
           } 
           increments = increments.replace(new RegExp(privateStateName, 'g'), `${privateStateName}_newCommitmentValue`);
-          return  `\n${privateStateName}_newCommitmentValue = generalise(${increments});\n`;
+          if (!node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue = generalise(${increments});\n`;
+          if (node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue = generalise(\nparseInt(${privateStateName}_newCommitmentValue.integer, 10) -(${increments}));\n`;
         }
       }
 

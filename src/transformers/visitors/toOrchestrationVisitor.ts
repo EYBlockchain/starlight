@@ -1551,6 +1551,8 @@ const visitor = {
             decrementsSecretState: node.expression.isDecremented,
             privateStateName: name,
           });
+          newNode.indicatorIncremented= indicator.isIncremented;
+          newNode.indicatorDecremented= indicator.isDecremented;
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
 
