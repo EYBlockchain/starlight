@@ -132,6 +132,8 @@ class BoilerplateGenerator {
               \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
               \n
               ${structProperties.map(sp => `let ${stateName}_${sp}_newCommitmentValue = generalise(0);\n`).join('')}
+              \n
+              ${structProperties.map(sp => `let ${stateName}_${sp}_newCommitmentValue_inc = generalise(0);\n`).join('')}
             `];
           return [`
             \n\n// read preimage for decremented state
@@ -139,7 +141,9 @@ class BoilerplateGenerator {
             ${stateVarIds.join('\n')}
             \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
             \n
-            let ${stateName}_newCommitmentValue = generalise(0);`  ];
+            let ${stateName}_newCommitmentValue = generalise(0);
+            \n
+            let ${stateName}_newCommitmentValue_inc = generalise(0);`  ];
         case 'whole':
           switch (reinitialisedOnly) {
             case true:
@@ -190,7 +194,7 @@ class BoilerplateGenerator {
           if (structProperties)
           return [`
           \n\n// First check if required commitments exist or not
-          \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(structProperties).map((sp) => `${stateName}_${sp}_newCommitmentValue`)}]).all;
+          \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(structProperties).map((sp) => `generalise(parseInt(${stateName}_${sp}_newCommitmentValue.integer, 10) - parseInt(${stateName}_${sp}_newCommitmentValue_inc.integer, 10))`)}]).all;
           \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
             publicKey.hex(32),
             ${stateName}_newCommitmentValue.integer,
@@ -215,6 +219,7 @@ class BoilerplateGenerator {
             const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
           return [`
           \n\n// First check if required commitments exist or not
+          \n${stateName}_newCommitmentValue = generalise(parseInt(${stateName}_newCommitmentValue.integer, 10) - parseInt(${stateName}_newCommitmentValue_inc.integer, 10));
             \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
               publicKey.hex(32),
               ${stateName}_newCommitmentValue.integer,

@@ -29,9 +29,9 @@ contract Assign {
     unknown b += value;
     unknown x.prop1 += a;
     a+= value;
-    unknown b -= 1;
-    unknown x.prop1 -= 1;
-    unknown x.prop2 -= 1;
+    unknown b -= 5*value + a;
+    unknown x.prop1 -= 5*value + a;
+    unknown x.prop2 -= 2*value;
   }
 
   function remove( uint256 value ) public {
