@@ -1454,7 +1454,7 @@ const visitor = {
         if (!lhs) lhs = node.expression.subExpression;
        indicator = scope.getReferencedIndicator(lhs, true);
 
-        const name = indicator.isMapping
+        let name = indicator.isMapping
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
@@ -1539,6 +1539,9 @@ const visitor = {
             parent._newASTPointer.push(newNode);
             return;
           }
+        }
+        if (indicator.isMapping && indicator.isStruct){
+          name = `${name}_${node.expression.leftHandSide.memberName}`;
         }
         // if its an incrementation, we need to know it happens but not copy it over
         if (node.expression.isIncremented && indicator.isPartitioned) {
