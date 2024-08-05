@@ -105,12 +105,6 @@ class BoilerplateGenerator {
       accessedOnly,
       stateVarIds
     }): string[] {
-        const stateVarId: string[] = [];
-      if(stateVarIds.length > 1){
-        stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
-        stateVarId.push(`${stateName}_stateVarId_key`);
-      } else
-       stateVarId.push(`${stateName}_stateVarId`);
 
       switch (stateType) {
         case 'increment':
@@ -119,15 +113,16 @@ class BoilerplateGenerator {
               \n\n// read preimage for incremented state
               ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
               ${stateVarIds.join('\n')}
-              \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
               \n
+              ${structProperties.map(sp => `let ${stateName}_${sp}_newCommitmentValue = generalise(0);\n`).join('')}
             `];
           return [`
             \n\n// read preimage for incremented state
             ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
-            \nconst ${stateName}_newCommitmentValue = generalise(${increment});
-            \n`];
+            \n
+            let ${stateName}_newCommitmentValue = generalise(0);
+            `];
         case 'decrement':
           if (structProperties)
             return [`
@@ -135,70 +130,20 @@ class BoilerplateGenerator {
               ${stateName}_newOwnerPublicKey = ${newOwnerStatment}
               ${stateVarIds.join('\n')}
               \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
-              \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(increment).map((inc) => `generalise(${inc})`)}]).all;
-
-              \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
-                publicKey.hex(32),
-                ${stateName}_newCommitmentValue.integer,
-                ${stateName}_preimage,
-                true,
-              );
-
-              \nlet ${stateName}_witness_0;
-              \nlet ${stateName}_witness_1;
-
-              const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
-              const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
-              const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
-              const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
               \n
+              ${structProperties.map(sp => `let ${stateName}_${sp}_newCommitmentValue = generalise(0);\n`).join('')}
+              \n
+              ${structProperties.map(sp => `let ${stateName}_${sp}_newCommitmentValue_inc = generalise(0);\n`).join('')}
             `];
           return [`
             \n\n// read preimage for decremented state
             \n${stateName}_newOwnerPublicKey = ${newOwnerStatment}
             ${stateVarIds.join('\n')}
             \nlet ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
-            \n const ${stateName}_newCommitmentValue = generalise(${increment});
-            // First check if required commitments exist or not
-            \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
-              publicKey.hex(32),
-              ${stateName}_newCommitmentValue.integer,
-              ${stateName}_preimage,
-            );
-            \nlet ${stateName}_witness_0;
-            \nlet ${stateName}_witness_1;
-
-            if(${stateName}_1_oldCommitment === null && ${stateName}_commitmentFlag){
-              \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
-               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3);
-               ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
-
-               [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
-                publicKey.hex(32),
-                ${stateName}_newCommitmentValue.integer,
-                ${stateName}_preimage,
-              );
-            }
-
-            while(${stateName}_commitmentFlag === false) {
-                \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
-                \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
-
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}', ${isSharedSecret? `sharedSecretKey, sharedPublicKey`: `secretKey, publicKey`}, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
-
-                ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
-
-                [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
-                  ${isSharedSecret ? `sharedPublicKey.hex(32)` : `publicKey.hex(32)`},
-                  ${stateName}_newCommitmentValue.integer,
-                  ${stateName}_preimage,
-                );
-            }
-            const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
-            const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
-            const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
-            const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
-            \n`  ];
+            \n
+            let ${stateName}_newCommitmentValue = generalise(0);
+            \n
+            let ${stateName}_newCommitmentValue_inc = generalise(0);`  ];
         case 'whole':
           switch (reinitialisedOnly) {
             case true:
@@ -237,10 +182,33 @@ class BoilerplateGenerator {
   membershipWitness = {
     postStatements({ stateName,
       contractName,
-      stateType }): string[] {
+      stateType, mappingName, structProperties, isSharedSecret, stateVarIds   }): string[] {
+      const stateVarId: string[] = [];
+      if(stateVarIds.length > 1){
+        stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
+        stateVarId.push(`${stateName}_stateVarId_key`);
+      } else
+        stateVarId.push(`${stateName}_stateVarId`);
       switch (stateType) {
         case 'partitioned':
+          if (structProperties)
           return [`
+          \n\n// First check if required commitments exist or not
+          \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(structProperties).map((sp) => `generalise(parseInt(${stateName}_${sp}_newCommitmentValue.integer, 10) - parseInt(${stateName}_${sp}_newCommitmentValue_inc.integer, 10))`)}]).all;
+          \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+            publicKey.hex(32),
+            ${stateName}_newCommitmentValue.integer,
+            ${stateName}_preimage,
+            true,
+          );
+
+          \nlet ${stateName}_witness_0;
+          \nlet ${stateName}_witness_1;
+
+          const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
+          const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
+          const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
+          const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
             \n\n// generate witness for partitioned state
             ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
             ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
@@ -249,6 +217,55 @@ class BoilerplateGenerator {
             const ${stateName}_root = generalise(${stateName}_witness_0.root);
             const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
             const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
+          return [`
+          \n\n// First check if required commitments exist or not
+          \n${stateName}_newCommitmentValue = generalise(parseInt(${stateName}_newCommitmentValue.integer, 10) - parseInt(${stateName}_newCommitmentValue_inc.integer, 10));
+            \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+              publicKey.hex(32),
+              ${stateName}_newCommitmentValue.integer,
+              ${stateName}_preimage,
+            );
+            \nlet ${stateName}_witness_0;
+            \nlet ${stateName}_witness_1;
+
+            if(${stateName}_1_oldCommitment === null && ${stateName}_commitmentFlag){
+              \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3);
+               ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
+
+               [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+                publicKey.hex(32),
+                ${stateName}_newCommitmentValue.integer,
+                ${stateName}_preimage,
+              );
+            }
+
+            while(${stateName}_commitmentFlag === false) {
+                \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+                \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
+
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', ${isSharedSecret? `sharedSecretKey, sharedPublicKey`: `secretKey, publicKey`}, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
+
+                ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
+
+                [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
+                  ${isSharedSecret ? `sharedPublicKey.hex(32)` : `publicKey.hex(32)`},
+                  ${stateName}_newCommitmentValue.integer,
+                  ${stateName}_preimage,
+                );
+            }
+            const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
+            const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
+            const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
+            const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
+          \n\n// generate witness for partitioned state
+          ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+          ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
+          const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
+          const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
+          const ${stateName}_root = generalise(${stateName}_witness_0.root);
+          const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
+          const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
         case 'whole':
           return [`
             \n\n// generate witness for whole state
@@ -382,8 +399,13 @@ class BoilerplateGenerator {
       // once per state
       switch (stateType) {
         case 'increment':
+          let newComValue = ``;
+          if (structProperties){
+            newComValue = `\nconst ${stateName}_newCommitmentValue = generalise([${Object.values(structProperties).map((sp) => `${stateName}_${sp}_newCommitmentValue`)}]).all;`;
+          }
           return [`
           \nconst ${stateName}_newSalt = generalise(utils.randomHex(31));
+          ${newComValue} 
           \nlet ${stateName}_newCommitment = poseidonHash([BigInt(${stateName}_stateVarId), ${structProperties ? `...${stateName}_newCommitmentValue.hex(32).map(v => BigInt(v))` : `BigInt(${stateName}_newCommitmentValue.hex(32))`}, BigInt(${stateName}_newOwnerPublicKey.hex(32)), BigInt(${stateName}_newSalt.hex(32))],);
           \n${stateName}_newCommitment = generalise(${stateName}_newCommitment.hex(32)); // truncate`];
         case 'decrement':
@@ -588,7 +610,7 @@ encryptBackupPreimage = {
           ${valueName}]`;
           varName += ` a`;
       } else {
-        plainText = `[BigInt(${saltName}.hex(32)), BigInt(${mappingKey}.hex(32)),
+        plainText = `[BigInt(${saltName}.hex(32)), BigInt(generalise(${mappingKey}).hex(32)),
           BigInt(generalise(${stateName}_stateVarIdInit).hex(32)), 
           ${valueName}]`;
           varName += ` a`;

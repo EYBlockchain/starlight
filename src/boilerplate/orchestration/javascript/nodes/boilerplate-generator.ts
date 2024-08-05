@@ -77,6 +77,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
     }
     case 'MembershipWitness': {
       const {
+        id,
         increment,
         privateStateName,
         accessedOnly,
@@ -84,10 +85,14 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       } = fields;
       return {
         increment,
+        stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
         privateStateName,
         accessedOnly,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
       };
     }
     case 'CalculateNullifier': {
@@ -98,7 +103,6 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        
       };
     }
     case 'CalculateCommitment': {

@@ -91,7 +91,6 @@ function codeGenerator(node: any) {
           }
         });
       }
-
       functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true && node.typeName.name != 'bool') || node.typeName.name.includes('EncryptedMsgs'))
@@ -331,6 +330,10 @@ function codeGenerator(node: any) {
       return Circuitbp.generateBoilerplate(node);
 
     case 'BoilerplateStatement': {
+      let newComValue = '';
+      if (node.bpType === 'incrementation') newComValue  = codeGenerator(node.addend);
+      if (node.bpType === 'decrementation') newComValue  = codeGenerator(node.subtrahend);
+      node.newCommitmentValue = newComValue;
       return Circuitbp.generateBoilerplate(node);
     }
 
