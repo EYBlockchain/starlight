@@ -116,19 +116,31 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
   const { node } = path;
   let { name } = path.scope.getReferencedIndicator(node, true) || path.node;
 
-  if (!name) {
-    console.error('Name is not defined for node:', node);
-    return;
+//   if (!name) {
+//     console.error('Name is not defined for node:', node);
+//     return;
+// }
+
+if (IDnode) {
+  console.log('IDnode before assignment:', IDnode);
+  IDnode.name = name; // Safe to assign name if IDnode is not null
+  console.log('IDnode after assignment:', IDnode);
+} else {
+  console.warn('IDnode is null or undefined, unable to set name.');
+  // Optionally, handle the case where IDnode is null if needed
+  return;
 }
+// console.log('Node Path:', path);
+// console.log('Referenced Indicator:', path.scope.getReferencedIndicator(node, true));
 
 
   const binding = path.getReferencedBinding(node);
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
 
-  if (!node.baseExpression || !node.baseExpression.interactsWithPublic) {
-    console.error('Base expression is not defined or does not interact with public:', node);
-    return;
-} 
+//   if (!node.baseExpression || !node.baseExpression.interactsWithPublic) {
+//     console.error('Base expression is not defined or does not interact with public:', node);
+//     return;
+// } 
 
   const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('ForStatement')?.containsSecret;
