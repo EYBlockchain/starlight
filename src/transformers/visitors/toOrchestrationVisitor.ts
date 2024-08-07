@@ -12,6 +12,7 @@ import { interactsWithSecretVisitor, parentnewASTPointer, initialiseOrchestratio
 
 // collects increments and decrements into a string (for new commitment calculation) and array
 // (for collecting zokrates inputs)
+// This function appears to be unused - consider removing it?
 const collectIncrements = (stateVarIndicator: StateVariableIndicator | MappingKey) => {
   const incrementsArray: any[] = [];
   let incrementsString = '';
@@ -814,6 +815,7 @@ const visitor = {
             newNodes.membershipWitnessNode.privateStates[
               name
             ] = buildPrivateStateNode('MembershipWitness', {
+              id,
               privateStateName: name,
               indicator: stateVarIndicator,
               accessedOnly,
@@ -841,7 +843,6 @@ const visitor = {
               const keyIndicator = path.scope.getReferencedIndicator(stateVarIndicator[`keyPath`].node, true);
               if (keyIndicator instanceof LocalVariableIndicator && !keyIndicator.isParam) localMappingKey = true;
             }
-
             newNodes.generateProofNode.privateStates[
               name
             ] = buildPrivateStateNode('GenerateProof', {
@@ -1153,12 +1154,14 @@ const visitor = {
         // 9 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
         newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
+      
+        if(newNodes.VariableDeclarationStatement)
+        newFunctionDefinitionNode.body.preStatements.push(newNodes.VariableDeclarationStatement);
+
         if (newNodes.membershipWitnessNode)
-          newFunctionDefinitionNode.body.preStatements.push(
-            newNodes.membershipWitnessNode,
-          );
-          if(newNodes.VariableDeclarationStatement)
-          newFunctionDefinitionNode.body.preStatements.push(newNodes.VariableDeclarationStatement);
+        newFunctionDefinitionNode.body.postStatements.push(
+          newNodes.membershipWitnessNode,
+        );
 
         if (newNodes.calculateNullifierNode)
           newFunctionDefinitionNode.body.postStatements.push(
@@ -1476,7 +1479,7 @@ const visitor = {
         if (!lhs) lhs = node.expression.subExpression;
        indicator = scope.getReferencedIndicator(lhs, true);
 
-        const name = indicator.isMapping
+        let name = indicator.isMapping
           ? indicator.name
               .replace('[', '_')
               .replace(']', '')
@@ -1562,6 +1565,9 @@ const visitor = {
             return;
           }
         }
+        if (indicator.isMapping && indicator.isStruct){
+          name = `${name}_${node.expression.leftHandSide.memberName}`;
+        }
         // if its an incrementation, we need to know it happens but not copy it over
         if (node.expression.isIncremented && indicator.isPartitioned) {
           const newNode = buildNode(node.nodeType, {
@@ -1573,6 +1579,8 @@ const visitor = {
             decrementsSecretState: node.expression.isDecremented,
             privateStateName: name,
           });
+          newNode.indicatorIncremented= indicator.isIncremented;
+          newNode.indicatorDecremented= indicator.isDecremented;
           node._newASTPointer = newNode;
           parent._newASTPointer.push(newNode);
 

@@ -128,6 +128,36 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         return `\n${codeGenerator(node.expression)};`;
       }
+      if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
+        let privateStateName = node.privateStateName.replace(/\./g, '_');
+        let increments;
+        if (node.expression.operator === '+='){
+          increments = codeGenerator(node.expression.rightHandSide);
+          // Although we have += in the case that the indicator is decremented elsewhere in the function, we need to subtract the increments.
+          if (!node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
+          if (node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue_inc = generalise(parseInt(${privateStateName}_newCommitmentValue_inc.integer, 10) + ${increments});\n`;
+        }
+        if (node.expression.operator === '-='){
+          increments = codeGenerator(node.expression.rightHandSide);
+          return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + (${increments}));\n`;
+        }
+        if (node.expression.operator === '='){
+          increments = codeGenerator(node.expression.rightHandSide);
+          if (node.decrementsSecretState){
+            increments = increments.replace(new RegExp(`${privateStateName}.integer`, 'g'), `0`);
+            return `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) - (${increments}));\n`;
+          } 
+          if (!node.indicatorDecremented) {
+            increments = increments.replace(new RegExp(privateStateName, 'g'), `${privateStateName}_newCommitmentValue`);
+            return  `\n${privateStateName}_newCommitmentValue = generalise(${increments});\n`;
+          }
+          if (node.indicatorDecremented) {
+            increments = increments.replace(new RegExp(privateStateName, 'g'), `${privateStateName}_newCommitmentValue_inc`);
+            return  `\n${privateStateName}_newCommitmentValue_inc = generalise(\n${increments});\n`;
+          } 
+        }
+      }
+
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
       return `\n// increment would go here but has been filtered out`;

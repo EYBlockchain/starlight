@@ -26,7 +26,8 @@ export default {
         state.incrementedDeclaration = path.incrementedDeclaration;
       }
     },
-    exit(state: any) {
+    // path is unused here but if unincluded we cannot acccess the state object
+    exit(path: NodePath, state: any) {
       state.inIncrementation = false;
       state.incrementedDeclaration = null;
     },
@@ -41,7 +42,7 @@ export default {
       // e.g. a = a + b --> b accessed
       // e.g. a += 10, a whole --> a accessed
       // e.g. myMapping[a] = x --> a accessed
-      const { node, scope } = path;
+      const { node, scope} = path;
       if (path.isMsg()) return; // the node represents the special 'msg' type in solidity
       if (path.isThis()) return; // the node represents the special 'this' type in solidity
       if (path.isExportedSymbol()) return; // the node represents an external contract name

@@ -45,7 +45,7 @@ const internalCallVisitor = {
                 }
                 state.newPreStatementList = cloneDeep(childNode.body.preStatements);
                 state.newPreStatementList.forEach(node => {
-                    if(['InitialisePreimage','ReadPreimage','MembershipWitness'].includes(node.nodeType)) {
+                    if(['InitialisePreimage','ReadPreimage'].includes(node.nodeType)) {
                     let stateName: string;
                     let stateNode: any;
                     let newstateName: string;
@@ -75,10 +75,6 @@ const internalCallVisitor = {
                              stateNode.stateVarId[1] = stateNode.stateVarId[1].replace(oldStateName, state.newStateArray[name][index])
                             break;
                             }
-                            case 'MembershipWitness': {
-                              stateNode.privateStateName = stateNode.privateStateName.replace('_'+oldStateName, '_'+ state.newStateArray[name][index])
-                              break;
-                              }
                               default :
                               break;
                         }
@@ -106,6 +102,20 @@ const internalCallVisitor = {
               });
                 state.newPostStatementList = cloneDeep(childNode.body.postStatements);
                 state.newPostStatementList.forEach(node => {
+                  if(node.nodeType === 'MembershipWitness'){
+                    let stateName: string;
+                    let stateNode: any;
+                    let newstateName: string;
+                    for( [stateName, stateNode] of Object.entries(node.privateStates)){
+                      for(const [index, oldStateName] of  state.oldStateArray[name].entries()) {
+                        newstateName = stateName.replace('_'+oldStateName, '_'+ state.newStateArray[name][index])
+                        if(newstateName != stateName ){
+                          node.privateStates[ newstateName ] = node.privateStates[stateName];
+                          delete(node.privateStates[ stateName ]);
+                         }
+                       }
+                     }
+                   }
                  if(node.nodeType === 'CalculateNullifier'){
                    let stateName: string;
                    let stateNode: any;
@@ -238,22 +248,6 @@ const internalCallVisitor = {
                           });
                           break;
                           }
-                          case 'MembershipWitness': {
-                            state.newPreStatementList.forEach(statenode => {
-                              if(statenode.nodeType === 'MembershipWitness'){
-                                Object.keys(node.privateStates).forEach(key => {
-                                  Object.keys(statenode.privateStates).forEach(newKey => {
-                                    if (key === newKey){
-                                      statenode.privateStates[newKey].accessedOnly = statenode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
-                                      statenode.privateStates[newKey].nullifierRequired = statenode.privateStates[newKey].nullifierRequired || node.privateStates[key].nullifierRequired;
-                                    }
-                                  });  
-                                });     
-                                node.privateStates = Object.assign(node.privateStates,statenode.privateStates)
-                               }
-                            });
-                            break;
-                          }
                           default :
                           break;
                         }
@@ -377,6 +371,22 @@ const internalCallVisitor = {
 
                    childNode.body.postStatements.forEach(node => {
                      switch(node.nodeType) {
+                      case 'MembershipWitness' : {
+                        state.newPostStatementList.forEach(statenode => {
+                          if(statenode.nodeType === 'MembershipWitness'){
+                            Object.keys(node.privateStates).forEach(key => {
+                              Object.keys(statenode.privateStates).forEach(newKey => {
+                                if (key === newKey){
+                                  statenode.privateStates[newKey].accessedOnly = statenode.privateStates[newKey].accessedOnly && node.privateStates[key].accessedOnly;
+                                  statenode.privateStates[newKey].nullifierRequired = statenode.privateStates[newKey].nullifierRequired || node.privateStates[key].nullifierRequired;
+                                }
+                              });  
+                            });                    
+                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates);
+                           }
+                        });
+                        break;
+                       }
                        case 'CalculateNullifier' : {
                         state.newPostStatementList.forEach(statenode => {
                           if(statenode.nodeType === 'CalculateNullifier'){

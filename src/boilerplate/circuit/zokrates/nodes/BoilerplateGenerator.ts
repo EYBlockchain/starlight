@@ -11,7 +11,7 @@ import MappingKey from '../../../../traverse/MappingKey.js';
 const collectIncrements = (bpg: BoilerplateGenerator) => {
   const stateVarIndicator = bpg.thisIndicator || bpg.indicators;
   const incrementsArray: any[] = [];
-  let incrementsString = '';
+  let incrementsString: string[] = [];
 
   if (stateVarIndicator.isStruct && (
       stateVarIndicator instanceof StateVariableIndicator ||
@@ -27,7 +27,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
         bpg.thisIndicator = stateVarIndicator;
       } else {
         structIncs.incrementsArray[sp] = [];
-        structIncs.incrementsString[sp] = '0';
+        structIncs.incrementsString[sp] = ['0'];
       }
     }
     return structIncs;
@@ -35,6 +35,7 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
 
   // TODO sometimes decrements are added to .increments
   // current fix -  prevent duplicates
+  let counter =-1;
   for (const inc of stateVarIndicator.increments) {
     if (inc.nodeType === 'IndexAccess') {
       const mappingKeyName = NodePath.getPath(inc).scope.getMappingKeyName(inc);
@@ -46,19 +47,23 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
     if (inc.nodeType === 'MemberAccess') inc.name ??= `${inc.expression.name}.${inc.memberName}`;
     if (!inc.name) inc.name = inc.value;
     let modName =  inc.modName ? inc.modName : inc.name;
-    if (incrementsArray.some(existingInc => inc.name === existingInc.name))
+    if (incrementsArray.some(existingInc => inc.name === existingInc.name && inc.id === existingInc.id))
       continue;
     incrementsArray.push({
       name: inc.name,
       precedingOperator: inc.precedingOperator,
     });
-
-    if (inc === stateVarIndicator.increments[0]) {
-      incrementsString += `${modName}`;
+    
+    if (counter !== inc.counter) {
+      incrementsString[inc.counter] = `${modName}`;
     } else {
-      incrementsString += ` ${inc.precedingOperator} ${modName}`;
+      incrementsString[inc.counter] += ` ${inc.precedingOperator} ${modName}`;
     }
+    counter = inc.counter;
   }
+  let incCounter;
+  (counter === -1) ?  incCounter = 0 : incCounter = counter +1;
+  counter = -1;
   for (const dec of stateVarIndicator.decrements) {
     if (dec.nodeType === 'IndexAccess') {
       const mappingKeyName = NodePath.getPath(dec).scope.getMappingKeyName(dec);
@@ -78,13 +83,14 @@ const collectIncrements = (bpg: BoilerplateGenerator) => {
       precedingOperator: dec.precedingOperator,
     });
 
-    if (!stateVarIndicator.decrements[1] && !stateVarIndicator.increments[0]) {
-      incrementsString += `${modName}`;
+    if (counter != dec.counter) {
+      incrementsString[dec.counter + incCounter] = `${modName}`;
     } else {
       // if we have decrements, this str represents the value we must take away
       // => it's a positive value with +'s
-      incrementsString += ` + ${modName}`;
+      incrementsString[dec.counter + incCounter] += `${dec.precedingOperator} ${modName}`;
     }
+    counter = dec.counter;
   }
   
   return { incrementsArray, incrementsString };
@@ -222,8 +228,10 @@ class BoilerplateGenerator {
     this.assignIndicators(mappingKeyIndicator);
     this.mappingKeyName = mappingKeyName.replace('[', '_').replace(']', '');
     if (this.mappingKeyName.split('.').length > 2) this.mappingKeyName.replace('.', 'dot');
+    if(this.mappingKeyName == 'msg')
+        this.mappingKeyName = this.mappingKeyName+mappingKeyIndicator.keyPath.parent.memberName.replace('sender','Sender').replace('value','Value');
     this.mappingName = this.indicators.name;
-    this.name = `${this.mappingName}_${mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
+    this.name = `${this.mappingName}_${this.mappingKeyName}`.replaceAll('.', 'dot').replace('[', '_').replace(']', '');
   }
 
   generateBoilerplateStatement(bpType: string, extraParams?: any) {
@@ -232,7 +240,6 @@ class BoilerplateGenerator {
       const { mappingKeyName } = extraParams;
       this.refresh(mappingKeyName);
     }
-
     return {
       nodeType: 'BoilerplateStatement',
       bpSection: 'statements',
@@ -376,18 +383,24 @@ class BoilerplateGenerator {
   });
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
-  incrementation = () => {
+  incrementation = (extraParams) => {
     //const startIndex = this.getIndex({ addendId });
     return {
       // startIndex,
+      newCommitmentValue: this.newCommitmentValue,
+      structProperties: (this.isStruct && { structProperties: this.structProperties}),
+      memberName: extraParams.memberName,
       addend: {},
     };
   };
 
-  decrementation = () => {
+  decrementation = (extraParams) => {
     //const startIndex = this.getIndex({ subtrahendId });
     return {
       // startIndex,
+      newCommitmentValue: this.newCommitmentValue,
+      structProperties: (this.isStruct && { structProperties: this.structProperties}),
+      memberName: extraParams.memberName,
       subtrahend: {},
     };
   };

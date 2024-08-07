@@ -905,6 +905,9 @@ const visitor = {
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
+                ...(lhsIndicator.isStruct && {
+                  memberName: lhs.memberName 
+                }),
               });
               tempRHSPath.containerName = 'subtrahend'; // a dangerous bodge that works
               node._newASTPointer = newNode.subtrahend;
@@ -919,13 +922,15 @@ const visitor = {
                     lhs.indexExpression?.name ||
                     lhs.indexExpression.expression.name,
                 }), // TODO: tidy this
+                ...(lhsIndicator.isStruct && {
+                  memberName: lhs.memberName 
+                }),
               });
               tempRHSPath.containerName = 'addend'; // a dangerous bodge that works
               node._newASTPointer = newNode.addend;
             }
 
             // The child of this 'ExpressionStatement' node is an 'Assignment' node. But we've built a newNode to replace the 'Assignment' node of the original tree. The child of this newNode will be the RHS of the original 'Assignment' node. We discard the LHS, so we need to 'skip' the traversal of the 'Assignment' (using skipSubNodes = true), and instead traverse directly into the RHS node.
-
             tempRHSParent._newASTPointer = newNode;
             // we don't want to add public inputs twice:
 
@@ -940,6 +945,8 @@ const visitor = {
             state.skipSubNodes = true;
             parent._newASTPointer.push(newNode);
             incrementNames(newNode, lhsIndicator);
+            if (newNode.addend) newNode.addend.incrementType = expression.operator;
+            if (newNode.subtrahend) newNode.subtrahend.decrementType = expression.operator;
             return;
           }
           default:

@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: CC0
+pragma solidity ^0.8.0;
+contract Assign {
+  secret uint256 private a;
+  secret uint256 private b;
+
+  struct MyStruct {
+    uint256 prop1;
+    uint256 prop2;
+  }
+
+  secret MyStruct public x;
+
+  
+  function add( uint256 value ) public {
+    unknown b = b + value +a;
+    unknown x.prop1 += value + a;
+    unknown x.prop2 += value;
+    unknown b += value;
+    unknown x.prop1 += a;
+    a+= value;
+  }
+
+
+  function add1( uint256 value ) public {
+    unknown b = b + value +a;
+    unknown x.prop1 += value + a;
+    unknown x.prop2 += value;
+    unknown b += value;
+    unknown x.prop1 += a;
+    a+= value;
+    unknown b -= 5*value + a;
+    unknown x.prop1 -= 5*value + a;
+    unknown x.prop2 -= 2*value;
+  }
+
+  function remove( uint256 value ) public {
+    unknown b = b - (value +a);
+    unknown x.prop1 -= value + a;
+    unknown x.prop2 -= value;
+    unknown b -= value;
+    unknown x.prop1 -= value;
+    a+= value;
+  }
+
+}

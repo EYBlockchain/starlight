@@ -210,7 +210,7 @@ class ContractBoilerplateGenerator {
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
-            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0)'] : []), // newNullifiers and commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state). and  commitmentRoot are always submitted together (regardless of use case). It's just that nullifiers aren't always stored (when merely accessing a state).
+            ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 3 : 0) + (((_inputs.nullifierRoot != 0) && (_inputs.latestNullifierRoot == 0)) ? 2 : 0)'] : []), // If there are new nullifiers then we need the nullier root, the latest nullifier root and the commitment root, but if the nullifier root is included but not the latest nullifier root (i.e. there is an accessed only state variable) then we only need 2 inputs.
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
           ].join(' + ')});`,

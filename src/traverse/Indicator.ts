@@ -633,10 +633,20 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
     this.isDecremented ||= path.isDecremented;
     this.increments ??= [];
     this.decrements ??= [];
+    let incCounter =0;
+    if (this.increments[0] && state.increments[0]){
+      incCounter = this.increments[this.increments.length -1].counter +1;
+    } 
     state.increments.forEach((inc: any) => {
+      inc.counter = incCounter;
       this.increments?.push(inc);
     });
+    let decCounter =0;
+    if (this.decrements[0] && state.decrements[0]){
+      decCounter = this.decrements[this.decrements.length -1].counter +1;
+    } 
     state.decrements.forEach((dec: any) => {
+      dec.counter = decCounter;
       this.decrements?.push(dec);
     });
     if (this.isMapping) {
