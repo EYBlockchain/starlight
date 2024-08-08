@@ -87,7 +87,7 @@ if [[ ! $setup == 'n' ]]
 then
 printf "\n${GREEN}*** Starting the zokrates container ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml up -d zokrates
+docker compose -f docker-compose.zapp.yml up -d zokrates
 
 sleep 5
 
