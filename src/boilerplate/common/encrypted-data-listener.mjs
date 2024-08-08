@@ -3,10 +3,19 @@ import utils from 'zkp-utils';
 import config from 'config';
 import { generalise } from 'general-number';
 import { getContractAddress, getContractInstance, registerKey } from './common/contract.mjs';
-import { storeCommitment } from './common/commitment-storage.mjs';
-import { decrypt } from './common/number-theory.mjs';
+import { storeCommitment, formatCommitment } from './common/commitment-storage.mjs';
+import { decrypt, poseidonHash, } from './common/number-theory.mjs';
 
 const keyDb = '/app/orchestration/common/db/key.json';
+let newCommitment;
+
+function decodeCommitmentData(data){
+  const stateVarId = generalise(data[0]);
+  const salt = generalise(data[data.length - 1]);
+
+  ENCRYPTEDVARIABLE_COMMITMENT
+  return commitment
+}
 
 export default class EncryptedDataEventListener {
   constructor(web3) {
@@ -41,6 +50,48 @@ export default class EncryptedDataEventListener {
       );
       throw error;
     }
+  }
+
+  async fetchBackupData () {
+    await this.init()
+    const instance = this.instance
+    const eventName = 'BackupData'
+    const eventJsonInterface = this.instance._jsonInterface.find(
+      o => o.name === eventName && o.type === 'event'
+    )
+    console.log('Getting data from past events. This can take a while...')
+    const backupEvents = await instance.getPastEvents('BackupData', {
+      fromBlock: this.contractMetadata.blockNumber || 1,
+      topics: [eventJsonInterface.signature, this.ethAddress.hex(32)]
+    })
+    console.log('Getting nullifiers. This can take a while...')
+    const nullifierEvents = await instance.getPastEvents('Nullifiers', {
+      fromBlock: this.contractMetadata.blockNumber || 1
+    })
+    const nullifiers = nullifierEvents
+      .flatMap(e => e.returnValues.nullifiers)
+    return Promise.all(
+      backupEvents
+        .map(e => decrypt(e.returnValues.cipherText, this.publicKey, this.secretKey))
+        .map(decodeCommitmentData)
+        .filter(c => c)
+        .map(formatCommitment)
+        .map(c => {
+          c.isNullified = nullifiers.includes(BigInt(c.nullifier).toString())
+          return c
+        })
+    )
+  }
+  async saveBackupData (allCommitments) {
+    return allCommitments.map(async commit => {
+      try {
+        await persistCommitment(commit)
+      } catch (e) {
+        if (e.toString().includes('E11000 duplicate key')) {
+          logger.info('Commitment already exists. Thats fine.')
+        }
+      }
+    })
   }
 
   async start() {
