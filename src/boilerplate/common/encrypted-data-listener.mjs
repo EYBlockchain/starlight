@@ -3,18 +3,19 @@ import utils from 'zkp-utils';
 import config from 'config';
 import { generalise } from 'general-number';
 import { getContractAddress, getContractInstance, registerKey } from './common/contract.mjs';
-import { storeCommitment, formatCommitment } from './common/commitment-storage.mjs';
+import { storeCommitment, formatCommitment, persistCommitment } from './common/commitment-storage.mjs';
 import { decrypt, poseidonHash, } from './common/number-theory.mjs';
 
 const keyDb = '/app/orchestration/common/db/key.json';
-let newCommitment;
 
-function decodeCommitmentData(data){
-  const stateVarId = generalise(data[0]);
-  const salt = generalise(data[data.length - 1]);
+
+function decodeCommitmentData(decrypted){
+  const stateVarId = generalise(decrypted[0]);
+  const salt = generalise(decrypted[decrypted.length - 1]);
+  let newCommitment;
 
   ENCRYPTEDVARIABLE_COMMITMENT
-  return commitment
+  return newCommitment;
 }
 
 export default class EncryptedDataEventListener {
