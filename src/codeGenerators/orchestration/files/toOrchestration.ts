@@ -246,6 +246,16 @@ file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
 let encryptedCode = '';
 let encryptedStateVarId = '';
 let encryptedValue = ''
+let encryptedCommitmentCode = '';
+// This removes the repeated elements
+const uniqueMap = new Map();
+node.stateVariables.forEach(item => {
+  if (!uniqueMap.has(item.id) || (item.isMapping && !uniqueMap.get(item.id).isMapping)) {
+    uniqueMap.set(item.id, item);
+  }
+});
+
+node.stateVariables = Array.from(uniqueMap.values());
 node.stateVariables?.forEach(
   variable => {
     variable.isMapping ?  encryptedStateVarId = `const ${variable.name}_stateVarId = generalise(utils.mimcHash([generalise(${variable.id}).bigInt, self.ethAddress.bigInt], 'ALT_BN_254')).hex(32);`
@@ -253,17 +263,27 @@ node.stateVariables?.forEach(
     variable.isStruct ?  variable.structProperty.forEach( (structProp, index) => {
        encryptedValue += `
        const ${structProp} = generalise(decrypted[${index+1}]);`
-    }) : encryptedValue += ` const value =  generalise(decrypted[1]); `;
+    }) : '';
     if(variable.isStruct) {
-    encryptedCode += `
-    const newCommitment = poseidonHash([
-      BigInt(stateVarId.hex(32)),
-      ${variable.structProperty.map(structProp => `BigInt(${structProp}.hex(32))`).join(', \n')},
-      BigInt(self.publicKey.hex(32)),
-      BigInt(salt.hex(32))
-    ]);
-
+    encryptedCommitmentCode += `
     if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      ${encryptedValue};
+        newCommitment = poseidonHash([
+        BigInt(stateVarId.hex(32)),
+        ${variable.structProperty.map(structProp => `BigInt(${structProp}.hex(32))`).join(', \n')},
+        BigInt(self.publicKey.hex(32)),
+        BigInt(salt.hex(32))
+      ]);
+    }`  
+    encryptedCode += `
+    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      ${encryptedValue};
+      const newCommitment = poseidonHash([
+        BigInt(stateVarId.hex(32)),
+        ${variable.structProperty.map(structProp => `BigInt(${structProp}.hex(32))`).join(', \n')},
+        BigInt(self.publicKey.hex(32)),
+        BigInt(salt.hex(32))
+      ]);
       try {
         await storeCommitment({
           hash: newCommitment,
@@ -294,16 +314,29 @@ node.stateVariables?.forEach(
     }`;
       
     } else {
-      encryptedCode += `
-
-      const newCommitment = poseidonHash([
+      encryptedCommitmentCode += `
+  
+      if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+        const value =  generalise(decrypted[1]); 
+  
+        newCommitment = poseidonHash([
         BigInt(stateVarId.hex(32)),
         BigInt(value.hex(32)),
         BigInt(self.publicKey.hex(32)),
         BigInt(salt.hex(32))
-      ]);
+        ]);
+      }`
+      encryptedCode += `
   
     if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      const value =  generalise(decrypted[1]); 
+
+      const newCommitment = poseidonHash([
+      BigInt(stateVarId.hex(32)),
+      BigInt(value.hex(32)),
+      BigInt(self.publicKey.hex(32)),
+      BigInt(salt.hex(32))
+      ]);
       try {
         await storeCommitment({
           hash: newCommitment,
@@ -336,7 +369,8 @@ node.stateVariables?.forEach(
    
   }
 )
-encryptedCode = encryptedStateVarId + encryptedValue + encryptedCode;
+encryptedCode = encryptedStateVarId  + encryptedCode;
+file.file = file.file.replace(/ENCRYPTEDVARIABLE_COMMITMENT/g, encryptedCommitmentCode);
 file.file = file.file.replace(/ENCRYPTEDVARIABLE_CODE/g, encryptedCode);
 return file.file;
 } 

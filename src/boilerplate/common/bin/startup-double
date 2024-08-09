@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-docker-compose -f docker-compose.zapp-double.yml down -v
+docker compose -f docker-compose.zapp-double.yml down -v
 
 echo "Starting ganache..."
 
@@ -13,7 +13,7 @@ sleep 30
 echo "Starting deployer and zokrates..."
 CONSTRUCTOR_CALL
 
-docker-compose -f docker-compose.zapp-double.yml up -d deployer $BUILD_ARG
+docker compose -f docker-compose.zapp-double.yml up -d deployer $BUILD_ARG
 
 docker compose -f docker-compose.zapp-double.yml up -d zokrates zokrates2  $BUILD_ARG
 echo "Waiting for 20 seconds before starting timber..."

@@ -45,33 +45,46 @@ let temp_smt_tree = SMT(hlt[0]); // for temporary updates before proof generatio
 // Gets the hash of a smt_tree (or subtree)
 export const getHash = tree => reduceTree(poseidonConcatHash, tree);
 
-// function to format a commitment for a mongo db and store it
-export async function storeCommitment(commitment) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  // we'll also compute and store the nullifier hash.
-  const nullifierHash = commitment.secretKey
-    ? poseidonHash([
+export function formatCommitment (commitment) {
+  let data
+  try {
+    const nullifierHash = commitment.secretKey
+      ? poseidonHash([
         BigInt(commitment.preimage.stateVarId.hex(32)),
         BigInt(commitment.secretKey.hex(32)),
-        BigInt(commitment.preimage.salt.hex(32)),
+        BigInt(commitment.preimage.salt.hex(32))
       ])
-    : '';
-  const preimage = generalise(commitment.preimage).all.hex(32);
-  preimage.value = generalise(commitment.preimage.value).all
-    ? generalise(commitment.preimage.value).all.integer
-    : generalise(commitment.preimage.value).integer;
-  const data = {
-    _id: commitment.hash.hex(32),
-    name: commitment.name,
-    mappingKey: commitment.mappingKey ? commitment.mappingKey : null,
-    secretKey: commitment.secretKey ? commitment.secretKey.hex(32) : null,
-    preimage,
-    isNullified: commitment.isNullified,
-    nullifier: commitment.secretKey ? nullifierHash.hex(32) : null,
-  };
-  logger.debug(`Storing commitment ${data._id}`);
-  return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+      : ''
+    const preimage = generalise(commitment.preimage).all.hex(32)
+    preimage.value = generalise(commitment.preimage.value).all
+      ? generalise(commitment.preimage.value).all.integer
+      : generalise(commitment.preimage.value).integer
+    data = {
+      _id: commitment.hash.hex(32),
+      name: commitment.name,
+      source: commitment.source,
+      mappingKey: commitment.mappingKey ? commitment.mappingKey : null,
+      secretKey: commitment.secretKey ? commitment.secretKey.hex(32) : null,
+      preimage,
+      isNullified: commitment.isNullified,
+      nullifier: commitment.secretKey ? nullifierHash.hex(32) : null
+    }
+    logger.debug(`Storing commitment ${data._id}`)
+  } catch (error) {
+    console.error('Error --->', error)
+  }
+  return data
+}
+
+export async function persistCommitment (data) {
+  const connection = await mongo.connection(MONGO_URL)
+  const db = connection.db(COMMITMENTS_DB)
+  return db.collection(COMMITMENTS_COLLECTION).insertOne(data)
+}
+// function to format a commitment for a mongo db and store it
+export async function storeCommitment (commitment) {
+  const data = formatCommitment(commitment)
+  return persistCommitment(data)
 }
 
 // function to retrieve commitment with a specified stateVarId

@@ -87,17 +87,17 @@ if [[ ! $setup == 'n' ]]
 then
 printf "\n${GREEN}*** Starting the zokrates container ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml up -d zokrates
+docker compose -f docker-compose.zapp.yml up -d zokrates
 
 sleep 5
 
 printf "\n${GREEN}*** Running setup for your ZApp... ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/orchestration/common/zkp-setup.mjs -i ''
+docker compose -f docker-compose.zapp.yml run zapp-setup node /app/orchestration/common/zkp-setup.mjs -i ''
 
 printf "\n${GREEN}*** Setup complete! Writing verification key to db... ***${NC}\n"
 
-docker-compose -f docker-compose.zapp.yml run zapp-setup node /app/write-vk.mjs -i ''
+docker compose -f docker-compose.zapp.yml run zapp-setup node /app/write-vk.mjs -i ''
 
 fi
 printf "\n${GREEN}*** Finished! ***${NC}\n"
