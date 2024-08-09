@@ -122,15 +122,15 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
 //     return;
 // }
 
-if (IDnode) {
-  console.log('IDnode before assignment:', IDnode);
-  IDnode.name = name; // Safe to assign name if IDnode is not null
-  console.log('IDnode after assignment:', IDnode);
-} else {
-  console.warn('IDnode is null or undefined, unable to set name.');
-  // Optionally, handle the case where IDnode is null if needed
-  return;
-}
+// if (IDnode) {
+//   console.log('IDnode before assignment:', IDnode);
+//   IDnode.name = name; // Safe to assign name if IDnode is not null
+//   console.log('IDnode after assignment:', IDnode);
+// } else {
+//   console.warn('IDnode is null or undefined, unable to set name.');
+//   // Optionally, handle the case where IDnode is null if needed
+//   return;
+// }
 // console.log('Node Path:', path);
 // console.log('Referenced Indicator:', path.scope.getReferencedIndicator(node, true));
 
