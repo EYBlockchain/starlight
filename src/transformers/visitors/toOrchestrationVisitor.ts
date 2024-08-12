@@ -121,16 +121,37 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
 //     console.error('Name is not defined for node:', node);
 //     return;
 // }
+let num_modifiers=0;
 
 // if (IDnode) {
 //   console.log('IDnode before assignment:', IDnode);
-//   IDnode.name = name; // Safe to assign name if IDnode is not null
+  
+//   // Apply logic to adjust the name if needed
+//   if (num_modifiers !== 0) {
+//     if (IDnode.name === node.name) {
+//       IDnode.name += `_${num_modifiers}`;
+//     } else {
+//       IDnode.name = `${node.name}_${num_modifiers}`;
+//     }
+//   } else {
+//     IDnode.name = name; // Just set the name if no modifiers
+//   }
 //   console.log('IDnode after assignment:', IDnode);
 // } else {
 //   console.warn('IDnode is null or undefined, unable to set name.');
-//   // Optionally, handle the case where IDnode is null if needed
+//   // Optionally handle the null case, or just return as needed
 //   return;
 // }
+
+if (IDnode) {
+  console.log('IDnode before assignment:', IDnode);
+  IDnode.name = name; // Safe to assign name if IDnode is not null
+  console.log('IDnode after assignment:', IDnode);
+} else {
+  console.warn('IDnode is null or undefined, unable to set name.');
+  // Optionally, handle the case where IDnode is null if needed
+  return;
+}
 // console.log('Node Path:', path);
 // console.log('Referenced Indicator:', path.scope.getReferencedIndicator(node, true));
 
@@ -210,7 +231,7 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
 
     const statements = fnDefNode.node._newASTPointer.body.statements;
 
-    let num_modifiers=0;
+    // let num_modifiers=0;
     // For each statement that modifies the public variable previously, we need to ensure that the modified variable is stored for later. 
     // We also need that the original public variable is updated, e.g if the statement is index_2 = index +1, we need an extra statement index = index_2.
     modifiedBeforePaths?.forEach((p: NodePath) => {
@@ -328,14 +349,15 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
         }
       }
     });
-    // We ensure here that the public variable used has the correct name, e.g index_2 instead of index.
-    if (num_modifiers != 0)  {
-       if (IDnode.name === node.name){
-        IDnode.name += `_${num_modifiers}`;
-      } else {
-        IDnode.name =  `${node.name}_${num_modifiers}`;
-      }
-    }
+ 
+    //We ensure here that the public variable used has the correct name, e.g index_2 instead of index.
+    // if (num_modifiers != 0)  {
+    //    if (IDnode.name === node.name){
+    //     IDnode.name += `_${num_modifiers}`;
+    //   } else {
+    //     IDnode.name =  `${node.name}_${num_modifiers}`;
+    //   }
+    // }
     // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
     // e.g. index = index_init. 
     if (node.nodeType !== 'IndexAccess') {
