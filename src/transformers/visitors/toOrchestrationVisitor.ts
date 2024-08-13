@@ -123,35 +123,35 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
 // }
 let num_modifiers=0;
 
-// if (IDnode) {
-//   console.log('IDnode before assignment:', IDnode);
-  
-//   // Apply logic to adjust the name if needed
-//   if (num_modifiers !== 0) {
-//     if (IDnode.name === node.name) {
-//       IDnode.name += `_${num_modifiers}`;
-//     } else {
-//       IDnode.name = `${node.name}_${num_modifiers}`;
-//     }
-//   } else {
-//     IDnode.name = name; // Just set the name if no modifiers
-//   }
-//   console.log('IDnode after assignment:', IDnode);
-// } else {
-//   console.warn('IDnode is null or undefined, unable to set name.');
-//   // Optionally handle the null case, or just return as needed
-//   return;
-// }
-
 if (IDnode) {
   console.log('IDnode before assignment:', IDnode);
-  IDnode.name = name; // Safe to assign name if IDnode is not null
+  
+  // Apply logic to adjust the name if needed
+  if (num_modifiers !== 0) {
+    if (IDnode.name === node.name) {
+      IDnode.name += `_${num_modifiers}`;
+    } else {
+      IDnode.name = `${node.name}_${num_modifiers}`;
+    }
+  } else {
+    IDnode.name = name; // Just set the name if no modifiers
+  }
   console.log('IDnode after assignment:', IDnode);
 } else {
   console.warn('IDnode is null or undefined, unable to set name.');
-  // Optionally, handle the case where IDnode is null if needed
+  // Optionally handle the null case, or just return as needed
   return;
 }
+
+// if (IDnode) {
+//   console.log('IDnode before assignment:', IDnode);
+//   IDnode.name = name; // Safe to assign name if IDnode is not null
+//   console.log('IDnode after assignment:', IDnode);
+// } else {
+//   console.warn('IDnode is null or undefined, unable to set name.');
+//   // Optionally, handle the case where IDnode is null if needed
+//   return;
+// }
 
 if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
   console.error('2222222222222222222 base expression is not defined or does not interact with public:',node);

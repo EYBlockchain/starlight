@@ -59,8 +59,19 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   ) {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
+    const isConstantArray = thisPath.isConstantArray();
+    const arrayLength = isConstantArray && thisPath.node.typeName?.length ? thisPath.node.typeName.length.value : false;
+    console.log('isConstantArray:', isConstantArray);
+    console.log('arrayLength:', arrayLength);
     if (!thisState.customInputs.some((input: any) => input.name === indicator?.name))
-      thisState.customInputs.push({name: indicator?.name, typeName: {name: type}, isConstantArray: thisPath.isConstantArray() ? thisPath.node.typeName.length.value : false, inCircuit: true, isReturn: false });
+      thisState.customInputs.push({
+        name: indicator?.name,
+        typeName: { name: type },
+        isConstantArray: arrayLength,
+        inCircuit: true,
+        isReturn: false
+      });
+
   }
 };
 
