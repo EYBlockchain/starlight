@@ -143,10 +143,6 @@ services:
     depends_on:
       - ganache
     volumes:
-      - ./build:/app/build
-      - ./contracts/:/app/contracts/
-      - ./migrations/:/app/migrations/
-      - ./truffle-config.js:/app/truffle-config.js
       - ./orchestration/:/app/orchestration:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
