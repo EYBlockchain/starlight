@@ -79,8 +79,6 @@ services:
     volumes:
       - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated
-      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs
-      - ./orchestration/common/db/:/app/orchestration/common/db:delegated
     environment:
       PROVING_SCHEME: 'g16'
     ports:
@@ -96,8 +94,6 @@ services:
     volumes:
       - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated
-      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs
-      - ./orchestration/common/db/:/app/orchestration/common/db:delegated
     environment:
       PROVING_SCHEME: 'g16'
     ports:
