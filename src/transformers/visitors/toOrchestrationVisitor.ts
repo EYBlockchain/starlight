@@ -152,6 +152,12 @@ if (IDnode) {
   // Optionally, handle the case where IDnode is null if needed
   return;
 }
+
+if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
+  console.error('2222222222222222222 base expression is not defined or does not interact with public:',node);
+  return;
+
+}
 // console.log('Node Path:', path);
 // console.log('Referenced Indicator:', path.scope.getReferencedIndicator(node, true));
 
