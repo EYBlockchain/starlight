@@ -30,13 +30,7 @@ services:
       - zapp-mongo
     volumes:
       - ./build:/app/build
-      - ./contracts/:/app/contracts/
-      - ./migrations/:/app/migrations/
-      - ./truffle-config.js:/app/truffle-config.js
-      - ./circuits/:/app/circuits:delegated
       - ./orchestration/:/app/orchestration:delegated
-      - ./test/:/app/test:delegated
-      - ./config/:/app/config:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
@@ -77,7 +71,6 @@ services:
       - ganache
     volumes:
       - ./config/:/app/config
-      - ./contracts/:/app/contracts:consistent
       - ./build/:/app/build:consistent
     ports:
       - '9000:80'
