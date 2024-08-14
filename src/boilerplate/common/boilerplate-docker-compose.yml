@@ -136,6 +136,7 @@ services:
     depends_on:
       - ganache
     volumes:
+      - ./build:/app/build
       - ./orchestration/:/app/orchestration:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
