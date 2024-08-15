@@ -29,6 +29,7 @@ services:
     volumes:
       - ./build:/app/build
       - ./orchestration/:/app/orchestration:delegated
+      - ./test/:/app/test:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
