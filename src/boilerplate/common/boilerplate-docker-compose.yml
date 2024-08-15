@@ -10,11 +10,9 @@ services:
     depends_on:
       - zokrates
     volumes:
-      - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated
       - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs # "
       - ./orchestration/:/app/orchestration:delegated
-      - ./config/:/app/config:delegated
     networks:
       - zapp_network
   zapp:
