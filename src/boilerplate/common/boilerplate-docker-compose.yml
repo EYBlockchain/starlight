@@ -130,6 +130,7 @@ services:
       dockerfile: Dockerfile.deployer
     volumes:
       - ./build:/app/build
+      - ./contracts/:/app/contracts/
       - ./orchestration/:/app/orchestration:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache

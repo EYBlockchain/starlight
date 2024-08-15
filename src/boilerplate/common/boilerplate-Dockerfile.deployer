@@ -8,7 +8,6 @@ RUN apt-get install -y netcat-openbsd
 COPY ./package.json ./package-lock.json ./
 RUN npm ci
 COPY entrypoint.sh entrypoint.sh
-COPY contracts contracts
 COPY migrations migrations
 COPY truffle-config.js truffle-config.js
 RUN chmod +x entrypoint.sh
