@@ -8,9 +8,6 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - zokrates
-      - timber
-      - ganache
       - zapp-mongo
     volumes:
       - ./build:/app/build
@@ -38,9 +35,6 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - zokrates
-      - timber
-      - ganache
       - zapp-mongo
     volumes:
       - ./build:/app/build
@@ -98,7 +92,6 @@ services:
     restart: on-failure
     depends_on:
       - timber-mongo
-      - ganache
     volumes:
       - ./config/:/app/config
       - ./build/:/app/build:consistent
@@ -129,7 +122,6 @@ services:
     restart: on-failure
     depends_on:
       - timber-mongo
-      - ganache
     volumes:
       - ./config/:/app/config
       - ./build/:/app/build:consistent
@@ -229,8 +221,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.deployer
-    depends_on:
-      - ganache
     volumes:
       - ./build:/app/build
       - ./orchestration/:/app/orchestration:delegated
