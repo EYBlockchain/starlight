@@ -8,19 +8,11 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - zokrates
-      - timber
-      - ganache
       - zapp-mongo
     volumes:
       - ./build:/app/build
-      - ./contracts/:/app/contracts/
-      - ./migrations/:/app/migrations/
-      - ./truffle-config.js:/app/truffle-config.js
-      - ./circuits/:/app/circuits:delegated
       - ./orchestration/:/app/orchestration:delegated
       - ./test/:/app/test:delegated
-      - ./config/:/app/config:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
@@ -43,19 +35,11 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - zokrates
-      - timber
-      - ganache
       - zapp-mongo
     volumes:
       - ./build:/app/build
-      - ./contracts/:/app/contracts/
-      - ./migrations/:/app/migrations/
-      - ./truffle-config.js:/app/truffle-config.js
-      - ./circuits/:/app/circuits:delegated
       - ./orchestration/:/app/orchestration:delegated
       - ./test/:/app/test:delegated
-      - ./config/:/app/config:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
@@ -79,8 +63,6 @@ services:
     volumes:
       - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated
-      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs
-      - ./orchestration/common/db/:/app/orchestration/common/db:delegated
     environment:
       PROVING_SCHEME: 'g16'
     ports:
@@ -96,8 +78,6 @@ services:
     volumes:
       - ./circuits/:/app/circuits:delegated
       - ./proving-files/:/app/output:delegated
-      - ./orchestration/common/write-vk.mjs:/app/write-vk.mjs
-      - ./orchestration/common/db/:/app/orchestration/common/db:delegated
     environment:
       PROVING_SCHEME: 'g16'
     ports:
@@ -112,10 +92,8 @@ services:
     restart: on-failure
     depends_on:
       - timber-mongo
-      - ganache
     volumes:
       - ./config/:/app/config
-      - ./contracts/:/app/contracts:consistent
       - ./build/:/app/build:consistent
     ports:
       - '9000:80'
@@ -144,10 +122,8 @@ services:
     restart: on-failure
     depends_on:
       - timber-mongo
-      - ganache
     volumes:
       - ./config/:/app/config
-      - ./contracts/:/app/contracts:consistent
       - ./build/:/app/build:consistent
     ports:
       - '9001:80'
@@ -245,13 +221,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.deployer
-    depends_on:
-      - ganache
     volumes:
       - ./build:/app/build
       - ./contracts/:/app/contracts/
-      - ./migrations/:/app/migrations/
-      - ./truffle-config.js:/app/truffle-config.js
       - ./orchestration/:/app/orchestration:delegated
     environment:
       BLOCKCHAIN_HOST: ws://ganache
