@@ -117,16 +117,9 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
   const { node } = path;
   let { name } = path.scope.getReferencedIndicator(node, true) || path.node;
 
-//   if (!name) {
-//     console.error('Name is not defined for node:', node);
-//     return;
-// }
 let num_modifiers=0;
 
 if (IDnode) {
-  console.log('IDnode before assignment:', IDnode);
-  
-  // Apply logic to adjust the name if needed
   if (num_modifiers !== 0) {
     if (IDnode.name === node.name) {
       IDnode.name += `_${num_modifiers}`;
@@ -136,39 +129,18 @@ if (IDnode) {
   } else {
     IDnode.name = name; // Just set the name if no modifiers
   }
-  console.log('IDnode after assignment:', IDnode);
 } else {
-  console.warn('IDnode is null or undefined, unable to set name.');
-  // Optionally handle the null case, or just return as needed
   return;
 }
-
-// if (IDnode) {
-//   console.log('IDnode before assignment:', IDnode);
-//   IDnode.name = name; // Safe to assign name if IDnode is not null
-//   console.log('IDnode after assignment:', IDnode);
-// } else {
-//   console.warn('IDnode is null or undefined, unable to set name.');
-//   // Optionally, handle the case where IDnode is null if needed
-//   return;
-// }
 
 if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
-  console.error('2222222222222222222 base expression is not defined or does not interact with public:',node);
   return;
 
 }
-// console.log('Node Path:', path);
-// console.log('Referenced Indicator:', path.scope.getReferencedIndicator(node, true));
-
 
   const binding = path.getReferencedBinding(node);
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
 
-//   if (!node.baseExpression || !node.baseExpression.interactsWithPublic) {
-//     console.error('Base expression is not defined or does not interact with public:', node);
-//     return;
-// } 
 
   const isCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('IfStatement')?.containsSecret;
   const isForCondition = !!path.getAncestorContainedWithin('condition') && path.getAncestorOfType('ForStatement')?.containsSecret;
