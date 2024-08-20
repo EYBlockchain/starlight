@@ -115,28 +115,37 @@ const findStatementId = (statements: any, ID: number) => {
 // i.e. public 'accessed' variables
 const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
   const { node } = path;
+
+  console.log("print node", node);
   let { name } = path.scope.getReferencedIndicator(node, true) || path.node;
+//   if (name.includes('[') && name.includes(']')) {
+//     name = name.replace(/\[|\]/g, '_');
+// }
+name = name.replace(/\[([^\]]+)\]/g, '_$1');
 
-let num_modifiers=0;
-
-if (IDnode) {
-  if (num_modifiers !== 0) {
-    if (IDnode.name === node.name) {
-      IDnode.name += `_${num_modifiers}`;
-    } else {
-      IDnode.name = `${node.name}_${num_modifiers}`;
-    }
-  } else {
-    IDnode.name = name; // Just set the name if no modifiers
-  }
-} else {
-  return;
+// Ensure there is no trailing underscore
+if (name.endsWith('_')) {
+    name = name.slice(0, -1);
 }
+  console.log("display name",name);
 
-if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
-  return;
+// let num_modifiers=0;
 
-}
+// if (IDnode) {
+//   if (num_modifiers !== 0) {
+//     if (IDnode.name === node.name) {
+//       IDnode.name += `_${num_modifiers}`;
+//     } else {
+//       IDnode.name = `${node.name}_${num_modifiers}`;
+//     }
+//   } 
+// } 
+
+
+// if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
+//   return;
+
+// }
 
   const binding = path.getReferencedBinding(node);
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
@@ -209,7 +218,7 @@ if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
 
     const statements = fnDefNode.node._newASTPointer.body.statements;
 
-    // let num_modifiers=0;
+     let num_modifiers=0;
     // For each statement that modifies the public variable previously, we need to ensure that the modified variable is stored for later. 
     // We also need that the original public variable is updated, e.g if the statement is index_2 = index +1, we need an extra statement index = index_2.
     modifiedBeforePaths?.forEach((p: NodePath) => {
@@ -329,13 +338,16 @@ if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
     });
  
     //We ensure here that the public variable used has the correct name, e.g index_2 instead of index.
-    // if (num_modifiers != 0)  {
-    //    if (IDnode.name === node.name){
-    //     IDnode.name += `_${num_modifiers}`;
-    //   } else {
-    //     IDnode.name =  `${node.name}_${num_modifiers}`;
-    //   }
-    // }
+    if(IDnode) {
+      if (num_modifiers != 0)  {
+        if (IDnode.name === node.name){
+         IDnode.name += `_${num_modifiers}`;
+       } else {
+         IDnode.name =  `${node.name}_${num_modifiers}`;
+       }
+     }
+    }
+   
     // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
     // e.g. index = index_init. 
     if (node.nodeType !== 'IndexAccess') {
