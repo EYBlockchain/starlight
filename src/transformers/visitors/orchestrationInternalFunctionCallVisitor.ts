@@ -306,14 +306,24 @@ const internalCallVisitor = {
                             childNode.body.statements[id-1] = statenode;
                            node.body.statements.forEach(kidNode =>{
                             if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
-                               kidNode.expression = Object.assign(kidNode.expression,statenode.initialValue);
+                              if (kidNode.expression.operator) {
+                                const newExpressionNode = Object.assign(cloneDeep(kidNode.expression), statenode.initialValue);
+                                node.body.statements.push(newExpressionNode);
+                            } else {
+                                Object.assign(kidNode.expression, statenode.initialValue);
                             }
+                            }
+
                            });
-                          childNode.body.statements[id-1].initialValue =undefined;
+                          childNode.body.statements[id-1].initialValue = undefined;
                           } else{
-                            node.body.statements.forEach(kidNode =>{
-                              if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
-                                 kidNode.expression = Object.assign(kidNode.expression,statenode.expression);
+                            node.body.statements.forEach(kidNode => {
+                              if(kidNode.nodeType === 'ExpressionStatement' && kidNode.expression.name === state.internalFncName[index]) {
+                                if(kidNode.expression.operator) {
+                                const newExpressionNode = Object.assign(cloneDeep(kidNode.expression), statenode.expression);
+                                node.body.statements.push(newExpressionNode);
+                                }
+                                 kidNode.expression = Object.assign(kidNode.expression, statenode.expression);
                               }
                              });
                           }
@@ -321,7 +331,7 @@ const internalCallVisitor = {
                        });
                       });
                       // remove multiple variable declarations
-                      childNode.body.statements.forEach((node1, index1)=> {
+                      childNode.body.statements.forEach((node1, index1) => {
                         let isDecDeleted = false;
                         if(node1.nodeType === 'VariableDeclarationStatement'){
                          childNode.body.statements.forEach((node2, index2)=> {
@@ -342,7 +352,7 @@ const internalCallVisitor = {
                           if(statenode.nodeType === 'VariableDeclarationStatement'){
                             childNode.body.statements[id-1] = statenode;
                            node.body.statements.forEach(kidNode =>{
-                            if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
+                            if(kidNode.nodeType === 'ExpressionStatement' && kidNode.expression.name === state.internalFncName[index]) {
                                kidNode.expression = Object.assign(kidNode.expression,statenode.initialValue);
                                node.body.statements?.splice(node.body.statements.indexOf(kidNode)+1, 0, state.newStatementList[stateid+1]);
                             }
@@ -382,7 +392,7 @@ const internalCallVisitor = {
                                 }
                               });  
                             });                    
-                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates);
+                            node.privateStates = Object.assign(node.privateStates, statenode.privateStates);
                            }
                         });
                         break;
@@ -397,7 +407,7 @@ const internalCallVisitor = {
                                 }
                               });  
                             });                    
-                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates);
+                            node.privateStates = Object.assign(node.privateStates, statenode.privateStates);
                            }
                         });
                         break;
@@ -405,7 +415,7 @@ const internalCallVisitor = {
                        case 'CalculateCommitment': {
                          state.newPostStatementList.forEach(statenode => {
                            if(statenode.nodeType === 'CalculateCommitment'){    
-                             node.privateStates = Object.assign(node.privateStates,statenode.privateStates);  
+                             node.privateStates = Object.assign(node.privateStates, statenode.privateStates);  
                             }
                          });
                          break;

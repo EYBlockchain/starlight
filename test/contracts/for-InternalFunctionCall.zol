@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 contract Assign {
 
   secret uint256 private a;
-  
+  secret uint256 private b;
   function remove(secret uint256 value) public {
     a -= value;
     uint k;
@@ -15,6 +15,6 @@ contract Assign {
   }
   function add(secret uint256 value) public {
     known a += value;
-    a += 1;
+    b += 1;
   }
 }

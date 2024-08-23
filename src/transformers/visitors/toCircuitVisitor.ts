@@ -722,6 +722,7 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
+      
 
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
@@ -1579,14 +1580,20 @@ const visitor = {
        state.circuitImport.push({isImported: 'true', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
      else
        state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
-
-
-     const newNode = buildNode('InternalFunctionCall', {
+let newNode: any;
+if(parent.nodeType === 'VariableDeclarationStatement') {
+ // console.log(functionReferncedNode.node.returnParameters);
+   newNode = buildNode('InternalFunctionCall', {
+    name: functionReferncedNode.node.returnParameters.parameters[0].name,
+    internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+  });
+} else 
+     { newNode = buildNode('InternalFunctionCall', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        CircuitArguments: [],
        CircuitReturn:[],
-     });
+     });}
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
