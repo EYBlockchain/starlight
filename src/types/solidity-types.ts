@@ -77,7 +77,6 @@ export function getVisitableKeys(nodeType: string): string[] {
     // And again, if we haven't recognized the nodeType then we'll throw an
     // error.
     default:
-      console.log(nodeType);
       throw new TypeError(nodeType);
   }
 }
