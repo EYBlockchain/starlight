@@ -1582,18 +1582,19 @@ const visitor = {
        state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
 let newNode: any;
 if(parent.nodeType === 'VariableDeclarationStatement') {
- // console.log(functionReferncedNode.node.returnParameters);
    newNode = buildNode('InternalFunctionCall', {
     name: functionReferncedNode.node.returnParameters.parameters[0].name,
-    internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+    internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
   });
-} else 
-     { newNode = buildNode('InternalFunctionCall', {
+} else
+     { 
+      newNode = buildNode('InternalFunctionCall', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
        CircuitArguments: [],
        CircuitReturn:[],
-     });}
+     });
+    }
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,

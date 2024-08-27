@@ -520,7 +520,7 @@ export default {
       // TODO interacts with secret AND public
       const subState = { interactsWithSecret: false };
       path.traversePathsFast(interactsWithSecretVisitor, subState);
-      if (subState.interactsWithSecret) {
+      if (subState.interactsWithSecret && node.initialValue.nodeType != 'FunctionCall') {
         state.skipSubNodes = true;
         return;
       }
@@ -841,7 +841,6 @@ DoWhileStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       let newNode: any;
-
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
       if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
@@ -882,7 +881,6 @@ DoWhileStatement: {
       if (path.isInternalFunctionCall()) {
        // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
        // TODO: need a warning message to this effect ^^^
-
       const functionReferncedNode = scope.getReferencedNode(node.expression);
       const params = functionReferncedNode.parameters.parameters;
       state.pubparams = [];

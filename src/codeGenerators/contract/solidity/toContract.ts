@@ -146,6 +146,8 @@ function codeGenerator(node: any) {
        if(node.initialValue)
        initialValue = codeGenerator(node.initialValue);
       if (!initialValue || initialValue === '') return `${declarations};`;
+      if(node.initialValue.nodeType === 'InternalFunctionCall') return `
+      ${declarations} = ${initialValue.replace(/\s+/g,' ').trim()}`;
       return `
           ${declarations} = ${initialValue};`;
     }
