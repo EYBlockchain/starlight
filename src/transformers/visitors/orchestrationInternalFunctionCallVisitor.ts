@@ -267,7 +267,8 @@ const internalCallVisitor = {
                       let newVarDecs = [];
                       childNode.body.statements.forEach((node1, index1)=> {
                         state.varNames = [];
-                        if (!(node1.expression && node1.expression?.nodeType === 'InternalFunctionCall')){
+                        // check the node except the InternalFunctionCall node
+                        if (!((node1.expression &&node1.expression?.nodeType === 'InternalFunctionCall') || (node1.initialValue && node1.initialValue?.nodeType === 'InternalFunctionCall'))){
                           traverseNodesFast(node1, findVarVisitor,  state);
                         } 
                         state.varNames.forEach((varName) => {
@@ -517,10 +518,18 @@ FunctionCall: {
         state.circuitImport.push('true');
         else
         state.circuitImport.push('false');
-        const newNode = buildNode('InternalFunctionCall', {
+      let newNode;
+        if(parent.nodeType === 'VariableDeclarationStatement') {
+            newNode = buildNode('InternalFunctionCall', {
+             name: functionReferncedNode.node.returnParameters.parameters[0].name,
+             internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+           });
+         } else {
+       newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,
           internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
         });
+      }
         node._newASTPointer = newNode ;
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
           parent._newASTPointer[path.containerName].push(newNode);

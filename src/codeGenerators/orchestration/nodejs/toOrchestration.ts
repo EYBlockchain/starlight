@@ -109,8 +109,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
         if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
         // local var dec
         if (node.initialValue.nodeType === 'Literal' && node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
+        if(node.initialValue.nodeType === 'InternalFunctionCall') return  `\nlet ${codeGenerator(node.declarations[0])} = generalise(${node.initialValue.name}.integer);`;
         return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
       } 
+      
       return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
