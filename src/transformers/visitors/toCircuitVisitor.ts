@@ -1090,7 +1090,7 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
-      let interactsWithSecret = false ;
+      let interactsWithSecret = scope.getReferencedIndicator(node)?.interactsWithSecret ;
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
         refPath.parentPath.traversePathsFast(

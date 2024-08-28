@@ -24,9 +24,9 @@ const getAccessedValue = (name: string) => {
  */
 const getPublicValue = (node: any) => {
   if (node.nodeType !== 'IndexAccess')
-    // In the _init variable we save the initial value of the variable for use later. 
+    // In the _init variable we save the initial value of the variable for use later.
     return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node)}().call());\n let ${node.name}_init = ${node.name};`;
-  return `\nconst ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call());`;
+  return `\nlet ${node.name} = generalise(await instance.methods.${codeGenerator(node.baseExpression, { lhs: true} )}(${codeGenerator(node.indexExpression, { contractCall: true })}).call()); \n let ${node.name}_init = ${node.name}`;
 };
 
 /**
@@ -127,16 +127,21 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'ExpressionStatement':
       if (!node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         return `\n${codeGenerator(node.expression)};`;
+        
       }
-      if (node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
+    
+      if (node.incrementsSecretState && (node.interactsWithSecret ||node.containsPublic || node.expression?.internalFunctionInteractsWithSecret)){
         let privateStateName = node.privateStateName.replace(/\./g, '_');
         let increments;
+     
         if (node.expression.operator === '+='){
           increments = codeGenerator(node.expression.rightHandSide);
+      
           // Although we have += in the case that the indicator is decremented elsewhere in the function, we need to subtract the increments.
           if (!node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
           if (node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue_inc = generalise(parseInt(${privateStateName}_newCommitmentValue_inc.integer, 10) + ${increments});\n`;
         }
+       
         if (node.expression.operator === '-='){
           increments = codeGenerator(node.expression.rightHandSide);
           return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + (${increments}));\n`;
@@ -166,18 +171,24 @@ export default function codeGenerator(node: any, options: any = {}): any {
      return " ";
 
     case 'Assignment':
-      // To ensure the left hand side is always a general number, we generalise it here (excluding the initialisation in a for loop). 
+      // To ensure the left hand side is always a general number, we generalise it here (excluding the initialisation in a for loop).    
+    
       if (!node.isInitializationAssignment && node.rightHandSide.subType !== 'generalNumber'){
         if (['+=', '-=', '*='].includes(node.operator)) {
+
           return `${codeGenerator(node.leftHandSide, {
             lhs: true,
           })} = generalise(${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
             0,
           )} ${codeGenerator(node.rightHandSide)})`;
+          
         }
+
+        
         return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
           node.operator
         } generalise(${codeGenerator(node.rightHandSide)})`;
+
       } else {
         if (['+=', '-=', '*='].includes(node.operator)) {
           return `${codeGenerator(node.leftHandSide, {
@@ -189,7 +200,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
           node.operator
         } ${codeGenerator(node.rightHandSide)}`;
+        
       }
+
+      
       
 
     case 'BinaryOperation':

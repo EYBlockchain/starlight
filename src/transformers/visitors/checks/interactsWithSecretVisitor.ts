@@ -34,6 +34,31 @@ const markSubtreeInteractsWithPublic = (thisPath: any, thisState: any) => {
     indicator.addPublicInteractingPath(thisState.publicPath);
 };
 
+const markIndicatorSubtreeInteractsWithSecret = (thisPath: any, thisState: any) => {
+  const { node, scope } = thisPath;
+  if (!['Identifier', 'VariableDeclarationStatement'].includes(node.nodeType))
+    return;
+  const indicator = scope.getReferencedIndicator(node, true);
+  // we don't want to add itself as an interacted with path
+  if (indicator && thisState.secretPath.node.id !== node.id)
+    indicator.addSecretInteractingPath(thisState.secretPath);
+};
+
+const interactwithPublicSecret = (thisPath: any, thisState: any) => {
+  const { node, scope } = thisPath;
+ 
+
+  if (node.nodeType === 'ExpressionStatement') {
+    const leftHandSideIndicator = scope.getReferencedIndicator(node.expression.leftHandSide, true);
+
+    if (leftHandSideIndicator?.interactsWithSecret) {
+      thisPath.traversePathsFast(markIndicatorSubtreeInteractsWithSecret, {
+        secretPath: thisPath,
+      });
+    }
+   }
+};
+
 export default {
 
   FunctionCall: {
@@ -47,6 +72,17 @@ export default {
           publicPath: path,
         });
       }
+    },
+  },
+
+  FunctionDefinition: {
+    exit(path: NodePath) {
+  
+      path.traversePathsFast(interactwithPublicSecret, {
+        publicPath: path,
+      });
+
+
     },
   },
 

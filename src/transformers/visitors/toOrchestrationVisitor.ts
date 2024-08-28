@@ -116,7 +116,6 @@ const findStatementId = (statements: any, ID: number) => {
 const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
   const { node } = path;
 
-  console.log("print node", node);
   let { name } = path.scope.getReferencedIndicator(node, true) || path.node;
 //   if (name.includes('[') && name.includes(']')) {
 //     name = name.replace(/\[|\]/g, '_');
@@ -127,25 +126,6 @@ name = name.replace(/\[([^\]]+)\]/g, '_$1');
 if (name.endsWith('_')) {
     name = name.slice(0, -1);
 }
-  console.log("display name",name);
-
-// let num_modifiers=0;
-
-// if (IDnode) {
-//   if (num_modifiers !== 0) {
-//     if (IDnode.name === node.name) {
-//       IDnode.name += `_${num_modifiers}`;
-//     } else {
-//       IDnode.name = `${node.name}_${num_modifiers}`;
-//     }
-//   } 
-// } 
-
-
-// if (!node.baseExpression || !node.baseExpression.interactsWithPublic){
-//   return;
-
-// }
 
   const binding = path.getReferencedBinding(node);
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
@@ -166,10 +146,12 @@ if (name.endsWith('_')) {
     (node.interactsWithPublic || node.baseExpression?.interactsWithPublic || isCondition || isForCondition || isInitializationExpression || isLoopExpression) &&
     binding.stateVariable && !binding.isSecret
   ) {
+
+ 
     const fnDefNode = path.getAncestorOfType('FunctionDefinition');
     if (!fnDefNode) throw new Error(`Not in a function`);
     let innerNode: any;
-    if (path.isMapping(node)) {
+    if (path.isMapping(node)  ||  (node.nodeType === 'IndexAccess' &&  node.baseExpression.nodeType === 'Identifier')) {
       name = getIndexAccessName(node);
       node.name = name;
       let indexExpressionNode: any;
@@ -181,7 +163,8 @@ if (name.endsWith('_')) {
       indexExpressionNode = buildNode(node.indexExpression.nodeType, {
           name: node.indexExpression.name,
           value: node.indexExpression.value,
-          subType: node.indexExpression.typeDescriptions?.typeString,});
+          subType: node.indexExpression.typeDescriptions?.typeString,}); 
+
       innerNode = buildNode('IndexAccess', {
           name,
           baseExpression: buildNode('Identifier', { name: node.baseExpression.name }),
@@ -189,7 +172,9 @@ if (name.endsWith('_')) {
           isAccessed: true,
           isSecret: false,
         })
-    } else {
+    }
+    
+    else {
       innerNode = buildNode('VariableDeclaration', {
         name,
         isAccessed: true,
@@ -217,6 +202,7 @@ if (name.endsWith('_')) {
     const modifiedBeforePaths = path.scope.getReferencedIndicator(node, true)?.modifyingPaths?.filter((p: NodePath) => p.node.id < node.id);
 
     const statements = fnDefNode.node._newASTPointer.body.statements;
+   
 
      let num_modifiers=0;
     // For each statement that modifies the public variable previously, we need to ensure that the modified variable is stored for later. 
@@ -233,6 +219,7 @@ if (name.endsWith('_')) {
         // we have to go back and mark any editing statements as interactsWithSecret so they show up
           expNode.interactsWithSecret = true;
           const moveExpNode = cloneDeep(expNode);
+        
           // We now move the statement in expNode to preStatements. 
           //If the statement is within an if statement we need to find the correct if statement in preStatements or create a new one.
           let ifPreIndex = null;
@@ -265,7 +252,7 @@ if (name.endsWith('_')) {
           if ((statements[location.index]?.trueBody && statements[location.index].trueBody.every(element => element === null || element === undefined)) && (statements[location.index]?.falseBody && statements[location.index].falseBody.every(element => element === null || element === undefined))) {
             delete statements[location.index];
           }      
-          
+         
           if(
             (expNode.expression &&  expNode.expression.leftHandSide && expNode.expression.leftHandSide?.name === node.name) || 
             (expNode.initialValue &&  expNode.initialValue.leftHandSide &&  expNode.initialValue.leftHandSide?.name === node.name) 
@@ -277,11 +264,17 @@ if (name.endsWith('_')) {
                 isSecret: false,
                 interactsWithSecret: true,
               });
+              
               const initInnerNode = buildNode('Assignment', {
                 leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
                 operator: '=',
                 rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+                
               });
+
+          
+
+
               const newNode1 = buildNode('VariableDeclarationStatement', {
                   declarations: [decInnerNode],
                   initialValue: initInnerNode,
@@ -305,6 +298,7 @@ if (name.endsWith('_')) {
               expression: InnerNode,
               interactsWithSecret: true,
             });
+      
             if (location.trueIndex !== -1){ fnDefNode.node._newASTPointer.body.preStatements[ifPreIndex].trueBody.push(newNode1); }
             else if (location.falseIndex !== -1){ fnDefNode.node._newASTPointer.body.preStatements[ifPreIndex].falseBody.push(newNode1); }
             else {fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);}
@@ -332,15 +326,18 @@ if (name.endsWith('_')) {
               else if (location.falseIndex !== -1){ fnDefNode.node._newASTPointer.body.preStatements[ifPreIndex].falseBody.push(newNode2); }
               else {fnDefNode.node._newASTPointer.body.preStatements.push(newNode2);}
             }
+            
           }
         }
       }
     });
- 
+
+  
     //We ensure here that the public variable used has the correct name, e.g index_2 instead of index.
     if(IDnode) {
       if (num_modifiers != 0)  {
         if (IDnode.name === node.name){
+          console.log(`IDnode name (${IDnode.name}) is the same as node name (${node.name})`);
          IDnode.name += `_${num_modifiers}`;
        } else {
          IDnode.name =  `${node.name}_${num_modifiers}`;
@@ -348,9 +345,9 @@ if (name.endsWith('_')) {
      }
     }
    
+   
     // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
     // e.g. index = index_init. 
-    if (node.nodeType !== 'IndexAccess') {
       fnDefNode.node._newASTPointer.body.preStatements = fnDefNode.node._newASTPointer.body.preStatements.filter(p => p.expression?.rightHandSide?.name !== `${node.name}_init`);
       const endNodeInit = buildNode('Assignment', {
         leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'   }),
@@ -361,8 +358,8 @@ if (name.endsWith('_')) {
           expression: endNodeInit,
           interactsWithSecret: true,
       });
+     
       fnDefNode.node._newASTPointer.body.preStatements.push(endNode);
-    }
 
     // if the node is the indexExpression, we dont need its value in the circuit
     state.publicInputs ??= [];
@@ -1387,7 +1384,6 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
-        binOpNode.leftExpression.name = path.node.leftHandSide.name;
         return assNode;
       };
 
@@ -1405,6 +1401,7 @@ const visitor = {
             parent._newASTPointer.expression = newNode;
           }
         }
+
         if (path.getAncestorContainedWithin('initializationExpression') && parent._newASTPointer.nodeType === 'VariableDeclarationStatement' ){
           parent._newASTPointer.initialValue.isInitializationAssignment = true;
         } else if (path.getAncestorContainedWithin('initializationExpression')) {
@@ -1413,6 +1410,60 @@ const visitor = {
       // node._newASTPointer = newNode; // no need to ascribe the node._newASTPointer, because we're exiting.
     },
   },
+  // Assignment: {
+  //   enter(path: NodePath) {
+  //     const { node, parent } = path;
+  //     const newNode = buildNode(node.nodeType, { operator: node.operator });
+  //     node._newASTPointer = newNode;
+  
+  //     if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+  //       parent._newASTPointer.initialValue = newNode;
+  //     } else {
+  //       parent._newASTPointer.expression = newNode;
+  //     }
+  //   },
+  
+  //   exit(path: NodePath) {
+  //     // Convert 'a += b' into 'a = a + b' for all operators
+  //     const expandAssignment = (node: any) => {
+  //       const { operator, leftHandSide, rightHandSide } = node;
+  //       const expandableOps = ['+=', '-=', '*=', '/=', '%=', '|=', '&=', '^='];
+  //       if (!expandableOps.includes(operator)) return node;
+  //       const op = operator.charAt(0);
+  //       const binOpNode = buildNode('BinaryOperation', {
+  //         operator: op,
+  //         leftExpression: cloneDeep(leftHandSide),
+  //         rightExpression: rightHandSide,
+  //       });
+  //       const assNode = buildNode('Assignment', {
+  //         operator: '=',
+  //         leftHandSide,
+  //         rightHandSide: binOpNode,
+  //       });
+  //       return assNode;
+  //     };
+  
+  //     const { parent } = path;
+  //     const binding = path.getReferencedBinding(path.node.leftHandSide);
+  //     if (binding instanceof VariableBinding && !binding.isSecret && binding.stateVariable) {
+  //       if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+  //         const circuitNode = parent._newASTPointer.initialValue;
+  //         const newNode = expandAssignment(circuitNode);
+  //         parent._newASTPointer.initialValue = newNode;
+  //       } else {
+  //         const circuitNode = parent._newASTPointer.expression;
+  //         const newNode = expandAssignment(circuitNode);
+  //         parent._newASTPointer.expression = newNode;
+  //       }
+  //     }
+  //     if (path.getAncestorContainedWithin('initializationExpression') && parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
+  //       parent._newASTPointer.initialValue.isInitializationAssignment = true;
+  //     } else if (path.getAncestorContainedWithin('initializationExpression')) {
+  //       parent._newASTPointer.expression.isInitializationAssignment = true;
+  //     }
+  //   },
+  // },
+  
 
   TupleExpression: {
     enter(path: NodePath, state: any) {
@@ -1607,6 +1658,7 @@ const visitor = {
         //|| indicator?.interactsWithSecret,
         oldASTId: node.id,
       });
+
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer) || (!path.isInSubScope() && Array.isArray(parent._newASTPointer[path.containerName]))) {
         parent._newASTPointer.push(newNode);
@@ -1619,6 +1671,7 @@ const visitor = {
 
     exit(path: NodePath, state: any) {
       const { node, scope } = path;
+
       const { leftHandSide: lhs } = node.expression;
       const indicator = scope.getReferencedIndicator(lhs, true);
       let name = indicator?.isMapping
@@ -1852,10 +1905,11 @@ const visitor = {
         name,
         subType: node.typeDescriptions.typeString,
       });
+
+   
       // if this is a public state variable, this fn will add a public input
       addPublicInput(path, state, null);
       state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
-
       parent._newASTPointer[path.containerName] = newNode;
     },
 
