@@ -140,14 +140,18 @@ function codeGenerator(node: any) {
     }
 
     case 'VariableDeclarationStatement': {
+      console.log(node);
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
       let initialValue;
        if(node.initialValue)
        initialValue = codeGenerator(node.initialValue);
       if (!initialValue || initialValue === '') return `${declarations};`;
-      if(node.initialValue.nodeType === 'InternalFunctionCall') return `
-      ${declarations} = ${initialValue.replace(/\s+/g,' ').trim()}`;
+      if(node.initialValue.nodeType === 'InternalFunctionCall'){
+        if(node.interactsWithSecret) return ;
+        return `
+        ${declarations} = ${initialValue.replace(/\s+/g,' ').trim()}`;
+      } 
       return `
           ${declarations} = ${initialValue};`;
     }

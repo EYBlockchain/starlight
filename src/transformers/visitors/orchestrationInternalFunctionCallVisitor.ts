@@ -520,10 +520,27 @@ FunctionCall: {
         state.circuitImport.push('false');
       let newNode;
         if(parent.nodeType === 'VariableDeclarationStatement') {
+          const decNode = buildNode('VariableDeclarationStatement')
+          decNode.declarations.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+          decNode.interactsWithSecret = true;
+          decNode.declarations[0].declarationType = 'state';
+          decNode.declarations[0].isAccessed = true;
+          decNode.declarations[0].interactsWithSecret = true;
+          callingfnDefPath.node._newASTPointer.body.preStatements.splice(1,0,decNode);
+          const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
             newNode = buildNode('InternalFunctionCall', {
-             name: functionReferncedNode.node.returnParameters.parameters[0].name,
+             name: returnPara,
              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
            });
+
+          const functionParams = callingfnDefPath.node._newASTPointer.body.preStatements;
+          // console.log(functionParams);
+          // console.log(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+          // if(!functionParams.includes(returnPara)){
+          //   callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+          //   callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].declarationType = 'parameter';
+          //   callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].interactsWithSecret = true;
+          // }
          } else {
        newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,

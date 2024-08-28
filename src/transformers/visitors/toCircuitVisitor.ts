@@ -1582,10 +1582,17 @@ const visitor = {
        state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
 let newNode: any;
 if(parent.nodeType === 'VariableDeclarationStatement') {
+  const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
    newNode = buildNode('InternalFunctionCall', {
-    name: functionReferncedNode.node.returnParameters.parameters[0].name,
+    name: returnPara,
     internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
   });
+  const functionParams = callingfnDefPath.node._newASTPointer.parameters.parameters.map(param => param.name);
+  if(!functionParams.includes(returnPara)){
+    callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+    callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].declarationType = 'parameter';
+    callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].interactsWithSecret = true;
+  }
 } else
      { 
       newNode = buildNode('InternalFunctionCall', {
@@ -1595,6 +1602,7 @@ if(parent.nodeType === 'VariableDeclarationStatement') {
        CircuitReturn:[],
      });
     }
+
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
