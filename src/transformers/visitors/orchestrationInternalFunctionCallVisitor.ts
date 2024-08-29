@@ -432,7 +432,7 @@ const internalCallVisitor = {
                             });  
                           });        
                           node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates);
-                          node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+                          node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters, ...state.returnPara])];
                           break;
                         }
                         case 'SendTransaction': {
@@ -527,11 +527,13 @@ FunctionCall: {
           decNode.declarations[0].isAccessed = true;
           decNode.declarations[0].interactsWithSecret = true;
           callingfnDefPath.node._newASTPointer.body.preStatements.splice(1,0,decNode);
-          const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
+           const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
             newNode = buildNode('InternalFunctionCall', {
              name: returnPara,
              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
            });
+           console.log(parent)
+           parent.interactsWithSecret ? state.returnPara = returnPara : ' ';
 
           const functionParams = callingfnDefPath.node._newASTPointer.body.preStatements;
           // console.log(functionParams);
