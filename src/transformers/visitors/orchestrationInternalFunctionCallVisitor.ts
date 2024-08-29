@@ -432,7 +432,8 @@ const internalCallVisitor = {
                             });  
                           });        
                           node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates);
-                          node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters, ...state.returnPara])];
+                          node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+                          state.returnPara ? node.parameters = [...new Set([...node.parameters, ...state.returnPara])]: node.parameters;
                           break;
                         }
                         case 'SendTransaction': {
@@ -532,17 +533,8 @@ FunctionCall: {
              name: returnPara,
              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
            });
-           console.log(parent)
-           parent.interactsWithSecret ? state.returnPara = returnPara : ' ';
-
-          const functionParams = callingfnDefPath.node._newASTPointer.body.preStatements;
-          // console.log(functionParams);
-          // console.log(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
-          // if(!functionParams.includes(returnPara)){
-          //   callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
-          //   callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].declarationType = 'parameter';
-          //   callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].interactsWithSecret = true;
-          // }
+           
+           parent._newASTPointer.interactsWithSecret ? state.returnPara = returnPara : ' ';
          } else {
        newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,

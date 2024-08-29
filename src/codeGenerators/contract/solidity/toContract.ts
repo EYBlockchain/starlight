@@ -140,7 +140,6 @@ function codeGenerator(node: any) {
     }
 
     case 'VariableDeclarationStatement': {
-      console.log(node);
       const declarations: string = node.declarations.map(codeGenerator).join(', ');
       if (declarations === '') return declarations; // when all are secret, we ignore them
       let initialValue;
