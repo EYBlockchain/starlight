@@ -86,6 +86,7 @@ class FunctionBoilerplateGenerator {
         }
         if (input.structName) customInputs[i] = input.properties;
       });
+    console.log('cutomInputs in contract', customInputs);
     
       let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
       customInputs = customInputs?.flat(Infinity).filter(p => (p.inCircuit || p.isReturn));

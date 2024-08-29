@@ -127,7 +127,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'ExpressionStatement':
       if (!node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         return `\n${codeGenerator(node.expression)};`;
-        
       }
     
       if (node.incrementsSecretState && (node.interactsWithSecret ||node.containsPublic || node.expression?.internalFunctionInteractsWithSecret)){
@@ -203,8 +202,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
         
       }
 
-      
-      
 
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${

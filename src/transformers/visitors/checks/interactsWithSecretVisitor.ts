@@ -46,8 +46,6 @@ const markIndicatorSubtreeInteractsWithSecret = (thisPath: any, thisState: any) 
 
 const interactwithPublicSecret = (thisPath: any, thisState: any) => {
   const { node, scope } = thisPath;
- 
-
   if (node.nodeType === 'ExpressionStatement') {
     const leftHandSideIndicator = scope.getReferencedIndicator(node.expression.leftHandSide, true);
 
@@ -58,6 +56,7 @@ const interactwithPublicSecret = (thisPath: any, thisState: any) => {
     }
    }
 };
+
 
 export default {
 
@@ -77,12 +76,9 @@ export default {
 
   FunctionDefinition: {
     exit(path: NodePath) {
-  
       path.traversePathsFast(interactwithPublicSecret, {
         publicPath: path,
       });
-
-
     },
   },
 

@@ -160,12 +160,17 @@ export const generateProofBoilerplate = (node: any) => {
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];  
     // we add any extra params the circuit needs
+    console.log('Node Parameters Before Filtering:', node.parameters);
     node.parameters
+    
       .filter(
         (para: string) =>
           !privateStateNames.includes(para) && (
           !output.join().includes(`${para}.integer`) && !output.join().includes('msgValue')),
       )
+
+    
+      
       ?.forEach((param: string) => {
         if (param == 'msgSender') {
           parameters.unshift(`\t${param}.integer,`);
@@ -176,8 +181,10 @@ export const generateProofBoilerplate = (node: any) => {
         else {
           parameters.push(`\t${param}.integer,`);
         }
+        console.log('Rania@@@@@@@@@@@@@@@@@@@@@@',param)
 
       });
+     
     // then we build boilerplate code per state
     switch (stateNode.isWhole) {
       case true:
@@ -238,6 +245,7 @@ export const generateProofBoilerplate = (node: any) => {
                 isSharedSecret: stateNode.isSharedSecret,
                 parameters,
               })
+             
             );
             containsNullifierRoot = true;
             containsNewNullifierRoot = true;

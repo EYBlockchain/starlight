@@ -214,6 +214,7 @@ if (name.endsWith('_')) {
         if (path.containerName !== 'indexExpression') {
           num_modifiers++;
         } 
+        //console.log('expNode!!!!!!!!!!!!!!!!!',expNode);
         if (expNode) {
           // if the public input is modified before here, it won't show up in the mjs file
         // we have to go back and mark any editing statements as interactsWithSecret so they show up
@@ -337,18 +338,20 @@ if (name.endsWith('_')) {
     if(IDnode) {
       if (num_modifiers != 0)  {
         if (IDnode.name === node.name){
-          console.log(`IDnode name (${IDnode.name}) is the same as node name (${node.name})`);
          IDnode.name += `_${num_modifiers}`;
        } else {
          IDnode.name =  `${node.name}_${num_modifiers}`;
        }
+       console.log('aaaaaaaaaabbbbbbbbbbbbb', IDnode);
      }
     }
    
    
     // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
     // e.g. index = index_init. 
+  
       fnDefNode.node._newASTPointer.body.preStatements = fnDefNode.node._newASTPointer.body.preStatements.filter(p => p.expression?.rightHandSide?.name !== `${node.name}_init`);
+
       const endNodeInit = buildNode('Assignment', {
         leftHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber'   }),
         operator: '=',
@@ -365,6 +368,7 @@ if (name.endsWith('_')) {
     state.publicInputs ??= [];
     if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);
   } 
+  //console.log('Public Inputs After Addition aaaaaaaaaaaaaaaaaaaaaaaaaaaa:', state.publicInputs);
 
     if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) addPublicInput(NodePath.getPath(node.indexExpression), state, null);
 }
@@ -987,7 +991,11 @@ const visitor = {
 
         // this adds other values we need in the circuit
         for (const param of node._newASTPointer.parameters.parameters) {
-          if (param.isPrivate || param.isSecret || param.interactsWithSecret) {
+
+          scope.getReferencedIndicator(param);
+          console.log('KKKKKKKKKKKKKK param', scope.getReferencedIndicator(param).interactsWithSecret);
+
+          if (param.isPrivate || param.isSecret || param.interactsWithSecret || scope.getReferencedIndicator(param).interactsWithSecret) {
             if (param.typeName.isStruct) {
               param.typeName.properties.forEach((prop: any) => {
                 newNodes.generateProofNode.parameters.push(`${param.name}.${prop.name}${param.typeName.isConstantArray ? '.all' : ''}`);
@@ -1908,7 +1916,7 @@ const visitor = {
 
    
       // if this is a public state variable, this fn will add a public input
-      addPublicInput(path, state, null);
+      addPublicInput(path, state, newNode);
       state.skipSubNodes = true; // the subnodes are baseExpression and indexExpression - we skip them
       parent._newASTPointer[path.containerName] = newNode;
     },
