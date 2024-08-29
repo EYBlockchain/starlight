@@ -213,6 +213,9 @@ const internalCallVisitor = {
                 file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
+                   const modifiedNodes = childNode.parameters.modifiedStateVariables.map(node => node.name);
+                   if(state.decNode && !(modifiedNodes.includes(state.decNode.declarations[0].name))) 
+                   childNode.body.preStatements.splice(1, 0, state.decNode);
                    if(childNode.decrementedSecretStates)
                     childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
                     childNode.body.preStatements.forEach(node => {
@@ -527,7 +530,7 @@ FunctionCall: {
           decNode.declarations[0].declarationType = 'state';
           decNode.declarations[0].isAccessed = true;
           decNode.declarations[0].interactsWithSecret = true;
-          callingfnDefPath.node._newASTPointer.body.preStatements.splice(1,0,decNode);
+          state.decNode = decNode;
            const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
             newNode = buildNode('InternalFunctionCall', {
              name: returnPara,

@@ -114,6 +114,8 @@ const internalCallVisitor = {
                        if(state.newStateArray[name][id].memberName)
                        state.newParameterList.splice(nodeIndex,1);
                      }
+                     const params = state.newParameterList.map(node => node.name);
+                    (state.paramNode && !(params.includes(state.paramNode.name))) ? state.newParameterList.push(state.paramNode) : state.newParameterList;
                    }
                  })
                  state.newReturnParameterList.forEach((node,nodeIndex) => {
