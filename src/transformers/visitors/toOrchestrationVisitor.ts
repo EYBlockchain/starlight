@@ -214,7 +214,6 @@ if (name.endsWith('_')) {
         if (path.containerName !== 'indexExpression') {
           num_modifiers++;
         } 
-        //console.log('expNode!!!!!!!!!!!!!!!!!',expNode);
         if (expNode) {
           // if the public input is modified before here, it won't show up in the mjs file
         // we have to go back and mark any editing statements as interactsWithSecret so they show up
@@ -342,7 +341,6 @@ if (name.endsWith('_')) {
        } else {
          IDnode.name =  `${node.name}_${num_modifiers}`;
        }
-       console.log('aaaaaaaaaabbbbbbbbbbbbb', IDnode);
      }
     }
    
@@ -368,8 +366,7 @@ if (name.endsWith('_')) {
     state.publicInputs ??= [];
     if (!(path.containerName === 'indexExpression' && !(path.parentPath.isSecret|| path.parent.containsSecret))) state.publicInputs.push(node);
   } 
-  //console.log('Public Inputs After Addition aaaaaaaaaaaaaaaaaaaaaaaaaaaa:', state.publicInputs);
-
+  
     if (['Identifier', 'IndexAccess'].includes(node.indexExpression?.nodeType)) addPublicInput(NodePath.getPath(node.indexExpression), state, null);
 }
 /**
@@ -990,12 +987,16 @@ const visitor = {
         }
 
         // this adds other values we need in the circuit
+        
         for (const param of node._newASTPointer.parameters.parameters) {
+          let oldParam : any ;
+          for(const para of node.parameters.parameters) { 
+            if ( para?.name === param?.name )
+            oldParam = para ;
+            break;
+          }
 
-          scope.getReferencedIndicator(param);
-          console.log('KKKKKKKKKKKKKK param', scope.getReferencedIndicator(param).interactsWithSecret);
-
-          if (param.isPrivate || param.isSecret || param.interactsWithSecret || scope.getReferencedIndicator(param).interactsWithSecret) {
+          if (param.isPrivate || param.isSecret || param.interactsWithSecret || scope.getReferencedIndicator(oldParam)?.interactsWithSecret) {
             if (param.typeName.isStruct) {
               param.typeName.properties.forEach((prop: any) => {
                 newNodes.generateProofNode.parameters.push(`${param.name}.${prop.name}${param.typeName.isConstantArray ? '.all' : ''}`);

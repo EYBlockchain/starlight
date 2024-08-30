@@ -393,10 +393,16 @@ export class Scope {
    */
   getReferencedIndicator(referencingNode: any, mappingKeyIndicatorOnly: boolean = false): StateVariableIndicator | MappingKey | null {
     const { path } = this;
-    if (!referencingNode) return null;
+    if (!referencingNode) 
+      return null;
+
+    //if (referencingNode.nodeType === 'VariableDeclaration') return null ;
+
+
     const indicator = this.getIndicatorById(
-      path.getReferencedDeclarationId(referencingNode) || referencingNode.id
+      path.getReferencedDeclarationId(referencingNode) || referencingNode?.id
     );
+
 
     if (!path.isMapping(referencingNode) && !path.isArray(referencingNode) && !path.isStruct(referencingNode)) return indicator;
 
@@ -407,39 +413,42 @@ export class Scope {
             .node;
 
       const indexAccessNode =
-        memberAccessNode.expression.nodeType === 'IndexAccess'
+        memberAccessNode.expression?.nodeType === 'IndexAccess'
           ? memberAccessNode.expression
           : NodePath.getPath(memberAccessNode).getAncestorOfType('IndexAccess')
-              .node;
+              ?.node;
 
       return mappingKeyIndicatorOnly
         ? indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)]
         : indicator;
     }
 
-    if (path.isStruct(referencingNode) && NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')) {
+    if (path.isStruct(referencingNode) && NodePath.getPath(referencingNode)?.getAncestorOfType('MemberAccess')) {
       const memberAccessNode = referencingNode.nodeType === 'MemberAccess'
         ? referencingNode
-        : NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess')
+        : NodePath.getPath(referencingNode)?.getAncestorOfType('MemberAccess')
             .node;
       return mappingKeyIndicatorOnly
         ? indicator.structProperties[memberAccessNode.memberName]
         : indicator;
     }
+   
 
+    //if (path.isConstantArray(referencingNode) && referencingNode.nodeType === 'variableDeclaration') return null;
     if ((path.isConstantArray(referencingNode) || referencingNode.memberName === 'length') && !NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')) return indicator;
-
+  
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
     const indexAccessNode =
       referencingNode.nodeType === 'IndexAccess'
         ? referencingNode
-        : NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')
-            .node;
+        : NodePath.getPath(referencingNode)?.getAncestorOfType('IndexAccess')
+            ?.node;
 
     return mappingKeyIndicatorOnly
-      ? indicator.mappingKeys[this.getMappingKeyName(indexAccessNode)]
+      ? indicator?.mappingKeys[this.getMappingKeyName(indexAccessNode)]
       : indicator;
   }
+  
 
   /**
    * @returns {Node || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.

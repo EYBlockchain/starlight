@@ -160,7 +160,6 @@ export const generateProofBoilerplate = (node: any) => {
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
         : [];  
     // we add any extra params the circuit needs
-    console.log('Node Parameters Before Filtering:', node.parameters);
     node.parameters
     
       .filter(
@@ -181,7 +180,6 @@ export const generateProofBoilerplate = (node: any) => {
         else {
           parameters.push(`\t${param}.integer,`);
         }
-        console.log('Rania@@@@@@@@@@@@@@@@@@@@@@',param)
 
       });
      
