@@ -396,14 +396,10 @@ export class Scope {
     if (!referencingNode) 
       return null;
 
-    //if (referencingNode.nodeType === 'VariableDeclaration') return null ;
-
-
     const indicator = this.getIndicatorById(
       path.getReferencedDeclarationId(referencingNode) || referencingNode?.id
     );
-
-
+    
     if (!path.isMapping(referencingNode) && !path.isArray(referencingNode) && !path.isStruct(referencingNode)) return indicator;
 
     if (path.isStruct(referencingNode) && NodePath.getPath(referencingNode).getAncestorOfType('MemberAccess') && path.isMapping(referencingNode)) {

@@ -10,7 +10,7 @@ contract Assign {
 
   function add(secret uint256[5] calldata value, uint256[5] calldata publicValue) public {
     b = publicValue;
-    for (uint256 index = 0; index < 2; index++) {
+    for (uint256 index = 0; index < 5; index++) {
     known a += value[index];
     }
   }

@@ -298,7 +298,7 @@ if (name.endsWith('_')) {
               expression: InnerNode,
               interactsWithSecret: true,
             });
-      
+    
             if (location.trueIndex !== -1){ fnDefNode.node._newASTPointer.body.preStatements[ifPreIndex].trueBody.push(newNode1); }
             else if (location.falseIndex !== -1){ fnDefNode.node._newASTPointer.body.preStatements[ifPreIndex].falseBody.push(newNode1); }
             else {fnDefNode.node._newASTPointer.body.preStatements.push(newNode1);}
@@ -343,6 +343,7 @@ if (name.endsWith('_')) {
        }
      }
     }
+
    
    
     // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
@@ -1393,6 +1394,16 @@ const visitor = {
           leftHandSide,
           rightHandSide: binOpNode,
         });
+        if (path.node.leftHandSide.nodeType === 'IndexAccess') {
+          binOpNode.leftExpression.name = path.node.leftHandSide.baseExpression.name+'_'+ path.node.leftHandSide.indexExpression.name;
+
+        } else {
+          binOpNode.leftExpression.name = path.node.leftHandSide.name;
+        }
+       
+       
+        
+    
         return assNode;
       };
 
@@ -1419,60 +1430,6 @@ const visitor = {
       // node._newASTPointer = newNode; // no need to ascribe the node._newASTPointer, because we're exiting.
     },
   },
-  // Assignment: {
-  //   enter(path: NodePath) {
-  //     const { node, parent } = path;
-  //     const newNode = buildNode(node.nodeType, { operator: node.operator });
-  //     node._newASTPointer = newNode;
-  
-  //     if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
-  //       parent._newASTPointer.initialValue = newNode;
-  //     } else {
-  //       parent._newASTPointer.expression = newNode;
-  //     }
-  //   },
-  
-  //   exit(path: NodePath) {
-  //     // Convert 'a += b' into 'a = a + b' for all operators
-  //     const expandAssignment = (node: any) => {
-  //       const { operator, leftHandSide, rightHandSide } = node;
-  //       const expandableOps = ['+=', '-=', '*=', '/=', '%=', '|=', '&=', '^='];
-  //       if (!expandableOps.includes(operator)) return node;
-  //       const op = operator.charAt(0);
-  //       const binOpNode = buildNode('BinaryOperation', {
-  //         operator: op,
-  //         leftExpression: cloneDeep(leftHandSide),
-  //         rightExpression: rightHandSide,
-  //       });
-  //       const assNode = buildNode('Assignment', {
-  //         operator: '=',
-  //         leftHandSide,
-  //         rightHandSide: binOpNode,
-  //       });
-  //       return assNode;
-  //     };
-  
-  //     const { parent } = path;
-  //     const binding = path.getReferencedBinding(path.node.leftHandSide);
-  //     if (binding instanceof VariableBinding && !binding.isSecret && binding.stateVariable) {
-  //       if (parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
-  //         const circuitNode = parent._newASTPointer.initialValue;
-  //         const newNode = expandAssignment(circuitNode);
-  //         parent._newASTPointer.initialValue = newNode;
-  //       } else {
-  //         const circuitNode = parent._newASTPointer.expression;
-  //         const newNode = expandAssignment(circuitNode);
-  //         parent._newASTPointer.expression = newNode;
-  //       }
-  //     }
-  //     if (path.getAncestorContainedWithin('initializationExpression') && parent._newASTPointer.nodeType === 'VariableDeclarationStatement') {
-  //       parent._newASTPointer.initialValue.isInitializationAssignment = true;
-  //     } else if (path.getAncestorContainedWithin('initializationExpression')) {
-  //       parent._newASTPointer.expression.isInitializationAssignment = true;
-  //     }
-  //   },
-  // },
-  
 
   TupleExpression: {
     enter(path: NodePath, state: any) {

@@ -984,21 +984,10 @@ export default class NodePath {
   isConstantArray(node: any = this.node): boolean {
     if (!this.isArray(node)) return false;
     let arrLen;
-    console.log('vvvvvvvvvvvvvvvvvNodenode', node);
     switch (node.nodeType) {
       case 'IndexAccess':
         arrLen = node.baseExpression.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
         break;
-
-    //     case 'VariableDeclaration':
-
-    // if (node.typeDescriptions && node.typeDescriptions.typeString) {
-    //     arrLen = node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
-    // } else if (node.typeName && typeof node.typeName.name === 'string' && !isNaN(node.typeName.name)) {
-    //     return false;
-    // }
-    // break;
-
       case 'Identifier':
       default:
         arrLen = node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
