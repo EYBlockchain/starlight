@@ -274,7 +274,6 @@ if (name.endsWith('_')) {
 
           
 
-
               const newNode1 = buildNode('VariableDeclarationStatement', {
                   declarations: [decInnerNode],
                   initialValue: initInnerNode,
@@ -1396,14 +1395,9 @@ const visitor = {
         });
         if (path.node.leftHandSide.nodeType === 'IndexAccess') {
           binOpNode.leftExpression.name = path.node.leftHandSide.baseExpression.name+'_'+ path.node.leftHandSide.indexExpression.name;
-
         } else {
           binOpNode.leftExpression.name = path.node.leftHandSide.name;
         }
-       
-       
-        
-    
         return assNode;
       };
 
