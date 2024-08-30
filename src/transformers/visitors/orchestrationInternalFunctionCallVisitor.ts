@@ -84,6 +84,8 @@ const internalCallVisitor = {
                 })
                state.newPreStatementList.splice(0,1);
                state.newStatementList = cloneDeep(childNode.body.statements);
+               // also adding the public expression node from the called function
+               if(state.expNode) state.newStatementList.push(state.expNode);
                const adjustNamesVisitor = (thisNode: any, state: any) => {
                 if (thisNode.nodeType === 'VariableDeclaration'){
                   thisNode.name = thisNode.name.replace(state.oldStateName, state.newStateArray[name][state.currentIndex]);
@@ -214,8 +216,9 @@ const internalCallVisitor = {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
                    const modifiedNodes = childNode.parameters.modifiedStateVariables.map(node => node.name);
+                   // if the function doesn't modifies the returned variable don't include it
                    if(state.decNode && !(modifiedNodes.includes(state.decNode.declarations[0].name))) 
-                   childNode.body.preStatements.splice(1, 0, state.decNode);
+                   childNode.body.preStatements.splice(1, 0, state.decNode); 
                    if(childNode.decrementedSecretStates)
                     childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
                     childNode.body.preStatements.forEach(node => {
@@ -271,7 +274,7 @@ const internalCallVisitor = {
                       childNode.body.statements.forEach((node1, index1)=> {
                         state.varNames = [];
                         // check the node except the InternalFunctionCall node
-                        if (!((node1.expression &&node1.expression?.nodeType === 'InternalFunctionCall') || (node1.initialValue && node1.initialValue?.nodeType === 'InternalFunctionCall'))){
+                        if (!((node1.expression && node1.expression?.nodeType === 'InternalFunctionCall') || (node1.initialValue && node1.initialValue?.nodeType === 'InternalFunctionCall'))){
                           traverseNodesFast(node1, findVarVisitor,  state);
                         } 
                         state.varNames.forEach((varName) => {
@@ -324,6 +327,7 @@ const internalCallVisitor = {
                             node.body.statements.forEach(kidNode => {
                               if(kidNode.nodeType === 'ExpressionStatement' && kidNode.expression.name === state.internalFncName[index]) {
                                 if(kidNode.expression.operator) {
+                                  // If the internal function modifies the same state variable, we need to copy over the statements in the calling function
                                 const newExpressionNode = Object.assign(cloneDeep(kidNode.expression), statenode.expression);
                                 node.body.statements.push(newExpressionNode);
                                 }
@@ -524,6 +528,7 @@ FunctionCall: {
         state.circuitImport.push('false');
       let newNode;
         if(parent.nodeType === 'VariableDeclarationStatement') {
+         
           const decNode = buildNode('VariableDeclarationStatement')
           decNode.declarations.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
           decNode.interactsWithSecret = true;
@@ -531,7 +536,22 @@ FunctionCall: {
           decNode.declarations[0].isAccessed = true;
           decNode.declarations[0].interactsWithSecret = true;
           state.decNode = decNode;
-           const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
+          const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
+          let includeExpressionNode = false;
+          // this functions checks if the parent node interact with secret in the calling function or not
+          callingfnDefIndicators[parent.declarations[0].id].interactsWith.forEach( node => {
+            if(node.key != 'arguments' && node.interactsWithSecret)
+            includeExpressionNode = true;
+           })
+          functionReferncedNode.node.body.statements.forEach(exp => {
+            // If the return para interacts with public only in the internal function but with secret in calling function we need this expression in calling function
+          if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret && includeExpressionNode){
+            state.expNode = cloneDeep(exp._newASTPointer);
+            state.expNode.interactsWithSecret = 'true';
+          }
+            
+          })
+          
             newNode = buildNode('InternalFunctionCall', {
              name: returnPara,
              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,

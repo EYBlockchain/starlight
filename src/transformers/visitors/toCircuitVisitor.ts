@@ -1582,17 +1582,22 @@ const visitor = {
        state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
 let newNode: any;
 if(parent.nodeType === 'VariableDeclarationStatement') {
+  state.isReturnInternalFunctionCall = true;
+  console.log(parent);
+  state.functionArgs = node.arguments.map(args => args.name);
   const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
    newNode = buildNode('InternalFunctionCall', {
     name: returnPara,
     internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
   });
   if(parent._newASTPointer.declarations.length > 0){
- // saving the return parameter to add in the circuits if it doesn't exist
-    state.paramNode = functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer;
-    state.paramNode.declarationType = 'parameter';
-    state.paramNode.interactsWithSecret = true;
 
+  const functionParams = callingfnDefPath.node._newASTPointer.parameters.parameters.map(param => param.name);
+  if(!functionParams.includes(returnPara)){
+    callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+    callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].declarationType = 'parameter';
+    callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].interactsWithSecret = true;
+  }
 }
 } else
      { 

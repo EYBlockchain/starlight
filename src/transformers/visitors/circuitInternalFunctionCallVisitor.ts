@@ -19,6 +19,8 @@ const reorderParameters = (parameterList: any) => {
           parameterList[index] = newParam;
         }
       }
+      if(param.name === newParam.name && param.nodeType === 'VariableDeclaration' && newParam.nodeType === 'Boilerplate')
+        parameterList.splice(index, 1);
     });
   });
   let newBPName: string;
@@ -90,6 +92,7 @@ const internalCallVisitor = {
          node._newASTPointer.forEach(file => {
         if(file.fileName === name) {
             file.nodes.forEach(childNode => {
+              console.log(name);
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
                 state.newReturnParameterList = cloneDeep(childNode.returnParameters.parameters);
@@ -114,8 +117,10 @@ const internalCallVisitor = {
                        if(state.newStateArray[name][id].memberName)
                        state.newParameterList.splice(nodeIndex,1);
                      }
-                     const params = state.newParameterList.map(node => node.name);
-                    (state.paramNode && !(params.includes(state.paramNode.name))) ? state.newParameterList.push(state.paramNode) : state.newParameterList;
+                    //  const params = state.newParameterList.map(node => node.name);
+                    //  console.log(state.newParameterList);
+                    // (state.paramNode && !(params.includes(state.paramNode.name))) ? state.newParameterList.push(state.paramNode) : state.newParameterList;
+                    
                    }
                  })
                  state.newReturnParameterList.forEach((node,nodeIndex) => {
@@ -197,6 +202,18 @@ const internalCallVisitor = {
                 })
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
+                    // console.log(state.functionArgs);
+                    // console.log(childNode.parameters.parameters);
+                    // console.log('==========================================');
+                    state.functionArgs.forEach(args => {
+                    childNode.parameters.parameters.forEach((param, index) => {
+                        if(state.isReturnInternalFunctionCall && param.name === args)
+                        childNode.parameters.parameters.splice(index, 1);
+                      })
+                    })
+                    //console.log(state.newParameterList);
+                    
+                    
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])];
                     reorderParameters(childNode.parameters.parameters);
                     childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])];
