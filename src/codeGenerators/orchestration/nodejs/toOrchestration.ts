@@ -128,7 +128,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (!node.incrementsSecretState && (node.interactsWithSecret || node.expression?.internalFunctionInteractsWithSecret)){
         return `\n${codeGenerator(node.expression)};`;
       }
-    
       if (node.incrementsSecretState && (node.interactsWithSecret ||node.containsPublic || node.expression?.internalFunctionInteractsWithSecret)){
         let privateStateName = node.privateStateName.replace(/\./g, '_');
         let increments;
@@ -174,17 +173,13 @@ export default function codeGenerator(node: any, options: any = {}): any {
     
       if (!node.isInitializationAssignment && node.rightHandSide.subType !== 'generalNumber'){
         if (['+=', '-=', '*='].includes(node.operator)) {
-
           return `${codeGenerator(node.leftHandSide, {
             lhs: true,
           })} = generalise(${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
             0,
           )} ${codeGenerator(node.rightHandSide)})`;
-          
         }
-
-        
-        return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
+         return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
           node.operator
         } generalise(${codeGenerator(node.rightHandSide)})`;
 

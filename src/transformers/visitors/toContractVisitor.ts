@@ -59,7 +59,6 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   ) {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
-    
     const isConstantArray = thisPath.isConstantArray();
     const arrayLength = isConstantArray && thisPath.node.typeName?.length ? thisPath.node.typeName.length.value : false;
     

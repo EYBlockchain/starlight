@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 contract Assign {
 
   secret uint256 private a;
-  uint256[6] public b;
+  uint256[5] public b;
 
 
   function add(secret uint256[5] calldata value, uint256[5] calldata publicValue) public {

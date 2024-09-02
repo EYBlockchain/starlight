@@ -117,10 +117,8 @@ const addPublicInput = (path: NodePath, state: any, IDnode: any) => {
   const { node } = path;
 
   let { name } = path.scope.getReferencedIndicator(node, true) || path.node;
-//   if (name.includes('[') && name.includes(']')) {
-//     name = name.replace(/\[|\]/g, '_');
-// }
-name = name.replace(/\[([^\]]+)\]/g, '_$1');
+
+  name = name.replace(/\[([^\]]+)\]/g, '_$1');
 
 // Ensure there is no trailing underscore
 if (name.endsWith('_')) {
@@ -172,9 +170,7 @@ if (name.endsWith('_')) {
           isAccessed: true,
           isSecret: false,
         })
-    }
-    
-    else {
+    } else {
       innerNode = buildNode('VariableDeclaration', {
         name,
         isAccessed: true,
@@ -331,7 +327,6 @@ if (name.endsWith('_')) {
       }
     });
 
-  
     //We ensure here that the public variable used has the correct name, e.g index_2 instead of index.
     if(IDnode) {
       if (num_modifiers != 0)  {
@@ -343,8 +338,6 @@ if (name.endsWith('_')) {
      }
     }
 
-   
-   
     // After the non-secret variables have been modified we need to reset the original variable name to its initial value.
     // e.g. index = index_init. 
   
@@ -987,7 +980,6 @@ const visitor = {
         }
 
         // this adds other values we need in the circuit
-        
         for (const param of node._newASTPointer.parameters.parameters) {
           let oldParam : any ;
           for(const para of node.parameters.parameters) { 
@@ -995,7 +987,6 @@ const visitor = {
             oldParam = para ;
             break;
           }
-
           if (param.isPrivate || param.isSecret || param.interactsWithSecret || scope.getReferencedIndicator(oldParam)?.interactsWithSecret) {
             if (param.typeName.isStruct) {
               param.typeName.properties.forEach((prop: any) => {
@@ -1003,7 +994,6 @@ const visitor = {
               });
             } else newNodes.generateProofNode.parameters.push(`${param.name}${param.typeName.isConstantArray ? '.all' : ''}`);
           }
-
         }
         if (state.publicInputs) {
           state.publicInputs.forEach((input: any) => {

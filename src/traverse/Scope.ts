@@ -429,8 +429,6 @@ export class Scope {
         : indicator;
     }
    
-
-    //if (path.isConstantArray(referencingNode) && referencingNode.nodeType === 'variableDeclaration') return null;
     if ((path.isConstantArray(referencingNode) || referencingNode.memberName === 'length') && !NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')) return indicator;
   
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
@@ -445,7 +443,6 @@ export class Scope {
       : indicator;
   }
   
-
   /**
    * @returns {Node || null} - the node (VariableDeclaration) being referred-to by the input referencingNode.
    */

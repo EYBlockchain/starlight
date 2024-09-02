@@ -168,8 +168,6 @@ export const generateProofBoilerplate = (node: any) => {
           !output.join().includes(`${para}.integer`) && !output.join().includes('msgValue')),
       )
 
-    
-      
       ?.forEach((param: string) => {
         if (param == 'msgSender') {
           parameters.unshift(`\t${param}.integer,`);
