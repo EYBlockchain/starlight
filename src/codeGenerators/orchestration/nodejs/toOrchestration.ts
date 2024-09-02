@@ -63,7 +63,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
         const fn = OrchestrationCodeBoilerPlate(node);
         const statements = codeGenerator(node.body);
         fn.statements.push(statements);
-
         return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
           fn.signature[1]
       }`;
@@ -96,7 +95,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
       } else if (node.declarations[0].isAccessed) {
         return `${getAccessedValue(node.declarations[0].name)}`;
       }
-
       if (!node.initialValue && !node.declarations[0].isAccessed) return `\nlet ${codeGenerator(node.declarations[0])};`;
       if (node.initialValue &&
         node.initialValue.operator &&
@@ -111,17 +109,17 @@ export default function codeGenerator(node: any, options: any = {}): any {
         if (node.initialValue.nodeType === 'Literal' && node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
       } 
-      return `\nlet ${codeGenerator(node.initialValue)};`;
+        return `\nlet ${codeGenerator(node.initialValue)};`;
     }
 
     case 'ElementaryTypeName':
       return;
 
-      case 'Block': {
-        const preStatements: string = (node.preStatements.flatMap(codeGenerator));
-        const statements:string = (node.statements.flatMap(codeGenerator));
-        const postStatements: string = (node.postStatements.flatMap(codeGenerator));
-        return [...preStatements, ...statements, ...postStatements].join('\n\n');
+    case 'Block': {
+      const preStatements: string = (node.preStatements.flatMap(codeGenerator));
+      const statements:string = (node.statements.flatMap(codeGenerator));
+      const postStatements: string = (node.postStatements.flatMap(codeGenerator));
+      return [...preStatements, ...statements, ...postStatements].join('\n\n');
       }
 
     case 'ExpressionStatement':
@@ -131,15 +129,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
       if (node.incrementsSecretState && (node.interactsWithSecret ||node.containsPublic || node.expression?.internalFunctionInteractsWithSecret)){
         let privateStateName = node.privateStateName.replace(/\./g, '_');
         let increments;
-     
         if (node.expression.operator === '+='){
           increments = codeGenerator(node.expression.rightHandSide);
-      
           // Although we have += in the case that the indicator is decremented elsewhere in the function, we need to subtract the increments.
           if (!node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + ${increments});\n`;
           if (node.indicatorDecremented) return  `\n${privateStateName}_newCommitmentValue_inc = generalise(parseInt(${privateStateName}_newCommitmentValue_inc.integer, 10) + ${increments});\n`;
         }
-       
         if (node.expression.operator === '-='){
           increments = codeGenerator(node.expression.rightHandSide);
           return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + (${increments}));\n`;
@@ -160,17 +155,15 @@ export default function codeGenerator(node: any, options: any = {}): any {
           } 
         }
       }
-
       if (!node.interactsWithSecret)
-        return `\n// non-secret line would go here but has been filtered out`;
-      return `\n// increment would go here but has been filtered out`;
+       return `\n// non-secret line would go here but has been filtered out`;
+       return `\n// increment would go here but has been filtered out`;
 
     case 'InternalFunctionCall':
      return " ";
 
     case 'Assignment':
       // To ensure the left hand side is always a general number, we generalise it here (excluding the initialisation in a for loop).    
-    
       if (!node.isInitializationAssignment && node.rightHandSide.subType !== 'generalNumber'){
         if (['+=', '-=', '*='].includes(node.operator)) {
           return `${codeGenerator(node.leftHandSide, {
@@ -182,7 +175,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
          return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
           node.operator
         } generalise(${codeGenerator(node.rightHandSide)})`;
-
       } else {
         if (['+=', '-=', '*='].includes(node.operator)) {
           return `${codeGenerator(node.leftHandSide, {
@@ -194,9 +186,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
           node.operator
         } ${codeGenerator(node.rightHandSide)}`;
-        
       }
-
 
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${
@@ -208,9 +198,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
       return `(${node.components.map(codeGenerator).join(` `)})`;
       return ` `;
 
-      case 'IfStatement': {
+    case 'IfStatement': {
         let comment = (node.inPreStatements)  ? "// some public statements of this if statement have been moved to pre-statements here, any other statements appear later" : '';
-
         // We need to declare some variables before the if statement begins (because they are used outside the if statement). 
         let preIfStatements = node.trueBody.filter((node: any) => node.outsideIf).concat(node.falseBody.filter((node: any) => node.outsideIf));
         let newPreIfStatements = [];
@@ -219,7 +208,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
           newPreIfStatements[newPreIfStatements.length - 1].outsideIf = false;
         });
         let preIfStatementsString =  newPreIfStatements.flatMap(codeGenerator).join('\n');
-
         if(node.falseBody.length)
         return `${comment}
         ${preIfStatementsString}
@@ -236,12 +224,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
             }`
         }
 
-        case 'Conditional': {
-            return ` ${codeGenerator(node.condition)} ?
-            ${node.trueExpression.flatMap(codeGenerator).join('\n')} : ${node.falseExpression.flatMap(codeGenerator).join('\n')}`
+    case 'Conditional': {
+          return ` ${codeGenerator(node.condition)} ?
+          ${node.trueExpression.flatMap(codeGenerator).join('\n')} : ${node.falseExpression.flatMap(codeGenerator).join('\n')}`
         }
 
-      case 'ForStatement': {
+    case 'ForStatement': {
         if(node.interactsWithSecret) {
           let initializationExpression = `${codeGenerator(node.initializationExpression).trim()}`;
           let condition = `${codeGenerator(node.condition, { condition: true })};`;
@@ -249,9 +237,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
           return `for( ${node.initializationExpression.nodeType === 'VariableDeclarationStatement' ? `` : `let`} ${initializationExpression} ${condition} ${loopExpression}) {
           ${codeGenerator(node.body)}
         }`
-        }
-        else
-        return '';
+        } else
+          return '';
       }
 
     case 'MsgSender':

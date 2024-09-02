@@ -44,11 +44,10 @@ const markIndicatorSubtreeInteractsWithSecret = (thisPath: any, thisState: any) 
     indicator.addSecretInteractingPath(thisState.secretPath);
 };
 
-const interactwithInferSecret = (thisPath: any, thisState: any) => {
+const inferInteractsWithSecret = (thisPath: any, thisState: any) => {
   const { node, scope } = thisPath;
   if (node.nodeType === 'ExpressionStatement') {
     const leftHandSideIndicator = scope.getReferencedIndicator(node.expression.leftHandSide, true);
-
     if (leftHandSideIndicator?.interactsWithSecret) {
       thisPath.traversePathsFast(markIndicatorSubtreeInteractsWithSecret, {
         secretPath: thisPath,
@@ -66,7 +65,6 @@ export default {
         path.getAncestorOfType('ExpressionStatement') || path.parentPath;
       if (path.isExternalFunctionCall()) {
         path.markContainsPublic();
-        // below ensures that the return value and args are marked as interactsWithPublic
         expressionPath.traversePathsFast(markSubtreeInteractsWithPublic, {
           publicPath: path,
         });
@@ -76,7 +74,7 @@ export default {
 
   FunctionDefinition: {
     exit(path: NodePath) {
-      path.traversePathsFast(interactwithInferSecret, {
+      path.traversePathsFast(inferInteractsWithSecret, {
         publicPath: path,
       });
     },
