@@ -84,8 +84,6 @@ const internalCallVisitor = {
                 })
                state.newPreStatementList.splice(0,1);
                state.newStatementList = cloneDeep(childNode.body.statements);
-               // also adding the public expression node from the called function
-               if(state.expNode) state.newStatementList.push(state.expNode);
                const adjustNamesVisitor = (thisNode: any, state: any) => {
                 if (thisNode.nodeType === 'VariableDeclaration'){
                   thisNode.name = thisNode.name.replace(state.oldStateName, state.newStateArray[name][state.currentIndex]);
@@ -100,8 +98,9 @@ const internalCallVisitor = {
                   state.currentIndex = index;
                   traverseNodesFast(node, adjustNamesVisitor,  state);
                 }
-                
               });
+
+              if(state.expNode) state.newStatementList.push(state.expNode); 
                 state.newPostStatementList = cloneDeep(childNode.body.postStatements);
                 state.newPostStatementList.forEach(node => {
                   if(node.nodeType === 'MembershipWitness'){
@@ -273,8 +272,8 @@ const internalCallVisitor = {
                       let newVarDecs = [];
                       childNode.body.statements.forEach((node1, index1)=> {
                         state.varNames = [];
-                        // check the node except the InternalFunctionCall node
-                        if (!((node1.expression && node1.expression?.nodeType === 'InternalFunctionCall') || (node1.initialValue && node1.initialValue?.nodeType === 'InternalFunctionCall'))){
+                        // check the node except the InternalFunctionCall node and new created public node
+                        if (!((node1.expression && node1.expression?.nodeType === 'InternalFunctionCall') || (node1.initialValue && node1.initialValue?.nodeType === 'InternalFunctionCall') || node1.id === 0)){
                           traverseNodesFast(node1, findVarVisitor,  state);
                         } 
                         state.varNames.forEach((varName) => {
@@ -517,7 +516,7 @@ FunctionCall: {
              }
              }
              else
-                 isCircuit = true;
+              isCircuit = true;
             }
             }
         });
@@ -543,14 +542,34 @@ FunctionCall: {
             if(node.key != 'arguments' && node.interactsWithSecret)
             includeExpressionNode = true;
            })
+           includeExpressionNode ? 
           functionReferncedNode.node.body.statements.forEach(exp => {
             // If the return para interacts with public only in the internal function but with secret in calling function we need this expression in calling function
-          if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret && includeExpressionNode){
-            state.expNode = cloneDeep(exp._newASTPointer);
-            state.expNode.interactsWithSecret = 'true';
+          if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret){
+            const newName =returnPara+'_1';
+            const innerNode = buildNode('VariableDeclaration', {
+              name: newName,
+              isAccessed: true,
+              isSecret: false,
+              interactsWithSecret: true, // setting interact with secret true, as now it interacts with secret in the calling function
+            });
+            const initNode = buildNode('BinaryOperation', {
+              leftExpression: exp._newASTPointer.expression.rightHandSide.leftExpression,
+              operator: exp._newASTPointer.expression.rightHandSide.operator,
+              rightExpression: exp._newASTPointer.expression.rightHandSide.rightExpression,
+            });
+            state.expNode = buildNode('VariableDeclarationStatement',{
+              declarations: [innerNode],
+              initialValue: initNode,
+              interactsWithSecret: true,
+            })
+            newNode = buildNode('InternalFunctionCall', {
+              name: newName,
+              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+            });
           }
             
-          })
+          }) :
           
             newNode = buildNode('InternalFunctionCall', {
              name: returnPara,

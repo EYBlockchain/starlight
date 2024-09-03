@@ -117,10 +117,6 @@ const internalCallVisitor = {
                        if(state.newStateArray[name][id].memberName)
                        state.newParameterList.splice(nodeIndex,1);
                      }
-                    //  const params = state.newParameterList.map(node => node.name);
-                    //  console.log(state.newParameterList);
-                    // (state.paramNode && !(params.includes(state.paramNode.name))) ? state.newParameterList.push(state.paramNode) : state.newParameterList;
-                    
                    }
                  })
                  state.newReturnParameterList.forEach((node,nodeIndex) => {
@@ -202,18 +198,6 @@ const internalCallVisitor = {
                 })
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition'){
-                    // console.log(state.functionArgs);
-                    // console.log(childNode.parameters.parameters);
-                    // console.log('==========================================');
-                    state.functionArgs.forEach(args => {
-                    childNode.parameters.parameters.forEach((param, index) => {
-                        if(state.isReturnInternalFunctionCall && param.name === args)
-                        childNode.parameters.parameters.splice(index, 1);
-                      })
-                    })
-                    //console.log(state.newParameterList);
-                    
-                    
                     childNode.parameters.parameters = [...new Set([...childNode.parameters.parameters, ...state.newParameterList])];
                     reorderParameters(childNode.parameters.parameters);
                     childNode.returnParameters.parameters = [...new Set([...childNode.returnParameters.parameters, ...state.newReturnParameterList])];
@@ -288,6 +272,7 @@ const internalCallVisitor = {
                      }
                    }
                  });
+                 if(state.expNode) newExpressionList.push(state.expNode);
                  childNode.body.preStatements.forEach(node => {
                    if(node.isPartitioned){
                      commitmentValue = node.newCommitmentValue;

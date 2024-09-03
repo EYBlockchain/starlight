@@ -92,6 +92,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
         if (node.declarations[0].isStruct) return `\n let ${codeGenerator(node.declarations[0])} = {}; \n${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) { 
+        const obj = {}
+        if(Object.keys(node.initialValue).length > 1) {
+          console.log('here');
+          return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
+        } else
         return `${getPublicValue(node.declarations[0])}`
       } else if (node.declarations[0].isAccessed) {
         return `${getAccessedValue(node.declarations[0].name)}`;

@@ -1575,30 +1575,87 @@ const visitor = {
           } 
         }
       });
-     state.circuitImport ??= [];
-     if(isCircuit)
-       state.circuitImport.push({isImported: 'true', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
-     else
-       state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
-let newNode: any;
-if(parent.nodeType === 'VariableDeclarationStatement') {
-  state.isReturnInternalFunctionCall = true;
-  console.log(parent);
-  state.functionArgs = node.arguments.map(args => args.name);
-  const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
-   newNode = buildNode('InternalFunctionCall', {
-    name: returnPara,
-    internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
-  });
-  if(parent._newASTPointer.declarations.length > 0){
+    state.circuitImport ??= [];
+    if(isCircuit)
+      state.circuitImport.push({isImported: 'true', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
+    else
+      state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
+    let newNode: any;
+    if(parent.nodeType === 'VariableDeclarationStatement') {
+      state.isReturnInternalFunctionCall = true;
+      state.functionArgs = node.arguments.map(args => args.name);
+      const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
+      newNode = buildNode('InternalFunctionCall', {
+        name: returnPara,
+        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
+      });
+        if(parent._newASTPointer.declarations.length > 0){
+        const functionParams = callingfnDefPath.node._newASTPointer.parameters.parameters.map(param => param.name);
+        if(!functionParams.includes(returnPara)){
+          callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+          callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].declarationType = 'parameter';
+          callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].interactsWithSecret = true;
+        }
+      }
+     let includeExpressionNode = false;
+      // this functions checks if the parent node interact with secret in the calling function or not
+      callingfnDefIndicators[parent.declarations[0].id].interactsWith.forEach( node => {
+        if(node.key != 'arguments' && node.interactsWithSecret)
+        includeExpressionNode = true;
+        })
+        includeExpressionNode ? 
+          functionReferncedNode.node.body.statements.forEach(exp => {
+            // If the return para interacts with public only in the internal function but with secret in calling function we need this expression in calling function
+          if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret){
+            const newName =returnPara+'_1';
+            const innerNode = buildNode('VariableDeclaration', {
+              name: newName,
+              isAccessed: true,
+              isSecret: false,
+              interactsWithSecret: true, // setting interact with secret true, as now it interacts with secret in the calling function
+            });
+            innerNode.typeName.name = 'field';
+            let initNode: any;
+            if(['+=', '-=', '*=', '/='].includes(exp.expression.operator)) {
+              initNode = buildNode('BinaryOperation', {
+                leftExpression: exp.expression.leftHandSide,
+                operator: exp.expression.operator.slice(0,-1),
+                rightExpression: exp.expression.rightHandSide,
+              });
+            } 
+            state.expNode = buildNode('VariableDeclarationStatement',{
+              declarations: [innerNode],
+              initialValue: initNode,
+              interactsWithSecret: true,
+            })
+            console.log(state.expNode);
 
-  const functionParams = callingfnDefPath.node._newASTPointer.parameters.parameters.map(param => param.name);
-  if(!functionParams.includes(returnPara)){
-    callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
-    callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].declarationType = 'parameter';
-    callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].interactsWithSecret = true;
-  }
-}
+            newNode = buildNode('InternalFunctionCall', {
+              name: newName,
+              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+            });
+            // const decInnerNode = buildNode('VariableDeclaration', {
+            //   name: `${node.name}_${num_modifiers}`,
+            //   isAccessed: true,
+            //   isSecret: false,
+            //   interactsWithSecret: true,
+            // });
+            // const initInnerNode = buildNode('Assignment', {
+            //   leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
+            //   operator: '=',
+            //   rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
+            // });
+            // const newNode1 = buildNode('VariableDeclarationStatement', {
+            //     declarations: [decInnerNode],
+            //     initialValue: initInnerNode,
+            //     interactsWithSecret: true,
+            //     isModifiedDeclaration: true,
+            // });
+              }
+                
+              }) : '';
+          
+
 } else
      { 
       newNode = buildNode('InternalFunctionCall', {
