@@ -1603,18 +1603,9 @@ const visitor = {
         if(node.key != 'arguments' && node.interactsWithSecret)
         includeExpressionNode = true;
         })
-        includeExpressionNode ? 
           functionReferncedNode.node.body.statements.forEach(exp => {
             // If the return para interacts with public only in the internal function but with secret in calling function we need this expression in calling function
           if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret){
-            const newName =returnPara+'_1';
-            const innerNode = buildNode('VariableDeclaration', {
-              name: newName,
-              isAccessed: true,
-              isSecret: false,
-              interactsWithSecret: true, // setting interact with secret true, as now it interacts with secret in the calling function
-            });
-            innerNode.typeName.name = 'field';
             let initNode: any;
             if(['+=', '-=', '*=', '/='].includes(exp.expression.operator)) {
               initNode = buildNode('BinaryOperation', {
@@ -1623,49 +1614,23 @@ const visitor = {
                 rightExpression: exp.expression.rightHandSide,
               });
             } 
-            state.expNode = buildNode('VariableDeclarationStatement',{
-              declarations: [innerNode],
-              initialValue: initNode,
-              interactsWithSecret: true,
-            })
-            console.log(state.expNode);
-
             newNode = buildNode('InternalFunctionCall', {
-              name: newName,
+              name: returnPara,
               internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
             });
-            // const decInnerNode = buildNode('VariableDeclaration', {
-            //   name: `${node.name}_${num_modifiers}`,
-            //   isAccessed: true,
-            //   isSecret: false,
-            //   interactsWithSecret: true,
-            // });
-            // const initInnerNode = buildNode('Assignment', {
-            //   leftHandSide: buildNode('Identifier', { name: `${node.name}_${num_modifiers}`, subType: 'generalNumber'  }),
-            //   operator: '=',
-            //   rightHandSide: buildNode('Identifier', { name: `${node.name}`, subType: 'generalNumber' })
-            // });
-            // const newNode1 = buildNode('VariableDeclarationStatement', {
-            //     declarations: [decInnerNode],
-            //     initialValue: initInnerNode,
-            //     interactsWithSecret: true,
-            //     isModifiedDeclaration: true,
-            // });
-              }
+            includeExpressionNode? state.initNode = initNode : '';
+          }
                 
-              }) : '';
-          
-
-} else
-     { 
-      newNode = buildNode('InternalFunctionCall', {
-       name: node.expression.name,
-       internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-       CircuitArguments: [],
-       CircuitReturn:[],
-     });
-    }
-
+        })
+      } else
+      { 
+        newNode = buildNode('InternalFunctionCall', {
+        name: node.expression.name,
+        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+        CircuitArguments: [],
+        CircuitReturn:[],
+      });
+      }
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,

@@ -161,8 +161,8 @@ function codeGenerator(node: any) {
       const declarations = node.declarations.map(codeGenerator).join(', ');
       if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)}`;
       if(node.initialValue.nodeType === 'InternalFunctionCall'){
-        if(!declarations) return ; 
-        return `${declarations} = ${node.initialValue.name}`;
+        if(!declarations) return ;
+        return `${declarations} = ${codeGenerator(node.initialValue.expression)}`;
       } 
       const initialValue = codeGenerator(node.initialValue);
 

@@ -92,7 +92,6 @@ const internalCallVisitor = {
          node._newASTPointer.forEach(file => {
         if(file.fileName === name) {
             file.nodes.forEach(childNode => {
-              console.log(name);
               if(childNode.nodeType === 'FunctionDefinition'){
                 state.newParameterList = cloneDeep(childNode.parameters.parameters);
                 state.newReturnParameterList = cloneDeep(childNode.returnParameters.parameters);
@@ -272,7 +271,7 @@ const internalCallVisitor = {
                      }
                    }
                  });
-                 if(state.expNode) newExpressionList.push(state.expNode);
+                // if(state.expNode) newExpressionList.push(state.expNode);
                  childNode.body.preStatements.forEach(node => {
                    if(node.isPartitioned){
                      commitmentValue = node.newCommitmentValue;
@@ -293,6 +292,8 @@ const internalCallVisitor = {
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition') {
                     childNode.body.statements.forEach(node => {
+                      if(node.initialValue?.nodeType === 'InternalFunctionCall' && state.initNode) 
+                      node.initialValue.expression = state.initNode;
                       if(node.nodeType==='BoilerplateStatement'){
                         callingFncbpType = node.bpType;
                       }

@@ -94,7 +94,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) { 
         const obj = {}
         if(Object.keys(node.initialValue).length > 1) {
-          console.log('here');
           return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
         } else
         return `${getPublicValue(node.declarations[0])}`
