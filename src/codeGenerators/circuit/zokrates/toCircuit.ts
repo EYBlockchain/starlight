@@ -162,7 +162,9 @@ function codeGenerator(node: any) {
       if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)}`;
       if(node.initialValue.nodeType === 'InternalFunctionCall'){
         if(!declarations) return ;
+        if(node.initialValue.expression.nodeType === 'BinaryOperation')
         return `${declarations} = ${codeGenerator(node.initialValue.expression)}`;
+        return `${declarations} = ${node.initialValue.name}`;
       } 
       const initialValue = codeGenerator(node.initialValue);
 

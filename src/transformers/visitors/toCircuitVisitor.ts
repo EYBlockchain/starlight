@@ -1613,7 +1613,12 @@ const visitor = {
                 operator: exp.expression.operator.slice(0,-1),
                 rightExpression: exp.expression.rightHandSide,
               });
-            } 
+            } else
+            initNode = buildNode('BinaryOperation', {
+              leftExpression: exp.expression.rightHandSide.leftExpression,
+              operator: exp.expression.rightHandSide.operator,
+              rightExpression: exp.expression.rightHandSide.rightExpression,
+            });
             newNode = buildNode('InternalFunctionCall', {
               name: returnPara,
               internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
