@@ -311,65 +311,69 @@ export function getInputCommitments(
 }
 
 function getStructInputCommitments(value, possibleCommitments) {
-  if (possibleCommitments.length < 2) {
-    logger.warn('Enough Commitments dont exists to use.');
-    return null;
-  }
-  let possibleCommitmentsProp = [];
-  value.forEach((propValue, i) => {
-    let possibleCommitmentsTemp = [];
-    possibleCommitments.sort(
-      (commitA, commitB) =>
-        parseInt(Object.values(commitB.preimage.value)[i], 10) -
-        parseInt(Object.values(commitA.preimage.value)[i], 10),
-    );
-    if (!possibleCommitmentsProp.length) {
-      if (
-        parseInt(Object.values(possibleCommitments[0].preimage.value)[i], 10) +
-          parseInt(
-            Object.values(possibleCommitments[1].preimage.value)[i],
-            10,
-          ) >=
-        parseInt(propValue, 10)
-      ) {
-        possibleCommitmentsProp.push([
-          possibleCommitments[0],
-          possibleCommitments[1],
-        ]);
-      } else {
-        possibleCommitments.splice(0, 2);
-        possibleCommitmentsProp = getStructInputCommitments(
-          value,
-          possibleCommitments,
-        );
-      }
-    } else {
-      possibleCommitments.forEach(possibleCommit => {
-        if (possibleCommitmentsProp.includes(possibleCommit))
-          possibleCommitmentsTemp.push(possibleCommit);
-      });
-      if (
-        possibleCommitmentsTemp.length > 1 &&
-        parseInt(
-          Object.values(possibleCommitmentsTemp[0].preimage.value)[i],
-          10,
-        ) +
-          parseInt(
-            Object.values(possibleCommitmentsTemp[1].preimage.value)[i],
-            10,
-          ) <
-          parseInt(propValue, 10)
-      ) {
-        possibleCommitments.splice(0, 2);
-        possibleCommitmentsProp = getStructInputCommitments(
-          value,
-          possibleCommitments,
-        );
-      }
-    }
-  });
-  return possibleCommitmentsProp;
-}
+  if (possibleCommitments.length === 1) {
+     throw new Error(
+       "There is only one non-nullified commitment for state variable total_msgSender. Split commitments is not yet supported for structs, and so at least two commitments are required."
+     );
+   } else if (possibleCommitments.length < 2){
+     throw new Error(
+       "There are no commitments available."
+     );
+   }
+   let possibleCommitmentsProp = [];
+   value.forEach((propValue, i) => {
+     if (!possibleCommitmentsProp.length) {
+       possibleCommitments.forEach((possibleCommit0, ind0) => {
+         possibleCommitments.forEach((possibleCommit1, ind1) => {
+           if (ind0 != ind1){
+             if (
+               parseInt(Object.values(possibleCommit0.preimage.value)[i], 10) +
+                 parseInt(
+                   Object.values(possibleCommit1.preimage.value)[i],
+                   10,
+                 ) >=
+               parseInt(propValue, 10)
+             ) {
+               possibleCommitmentsProp.push([
+                 possibleCommit0,
+                 possibleCommit1
+               ]);
+             }
+           }
+         });
+       });
+       if (possibleCommitmentsProp.length === 0) {
+         throw new Error(
+           "There is not two commitments available with sufficient value for the decrementation. Note join commitments is not yet supported for structs."
+         );
+       }
+     } else {
+       let possibleCommitmentsTemp = [];
+       possibleCommitmentsProp.forEach((possibleCommitmentPair, ind) => {
+         if (
+           parseInt(
+             Object.values(possibleCommitmentPair[0].preimage.value)[i],
+             10,
+           ) +
+             parseInt(
+               Object.values(possibleCommitmentPair[1].preimage.value)[i],
+               10,
+             ) >=
+             parseInt(propValue, 10)
+         ) {
+           possibleCommitmentsTemp.push(possibleCommitmentPair);
+         }
+       });
+       possibleCommitmentsProp = possibleCommitmentsTemp;
+       if (possibleCommitmentsProp.length === 0) {
+         throw new Error(
+           "There is not two commitments available with sufficient value for the decrementation. Note join commitments is not yet supported for structs."
+         );
+       }
+     }
+   });
+   return possibleCommitmentsProp;
+ }
 
 export async function joinCommitments(
   contractName,
