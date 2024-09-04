@@ -3,22 +3,59 @@ set -e
 
 docker compose -f docker-compose.zapp.yml down -v
 
-sleep 5
+# Wait for all containers from the docker-compose.zapp.yml configuration to be removed
+while docker compose -f docker-compose.zapp.yml ps | grep -q 'Up'; do
+  sleep 1
+done
 
 docker compose -f docker-compose.zapp.yml up -d ganache
 docker compose -f docker-compose.zapp.yml up -d zokrates
 
-sleep 5
+# Wait for the ganache service to be ready
+while ! nc -z localhost 8545; do
+  sleep 1
+done
+
+# Get the ID of the zokrates container
+container_id_zokrates=$(docker compose -f docker-compose.zapp.yml ps -q zokrates)
+
+# Wait for the zokrates service to be ready
+while ! nc -z localhost 8080; do
+  sleep 1
+done
+
 
 CONSTRUCTOR_CALL
 
-docker compose -f docker-compose.zapp.yml up -d deployer
+docker compose -f docker-compose.zapp.yml up -d deployer 
 
-sleep 25
+# Get the ID of the deployer container
+container_id=$(docker compose -f docker-compose.zapp.yml ps -q deployer)
+
+# Wait for the deployer container to stop and get its exit code
+exit_code=$(docker wait "$container_id")
+
+# Exit the script if the exit code is 1
+if [ "$exit_code" -eq 1 ]; then
+  echo "Deployer container failed with exit code 1, exiting."
+  exit 1
+fi
+
+# Wait for the deployer container to be ready
+while ! docker logs "$container_id" 2>&1 | grep -q "Saving migration to chain."; do
+  sleep 1
+done
+
 
 docker compose -f docker-compose.zapp.yml up -d timber
 
-sleep 10
+# Get the ID of the timber container
+container_id=$(docker compose -f docker-compose.zapp.yml ps -q timber)
+
+# Wait for the timber container to be ready
+while ! docker logs "$container_id" 2>&1 | grep -q "Blockchain Connected"; do
+  sleep 1
+done
 
 docker compose -f docker-compose.zapp.yml up -d zapp
 
