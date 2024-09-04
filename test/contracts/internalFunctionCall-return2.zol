@@ -15,6 +15,6 @@ contract Assign {
 
   function remove(secret uint256 value, uint256 value1) public {
     uint256 c = add(value, value1);
-    a -= value + c;
+    a -= c;
   }
 }
