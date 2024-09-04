@@ -313,7 +313,7 @@ export function getInputCommitments(
 function getStructInputCommitments(value, possibleCommitments) {
   if (possibleCommitments.length === 1) {
      throw new Error(
-       "There is only one non-nullified commitment for state variable total_msgSender. Split commitments is not yet supported for structs, and so at least two commitments are required."
+       "There is only one non-nullified commitment for a struct state variable. Split commitments is not yet supported for structs, and so at least two commitments are required."
      );
    } else if (possibleCommitments.length < 2){
      throw new Error(
