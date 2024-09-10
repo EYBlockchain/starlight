@@ -91,10 +91,6 @@ export default function codeGenerator(node: any, options: any = {}): any {
         if (node.declarations[0].isStruct) return `\n let ${codeGenerator(node.declarations[0])} = {}; \n${codeGenerator(node.initialValue)};`;
         return `\nlet ${codeGenerator(node.initialValue)};`;
       } else if (node.declarations[0].isAccessed && !node.declarations[0].isSecret) { 
-        const obj = {}
-        if(Object.keys(node.initialValue).length > 1) {
-          return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
-        } else
         return `${getPublicValue(node.declarations[0])}`
       } else if (node.declarations[0].isAccessed) {
         return `${getAccessedValue(node.declarations[0].name)}`;
@@ -111,7 +107,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
         if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
         // local var dec
         if (node.initialValue.nodeType === 'Literal' && node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
-        if(node.initialValue.nodeType === 'InternalFunctionCall') return  `\nlet ${codeGenerator(node.declarations[0])} = generalise(${node.initialValue.name}.integer);`;
+        if(node.initialValue.nodeType === 'InternalFunctionCall'){
+          if(node.initialValue?.expression?.nodeType === 'BinaryOperation')
+          return  `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue.expression)};`;
+          return  `\nlet ${codeGenerator(node.declarations[0])} = ${node.initialValue.name};`;
+        } 
         return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
       } 
         return `\nlet ${codeGenerator(node.initialValue)};`;

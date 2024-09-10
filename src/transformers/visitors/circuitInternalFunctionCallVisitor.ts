@@ -7,6 +7,7 @@ import buildNode from '../../types/orchestration-types.js'
 // We need to ensure that parameters appear in the same order as in the .mjs file if the same state variables are used in multiple function calls.
 // All parameters relating to the same state variable should be grouped together.
 const reorderParameters = (parameterList: any) => {
+  let deletedIndexes = [];
   parameterList.forEach((param, index) => {
     parameterList.forEach((newParam, newIndex) => {
       if (param.name === newParam.name && param.bpType === 'nullification' && newParam.bpType === 'nullification') {
@@ -19,10 +20,13 @@ const reorderParameters = (parameterList: any) => {
           parameterList[index] = newParam;
         }
       }
-      if(param.name === newParam.name && param.nodeType === 'VariableDeclaration' && newParam.nodeType === 'Boilerplate')
-        parameterList.splice(index, 1);
+      if(param.name === newParam.name && param.nodeType === 'VariableDeclaration' && newParam.nodeType === 'Boilerplate'){
+        !deletedIndexes.includes(index)? deletedIndexes.push(index) : deletedIndexes;
+      }
+             
     });
   });
+  deletedIndexes.forEach(index => parameterList.splice(index, 1));
   let newBPName: string;
   let currentIndex: number;
   let newCommitment = {};
@@ -61,6 +65,7 @@ const reorderParameters = (parameterList: any) => {
   elementsToAdd.forEach((element) => {
     parameterList.splice(element.NewIndex, 0, element.element);
   });
+
 }
 
 
@@ -271,7 +276,6 @@ const internalCallVisitor = {
                      }
                    }
                  });
-                // if(state.expNode) newExpressionList.push(state.expNode);
                  childNode.body.preStatements.forEach(node => {
                    if(node.isPartitioned){
                      commitmentValue = node.newCommitmentValue;
@@ -291,9 +295,11 @@ const internalCallVisitor = {
               if(file.fileName === callingFncName) {
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition') {
-                    childNode.body.statements.forEach(node => {
-                      if(node.initialValue?.nodeType === 'InternalFunctionCall' && state.initNode) 
-                      node.initialValue.expression = state.initNode;
+                    childNode.body.statements.forEach((node) => {
+                      if(node.initialValue?.nodeType === 'InternalFunctionCall' && state.initNode) {
+                        node.initialValue.expression = state.initNode[ node.initialValue.name ];
+                      }
+                     
                       if(node.nodeType==='BoilerplateStatement'){
                         callingFncbpType = node.bpType;
                       }

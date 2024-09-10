@@ -215,9 +215,13 @@ const internalCallVisitor = {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
                    const modifiedNodes = childNode.parameters.modifiedStateVariables.map(node => node.name);
-                   // if the function doesn't modifies the returned variable don't include it
-                   if(state.decNode && !(modifiedNodes.includes(state.decNode.declarations[0].name))) 
-                   childNode.body.preStatements.splice(1, 0, state.decNode); 
+                   const decNode = childNode.body.preStatements.filter(node => node.nodeType === 'VariableDeclarationStatement');
+                   !JSON.stringify(decNode).includes(JSON.stringify(state.decNode)) ?
+                   state.decNode?.forEach((decNode, decIndex) => {
+                      // if the function doesn't modifies the returned variable don't include it
+                      if(state.decNode && !(modifiedNodes.includes(decNode.declarations[0].name))) 
+                      childNode.body.preStatements.splice(decIndex+1, 0, decNode); 
+                   }): '';
                    if(childNode.decrementedSecretStates)
                     childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
                     childNode.body.preStatements.forEach(node => {
@@ -272,7 +276,7 @@ const internalCallVisitor = {
                       let newVarDecs = [];
                       childNode.body.statements.forEach((node1, index1)=> {
                         state.varNames = [];
-                        // check the node except the InternalFunctionCall node and new created public node
+                        // check the node except the InternalFunctionCall node and new created public node with id = 0 as we created it
                         if (!((node1.expression && node1.expression?.nodeType === 'InternalFunctionCall') || (node1.initialValue && node1.initialValue?.nodeType === 'InternalFunctionCall') || node1.id === 0)){
                           traverseNodesFast(node1, findVarVisitor,  state);
                         } 
@@ -527,14 +531,17 @@ FunctionCall: {
         state.circuitImport.push('false');
       let newNode;
         if(parent.nodeType === 'VariableDeclarationStatement') {
-         
+          if(!functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer.isSecret)  {
           const decNode = buildNode('VariableDeclarationStatement')
           decNode.declarations.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
           decNode.interactsWithSecret = true;
           decNode.declarations[0].declarationType = 'state';
           decNode.declarations[0].isAccessed = true;
           decNode.declarations[0].interactsWithSecret = true;
-          state.decNode = decNode;
+          state.decNode ??= [];
+          const decNodeNames = state.decNode.map(node => node.declarations[0].name);
+          decNodeNames.includes(decNode.declarations[0].name) ? state.decNode : state.decNode.push(decNode);
+          }
           const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
           let includeExpressionNode = false;
           // this functions checks if the parent node interact with secret in the calling function or not
@@ -542,41 +549,25 @@ FunctionCall: {
             if(node.key != 'arguments' && node.interactsWithSecret)
             includeExpressionNode = true;
            })
-           includeExpressionNode ? 
           functionReferncedNode.node.body.statements.forEach(exp => {
             // If the return para interacts with public only in the internal function but with secret in calling function we need this expression in calling function
           if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret){
-            const newName =returnPara+'_1';
-            const innerNode = buildNode('VariableDeclaration', {
-              name: newName,
-              isAccessed: true,
-              isSecret: false,
-              interactsWithSecret: true, // setting interact with secret true, as now it interacts with secret in the calling function
-            });
-            const initNode = buildNode('BinaryOperation', {
+            state.initNode = buildNode('BinaryOperation', {
               leftExpression: exp._newASTPointer.expression.rightHandSide.leftExpression,
               operator: exp._newASTPointer.expression.rightHandSide.operator,
               rightExpression: exp._newASTPointer.expression.rightHandSide.rightExpression,
             });
-            state.expNode = buildNode('VariableDeclarationStatement',{
-              declarations: [innerNode],
-              initialValue: initNode,
-              interactsWithSecret: true,
-            })
-            newNode = buildNode('InternalFunctionCall', {
-              name: newName,
-              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-            });
-          }
-            
-          }) :
-          
-            newNode = buildNode('InternalFunctionCall', {
-             name: returnPara,
-             internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-           });
-           
-           parent._newASTPointer.interactsWithSecret ? state.returnPara = returnPara : ' ';
+          }  
+          newNode = buildNode('InternalFunctionCall', {
+            name: returnPara,
+            internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+          });
+          if(includeExpressionNode && state.initNode) { 
+            newNode.expression = state.initNode;
+          } 
+
+          parent._newASTPointer.interactsWithSecret ? state.returnPara = returnPara : ' ';
+          }) 
          } else {
        newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,

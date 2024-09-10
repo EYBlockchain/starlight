@@ -1623,7 +1623,10 @@ const visitor = {
               name: returnPara,
               internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
             });
-            includeExpressionNode? state.initNode = initNode : '';
+            if(includeExpressionNode) { 
+              state.initNode ??= [];
+              state.initNode[ returnPara ] = initNode;
+            } 
           }
                 
         })
