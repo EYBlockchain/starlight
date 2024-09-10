@@ -316,6 +316,7 @@ const internalCallVisitor = {
                             childNode.body.statements[id-1] = statenode;
                            node.body.statements.forEach(kidNode =>{
                             if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
+                              //When Internal function is inside for-loop, it exit under Expression Statement, we replace the function call with expression from the called function
                               if (kidNode.expression.operator) {
                                 const newExpressionNode = Object.assign(cloneDeep(kidNode.expression), statenode.initialValue);
                                 node.body.statements.push(newExpressionNode);
