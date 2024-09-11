@@ -122,6 +122,18 @@ export async function getCommitmentsByState(name, mappingKey = null) {
   return commitments;
 }
 
+// function to delete commitment with a specified stateName
+export async function deleteCommitmentsByState(name, mappingKey = null) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { name: name };
+  if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
+  const deleteResult = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .deleteMany(query);
+  return deleteResult;
+}
+
 // function to retrieve all known nullified commitments
 export async function getNullifiedCommitments() {
   const connection = await mongo.connection(MONGO_URL);

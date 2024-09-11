@@ -290,6 +290,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'IntegrationApiServicesBoilerplate':
     case 'IntegrationApiRoutesBoilerplate':
     case 'BackupDataRetrieverBoilerplate':
+    case 'BackupVariableBoilerplate':
     case 'IntegrationEncryptedListenerBoilerplate':
     case 'IntegrationTestFunction':
     case 'IntegrationApiServiceFunction':

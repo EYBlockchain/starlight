@@ -329,7 +329,13 @@ You can also filter these commitments by variable name. Using the example above,
 ```
 as a GET request to `http://localhost:3000/getCommitmentsByVariableName`.
 
-If the commitment database that stores commitment preimages is lost you can restore the DB (by decrypting the onchain encryptions of the preimages) by sending a POST request to `http://localhost:3000/backupDataRetriever`.
+If the commitment database that stores commitment preimages is lost you can restore the DB (by decrypting the onchain encryptions of the preimages) by sending a POST request to `http://localhost:3000/backupDataRetriever`. You can also restore only the commitments with a specific variable name. For example, if you want to restore commitments representing variable `a`, send:
+```
+{
+    "name": "a"
+}
+```
+as a POST request to `http://localhost:3000/backupVariable`.
 
 
 #### Using secret states in the constructor
