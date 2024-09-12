@@ -521,8 +521,8 @@ export class VariableBinding extends Binding {
    */
   inferOwnership() {
     if (this.kind !== 'VariableDeclaration') return;
-    let msgSenderEverywhereMappingKey: boolean = false;
-    let msgSenderEverywhereMappingValue: boolean = false;
+    let msgSenderEverywhereMappingKey: boolean;
+    let msgSenderEverywhereMappingValue: boolean;
     this.nullifyingPaths.forEach(path => {
       const functionDefScope = path.scope.getAncestorOfScopeType(
         'FunctionDefinition',
@@ -542,6 +542,7 @@ export class VariableBinding extends Binding {
         this.isMapping && path.getAncestorOfType('IndexAccess') &&
         (path.isMsgSender(path.getCorrespondingRhsNode()) || path.isMsgValue(path.getCorrespondingRhsNode()))
       ) {
+        msgSenderEverywhereMappingKey = false;
         msgSenderEverywhereMappingValue ??= true;
       } else {
         // if we find a single non-msg sender mapping key, then msg sender can't be the owner
@@ -561,7 +562,7 @@ export class VariableBinding extends Binding {
         this.nullifyingPaths[0].parent.rightHandSide ||
         this.nullifyingPaths[0].parentPath.parent.rightHandSide;
       this.updateOwnership(owner, 'value');
-    }
+    } 
   }
 
   ownerSetToZeroCheck() {

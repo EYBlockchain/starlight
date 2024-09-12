@@ -140,6 +140,10 @@ export default class MappingKey {
     this.isNullified = false;
     this.nullificationCount = 0;
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
+;
+    if (this.keyPath.node.typeDescriptions?.typeString === 'address') {
+      this.updateOwnership(this.keyPath); 
+    } 
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
@@ -169,6 +173,15 @@ export default class MappingKey {
   }
 
   updateOwnership(ownerNode: any) {
+    // if the mapping key is an address the owner is always the address itself, even if the owner is set elsewhere.
+    if (this.keyPath.node.typeDescriptions?.typeString === 'address') {
+      if (this.isOwned){
+        return;
+      } else{
+        this.isOwned =true;
+        this.owner = this.keyPath;
+      }
+    };
     if (this.isOwned && this.owner.name !== ownerNode.name) {
       throw new ZKPError(
         `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
