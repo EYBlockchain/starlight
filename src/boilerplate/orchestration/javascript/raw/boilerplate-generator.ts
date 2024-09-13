@@ -520,6 +520,7 @@ class BoilerplateGenerator {
                       ${parameters.join('\n')}${stateVarIds.join('\n')}
                       \t${stateName}_commitmentExists ? ${isSharedSecret ? `sharedSecretKey.integer`: `secretKey.integer`}: generalise(0).integer,
                       \t${stateName}_nullifier.integer,
+
                       ${prev},
                       \t${stateName}_prevSalt.integer,
                       ${initialisationRequired ? `\t${stateName}_commitmentExists ? 0 : 1,` : ``}
@@ -668,7 +669,7 @@ sendTransaction = {
               value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}`)} }` : `${stateName}`;
               return [`
                 \n${reinitialisedOnly ? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32)); 
-                \n else await updateNullifierTree(); // Else we always update it in markNullified`}
+               `}
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',

@@ -217,6 +217,7 @@ class ContractBoilerplateGenerator {
             uint256[] memory inputs = new uint256[](${[
             'customInputs.length',
             ...(newNullifiers ? ['newNullifiers.length'] : []),
+            ...(checkNullifiers ? ['checkNullifiers.length']: []),
             ...(commitmentRoot ? ['(newNullifiers.length > 0 ? 1 : 0)'] : []), // If there are new nullifiers then we need the nullier root, the latest nullifier root and the commitment root, but if the nullifier root is included but not the latest nullifier root (i.e. there is an accessed only state variable) then we only need 2 inputs.
             ...(newCommitments ? ['newCommitments.length'] : []),
             ...(encryptionRequired ? ['encInputsLen'] : []),
