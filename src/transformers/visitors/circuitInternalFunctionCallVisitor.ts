@@ -26,7 +26,11 @@ const reorderParameters = (parameterList: any) => {
              
     });
   });
-  deletedIndexes.forEach(index => parameterList.splice(index, 1));
+  // sort the array in descending array so that we delete the correct elements
+  deletedIndexes = deletedIndexes.slice().sort((a, b) => b - a);
+  deletedIndexes.forEach(index => {
+    parameterList.splice(index, 1)
+  });
   let newBPName: string;
   let currentIndex: number;
   let newCommitment = {};

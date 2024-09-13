@@ -98,9 +98,7 @@ const internalCallVisitor = {
                   state.currentIndex = index;
                   traverseNodesFast(node, adjustNamesVisitor,  state);
                 }
-              });
-
-              if(state.expNode) state.newStatementList.push(state.expNode); 
+              }); 
                 state.newPostStatementList = cloneDeep(childNode.body.postStatements);
                 state.newPostStatementList.forEach(node => {
                   if(node.nodeType === 'MembershipWitness'){
@@ -215,8 +213,8 @@ const internalCallVisitor = {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
                    const modifiedNodes = childNode.parameters.modifiedStateVariables.map(node => node.name);
-                   const decNode = childNode.body.preStatements.filter(node => node.nodeType === 'VariableDeclarationStatement');
-                   !JSON.stringify(decNode).includes(JSON.stringify(state.decNode)) ?
+                   const declarationNode = childNode.body.preStatements.filter(node => node.nodeType === 'VariableDeclarationStatement');
+                   !JSON.stringify(declarationNode).includes(JSON.stringify(state.decNode)) ?
                    state.decNode?.forEach((decNode, decIndex) => {
                       // if the function doesn't modifies the returned variable don't include it
                       if(state.decNode && !(modifiedNodes.includes(decNode.declarations[0].name))) 
@@ -318,9 +316,35 @@ const internalCallVisitor = {
                             if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
                               //When Internal function is inside for-loop, it exit under Expression Statement, we replace the function call with expression from the called function
                               if (kidNode.expression.operator) {
+                                // for statement like 
+                                /* 
+                                for (statement) {
+                                  a += internalFuncCall();
+                                } here, kidNode will look like
+                                expression: {
+                                nodeType: 'Assignment',
+                                name: 'add',
+                                internalFunctionInteractsWithSecret: true,
+                                operator: '+=',
+                                leftHandSide: { nodeType: 'Identifier', name: 'a', subType: 'uint256' },
+                              }, and we need to get the other expression from the other function here.
+                                */
                                 const newExpressionNode = Object.assign(cloneDeep(kidNode.expression), statenode.initialValue);
                                 node.body.statements.push(newExpressionNode);
                             } else {
+                              // for statement like 
+                                /* 
+                                for (statement) {
+                                  internalFuncCall();
+                                } here, kidNode will look like
+                                expression: {
+                                expression: {
+                                      nodeType: 'InternalFunctionCall',
+                                      name: 'add',
+                                      internalFunctionInteractsWithSecret: true
+                                    },
+                                 and we need to get the other expression from the other function here.
+                                */
                                 Object.assign(kidNode.expression, statenode.initialValue);
                             }
                             }
@@ -567,7 +591,7 @@ FunctionCall: {
             newNode.expression = state.initNode;
           } 
 
-          parent._newASTPointer.interactsWithSecret ? state.returnPara = returnPara : ' ';
+          parent._newASTPointer.interactsWithSecret ? state.returnPara.push(returnPara) : ' ';
           }) 
          } else {
        newNode = buildNode('InternalFunctionCall', {
