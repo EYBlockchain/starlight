@@ -171,14 +171,11 @@ export default class MappingKey {
   updateOwnership(ownerNode: any) {
     //We need to check if the owner node is msg.sender - if it is then we need to set the owner to the mapping key
     if (this.container.owner.mappingOwnershipType === 'key'){
-      if (this.isOwned){
-        return;
-      } else {
-        this.isOwned =true;
-        this.owner = this.keyPath.node;
-        this.owner.mappingOwnershipType = 'key';
-        return;
-      }
+      this.isOwned =true;
+      this.owner = this.keyPath.node;
+      this.owner.mappingOwnershipType = 'key';
+      this.owner.isParam = this.keyPath.isFunctionParameter();
+      return;
     }
     if (this.isOwned && this.owner.mappingOwnershipType === 'key') return;
     if (this.isOwned && this.owner.name !== ownerNode.name) {
