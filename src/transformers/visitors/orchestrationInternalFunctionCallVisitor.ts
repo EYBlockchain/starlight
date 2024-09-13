@@ -564,6 +564,7 @@ FunctionCall: {
           decNode.declarations[0].isAccessed = true;
           decNode.declarations[0].interactsWithSecret = true;
           state.decNode ??= [];
+         
           const decNodeNames = state.decNode.map(node => node.declarations[0].name);
           decNodeNames.includes(decNode.declarations[0].name) ? state.decNode : state.decNode.push(decNode);
           }
@@ -591,7 +592,10 @@ FunctionCall: {
             newNode.expression = state.initNode;
           } 
 
-          parent._newASTPointer.interactsWithSecret ? state.returnPara.push(returnPara) : ' ';
+          if(parent._newASTPointer.interactsWithSecret && !(state.returnPara?.includes(returnPara))) {
+            state.returnPara ??= [];
+            state.returnPara.push(returnPara);
+          } 
           }) 
          } else {
        newNode = buildNode('InternalFunctionCall', {
