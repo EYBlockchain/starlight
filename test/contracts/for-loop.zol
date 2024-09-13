@@ -10,6 +10,7 @@ function add(uint256 j) public {
 uint256 i;
 for(i =0 ; i<5 ; i++) {
       z += j;
+      z += 1;
     }
   }
 }

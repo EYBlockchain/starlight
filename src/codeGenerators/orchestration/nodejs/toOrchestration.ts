@@ -107,6 +107,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
         if (!node.initialValue.nodeType) return `\nlet ${codeGenerator(node.declarations[0])};`
         // local var dec
         if (node.initialValue.nodeType === 'Literal' && node.isInitializationExpression) return `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue)};`;
+        if(node.initialValue.nodeType === 'InternalFunctionCall'){
+          if(node.initialValue?.expression?.nodeType === 'BinaryOperation')
+          return  `\nlet ${codeGenerator(node.declarations[0])} = ${codeGenerator(node.initialValue.expression)};`;
+          return  `\nlet ${codeGenerator(node.declarations[0])} = ${node.initialValue.name};`;
+        } 
         return `\nlet ${codeGenerator(node.declarations[0])} = generalise(${codeGenerator(node.initialValue)});`;
       } 
         return `\nlet ${codeGenerator(node.initialValue)};`;

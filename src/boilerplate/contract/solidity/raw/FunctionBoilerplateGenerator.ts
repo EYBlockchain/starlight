@@ -143,7 +143,8 @@ class FunctionBoilerplateGenerator {
           : []),
         ...(newCommitments ? [`
             // this seems silly (it is) but its the only way to get the event to emit properly
-            emit EncryptedBackupData(BackupData);`]
+            emit EncryptedBackupData(BackupData);
+            `]
           : []),
       ];
     },
