@@ -798,7 +798,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getSharedSecretskeys , getBalanceByState, addConstructorNullifiers } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getSharedSecretskeys , getBalanceByState, addConstructorNullifiers } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -887,6 +887,17 @@ integrationApiServicesBoilerplate = {
             res.send({ errors: [err.message] });
         }
       }
+      export async function service_backupVariable(req, res, next) {
+        try {
+          const { name } = req.body;
+          await backupVariable(name);
+          res.send("Complete");
+          await sleep(10);
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }
       export async function service_getSharedKeys(req, res, next) {
         try {
           const { recipientAddress } = req.body;
@@ -921,7 +932,7 @@ integrationApiRoutesBoilerplate = {
     return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable,} from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
@@ -934,6 +945,7 @@ integrationApiRoutesBoilerplate = {
     router.post("/getSharedKeys", service_getSharedKeys);
     // backup route
     router.post("/backupDataRetriever", service_backupData);
+    router.post("/backupVariable", service_backupVariable);
     `;
   }
 };

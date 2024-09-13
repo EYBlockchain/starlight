@@ -492,6 +492,18 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
       };
     }
 
+    case 'BackupVariableBoilerplate': {
+      const {
+        contractName,
+        privateStates = [],
+      } = fields;
+      return {
+        nodeType,
+        contractName,
+        privateStates,
+      };
+    }
+
     default:
       throw new TypeError(nodeType);
   }

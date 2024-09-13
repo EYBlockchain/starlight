@@ -423,6 +423,17 @@ const visitor = {
         ],
       });
       node._newASTPointer.push(newNode);
+      newNode = buildNode('File', {
+        fileName: 'BackupVariable',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('BackupVariableBoilerplate', {
+            contractName,
+            privateStates: [],
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
       if (scope.indicators.encryptionRequired) {
         newNode = buildNode('File', {
           fileName: 'encrypted-data-listener',
@@ -850,6 +861,16 @@ const visitor = {
             let contrNode = path.getContractDefinition().node._newASTPointer;
             for (const file of contrNode) {
               if (file.nodes?.[0].nodeType === 'BackupDataRetrieverBoilerplate') {
+                let newNode = buildPrivateStateNode('EncryptBackupPreimage', {
+                  privateStateName: name,
+                  id,
+                  indicator: stateVarIndicator,
+                });
+                if (!file.nodes?.[0].privateStates.some((n: any) => n.stateVarId === newNode.stateVarId)){
+                  file.nodes?.[0].privateStates.push(newNode);
+                }
+              }
+              if (file.nodes?.[0].nodeType === 'BackupVariableBoilerplate') {
                 let newNode = buildPrivateStateNode('EncryptBackupPreimage', {
                   privateStateName: name,
                   id,
