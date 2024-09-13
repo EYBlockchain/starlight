@@ -8,6 +8,10 @@ contract MyContract {
   secret uint256 private b;
   address public admin;
 
+   constructor() {
+      admin = msg.sender;
+    }
+
   function assign(secret address param1, secret uint256 param2) public {
     unknown a[param1] += param2;
   }
