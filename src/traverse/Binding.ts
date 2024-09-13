@@ -275,6 +275,7 @@ export class VariableBinding extends Binding {
   }
 
   updateOwnership(ownerNode: any, msgIsMappingKeyorMappingValue?: string | null) {
+    if (this.isOwned && this.owner.mappingOwnershipType === 'key') return;
     if (
       ownerNode.expression?.name === 'msg' &&
       msgIsMappingKeyorMappingValue === 'value'
@@ -524,16 +525,6 @@ export class VariableBinding extends Binding {
     let msgSenderEverywhereMappingKey: boolean;
     let msgSenderEverywhereMappingValue: boolean;
     this.nullifyingPaths.forEach(path => {
-      const functionDefScope = path.scope.getAncestorOfScopeType(
-        'FunctionDefinition',
-      );
-      if (functionDefScope.callerRestriction === 'match') {
-        this.updateOwnership(functionDefScope.callerRestrictionNode);
-        return;
-      }
-      if (functionDefScope.callerRestriction === 'exclude') {
-        this.updateBlacklist(functionDefScope.callerRestrictionNode);
-      }
       if (this.isMapping && path.getAncestorOfType('IndexAccess') && this.addMappingKey(path).isMsgSender ) {
         // if its unassigned, we assign true
         // if its true, it remains true
@@ -562,7 +553,19 @@ export class VariableBinding extends Binding {
         this.nullifyingPaths[0].parent.rightHandSide ||
         this.nullifyingPaths[0].parentPath.parent.rightHandSide;
       this.updateOwnership(owner, 'value');
-    } 
+    }
+    this.nullifyingPaths.forEach(path => {
+      const functionDefScope = path.scope.getAncestorOfScopeType(
+        'FunctionDefinition',
+      );
+      if (functionDefScope.callerRestriction === 'match') {
+        this.updateOwnership(functionDefScope.callerRestrictionNode);
+        return;
+      }
+      if (functionDefScope.callerRestriction === 'exclude') {
+        this.updateBlacklist(functionDefScope.callerRestrictionNode);
+      }
+    }); 
   }
 
   ownerSetToZeroCheck() {
