@@ -143,11 +143,7 @@ const internalCallVisitor = {
                  };
                  case 'nullification' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
-                  internalFncParameters.push(`nullifierRoot`);
-                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`newNullifierRoot`);
-                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
-                  internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_siblingPath`);
-                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_newsiblingPath`);
+                  internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
                   break;
                  };
                  case 'oldCommitmentPreimage' : {
