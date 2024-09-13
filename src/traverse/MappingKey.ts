@@ -140,10 +140,6 @@ export default class MappingKey {
     this.isNullified = false;
     this.nullificationCount = 0;
     this.nullifyingPaths = []; // array of paths of `Identifier` nodes which nullify this binding
-;
-    if (this.keyPath.node.typeDescriptions?.typeString === 'address') {
-      this.updateOwnership(this.keyPath); 
-    } 
   }
 
   addStructProperty(referencingPath: NodePath): MappingKey {
@@ -173,15 +169,18 @@ export default class MappingKey {
   }
 
   updateOwnership(ownerNode: any) {
-    // if the mapping key is an address the owner is always the address itself, even if the owner is set elsewhere.
-    if (this.keyPath.node.typeDescriptions?.typeString === 'address') {
+    //We need to check if the owner node is msg.sender - if it is then we need to set the owner to the mapping key
+    if (this.container.owner.mappingOwnershipType === 'key'){
       if (this.isOwned){
         return;
-      } else{
+      } else {
         this.isOwned =true;
-        this.owner = this.keyPath;
+        this.owner = this.keyPath.node;
+        this.owner.mappingOwnershipType = 'key';
+        return;
       }
-    };
+    }
+    if (this.isOwned && this.owner.mappingOwnershipType === 'key') return;
     if (this.isOwned && this.owner.name !== ownerNode.name) {
       throw new ZKPError(
         `We found two distinct owners (${this.owner.name} and ${ownerNode.name}) of a secret state, which we can't allow because only one public key needs to be able to open/nullify the secret.`,
@@ -367,9 +366,17 @@ export default class MappingKey {
     this.isPartitionedReason = this.isPartitioned
       ? container.isPartitionedReason
       : this.isPartitionedReason;
+    const mappingKeys: [string, MappingKey][] = Object.entries(container.mappingKeys);
+      for (const [, mappingKey] of mappingKeys) {
+        if (mappingKey.name === this.name){
+          this.isOwned = mappingKey.isOwned;
+          this.owner = mappingKey.owner;
+          this.mappingOwnershipType = mappingKey.mappingOwnershipType;
+        }
+      }
     this.isOwned ??= container.isOwned;
     this.owner ??= container.owner;
-    this.mappingOwnershipType = this.owner?.mappingOwnershipType;
+    this.mappingOwnershipType ??= this.owner?.mappingOwnershipType;
     this.onChainKeyRegistry ??= container.onChainKeyRegistry;
   }
 }
