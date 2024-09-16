@@ -60,20 +60,9 @@ class BoilerplateGenerator {
     parameters({ name: x, isAccessed, isNullified }): string[] {
       let para = [
         `private field ${x}_oldCommitment_owner_secretKey`,
-        `public field nullifierRoot`,
-        `public field newNullifierRoot`,
         `public field ${x}_oldCommitment_nullifier`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_newsiblingPath`,
         
       ]
-      if(isAccessed && !isNullified) 
-       para = [
-        `private field ${x}_oldCommitment_owner_secretKey`,
-        `public field nullifierRoot`,
-        `private field[32] ${x}_nullifier_nonmembershipWitness_siblingPath`,
-      ]
-
       return para;
     },
 
@@ -104,42 +93,6 @@ class BoilerplateGenerator {
         )
         // ${x}_oldCommitment_nullifier : non-existence check
         
-        assert(\\
-          nullifierRoot == checkproof(\\
-            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier\\
-           )\
-       )
-
-       assert(\\
-        newNullifierRoot == checkUpdatedPath(\\
-          ${x}_nullifier_nonmembershipWitness_newsiblingPath,\\
-          ${x}_oldCommitment_nullifier\\
-        )\
-        )
-
-        `,
-      ];
-
-      if(isAccessed && !isNullified) 
-      lines = [
-        `
-        // Create the Nullifier  for ${x} and no need to nullify it as its accessed only:
-
-        field ${x}_oldCommitment_nullifier_check_field = poseidon([\\
-          ${x}_stateVarId_field,\\
-          ${x}_oldCommitment_owner_secretKey,\\
-          ${x}_oldCommitment_salt\\
-        ])
-
-        // ${x}_oldCommitment_nullifier : non-existence check
-        
-        assert(\\
-          nullifierRoot == checkproof(\\
-            ${x}_nullifier_nonmembershipWitness_siblingPath,\\
-            ${x}_oldCommitment_nullifier_check_field\\
-           )\
-       )
         `,
       ];
 
