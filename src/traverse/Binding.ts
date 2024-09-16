@@ -558,6 +558,7 @@ export class VariableBinding extends Binding {
       const functionDefScope = path.scope.getAncestorOfScopeType(
         'FunctionDefinition',
       );
+      // we update the ownership of the variable if the function has a restriction on the caller, e.g. require(msg.sender == admin)
       if (functionDefScope.callerRestriction === 'match') {
         this.updateOwnership(functionDefScope.callerRestrictionNode);
         return;
