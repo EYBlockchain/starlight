@@ -305,7 +305,6 @@ export default {
       if (!path.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret) return;
       const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
-
       state.circuitParams ??= {};
       state.circuitParams[path.getUniqueFunctionName()] ??= {};
       state.circuitParams[path.getUniqueFunctionName()].parameters = circuitParams;
