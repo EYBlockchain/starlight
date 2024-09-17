@@ -171,7 +171,7 @@ A node of an AST. A node will be of a particular `nodeType` and contains informa
 
 ##### NodePath
 
-A regular node doesn't contain information about its parents, and so when a traverser enters a particular node, it loses 'sight' of its locaton in the larger tree. What are this node's parents? Does it have sibings? Does it have an ancestor which is of nodeType 'FunctionDefinition'?
+A regular node doesn't contain information about its parents, and so when a traverser enters a particular node, it loses 'sight' of its location in the larger tree. What are this node's parents? Does it have siblings? Does it have an ancestor which is of nodeType 'FunctionDefinition'?
 
 The `NodePath` class is designed to 'wrap' a node in lots of extra information about the node's location within the tree, and contains lots of methods to retrieve information about the tree around the node. A `NodePath` instance (often named `path`) gets created for each node of an AST.
 
@@ -384,8 +384,8 @@ For each stateVariable within the function, its indicator object is:
 | `oldCommitmentAccessRequired` | whether to import set membership boilerplate for this stateVar within this function |
 | `nullifiersRequired` | whether to import nullifier calculation and/or set non-membership boilerplate for this stateVar within this function |
 | `newCommitmentRequired` | whether to import commitment calculation boilerplate for this stateVar within this function |
-| `isIncremented` | whether the stateVar is is incremented within the function |
-| `isIncremented` | whether the stateVar is is decremented within the function |
+| `isIncremented` | whether the stateVar is incremented within the function |
+| `isIncremented` | whether the stateVar is decremented within the function |
 | `isWhole` | whether the stateVar is whole or partitioned |
 | `isPartitioned` | whether the stateVar is whole or partitioned |
 | `isOwned` | whether the stateVar has an owner we can deduce |
@@ -444,7 +444,7 @@ Some of the terminology in this summary will only make sense after reading every
 
 ##### Summary
 
-- If someone doesn't know a secret state, they can only only call functions which _increment_ it (and only if such incrementations are decorated as `unknown`).
+- If someone doesn't know a secret state, they can only call functions which _increment_ it (and only if such incrementations are decorated as `unknown`).
 - If a secret state is a 'partitioned' state, then it can _only_ be incremented or decremented. It's impossible to perform other binary/arithmetic operations on a partitioned state, even if you know (own) the secret.
 - Complex computations can only be performed on a 'whole' state.
 - A 'partitioned' state can only be decremented by its owner; not by anyone.
@@ -500,7 +500,7 @@ contract MyContract {
 }
 ```
 
-Quickly, to explain the wierd ones:
+Quickly, to explain the weird ones:
 
 - For `myMapping1`, storage slot `3` is empty. As is storage slot `4` for `myMapping2`. These empty slots help avoid collisions between these mappings when looking up their data.
 - The data for `myMapping1[k]` is at storage slot `keccak(k, p=3)` (where `,` is concatenation).
@@ -638,7 +638,7 @@ Which would translate to a PoKoSK in the circuit, again doing the same job as a 
 
 However, there is one key problem with never having a PK in the commitment - transferring of ownership. With Nightfall, the mapping key would be changed to the receiver's address, so the PoKoSK in the circuit would change accordingly - great! What about other secrets?
 
-Let's say we have a secret state `a` which is represented by a commitment `h(aVarId, value, salt)`. The dev wants a user of the zApp to be able to transfer ownership (i.e. nullification rights) to an other user. That's fine - and a good use of the zApp - so we should allow it. With the 'no PK in the commitment' rule, ownership is transferred by messaging the new user the salt. This seems ok, because this is how Nightfall's token transfer happens, but the previous owner *still knows the preimage to the nullifer*, meaning they can nullify it at any time, including after transferring ownership. Even if they don't, they still know when the new owner nullifies the commitment.
+Let's say we have a secret state `a` which is represented by a commitment `h(aVarId, value, salt)`. The dev wants a user of the zApp to be able to transfer ownership (i.e. nullification rights) to an other user. That's fine - and a good use of the zApp - so we should allow it. With the 'no PK in the commitment' rule, ownership is transferred by messaging the new user the salt. This seems ok, because this is how Nightfall's token transfer happens, but the previous owner *still knows the preimage to the nullifier*, meaning they can nullify it at any time, including after transferring ownership. Even if they don't, they still know when the new owner nullifies the commitment.
 
 *Never* adding a public key to the commitment means that the 'owner' of a secret owns it forever. This removes nice transferability from any secret state (which doesn't include a key in its commitment as a mapping key), and there are plenty of states like that which (reasonably) should be transferable.
 
@@ -662,7 +662,7 @@ Secret states are either *whole* or *partitioned*.
 
 **Whole states:**
 - A 'whole' state's secret value is contained within one commitment.
-- Whenver a 'whole' state is edited, its one commitment gets nullified, and one replacement commitment is submitted.
+- Whenever a 'whole' state is edited, its one commitment gets nullified, and one replacement commitment is submitted.
 - If a secret state is operated on in such a way that would require knowledge of the _entire_ state, it _must_ be a whole state.
 E.g. `a = b` implies `a` must be whole.
 E.g. `a *= b` implies `a` must be whole.
@@ -709,9 +709,9 @@ Incrementations and decrementations. A user can increment a state without access
 
 #### Partitioned states
 
-A 'whole' state can only be edited by the 'owner' of such a state. If the only way of modifying a secret state was to be its 'owner', we'd be severly limited in the kinds of contracts we could write.
+A 'whole' state can only be edited by the 'owner' of such a state. If the only way of modifying a secret state was to be its 'owner', we'd be severely limited in the kinds of contracts we could write.
 
-A 'partitioned' state, on the other hand, can be edited (incremented*) by a user who doesn't own or know its secret value. Paritioned states are so-called, because the secret state gets split into little incremental chunks or 'parts', and each part is wrapped in its own commitment.
+A 'partitioned' state, on the other hand, can be edited (incremented*) by a user who doesn't own or know its secret value. Partitioned states are so-called, because the secret state gets split into little incremental chunks or 'parts', and each part is wrapped in its own commitment.
 
 An example of this is lots of users contributing to a charity pot, where nobody needs to know how much money is in the pot to add to it.
 
