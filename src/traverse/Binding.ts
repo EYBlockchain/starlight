@@ -275,6 +275,7 @@ export class VariableBinding extends Binding {
   }
 
   updateOwnership(ownerNode: any, msgIsMappingKeyorMappingValue?: string | null) {
+    if (this.isOwned && this.owner.mappingOwnershipType === 'key') return;
     if (
       ownerNode.expression?.name === 'msg' &&
       msgIsMappingKeyorMappingValue === 'value'
@@ -521,19 +522,9 @@ export class VariableBinding extends Binding {
    */
   inferOwnership() {
     if (this.kind !== 'VariableDeclaration') return;
-    let msgSenderEverywhereMappingKey: boolean = false;
-    let msgSenderEverywhereMappingValue: boolean = false;
+    let msgSenderEverywhereMappingKey: boolean;
+    let msgSenderEverywhereMappingValue: boolean;
     this.nullifyingPaths.forEach(path => {
-      const functionDefScope = path.scope.getAncestorOfScopeType(
-        'FunctionDefinition',
-      );
-      if (functionDefScope.callerRestriction === 'match') {
-        this.updateOwnership(functionDefScope.callerRestrictionNode);
-        return;
-      }
-      if (functionDefScope.callerRestriction === 'exclude') {
-        this.updateBlacklist(functionDefScope.callerRestrictionNode);
-      }
       if (this.isMapping && path.getAncestorOfType('IndexAccess') && this.addMappingKey(path).isMsgSender ) {
         // if its unassigned, we assign true
         // if its true, it remains true
@@ -542,6 +533,7 @@ export class VariableBinding extends Binding {
         this.isMapping && path.getAncestorOfType('IndexAccess') &&
         (path.isMsgSender(path.getCorrespondingRhsNode()) || path.isMsgValue(path.getCorrespondingRhsNode()))
       ) {
+        msgSenderEverywhereMappingKey = false;
         msgSenderEverywhereMappingValue ??= true;
       } else {
         // if we find a single non-msg sender mapping key, then msg sender can't be the owner
@@ -562,6 +554,19 @@ export class VariableBinding extends Binding {
         this.nullifyingPaths[0].parentPath.parent.rightHandSide;
       this.updateOwnership(owner, 'value');
     }
+    this.nullifyingPaths.forEach(path => {
+      const functionDefScope = path.scope.getAncestorOfScopeType(
+        'FunctionDefinition',
+      );
+      // we update the ownership of the variable if the function has a restriction on the caller, e.g. require(msg.sender == admin)
+      if (functionDefScope.callerRestriction === 'match') {
+        this.updateOwnership(functionDefScope.callerRestrictionNode);
+        return;
+      }
+      if (functionDefScope.callerRestriction === 'exclude') {
+        this.updateBlacklist(functionDefScope.callerRestrictionNode);
+      }
+    }); 
   }
 
   ownerSetToZeroCheck() {
