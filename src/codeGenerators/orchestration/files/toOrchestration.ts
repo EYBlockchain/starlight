@@ -572,7 +572,7 @@ const prepareBackupVariable = (node: any) => {
 
 	deleteCommitmentsByState(requestedName, null);
 
-	const instance = await getContractInstance("AssignShield");
+	const instance = await getContractInstance("CONTRACT_NAME");
 
 	const backDataEvent = await instance.getPastEvents("EncryptedBackupData", {
 		fromBlock: 0,

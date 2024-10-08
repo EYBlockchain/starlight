@@ -897,7 +897,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
       if(node.returnInputs[0]) {
         node.returnInputs.forEach((input: any) => { 
-          input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input);
+          input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input+'.integer');
           
         })
       } 
