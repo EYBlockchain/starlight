@@ -1,0 +1,37 @@
+#!/bin/sh
+set -e
+
+docker-compose -f docker-compose.zapp-double.yml down -v
+
+echo "Starting ganache..."
+
+docker compose -f docker-compose.zapp-double.yml up -d ganache $BUILD_ARG
+
+echo "Waiting for 30 seconds before starting the deployer..."
+sleep 30
+
+echo "Starting deployer and zokrates..."
+
+
+docker-compose -f docker-compose.zapp-double.yml up -d deployer $BUILD_ARG
+
+docker compose -f docker-compose.zapp-double.yml up -d zokrates zokrates2  $BUILD_ARG
+echo "Waiting for 20 seconds before starting timber..."
+sleep 20
+
+echo "Starting timber..."
+docker compose -f docker-compose.zapp-double.yml up -d timber timber2  $BUILD_ARG
+
+echo "Waiting for 2 seconds before starting Zapp orchestrators..."
+sleep 2
+
+echo "Starting Zapp ..."
+docker compose -f docker-compose.zapp-double.yml up -d zapp zapp2  --build --wait
+echo "Waiting for 2 seconds before running the tests..."
+sleep 2
+echo "All services have been started."
+echo "----------------------------------------------------"
+echo " Run  these commands in two terminal to get the logs"
+echo "docker compose -f docker-compose.zapp-double.yml logs -f -n 1000 zapp zokrates timber"
+echo "docker compose -f docker-compose.zapp-double.yml logs -f -n 1000 zapp2 zokrates2 timber2"
+echo "-----------------------------------------------------"

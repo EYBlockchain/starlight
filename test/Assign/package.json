@@ -1,0 +1,51 @@
+{
+  "name": "zapp",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "./bin/startup && docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
+    "retest": "docker-compose -f docker-compose.zapp.yml run zapp npx mocha --exit --require @babel/register 'orchestration/test.mjs'",
+    "start": "./bin/startup",
+    "restart": "docker-compose -f docker-compose.zapp.yml restart && docker compose -f docker-compose.zapp-double.yml logs -f -n 1000 zapp zokrates timber",
+    "apitest": "./bin/setup && ./bin/startup && docker-compose -f docker-compose.zapp.yml run --name apiservice -d -p 3000:3000 zapp node orchestration/api.mjs"
+  },
+  "keywords": [
+    "private contract",
+    "zapp",
+    "zappify",
+    "starlight",
+    "zk-snark",
+    "compiler",
+    "transpiler",
+    "solidity"
+  ],
+  "author": "starlight",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "@babel/register": "^7.23.7",
+    "@truffle/contract": "^4.2.21",
+    "@truffle/hdwallet-provider": "^1.4.0",
+    "@openzeppelin/contracts": "4.9.0",
+    "axios": "1.7.2",
+    "config": "^3.3.1",
+    "express":"4.19.2",
+    "enquirer": "^2.3.6",
+    "general-number": "^1.0.1",
+    "lodash.clonedeep": "^4.5.0",
+    "mongodb": "^4.7.0",
+    "solc": "0.8.0",
+    "truffle": "5.1.65",
+    "web3": "1.8.2",
+    "typescript": "^4.9.5",
+    "winston": "^3.3.3",
+    "yargs": "17.7.2",
+    "zkp-utils": "^1.0.8"
+  },
+  "devDependencies": {
+    "cod-scripts": "^6.0.0",
+    "eslint": "^7.19.0",
+    "husky": "9.0.11",
+    "mocha": "10.4.0",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-alpha.54"
+  }
+}
