@@ -37,5 +37,5 @@ export default function toContract(ast: object, options: any) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, fileObj.file);
   }
-  logger.info('Contract transpilation complete kahina.');
+  logger.info('Contract transpilation complete.');
 }

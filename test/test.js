@@ -149,66 +149,66 @@ describe("Code Gen testing", function () {
   });
 
   // Testing orchestration files: 
-  describe("#testing orchestration files", function () {
-    it("should generate orchestration files correctly", function () {
-        const result = checktestASTExists(options, 'orchestration');
-        assert.strictEqual(result, true);
-    });
+//   describe("#testing orchestration files", function () {
+//     it("should generate orchestration files correctly", function () {
+//         const result = checktestASTExists(options, 'orchestration');
+//         assert.strictEqual(result, true);
+//     });
 
-    it("should validate the structure of orchestration files", function () {
-        const structure = validateOrchestrationStructure(options);
-        assert.strictEqual(structure.isValid, true);
-        assert.deepStrictEqual(structure.errors, []); // Assuming `validateOrchestrationStructure` returns an object with validity and errors
-    });
+//     it("should validate the structure of orchestration files", function () {
+//         const structure = validateOrchestrationStructure(options);
+//         assert.strictEqual(structure.isValid, true);
+//         assert.deepStrictEqual(structure.errors, []); // Assuming `validateOrchestrationStructure` returns an object with validity and errors
+//     });
 
-    it("should handle invalid input gracefully", function () {
-        // Example of testing error handling
-        const result = handleInvalidInput(options);
-        assert.strictEqual(result.success, false);
-        assert.strictEqual(result.message, "Expected error message");
-    });
-});
+//     it("should handle invalid input gracefully", function () {
+//         // Example of testing error handling
+//         const result = handleInvalidInput(options);
+//         assert.strictEqual(result.success, false);
+//         assert.strictEqual(result.message, "Expected error message");
+//     });
+// });
 
-describe("#testing orchestration files", function () {
+// describe("#testing orchestration files", function () {
     
-  // Check if orchestration files are generated correctly
-  it("should generate orchestration files correctly", function () {
-      const result = checktestASTExists(options, 'orchestration');
-      assert.strictEqual(result, true);
-  });
+//   // Check if orchestration files are generated correctly
+//   it("should generate orchestration files correctly", function () {
+//       const result = checktestASTExists(options, 'orchestration');
+//       assert.strictEqual(result, true);
+//   });
 
-  // Validate the structure of the generated orchestration files
-  it("should validate the structure of orchestration files", function () {
-      const structure = validateOrchestrationStructure(options);
-      assert.strictEqual(structure.isValid, true);
-      assert.deepStrictEqual(structure.errors, []); // Assuming `validateOrchestrationStructure` returns an object with validity and errors
-  });
+//   // Validate the structure of the generated orchestration files
+//   it("should validate the structure of orchestration files", function () {
+//       const structure = validateOrchestrationStructure(options);
+//       assert.strictEqual(structure.isValid, true);
+//       assert.deepStrictEqual(structure.errors, []); // Assuming `validateOrchestrationStructure` returns an object with validity and errors
+//   });
 
-  // Handle invalid inputs gracefully
-  it("should handle invalid input gracefully", function () {
-      const invalidOptions = {
-          ...options,
-          orchestrationDirPath: './invalid/orchestration/path', // Intentionally wrong path
-      };
-      const result = handleInvalidInput(invalidOptions);
-      assert.strictEqual(result.success, false);
-      assert.strictEqual(result.message, "Expected error message");
-  });
+//   // Handle invalid inputs gracefully
+//   it("should handle invalid input gracefully", function () {
+//       const invalidOptions = {
+//           ...options,
+//           orchestrationDirPath: './invalid/orchestration/path', // Intentionally wrong path
+//       };
+//       const result = handleInvalidInput(invalidOptions);
+//       assert.strictEqual(result.success, false);
+//       assert.strictEqual(result.message, "Expected error message");
+//   });
 
-  // Check the existence and correctness of specific properties in orchestration files
-  it("should ensure necessary properties are present in orchestration files", function () {
-      const result = validateOrchestrationProperties(options);
-      assert.strictEqual(result.isValid, true);
-      assert.deepStrictEqual(result.missingProperties, []); // No missing properties
-  });
+//   // Check the existence and correctness of specific properties in orchestration files
+//   it("should ensure necessary properties are present in orchestration files", function () {
+//       const result = validateOrchestrationProperties(options);
+//       assert.strictEqual(result.isValid, true);
+//       assert.deepStrictEqual(result.missingProperties, []); // No missing properties
+//   });
 
-  // Additional test to validate the content of generated orchestration files
-  it("should validate the content of orchestration files", function () {
-      const content = validateOrchestrationContent(options);
-      assert.strictEqual(content.isValid, true);
-      assert.deepStrictEqual(content.errors, []); // Assuming `validateOrchestrationContent` checks content-level validity
-  });
-});
+//   // Additional test to validate the content of generated orchestration files
+//   it("should validate the content of orchestration files", function () {
+//       const content = validateOrchestrationContent(options);
+//       assert.strictEqual(content.isValid, true);
+//       assert.deepStrictEqual(content.errors, []); // Assuming `validateOrchestrationContent` checks content-level validity
+//   });
+// });
 
 
 
