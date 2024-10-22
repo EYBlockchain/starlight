@@ -57,13 +57,12 @@ const Orchestrationbp = new OrchestrationBP();
 export const sendTransactionBoilerplate = (node: any) => {
   const { privateStates } = node;
   const output: string[][] = [[],[],[],[],[],[],[]];
-  // output[0] = nullifier root(s)
-  // output[1] = nullifier root(s)
-  // output[2] = arr of nullifiers
-  // output[3] = commitments root(s)
-  // output[4] = arr of commitments
-  // output[5] = arr of cipherText
-  // output[6] = arr of enc keys
+  // output[0] = arr of nullifiers
+  // output[1] = commitments root(s)
+  // output[2] = arr of commitments
+  // output[3] = arr of nullifiers to check, not add (for accessed states)
+  // output[4] = arr of cipherText
+  // output[5] = arr of enc keys
   let privateStateName: string;
   let stateNode: any;
   for ([privateStateName, stateNode] of Object.entries(privateStates)) {
@@ -72,21 +71,19 @@ export const sendTransactionBoilerplate = (node: any) => {
         switch (stateNode.nullifierRequired) {
           case true:
             // decrement
-            output[3].push(`${privateStateName}_root.integer`);
-            output[0].push(`${privateStateName}_nullifierRoot.integer`);
-            output[1].push(`${privateStateName}_newNullifierRoot.integer`);
-            output[2].push(
+            output[1].push(`${privateStateName}_root.integer`);
+            output[0].push(
               `${privateStateName}_0_nullifier.integer, ${privateStateName}_1_nullifier.integer`,
             );
-            output[4].push(`${privateStateName}_2_newCommitment.integer`);
+            output[2].push(`${privateStateName}_2_newCommitment.integer`);
             break;
           case false:
           default:
             // increment
-            output[4].push(`${privateStateName}_newCommitment.integer`);
+            output[2].push(`${privateStateName}_newCommitment.integer`);
             if (stateNode.encryptionRequired) {
-              output[5].push(`${privateStateName}_cipherText`);
-              output[6].push(`${privateStateName}_encKey`);
+              output[4].push(`${privateStateName}_cipherText`);
+              output[5].push(`${privateStateName}_encKey`);
             }
             break;
         }
@@ -95,21 +92,20 @@ export const sendTransactionBoilerplate = (node: any) => {
       default:
         // whole 
         if (!stateNode.reinitialisedOnly)
-          output[3].push(`${privateStateName}_root.integer`);
-        if (!stateNode.reinitialisedOnly) {
-          output[0].push(`${privateStateName}_nullifierRoot.integer`)
-          if (!stateNode.accessedOnly) {
-            output[2].push(`${privateStateName}_nullifier.integer`);
-            output[1].push(`${privateStateName}_newNullifierRoot.integer`);
-          } 
+          output[1].push(`${privateStateName}_root.integer`);
+          if (stateNode.accessedOnly) {
+            output[3].push(`${privateStateName}_nullifier.integer`);
+          } else {
+            if (!stateNode.reinitialisedOnly) {
+              output[0].push(`${privateStateName}_nullifier.integer`);
+          }
         }
-        if (!stateNode.accessedOnly && !stateNode.burnedOnly)
-          output[4].push(`${privateStateName}_newCommitment.integer`);
+        if (!stateNode.burnedOnly)
+          output[2].push(`${privateStateName}_newCommitment.integer`);
         if (stateNode.encryptionRequired) {
-          output[5].push(`${privateStateName}_cipherText`);
-          output[6].push(`${privateStateName}_encKey`);
+          output[4].push(`${privateStateName}_cipherText`);
+          output[5].push(`${privateStateName}_encKey`);
         }
-
         break;
     }
   }
@@ -139,7 +135,6 @@ export const generateProofBoilerplate = (node: any) => {
     // we include the state variable key (mapping key) if its not a param (we include params separately)
     const msgSenderParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgSender') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
     const msgValueParamAndMappingKey = stateNode.isMapping && (node.parameters.includes('msgValue') || output.join().includes('_msg_stateVarId_key.integer')) && stateNode.stateVarId[1] === 'msg';
-
     const constantMappingKey = stateNode.isMapping && (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0');
 
     // We are keeping this code in comments, for future if have any issue with extra mapping keys getting added for a zapp we can come to this
@@ -176,8 +171,8 @@ export const generateProofBoilerplate = (node: any) => {
         else {
           parameters.push(`\t${param}.integer,`);
         }
-
       });
+     
     // then we build boilerplate code per state
     switch (stateNode.isWhole) {
       case true:
@@ -199,8 +194,6 @@ export const generateProofBoilerplate = (node: any) => {
             parameters,
           })
         );
-        if(stateNode.nullifierRequired || stateNode.accessedOnly) containsNullifierRoot = true;
-        if(stateNode.nullifierRequired) containsNewNullifierRoot = true;
         if (!stateNode.reinitialisedOnly) containsRoot = true;
         break;
 
@@ -321,7 +314,6 @@ export const preimageBoilerPlate = (node: any) => {
           accessedOnly: true,
           stateVarIds,
         }));
-
       continue;
     }
 
@@ -503,21 +495,18 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         lines.push(`\nconst ${param} = generalise(_${param});`);
         params.push(`_${param}`);
       });
-
       node.parameters.modifiedStateVariables.forEach((param: any) => {
         states.push(`_${param.name}_newOwnerPublicKey = 0`);
         lines.push(
           `\nlet ${param.name}_newOwnerPublicKey = generalise(_${param.name}_newOwnerPublicKey);`,
         );
       });
-
       if (node.decrementsSecretState) {
         node.decrementedSecretStates.forEach((decrementedState: string) => {
           states.push(` _${decrementedState}_0_oldCommitment = 0`);
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
-
       node.returnParameters.forEach( (param, index) => {
        if(param === 'true')
         rtnparams?.push('bool: bool');
@@ -525,7 +514,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
        rtnparams?.push( ` ${param.replace('_change', '')}_newCommitmentValue : ${param}.integer  `);
      });
       if (params) params[params.length - 1] += `,`;
-
       if (node.name === 'cnstrctr')
         return {
           signature: [
@@ -547,7 +535,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             statements: lines,
           };
         }
-
       if(rtnparams.includes('bool: bool')) {
         return {
           signature: [
@@ -560,7 +547,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           statements: lines,
         };
       }
-
       return {
         signature: [
           ` ${functionSig}
@@ -603,7 +589,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             mappingName: stateNode.mappingName || stateName,
             structProperties: stateNode.structProperties
           }));
-
       }
       return {
         statements: lines,
@@ -749,7 +734,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [`\n// Extract set membership witness: \n\n`, ...lines],
       };
 
-      case 'CalculateNullifier':
+    case 'CalculateNullifier':
         for ([stateName, stateNode] of Object.entries(node.privateStates)) {
           if (stateNode.isPartitioned) {
             lines.push(
@@ -759,7 +744,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 accessedOnly: stateNode.accessedOnly,
                 stateType: 'partitioned',
               }));
-  
           } else {
             lines.push(
               Orchestrationbp.calculateNullifier.postStatements({
@@ -770,45 +754,41 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               }));
           }
         }
+        // for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        //   if (stateNode.isPartitioned) {
+        //     lines.push(
+        //       Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+        //         stateName,
+        //         accessedOnly: stateNode.accessedOnly,
+        //         stateType: 'partitioned',
+        //       }));
+        //   } else {
+        //     lines.push(
+        //       Orchestrationbp.temporaryUpdatedNullifier.postStatements({
+        //         stateName,
+        //         accessedOnly: stateNode.accessedOnly,
+        //         stateType: 'whole',
+        //       }));
+        //   }
+        // }
+        // for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        //   if (stateNode.isPartitioned) {
+        //     lines.push(
+        //       Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+        //         stateName,
+        //         accessedOnly: stateNode.accessedOnly,
+        //         stateType: 'partitioned',
+        //       }));
   
-        for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-          if (stateNode.isPartitioned) {
-            lines.push(
-              Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-                stateName,
-                accessedOnly: stateNode.accessedOnly,
-                stateType: 'partitioned',
-              }));
-  
-          } else {
-            lines.push(
-              Orchestrationbp.temporaryUpdatedNullifier.postStatements({
-                stateName,
-                accessedOnly: stateNode.accessedOnly,
-                stateType: 'whole',
-              }));
-          }
-        }
-  
-        for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-          if (stateNode.isPartitioned) {
-            lines.push(
-              Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-                stateName,
-                accessedOnly: stateNode.accessedOnly,
-                stateType: 'partitioned',
-              }));
-  
-          } else {
-            lines.push(
-              Orchestrationbp.calculateUpdateNullifierPath.postStatements({
-                stateName,
-                accessedOnly: stateNode.accessedOnly,
-                stateType: 'whole',
-              }));
-          }
-        }
-  
+        //   } else {
+        //     lines.push(
+        //       Orchestrationbp.calculateUpdateNullifierPath.postStatements({
+        //         stateName,
+        //         accessedOnly: stateNode.accessedOnly,
+        //         stateType: 'whole',
+        //       }));
+        //   }
+        // }
         return {
           statements: [`\n// Calculate nullifier(s): \n`, ...lines],
         };
@@ -825,7 +805,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 isSharedSecret: stateNode.isSharedSecret,
                 structProperties: stateNode.structProperties,
               }));
-
             break;
           case true:
           default:
@@ -839,7 +818,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     isSharedSecret: stateNode.isSharedSecret,
                     structProperties: stateNode.structProperties,
                   }));
-
                 break;
               case false:
               default:
@@ -851,7 +829,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     isSharedSecret: stateNode.isSharedSecret,
                     structProperties: stateNode.structProperties,
                   }));
-
             }
         }
       }
@@ -874,7 +851,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ],
       };
 
-      case 'EncryptBackupPreimage':
+    case 'EncryptBackupPreimage':
         lines.push(`let BackupData = [];\n`)
         for ([stateName, stateNode] of Object.entries(node.privateStates)) {
           let stateType;
@@ -920,24 +897,22 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
       if(node.returnInputs[0]) {
         node.returnInputs.forEach((input: any) => { 
-          input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input);
+          input == 'true' ? returnInputs.push(`1`) : input == 'false' ? returnInputs.push(`0`) : returnInputs.push(input+'.integer');
           
         })
       } 
   
       params[0] = sendTransactionBoilerplate(node);
       if(!node.returnInputs[0] && !params[0][5][0]) returnInputs.push(`1`); // If there are no return, circuit's default return is true
-      // params[0] = arr of nullifier root(s)
+      // params[0] = arr of nullifier 
       // params[1] = arr of commitment root(s)
-      // params[2] =  arr of nullifiers 
       // params[3] = arr of commitments
-      (params[0][0][0]) ? params[0][0] = ` ${params[0][0][0]}, ` : params[0][0] = ` 0 , ` ; // nullifierRoot - array // Default value for the struct
-      (params[0][1][0]) ? params[0][1] = ` ${params[0][1][0]}, ` : params[0][1] = ` 0, `;
-      (params[0][3][0]) ? params[0][3] = ` ${params[0][3][0]},` : params[0][3] = ` 0 , ` ;  // commitmentRoot - array 
-      (params[0][2][0]) ? params[0][2] = ` [${params[0][2]}],` : params[0][2] = ` [],  `; // nullifiers - array
-      (params[0][4][0]) ? params[0][4] = `[${params[0][4]}],` : params[0][4] = ` [], `; // commitments - array
-      (params[0][5][0]) ? params[0][5] = `[${params[0][5]}],` : params[0][5] = ` [], `; // cipherText - array of arrays
-      (params[0][6][0]) ? params[0][6] = `[${params[0][6]}],`: params[0][6] = ` [], `;// cipherText - array of arrays
+      (params[0][0][0]) ? params[0][0] = ` [${params[0][0]}],` : params[0][0] = ` [],  `; // nullifiers - array
+      (params[0][1][0]) ? params[0][1] = ` ${params[0][1][0]}, ` : params[0][1] = ` 0, `;  // commitmentRoot 
+      (params[0][2][0]) ? params[0][2] = ` [${params[0][2]}],` : params[0][2] = ` [] , ` ; // commitment -array
+      (params[0][3][0]) ? params[0][3] = `[${params[0][3]}],` : params[0][3] = ` [], `; // accessed nullifiers -array
+      (params[0][4][0]) ? params[0][4] = `[${params[0][4]}],` : params[0][4] = ` [], `; // cipherText - array of arrays
+      (params[0][5][0]) ? params[0][5] = `[${params[0][5]}],`: params[0][5] = ` [], `;// cipherText - array of arrays
 
       if (node.functionName === 'cnstrctr') return {
         statements: [
@@ -945,17 +920,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nBackupData.forEach((element) => {
             element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
           });
-          \nconst tx = { proofInput: [{customInputs: [${returnInputs}], nullifierRoot: ${params[0][0]} latestNullifierRoot:${params[0][1]} newNullifiers: ${params[0][2]}  commitmentRoot:${params[0][3]} newCommitments: ${params[0][4]}}, proof, BackupData], nullifiers: ${params[0][2]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
       
-      
-
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
-          .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], nullifierRoot: ${params[0][0]} latestNullifierRoot:${params[0][1]} newNullifiers: ${params[0][2]}  commitmentRoot:${params[0][3]} newCommitments: ${params[0][4]}  cipherText:${params[0][5]}  encKeys: ${params[0][6]}}, proof, BackupData).encodeABI();
+          .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).encodeABI();
           \n	let txParams = {
             from: config.web3.options.defaultAccount,
             to: contractAddr,
@@ -993,8 +966,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ],
       };
   
-
-      case 'SendPublicTransaction':  
+    case 'SendPublicTransaction':  
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
@@ -1011,6 +983,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           }           
         });
       }
+      
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:

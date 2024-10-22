@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+
+  secret uint256 private a;
+  uint256 public b;
+  uint256 public m;
+  
+  function add( secret uint256 value, uint256 value1) public  returns (uint256) {
+    a += value;
+    b += value1;
+    return b;
+  }
+
+  function add1( secret uint256 value, uint256 value1) public  returns (uint256) {
+    a += value;
+    m += value1 + 2;
+    return m;
+  }
+
+  function remove(secret uint256 value, uint256 value1) public {
+    uint256 c = add(value, value1);
+    uint256 d = add1(value, value1);
+    a -= c + d ;
+  }
+}

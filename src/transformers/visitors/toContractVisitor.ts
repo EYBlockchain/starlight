@@ -59,8 +59,18 @@ const findCustomInputsVisitor = (thisPath: NodePath, thisState: any) => {
   ) {
     thisState.customInputs ??= [];
     const type = binding.node.typeName.nodeType === 'Mapping' ? binding.node.typeName.valueType.name : binding.node.typeName.name;
+    const isConstantArray = thisPath.isConstantArray();
+    const arrayLength = isConstantArray && thisPath.node.typeName?.length ? thisPath.node.typeName.length.value : false;
+    
     if (!thisState.customInputs.some((input: any) => input.name === indicator?.name))
-      thisState.customInputs.push({name: indicator?.name, typeName: {name: type}, isConstantArray: thisPath.isConstantArray() ? thisPath.node.typeName.length.value : false, inCircuit: true, isReturn: false });
+      thisState.customInputs.push({
+        name: indicator?.name,
+        typeName: { name: type },
+        isConstantArray: arrayLength,
+        inCircuit: true,
+        isReturn: false
+      });
+
   }
 };
 
@@ -295,7 +305,6 @@ export default {
       if (!path.containsSecret && !path.scope.indicators.internalFunctionInteractsWithSecret) return;
       const file = state.circuitAST.files.find((n: any) => n.fileId === node.id);
       const circuitParams = file.nodes.find((n: any) => n.nodeType === node.nodeType).parameters.parameters;
-
       state.circuitParams ??= {};
       state.circuitParams[path.getUniqueFunctionName()] ??= {};
       state.circuitParams[path.getUniqueFunctionName()].parameters = circuitParams;
@@ -520,7 +529,7 @@ export default {
       // TODO interacts with secret AND public
       const subState = { interactsWithSecret: false };
       path.traversePathsFast(interactsWithSecretVisitor, subState);
-      if (subState.interactsWithSecret) {
+      if (subState.interactsWithSecret && node.initialValue.nodeType != 'FunctionCall') {
         state.skipSubNodes = true;
         return;
       }
@@ -841,7 +850,6 @@ DoWhileStatement: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       let newNode: any;
-
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
       if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
@@ -882,7 +890,6 @@ DoWhileStatement: {
       if (path.isInternalFunctionCall()) {
        // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
        // TODO: need a warning message to this effect ^^^
-
       const functionReferncedNode = scope.getReferencedNode(node.expression);
       const params = functionReferncedNode.parameters.parameters;
       state.pubparams = [];

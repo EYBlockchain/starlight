@@ -7,6 +7,7 @@ import buildNode from '../../types/orchestration-types.js'
 // We need to ensure that parameters appear in the same order as in the .mjs file if the same state variables are used in multiple function calls.
 // All parameters relating to the same state variable should be grouped together.
 const reorderParameters = (parameterList: any) => {
+  let deletedIndexes = [];
   parameterList.forEach((param, index) => {
     parameterList.forEach((newParam, newIndex) => {
       if (param.name === newParam.name && param.bpType === 'nullification' && newParam.bpType === 'nullification') {
@@ -19,7 +20,16 @@ const reorderParameters = (parameterList: any) => {
           parameterList[index] = newParam;
         }
       }
+      if(param.name === newParam.name && param.nodeType === 'VariableDeclaration' && newParam.nodeType === 'Boilerplate'){
+        !deletedIndexes.includes(index)? deletedIndexes.push(index) : deletedIndexes;
+      }
+             
     });
+  });
+  // sort the array in descending array so that we delete the correct elements
+  deletedIndexes = deletedIndexes.slice().sort((a, b) => b - a);
+  deletedIndexes.forEach(index => {
+    parameterList.splice(index, 1)
   });
   let newBPName: string;
   let currentIndex: number;
@@ -59,6 +69,7 @@ const reorderParameters = (parameterList: any) => {
   elementsToAdd.forEach((element) => {
     parameterList.splice(element.NewIndex, 0, element.element);
   });
+
 }
 
 
@@ -143,11 +154,7 @@ const internalCallVisitor = {
                  };
                  case 'nullification' : {
                   internalFncParameters.push(`${node.name}_oldCommitment_owner_secretKey`) ;
-                  internalFncParameters.push(`nullifierRoot`);
-                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`newNullifierRoot`);
-                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
-                  internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_siblingPath`);
-                  if (!(node.isAccessed && !node.isNullified)) internalFncParameters.push(`${node.name}_nullifier_nonmembershipWitness_newsiblingPath`);
+                  internalFncParameters.push(`${node.name}_oldCommitment_nullifier`);
                   break;
                  };
                  case 'oldCommitmentPreimage' : {
@@ -288,7 +295,11 @@ const internalCallVisitor = {
               if(file.fileName === callingFncName) {
                 file.nodes.forEach(childNode => {
                   if(childNode.nodeType === 'FunctionDefinition') {
-                    childNode.body.statements.forEach(node => {
+                    childNode.body.statements.forEach((node) => {
+                      if(node.initialValue?.nodeType === 'InternalFunctionCall' && state.initNode) {
+                        node.initialValue.expression = state.initNode[ node.initialValue.name ];
+                      }
+                     
                       if(node.nodeType==='BoilerplateStatement'){
                         callingFncbpType = node.bpType;
                       }

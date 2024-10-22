@@ -98,8 +98,7 @@ const internalCallVisitor = {
                   state.currentIndex = index;
                   traverseNodesFast(node, adjustNamesVisitor,  state);
                 }
-                
-              });
+              }); 
                 state.newPostStatementList = cloneDeep(childNode.body.postStatements);
                 state.newPostStatementList.forEach(node => {
                   if(node.nodeType === 'MembershipWitness'){
@@ -213,6 +212,14 @@ const internalCallVisitor = {
                 file.nodes.forEach(childNode => {
                  if(childNode.nodeType === 'FunctionDefinition') {
                    childNode.parameters.modifiedStateVariables = joinWithoutDupes(childNode.parameters.modifiedStateVariables, state.newParametersList);
+                   const modifiedNodes = childNode.parameters.modifiedStateVariables.map(node => node.name);
+                   const declarationNode = childNode.body.preStatements.filter(node => node.nodeType === 'VariableDeclarationStatement');
+                   !JSON.stringify(declarationNode).includes(JSON.stringify(state.decNode)) ?
+                   state.decNode?.forEach((decNode, decIndex) => {
+                      // if the function doesn't modifies the returned variable don't include it
+                      if(state.decNode && !(modifiedNodes.includes(decNode.declarations[0].name))) 
+                      childNode.body.preStatements.splice(decIndex+1, 0, decNode); 
+                   }): '';
                    if(childNode.decrementedSecretStates)
                     childNode.decrementedSecretStates = [...new Set([...childNode.decrementedSecretStates, ...newdecrementedSecretStates])];
                     childNode.body.preStatements.forEach(node => {
@@ -267,7 +274,8 @@ const internalCallVisitor = {
                       let newVarDecs = [];
                       childNode.body.statements.forEach((node1, index1)=> {
                         state.varNames = [];
-                        if (!(node1.expression && node1.expression?.nodeType === 'InternalFunctionCall')){
+                        // check the node except the InternalFunctionCall node and new created public node with id = 0 as we created it
+                        if (!((node1.expression && node1.expression?.nodeType === 'InternalFunctionCall') || (node1.initialValue && node1.initialValue?.nodeType === 'InternalFunctionCall') || node1.id === 0)){
                           traverseNodesFast(node1, findVarVisitor,  state);
                         } 
                         state.varNames.forEach((varName) => {
@@ -306,14 +314,52 @@ const internalCallVisitor = {
                             childNode.body.statements[id-1] = statenode;
                            node.body.statements.forEach(kidNode =>{
                             if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
-                               kidNode.expression = Object.assign(kidNode.expression,statenode.initialValue);
+                              //When Internal function is inside for-loop, it exit under Expression Statement, we replace the function call with expression from the called function
+                              if (kidNode.expression.operator) {
+                                // for statement like 
+                                /* 
+                                for (statement) {
+                                  a += internalFuncCall();
+                                } here, kidNode will look like
+                                expression: {
+                                nodeType: 'Assignment',
+                                name: 'add',
+                                internalFunctionInteractsWithSecret: true,
+                                operator: '+=',
+                                leftHandSide: { nodeType: 'Identifier', name: 'a', subType: 'uint256' },
+                              }, and we need to get the other expression from the other function here.
+                                */
+                                const newExpressionNode = Object.assign(cloneDeep(kidNode.expression), statenode.initialValue);
+                                node.body.statements.push(newExpressionNode);
+                            } else {
+                              // for statement like 
+                                /* 
+                                for (statement) {
+                                  internalFuncCall();
+                                } here, kidNode will look like
+                                expression: {
+                                expression: {
+                                      nodeType: 'InternalFunctionCall',
+                                      name: 'add',
+                                      internalFunctionInteractsWithSecret: true
+                                    },
+                                 and we need to get the other expression from the other function here.
+                                */
+                                Object.assign(kidNode.expression, statenode.initialValue);
                             }
+                            }
+
                            });
-                          childNode.body.statements[id-1].initialValue =undefined;
+                          childNode.body.statements[id-1].initialValue = undefined;
                           } else{
-                            node.body.statements.forEach(kidNode =>{
-                              if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
-                                 kidNode.expression = Object.assign(kidNode.expression,statenode.expression);
+                            node.body.statements.forEach(kidNode => {
+                              if(kidNode.nodeType === 'ExpressionStatement' && kidNode.expression.name === state.internalFncName[index]) {
+                                if(kidNode.expression.operator) {
+                                  // If the internal function modifies the same state variable, we need to copy over the statements in the calling function
+                                const newExpressionNode = Object.assign(cloneDeep(kidNode.expression), statenode.expression);
+                                node.body.statements.push(newExpressionNode);
+                                }
+                                 kidNode.expression = Object.assign(kidNode.expression, statenode.expression);
                               }
                              });
                           }
@@ -321,7 +367,7 @@ const internalCallVisitor = {
                        });
                       });
                       // remove multiple variable declarations
-                      childNode.body.statements.forEach((node1, index1)=> {
+                      childNode.body.statements.forEach((node1, index1) => {
                         let isDecDeleted = false;
                         if(node1.nodeType === 'VariableDeclarationStatement'){
                          childNode.body.statements.forEach((node2, index2)=> {
@@ -342,7 +388,7 @@ const internalCallVisitor = {
                           if(statenode.nodeType === 'VariableDeclarationStatement'){
                             childNode.body.statements[id-1] = statenode;
                            node.body.statements.forEach(kidNode =>{
-                            if(kidNode.nodeType === 'ExpressionStatement'&& kidNode.expression.name === state.internalFncName[index]) {
+                            if(kidNode.nodeType === 'ExpressionStatement' && kidNode.expression.name === state.internalFncName[index]) {
                                kidNode.expression = Object.assign(kidNode.expression,statenode.initialValue);
                                node.body.statements?.splice(node.body.statements.indexOf(kidNode)+1, 0, state.newStatementList[stateid+1]);
                             }
@@ -382,7 +428,7 @@ const internalCallVisitor = {
                                 }
                               });  
                             });                    
-                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates);
+                            node.privateStates = Object.assign(node.privateStates, statenode.privateStates);
                            }
                         });
                         break;
@@ -397,7 +443,7 @@ const internalCallVisitor = {
                                 }
                               });  
                             });                    
-                            node.privateStates = Object.assign(node.privateStates,statenode.privateStates);
+                            node.privateStates = Object.assign(node.privateStates, statenode.privateStates);
                            }
                         });
                         break;
@@ -405,7 +451,7 @@ const internalCallVisitor = {
                        case 'CalculateCommitment': {
                          state.newPostStatementList.forEach(statenode => {
                            if(statenode.nodeType === 'CalculateCommitment'){    
-                             node.privateStates = Object.assign(node.privateStates,statenode.privateStates);  
+                             node.privateStates = Object.assign(node.privateStates, statenode.privateStates);  
                             }
                          });
                          break;
@@ -422,6 +468,7 @@ const internalCallVisitor = {
                           });        
                           node.privateStates = Object.assign(node.privateStates,generateProofNode.privateStates);
                           node.parameters = [...new Set([...node.parameters ,...generateProofNode.parameters])];
+                          state.returnPara ? node.parameters = [...new Set([...node.parameters, ...state.returnPara])]: node.parameters;
                           break;
                         }
                         case 'SendTransaction': {
@@ -498,7 +545,7 @@ FunctionCall: {
              }
              }
              else
-                 isCircuit = true;
+              isCircuit = true;
             }
             }
         });
@@ -507,10 +554,55 @@ FunctionCall: {
         state.circuitImport.push('true');
         else
         state.circuitImport.push('false');
-        const newNode = buildNode('InternalFunctionCall', {
+      let newNode;
+        if(parent.nodeType === 'VariableDeclarationStatement') {
+          if(!functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer.isSecret)  {
+          const decNode = buildNode('VariableDeclarationStatement')
+          decNode.declarations.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+          decNode.interactsWithSecret = true;
+          decNode.declarations[0].declarationType = 'state';
+          decNode.declarations[0].isAccessed = true;
+          decNode.declarations[0].interactsWithSecret = true;
+          state.decNode ??= [];
+         
+          const decNodeNames = state.decNode.map(node => node.declarations[0].name);
+          decNodeNames.includes(decNode.declarations[0].name) ? state.decNode : state.decNode.push(decNode);
+          }
+          const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
+          let includeExpressionNode = false;
+          // this functions checks if the parent node interact with secret in the calling function or not
+          callingfnDefIndicators[parent.declarations[0].id].interactsWith.forEach( node => {
+            if(node.key != 'arguments' && node.interactsWithSecret)
+            includeExpressionNode = true;
+           })
+          functionReferncedNode.node.body.statements.forEach(exp => {
+            // If the return para interacts with public only in the internal function but with secret in calling function we need this expression in calling function
+          if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret){
+            state.initNode = buildNode('BinaryOperation', {
+              leftExpression: exp._newASTPointer.expression.rightHandSide.leftExpression,
+              operator: exp._newASTPointer.expression.rightHandSide.operator,
+              rightExpression: exp._newASTPointer.expression.rightHandSide.rightExpression,
+            });
+          }  
+          newNode = buildNode('InternalFunctionCall', {
+            name: returnPara,
+            internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+          });
+          if(includeExpressionNode && state.initNode) { 
+            newNode.expression = state.initNode;
+          } 
+
+          if(parent._newASTPointer.interactsWithSecret && !(state.returnPara?.includes(returnPara))) {
+            state.returnPara ??= [];
+            state.returnPara.push(returnPara);
+          } 
+          }) 
+         } else {
+       newNode = buildNode('InternalFunctionCall', {
           name: node.expression.name,
           internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
         });
+      }
         node._newASTPointer = newNode ;
         if (Array.isArray(parent._newASTPointer[path.containerName])) {
           parent._newASTPointer[path.containerName].push(newNode);

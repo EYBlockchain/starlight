@@ -122,6 +122,18 @@ export async function getCommitmentsByState(name, mappingKey = null) {
   return commitments;
 }
 
+// function to delete commitment with a specified stateName
+export async function deleteCommitmentsByState(name, mappingKey = null) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { name: name };
+  if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
+  const deleteResult = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .deleteMany(query);
+  return deleteResult;
+}
+
 // function to retrieve all known nullified commitments
 export async function getNullifiedCommitments() {
   const connection = await mongo.connection(MONGO_URL);
@@ -255,7 +267,7 @@ export async function markNullified(commitmentHash, secretKey = null) {
   };
   // updating the original tree
   // eslint-disable-next-line camelcase
-  smt_tree = temp_smt_tree;
+  //smt_tree = temp_smt_tree;
 
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
@@ -311,65 +323,69 @@ export function getInputCommitments(
 }
 
 function getStructInputCommitments(value, possibleCommitments) {
-  if (possibleCommitments.length < 2) {
-    logger.warn('Enough Commitments dont exists to use.');
-    return null;
-  }
-  let possibleCommitmentsProp = [];
-  value.forEach((propValue, i) => {
-    let possibleCommitmentsTemp = [];
-    possibleCommitments.sort(
-      (commitA, commitB) =>
-        parseInt(Object.values(commitB.preimage.value)[i], 10) -
-        parseInt(Object.values(commitA.preimage.value)[i], 10),
-    );
-    if (!possibleCommitmentsProp.length) {
-      if (
-        parseInt(Object.values(possibleCommitments[0].preimage.value)[i], 10) +
-          parseInt(
-            Object.values(possibleCommitments[1].preimage.value)[i],
-            10,
-          ) >=
-        parseInt(propValue, 10)
-      ) {
-        possibleCommitmentsProp.push([
-          possibleCommitments[0],
-          possibleCommitments[1],
-        ]);
-      } else {
-        possibleCommitments.splice(0, 2);
-        possibleCommitmentsProp = getStructInputCommitments(
-          value,
-          possibleCommitments,
-        );
-      }
-    } else {
-      possibleCommitments.forEach(possibleCommit => {
-        if (possibleCommitmentsProp.includes(possibleCommit))
-          possibleCommitmentsTemp.push(possibleCommit);
-      });
-      if (
-        possibleCommitmentsTemp.length > 1 &&
-        parseInt(
-          Object.values(possibleCommitmentsTemp[0].preimage.value)[i],
-          10,
-        ) +
-          parseInt(
-            Object.values(possibleCommitmentsTemp[1].preimage.value)[i],
-            10,
-          ) <
-          parseInt(propValue, 10)
-      ) {
-        possibleCommitments.splice(0, 2);
-        possibleCommitmentsProp = getStructInputCommitments(
-          value,
-          possibleCommitments,
-        );
-      }
-    }
-  });
-  return possibleCommitmentsProp;
-}
+  if (possibleCommitments.length === 1) {
+     throw new Error(
+       "There is only one non-nullified commitment for a struct state variable. Split commitments is not yet supported for structs, and so at least two commitments are required."
+     );
+   } else if (possibleCommitments.length < 2){
+     throw new Error(
+       "There are no commitments available."
+     );
+   }
+   let possibleCommitmentsProp = [];
+   value.forEach((propValue, i) => {
+     if (!possibleCommitmentsProp.length) {
+       possibleCommitments.forEach((possibleCommit0, ind0) => {
+         possibleCommitments.forEach((possibleCommit1, ind1) => {
+           if (ind0 != ind1){
+             if (
+               parseInt(Object.values(possibleCommit0.preimage.value)[i], 10) +
+                 parseInt(
+                   Object.values(possibleCommit1.preimage.value)[i],
+                   10,
+                 ) >=
+               parseInt(propValue, 10)
+             ) {
+               possibleCommitmentsProp.push([
+                 possibleCommit0,
+                 possibleCommit1
+               ]);
+             }
+           }
+         });
+       });
+       if (possibleCommitmentsProp.length === 0) {
+         throw new Error(
+           "There is not two commitments available with sufficient value for the decrementation. Note join commitments is not yet supported for structs."
+         );
+       }
+     } else {
+       let possibleCommitmentsTemp = [];
+       possibleCommitmentsProp.forEach((possibleCommitmentPair, ind) => {
+         if (
+           parseInt(
+             Object.values(possibleCommitmentPair[0].preimage.value)[i],
+             10,
+           ) +
+             parseInt(
+               Object.values(possibleCommitmentPair[1].preimage.value)[i],
+               10,
+             ) >=
+             parseInt(propValue, 10)
+         ) {
+           possibleCommitmentsTemp.push(possibleCommitmentPair);
+         }
+       });
+       possibleCommitmentsProp = possibleCommitmentsTemp;
+       if (possibleCommitmentsProp.length === 0) {
+         throw new Error(
+           "There is not two commitments available with sufficient value for the decrementation. Note join commitments is not yet supported for structs."
+         );
+       }
+     }
+   });
+   return possibleCommitmentsProp;
+ }
 
 export async function joinCommitments(
   contractName,
@@ -430,43 +446,7 @@ export async function joinCommitments(
   oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
   oldCommitment_1_nullifier = generalise(oldCommitment_1_nullifier.hex(32)); // truncate
 
-  // Non-membership witness for Nullifier
-  const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-    oldCommitment_0_nullifier,
-  );
-  const oldCommitment_1_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-    oldCommitment_1_nullifier,
-  );
-
-  const oldCommitment_nullifierRoot = generalise(
-    oldCommitment_0_nullifier_NonMembership_witness.root,
-  );
-  const oldCommitment_0_nullifier_path = generalise(
-    oldCommitment_0_nullifier_NonMembership_witness.path,
-  ).all;
-  const oldCommitment_1_nullifier_path = generalise(
-    oldCommitment_1_nullifier_NonMembership_witness.path,
-  ).all;
-
-  await temporaryUpdateNullifier(a_0_nullifier);
-  await temporaryUpdateNullifier(a_1_nullifier);
-
-  const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-    oldCommitment_0_nullifier,
-  );
-  const oldCommitment_1_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-    oldCommitment_1_nullifier,
-  );
-
-  const oldCommitment_0_nullifier_newpath = generalise(
-    oldCommitment_0_updated_nullifier_NonMembership_witness.path,
-  ).all;
-  const oldCommitment_1_nullifier_newpath = generalise(
-    oldCommitment_1_updated_nullifier_NonMembership_witness.path,
-  ).all;
-  const oldCommitment_newNullifierRoot = generalise(
-    oldCommitment_0_updated_nullifier_NonMembership_witness.root,
-  );
+  
   // Calculate commitment(s):
 
   const newCommitment_newSalt = generalise(utils.randomHex(31));
@@ -503,14 +483,8 @@ export async function joinCommitments(
     secretKey.integer,
     secretKey.integer,
 
-    oldCommitment_nullifierRoot.integer,
-    oldCommitment_newNullifierRoot.integer,
     oldCommitment_0_nullifier.integer,
-    oldCommitment_0_nullifier_path.integer,
-    oldCommitment_0_nullifier_newpath.integer,
     oldCommitment_1_nullifier.integer,
-    oldCommitment_1_nullifier_path.integer,
-    oldCommitment_1_nullifier_newpath.integer,
     oldCommitment_0_prev.integer,
     oldCommitment_0_prevSalt.integer,
     oldCommitment_1_prev.integer,
@@ -533,8 +507,6 @@ export async function joinCommitments(
 
   const txData = await instance.methods
     .joinCommitments(
-      oldCommitment_nullifierRoot.integer,
-      oldCommitment_newNullifierRoot.integer,
       [oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
       oldCommitment_root.integer,
       [newCommitment.integer],
@@ -630,32 +602,7 @@ export async function splitCommitments(
 
   oldCommitment_0_nullifier = generalise(oldCommitment_0_nullifier.hex(32)); // truncate
 
-  // Non-membership witness for Nullifier
-  const oldCommitment_0_nullifier_NonMembership_witness = getnullifierMembershipWitness(
-    oldCommitment_0_nullifier,
-  );
-
-  const oldCommitment_nullifierRoot = generalise(
-    oldCommitment_0_nullifier_NonMembership_witness.root,
-  );
-  const oldCommitment_0_nullifier_path = generalise(
-    oldCommitment_0_nullifier_NonMembership_witness.path,
-  ).all;
-
-  await temporaryUpdateNullifier(oldCommitment_0_nullifier);
-
-  const oldCommitment_0_updated_nullifier_NonMembership_witness = getupdatedNullifierPaths(
-    oldCommitment_0_nullifier,
-  );
-
-  const oldCommitment_0_nullifier_newpath = generalise(
-    oldCommitment_0_updated_nullifier_NonMembership_witness.path,
-  ).all;
-
-  const oldCommitment_newNullifierRoot = generalise(
-    oldCommitment_0_updated_nullifier_NonMembership_witness.root,
-  );
-  // Calculate commitment(s):
+    // Calculate commitment(s):
 
   const newCommitment_0_newSalt = generalise(utils.randomHex(31));
 
@@ -704,12 +651,7 @@ export async function splitCommitments(
     stateVarID,
     isMapping,
     secretKey.integer,
-
-    oldCommitment_nullifierRoot.integer,
-    oldCommitment_newNullifierRoot.integer,
     oldCommitment_0_nullifier.integer,
-    oldCommitment_0_nullifier_path.integer,
-    oldCommitment_0_nullifier_newpath.integer,
     oldCommitment_0_prev.integer,
     oldCommitment_0_prevSalt.integer,
     oldCommitment_root.integer,
@@ -731,8 +673,6 @@ export async function splitCommitments(
 
   const txData = await instance.methods
     .splitCommitments(
-      oldCommitment_nullifierRoot.integer,
-      oldCommitment_newNullifierRoot.integer,
       [oldCommitment_0_nullifier.integer],
       oldCommitment_root.integer,
       [newCommitment_0.integer, newCommitment_1.integer],

@@ -98,7 +98,7 @@ class FunctionBoilerplateGenerator {
           });
           return { structName: structDef.name, properties: names, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false, inCircuit: node.interactsWithSecret };
         }
-        return { name: node.name, type: node.typeName.name || node.typeName.baseType?.name || node.typeName.pathNode?.name, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false, inCircuit: node.interactsWithSecret };
+        return { name: node.name, type: node.typeName.name || node.typeName.baseType?.name || node.typeName.pathNode?.name, isParam: path.isFunctionParameter(node), isConstantArray: path.isConstantArray(node) ? node.typeName.length.value : false, inCircuit: node.interactsWithSecret || scope.getReferencedIndicator(node)?.interactsWithSecret };
       }
 
       const params = path.getFunctionParameters();

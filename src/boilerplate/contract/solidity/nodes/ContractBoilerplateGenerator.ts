@@ -97,8 +97,6 @@ class ContractBoilerplateGenerator {
     },
 
     constructor() {
-      const {indicators: { nullifiersRequired }} = this.scope;
-      return { nullifiersRequired };
     },
 
     registerZKPPublicKey() {},
@@ -129,14 +127,12 @@ class ContractBoilerplateGenerator {
         params?.forEach(circuitParamNode => {
           switch (circuitParamNode.bpType) {
             case 'nullification':
-              if (!newList.includes('nullifierRoot')) 
-                  newList.push('nullifierRoot');
               if (circuitParamNode.isNullified) {
-                if (!newList.includes('newNullifierRoot')) 
-                  newList.push('newNullifierRoot');
                 newList.push('nullifier');
- 
-              } 
+              } else {
+                // we use a nullification node for accessed, not nullified, states
+                newList.push('checkNullifier')
+              }
               break;
             case 'newCommitment':
               newList.push(circuitParamNode.bpType);

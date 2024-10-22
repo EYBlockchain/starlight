@@ -25,7 +25,7 @@ class FunctionBoilerplateGenerator {
     		  for (uint i = 0; i < vk.length; i++) {
     			  vks[i] = vk[i];
     		  }
-          newNullifierRoot = Initial_NullifierRoot;`,
+         `,
       ];
     },
 
@@ -67,7 +67,7 @@ class FunctionBoilerplateGenerator {
       let parameter = [
         ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
         .map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.isConstantArray ? `${input.type}[${input.isConstantArray}]` : input.type) : []), // TODO arrays of structs/ structs of arrays
-      `(uint256,uint256,uint256[],uint256,uint256[],uint256[])`,
+      `(uint256[],uint256,uint256[],uint256[])`,
       `uint256[]`,
       `(string,uint256[],uint256)[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
@@ -143,7 +143,8 @@ class FunctionBoilerplateGenerator {
           : []),
         ...(newCommitments ? [`
             // this seems silly (it is) but its the only way to get the event to emit properly
-            emit EncryptedBackupData(BackupData);`]
+            emit EncryptedBackupData(BackupData);
+            `]
           : []),
       ];
     },

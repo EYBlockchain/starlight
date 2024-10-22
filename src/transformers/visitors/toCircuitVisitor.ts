@@ -722,6 +722,7 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
+      
 
       const newNode = buildNode('VariableDeclarationStatement');
       node._newASTPointer = newNode;
@@ -1090,7 +1091,7 @@ const visitor = {
         state.skipSubNodes = true;
         return;
       }
-      let interactsWithSecret = false ;
+      let interactsWithSecret = scope.getReferencedIndicator(node)?.interactsWithSecret ;
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
         const newState: any = {};
         refPath.parentPath.traversePathsFast(
@@ -1574,19 +1575,70 @@ const visitor = {
           } 
         }
       });
-     state.circuitImport ??= [];
-     if(isCircuit)
-       state.circuitImport.push({isImported: 'true', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
-     else
-       state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
-
-
-     const newNode = buildNode('InternalFunctionCall', {
-       name: node.expression.name,
-       internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
-       CircuitArguments: [],
-       CircuitReturn:[],
-     });
+    state.circuitImport ??= [];
+    if(isCircuit)
+      state.circuitImport.push({isImported: 'true', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
+    else
+      state.circuitImport.push({isImported: 'false', modVars: modifiedVariables, callingFunction: callingfnDefPath.node.name});
+    let newNode: any;
+    if(parent.nodeType === 'VariableDeclarationStatement') {
+      state.isReturnInternalFunctionCall = true;
+      state.functionArgs = node.arguments.map(args => args.name);
+      const returnPara = functionReferncedNode.node.returnParameters.parameters[0].name;
+      newNode = buildNode('InternalFunctionCall', {
+        name: returnPara,
+        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
+      });
+        if(parent._newASTPointer.declarations.length > 0){
+        const functionParams = callingfnDefPath.node._newASTPointer.parameters.parameters.map(param => param.name);
+        if(!functionParams.includes(returnPara)){
+          callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
+          callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].declarationType = 'parameter';
+          callingfnDefPath.node._newASTPointer.parameters.parameters[functionParams.length].interactsWithSecret = true;
+        }
+      }
+     let includeExpressionNode = false;
+      // this functions checks if the parent node interact with secret in the calling function or not
+      callingfnDefIndicators[parent.declarations[0].id].interactsWith.forEach( node => {
+        if(node.key != 'arguments' && node.interactsWithSecret)
+        includeExpressionNode = true;
+        })
+          functionReferncedNode.node.body.statements.forEach(exp => {
+            // If the return para interacts with public only in the internal function but with secret in calling function we need this expression in calling function
+          if(exp?.expression.leftHandSide?.name === returnPara && !exp.expression.leftHandSide.interactsWithSecret){
+            let initNode: any;
+            if(['+=', '-=', '*=', '/='].includes(exp.expression.operator)) {
+              initNode = buildNode('BinaryOperation', {
+                leftExpression: exp.expression.leftHandSide,
+                operator: exp.expression.operator.slice(0,-1),
+                rightExpression: exp.expression.rightHandSide,
+              });
+            } else
+            initNode = buildNode('BinaryOperation', {
+              leftExpression: exp.expression.rightHandSide.leftExpression,
+              operator: exp.expression.rightHandSide.operator,
+              rightExpression: exp.expression.rightHandSide.rightExpression,
+            });
+            newNode = buildNode('InternalFunctionCall', {
+              name: returnPara,
+              internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+            });
+            if(includeExpressionNode) { 
+              state.initNode ??= [];
+              state.initNode[ returnPara ] = initNode;
+            } 
+          }
+                
+        })
+      } else
+      { 
+        newNode = buildNode('InternalFunctionCall', {
+        name: node.expression.name,
+        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
+        CircuitArguments: [],
+        CircuitReturn:[],
+      });
+      }
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,
        internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
