@@ -33,6 +33,7 @@ jobs:
 
       - name: compile shield contracts and circuits
         run: |
+          npm init @eslint/config@latest
           npm i solc@^0.8.0 -g
           chmod +x ./test/test-zapp-actions.sh
           TERM=xterm bash ./test/test-zapp-actions.sh
