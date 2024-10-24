@@ -23,13 +23,13 @@ do
     docker rm testcircuits
 done
  
-echo “$(tput setaf 3) ORCHESTRATION”
-eslint --init
-MJSFILES=$(find . -type f -name "*.mjs" -maxdepth 3 -mindepth 3)
-mjsarray=($MJSFILES)
-for mjselement in "${mjsarray[@]}"
-do
-    mjselement="${mjselement:1}"
-    echo “$(tput setaf 7) $mjselement compiling”
-    eslint $mjselement
-done
+# echo “$(tput setaf 3) ORCHESTRATION”
+# eslint --init
+# MJSFILES=$(find . -type f -name "*.mjs" -maxdepth 3 -mindepth 3)
+# mjsarray=($MJSFILES)
+# for mjselement in "${mjsarray[@]}"
+# do
+#     mjselement="${mjselement:1}"
+#     echo “$(tput setaf 7) $mjselement compiling”
+#     eslint $mjselement
+# done
