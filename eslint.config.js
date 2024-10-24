@@ -1,13 +1,19 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
 import pluginTs from "@typescript-eslint/eslint-plugin";
+import parser from "@typescript-eslint/parser";
 
 
 export default [
   {
   languageOptions: { 
    globals: globals.browser,
-   parser: "@typescript-eslint/parser", }},
+   parser: parser, 
+   parserOptions: {
+     ecmaVersion: 2020, 
+     sourceType: "module", 
+   }, 
+  }},
    pluginJs.configs.recommended,
   {
     rules: {
