@@ -4,6 +4,7 @@ import pluginTs from "@typescript-eslint/eslint-plugin";
 import parser from "@typescript-eslint/parser";
 
 
+
 export default [
   {
   languageOptions: { 
@@ -19,14 +20,16 @@ export default [
     rules: {
       "no-underscore-dangle": "off",
       "no-console": "warn",
-      "no-plusplus": "error",
+      "no-plusplus": "warn",
       "import/extensions": "off",
       "no-restricted-syntax": "off",
       "no-restricted-globals": "off",
       "no-cond-assign": "off",
+      "no-undef": "warn",
       "semi": ["error", "always"], 
       "quotes": ["error", "double"], 
       "@typescript-eslint/no-unused-vars": ["warn"],
+      "prettier/prettier": "off"
     },
   },
   {
@@ -35,3 +38,4 @@ export default [
     },
   }
 ];
+

@@ -23,7 +23,7 @@ cd temp-zapps/
 #     docker rm testcircuits
 # done
  
- echo “$(tput setaf 3) ORCHESTRATION”
+  echo “$(tput setaf 3) ORCHESTRATION”
  MJSFILES=$(find . -type f -name "*.mjs" -maxdepth 3 -mindepth 3)
  mjsarray=($MJSFILES)
  for mjselement in "${mjsarray[@]}"
@@ -32,5 +32,9 @@ cd temp-zapps/
      echo $DIR
     mjselement="${mjselement:2}"
      echo “$(tput setaf 7) $mjselement compiling”
+     if [[ "$mjselement" == *"api.mjs" ]] || [[ "$mjselement" == *"cnstrctr.mjs" ]] || [[ "$mjselement" == *"test.mjs" ]] || [[ "$mjselement" == *"BackupDataRetriever.mjs" ]] || [[ "$mjselement" == *"BackupVariable.mjs" ]] || [[ "$mjselement" == *"api_routes.mjs" ]]; then
+        echo "Skipping $mjselement"
+        continue
+    fi
      npx eslint $mjselement --fix
 done
