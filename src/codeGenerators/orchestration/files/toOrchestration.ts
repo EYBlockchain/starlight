@@ -792,7 +792,8 @@ const prepareBackupDataRetriever = (node: any) => {
         let isStruct = false;
         if (varName.includes(" a")) {
           isArray = true;
-        } else if (varName.includes(" s")) {
+        } 
+        if (varName.includes(" s")) {
           isStruct = true;
         }
         const plainText = decrypt(
@@ -843,8 +844,8 @@ const prepareBackupDataRetriever = (node: any) => {
                 genericApiServiceFile += `\nif (stateVarId.integer === 
                   generalise(utils.mimcHash(
                     [
-                      ${stateVar.stateVarId[0]},
-                      generalise(${stateVar.mappingKey}).bigInt,
+                      BigInt(${stateVar.stateVarId[0]}),
+                      generalise(plainText[1]).bigInt,
                     ],
                     "ALT_BN_254"
                   )).integer) {`
@@ -867,7 +868,8 @@ const prepareBackupDataRetriever = (node: any) => {
         let newCommitment;
         if (isStruct){
           let hashInput = [BigInt(stateVarId.hex(32))];
-          for (let i = 2; i < plainText.length; i++) {
+          let start = isArray ? 3 : 2;
+          for (let i = start; i < plainText.length; i++) {
             hashInput.push(BigInt(generalise(plainText[i]).hex(32)));
           }
           hashInput.push(BigInt(publicKey.hex(32)));
