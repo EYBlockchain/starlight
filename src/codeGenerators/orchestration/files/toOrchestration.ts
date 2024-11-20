@@ -809,6 +809,7 @@ const prepareBackupDataRetriever = (node: any) => {
         console.log("Decrypted pre-image of commitment for variable name: " + name + ": ");
         let salt = generalise(plainText[0]);
         console.log(\`\\tSalt: \${salt.integer}\`);
+        let count;
         if (isArray){
           console.log(\`\\tState variable StateVarId: \${plainText[2]}\`);
           mappingKey = generalise(plainText[1]);
@@ -824,31 +825,44 @@ const prepareBackupDataRetriever = (node: any) => {
           );
           stateVarId = reGenStateVarId;
           console.log(\`Regenerated StateVarId: \${reGenStateVarId.bigInt}\`);
-          value = generalise(plainText[3]);
-          console.log(\`\\tValue: \${value.integer}\`);
+          count = 3;
         } else {
           stateVarId = generalise(plainText[1]);
           console.log(\`\\tStateVarId: \${plainText[1]}\`);
-          if (isStruct){
-            value = {};`;
+          count = 2;
+        }
+        if (isStruct){
+          value = {};`;
 
-            node.privateStates.forEach((stateVar: any) => {
-              if (stateVar.structProperties){
-                let propCount = 2;
+          node.privateStates.forEach((stateVar: any) => {
+            if (stateVar.structProperties){
+              let propCount = 2;
+              if (stateVar.mappingKey){
+                propCount++;
+                let reGenStateVarId = 
+                genericApiServiceFile += `\nif (stateVarId.integer === 
+                  generalise(utils.mimcHash(
+                    [
+                      ${stateVar.stateVarId[0]},
+                      generalise(${stateVar.mappingKey}).bigInt,
+                    ],
+                    "ALT_BN_254"
+                  )).integer) {`
+              } else{
                 genericApiServiceFile += `\nif (stateVarId.integer === '${stateVar.stateVarId}') {`
-                stateVar.structProperties.forEach((prop: any) => {
-                  genericApiServiceFile += `value.${prop} = plainText[${propCount}];\n`;
-                  propCount++;
-                });
-                genericApiServiceFile += `}\n`;
               }
-            });
-        
-            genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
-          } else {
-            value = generalise(plainText[2]);
-            console.log(\`\\tValue: \${value.integer}\`);
-          }
+              stateVar.structProperties.forEach((prop: any) => {
+                genericApiServiceFile += `value.${prop} = plainText[${propCount}];\n`;
+                propCount++;
+              });
+              genericApiServiceFile += `}\n`;
+            }
+          });
+      
+          genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
+        } else {
+          value = generalise(plainText[count]);
+          console.log(\`\\tValue: \${value.integer}\`);
         }
         let newCommitment;
         if (isStruct){
