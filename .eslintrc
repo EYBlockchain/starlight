@@ -1,5 +1,10 @@
 {
-  "extends": ["codfish"],
+  "extends": [
+    "codfish",
+    "eslint:recommended",
+    "plugin:react/recommended", 
+    "prettier"
+],
   "parserOptions": {
      "ecmaVersion": 2020,
   },
@@ -10,7 +15,8 @@
     "import/extensions": "off",
     "no-restricted-syntax": "off",
     "no-restricted-globals": "off",
-    "no-cond-assign": "off"
+    "no-cond-assign": "off",
+    "prettier/prettier": "off"
   },
   "globals": {
     "BigInt": true
