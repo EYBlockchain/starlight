@@ -100,7 +100,7 @@ export const sendTransactionBoilerplate = (node: any) => {
               output[0].push(`${privateStateName}_nullifier.integer`);
           }
         }
-        if (!stateNode.burnedOnly)
+        if (!stateNode.accessedOnly && !stateNode.burnedOnly)
           output[2].push(`${privateStateName}_newCommitment.integer`);
         if (stateNode.encryptionRequired) {
           output[4].push(`${privateStateName}_cipherText`);
