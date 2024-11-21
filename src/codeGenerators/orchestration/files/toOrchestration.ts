@@ -600,7 +600,8 @@ const prepareBackupVariable = (node: any) => {
         let isStruct = false;
         if (varName.includes(" a")) {
           isArray = true;
-        } else if (varName.includes(" s")) {
+        } 
+        if (varName.includes(" s")) {
           isStruct = true;
         }
         const plainText = decrypt(
@@ -617,6 +618,7 @@ const prepareBackupVariable = (node: any) => {
         console.log("Decrypted pre-image of commitment for variable name: " + name + ": ");
         let salt = generalise(plainText[0]);
         console.log(\`\\tSalt: \${salt.integer}\`);
+        let count;
         if (isArray){
           console.log(\`\\tState variable StateVarId: \${plainText[2]}\`);
           mappingKey = generalise(plainText[1]);
@@ -632,36 +634,47 @@ const prepareBackupVariable = (node: any) => {
           );
           stateVarId = reGenStateVarId;
           console.log(\`Regenerated StateVarId: \${reGenStateVarId.bigInt}\`);
-          value = generalise(plainText[3]);
-          console.log(\`\\tValue: \${value.integer}\`);
+          count = 3;
         } else {
           stateVarId = generalise(plainText[1]);
           console.log(\`\\tStateVarId: \${plainText[1]}\`);
-          if (isStruct){
-            value = {};`;
-
-            node.privateStates.forEach((stateVar: any) => {
-              if (stateVar.structProperties){
-                let propCount = 2;
+          count = 2;
+        }
+        if (isStruct){
+          value = {};`;
+          node.privateStates.forEach((stateVar: any) => {
+            if (stateVar.structProperties){
+              let propCount = 2;
+              if (stateVar.mappingKey){
+                propCount++;
+                genericApiServiceFile += `\nif (stateVarId.integer === 
+                  generalise(utils.mimcHash(
+                    [
+                      BigInt(${stateVar.stateVarId[0]}),
+                      generalise(plainText[1]).bigInt,
+                    ],
+                    "ALT_BN_254"
+                  )).integer) {`
+              } else {
                 genericApiServiceFile += `\nif (stateVarId.integer === '${stateVar.stateVarId}') {`
-                stateVar.structProperties.forEach((prop: any) => {
-                  genericApiServiceFile += `value.${prop} = plainText[${propCount}];\n`;
-                  propCount++;
-                });
-                genericApiServiceFile += `}\n`;
               }
-            });
-        
-            genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
-          } else {
-            value = generalise(plainText[2]);
-            console.log(\`\\tValue: \${value.integer}\`);
-          }
+              stateVar.structProperties.forEach((prop: any) => {
+                genericApiServiceFile += `value.${prop} = plainText[${propCount}];\n`;
+                propCount++;
+              });
+              genericApiServiceFile += `}\n`;
+            }
+          });
+          genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
+        } else {
+          value = generalise(plainText[count]);
+          console.log(\`\\tValue: \${value.integer}\`);
         }
         let newCommitment;
         if (isStruct){
           let hashInput = [BigInt(stateVarId.hex(32))];
-          for (let i = 2; i < plainText.length; i++) {
+          let start = isArray ? 3 : 2;
+          for (let i = start; i < plainText.length; i++) {
             hashInput.push(BigInt(generalise(plainText[i]).hex(32)));
           }
           hashInput.push(BigInt(publicKey.hex(32)));
@@ -840,7 +853,6 @@ const prepareBackupDataRetriever = (node: any) => {
               let propCount = 2;
               if (stateVar.mappingKey){
                 propCount++;
-                let reGenStateVarId = 
                 genericApiServiceFile += `\nif (stateVarId.integer === 
                   generalise(utils.mimcHash(
                     [
@@ -860,7 +872,7 @@ const prepareBackupDataRetriever = (node: any) => {
             }
           });
       
-          genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
+        genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
         } else {
           value = generalise(plainText[count]);
           console.log(\`\\tValue: \${value.integer}\`);
