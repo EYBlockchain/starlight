@@ -579,8 +579,8 @@ encryptBackupPreimage = {
     } else{
       plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId),
         ${valueName}]`;
-      if (structProperties) varName += ` s`;
     }
+    if (structProperties) varName += ` s`;
     if (stateType === 'increment') varName += ` u`;
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
     let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 

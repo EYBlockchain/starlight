@@ -1511,13 +1511,13 @@ const visitor = {
           }
           i++;
         });      
-
         // check whether this should be a VariableDeclaration
         const firstEdit =
           (firstInstanceOfNewName && indicator.interactsWithSecret) ||
           (!indicator.isStruct && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) ||
-          (indicator.isStruct && indicator instanceof MappingKey && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole);
-          
+          // We want to check the indicator of the struct and not the struct property
+          (indicator.isStruct && indicator instanceof MappingKey && !indicator.isMapping && indicator.container.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole) || 
+          ((indicator.isStruct &&  indicator.isMapping && indicator.modifyingPaths[0]?.node.id === lhs?.id && indicator.isSecret && indicator.isWhole));
         // We should only replace the _first_ assignment to this node. Let's look at the scope's modifiedBindings for any prior modifications to this binding:
         // if its secret and this is the first assigment, we add a vardec
         if (
@@ -1531,7 +1531,6 @@ const visitor = {
             )
               accessed = true;
           });
-
           // we still need to initialise accessed states if they were accessed _before_ this modification
           const accessedBeforeModification = indicator.isAccessed && indicator.accessedPaths[0].node.id < lhs.id && !indicator.accessedPaths[0].isModification();
 
