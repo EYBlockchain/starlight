@@ -50,10 +50,12 @@ module.exports = {
       network_id: 1337, // Any network (default: none)
       gas: 10000000,
     },
-    mumbai: {
+    amoy: {
       networkCheckTimeout: 10000,
       provider: () => new HDWalletProvider(mnemonic, rpcUrl),
-      network_id: 80001,
+      network_id: 80002,
+      gas:8500000,
+      gasPrice:30000000000,
       confirmations: 2,
       timeoutBlocks: 200,
       port: 8545,

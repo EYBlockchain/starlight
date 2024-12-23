@@ -344,17 +344,9 @@ Starlight handles secret initiation in the constructor by creating a proof at th
 
 Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
 
-If you would like to restart the zapp and redeploy the contract, always (with no running docker containers) run:
-
-`./bin/redeploy` <-- creates a new constructor proof and saves the commitment, then deploys the shield contract
-
-`npm run restart` <-- if you'd like to use the APIs, always **restart** rather than **start** since the latter clears your local dbs
-
-Then, if you previously had nullifiers, reinstate them in your local sparse merkle tree by sending a POST to `http://localhost:3000/reinstateNullifiers`.
-
 #### Deploy on public testnets
 
-Apart from local ganache instance, Starlight output zapps can now be deployed in Sepolia, Goerli and Polygon Mumbai as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Mumbai is provided via [maticvigil](https://rpc.maticvigil.com/).
+Apart from local ganache instance, Starlight output zapps can now be deployed in Sepolia, Goerli and Polygon Amoy as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Amoy is provided via [Alchemy](https://www.alchemy.com/).
 
 The configuration can be done during `./bin/setup` phase in the following way.
 
@@ -364,7 +356,7 @@ The configuration can be done during `./bin/setup` phase in the following way.
 
 | option  | description  |
 |:--|:--|
-| `-n`  | Network : Specify testnet you want to connect to. possible options: `mumbai/ sepolia/ goerli`  |
+| `-n`  | Network : Specify testnet you want to connect to. possible options: `amoy/ sepolia/ goerli`  |
 | `-a`  | Ethereum address |
 | `-k`  | Private key of above ethereum address |
 | `-m` -  | 12 letter mnemonic passphrase  |

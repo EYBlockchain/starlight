@@ -88,7 +88,7 @@ module.exports = {
     port: process.env.BLOCKCHAIN_PORT,
   },
   // web3:
-  web3: {
+  web3: {    
     host: process.env.BLOCKCHAIN_HOST,
     port: process.env.BLOCKCHAIN_PORT,
     // url: `${process.env.BLOCKCHAIN_HOST}:${process.env.BLOCKCHAIN_PORT}`,
@@ -96,19 +96,33 @@ module.exports = {
     rpcUrl: process.env.RPC_URL,
     defaultAccountMnemonic: process.env.DEFAULT_ACCOUNT_MNEMONIC,
     key: process.env.KEY,
+    autoReconnectInterval: process.env.BLOCKCHAIN_RECONNECT_INTERVAL || 1000,
 
     options: {
       // defaultAccount: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1',
       defaultAccount: process.env.DEFAULT_ACCOUNT,
-      defaultGas: 5221975,
-      defaultGasPrice: 20000000000,
+      defaultGas: 11511304,
+      defaultGasPrice: 30000000000,
       // defaultBlock: '0', // e.g. the genesis block our blockchain
       // defaultGas: 90000000,
       // defaultGasPrice: 20000000000,
-      // transactionBlockTimeout: 50,
+      transactionBlockTimeout: 150,
       // transactionConfirmationBlocks: 15,
       // transactionPollingTimeout: 480,
       // transactionSigner: new CustomTransactionSigner()
+      clientConfig: {
+        // Useful to keep a connection alive
+        keepalive: true,
+        // Keep keepalive interval small so that socket doesn't die
+        keepaliveInterval: -1,
+      },
+      timeout: 0,
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 120,
+        onTimeout: false,
+      },
     },
   },
 };
