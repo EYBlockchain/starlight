@@ -100,7 +100,7 @@ export const sendTransactionBoilerplate = (node: any) => {
               output[0].push(`${privateStateName}_nullifier.integer`);
           }
         }
-        if (!stateNode.accessedOnly && !stateNode.burnedOnly)
+        if (!stateNode.burnedOnly)
           output[2].push(`${privateStateName}_newCommitment.integer`);
         if (stateNode.encryptionRequired) {
           output[4].push(`${privateStateName}_cipherText`);
@@ -923,6 +923,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
+      
       return {
         statements: [
           `\n\n// Send transaction to the blockchain:
