@@ -3,4 +3,4 @@ set -e
 
 npm install -g ./
 
-tsc
+./node_modules/typescript/bin/tsc

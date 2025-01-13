@@ -44,7 +44,7 @@ rm -rf proving-files
 
 perl -i -pe "s,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,docker-compose.zapp.yml,g" package.json
 
-if [[ $network == 'mumbai' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]]
+if [[ $network == 'amoy' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]]
 then
 perl -i -pe "s,DEFAULT_ACCOUNT: '',DEFAULT_ACCOUNT: \'$account\',g" docker-compose.zapp.override.yml
 perl -i -pe "s,DEFAULT_ACCOUNT_MNEMONIC: '',DEFAULT_ACCOUNT_MNEMONIC: \'$mnemonic\',g" docker-compose.zapp.override.yml
@@ -54,10 +54,10 @@ perl -i -pe "s,docker-compose.zapp.yml,docker-compose.zapp.yml -f docker-compose
 perl -i -pe "s,docker-compose -f docker-compose.zapp.yml up -d ganache, ## up ganache service for ganache,g" bin/startup
 fi
 
-if [[ $network == 'mumbai' ]]
+if [[ $network == 'amoy' ]]
 then
-perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss:\/\/rpc-mumbai.maticvigil.com\/ws\/v1\/$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,mumbai,g" entrypoint.sh
+perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss:\/\/polygon-amoy.g.alchemy.com\/v2\/$rpc\',g" docker-compose.zapp.override.yml
+perl -i -pe "s,development_ganache,amoy,g" entrypoint.sh
 perl -i -pe "s,while,##while,g" entrypoint.sh
 perl -i -pe "s,10,60,g" bin/startup
 fi
