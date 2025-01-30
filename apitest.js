@@ -1,90 +1,197 @@
-import shell from 'shelljs';
 
-const SERVER_URL = 'http://localhost:3000';
+import chai from 'chai';
+import chaiHttp from 'chai-http';
+import chaiAsPromised from 'chai-as-promised';
+import shell from 'shelljs'
+import logger from "./built/utils/logger.js";
+const { expect } = chai;
+chai.use(chaiHttp);
+chai.use(chaiAsPromised);
+let res = [];
 
-// Function to wait for the API to be ready
-const waitForServer = async (retries = 10, delay = 5000) => {
-  for (let i = 0; i < retries; i++) {
-    const response = shell.exec(`curl -s -o /dev/null -w "%{http_code}" ${SERVER_URL}`, { silent: true });
-    if (response.stdout.trim() === "200") {
-      console.log("API is up and running.");
-      return;
-    }
-    console.log(`⏳ Waiting for API to start... Attempt ${i + 1}/${retries}`);
-    await new Promise(resolve => setTimeout(resolve, delay));
-  }
-  throw new Error("API did not start in time.");
-};
-
-// Function to make API calls using curl
-const callAPI = (method, endpoint, data = null) => {
-  const url = `${SERVER_URL}${endpoint}`;
-  let curlCommand = `curl -s -X ${method} "${url}" -H "Content-Type: application/json"`;
-  if (data) {
-    curlCommand += ` -d '${JSON.stringify(data)}'`;
-  }
-  const response = shell.exec(curlCommand, { silent: true });
-  return JSON.parse(response.stdout);
-};
-
-// Step 1: Start the API
-console.log("Starting API...");
 if (shell.exec('./apiactions -z Assign').code !== 0) {
-  shell.echo('apiactions failed to start');
+  shell.echo('assign failed');
   shell.exit(1);
 }
 
-// Step 2: Wait for the API to be ready
-await waitForServer();
 
-// Step 3: Run API requests
-const res = [];
-res[0] = callAPI('POST', '/add', { value: 11 });
-res[1] = callAPI('POST', '/add', { value: 8 });
-res[2] = callAPI('POST', '/remove', { value: 16 });
-res[3] = callAPI('GET', '/getAllCommitments');
-res[4] = callAPI('GET', '/getCommitmentsByVariableName', { name: 'a' });
+// res[0] = await chai
+// .request('localhost:3000')
+// .post('/add')
+// .send({ value: 11 });
 
-// Step 4: Stop and remove the container
-shell.exec('docker stop $(docker ps -q)');
-shell.exec('docker rm apiservice');
+// res[1] = await chai
+// .request('localhost:3000')
+// .post('/add')
+// .send({ value: 8 });
 
-// Step 5: Restart API for another test
+// res[2] = await chai
+// .request('localhost:3000')
+// .post('/remove')
+// .send({ value: 16 });
+
+// res[3] = await chai
+// .request('localhost:3000')
+// .get('/getAllCommitments');
+
+// res[4] = await chai
+// .request('localhost:3000')
+// .get('/getCommitmentsByVariableName')
+// .send({ name: 'a' });
+
+if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+  shell.echo('docker stop failed');
+  shell.exit(1);
+}
+
+if (shell.exec('docker rm apiservice').code !== 0) {
+  shell.echo('docker stop failed');
+  shell.exit(1);
+}
+
 await new Promise(resolve => setTimeout(resolve, 5000));
+
 if (shell.exec('./apiactions -z If-Statement').code !== 0) {
-  shell.echo('IfStatement failed');
+  shell.echo('Ifstatement failed');
   shell.exit(1);
 }
 
-// Step 6: Run next set of API requests
-res[5] = callAPI('POST', '/add', { y: 14 });
-res[6] = callAPI('POST', '/add', { y: 23 });
-res[7] = callAPI('GET', '/getAllCommitments');
-res[8] = callAPI('GET', '/getCommitmentsByVariableName', { name: 'x', mappingKey: '827641930419614124039720421795580660909102123457' });
-res[9] = callAPI('GET', '/getCommitmentsByVariableName', { name: 'z' });
+// res[5] = await chai
+// .request('localhost:3000')
+// .post('/add')
+// .send({ y: 14 });
 
-// Step 7: Stop and remove container again
-shell.exec('docker stop $(docker ps -q)');
-shell.exec('docker rm apiservice');
+// res[6] = await chai
+// .request('localhost:3000')
+// .post('/add')
+// .send({ y: 23 });
 
-// Step 8: Restart API for final test
-await new Promise(resolve => setTimeout(resolve, 5000));
-if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
-  shell.echo('InternalFunctionCallTest1 failed');
-  shell.exit(1);
-}
+// res[7] = await chai
+// .request('localhost:3000')
+// .get('/getAllCommitments');
 
-// Step 9: Run final set of API requests
-res[10] = callAPI('POST', '/add', { value: 46 });
-res[11] = callAPI('POST', '/remove', { value: 33 });
-res[12] = callAPI('GET', '/getAllCommitments');
-res[13] = callAPI('POST', '/add', { value: 63 });
-res[14] = callAPI('POST', '/remove', { value: 55 });
-res[15] = callAPI('GET', '/getAllCommitments');
+// res[8] = await chai
+// .request('localhost:3000')
+// .get('/getCommitmentsByVariableName')
+// .send({ name: 'x', mappingKey: '827641930419614124039720421795580660909102123457'});
 
-// Step 10: Stop and remove container
-shell.exec('docker stop $(docker ps -q)');
-shell.exec('docker rm apiservice');
+// res[9] = await chai
+// .request('localhost:3000')
+// .get('/getCommitmentsByVariableName')
+// .send({ name: 'z'});
 
-// Step 11: Print results (for debugging)
-//console.log(JSON.stringify(res, null, 2));
+// if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+//   shell.echo('docker stop failed');
+//   shell.exit(1);
+// }
+
+// if (shell.exec('docker rm apiservice').code !== 0) {
+//   shell.echo('docker stop failed');
+//   shell.exit(1);
+// }
+
+// await new Promise(resolve => setTimeout(resolve, 5000));
+// if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
+//   shell.echo('InternalFunctionCallTest1 failed');
+//   shell.exit(1);
+// }
+//     res[10] = await chai
+//       .request('localhost:3000')
+//       .post('/add')
+//       .send({ value: 46 });
+
+//       res[11] = await chai
+//       .request('localhost:3000')
+//       .post('/remove')
+//       .send({ value: 33});
+
+//       res[12] = await chai
+//       .request('localhost:3000')
+//       .get('/getAllCommitments');
+
+//       res[13] = await chai
+//       .request('localhost:3000')
+//       .post('/add')
+//       .send({ value: 63 });
+
+//       res[14] = await chai
+//       .request('localhost:3000')
+//       .post('/remove')
+//       .send({ value: 55});
+
+
+//       res[15] = await chai
+//       .request('localhost:3000')
+//       .get('/getAllCommitments');
+
+//       if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+//         shell.echo('docker stop failed');
+//         shell.exit(1);
+//       }
+
+
+//       if (shell.exec('docker rm apiservice').code !== 0) {
+//         shell.echo('docker stop failed');
+//         shell.exit(1);
+//       }
+      
+//     describe('Assign Zapp', () => {
+//       it('tests APIs are working', async () => {
+//         expect(res[0].body.tx.event).to.equal('NewLeaves');
+//         expect(res[1].body.tx.event).to.equal('NewLeaves');
+//         expect(res[2].body.tx.event).to.equal('NewLeaves');
+//       });
+//       it('MinLeaf Index check', async () => {
+//         expect(parseInt(res[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+//         expect(parseInt(res[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+//         expect(parseInt(res[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+//       });
+//       it('Check commitments', async () => {
+//         expect(res[3].body.commitments.length).to.equal(3);
+//       });
+//       it('Check nullified commitments', async () => {
+//         expect(res[4].body.commitments[0].isNullified).to.equal(true);
+//         expect(res[4].body.commitments[1].isNullified).to.equal(true);
+//         expect(res[4].body.commitments[2].isNullified).to.equal(false);
+//       });
+//     });
+
+//     describe('If-Statement Zapp', () => {
+//       it('tests APIs are working', async () => {
+//         expect(res[5].body.tx.event).to.equal('NewLeaves');
+//         expect(res[6].body.tx.event).to.equal('NewLeaves');
+//       });
+//       it('test MappingKey response', async () => {
+//         expect(res[7].body.commitments.length).to.equal(2);
+//         expect(res[7].body.commitments[0].isNullified).to.equal(true);
+//         expect(res[7].body.commitments[1].isNullified).to.equal(false);
+//       });
+//       it('test stateVarId ', async () => {
+//         expect(res[9].body.commitments[0].preimage.stateVarId).to.equal(res[9].body.commitments[1].preimage.stateVarId);
+//         expect(res[9].body.commitments[0].isNullified).to.equal(true);
+//         expect(res[9].body.commitments[1].isNullified).to.equal(false);
+//       });
+//     });
+
+//     describe('InternalFunctionCallTest2 Zapp', () => {
+//       it('tests APIs are working', async () => {
+//         expect(res[10].body.tx.event).to.equal('NewLeaves');
+//         expect(res[11].body.tx.event).to.equal('NewLeaves');
+//         expect(res[13].body.tx.event).to.equal('NewLeaves');
+//         expect(res[14].body.tx.event).to.equal('NewLeaves');
+//       });
+//       it('Check value after internal function call intialize', async () => {
+//         expect(res[12].body.commitments[0].isNullified).to.equal(true);
+//         expect(res[12].body.commitments[1].isNullified).to.equal(false);
+//         expect(parseInt(res[12].body.commitments[0].preimage.value)).to.equal(92);
+//         expect(parseInt(res[12].body.commitments[1].preimage.value)).to.equal(125);
+//       });
+//       it('Check value after internal function call after update', async () => {
+//         expect(res[15].body.commitments[0].isNullified).to.equal(true);
+//         expect(res[15].body.commitments[1].isNullified).to.equal(true);
+//         expect(res[15].body.commitments[2].isNullified).to.equal(true);
+//         expect(res[15].body.commitments[3].isNullified).to.equal(false);
+//         expect(parseInt(res[15].body.commitments[2].preimage.value)).to.equal(251);
+//         expect(parseInt(res[15].body.commitments[3].preimage.value)).to.equal(306);
+//       });
+//     });
