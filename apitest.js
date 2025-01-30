@@ -14,6 +14,8 @@ if (shell.exec('./apiactions -z Assign').code !== 0) {
   shell.exit(1);
 }
 
+await waitForServer('http://localhost:3000');
+
 res[0] = await chai
 .request('localhost:3000')
 .post('/add')
