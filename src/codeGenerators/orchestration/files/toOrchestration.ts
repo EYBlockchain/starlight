@@ -1012,7 +1012,6 @@ export default function fileGenerator(node: any) {
       const setupfile = files.filter(obj =>
         obj.filepath.includes(`zkp-setup`),
       )[0];
-      console.log(files);
       const migrationsfile = files.filter(obj =>
         obj.filepath.includes(`deploy`),
       )[0];
