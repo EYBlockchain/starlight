@@ -11,6 +11,10 @@ function saveMetadata (
   const projectFolder = process.env.PROJECT_PATH || '/app'
   const buildFolder = projectFolder + '/build/contracts/'
 
+  if (!fs.existsSync(buildFolder)) {
+        fs.mkdirSync(buildFolder, { recursive: true });
+      }
+
   const deployedFileName = buildFolder + contractName + '.json'
 
   let deployedMetadata = {
