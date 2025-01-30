@@ -5,16 +5,17 @@ import chaiAsPromised from 'chai-as-promised';
 import shell from 'shelljs'
 import logger from "./built/utils/logger.js";
 const { expect } = chai;
-
+chai.use(chaiHttp);
+chai.use(chaiAsPromised);
+let res = [];
 
 if (shell.exec('./apiactions -z Assign').code !== 0) {
   shell.echo('assign failed');
   shell.exit(1);
 }
 
-chai.use(chaiHttp);
-chai.use(chaiAsPromised);
-let res = [];
+// wait for above shell command to execute
+await new Promise(resolve => setTimeout(resolve, 5000));
 
 
 res[0] = await chai
