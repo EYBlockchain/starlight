@@ -2,13 +2,10 @@ FROM node:18.19
 
 WORKDIR /app
 
-RUN apt-get update -y
-RUN apt-get install -y netcat-openbsd
-
 COPY ./package.json ./package-lock.json ./
 RUN npm ci
-COPY entrypoint.sh entrypoint.sh
+COPY deploy.sh deploy.sh
 COPY migrations migrations
-COPY truffle-config.js truffle-config.js
-RUN chmod +x entrypoint.sh
-ENTRYPOINT ["./entrypoint.sh"]
+COPY hardhat.config.js hardhat.config.js
+RUN chmod +x deploy.sh
+CMD ["./deploy.sh"]

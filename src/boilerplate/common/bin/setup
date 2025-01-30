@@ -36,7 +36,7 @@ done
 
 cp docker-compose.zapp.override.default.yml docker-compose.zapp.override.yml
 
-cp entrypoint_default.sh entrypoint.sh
+cp deploy_default.sh deploy.sh
 
 
 
@@ -57,8 +57,8 @@ fi
 if [[ $network == 'amoy' ]]
 then
 perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss:\/\/polygon-amoy.g.alchemy.com\/v2\/$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,amoy,g" entrypoint.sh
-perl -i -pe "s,while,##while,g" entrypoint.sh
+perl -i -pe "s,development_ganache,amoy,g"deploy.sh
+perl -i -pe "s,while,##while,g" deploy.sh
 perl -i -pe "s,10,60,g" bin/startup
 fi
 
@@ -66,16 +66,16 @@ fi
 if [[ $network == 'sepolia' ]]
 then
 perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss://sepolia.infura.io/ws/v3//$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,sepolia,g" entrypoint.sh
-perl -i -pe "s,while,##while,g" entrypoint.sh
+perl -i -pe "s,development_ganache,sepolia,g" deploy.sh
+perl -i -pe "s,while,##while,g" deploy.sh
 perl -i -pe "s,10,500,g" bin/startup
 fi
 
 if [[ $network == 'goerli' ]]
 then
 perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss://goerli.infura.io/ws/v3/$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,goerli,g" entrypoint.sh
-perl -i -pe "s,while,##while,g" entrypoint.sh
+perl -i -pe "s,development_ganache,goerli,g" deploy.sh
+perl -i -pe "s,while,##while,g" deploy.sh
 perl -i -pe "s,10,500,g" bin/startup
 fi
 

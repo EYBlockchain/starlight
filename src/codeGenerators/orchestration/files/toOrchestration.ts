@@ -382,7 +382,7 @@ return file.file;
 
 const prepareMigrationsFile = (file: localFile, node: any) => {
   // insert filepath and replace with our contract and function names
-  file.filepath = `./migrations/2_shield.js`;
+  file.filepath = `./migrations/deploy.js`;
   file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
   file.file = file.file.replace(
     /FUNCTION_NAMES/g,
@@ -437,7 +437,6 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
         const check = fs.existsSync(`./contracts/${newPath}`);
         if (check) {
           // if we can find the imported contract, we add it to migrations
-          customImports += `const ${importedContractName} = artifacts.require("${importedContractName}"); \n`;
           if (
             importedContractName === 'ERC20' ||
             importedContractName === 'ERC721' || importedContractName === 'ERC1155'
@@ -447,18 +446,38 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
               `It looks like you're using an ERC contract - please make sure you increase the allowance of the shield contract before testing!`,
             );
             switch (importedContractName) {
-              case 'ERC20': customDeployments += `await deployer.deploy(${importedContractName}, 'MyCoin', 'MC'); \n`;
+              case 'ERC20': customDeployments += `const ERC20 = await hre.ethers.getContractFactory('contracts/ERC20.sol:ERC20') \n
+                                      const erc20 = await ERC20.deploy(
+                                        'MyCoin',
+                                        'MC'
+                                      ) \n
+                                      await erc20.waitForDeployment() \n
+                                      const erc20Address = await erc20.getAddress() \n
+                                      console.log('ERC20 deployed to:', erc20Address) \n
+                                      deployTx = await erc20.deploymentTransaction().wait() \n
+                                      saveMetadata(erc20Address, 'ERC20', chainId, blockNumber, deployTx.hash) \n`;
               break;
               case 'ERC721':
-                customDeployments += `await deployer.deploy(${importedContractName}); \n`;
+                customDeployments += `const ERC721 = await hre.ethers.getContractFactory('contracts/ERC721.sol:ERC721') \n
+                                      const erc721 = await ERC721.deploy() \n
+                                      await erc721.waitForDeployment() \n
+                                      const erc721Address = await erc721.getAddress() \n
+                                      console.log('ERC721 deployed to:', erc721Address) \n
+                                      deployTx = await erc721.deploymentTransaction().wait() \n
+                                      saveMetadata(erc721Address, 'ERC721', chainId, blockNumber, deployTx.hash) \n \n`;
                 break;
               case 'ERC1155':
-                customDeployments += `await deployer.deploy(${importedContractName}, https://Mytokens.example/api/item/{id}.json); \n`;
+                customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('contracts/ERC1155Token.sol:ERC1155Token') \n
+                                      const erc1155 = await ERC1155.deploy() \n
+                                      await erc1155.waitForDeployment() \n
+                                      erc1155Address = await erc1155.getAddress() \n
+                                      console.log('ERC1155 deployed to:', erc1155Address) \n 
+                                      deployTx = await erc1155.deploymentTransaction().wait() \n
+                                      saveMetadata(erc1155Address, 'ERC1155Token', chainId, blockNumber, deployTx.hash) \n
+                                    \n`;
                 break; 
             }
-          } else {
-            customDeployments += `await deployer.deploy(${importedContractName}); \n`;
-          }
+          } 
         }
         // for each address in the shield contract constructor...
         constructorAddrParams.forEach(name => {
@@ -486,7 +505,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
       customImports += `const ${name} = process.env.DEFAULT_ACCOUNT; \n`;
       logger.warn(
         `Looks like you are using a constructor with a public address ${name}. This will be set to the default account address.
-        If you'd like to change it, edit the variable in migrations/2_shield.js in the output zApp.`
+        If you'd like to change it, edit the variable in migrations/deploy.js in the output zApp.`
       );
     });
   }
@@ -505,7 +524,6 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   // we need to add a comma if we have 1+ constructor param
   if (constructorParams?.length >= 1) constructorParams[constructorParams.length - 1] += `,`;
   // finally, import all above findings to the migrationsfile
-  file.file = file.file.replace(/CUSTOM_CONTRACT_IMPORT/g, customImports);
   file.file = file.file.replace(/CUSTOM_CONTRACTS/g, customDeployments);
   file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParams);
   file.file = file.file.replace(/CUSTOM_PROOF_IMPORT/g, customProofImport);
@@ -976,7 +994,7 @@ export default function fileGenerator(node: any) {
         [
           `import './common/write-vk.mjs'`,
           `import './common/zkp-setup.mjs'`,
-          `import './common/migrations/2_shield.js'`,
+          `import './common/migrations/deploy.js'`,
         ].join('\n'),
         'orchestration',
       );
@@ -994,8 +1012,9 @@ export default function fileGenerator(node: any) {
       const setupfile = files.filter(obj =>
         obj.filepath.includes(`zkp-setup`),
       )[0];
+      console.log(files);
       const migrationsfile = files.filter(obj =>
-        obj.filepath.includes(`shield`),
+        obj.filepath.includes(`deploy`),
       )[0];
 
       if (node.functionNames.includes('cnstrctr')) {

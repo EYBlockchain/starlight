@@ -924,8 +924,8 @@ zappFilesBoilerplate = () => {
       generic: false,
     },
     {
-      readPath: pathPrefix + '/migrations/1_initial_migration.js',
-      writePath: 'migrations/1_initial_migration.js',
+      readPath: pathPrefix + '/migrations/metadata.js',
+      writePath: 'migrations/metadata.js',
       generic: true,
     },
     {
@@ -974,18 +974,18 @@ zappFilesBoilerplate = () => {
       generic: true,
     },
     {
-      readPath: pathPrefix + '/entrypoint.sh',
-      writePath: './entrypoint.sh',
+      readPath: pathPrefix + '/deploy.sh',
+      writePath: './deploy.sh',
       generic: true,
     },
     {
-      readPath: pathPrefix + '/entrypoint.sh',
-      writePath: './entrypoint_default.sh',
+      readPath: pathPrefix + '/deploy.sh',
+      writePath: './deploy_default.sh',
       generic: true,
     },
     {
-      readPath: pathPrefix + '/truffle-config.js',
-      writePath: './truffle-config.js',
+      readPath: pathPrefix + '/hardhat.config.js',
+      writePath: './hardhat.config.js',
       generic: true,
     },
     {

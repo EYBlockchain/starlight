@@ -36,7 +36,7 @@ export const collectImportFiles = (
         line =>
           (line.includes(`.mjs`) ||
             line.includes(`.json`) ||
-            line.includes(`shield.js`)) &&
+            line.includes(`deploy.js`)) &&
           !line.includes('return') &&
           line.includes('import'),
       );
