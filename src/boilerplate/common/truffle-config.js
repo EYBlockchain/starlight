@@ -61,6 +61,17 @@ module.exports = {
       port: 8545,
       skipDryRun: true
     },
+    cardona: {
+      networkCheckTimeout: 10000,
+      provider: () => new HDWalletProvider(mnemonic, rpcUrl),
+      network_id: 2442,
+      gas:8500000,
+      gasPrice:4000000000000, 
+      confirmations: 2,
+      timeoutBlocks: 200,
+      port: 8545,
+      skipDryRun: true
+    },
     sepolia: {
       provider: () => new HDWalletProvider(mnemonic, rpcUrl),
       network_id: 11155111,
