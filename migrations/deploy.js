@@ -31,7 +31,7 @@ async function main () {
     const verifierAddress = await verifier.getAddress();
     let blockNumber = await hre.ethers.provider.getBlockNumber();
     let deployTx = await verifier.deploymentTransaction().wait()
-    console.log('SwapShield deployed to:', contractAddress, 'tx hash:', deployTx.hash);
+    console.log('Verifier deployed to:', contractAddress, 'tx hash:', deployTx.hash);
    saveMetadata(verifierAddress, 'Verifier', chainId, blockNumber, deployTx.hash);
     console.log('Verifier deployed to:', verifierAddress);
 	
@@ -42,9 +42,9 @@ async function main () {
     await contractShield.waitForDeployment();
     const contractAddress = await contractShield.getAddress();
     blockNumber = await hre.ethers.provider.getBlockNumber();
-    console.log('SwapShield deployed to:', contractAddress);
+    console.log('CONTRACT_NAME deployed to:', contractAddress);
     deployTx = await contractShield.deploymentTransaction().wait()
-    console.log('SwapShield deployed to:', contractAddress, 'tx hash:', deployTx.hash);
+    console.log('CONTRACT_NAME deployed to:', contractAddress, 'tx hash:', deployTx.hash);
    saveMetadata(contractAddress, 'CONTRACT_NAME', chainId, blockNumber, deployTx.hash);
    console.log("Deployment successful! Exiting...");
         
