@@ -9,7 +9,7 @@ done
 cd temp-zapps/$zapp
 npm install
 chmod +x ./bin/setup && chmod +x ./bin/startup
-./bin/setup && ./bin/startup
+npm run apitest
 sleep 20
 
 
