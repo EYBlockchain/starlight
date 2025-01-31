@@ -22,7 +22,7 @@ res[0] = await chai
 .request('localhost:3000')
 .post('/add')
 .send({ value: 11 });
-console.log(res[0].body.tx.event);
+console.log(res[0]);
 
 res[1] = await chai
 .request('localhost:3000')
