@@ -346,7 +346,7 @@ Since this inevitably creates a commitment to be sent your local db, simply rest
 
 #### Deploy on public testnets
 
-Apart from local ganache instance, Starlight output zapps can now be deployed in Sepolia, Goerli and Polygon Amoy as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints and that of Polygon Amoy is provided via [Alchemy](https://www.alchemy.com/).
+Apart from local ganache instance, Starlight output zapps can now be deployed in Sepolia, Goerli, Polygon Amoy and Polygon Cardona as cli options. Connection to Sepolia and Goerli are made through [infura](https://infura.io/) endpoints, for Polygon Amoy via [Alchemy](https://www.alchemy.com/) and for Cardona via [Blast](https://blastapi.io/public-api/polygon-zkevm).
 
 The configuration can be done during `./bin/setup` phase in the following way.
 
