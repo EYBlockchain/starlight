@@ -2,7 +2,7 @@ require('@nomicfoundation/hardhat-toolbox')
 require('hardhat-contract-sizer')
 
 const rpcUrl = process.env.RPC_URL;
-const mnemonic = process.env.DEFAULT_ACCOUNT_MNEMONIC;
+const accountKey = process.env.KEY;
 module.exports = {
     defaultNetwork: 'localhost',
   networks: {
@@ -14,23 +14,31 @@ module.exports = {
         timeout: 20000000
         },
     amoy: {
-        url: rpcUrl,
-        accounts: mnemonic,
-        chainId: 80002,
-        gas: 8500000,
-        gasPrice: 30000000000, // 30 Gwei
-        timeout: 200000,
-      },
+      url: rpcUrl,
+      accounts: [accountKey,],
+      chainId: 80002,
+      gas: 8500000,
+      gasPrice: 30000000000, // 30 Gwei
+      timeout: 200000,
+    },
+    cardona: {
+      url: rpcUrl,
+      accounts:[accountKey,],
+      chainId: 2442,
+      gas: 15000000,
+      gasPrice: 90000000000, // 30 Gwei
+      timeout: 200000,
+    },
     sepolia: {
       url: rpcUrl,
-      accounts: mnemonic,
+      accounts: [accountKey,],
       chainId: 11155111,
       gas:8500000,
       timeout: 20000000
     },
     goerli: {
       url: rpcUrl,
-      accounts: mnemonic,
+      accounts: [accountKey,],
       chainId: 5,
       gas: 8500000,
       timeout: 20000000,
