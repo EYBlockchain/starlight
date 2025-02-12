@@ -924,6 +924,11 @@ zappFilesBoilerplate = () => {
       generic: false,
     },
     {
+      readPath: pathPrefix + '/config/default.js',
+      writePath: '/config/default_standard.js',
+      generic: false,
+    },
+    {
       readPath: pathPrefix + '/migrations/metadata.js',
       writePath: 'migrations/metadata.js',
       generic: true,

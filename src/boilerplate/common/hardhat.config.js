@@ -26,7 +26,23 @@ module.exports = {
       accounts:[accountKey,],
       chainId: 2442,
       gas: 15000000,
-      gasPrice: 90000000000, // 30 Gwei
+      gasPrice: 5,
+      timeout: 200000,
+    },
+    zkEVM: {
+      url: rpcUrl,
+      accounts:[accountKey,],
+      chainId: 1101,
+      gas: 15000000,
+      gasPrice: 5,
+      timeout: 200000,
+    },
+    "base-mainnet": {
+      url: rpcUrl,
+      accounts:[accountKey,],
+      chainId: 8453,
+      gas: 15000000,
+      gasPrice: 5000000,
       timeout: 200000,
     },
     sepolia: {
