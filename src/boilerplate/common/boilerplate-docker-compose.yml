@@ -1,5 +1,3 @@
-version: '3.5'
-
 services:
   zapp-setup:
     ports:
@@ -31,8 +29,8 @@ services:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
       RPC_URL: ws://ganache:8545
-      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
-      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
+      DEFAULT_ACCOUNT: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
       LOG_LEVEL: info
       MONGO_HOST: mongodb://zapp-mongo
       MONGO_PORT: 27019
@@ -76,8 +74,8 @@ services:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
       RPC_URL: ws://ganache:8545
-      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
-      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
+      DEFAULT_ACCOUNT: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
       CONTRACT_LOCATION: 'default'
       MONGO_HOST: mongodb://timber-mongo
       MONGO_PORT: 27017
@@ -115,12 +113,18 @@ services:
     networks:
       - zapp_network
 
-  
   ganache:
-    image: trufflesuite/ganache:v7.4.4
-    command: --accounts=10 --gasLimit=100000000 --deterministic -i 1337
+    image: ethereumoptimism/hardhat-node
     ports:
-      - '8545:8545'
+      - "8545:8545"
+    networks:
+      - zapp_network
+
+  hardhat-node:
+    image: trufflesuite/ganache:v7.4.4
+    command: --accounts=10  --miner.defaultTransactionGasLimit=200000000000 --gasLimit=2000000000000 --chain.allowUnlimitedContractSize --gasPrice=1 --deterministic -i 1337
+    ports:
+      - "8545:8545"
     networks:
       - zapp_network
 
@@ -133,11 +137,9 @@ services:
       - ./contracts/:/app/contracts/
       - ./orchestration/:/app/orchestration:delegated
     environment:
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
-      RPC_URL: ws://ganache:8545
-      DEFAULT_ACCOUNT: '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'
-      KEY: '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d'
+      RPC_URL: http://ganache:8545
+      DEFAULT_ACCOUNT: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     networks:
       - zapp_network
 

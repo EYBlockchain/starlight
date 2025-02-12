@@ -3,6 +3,10 @@ set -e
 
 docker compose -f docker-compose.zapp-double.yml down -v
 
+set +e
+docker kill $(docker ps -a -q)
+docker network rm zapp_network
+
 echo "Starting ganache..."
 
 docker compose -f docker-compose.zapp-double.yml up -d ganache $BUILD_ARG

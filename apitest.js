@@ -14,10 +14,15 @@ if (shell.exec('./apiactions -z Assign').code !== 0) {
   shell.exit(1);
 }
 
+// wait for above shell command to execute
+await new Promise(resolve => setTimeout(resolve, 5000));
+
+
 res[0] = await chai
 .request('localhost:3000')
 .post('/add')
 .send({ value: 11 });
+console.log(res[0]);
 
 res[1] = await chai
 .request('localhost:3000')
@@ -39,11 +44,6 @@ res[4] = await chai
 .send({ name: 'a' });
 
 if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
-  shell.echo('docker stop failed');
-  shell.exit(1);
-}
-
-if (shell.exec('docker rm apiservice').code !== 0) {
   shell.echo('docker stop failed');
   shell.exit(1);
 }
@@ -84,10 +84,6 @@ if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
   shell.exit(1);
 }
 
-if (shell.exec('docker rm apiservice').code !== 0) {
-  shell.echo('docker stop failed');
-  shell.exit(1);
-}
 
 await new Promise(resolve => setTimeout(resolve, 5000));
 if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
@@ -128,11 +124,6 @@ if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
         shell.exit(1);
       }
 
-
-      if (shell.exec('docker rm apiservice').code !== 0) {
-        shell.echo('docker stop failed');
-        shell.exit(1);
-      }
       
     describe('Assign Zapp', () => {
       it('tests APIs are working', async () => {

@@ -36,47 +36,74 @@ done
 
 cp docker-compose.zapp.override.default.yml docker-compose.zapp.override.yml
 
-cp entrypoint_default.sh entrypoint.sh
+cp deploy_default.sh deploy.sh
 
+cp config/default_standard.js config/default.js
+
+cp bin/default_startup bin/startup
 
 
 rm -rf proving-files
 
 perl -i -pe "s,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,docker-compose.zapp.yml,g" package.json
 
-if [[ $network == 'amoy' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]]
+if [[ $network == 'amoy' ]] || [[ $network == 'sepolia' ]] || [[ $network == 'goerli' ]] || [[ $network == 'cardona' ]]|| [[ $network == 'zkEVM' ]] || [[ $network == 'base-mainnet' ]]
 then
 perl -i -pe "s,DEFAULT_ACCOUNT: '',DEFAULT_ACCOUNT: \'$account\',g" docker-compose.zapp.override.yml
 perl -i -pe "s,DEFAULT_ACCOUNT_MNEMONIC: '',DEFAULT_ACCOUNT_MNEMONIC: \'$mnemonic\',g" docker-compose.zapp.override.yml
 perl -i -pe "s,KEY: '',KEY: \'$key\',g" docker-compose.zapp.override.yml
 perl -i -pe "s,docker-compose.zapp.yml up,docker-compose.zapp.yml -f docker-compose.zapp.override.yml up,g" bin/startup
 perl -i -pe "s,docker-compose.zapp.yml,docker-compose.zapp.yml -f docker-compose.zapp.override.yml,g" package.json
-perl -i -pe "s,docker-compose -f docker-compose.zapp.yml up -d ganache, ## up ganache service for ganache,g" bin/startup
+perl -i -pe "s,docker compose -f docker-compose.zapp.yml -f docker-compose.zapp.override.yml up -d ganache, ## up ganache service for ganache,g" bin/startup
+perl -i -pe "s,! nc -z localhost 8545,false,g" bin/startup
 fi
 
 if [[ $network == 'amoy' ]]
 then
-perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss:\/\/polygon-amoy.g.alchemy.com\/v2\/$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,amoy,g" entrypoint.sh
-perl -i -pe "s,while,##while,g" entrypoint.sh
-perl -i -pe "s,10,60,g" bin/startup
+perl -i -pe "if (!\$found1 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/polygon-amoy.g.alchemy.com\/v2\/$rpc'/) { \$found1 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found2 && s/RPC_URL: ''/RPC_URL: 'https:\/\/polygon-amoy.g.alchemy.com\/v2\/$rpc'/) { \$found2 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found3 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/polygon-amoy.g.alchemy.com\/v2\/$rpc'/) { \$found3 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "s,migrations/deploy.js,migrations/deploy.js --network amoy,g" deploy.sh
 fi
 
 
 if [[ $network == 'sepolia' ]]
 then
 perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss://sepolia.infura.io/ws/v3//$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,sepolia,g" entrypoint.sh
-perl -i -pe "s,while,##while,g" entrypoint.sh
-perl -i -pe "s,10,500,g" bin/startup
+perl -i -pe "s,migrations/deploy.js,migrations/deploy.js --network sepolia,g" deploy.sh
 fi
 
 if [[ $network == 'goerli' ]]
 then
 perl -i -pe "s,RPC_URL: '',RPC_URL: \'wss://goerli.infura.io/ws/v3/$rpc\',g" docker-compose.zapp.override.yml
-perl -i -pe "s,development_ganache,goerli,g" entrypoint.sh
-perl -i -pe "s,while,##while,g" entrypoint.sh
-perl -i -pe "s,10,500,g" bin/startup
+perl -i -pe "s,migrations/deploy.js,migrations/deploy.js --network goerli,g" deploy.sh
+fi
+
+if [[ $network == 'cardona' ]]
+then
+perl -i -pe "if (!\$found1 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/polygon-zkevm-cardona.blastapi.io\/$rpc'/) { \$found1 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found2 && s/RPC_URL: ''/RPC_URL: 'https:\/\/polygon-zkevm-cardona.blastapi.io\/$rpc'/) { \$found2 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found3 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/polygon-zkevm-cardona.blastapi.io\/$rpc'/) { \$found3 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "s,migrations/deploy.js,migrations/deploy.js --network cardona,g" deploy.sh
+perl -i -pe "s,defaultGasPrice: 30000000000,defaultGasPrice: 5,g" config/default.js
+fi
+
+if [[ $network == 'zkEVM' ]]
+then
+perl -i -pe "if (!\$found1 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/polygon-zkevm-mainnet.blastapi.io\/$rpc'/) { \$found1 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found2 && s/RPC_URL: ''/RPC_URL: 'https:\/\/polygon-zkevm-mainnet.blastapi.io\/$rpc'/) { \$found2 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found3 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/polygon-zkevm-mainnet.blastapi.io\/$rpc'/) { \$found3 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "s,migrations/deploy.js,migrations/deploy.js --network zkEVM,g" deploy.sh
+perl -i -pe "s,defaultGasPrice: 30000000000,defaultGasPrice: 5,g" config/default.js
+fi
+
+if [[ $network == 'base-mainnet' ]]
+then
+perl -i -pe "if (!\$found1 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/base-mainnet.g.alchemy.com\/v2\/$rpc'/) { \$found1 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found2 && s/RPC_URL: ''/RPC_URL: 'https:\/\/base-mainnet.g.alchemy.com\/v2\/$rpc'/) { \$found2 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "if (!\$found3 && s/RPC_URL: ''/RPC_URL: 'wss:\/\/base-mainnet.g.alchemy.com\/v2\/$rpc'/) { \$found3 = 1 }" docker-compose.zapp.override.yml
+perl -i -pe "s,migrations/deploy.js,migrations/deploy.js --network base-mainnet,g" deploy.sh
+perl -i -pe "s,defaultGasPrice: 30000000000,//defaultGasPrice: 30000000000,g" config/default.js
 fi
 
 if [ ! -d "proving-files" ]; then

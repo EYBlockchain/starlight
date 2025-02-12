@@ -3,6 +3,10 @@ set -e
 
 docker compose -f docker-compose.zapp.yml down -v
 
+set +e
+docker kill $(docker ps -a -q)
+docker network rm zapp_network
+
 # Wait for all containers from the docker-compose.zapp.yml configuration to be removed
 while docker compose -f docker-compose.zapp.yml ps | grep -q 'Up'; do
   sleep 1
@@ -15,6 +19,9 @@ docker compose -f docker-compose.zapp.yml up -d zokrates
 while ! nc -z localhost 8545; do
   sleep 1
 done
+
+echo "Waiting for 30 seconds before starting the deployer..."
+sleep 30
 
 # Get the ID of the zokrates container
 container_id_zokrates=$(docker compose -f docker-compose.zapp.yml ps -q zokrates)
@@ -40,11 +47,6 @@ if [ "$exit_code" -eq 1 ]; then
   echo "Deployer container failed with exit code 1, exiting."
   exit 1
 fi
-
-# Wait for the deployer container to be ready
-while ! docker logs "$container_id" 2>&1 | grep -q "Saving migration to chain."; do
-  sleep 1
-done
 
 
 docker compose -f docker-compose.zapp.yml up -d timber
