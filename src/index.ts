@@ -20,7 +20,12 @@ const zappify = (options: any) => {
   const solAST = compile(deDecoratedFile, options);
 
   const zolAST = redecorate(solAST, toRedecorate, options);
-
+  const lastSlashIndex = options.inputFilePath.lastIndexOf('/');
+  const uuidsub = options.inputFilePath.substring(0, lastSlashIndex);
+  const uuidzapp = options.inputFilePath.substring(lastSlashIndex + 1);
+  zolAST.nodes[1].uuidsub = uuidsub;
+  zolAST.nodes[1].uuidzapp = uuidzapp;
+;
   let path = checks(zolAST);
 
   path = ownership(path, options);

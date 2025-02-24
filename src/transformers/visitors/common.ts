@@ -36,8 +36,11 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
   }
   if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
     newNodes.calculateCommitmentNode = buildNode('CalculateCommitment');
+  let uuidsub = path.getAncestorOfType("ContractDefinition").node.uuidsub;
+  let uuidzapp = path.getAncestorOfType("ContractDefinition").node.uuidzapp;
+  let uuid = uuidsub + '/' + uuidzapp;
   newNodes.generateProofNode = buildNode('GenerateProof', {
-    circuitName: node.fileName,
+    circuitName: uuid + '/' + node.fileName,
   });
   if (fnIndicator.newCommitmentsRequired || fnIndicator.internalFunctionInteractsWithSecret)
     newNodes.encryptBackupPreimageNode = buildNode('EncryptBackupPreimage');
