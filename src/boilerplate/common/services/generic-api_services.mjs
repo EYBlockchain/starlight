@@ -42,7 +42,10 @@ export class ServiceManager{
     const { tx , encEvent, encBackupEvent, _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
-    res.send({tx, encEvent, encBackupEvent, _RESPONSE_});
+    const txSerialized = serializeBigInt(tx);
+    const encEventSerialized = serializeBigInt(encEvent);
+    const encBackupEventSerialized = serializeBigInt(encBackupEvent);
+    res.send({ tx: txSerialized, encEvent: encEventSerialized, encBackupEvent: encBackupEventSerialized, _RESPONSE_ });
     // reassigns leafIndex to the index of the first commitment added by this function
     if (tx.event) {
       leafIndex = tx.returnValues[0];

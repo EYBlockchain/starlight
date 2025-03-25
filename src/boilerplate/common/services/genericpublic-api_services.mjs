@@ -14,7 +14,8 @@ let encryption = {};
     const { tx , _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
-    res.send({tx, _RESPONSE_});
+    const txSerialized = serializeBigInt(tx);
+    res.send({tx: txSerialized, _RESPONSE_});
    
     if (tx.event) {
       console.log(tx.returnValues);

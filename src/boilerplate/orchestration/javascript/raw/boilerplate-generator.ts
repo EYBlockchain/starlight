@@ -769,6 +769,12 @@ integrationApiServicesBoilerplate = {
       let encryption = {};
       // eslint-disable-next-line func-names
 
+      function serializeBigInt(obj) {
+        return JSON.parse(JSON.stringify(obj, (key, value) =>
+            typeof value === 'bigint' ? value.toString() : value
+        ));
+    }
+
       export class ServiceManager{
         constructor(web3){
           this.web3 =web3;
