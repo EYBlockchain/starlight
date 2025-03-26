@@ -47,5 +47,13 @@
     "mocha": "10.8.2",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-alpha.54"
+  },
+  "overrides": {
+    "fast-glob": {
+      "micromatch": "~4.0.8"
+    },
+    "@sentry/node": {
+      "cookie": "~0.7.0"
+    }
   }
 }
