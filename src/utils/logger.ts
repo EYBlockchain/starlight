@@ -23,7 +23,7 @@ export default createLogger({
     format.colorize(),
     format.printf(info => {
       const index: string = Symbol.for('splat') as unknown as string; // fix for ts compiler: https://github.com/Microsoft/TypeScript/issues/24587#issuecomment-460650063
-      const splatArgs = info[index];
+      const splatArgs = info[index] as unknown as any[];
       let log = `${info.level}: ${info.message}`;
 
       // append splat messages to log
