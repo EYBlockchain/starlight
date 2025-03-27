@@ -76,7 +76,7 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x , isAccessed, isNullified, initialisationRequired, isWhole, structProperties, structPropertiesTypes}): string[] {
+    postStatements({ name: x , isAccessed, isNullified, initialisationRequired, isWhole, structProperties, structPropertiesTypes, typeName }): string[] {
       // default nullification lines (for partitioned & whole states)
       const lines: string[] = [];
       lines.push(
@@ -108,15 +108,25 @@ class BoilerplateGenerator {
         if (structProperties) {
           if (structPropertiesTypes) {
             structPropertiesTypes.forEach(property => {
-              lines.push(
-                `${x}_oldCommitment_value.${property.name} = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value.${property.name} fi`
-              );
+              if (property.typeName === 'bool'){
+                lines.push(`${x}_oldCommitment_value.${property.name} = if ${x}_oldCommitment_isDummy then false else ${x}_oldCommitment_value.${property.name} fi`);
+              } else{
+                lines.push(
+                  `${x}_oldCommitment_value.${property.name} = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value.${property.name} fi`
+                );
+                }
             });
           }
         } else {
-          lines.push(
-            `${x}_oldCommitment_value = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value fi`
-          );
+          if (typeName === 'bool'){
+            lines.push(
+              `${x}_oldCommitment_value = if ${x}_oldCommitment_isDummy then false else ${x}_oldCommitment_value fi`
+            );
+          } else {
+            lines.push(
+              `${x}_oldCommitment_value = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value fi`
+            );
+          }
         }
       }
       return lines;
