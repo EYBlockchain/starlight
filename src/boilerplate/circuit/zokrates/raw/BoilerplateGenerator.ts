@@ -76,9 +76,10 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x , isAccessed, isNullified}): string[] {
+    postStatements({ name: x , isAccessed, isNullified, initialisationRequired, isWhole, structProperties, structPropertiesTypes, typeName }): string[] {
       // default nullification lines (for partitioned & whole states)
-      let lines = [
+      const lines: string[] = [];
+      lines.push(
         `
         // Nullify ${x}:
 
@@ -93,21 +94,41 @@ class BoilerplateGenerator {
         )
         // ${x}_oldCommitment_nullifier : non-existence check
         
-        `,
-      ];
+        `);
 
-     
-      if (this.initialisationRequired && this.isWhole) {
+      if (initialisationRequired && isWhole) {
         // whole states also need to handle the case of a dummy nullifier
-        const newLines = [
+        lines.push(
           `
           ${x}_oldCommitment_owner_secretKey = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_owner_secretKey fi
 
-          ${x}_oldCommitment_salt = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_salt fi`,
-        ];
-        newLines.concat(lines);
+          ${x}_oldCommitment_salt = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_salt fi
+          `
+        );
+        if (structProperties) {
+          if (structPropertiesTypes) {
+            structPropertiesTypes.forEach(property => {
+              if (property.typeName === 'bool'){
+                lines.push(`${x}_oldCommitment_value.${property.name} = if ${x}_oldCommitment_isDummy then false else ${x}_oldCommitment_value.${property.name} fi`);
+              } else{
+                lines.push(
+                  `${x}_oldCommitment_value.${property.name} = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value.${property.name} fi`
+                );
+                }
+            });
+          }
+        } else {
+          if (typeName === 'bool'){
+            lines.push(
+              `${x}_oldCommitment_value = if ${x}_oldCommitment_isDummy then false else ${x}_oldCommitment_value fi`
+            );
+          } else {
+            lines.push(
+              `${x}_oldCommitment_value = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value fi`
+            );
+          }
+        }
       }
-
       return lines;
     },
   };
