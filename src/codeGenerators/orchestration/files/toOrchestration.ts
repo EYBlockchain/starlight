@@ -864,33 +864,14 @@ const prepareBackupDataRetriever = (node: any) => {
           count = 2;
         }
         if (isStruct){
-          value = {};`;
-
-          node.privateStates.forEach((stateVar: any) => {
-            if (stateVar.structProperties){
-              let propCount = 2;
-              if (stateVar.mappingKey){
-                propCount++;
-                genericApiServiceFile += `\nif (stateVarId.integer === 
-                  generalise(utils.mimcHash(
-                    [
-                      BigInt(${stateVar.stateVarId[0]}),
-                      generalise(plainText[1]).bigInt,
-                    ],
-                    "ALT_BN_254"
-                  )).integer) {`
-              } else{
-                genericApiServiceFile += `\nif (stateVarId.integer === '${stateVar.stateVarId}') {`
-              }
-              stateVar.structProperties.forEach((prop: any) => {
-                genericApiServiceFile += `value.${prop} = plainText[${propCount}];\n`;
-                propCount++;
-              });
-              genericApiServiceFile += `}\n`;
-            }
-          });
-      
-        genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
+          value = {};
+          const structProperties = varName.split("props:")[1]?.trim();
+          let count = isArray ? 3 : 2;
+          for (const prop of structProperties.split(" ")) {
+            value[prop] = plainText[count];
+            count++;
+          }
+          console.log(\`\\tValue: \${value.integer}\`);
         } else {
           value = generalise(plainText[count]);
           console.log(\`\\tValue: \${value.integer}\`);
