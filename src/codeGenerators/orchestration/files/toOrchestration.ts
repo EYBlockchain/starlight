@@ -818,7 +818,9 @@ const prepareBackupDataRetriever = (node: any) => {
         let cipherText = log.returnValues.encPreimages[i].cipherText;
         let ephPublicKey = log.returnValues.encPreimages[i].ephPublicKey;
         let varName = log.returnValues.encPreimages[i].varName;
-        let name = varName.replace(" a", "").replace(" s", "").replace(" u", "");
+        let name = varName.split(" ")[0];
+        const structProperties = varName.split("props:")[1]?.trim();
+        varName = varName.split("props:")[0]?.trim();
         let isArray = false;
         let isStruct = false;
         if (varName.includes(" a")) {
@@ -865,13 +867,12 @@ const prepareBackupDataRetriever = (node: any) => {
         }
         if (isStruct){
           value = {};
-          const structProperties = varName.split("props:")[1]?.trim();
           let count = isArray ? 3 : 2;
           for (const prop of structProperties.split(" ")) {
             value[prop] = plainText[count];
             count++;
           }
-          console.log(\`\\tValue: \${value.integer}\`);
+          console.log(\`\\tValue: \${value}\`);
         } else {
           value = generalise(plainText[count]);
           console.log(\`\\tValue: \${value.integer}\`);
