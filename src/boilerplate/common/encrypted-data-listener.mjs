@@ -117,18 +117,21 @@ export default class EncryptedDataEventListener {
       eventSubscription
         .on('connected', subscriptionId => {
           console.log(`New subscription: ${subscriptionId}`);
-        })
+        });
+      eventSubscription
         .on('data', async eventData => {
           try {
             await this.processEventData(eventData);
           } catch (error) {
             console.error('Error processing event data:', error);
           }
-        })
+        });
+      eventSubscription
         .on('error', async error => {
           console.error('Event subscription error:', error);
           await this.reconnect();
-        })
+        });
+      eventSubscription
         .on('close', async () => {
           console.log('Subscription closed');
           await this.reconnect();

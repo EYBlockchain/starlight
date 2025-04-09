@@ -315,7 +315,7 @@ node.stateVariables?.forEach(
       
     } else {
       encryptedCommitmentCode += `
-  
+
       if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
         const value =  generalise(decrypted[1]); 
   
