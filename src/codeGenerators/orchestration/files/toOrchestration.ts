@@ -610,7 +610,9 @@ const prepareBackupVariable = (node: any) => {
         let cipherText = log.returnValues.encPreimages[i].cipherText;
         let ephPublicKey = log.returnValues.encPreimages[i].ephPublicKey;
         let varName = log.returnValues.encPreimages[i].varName;
-        let name = varName.replace(" a", "").replace(" s", "").replace(" u", "");
+        let name = varName.split(" ")[0];
+        const structProperties = varName.split("props:")[1]?.trim();
+        varName = varName.split("props:")[0]?.trim();
         if (requestedName !== name) {
           continue;
         }
@@ -659,31 +661,13 @@ const prepareBackupVariable = (node: any) => {
           count = 2;
         }
         if (isStruct){
-          value = {};`;
-          node.privateStates.forEach((stateVar: any) => {
-            if (stateVar.structProperties){
-              let propCount = 2;
-              if (stateVar.mappingKey){
-                propCount++;
-                genericApiServiceFile += `\nif (stateVarId.integer === 
-                  generalise(utils.mimcHash(
-                    [
-                      BigInt(${stateVar.stateVarId[0]}),
-                      generalise(plainText[1]).bigInt,
-                    ],
-                    "ALT_BN_254"
-                  )).integer) {`
-              } else {
-                genericApiServiceFile += `\nif (stateVarId.integer === '${stateVar.stateVarId}') {`
-              }
-              stateVar.structProperties.forEach((prop: any) => {
-                genericApiServiceFile += `value.${prop} = plainText[${propCount}];\n`;
-                propCount++;
-              });
-              genericApiServiceFile += `}\n`;
-            }
-          });
-          genericApiServiceFile += `console.log(\`\\tValue: \${value}\`);
+          value = {};
+          let count = isArray ? 3 : 2;
+          for (const prop of structProperties.split(" ")) {
+            value[prop] = plainText[count];
+            count++;
+          }
+          console.log(\`\\tValue: \${value}\`);
         } else {
           value = generalise(plainText[count]);
           console.log(\`\\tValue: \${value.integer}\`);
