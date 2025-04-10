@@ -91,7 +91,7 @@ const publicVariables = (path: NodePath, state: any, IDnode: any) => {
   const binding = path.getReferencedBinding(node);
   if (!['Identifier', 'IndexAccess'].includes(path.nodeType)) return;
   
-  // If there is a statment where a secret variable interacts with a public one, we need to adjust previous statements where the public variable was modified.
+  // If there is a statement where a secret variable interacts with a public one, we need to adjust previous statements where the public variable was modified.
 
   
   if (
