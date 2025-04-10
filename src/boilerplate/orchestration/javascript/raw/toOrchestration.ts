@@ -869,7 +869,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               structProperties: stateNode.structProperties,
               encryptionRequired: stateNode.encryptionRequired,
               mappingName: stateNode.mappingName || stateName,
-              mappingKey: stateNode.mappingKey,
+              mappingKey: stateNode.mappingKey
+                  ? `${stateName}_stateVarId_key.integer`
+                  : ``,
             }));
         }
         return {

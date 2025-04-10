@@ -582,6 +582,10 @@ encryptBackupPreimage = {
     }
     if (structProperties) varName += ` s`;
     if (stateType === 'increment') varName += ` u`;
+    if (structProperties) {
+      varName += ` props:`;
+      varName += ` ${structProperties.join(' ')}`;
+    } 
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
     let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
     let ${stateName}_ephPublicKeyPoint = generalise(
