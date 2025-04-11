@@ -8,7 +8,7 @@ contract Assign {
   uint256 public j;
   uint256 public len;
   function add(secret uint256 value) public {
-          do {
+      do {
          len++;
          j /= 10;
       } while (j != 0);
