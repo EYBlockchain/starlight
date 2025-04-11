@@ -924,11 +924,6 @@ integrationApiRoutesBoilerplate = {
 zappFilesBoilerplate = () => {
   return [
     {
-      readPath: pathPrefix + '/bin/startup',
-      writePath: '/bin/default_startup',
-      generic: true,
-    },
-    {
       readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
       generic: false,
