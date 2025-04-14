@@ -340,7 +340,7 @@ as a POST request to `http://localhost:3000/backupVariable`.
 
 #### Using secret states in the constructor
 
-Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Any user supplied inputs will be prompted for in the command line when running `./bin/setup`.
+Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Any user supplied inputs will be prompted for in the command line when running `npm start`.
 
 Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
 
