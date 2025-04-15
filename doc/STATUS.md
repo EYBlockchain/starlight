@@ -11,7 +11,7 @@ This document explains what Solidity functionality you can input to `starlight`,
 
 ## Example Contracts
 
-You can find example `.zol` contracts ready to compile in the `./test/contracts` directory [here](../test/contracts/). These are all simple and illustrative of what the compiler can do. Meanwhile, we have some more familiar looking real world contracts in `./test/real-world-zapps` [here](../test/real-world-zapps/).
+You can find example `.zol` contracts ready to compile in the `./test/contracts/user-friendly-tests` directory [here](../test/contracts/user-friendly-tests). These are all simple and illustrative of what the compiler can do. Meanwhile, we have some more familiar looking real world contracts in `./test/real-world-zapps` [here](../test/real-world-zapps/).
 
 Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we are actively working on these!
 
