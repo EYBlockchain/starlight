@@ -37,7 +37,7 @@ async function main () {
     CUSTOM_CONTRACTS
 	// Deploy AssignShield with Verifier and vkInput
 	const CONTRACT_NAME = await hre.ethers.getContractFactory('CONTRACT_NAME');
-    const contractShield = await CONTRACT_NAME.deploy(verifierAddress, vkInput);
+    const contractShield = await CONTRACT_NAME.deploy(CUSTOM_INPUTS verifierAddress, vkInput CUSTOM_PROOF);
     await contractShield.waitForDeployment();
     const contractAddress = await contractShield.getAddress();
     blockNumber = await hre.ethers.provider.getBlockNumber();

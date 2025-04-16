@@ -94,6 +94,7 @@ export default function toOrchestration(ast: any, options: any) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // required to create the nested folders for common import files.
     fs.writeFileSync(filepath, file);
   }
+  fs.copyFileSync(pathjs.join(options.outputDirPath, '/bin/startup'), pathjs.join(options.outputDirPath, '/bin/default_startup'));
 
   logger.info('Node transpilation complete.');
 }
