@@ -934,6 +934,11 @@ zappFilesBoilerplate = () => {
       generic: false,
     },
     {
+      readPath: pathPrefix + '/config/trust/ZscalerRootCertificate-2048-SHA256.crt',
+      writePath: '/config/trust/ZscalerRootCertificate-2048-SHA256.crt',
+      generic: false,
+    },
+    {
       readPath: pathPrefix + '/migrations/metadata.js',
       writePath: 'migrations/metadata.js',
       generic: true,
