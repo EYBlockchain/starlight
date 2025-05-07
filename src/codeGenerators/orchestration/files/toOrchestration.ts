@@ -265,8 +265,9 @@ node.stateVariables?.forEach(
        const ${structProp} = generalise(decrypted[${index+1}]);`
     }) : '';
     if(variable.isStruct) {
+      
     encryptedCommitmentCode += `
-    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+    if (stateVarId.integer === generalise(${variable.id}).integer) {
       ${encryptedValue};
         newCommitment = poseidonHash([
         BigInt(stateVarId.hex(32)),
@@ -276,7 +277,7 @@ node.stateVariables?.forEach(
       ]);
     }`  
     encryptedCode += `
-    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+    if (stateVarId.integer === generalise(${variable.id}).integer) {
       ${encryptedValue};
       const newCommitment = poseidonHash([
         BigInt(stateVarId.hex(32)),
@@ -315,8 +316,7 @@ node.stateVariables?.forEach(
       
     } else {
       encryptedCommitmentCode += `
-
-      if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      if (stateVarId.integer === generalise(${variable.id}).integer) {
         const value =  generalise(decrypted[1]); 
   
         newCommitment = poseidonHash([
@@ -327,8 +327,7 @@ node.stateVariables?.forEach(
         ]);
       }`
       encryptedCode += `
-  
-    if (stateVarId.integer === ${variable.name}_stateVarId.integer) {
+      if (stateVarId.integer === generalise(${variable.id}).integer) {
       const value =  generalise(decrypted[1]); 
 
       const newCommitment = poseidonHash([

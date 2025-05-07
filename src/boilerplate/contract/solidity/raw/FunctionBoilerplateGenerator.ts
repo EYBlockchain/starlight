@@ -64,10 +64,20 @@ class FunctionBoilerplateGenerator {
       encryptionRequired
     }): string[] {
       // prettier-ignore
+      let inputs_sig =  `${[
+          `(`,
+          ...(newNullifiers ? [`uint256[],`] : []),
+          ...(checkNullifiers ? [`uint256[],`] : []),
+          ...(commitmentRoot ? [`uint256,`] : []),
+          ...(newCommitments? [`uint256[],`] : []),
+          ...(encryptionRequired ? [`uint256[][],`] : []),
+          ...(encryptionRequired ? [`uint256[2][],`] : []),
+          `uint256[])`, // TODO: consider whether we need to identify when / when not to include this.
+        ].join('')}`;
       let parameter = [
         ...(customInputs ? customInputs.filter(input => !input.dummy && input.isParam)
         .map(input => input.structName ? `(${input.properties.map(p => p.type)})` : input.isConstantArray ? `${input.type}[${input.isConstantArray}]` : input.type) : []), // TODO arrays of structs/ structs of arrays
-      `(uint256[],uint256,uint256[],uint256[])`,
+      inputs_sig,
       `uint256[]`,
       `(string,uint256[],uint256)[]`,
     ].filter(para => para !== undefined); // Added for return parameter 
@@ -86,7 +96,6 @@ class FunctionBoilerplateGenerator {
         }
         if (input.structName) customInputs[i] = input.properties;
       });
-    
       let msgSigCheck = ([...(isConstructor  ? [] : [`bytes4 sig = bytes4(keccak256("${functionName}(${parameter})")) ;  \n \t \t \t if (sig == msg.sig)`])]);
       customInputs = customInputs?.flat(Infinity).filter(p => (p.inCircuit || p.isReturn));
       
