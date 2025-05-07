@@ -685,7 +685,7 @@ sendTransaction = {
               return [`
                 \n${reinitialisedOnly ? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32)); 
                `}
-                \n \try {
+                \n try {
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
