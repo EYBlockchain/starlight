@@ -1585,8 +1585,7 @@ const visitor = {
       // We no longer check indicator?.interactsWithSecret because in most cases interactsWithSecret is set to true in addPublicInput anyway. 
       // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
       const newNode = buildNode(node.nodeType, {
-        interactsWithSecret: interactsWithSecret,
-        //|| indicator?.interactsWithSecret,
+        interactsWithSecret: interactsWithSecret || indicator?.interactsWithSecret,
         oldASTId: node.id,
       });
 
