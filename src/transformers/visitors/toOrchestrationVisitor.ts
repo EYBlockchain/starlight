@@ -1584,7 +1584,7 @@ const visitor = {
       // We don't set interactsWithSecret for state variables because in most cases this is done in addPublicInput anyway. 
       // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
       const newNode = buildNode(node.nodeType, {
-        interactsWithSecret: indicator instanceof LocalVariableIndicator && (interactsWithSecret || indicator?.interactsWithSecret),
+        interactsWithSecret: (indicator instanceof LocalVariableIndicator || indicator.isSecret) && (interactsWithSecret || indicator?.interactsWithSecret),
         oldASTId: node.id,
       });
 
