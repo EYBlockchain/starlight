@@ -35,9 +35,9 @@ describe("AST testing", function () {
     it("zappifies each contract", function () {
       this.timeout(100000);
       files.forEach((file) => {
+        options.inputFilePath = file;
         options.inputFileName = path.parse(options.inputFilePath).name;
         logger.info('zappifying', options.inputFileName);
-        options.inputFilePath = file;
         options.modifyAST = 'n';
         // commander converts 'zapp-name' to 'zappName'
         options.zappName = options.inputFileName;
