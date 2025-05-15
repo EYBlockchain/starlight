@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Receipt {
+
+    mapping (address => Rct) private total;
+    secret uint256 a;
+
+    struct Rct {
+        uint256 amount;
+        uint256 tax;
+    }
+
+    function add(Rct memory myrct, address user) public {
+        total[user].amount += myrct.amount;
+        total[user].tax += myrct.tax;
+    }
+
+}
