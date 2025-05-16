@@ -155,6 +155,11 @@ export default {
   FunctionDefinition: {
     exit(path: NodePath, state: any) {
       const { scope } = path;
+
+      let isFunctionPublic = !scope.modifiesSecretState();
+      state.isContractPublic ??= true;
+      state.isContractPublic = state.isContractPublic && isFunctionPublic;
+
       if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
       if (path.node.containsSecret && (path.node.kind === 'fallback' || path.node.kind === 'receive'))
       throw new TODOError(`Secret states on fallback / receive functions is currently not supported`, path.node);
@@ -181,9 +186,17 @@ export default {
   },
 
   ContractDefinition: {
-    exit(path: NodePath) {
+    exit(path: NodePath, state: any) {
       // bindings are contract scope level, so we track global states here
       const { scope } = path;
+
+      if (state.isContractPublic) {
+        throw new Error(
+          'The contract is fully public and does not use secret variables, making it incompatible with the transpiler. ' +
+          'Ensure your contract manipulates secret variables to generate a valid ZApp.'
+        );
+      }
+
       for (const [, binding] of Object.entries(scope.bindings)) {
         if (!(binding instanceof VariableBinding)) continue;
         binding.prelimTraversalErrorChecks();
