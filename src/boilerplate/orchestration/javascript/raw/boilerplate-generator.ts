@@ -629,10 +629,20 @@ sendTransaction = {
       isConstructor
     }): string[] {
       let value;
+      const errorCatch = `\n console.log("Added commitment", newCommitment.hex(32));
+      } catch (e) {
+        if (e.toString().includes("E11000 duplicate key")) {
+          console.log(
+            "encrypted-data-listener -",
+            "receiving EncryptedData event with balances.",
+            'This commitment for ${stateName} already exists. Ignore it.',
+          );
+        }
+      }`;
       switch (stateType) {
         case 'increment':
           value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
-          return [`
+          return [`try {
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
             name: '${mappingName}',
@@ -645,12 +655,13 @@ sendTransaction = {
             },
             secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
             isNullified: false,
-          });`];
+          });` + errorCatch];
         case 'decrement':
           value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
             \nawait markNullified(generalise(${stateName}_0_oldCommitment._id), secretKey.hex(32));
             \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));
+            \n try {
             \nawait storeCommitment({
               hash: ${stateName}_2_newCommitment,
               name: '${mappingName}',
@@ -663,7 +674,7 @@ sendTransaction = {
               },
               secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
               isNullified: false,
-            });`];
+            });`+ errorCatch];
         case 'whole':
           switch (burnedOnly) {
             case true:
@@ -674,6 +685,7 @@ sendTransaction = {
               return [`
                 \n${reinitialisedOnly ? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32)); 
                `}
+                \n try {
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
@@ -686,7 +698,7 @@ sendTransaction = {
                   },
                   secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
                   isNullified: false,
-                });`];
+                });` + errorCatch];
           }
         default:
           throw new TypeError(stateType);
