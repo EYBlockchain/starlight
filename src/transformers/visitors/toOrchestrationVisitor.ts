@@ -633,7 +633,6 @@ const visitor = {
             }
           }
         });
-        
         // Add publics parametres to sendTransactionNode
         node._newASTPointer.body.postStatements.push(sendPublicTransactionNode);
         node.parameters.parameters.forEach(para => {
@@ -1582,11 +1581,10 @@ const visitor = {
           return;
         }
       }
-      // We no longer check indicator?.interactsWithSecret because in most cases interactsWithSecret is set to true in addPublicInput anyway. 
+      // We don't set interactsWithSecret for state variables because in most cases this is done in addPublicInput anyway. 
       // The cases where this doesn't happen in AddPublicInput are where we don't want to add the statement to the newAST anyway.
       const newNode = buildNode(node.nodeType, {
-        interactsWithSecret: interactsWithSecret,
-        //|| indicator?.interactsWithSecret,
+        interactsWithSecret: (indicator instanceof LocalVariableIndicator ||  !indicator || indicator?.isSecret) && (interactsWithSecret || indicator?.interactsWithSecret),
         oldASTId: node.id,
       });
 
