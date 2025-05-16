@@ -29,7 +29,7 @@ function poseidonLibraryChooser(fileObj: string) {
      var lines = fileObj.split('\n');
      for(var line = 0; line < lines.length; line++) {
        if(lines[line].includes('./common/hashes/poseidon/poseidon.zok')) {
-         lines[line] = 'from "hashes/poseidon/poseidon.zok" import main as poseidon';
+         lines[line] = 'from "hashes/poseidon/poseidon.zok" import main as poseidon;';
        }
      }
      fileObj = lines.join('\n');
@@ -61,7 +61,7 @@ function codeGenerator(node: any) {
     }
 
     case 'ImportStatementList':
-      return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
+      return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join(';\n')};`;
 
     case 'FunctionDefinition': {
       let functionSignature : any;
@@ -103,11 +103,12 @@ function codeGenerator(node: any) {
         returnType.push('bool') ;
       }
       
-      return `${functionSignature}(${returnType}):
+      return `${functionSignature}${returnType} {
 
         ${body}
 
-         return ${returnStatement}`;
+         return ${returnStatement};
+      }`;
     }
 
     case 'StructDefinition': {
@@ -159,7 +160,7 @@ function codeGenerator(node: any) {
 
     case 'VariableDeclarationStatement': {
       const declarations = node.declarations.map(codeGenerator).join(', ');
-      if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)}`;
+      if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)};`;
       if(node.initialValue?.nodeType === 'InternalFunctionCall'){
         if(!declarations) return ;
         if(node.initialValue?.expression?.nodeType === 'BinaryOperation')
@@ -179,19 +180,19 @@ function codeGenerator(node: any) {
       // TO DO: We don't remove duplicate statements below because of duplicate statements in the contract. This could cause issues.
       const statements = node.statements.flatMap(codeGenerator);
       const postStatements = CircuitBP.uniqueify(node.postStatements.flatMap(codeGenerator));
-      return [...preStatements, ...statements, ...postStatements].join('\n\n');
+      return [...preStatements, ...statements, ...postStatements].join(';\n\n');
     }
 
     case 'ExpressionStatement': {
       if (node.isVarDec) {
         if (node.expression?.leftHandSide?.typeName === 'bool'){
           return `
-          bool ${codeGenerator(node.expression)}`;
+          bool ${codeGenerator(node.expression)};`;
         }
         return `
-        field ${codeGenerator(node.expression)}`;
+        field ${codeGenerator(node.expression)};`;
       }
-      return codeGenerator(node.expression);
+      return `${codeGenerator(node.expression)}`;
     }
     case 'InternalFunctionCall': {
      if(node.internalFunctionInteractsWithSecret) {
@@ -257,7 +258,7 @@ function codeGenerator(node: any) {
         if(node.condition.leftExpression.nodeType == 'Identifier')
         node.condition.leftExpression.name = node.condition.leftExpression.name.replace('_temp','');
       initialStatements+= `
-      assert(!(${codeGenerator(node.condition)}))`;
+      assert(!(${codeGenerator(node.condition)}));`;
       return initialStatements;
       }
       // we use our list of condition vars to init temp variables. 
@@ -276,10 +277,10 @@ function codeGenerator(node: any) {
         } else {
           if (node.trueBody[i].expression.nodeType === 'UnaryOperation'){
             trueStatements+= `
-            ${codeGenerator(node.trueBody[i].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.subExpression)} ${node.trueBody[i].expression.operator[0]} 1 else ${codeGenerator(node.trueBody[i].expression.subExpression)} fi`
+            ${codeGenerator(node.trueBody[i].expression.subExpression)} = if (${codeGenerator(node.condition)}) { ${codeGenerator(node.trueBody[i].expression.subExpression)} ${node.trueBody[i].expression.operator[0]} 1 } else { ${codeGenerator(node.trueBody[i].expression.subExpression)} }`
           } else {
             trueStatements+= `
-            ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${codeGenerator(node.trueBody[i].expression.leftHandSide)} fi`
+            ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if (${codeGenerator(node.condition)}) { ${codeGenerator(node.trueBody[i].expression.rightHandSide)} } else { ${codeGenerator(node.trueBody[i].expression.leftHandSide)} }`
           }
         }
       }
@@ -289,10 +290,10 @@ function codeGenerator(node: any) {
         } else {
           if (node.falseBody[j].expression.nodeType === 'UnaryOperation'){
             falseStatements+= `
-            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.subExpression)}  else  ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 fi`
+            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if (${codeGenerator(node.condition)}) { ${codeGenerator(node.falseBody[j].expression.subExpression)}  else  ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 }`;
           } else {
             falseStatements+= `
-            ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.leftHandSide)} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)} fi`
+            ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if (${codeGenerator(node.condition)}) { ${codeGenerator(node.falseBody[j].expression.leftHandSide)} } else { ${codeGenerator(node.falseBody[j].expression.rightHandSide)} }`;
           }
         }
       }
@@ -304,13 +305,13 @@ function codeGenerator(node: any) {
       case 'ForStatement':
         switch (node.initializationExpression.nodeType) {
           case 'ExpressionStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} do
+            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} {
             ${codeGenerator(node.body)}
-            endfor`;
+            }`;
           case 'VariableDeclarationStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.initialValue)}..${node.condition.rightExpression.value} do
+            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.initialValue)}..${node.condition.rightExpression.value} {
             ${codeGenerator(node.body)}
-            endfor`;
+            }`;
           default:
             break;
         }
@@ -329,9 +330,9 @@ function codeGenerator(node: any) {
       // only happens if we have a single bool identifier which is a struct property
       // these get converted to fields so we need to assert == 1 rather than true
       if (node.arguments[0].isStruct && node.arguments[0].nodeType === "MemberAccess") return `
-        assert(${node.arguments.flatMap(codeGenerator)} == 1)`;
+        assert(${node.arguments.flatMap(codeGenerator)} == 1);`;
       return `
-        assert(${node.arguments.flatMap(codeGenerator)})`;
+        assert(${node.arguments.flatMap(codeGenerator)});`;
 
     case 'Boilerplate':
       return Circuitbp.generateBoilerplate(node);
