@@ -635,7 +635,7 @@ sendTransaction = {
           console.log(
             "encrypted-data-listener -",
             "receiving EncryptedData event with balances.",
-            'This ${stateName} already exists. Ignore it.',
+            'This commitment for ${stateName} already exists. Ignore it.',
           );
         }
       }`;

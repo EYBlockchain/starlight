@@ -308,7 +308,7 @@ node.stateVariables?.forEach(
           console.log(
             'encrypted-data-listener -',
             'receiving EncryptedData event with balances.',
-            'This ${variable.name} already exists. Ignore it.',
+            'This commitment for ${variable.name} already exists. Ignore it.',
           );
         }
       }
@@ -357,7 +357,7 @@ node.stateVariables?.forEach(
           console.log(
             'encrypted-data-listener -',
             'receiving EncryptedData event with balances.',
-            'This ${variable.name} already exists. Ignore it.',
+            'This commitment for ${variable.name} already exists. Ignore it.',
           );
         }
       }
