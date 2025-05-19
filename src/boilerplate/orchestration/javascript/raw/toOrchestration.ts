@@ -112,6 +112,19 @@ export const sendTransactionBoilerplate = (node: any) => {
   return output;
 };
 
+// Helper to transform parameter into the expected `.integer` accessor
+function transformToIntegerAccess(para: string): string {
+  if (para === 'msgValue') return 'msgValue';
+  if (para === 'msgSender') return 'msgSender.integer';
+
+  if (para.includes('.')) {
+    const [first, ...rest] = para.split('.');
+    return `${[first + '_init', ...rest].join('.')}.integer`;
+  } else {
+    return `${para}_init.integer`;
+  }
+};
+
 export const generateProofBoilerplate = (node: any) => {
   const output: (string[] | string)[] = [];
   const enc: any[][] = [];
@@ -156,22 +169,21 @@ export const generateProofBoilerplate = (node: any) => {
         : [];  
     // we add any extra params the circuit needs
     node.parameters
-      .filter(
-        (para: string) =>
-          !privateStateNames.includes(para) && (
-          !output.join().includes(`${para}.integer`) && !output.join().includes('msgValue')),
-      )
-      ?.forEach((param: string) => {
-        if (param == 'msgSender') {
-          parameters.unshift(`\t${param}.integer,`);
-        } 
-        else if (param == 'msgValue') {
-          parameters.unshift(`\t${param},`);
-        }
-        else {
-          parameters.push(`\t${param}.integer,`);
-        }
-      });
+    .filter((para: string) => {
+      if (privateStateNames.includes(para)) return false;
+      const transformed = transformToIntegerAccess(para);
+      return !output.join().includes(transformed);
+    })
+    .forEach((para: string) => {
+      const transformed = transformToIntegerAccess(para);
+      if (para === 'msgValue') {
+        parameters.unshift(`\t${transformed},`);
+      } else if (para === 'msgSender') {
+        parameters.unshift(`\t${transformed},`);
+      } else {
+        parameters.push(`\t${transformed},`);
+      }
+    });
      
     // then we build boilerplate code per state
     switch (stateNode.isWhole) {
@@ -492,7 +504,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               lines.push(`
               \nconst msgValue = 0;`);  
       node.inputParameters.forEach((param: string) => {
-        lines.push(`\nconst ${param} = generalise(_${param});`);
+        lines.push(`\nlet ${param} = generalise(_${param});`);
+        lines.push(`\nconst ${param}_init = generalise(_${param});`);
         params.push(`_${param}`);
       });
       node.parameters.modifiedStateVariables.forEach((param: any) => {
@@ -883,16 +896,16 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
-            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
+            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}_init${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}_init${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
           } else if (input.isConstantArray) {
-            lines.push(`${input.name}.all.integer`);
+            lines.push(`${input.name}_init.all.integer`);
           } else if(input.isBool) {
-            lines.push(`parseInt(${input.name}.integer, 10)`);
+            lines.push(`parseInt(${input.name}_init.integer, 10)`);
           } else if(input.isAddress) {
-            lines.push(`${input.name}.hex(20)`);
+            lines.push(`${input.name}_init.hex(20)`);
           }
           else {
-            lines.push(`${input}.integer`);
+            lines.push(`${input}_init.integer`);
           }           
         });
       }
