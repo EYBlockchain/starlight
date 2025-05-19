@@ -4,9 +4,11 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import shell from 'shelljs'
 import logger from "./built/utils/logger.js";
+
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
+
 let res = [];
 
 if (shell.exec('./apiactions -z Assign').code !== 0) {
@@ -86,102 +88,103 @@ if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
 
 
 await new Promise(resolve => setTimeout(resolve, 5000));
+
 if (shell.exec('./apiactions -z internalFunctionCallTest1').code !== 0) {
   shell.echo('InternalFunctionCallTest1 failed');
   shell.exit(1);
 }
-    res[10] = await chai
-      .request('localhost:3000')
-      .post('/add')
-      .send({ value: 46 });
 
-      res[11] = await chai
-      .request('localhost:3000')
-      .post('/remove')
-      .send({ value: 33});
+res[10] = await chai
+  .request('localhost:3000')
+  .post('/add')
+  .send({ value: 46 });
 
-      res[12] = await chai
-      .request('localhost:3000')
-      .get('/getAllCommitments');
+  res[11] = await chai
+  .request('localhost:3000')
+  .post('/remove')
+  .send({ value: 33});
 
-      res[13] = await chai
-      .request('localhost:3000')
-      .post('/add')
-      .send({ value: 63 });
+  res[12] = await chai
+  .request('localhost:3000')
+  .get('/getAllCommitments');
 
-      res[14] = await chai
-      .request('localhost:3000')
-      .post('/remove')
-      .send({ value: 55});
+  res[13] = await chai
+  .request('localhost:3000')
+  .post('/add')
+  .send({ value: 63 });
+
+  res[14] = await chai
+  .request('localhost:3000')
+  .post('/remove')
+  .send({ value: 55});
 
 
-      res[15] = await chai
-      .request('localhost:3000')
-      .get('/getAllCommitments');
+  res[15] = await chai
+  .request('localhost:3000')
+  .get('/getAllCommitments');
 
-      if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
-        shell.echo('docker stop failed');
-        shell.exit(1);
-      }
+  if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+    shell.echo('docker stop failed');
+    shell.exit(1);
+  }
 
-      
-    describe('Assign Zapp', () => {
-      it('tests APIs are working', async () => {
-        expect(res[0].body.tx.event).to.equal('NewLeaves');
-        expect(res[1].body.tx.event).to.equal('NewLeaves');
-        expect(res[2].body.tx.event).to.equal('NewLeaves');
-      });
-      it('MinLeaf Index check', async () => {
-        expect(parseInt(res[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-        expect(parseInt(res[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-        expect(parseInt(res[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
-      });
-      it('Check commitments', async () => {
-        expect(res[3].body.commitments.length).to.equal(3);
-      });
-      it('Check nullified commitments', async () => {
-        expect(res[4].body.commitments[0].isNullified).to.equal(true);
-        expect(res[4].body.commitments[1].isNullified).to.equal(true);
-        expect(res[4].body.commitments[2].isNullified).to.equal(false);
-      });
-    });
+describe('Assign Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res[0].body.tx.event).to.equal('NewLeaves');
+    expect(res[1].body.tx.event).to.equal('NewLeaves');
+    expect(res[2].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expect(parseInt(res[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+  });
+  it('Check commitments', async () => {
+    expect(res[3].body.commitments.length).to.equal(3);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res[4].body.commitments[1].isNullified).to.equal(true);
+    expect(res[4].body.commitments[2].isNullified).to.equal(false);
+  });
+});
 
-    describe('If-Statement Zapp', () => {
-      it('tests APIs are working', async () => {
-        expect(res[5].body.tx.event).to.equal('NewLeaves');
-        expect(res[6].body.tx.event).to.equal('NewLeaves');
-      });
-      it('test MappingKey response', async () => {
-        expect(res[7].body.commitments.length).to.equal(2);
-        expect(res[7].body.commitments[0].isNullified).to.equal(true);
-        expect(res[7].body.commitments[1].isNullified).to.equal(false);
-      });
-      it('test stateVarId ', async () => {
-        expect(res[9].body.commitments[0].preimage.stateVarId).to.equal(res[9].body.commitments[1].preimage.stateVarId);
-        expect(res[9].body.commitments[0].isNullified).to.equal(true);
-        expect(res[9].body.commitments[1].isNullified).to.equal(false);
-      });
-    });
+describe('If-Statement Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res[5].body.tx.event).to.equal('NewLeaves');
+    expect(res[6].body.tx.event).to.equal('NewLeaves');
+  });
+  it('test MappingKey response', async () => {
+    expect(res[7].body.commitments.length).to.equal(2);
+    expect(res[7].body.commitments[0].isNullified).to.equal(true);
+    expect(res[7].body.commitments[1].isNullified).to.equal(false);
+  });
+  it('test stateVarId ', async () => {
+    expect(res[9].body.commitments[0].preimage.stateVarId).to.equal(res[9].body.commitments[1].preimage.stateVarId);
+    expect(res[9].body.commitments[0].isNullified).to.equal(true);
+    expect(res[9].body.commitments[1].isNullified).to.equal(false);
+  });
+});
 
-    describe('InternalFunctionCallTest2 Zapp', () => {
-      it('tests APIs are working', async () => {
-        expect(res[10].body.tx.event).to.equal('NewLeaves');
-        expect(res[11].body.tx.event).to.equal('NewLeaves');
-        expect(res[13].body.tx.event).to.equal('NewLeaves');
-        expect(res[14].body.tx.event).to.equal('NewLeaves');
-      });
-      it('Check value after internal function call intialize', async () => {
-        expect(res[12].body.commitments[0].isNullified).to.equal(true);
-        expect(res[12].body.commitments[1].isNullified).to.equal(false);
-        expect(parseInt(res[12].body.commitments[0].preimage.value)).to.equal(92);
-        expect(parseInt(res[12].body.commitments[1].preimage.value)).to.equal(125);
-      });
-      it('Check value after internal function call after update', async () => {
-        expect(res[15].body.commitments[0].isNullified).to.equal(true);
-        expect(res[15].body.commitments[1].isNullified).to.equal(true);
-        expect(res[15].body.commitments[2].isNullified).to.equal(true);
-        expect(res[15].body.commitments[3].isNullified).to.equal(false);
-        expect(parseInt(res[15].body.commitments[2].preimage.value)).to.equal(251);
-        expect(parseInt(res[15].body.commitments[3].preimage.value)).to.equal(306);
-      });
-    });
+describe('InternalFunctionCallTest2 Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res[10].body.tx.event).to.equal('NewLeaves');
+    expect(res[11].body.tx.event).to.equal('NewLeaves');
+    expect(res[13].body.tx.event).to.equal('NewLeaves');
+    expect(res[14].body.tx.event).to.equal('NewLeaves');
+  });
+  it('Check value after internal function call intialize', async () => {
+    expect(res[12].body.commitments[0].isNullified).to.equal(true);
+    expect(res[12].body.commitments[1].isNullified).to.equal(false);
+    expect(parseInt(res[12].body.commitments[0].preimage.value)).to.equal(92);
+    expect(parseInt(res[12].body.commitments[1].preimage.value)).to.equal(125);
+  });
+  it('Check value after internal function call after update', async () => {
+    expect(res[15].body.commitments[0].isNullified).to.equal(true);
+    expect(res[15].body.commitments[1].isNullified).to.equal(true);
+    expect(res[15].body.commitments[2].isNullified).to.equal(true);
+    expect(res[15].body.commitments[3].isNullified).to.equal(false);
+    expect(parseInt(res[15].body.commitments[2].preimage.value)).to.equal(251);
+    expect(parseInt(res[15].body.commitments[3].preimage.value)).to.equal(306);
+  });
+});
