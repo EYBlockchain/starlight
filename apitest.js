@@ -113,6 +113,37 @@ const apiRequests_InternalFunctionCall = [
 
 res.InternalFunctionCall = await callZAppAPIs('InternalFunctionCall', apiRequests_InternalFunctionCall, 'InternalFunctionCall Zapp failed');
 
+const apiRequests_MappingtoStruct = [
+  { method: 'post', endpoint: '/add', data: { value: 34 } },
+  { method: 'post', endpoint: '/add', data: { value: 15 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'd', mappingKey: '0'} },
+];
+
+res.MappingtoStruct = await callZAppAPIs('MappingtoStruct', apiRequests_MappingtoStruct, 'MappingtoStruct Zapp failed');
+
+const apiRequests_Return = [
+  { method: 'post', endpoint: '/add', data: { value: 21 } },
+  { method: 'post', endpoint: '/remove', data: { value: 17, value1: 12 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
+];
+
+res.Return = await callZAppAPIs('Return', apiRequests_Return, 'Return Zapp failed');
+
+const apiRequests_SimpleStruct = [
+  { method: 'post', endpoint: '/add', data: { value: {"prop1": 14, "prop2": true} } },
+  { method: 'post', endpoint: '/add', data: { value: {"prop1": 25, "prop2": false} } },
+  { method: 'post', endpoint: '/remove', data: { value: {"prop1": 28, "prop2": false} } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b' } },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'x' } },
+];
+
+res.SimpleStruct = await callZAppAPIs('SimpleStruct', apiRequests_SimpleStruct, 'SimpleStruct Zapp failed');
+
+
 const apiRequests_internalFunctionCallTest1 = [
   { method: 'post', endpoint: '/add', data: { value: 46 } },
   { method: 'post', endpoint: '/remove', data: { value: 33} },
@@ -300,6 +331,83 @@ describe('InternalFunctionCall Zapp', () => {
     expect(parseInt(res.InternalFunctionCall[5].body.commitments[0].preimage.value)).to.equal(29);
   });
 });
+
+describe('MappingtoStruct Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.MappingtoStruct[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.MappingtoStruct[1].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.MappingtoStruct[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.MappingtoStruct[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.MappingtoStruct[2].body.commitments.length).to.equal(2);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.MappingtoStruct[3].body.commitments[0].isNullified).to.equal(true);
+    expect(res.MappingtoStruct[3].body.commitments[1].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.MappingtoStruct[3].body.commitments[1].preimage.value.prop1)).to.equal(15);
+    expect(parseInt(res.MappingtoStruct[3].body.commitments[1].preimage.value.prop2)).to.equal(16);
+    expect(parseInt(res.MappingtoStruct[3].body.commitments[1].preimage.value.prop3)).to.equal(17);
+  });
+});
+
+describe('Return Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.Return[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.Return[1].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.Return[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.Return[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.Return[2].body.commitments.length).to.equal(4);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.Return[3].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Return[3].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Return[3].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Return[3].body.commitments[3].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.Return[3].body.commitments[3].preimage.value)).to.equal(4);
+  });
+});
+
+describe('SimpleStruct Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.SimpleStruct[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.SimpleStruct[1].body.tx.event).to.equal('NewLeaves');
+    expect(res.SimpleStruct[2].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.SimpleStruct[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.SimpleStruct[1].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(parseInt(res.SimpleStruct[2].body.tx.returnValues.minLeafIndex)).to.equal(4);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.SimpleStruct[3].body.commitments.length).to.equal(7);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.SimpleStruct[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res.SimpleStruct[4].body.commitments[1].isNullified).to.equal(true);
+    expect(res.SimpleStruct[4].body.commitments[2].isNullified).to.equal(false);
+    expect(res.SimpleStruct[5].body.commitments[0].isNullified).to.equal(false);
+    expect(res.SimpleStruct[6].body.commitments[1].isNullified).to.equal(true);
+    expect(res.SimpleStruct[6].body.commitments[2].isNullified).to.equal(true);
+    expect(res.SimpleStruct[6].body.commitments[2].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.SimpleStruct[4].body.commitments[2].preimage.value)).to.equal(67);
+    expect(parseInt(res.SimpleStruct[5].body.commitments[0].preimage.value)).to.equal(28);
+    expect(res.SimpleStruct[6].body.commitments[2].preimage.value).to.equal(true);
+  });
+});
+
 
 describe('InternalFunctionCallTest1 Zapp', () => {
   it('tests APIs are working', async () => {
