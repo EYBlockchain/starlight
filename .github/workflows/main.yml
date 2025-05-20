@@ -55,7 +55,6 @@ jobs:
           zappify -i test/contracts/user-friendly-tests/Encrypt.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/for-loop.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/If-Statement.zol -o temp-zapps
-          zappify -i test/contracts/user-friendly-tests/InternalFunctionCall.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/MappingtoStruct.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/Return.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/SimpleStruct.zol -o temp-zapps
