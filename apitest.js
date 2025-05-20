@@ -5,11 +5,29 @@ import chaiAsPromised from 'chai-as-promised';
 import shell from 'shelljs'
 import logger from "./built/utils/logger.js";
 
+import fs from 'fs';
+
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
+let testedZapps = [];
+
+const getUserFriendlyTestNames = async (folderPath) => {
+  try {
+    const files = await fs.promises.readdir(folderPath, { withFileTypes: true });
+    const fileNames = files
+      .filter(dirent => dirent.isFile()) // Only include files
+      .map(dirent => dirent.name.replace(/\.zol$/, '')); // Get file names
+    return fileNames;
+  } catch (err) {
+    console.error('Error reading folder:', err);
+    return [];
+  }
+};
+
 const callZAppAPIs = async (zappName , apiRequests, errorMessage) => {
+  testedZapps.push(zappName);
   if (shell.exec(`./apiactions -z ${zappName}`).code !== 0) {
     shell.echo(`${zappName} failed`);
     shell.exit(1);
@@ -153,6 +171,16 @@ const apiRequests_internalFunctionCallTest1 = [
 ];
 
 res.InternalFunctionCallTest1 = await callZAppAPIs('internalFunctionCallTest1', apiRequests_internalFunctionCallTest1, 'internalFunctionCallTest1 Zapp failed');
+
+const userFriendlyTestsPath = 'test/contracts/user-friendly-tests';
+const userFriendlyTests = await getUserFriendlyTestNames(userFriendlyTestsPath);
+const allTestsCovered = userFriendlyTests.every(test => testedZapps.includes(test));
+
+describe('Check all contracts in user-friendly-tests are tested', () => {
+  it('should ensure all user-friendly-tests are in testedZapps', () => {
+    expect(allTestsCovered).to.equal(true);
+  });
+});
 
 describe('Arrays Zapp', () => {
   it('tests APIs are working', async () => {
