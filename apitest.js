@@ -68,21 +68,50 @@ const apiRequests_BucketsOfBalls = [
   { method: 'post', endpoint: '/deposit', data: { amountDeposit: 7 } },
   { method: 'post', endpoint: '/transfer', data: { toBucketId: 5, numberOfBalls: 8 } },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '827641930419614124039720421795580660909102123457'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '5'} },
 ];
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
 
+const apiRequests_Encrypt = [
+  { method: 'post', endpoint: '/add', data: { value: 6 } },
+  { method: 'post', endpoint: '/remove', data: { value: 5 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b' } },
+];
+
+res.Encrypt = await callZAppAPIs('Encrypt', apiRequests_Encrypt, 'Encrypt Zapp failed');
+
+const apiRequests_forloop = [
+  { method: 'post', endpoint: '/add', data: { j: 8 } },
+  { method: 'post', endpoint: '/add', data: { j: 9 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z' } },
+];
+
+res.forloop = await callZAppAPIs('for-loop', apiRequests_forloop, 'for-loop Zapp failed');
+
 const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 14 } },
-  { method: 'post', endpoint: '/add', data: { y: 23 } },
+  { method: 'post', endpoint: '/add', data: { y: 3 } },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'x', mappingKey: '827641930419614124039720421795580660909102123457'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
 ];
 
 res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement, 'If-Statement Zapp failed');
+
+const apiRequests_InternalFunctionCall = [
+  { method: 'post', endpoint: '/deposit', data: { accountId: 1, amountDeposit: 16 } },
+  { method: 'post', endpoint: '/deposit', data: { accountId: 1, amountDeposit: 18 } },
+  { method: 'post', endpoint: '/transfer', data: { fromAccountId: 1, toAccountId: 3, amount: 29 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'account', mappingKey: '1'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'account', mappingKey: '3'} },
+];
+
+res.InternalFunctionCall = await callZAppAPIs('InternalFunctionCall', apiRequests_InternalFunctionCall, 'InternalFunctionCall Zapp failed');
 
 const apiRequests_internalFunctionCallTest1 = [
   { method: 'post', endpoint: '/add', data: { value: 46 } },
@@ -103,8 +132,8 @@ describe('Arrays Zapp', () => {
   });
   it('MinLeaf Index check', async () => {
     expect(parseInt(res.Arrays[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Arrays[1].body.tx.returnValues.minLeafIndex)).to.equal(2);
-    expect(parseInt(res.Arrays[2].body.tx.returnValues.minLeafIndex)).to.equal(5);
+    expect(parseInt(res.Arrays[1].body.tx.returnValues.minLeafIndex)).to.equal(3);
+    expect(parseInt(res.Arrays[2].body.tx.returnValues.minLeafIndex)).to.equal(6);
   });
   it('Check number of commitments', async () => {
     expect(res.Arrays[3].body.commitments.length).to.equal(7);
@@ -176,24 +205,103 @@ describe('BucketsOfBalls Zapp', () => {
   });
 });
 
+describe('Encrypt Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.Encrypt[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.Encrypt[1].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.Encrypt[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.Encrypt[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.Encrypt[2].body.commitments.length).to.equal(3);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.Encrypt[3].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Encrypt[4].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Encrypt[4].body.commitments[1].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.Encrypt[3].body.commitments[0].preimage.value)).to.equal(5);
+    expect(parseInt(res.Encrypt[4].body.commitments[1].preimage.value)).to.equal(12);
+    expect(parseInt(res.Encrypt[4].body.commitments[1].preimage.value)).to.equal(10);
+  });
+});
+
+describe('for-loop Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.forloop[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.forloop[1].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.forloop[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.forloop[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.forloop[2].body.commitments.length).to.equal(2);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.forloop[3].body.commitments[0].isNullified).to.equal(true);
+    expect(res.forloop[3].body.commitments[1].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.forloop[3].body.commitments[1].preimage.value)).to.equal(95);
+  });
+});
+
 describe('If-Statement Zapp', () => {
   it('tests APIs are working', async () => {
     expect(res.IfStatement[0].body.tx.event).to.equal('NewLeaves');
     expect(res.IfStatement[1].body.tx.event).to.equal('NewLeaves');
   });
-  it('test MappingKey response', async () => {
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.IfStatement[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.IfStatement[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+  });
+  it('Check number of commitments', async () => {
     expect(res.IfStatement[2].body.commitments.length).to.equal(2);
-    expect(res.IfStatement[2].body.commitments[0].isNullified).to.equal(true);
-    expect(res.IfStatement[2].body.commitments[1].isNullified).to.equal(false);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.IfStatement[3].body.commitments[0].isNullified).to.equal(true);
+    expect(res.IfStatement[3].body.commitments[1].isNullified).to.equal(false);
+  });
+  it('Check value of commitments', async () => {
+    expect(parseInt(res.IfStatement[3].body.commitments[0].preimage.value)).to.equal(17);
+    expect(parseInt(res.IfStatement[3].body.commitments[1].preimage.value)).to.equal(4);
   });
   it('test stateVarId ', async () => {
-    expect(res.IfStatement[4].body.commitments[0].preimage.stateVarId).to.equal(res.IfStatement[4].body.commitments[1].preimage.stateVarId);
-    expect(res.IfStatement[4].body.commitments[0].isNullified).to.equal(true);
-    expect(res.IfStatement[4].body.commitments[1].isNullified).to.equal(false);
+    expect(res.IfStatement[3].body.commitments[0].preimage.stateVarId).to.equal(res.IfStatement[3].body.commitments[1].preimage.stateVarId);
   });
 });
 
-describe('InternalFunctionCallTest2 Zapp', () => {
+describe('InternalFunctionCall Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.InternalFunctionCall[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.InternalFunctionCall[1].body.tx.event).to.equal('NewLeaves');
+    expect(res.InternalFunctionCall[2].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.InternalFunctionCall[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.InternalFunctionCall[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expect(parseInt(res.InternalFunctionCall[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.InternalFunctionCall[3].body.commitments.length).to.equal(4);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.InternalFunctionCall[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res.InternalFunctionCall[4].body.commitments[1].isNullified).to.equal(true);
+    expect(res.InternalFunctionCall[4].body.commitments[2].isNullified).to.equal(false);
+    expect(res.InternalFunctionCall[5].body.commitments[0].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.InternalFunctionCall[4].body.commitments[2].preimage.value)).to.equal(5);
+    expect(parseInt(res.InternalFunctionCall[5].body.commitments[0].preimage.value)).to.equal(29);
+  });
+});
+
+describe('InternalFunctionCallTest1 Zapp', () => {
   it('tests APIs are working', async () => {
     expect(res.InternalFunctionCallTest1[0].body.tx.event).to.equal('NewLeaves');
     expect(res.InternalFunctionCallTest1[1].body.tx.event).to.equal('NewLeaves');
