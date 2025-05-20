@@ -48,7 +48,7 @@ const apiRequests_Assign = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
 ];
 
-res.Assign = await callZAppAPIs('Assign', apiRequests_Assign, 'Assign Zapp failed')
+res.Assign = await callZAppAPIs('Assign', apiRequests_Assign, 'Assign Zapp failed');
 
 const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 14 } },
@@ -58,7 +58,7 @@ const apiRequests_IfStatement = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
 ];
 
-res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement, 'If-Statement Zapp failed')
+res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement, 'If-Statement Zapp failed');
 
 const apiRequests_internalFunctionCallTest1 = [
   { method: 'post', endpoint: '/add', data: { value: 46 } },
@@ -94,40 +94,40 @@ describe('Assign Zapp', () => {
 
 describe('If-Statement Zapp', () => {
   it('tests APIs are working', async () => {
-    expect(res.IfStatement[5].body.tx.event).to.equal('NewLeaves');
-    expect(res.IfStatement[6].body.tx.event).to.equal('NewLeaves');
+    expect(res.IfStatement[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.IfStatement[1].body.tx.event).to.equal('NewLeaves');
   });
   it('test MappingKey response', async () => {
-    expect(res.IfStatement[7].body.commitments.length).to.equal(2);
-    expect(res.IfStatement[7].body.commitments[0].isNullified).to.equal(true);
-    expect(res.IfStatement[7].body.commitments[1].isNullified).to.equal(false);
+    expect(res.IfStatement[2].body.commitments.length).to.equal(2);
+    expect(res.IfStatement[2].body.commitments[0].isNullified).to.equal(true);
+    expect(res.IfStatement[2].body.commitments[1].isNullified).to.equal(false);
   });
   it('test stateVarId ', async () => {
-    expect(res.IfStatement[9].body.commitments[0].preimage.stateVarId).to.equal(res[9].body.commitments[1].preimage.stateVarId);
-    expect(res.IfStatement[9].body.commitments[0].isNullified).to.equal(true);
-    expect(res.IfStatement[9].body.commitments[1].isNullified).to.equal(false);
+    expect(res.IfStatement[4].body.commitments[0].preimage.stateVarId).to.equal(res.IfStatement[4].body.commitments[1].preimage.stateVarId);
+    expect(res.IfStatement[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res.IfStatement[4].body.commitments[1].isNullified).to.equal(false);
   });
 });
 
 describe('InternalFunctionCallTest2 Zapp', () => {
   it('tests APIs are working', async () => {
-    expect(res.InternalFunctionCallTest1[10].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCallTest1[11].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCallTest1[13].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCallTest1[14].body.tx.event).to.equal('NewLeaves');
+    expect(res.InternalFunctionCallTest1[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.InternalFunctionCallTest1[1].body.tx.event).to.equal('NewLeaves');
+    expect(res.InternalFunctionCallTest1[3].body.tx.event).to.equal('NewLeaves');
+    expect(res.InternalFunctionCallTest1[4].body.tx.event).to.equal('NewLeaves');
   });
   it('Check value after internal function call intialize', async () => {
-    expect(res.InternalFunctionCallTest1[12].body.commitments[0].isNullified).to.equal(true);
-    expect(res.InternalFunctionCallTest1[12].body.commitments[1].isNullified).to.equal(false);
-    expect(parseInt(res.InternalFunctionCallTest1[12].body.commitments[0].preimage.value)).to.equal(92);
-    expect(parseInt(res.InternalFunctionCallTest1[12].body.commitments[1].preimage.value)).to.equal(125);
+    expect(res.InternalFunctionCallTest1[2].body.commitments[0].isNullified).to.equal(true);
+    expect(res.InternalFunctionCallTest1[2].body.commitments[1].isNullified).to.equal(false);
+    expect(parseInt(res.InternalFunctionCallTest1[2].body.commitments[0].preimage.value)).to.equal(92);
+    expect(parseInt(res.InternalFunctionCallTest1[2].body.commitments[1].preimage.value)).to.equal(125);
   });
   it('Check value after internal function call after update', async () => {
-    expect(res.InternalFunctionCallTest1[15].body.commitments[0].isNullified).to.equal(true);
-    expect(res.InternalFunctionCallTest1[15].body.commitments[1].isNullified).to.equal(true);
-    expect(res.InternalFunctionCallTest1[15].body.commitments[2].isNullified).to.equal(true);
-    expect(res.InternalFunctionCallTest1[15].body.commitments[3].isNullified).to.equal(false);
-    expect(parseInt(res.InternalFunctionCallTest1[15].body.commitments[2].preimage.value)).to.equal(251);
-    expect(parseInt(res.InternalFunctionCallTest1[15].body.commitments[3].preimage.value)).to.equal(306);
+    expect(res.InternalFunctionCallTest1[5].body.commitments[0].isNullified).to.equal(true);
+    expect(res.InternalFunctionCallTest1[5].body.commitments[1].isNullified).to.equal(true);
+    expect(res.InternalFunctionCallTest1[5].body.commitments[2].isNullified).to.equal(true);
+    expect(res.InternalFunctionCallTest1[5].body.commitments[3].isNullified).to.equal(false);
+    expect(parseInt(res.InternalFunctionCallTest1[5].body.commitments[2].preimage.value)).to.equal(251);
+    expect(parseInt(res.InternalFunctionCallTest1[5].body.commitments[3].preimage.value)).to.equal(306);
   });
 });
