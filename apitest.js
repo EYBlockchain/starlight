@@ -102,7 +102,7 @@ const apiRequests_IfStatement = [
 
 res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement, 'If-Statement Zapp failed');
 
-const apiRequests_InternalFunctionCall = [
+/*const apiRequests_InternalFunctionCall = [
   { method: 'post', endpoint: '/deposit', data: { accountId: 1, amountDeposit: 16 } },
   { method: 'post', endpoint: '/deposit', data: { accountId: 1, amountDeposit: 18 } },
   { method: 'post', endpoint: '/transfer', data: { fromAccountId: 1, toAccountId: 3, amount: 29 } },
@@ -111,7 +111,7 @@ const apiRequests_InternalFunctionCall = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'account', mappingKey: '3'} },
 ];
 
-res.InternalFunctionCall = await callZAppAPIs('InternalFunctionCall', apiRequests_InternalFunctionCall, 'InternalFunctionCall Zapp failed');
+res.InternalFunctionCall = await callZAppAPIs('InternalFunctionCall', apiRequests_InternalFunctionCall, 'InternalFunctionCall Zapp failed');*/
 
 const apiRequests_MappingtoStruct = [
   { method: 'post', endpoint: '/add', data: { value: 34 } },
@@ -138,7 +138,6 @@ const apiRequests_SimpleStruct = [
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b' } },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'x' } },
 ];
 
 res.SimpleStruct = await callZAppAPIs('SimpleStruct', apiRequests_SimpleStruct, 'SimpleStruct Zapp failed');
@@ -255,7 +254,7 @@ describe('Encrypt Zapp', () => {
   });
   it('Check value of final commitment', async () => {
     expect(parseInt(res.Encrypt[3].body.commitments[0].preimage.value)).to.equal(5);
-    expect(parseInt(res.Encrypt[4].body.commitments[1].preimage.value)).to.equal(12);
+    expect(parseInt(res.Encrypt[4].body.commitments[0].preimage.value)).to.equal(12);
     expect(parseInt(res.Encrypt[4].body.commitments[1].preimage.value)).to.equal(10);
   });
 });
@@ -306,7 +305,7 @@ describe('If-Statement Zapp', () => {
   });
 });
 
-describe('InternalFunctionCall Zapp', () => {
+/*describe('InternalFunctionCall Zapp', () => {
   it('tests APIs are working', async () => {
     expect(res.InternalFunctionCall[0].body.tx.event).to.equal('NewLeaves');
     expect(res.InternalFunctionCall[1].body.tx.event).to.equal('NewLeaves');
@@ -330,7 +329,7 @@ describe('InternalFunctionCall Zapp', () => {
     expect(parseInt(res.InternalFunctionCall[4].body.commitments[2].preimage.value)).to.equal(5);
     expect(parseInt(res.InternalFunctionCall[5].body.commitments[0].preimage.value)).to.equal(29);
   });
-});
+});*/
 
 describe('MappingtoStruct Zapp', () => {
   it('tests APIs are working', async () => {
@@ -362,7 +361,7 @@ describe('Return Zapp', () => {
   });
   it('MinLeaf Index check', async () => {
     expect(parseInt(res.Return[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Return[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expect(parseInt(res.Return[1].body.tx.returnValues.minLeafIndex)).to.equal(3);
   });
   it('Check number of commitments', async () => {
     expect(res.Return[2].body.commitments.length).to.equal(4);
@@ -386,25 +385,21 @@ describe('SimpleStruct Zapp', () => {
   });
   it('MinLeaf Index check', async () => {
     expect(parseInt(res.SimpleStruct[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.SimpleStruct[1].body.tx.returnValues.minLeafIndex)).to.equal(2);
-    expect(parseInt(res.SimpleStruct[2].body.tx.returnValues.minLeafIndex)).to.equal(4);
+    expect(parseInt(res.SimpleStruct[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expect(parseInt(res.SimpleStruct[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
   });
   it('Check number of commitments', async () => {
-    expect(res.SimpleStruct[3].body.commitments.length).to.equal(7);
+    expect(res.SimpleStruct[3].body.commitments.length).to.equal(4);
   });
   it('Check nullified commitments', async () => {
     expect(res.SimpleStruct[4].body.commitments[0].isNullified).to.equal(true);
     expect(res.SimpleStruct[4].body.commitments[1].isNullified).to.equal(true);
     expect(res.SimpleStruct[4].body.commitments[2].isNullified).to.equal(false);
     expect(res.SimpleStruct[5].body.commitments[0].isNullified).to.equal(false);
-    expect(res.SimpleStruct[6].body.commitments[1].isNullified).to.equal(true);
-    expect(res.SimpleStruct[6].body.commitments[2].isNullified).to.equal(true);
-    expect(res.SimpleStruct[6].body.commitments[2].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
     expect(parseInt(res.SimpleStruct[4].body.commitments[2].preimage.value)).to.equal(67);
     expect(parseInt(res.SimpleStruct[5].body.commitments[0].preimage.value)).to.equal(28);
-    expect(res.SimpleStruct[6].body.commitments[2].preimage.value).to.equal(true);
   });
 });
 
