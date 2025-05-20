@@ -63,6 +63,17 @@ const apiRequests_Assign = [
 
 res.Assign = await callZAppAPIs('Assign', apiRequests_Assign, 'Assign Zapp failed');
 
+const apiRequests_BucketsOfBalls = [
+  { method: 'post', endpoint: '/deposit', data: { amountDeposit: 6 } },
+  { method: 'post', endpoint: '/deposit', data: { amountDeposit: 7 } },
+  { method: 'post', endpoint: '/transfer', data: { toBucketId: 5, numberOfBalls: 8 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '827641930419614124039720421795580660909102123457'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '5'} },
+];
+
+res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
+
 const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 14 } },
   { method: 'post', endpoint: '/add', data: { y: 23 } },
@@ -91,9 +102,9 @@ describe('Arrays Zapp', () => {
     expect(res.Arrays[2].body.tx.event).to.equal('NewLeaves');
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Arrays[0].body.tx.returnValues.minLeafIndex)).to.equal(2);
-    expect(parseInt(res.Arrays[1].body.tx.returnValues.minLeafIndex)).to.equal(5);
-    expect(parseInt(res.Arrays[2].body.tx.returnValues.minLeafIndex)).to.equal(6);
+    expect(parseInt(res.Arrays[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.Arrays[1].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(parseInt(res.Arrays[2].body.tx.returnValues.minLeafIndex)).to.equal(5);
   });
   it('Check number of commitments', async () => {
     expect(res.Arrays[3].body.commitments.length).to.equal(7);
@@ -108,10 +119,10 @@ describe('Arrays Zapp', () => {
     expect(res.Arrays[7].body.commitments[0].isNullified).to.equal(false);
   });
   it('Check value of final commitments', async () => {
-    expect(res.Arrays[4].body.commitments[2].preimage.value).to.equal(2);
-    expect(res.Arrays[5].body.commitments[0].preimage.value).to.equal(0);
-    expect(res.Arrays[6].body.commitments[1].preimage.value).to.equal(0);
-    expect(res.Arrays[7].body.commitments[0].preimage.value).to.equal(9);
+    expect(parseInt(res.Arrays[4].body.commitments[2].preimage.value)).to.equal(2);
+    expect(parseInt(res.Arrays[5].body.commitments[0].preimage.value)).to.equal(0);
+    expect(parseInt(res.Arrays[6].body.commitments[1].preimage.value)).to.equal(0);
+    expect(parseInt(res.Arrays[7].body.commitments[0].preimage.value)).to.equal(9);
   });
 });
 
@@ -135,7 +146,33 @@ describe('Assign Zapp', () => {
     expect(res.Assign[4].body.commitments[2].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
-    expect(res.Assign[4].body.commitments[3].preimage.value).to.equal(3);
+    expect(parseInt(res.Assign[4].body.commitments[2].preimage.value)).to.equal(3);
+  });
+});
+
+describe('BucketsOfBalls Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.BucketsOfBalls[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.BucketsOfBalls[1].body.tx.event).to.equal('NewLeaves');
+    expect(res.BucketsOfBalls[2].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.BucketsOfBalls[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.BucketsOfBalls[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expect(parseInt(res.BucketsOfBalls[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.BucketsOfBalls[3].body.commitments.length).to.equal(4);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.BucketsOfBalls[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res.BucketsOfBalls[4].body.commitments[1].isNullified).to.equal(true);
+    expect(res.BucketsOfBalls[4].body.commitments[2].isNullified).to.equal(false);
+    expect(res.BucketsOfBalls[5].body.commitments[0].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.BucketsOfBalls[4].body.commitments[2].preimage.value)).to.equal(5);
+    expect(parseInt(res.BucketsOfBalls[5].body.commitments[0].preimage.value)).to.equal(8);
   });
 });
 
