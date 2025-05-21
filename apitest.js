@@ -71,6 +71,8 @@ const apiRequests_Arrays = [
   { method: 'post', endpoint: '/add', data: { value: 7 } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '2'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '3'} },
+  { method: 'get', endpoint: '/getBalance' },
+  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'a'} },
 ];
 
 res.Arrays = await callZAppAPIs('Arrays', apiRequests_Arrays, 'Arrays Zapp failed');
@@ -78,7 +80,9 @@ res.Arrays = await callZAppAPIs('Arrays', apiRequests_Arrays, 'Arrays Zapp faile
 const apiRequests_Assign = [
   { method: 'post', endpoint: '/add', data: { value: 11 } },
   { method: 'post', endpoint: '/add', data: { value: 8 } },
+  { method: 'get', endpoint: '/getBalance' },
   { method: 'post', endpoint: '/remove', data: { value: 16 } },
+  { method: 'get', endpoint: '/getBalance' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
   { method: 'get', endpoint: '/backupDataRetriever' },
@@ -99,6 +103,8 @@ const apiRequests_BucketsOfBalls = [
   { method: 'get', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/transfer', data: { toBucketId: 3, numberOfBalls: 2 } },
+  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
+  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '5'} },
 ];
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
@@ -235,36 +241,44 @@ describe('Arrays Zapp', () => {
     expect(parseInt(res.Arrays[11].body.commitments[0].preimage.value)).to.equal(7);
     expect(res.Arrays[11].body.commitments[0].isNullified).to.equal(false);
   });
+  it('Test getBalance', async () => {
+    expect(parseInt(res.Assign[12].body.totalBalance)).to.equal(16);
+    expect(parseInt(res.Assign[13].body.totalBalance)).to.equal(9);
+  });
 });
 
 describe('Assign Zapp', () => {
   it('tests APIs are working', async () => {
     expect(res.Assign[0].body.tx.event).to.equal('NewLeaves');
     expect(res.Assign[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.Assign[2].body.tx.event).to.equal('NewLeaves');
+    expect(res.Assign[3].body.tx.event).to.equal('NewLeaves');
   });
   it('MinLeaf Index check', async () => {
     expect(parseInt(res.Assign[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
     expect(parseInt(res.Assign[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.Assign[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(parseInt(res.Assign[3].body.tx.returnValues.minLeafIndex)).to.equal(2);
+  });
+  it('test getBalance', async () => {
+    expect(parseInt(res.Assign[2].body.totalBalance)).to.equal(19);
+    expect(parseInt(res.Assign[4].body.totalBalance)).to.equal(3);
   });
   it('Check number of commitments', async () => {
-    expect(res.Assign[3].body.commitments.length).to.equal(3);
+    expect(res.Assign[5].body.commitments.length).to.equal(3);
   });
   it('Check nullified commitments', async () => {
-    expect(res.Assign[4].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Assign[4].body.commitments[1].isNullified).to.equal(true);
-    expect(res.Assign[4].body.commitments[2].isNullified).to.equal(false);
+    expect(res.Assign[6].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Assign[6].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Assign[6].body.commitments[2].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
-    expect(parseInt(res.Assign[4].body.commitments[2].preimage.value)).to.equal(3);
+    expect(parseInt(res.Assign[6].body.commitments[2].preimage.value)).to.equal(3);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Assign[5].body.commitments.length).to.equal(3);
-    expect(res.Assign[5].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Assign[5].body.commitments[1].isNullified).to.equal(true);
-    expect(res.Assign[5].body.commitments[2].isNullified).to.equal(false);
-    expect(res.Arrays[6].body.tx.event).to.equal('NewLeaves');
+    expect(res.Assign[7].body.commitments.length).to.equal(3);
+    expect(res.Assign[7].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Assign[7].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Assign[7].body.commitments[2].isNullified).to.equal(false);
+    expect(res.Arrays[8].body.tx.event).to.equal('NewLeaves');
   });
 });
 
@@ -295,6 +309,10 @@ describe('BucketsOfBalls Zapp', () => {
   it('Check commitments are correct after deleting and restoring from backup', async () => {
     expect(res.Assign[7].body.commitments.length).to.equal(4);
     expect(res.Arrays[8].body.tx.event).to.equal('NewLeaves');
+  });
+  it('Test getBalanceByState', async () => {
+    expect(parseInt(res.Assign[9].body.totalBalance)).to.equal(5);
+    expect(parseInt(res.Assign[10].body.totalBalance)).to.equal(8);
   });
 });
 
