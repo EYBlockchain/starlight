@@ -818,7 +818,7 @@ integrationApiServicesBoilerplate = {
         try {
       
           const sum = await getBalance();
-          res.send( {" Total Balance": sum} );
+          res.send( {"totalBalance": sum} );
         } catch (error) {
           console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });
@@ -829,7 +829,7 @@ integrationApiServicesBoilerplate = {
         try {
           const { name, mappingKey } = req.body;
           const balance = await getBalanceByState(name, mappingKey);
-          res.send( {" Total Balance": balance} );
+          res.send( {"totalBalance": balance} );
         } catch (error) {
           console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });

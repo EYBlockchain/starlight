@@ -49,8 +49,15 @@ jobs:
       - name: run zappify
         run: |
           npm ci && ./bin/start
+          zappify -i test/contracts/user-friendly-tests/Arrays.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/Assign.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/BucketsOfBalls.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/Encrypt.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/for-loop.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/If-Statement.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/MappingtoStruct.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/Return.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/SimpleStruct.zol -o temp-zapps
           zappify -i test/contracts/action-tests/internalFunctionCallTest1.zol -o temp-zapps
 
       - name: replace zokrates image for actions test
