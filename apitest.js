@@ -242,8 +242,8 @@ describe('Arrays Zapp', () => {
     expect(res.Arrays[11].body.commitments[0].isNullified).to.equal(false);
   });
   it('Test getBalance', async () => {
-    expect(parseInt(res.Assign[12].body.totalBalance)).to.equal(16);
-    expect(parseInt(res.Assign[13].body.totalBalance)).to.equal(9);
+    expect(parseInt(res.Arrays[12].body.totalBalance)).to.equal(16);
+    expect(parseInt(res.Arrays[13].body.totalBalance)).to.equal(9);
   });
 });
 
@@ -274,11 +274,11 @@ describe('Assign Zapp', () => {
     expect(parseInt(res.Assign[6].body.commitments[2].preimage.value)).to.equal(3);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Assign[7].body.commitments.length).to.equal(3);
-    expect(res.Assign[7].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Assign[7].body.commitments[1].isNullified).to.equal(true);
-    expect(res.Assign[7].body.commitments[2].isNullified).to.equal(false);
-    expect(res.Arrays[8].body.tx.event).to.equal('NewLeaves');
+    expect(res.Assign[8].body.commitments.length).to.equal(3);
+    expect(res.Assign[8].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Assign[8].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Assign[8].body.commitments[2].isNullified).to.equal(false);
+    expect(res.Arrays[9].body.tx.event).to.equal('NewLeaves');
   });
 });
 
@@ -307,12 +307,12 @@ describe('BucketsOfBalls Zapp', () => {
     expect(parseInt(res.BucketsOfBalls[5].body.commitments[0].preimage.value)).to.equal(8);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Assign[7].body.commitments.length).to.equal(4);
-    expect(res.Arrays[8].body.tx.event).to.equal('NewLeaves');
+    expect(res.BucketsOfBalls[7].body.commitments.length).to.equal(4);
+    expect(res.BucketsOfBalls[8].body.tx.event).to.equal('NewLeaves');
   });
   it('Test getBalanceByState', async () => {
-    expect(parseInt(res.Assign[9].body.totalBalance)).to.equal(5);
-    expect(parseInt(res.Assign[10].body.totalBalance)).to.equal(8);
+    expect(parseInt(res.BucketsOfBalls[9].body.totalBalance)).to.equal(5);
+    expect(parseInt(res.BucketsOfBalls[10].body.totalBalance)).to.equal(8);
   });
 });
 
@@ -385,8 +385,8 @@ describe('If-Statement Zapp', () => {
     expect(res.IfStatement[3].body.commitments[0].preimage.stateVarId).to.equal(res.IfStatement[3].body.commitments[1].preimage.stateVarId);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Assign[5].body.commitments.length).to.equal(2);
-    expect(res.Arrays[6].body.tx.event).to.equal('NewLeaves');
+    expect(res.IfStatement[5].body.commitments.length).to.equal(2);
+    expect(res.IfStatement[6].body.tx.event).to.equal('NewLeaves');
   });
 });
 
@@ -438,8 +438,8 @@ describe('MappingtoStruct Zapp', () => {
     expect(parseInt(res.MappingtoStruct[3].body.commitments[1].preimage.value.prop3)).to.equal(17);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Assign[5].body.commitments.length).to.equal(2);
-    expect(res.Arrays[6].body.tx.event).to.equal('NewLeaves');
+    expect(res.MappingtoStruct[5].body.commitments.length).to.equal(2);
+    expect(res.MappingtoStruct[6].body.tx.event).to.equal('NewLeaves');
   });
 });
 
