@@ -67,6 +67,10 @@ const apiRequests_Arrays = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '0'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '1'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '2'} },
+  { method: 'get', endpoint: '/backupVariable', data: { name: 'b' } },
+  { method: 'post', endpoint: '/add', data: { value: 7 } },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '2'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '3'} },
 ];
 
 res.Arrays = await callZAppAPIs('Arrays', apiRequests_Arrays, 'Arrays Zapp failed');
@@ -77,6 +81,10 @@ const apiRequests_Assign = [
   { method: 'post', endpoint: '/remove', data: { value: 16 } },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
+  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'post', endpoint: '/remove', data: { value: 2 } },
+
 ];
 
 res.Assign = await callZAppAPIs('Assign', apiRequests_Assign, 'Assign Zapp failed');
@@ -88,6 +96,9 @@ const apiRequests_BucketsOfBalls = [
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '5'} },
+  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'post', endpoint: '/transfer', data: { toBucketId: 3, numberOfBalls: 2 } },
 ];
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
@@ -116,6 +127,9 @@ const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 3 } },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
+  { method: 'get', endpoint: '/backupVariable', data: { name: 'z' } },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
+  { method: 'post', endpoint: '/add', data: { y: 6 } },
 ];
 
 res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement, 'If-Statement Zapp failed');
@@ -136,6 +150,9 @@ const apiRequests_MappingtoStruct = [
   { method: 'post', endpoint: '/add', data: { value: 15 } },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'd', mappingKey: '0'} },
+  { method: 'get', endpoint: '/backupVariable', data: { name: 'd' } },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'd', mappingKey: '0'} },
+  { method: 'post', endpoint: '/add', data: { value: 18 } },
 ];
 
 res.MappingtoStruct = await callZAppAPIs('MappingtoStruct', apiRequests_MappingtoStruct, 'MappingtoStruct Zapp failed');
@@ -211,6 +228,13 @@ describe('Arrays Zapp', () => {
     expect(parseInt(res.Arrays[6].body.commitments[1].preimage.value)).to.equal(0);
     expect(parseInt(res.Arrays[7].body.commitments[0].preimage.value)).to.equal(9);
   });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.Arrays[9].body.tx.event).to.equal('NewLeaves');
+    expect(parseInt(res.Arrays[10].body.commitments[1].preimage.value)).to.equal(0);
+    expect(res.Arrays[10].body.commitments[1].isNullified).to.equal(false);
+    expect(parseInt(res.Arrays[11].body.commitments[0].preimage.value)).to.equal(7);
+    expect(res.Arrays[11].body.commitments[0].isNullified).to.equal(false);
+  });
 });
 
 describe('Assign Zapp', () => {
@@ -234,6 +258,13 @@ describe('Assign Zapp', () => {
   });
   it('Check value of final commitment', async () => {
     expect(parseInt(res.Assign[4].body.commitments[2].preimage.value)).to.equal(3);
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.Assign[5].body.commitments.length).to.equal(3);
+    expect(res.Assign[5].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Assign[5].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Assign[5].body.commitments[2].isNullified).to.equal(false);
+    expect(res.Arrays[6].body.tx.event).to.equal('NewLeaves');
   });
 });
 
@@ -260,6 +291,10 @@ describe('BucketsOfBalls Zapp', () => {
   it('Check value of final commitment', async () => {
     expect(parseInt(res.BucketsOfBalls[4].body.commitments[2].preimage.value)).to.equal(5);
     expect(parseInt(res.BucketsOfBalls[5].body.commitments[0].preimage.value)).to.equal(8);
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.Assign[7].body.commitments.length).to.equal(4);
+    expect(res.Arrays[8].body.tx.event).to.equal('NewLeaves');
   });
 });
 
@@ -331,6 +366,10 @@ describe('If-Statement Zapp', () => {
   it('test stateVarId ', async () => {
     expect(res.IfStatement[3].body.commitments[0].preimage.stateVarId).to.equal(res.IfStatement[3].body.commitments[1].preimage.stateVarId);
   });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.Assign[5].body.commitments.length).to.equal(2);
+    expect(res.Arrays[6].body.tx.event).to.equal('NewLeaves');
+  });
 });
 
 /*describe('InternalFunctionCall Zapp', () => {
@@ -379,6 +418,10 @@ describe('MappingtoStruct Zapp', () => {
     expect(parseInt(res.MappingtoStruct[3].body.commitments[1].preimage.value.prop1)).to.equal(15);
     expect(parseInt(res.MappingtoStruct[3].body.commitments[1].preimage.value.prop2)).to.equal(16);
     expect(parseInt(res.MappingtoStruct[3].body.commitments[1].preimage.value.prop3)).to.equal(17);
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.Assign[5].body.commitments.length).to.equal(2);
+    expect(res.Arrays[6].body.tx.event).to.equal('NewLeaves');
   });
 });
 
