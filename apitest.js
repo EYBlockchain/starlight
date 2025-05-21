@@ -105,6 +105,7 @@ const apiRequests_BucketsOfBalls = [
   { method: 'post', endpoint: '/transfer', data: { toBucketId: 3, numberOfBalls: 2 } },
   { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
   { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '5'} },
+  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '3'} },
 ];
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
@@ -311,8 +312,9 @@ describe('BucketsOfBalls Zapp', () => {
     expect(res.BucketsOfBalls[8].body.tx.event).to.equal('NewLeaves');
   });
   it('Test getBalanceByState', async () => {
-    expect(parseInt(res.BucketsOfBalls[9].body.totalBalance)).to.equal(5);
+    expect(parseInt(res.BucketsOfBalls[9].body.totalBalance)).to.equal(3);
     expect(parseInt(res.BucketsOfBalls[10].body.totalBalance)).to.equal(8);
+    expect(parseInt(res.BucketsOfBalls[11].body.totalBalance)).to.equal(2);
   });
 });
 
