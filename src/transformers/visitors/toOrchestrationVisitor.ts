@@ -489,6 +489,19 @@ const visitor = {
   FunctionDefinition: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
+      if (node.kind === 'constructor') {
+        state.constructorParams ??= [];
+        for (const param of node.parameters.parameters) {
+          state.constructorParams.push(
+            buildNode('VariableDeclaration', {
+              name: param.name,
+              type: param.typeName.name,
+              isSecret: param.isSecret,
+              interactsWithSecret: scope.getReferencedIndicator(param)?.interactsWithSecret,
+            }),
+          );
+        }
+      }
       if (scope.modifiesSecretState()) {
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
@@ -577,19 +590,6 @@ const visitor = {
         state.skipSubNodes = true;
       }  
   
-      if (node.kind === 'constructor') {
-        state.constructorParams ??= [];
-        for (const param of node.parameters.parameters) {
-          state.constructorParams.push(
-            buildNode('VariableDeclaration', {
-              name: param.name,
-              type: param.typeName.name,
-              isSecret: param.isSecret,
-              interactsWithSecret: scope.getReferencedIndicator(param)?.interactsWithSecret,
-            }),
-          );
-        }
-      }
     },
 
     exit(path: NodePath, state: any) {

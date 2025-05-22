@@ -523,6 +523,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   if (constructorParams?.length >= 1) constructorParams[constructorParams.length - 1] += `,`;
   // finally, import all above findings to the migrationsfile
   file.file = file.file.replace(/CUSTOM_CONTRACTS/g, customDeployments);
+  file.file = file.file.replace(/CUSTOM_CONTRACT_IMPORT/g, customImports);
   file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParams);
   file.file = file.file.replace(/CUSTOM_PROOF_IMPORT/g, customProofImport);
   file.file = file.file.replace(/CUSTOM_PROOF/g, customProofInputs);
