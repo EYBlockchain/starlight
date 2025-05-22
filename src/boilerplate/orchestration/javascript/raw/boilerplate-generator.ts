@@ -775,7 +775,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, reinstateNullifiers, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -818,7 +818,7 @@ integrationApiServicesBoilerplate = {
         try {
       
           const sum = await getBalance();
-          res.send( {" Total Balance": sum} );
+          res.send( {"totalBalance": sum} );
         } catch (error) {
           console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });
@@ -829,7 +829,7 @@ integrationApiServicesBoilerplate = {
         try {
           const { name, mappingKey } = req.body;
           const balance = await getBalanceByState(name, mappingKey);
-          res.send( {" Total Balance": balance} );
+          res.send( {"totalBalance": balance} );
         } catch (error) {
           console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });
@@ -849,16 +849,6 @@ integrationApiServicesBoilerplate = {
         }
       }
       
-      export async function service_reinstateNullifiers(req, res, next) {
-        try {
-          await reinstateNullifiers();
-          res.send('Complete');
-          await sleep(10);
-        } catch (err) {
-          logger.error(err);
-          res.send({ errors: [err.message] });
-        }
-      }
       
       export async function service_backupData(req, res, next) {
         try {
@@ -915,7 +905,7 @@ integrationApiRoutesBoilerplate = {
     return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_reinstateNullifiers, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable,} from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable,} from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
@@ -923,8 +913,6 @@ integrationApiRoutesBoilerplate = {
     router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
     router.get("/getBalance", service_getBalance);
     router.get("/getBalanceByState", service_getBalanceByState);
-    // nullifier route
-    router.post("/reinstateNullifiers", service_reinstateNullifiers);
     router.post("/getSharedKeys", service_getSharedKeys);
     // backup route
     router.post("/backupDataRetriever", service_backupData);
