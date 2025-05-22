@@ -444,7 +444,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
               `It looks like you're using an ERC contract - please make sure you increase the allowance of the shield contract before testing!`,
             );
             switch (importedContractName) {
-              case 'ERC20': customDeployments += `const ERC20 = await hre.ethers.getContractFactory('contracts/ERC20.sol:ERC20') \n
+              case 'ERC20': customDeployments += `const ERC20 = await hre.ethers.getContractFactory('ERC20') \n
                                       const erc20 = await ERC20.deploy(
                                         'MyCoin',
                                         'MC'
@@ -452,27 +452,23 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                                       await erc20.waitForDeployment() \n
                                       const erc20Address = await erc20.getAddress() \n
                                       console.log('ERC20 deployed to:', erc20Address) \n
-                                      deployTx = await erc20.deploymentTransaction().wait() \n
-                                      saveMetadata(erc20Address, 'ERC20', chainId, blockNumber, deployTx.hash) \n`;
+                                      deployTx = await erc20.deploymentTransaction().wait() \n`;
               break;
               case 'ERC721':
-                customDeployments += `const ERC721 = await hre.ethers.getContractFactory('contracts/ERC721.sol:ERC721') \n
+                customDeployments += `const ERC721 = await hre.ethers.getContractFactory('ERC721') \n
                                       const erc721 = await ERC721.deploy() \n
                                       await erc721.waitForDeployment() \n
                                       const erc721Address = await erc721.getAddress() \n
                                       console.log('ERC721 deployed to:', erc721Address) \n
-                                      deployTx = await erc721.deploymentTransaction().wait() \n
-                                      saveMetadata(erc721Address, 'ERC721', chainId, blockNumber, deployTx.hash) \n \n`;
+                                      deployTx = await erc721.deploymentTransaction().wait() \n`;
                 break;
               case 'ERC1155':
-                customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('contracts/ERC1155Token.sol:ERC1155Token') \n
+                customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('ERC1155Token') \n
                                       const erc1155 = await ERC1155.deploy() \n
                                       await erc1155.waitForDeployment() \n
                                       erc1155Address = await erc1155.getAddress() \n
                                       console.log('ERC1155 deployed to:', erc1155Address) \n 
-                                      deployTx = await erc1155.deploymentTransaction().wait() \n
-                                      saveMetadata(erc1155Address, 'ERC1155Token', chainId, blockNumber, deployTx.hash) \n
-                                    \n`;
+                                      deployTx = await erc1155.deploymentTransaction().wait() \n`;
                 break; 
             }
           } 
