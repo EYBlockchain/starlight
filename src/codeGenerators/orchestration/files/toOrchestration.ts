@@ -532,7 +532,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
 
 const prepareStartupScript = (file: localFile, node: any) => {
   let constructorCall = ``;
-  if (!node.functionNames.includes('cnstrctr')) {
+  if (!node.isConstructor) {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, ``);
     return;
   } else if (!node.constructorParams[0]) {
@@ -977,7 +977,7 @@ export default function fileGenerator(node: any) {
         obj.filepath.includes(`deploy`),
       )[0];
 
-      if (node.functionNames.includes('cnstrctr')) {
+      if (node.isConstructor) {
         const redeployPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/redeploy');
         const redeployFile = { filepath: 'bin/redeploy', file: fs.readFileSync(redeployPath, 'utf8') };
         prepareStartupScript(redeployFile, node);

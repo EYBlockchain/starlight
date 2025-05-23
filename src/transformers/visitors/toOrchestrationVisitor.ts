@@ -689,6 +689,9 @@ const visitor = {
           if(scope.modifiesSecretState()){
             file.functionNames.push(node.fileName);
           }
+          if (node.fileName === 'cnstrctr'){
+            file.isConstructor = true;
+          }
         }
       }
       thisIntegrationTestFunction.parameters = node._newASTPointer.parameters;
