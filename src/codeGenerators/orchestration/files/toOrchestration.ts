@@ -388,7 +388,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   );
   // collect any extra constructor parameters
   const constructorParams = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
-  const iwsConstructorParams = node.constructorParams?.filter((param: any) => param.interactsWithSecret === true);
+  const iwsConstructorParams = node.constructorParams;
   // initialise variables
   let customImports = ``;
   let customDeployments = ``;
@@ -503,7 +503,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
       );
     });
   }
-  if (node.functionNames.includes('cnstrctr')) {
+  if (node.isConstructor) {
     // we have a constructor which requires a proof
     customProofImport += `const constructorInput = JSON.parse(
       fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
@@ -540,7 +540,7 @@ const prepareStartupScript = (file: localFile, node: any) => {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
     return;
   }
-  constructorCall += `read -p "Please enter your constructor parameters separated by commas:" inputs
+  constructorCall += `read -p "Please enter your constructor parameters separated by commas (for imported contract addresses, input "NA" if it has not already been deployed):" inputs
 
   docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
 
