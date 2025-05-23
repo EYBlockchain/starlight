@@ -74,6 +74,7 @@ export default {
           logger.warn(
             `Non-secret parameter '${node.name}' used when assigning to a secret variable '${lhsBinding.name}'. Blockchain observers might be able to infer the value of '${lhsBinding.name}' from this. I.e. although you've labelled '${lhsBinding.name}' as 'secret', it might not be secret.`,
           );
+          logger.warn(`The secret variable '${lhsBinding.name}' is assigned a value derived from the non-secret parameter '${node.name}'. If '${node.name}' is modified in a concurrently issued transaction that is ordered before this one, it could invalidate the cryptographic proof backing the secret state change. This may result in the transaction failing, leading to wasted gas and proving effort.`);
           backtrace.getSourceCode(node.src);
         }
         // if its non-secret, no accessing occurs, we exit
