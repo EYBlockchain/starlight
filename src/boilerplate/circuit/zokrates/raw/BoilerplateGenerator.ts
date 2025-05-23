@@ -25,7 +25,7 @@ class BoilerplateGenerator {
     },
 
     parameters({ name: x }): string[] {
-      return [`private field ${x}_oldCommitment_owner_secretKey`];
+      return [`private field ${x}_oldCommitment_owner_secretKey;`];
     },
 
     postStatements({ name: x }): string[] {
@@ -35,14 +35,14 @@ class BoilerplateGenerator {
         // ${x}_oldCommitment - PoKoSK:
         // The correctness of this secret key will be constrained within the oldCommitment existence check.
 
-        field[2] ${x}_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(${x}_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams())
+        field[2] ${x}_oldCommitment_owner_publicKey_point = scalarMult(field_to_bool_256(${x}_oldCommitment_owner_secretKey), [curveParams().Gu, curveParams().Gv], curveParams());
 
-        bool ${x}_oldCommitment_owner_publicKey_sign = edwardsCompress(${x}_oldCommitment_owner_publicKey_point)[0]
+        bool ${x}_oldCommitment_owner_publicKey_sign = edwardsCompress(${x}_oldCommitment_owner_publicKey_point)[0];
 
-        bool[254] ${x}_oldCommitment_yBits = field_to_bool_256(${x}_oldCommitment_owner_publicKey_point[1])[2..256]
-        ${x}_oldCommitment_yBits[0] = ${x}_oldCommitment_owner_publicKey_sign
+        bool[254] ${x}_oldCommitment_yBits = field_to_bool_256(${x}_oldCommitment_owner_publicKey_point[1])[2..256];
+        ${x}_oldCommitment_yBits[0] = ${x}_oldCommitment_owner_publicKey_sign;
 
-        field ${x}_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_oldCommitment_yBits])`,
+        field ${x}_oldCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_oldCommitment_yBits]);`,
       ];
     },
   };
@@ -71,7 +71,7 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code each stateVarId into the circuit:
-        field ${x}_stateVarId_field = ${id}`
+        field ${x}_stateVarId_field = ${id};`
          // TODO: this results in unnecessary unpacking constraints, but simplifies transpilation effort, for now.
       ];
     },
@@ -87,11 +87,11 @@ class BoilerplateGenerator {
           ${x}_stateVarId_field,\\
           ${x}_oldCommitment_owner_secretKey,\\
           ${x}_oldCommitment_salt\\
-        ])
+        ]);
 
         assert(\\
         field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
-        )
+        );
         // ${x}_oldCommitment_nullifier : non-existence check
         
         `);
@@ -100,19 +100,19 @@ class BoilerplateGenerator {
         // whole states also need to handle the case of a dummy nullifier
         lines.push(
           `
-          ${x}_oldCommitment_owner_secretKey = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_owner_secretKey fi
+          ${x}_oldCommitment_owner_secretKey = if (${x}_oldCommitment_isDummy) { 0 } else ${x}_oldCommitment_owner_secretKey };
 
-          ${x}_oldCommitment_salt = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_salt fi
+          ${x}_oldCommitment_salt = if (${x}_oldCommitment_isDummy) { 0 } else { ${x}_oldCommitment_salt };
           `
         );
         if (structProperties) {
           if (structPropertiesTypes) {
             structPropertiesTypes.forEach(property => {
               if (property.typeName === 'bool'){
-                lines.push(`${x}_oldCommitment_value.${property.name} = if ${x}_oldCommitment_isDummy then false else ${x}_oldCommitment_value.${property.name} fi`);
+                lines.push(`${x}_oldCommitment_value.${property.name} = if (${x}_oldCommitment_isDummy) { false } else { ${x}_oldCommitment_value.${property.name} };`);
               } else{
                 lines.push(
-                  `${x}_oldCommitment_value.${property.name} = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value.${property.name} fi`
+                  `${x}_oldCommitment_value.${property.name} = if (${x}_oldCommitment_isDummy) { 0 } else { ${x}_oldCommitment_value.${property.name} };`
                 );
                 }
             });
@@ -120,11 +120,11 @@ class BoilerplateGenerator {
         } else {
           if (typeName === 'bool'){
             lines.push(
-              `${x}_oldCommitment_value = if ${x}_oldCommitment_isDummy then false else ${x}_oldCommitment_value fi`
+              `${x}_oldCommitment_value = if (${x}_oldCommitment_isDummy) { false } else { ${x}_oldCommitment_value };`
             );
           } else {
             lines.push(
-              `${x}_oldCommitment_value = if ${x}_oldCommitment_isDummy then 0 else ${x}_oldCommitment_value fi`
+              `${x}_oldCommitment_value = if (${x}_oldCommitment_isDummy) { 0 } else { ${x}_oldCommitment_value };`
             );
           }
         }
@@ -163,9 +163,9 @@ class BoilerplateGenerator {
       const lines: string[] = [];
       if (!structProperties && !reinitialisable ) {
         if (typeName === 'bool'){
-          lines.push(`field ${x}_oldCommitment_value_field = if ${x}_oldCommitment_value then 1 else 0 fi`);
+          lines.push(`field ${x}_oldCommitment_value_field = if (${x}_oldCommitment_value) { 1 } else { 0 };`);
         } else {
-          lines.push(`field ${x}_oldCommitment_value_field = ${x}_oldCommitment_value`);
+          lines.push(`field ${x}_oldCommitment_value_field = ${x}_oldCommitment_value;`);
         }  
       } 
 
@@ -173,7 +173,9 @@ class BoilerplateGenerator {
         if (structPropertiesTypes) {
           structPropertiesTypes.forEach(property => {
             if (property.typeName === 'bool'){
-              lines.push(`field ${x}_oldCommitment_value_${property.name}_field = if ${x}_oldCommitment_value.${property.name} then 1 else 0 fi`);
+              lines.push(`field ${x}_oldCommitment_value_${property.name}_field = if (${x}_oldCommitment_value.${property.name}) { 1 } else { 0 };`);
+            } else {
+              lines.push(`field ${x}_oldCommitment_value_${property.name}_field = if (${x}_oldCommitment_value.${property.name}) { 0 } else { ${x}_oldCommitment_value.${property.name} };`);
             }
           });
         }
@@ -190,7 +192,7 @@ class BoilerplateGenerator {
             ${structPropertiesTypes.map(p => (p.typeName === 'bool') ? `\t \t \t \t \t \t${x}_oldCommitment_value_${p.name}_field,\\` : `\t ${x}_oldCommitment_value.${p.name},\\`).join('\n')}
             ${x}_oldCommitment_owner_publicKey,\\
             ${x}_oldCommitment_salt\\
-          ])`,
+          ]);`,
         ];
       }
       if(!reinitialisable)  
@@ -210,7 +212,7 @@ class BoilerplateGenerator {
           ${x}_oldCommitment_value_field,\\
           ${x}_oldCommitment_owner_publicKey,\\
           ${x}_oldCommitment_salt\
-        ])`,
+        ]);`,
       ];
     },
   };
@@ -230,7 +232,7 @@ class BoilerplateGenerator {
         `private field[32] ${x}_oldCommitment_membershipWitness_siblingPath`,
       ];
       if (isWhole && initialisationRequired) {
-        lines.unshift(`private bool ${x}_oldCommitment_isDummy`);
+        lines.unshift(`private bool ${x}_oldCommitment_isDummy;`);
       }
       return lines;
     },
@@ -245,12 +247,12 @@ class BoilerplateGenerator {
           ${x}_oldCommitment_membershipWitness_siblingPath,\\
           ${x}_oldCommitment_commitment_field,\\
           ${x}_oldCommitment_membershipWitness_index\\
-        )`,
+        );`,
 
         `
         assert(\\
           field_to_bool_256(commitmentRoot)[8..256] == field_to_bool_256(${x}_commitmentRoot_check)[8..256]\\
-        )`
+        );`
         ,
       ];
 
@@ -261,7 +263,7 @@ class BoilerplateGenerator {
           0,
           `
         // Note: Don't bother actually asserting existence, if the oldCommitment is a dummy:
-        ${x}_commitmentRoot_check = if ${x}_oldCommitment_isDummy == true then commitmentRoot else ${x}_commitmentRoot_check fi`,
+        ${x}_commitmentRoot_check = if (${x}_oldCommitment_isDummy == true) { commitmentRoot } else { ${x}_commitmentRoot_check };`,
         );
       }
       return lines;
@@ -290,7 +292,7 @@ class BoilerplateGenerator {
       let stateVarIdLine = ``;
       if (!isMapping) stateVarIdLine = `
       // We need to hard-code each stateVarId into the circuit:
-      field ${x}_stateVarId_field = ${id}`;
+      field ${x}_stateVarId_field = ${id};`;
       if (!isWhole && isNullified) {
         const i = parseInt(x.slice(-1), 10);
         const x0 = x.slice(0, -1) + `${i-2}`;
@@ -305,7 +307,7 @@ class BoilerplateGenerator {
       } else{
         return [`
         // We need to hard-code each stateVarId into the circuit:
-        field ${x}_stateVarId_field = ${id}`];
+        field ${x}_stateVarId_field = ${id};`];
       }
       return [
         `${decLine}
@@ -326,10 +328,10 @@ class BoilerplateGenerator {
         const x1 = x.slice(0, -1) + `${i-1}`;
         if (!structProperties) {
           lines.push(
-            `assert(${y} >0)
+            `assert(${y} >0);
             // TODO: assert no under/overflows
 
-            field ${x}_newCommitment_value_field = ${y}`
+            field ${x}_newCommitment_value_field = ${y};`
           );
         } else {
           // TODO types for each structProperty
@@ -337,24 +339,24 @@ class BoilerplateGenerator {
             `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${y}.${p} > 0)`).join('\n')}
             // TODO: assert no under/overflows
 
-            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} }`
+            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} };`
           );
         }
       } else {
         if (!structProperties ) {
           if (typeName === 'bool'){
-            lines.push(`field ${x}_newCommitment_value_field = if ${y} then 1 else 0 fi`);
+            lines.push(`field ${x}_newCommitment_value_field = if (${y}) {1} else {0};`);
           } else {
-            lines.push(`field ${x}_newCommitment_value_field = ${y}`);
+            lines.push(`field ${x}_newCommitment_value_field = ${y};`);
           }
           
         }
         else {
-          lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} }\n`);
+          lines.push(`${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} };\n`);
           if (structPropertiesTypes) {
             structPropertiesTypes.forEach(property => {
               if (property.typeName === 'bool'){
-                lines.push(`\t \t \t \t field ${x}_newCommitment_value_${property.name}_field = if ${x}_newCommitment_value.${property.name} then 1 else 0 fi`);
+                lines.push(`\t \t \t \t field ${x}_newCommitment_value_${property.name}_field = if (${x}_newCommitment_value.${property.name})  {1} else {0};`);
               }
             });
           }
@@ -375,11 +377,11 @@ class BoilerplateGenerator {
             ${structPropertiesTypes.map(p => (p.typeName === 'bool') ? `\t \t \t \t \t \t${x}_newCommitment_value_${p.name}_field,\\` : `\t ${x}_newCommitment_value.${p.name},\\`).join('\n')}
             ${x}_newCommitment_owner_publicKey,\\
             ${x}_newCommitment_salt\\
-          ])
+          ]);
 
           assert(\\
             field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
-          )`,
+          );`,
         ];
 
       return [
@@ -395,11 +397,11 @@ class BoilerplateGenerator {
           ${x}_newCommitment_value_field,\\
           ${x}_newCommitment_owner_publicKey,\\
           ${x}_newCommitment_salt\\
-        ])
+        ]);
 
         assert(\\
           field_to_bool_256(${x}_newCommitment_commitment)[8..256] == field_to_bool_256(${x}_newCommitment_commitment_check_field)[8..256]\\
-        )`
+        );`
         ,
       ];
     },
@@ -422,8 +424,8 @@ class BoilerplateGenerator {
 
     parameters({ name: x }): string[] {
       return [
-        `private field ${x}_newCommitment_ephSecretKey`,
-        `private field[2] ${x}_newCommitment_owner_publicKey_point`,
+        `private field ${x}_newCommitment_ephSecretKey;`,
+        `private field[2] ${x}_newCommitment_owner_publicKey_point;`,
       ];
     },
 
@@ -431,12 +433,12 @@ class BoilerplateGenerator {
       return [
         `
         // calculate ${x}_newCommitment_owner_publicKey from its point
-        bool ${x}_newCommitment_owner_publicKey_sign = edwardsCompress(${x}_newCommitment_owner_publicKey_point)[0]
+        bool ${x}_newCommitment_owner_publicKey_sign = edwardsCompress(${x}_newCommitment_owner_publicKey_point)[0];
 
-        bool[254] ${x}_newCommitment_yBits = field_to_bool_256(${x}_newCommitment_owner_publicKey_point[1])[2..256]
-        ${x}_newCommitment_yBits[0] = ${x}_newCommitment_owner_publicKey_sign
+        bool[254] ${x}_newCommitment_yBits = field_to_bool_256(${x}_newCommitment_owner_publicKey_point[1])[2..256];
+        ${x}_newCommitment_yBits[0] = ${x}_newCommitment_owner_publicKey_sign;
 
-        field ${x}_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_newCommitment_yBits])`,
+        field ${x}_newCommitment_owner_publicKey = bool_256_to_field([false, false, ...${x}_newCommitment_yBits]);`,
       ];
     },
 
@@ -453,7 +455,7 @@ class BoilerplateGenerator {
               ${x}_stateVarId_field,\\
               ${structProperties.map(p => `\t ${x}_newCommitment_value.${p},\\`).join('\n')}
               ${x}_newCommitment_salt\\
-            ])`
+            ]);`
           :
           `EncryptedMsgs<3> ${x}_cipherText = enc(\\
             field_to_bool_256(${x}_newCommitment_ephSecretKey),\\
@@ -462,7 +464,7 @@ class BoilerplateGenerator {
               ${x}_stateVarId_field,\\
               ${x}_newCommitment_value_field,\\
               ${x}_newCommitment_salt\\
-            ])`
+            ]);`
         }`,
       ];
     },
@@ -478,7 +480,7 @@ class BoilerplateGenerator {
     parameters({ mappingKeyName: k, mappingKeyTypeName: t }): string[] {
       if (t === 'local') return [];
       return [
-        `private ${t ? t : 'field'} ${k}`, // must be a field, in case we need to do arithmetic on it.
+        `private ${t ? t : 'field'} ${k};`, // must be a field, in case we need to do arithmetic on it.
       ];
     },
 
@@ -486,7 +488,7 @@ class BoilerplateGenerator {
       return [
         `
         // We need to hard-code the mappingId's of mappings into the circuit:
-        field ${m}_mappingId = ${mappingId}`,
+        field ${m}_mappingId = ${mappingId};`,
       ];
     },
 
@@ -494,7 +496,7 @@ class BoilerplateGenerator {
       // const x = `${m}_${k}`;
       return [
         `
-        field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}])`,
+        field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}]);`,
       ];
     },
   };
@@ -506,14 +508,14 @@ class BoilerplateGenerator {
     statements({ name: x, addend, newCommitmentValue, structProperties, memberName}): string[] {
       if (addend.incrementType === '+='){
         if (structProperties) {
-          return [`${x}.${memberName} = ${x}.${memberName} + ${newCommitmentValue}`]
+          return [`${x}.${memberName} = ${x}.${memberName} + ${newCommitmentValue};`]
         }
         return [`${x} = ${x} + ${newCommitmentValue}`];
       } else if (addend.incrementType === '='){
         if (structProperties) {
-          return [`${x}.${memberName} = ${newCommitmentValue}`]
+          return [`${x}.${memberName} = ${newCommitmentValue};`]
         }
-        return [`${x} = ${newCommitmentValue}`];
+        return [`${x} = ${newCommitmentValue};`];
       }
       //return [
       //  `// Skipping incrementation of ${x}`
@@ -531,14 +533,14 @@ class BoilerplateGenerator {
     statements({ name: x, subtrahend, newCommitmentValue, structProperties, memberName}): string[] {
       if (subtrahend.decrementType === '-='){
         if (structProperties) {
-          return [`${x}.${memberName} = ${x}.${memberName} - (${newCommitmentValue})`]
+          return [`${x}.${memberName} = ${x}.${memberName} - (${newCommitmentValue});`]
         }
-        return [`${x} =  ${x} - (${newCommitmentValue})`];
+        return [`${x} =  ${x} - (${newCommitmentValue});`];
       } else if (subtrahend.decrementType === '='){
         if (structProperties) {
-          return [`${x}.${memberName} = ${newCommitmentValue}`]
+          return [`${x}.${memberName} = ${newCommitmentValue};`]
         }
-        return [`${x} = ${newCommitmentValue}`];
+        return [`${x} = ${newCommitmentValue};`];
       }
       
       // const y = codeGenerator(subtrahend);
