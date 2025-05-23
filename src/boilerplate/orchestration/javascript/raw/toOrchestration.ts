@@ -985,6 +985,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           }           
         });
       }
+
+      if (node.functionName === 'cnstrctr') return {
+        statements: [
+          `\n\n// Save transaction for the constructor:
+          \nconst tx = { publicInputs: [${lines}]};
+          \nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`
+        ]
+      }
       
       return {
         statements: [
