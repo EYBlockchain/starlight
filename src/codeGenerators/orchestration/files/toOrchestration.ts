@@ -507,13 +507,13 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     // we have a constructor which requires a proof
     customProofImport += `const constructorInput = JSON.parse(
       fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
-    );
+    );`
 
-    \nconst { proofInput } = constructorInput;`;
+    node.functionNames.includes('cnstrctr') ? customProofImport += `\nconst { proofInput } = constructorInput;` : ``;
     iwsConstructorParams?.forEach((param: any) => {
       customProofImport += `\nconst { ${param.name} } = constructorInput;`
     });
-    customProofInputs += `, ...proofInput`
+    node.functionNames.includes('cnstrctr') ? customProofInputs += `, ...proofInput` : "";
   }
   // we need to add a comma if we have 1+ constructor param
   if (constructorParams?.length >= 1) constructorParams[constructorParams.length - 1] += `,`;
