@@ -576,7 +576,6 @@ const visitor = {
       } else {
         state.skipSubNodes = true;
       }  
-  
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
@@ -590,6 +589,7 @@ const visitor = {
           );
         }
       }
+  
     },
 
     exit(path: NodePath, state: any) {
@@ -688,6 +688,9 @@ const visitor = {
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           if(scope.modifiesSecretState()){
             file.functionNames.push(node.fileName);
+          }
+          if (node.fileName === 'cnstrctr'){
+            file.isConstructor = true;
           }
         }
       }

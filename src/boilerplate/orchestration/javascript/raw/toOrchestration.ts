@@ -935,7 +935,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nBackupData.forEach((element) => {
             element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
           });
-          \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
+          \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
       
@@ -997,6 +997,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input}.integer`);
           }           
         });
+      }
+
+      if (node.functionName === 'cnstrctr') return {
+        statements: [
+          `\n\n// Save transaction for the constructor:
+          \nconst tx = { publicInputs: [${lines}]};
+          \nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`
+        ]
       }
       
       return {

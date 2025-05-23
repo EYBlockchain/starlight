@@ -2,6 +2,7 @@
 const hre = require('hardhat')
 const fs = require('fs');
 const c = require('config');
+CUSTOM_CONTRACT_IMPORT
 CUSTOM_PROOF_IMPORT
 const saveMetadata = require('./metadata').saveMetadata
 

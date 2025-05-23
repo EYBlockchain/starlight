@@ -38,7 +38,6 @@ export class ServiceManager{
 	try {
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
-    CONSTRUCTOR_INPUTS;
     const { tx , encEvent, encBackupEvent, _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
