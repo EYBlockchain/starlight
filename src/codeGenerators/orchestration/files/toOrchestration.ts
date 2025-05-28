@@ -633,6 +633,8 @@ const prepareBackupVariable = (node: any) => {
 	);
 	const secretKey = generalise(keys.secretKey);
 	const publicKey = generalise(keys.publicKey);
+        const sharedPublicKey = generalise(keys.sharedPublicKey);
+        const sharedSecretKey = generalise(keys.sharedSecretKey);
 	let storedCommitments = [];
     for (const log of backDataEvent) {
       for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
@@ -825,6 +827,8 @@ const prepareBackupDataRetriever = (node: any) => {
     );
     const secretKey = generalise(keys.secretKey);
     const publicKey = generalise(keys.publicKey);
+    const sharedPublicKey = generalise(keys.sharedPublicKey);
+    const sharedSecretKey = generalise(keys.sharedSecretKey);
     let storedCommitments = [];
     for (const log of backDataEvent) {
       for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
