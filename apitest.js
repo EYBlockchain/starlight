@@ -52,6 +52,10 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook) => {
         .request('localhost:3000')
         .post(apiRequests[i].endpoint)
         .send(apiRequests[i].data);
+      // Check if the response is successful
+      if (apiResponses[i].status !== 200) {
+        throw new Error(`API request failed for ${apiRequests[i].endpoint} with status ${apiResponses[i].status}`);
+      }
     }
   }
   if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
