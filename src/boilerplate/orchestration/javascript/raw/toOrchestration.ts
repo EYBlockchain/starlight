@@ -955,20 +955,20 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n 	const key = config.web3.key;
             \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
             \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-            \n  let tx = await instance.getPastEvents("NewLeaves");
+            \n  let tx = await instance.getPastEvents("NewLeaves", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
             \n tx = tx[0];\n
             \n if (!tx) {
               throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
             } \n
             let encEvent = '';
             \n try {
-            \n  encEvent = await instance.getPastEvents("EncryptedData");
+            \n  encEvent = await instance.getPastEvents("EncryptedData", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
             \n } catch (err) {
             \n  console.log('No encrypted event');
             \n}
             \nlet encBackupEvent = '';
             \n try {
-            \n  encBackupEvent = await instance.getPastEvents("EncryptedBackupData");
+            \n  encBackupEvent = await instance.getPastEvents("EncryptedBackupData", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
             \n } catch (err) {
             \n  console.log('No encrypted backup event');
             \n}`,
