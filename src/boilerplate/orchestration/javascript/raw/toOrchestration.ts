@@ -972,16 +972,16 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
           if (input.properties) {
-            lines.push(`[${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
+            lines.push(`${input.name}: [${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
           } else if (input.isConstantArray) {
-            lines.push(`${input.name}.all.integer`);
+            lines.push(`${input.name}: ${input.name}.all.integer`);
           } else if(input.isBool) {
-            lines.push(`parseInt(${input.name}.integer, 10)`);
+            lines.push(`${input.name}: parseInt(${input.name}.integer, 10)`);
           } else if(input.isAddress) {
-            lines.push(`${input.name}.hex(20)`);
+            lines.push(`${input.name}: ${input.name}.hex(20)`);
           }
           else {
-            lines.push(`${input}.integer`);
+            lines.push(`${input.name}: ${input}.integer`);
           }           
         });
       }
@@ -989,7 +989,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.functionName === 'cnstrctr') return {
         statements: [
           `\n\n// Save transaction for the constructor:
-          \nconst tx = { publicInputs: [${lines}]};
+          \nconst tx = { ${lines}};
           \nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`
         ]
       }

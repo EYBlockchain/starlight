@@ -25,4 +25,16 @@ contract CharityPot {
         pot -= withdrawal;
         require(erc20.transfer(msg.sender, withdrawal),"ERC20 transfer failed");
     }
+
+
+    /*const erc20 = await getContractInstance("ERC20");
+        // mint tokens to the contract
+		console.log("address minting to", config.web3.options.defaultAccount);
+        await erc20.methods
+            .mint(config.web3.options.defaultAccount, 500)
+            .send({ from: config.web3.options.defaultAccount, value: msgValue });
+
+			await erc20.methods
+            .approve(this.contractAddr, 500)
+            .send({ from: config.web3.options.defaultAccount, value: msgValue });*/
 }

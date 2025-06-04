@@ -452,7 +452,9 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                                       await erc20.waitForDeployment() \n
                                       const erc20Address = await erc20.getAddress() \n
                                       console.log('ERC20 deployed to:', erc20Address) \n
-                                      deployTx = await erc20.deploymentTransaction().wait() \n`;
+                                      blockNumber = await hre.ethers.provider.getBlockNumber(); \n
+                                      deployTx = await erc20.deploymentTransaction().wait() \n
+                                      saveMetadata(erc20Address, 'ERC20', "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n`;
               break;
               case 'ERC721':
                 customDeployments += `const ERC721 = await hre.ethers.getContractFactory('ERC721') \n
@@ -460,7 +462,9 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                                       await erc721.waitForDeployment() \n
                                       const erc721Address = await erc721.getAddress() \n
                                       console.log('ERC721 deployed to:', erc721Address) \n
-                                      deployTx = await erc721.deploymentTransaction().wait() \n`;
+                                      blockNumber = await hre.ethers.provider.getBlockNumber(); \n
+                                      deployTx = await erc721.deploymentTransaction().wait() \n
+                                      saveMetadata(erc721Address, 'ERC721',  "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n \n`;
                 break;
               case 'ERC1155':
                 customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('ERC1155Token') \n
@@ -468,27 +472,52 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                                       await erc1155.waitForDeployment() \n
                                       erc1155Address = await erc1155.getAddress() \n
                                       console.log('ERC1155 deployed to:', erc1155Address) \n 
-                                      deployTx = await erc1155.deploymentTransaction().wait() \n`;
+                                      blockNumber = await hre.ethers.provider.getBlockNumber(); \n
+                                      deployTx = await erc1155.deploymentTransaction().wait() \n
+                                      saveMetadata(erc1155Address, 'ERC1155Token', "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n
+                                    \n`;
                 break; 
             }
           } 
         }
-        // for each address in the shield contract constructor...
-        constructorAddrParams.forEach(name => {
-          if (
-            name
-              .toLowerCase()
-              .includes(importedContractName.substring(1).toLowerCase()) ||
-            importedContractName
-              .substring(1)
-              .toLowerCase()
-              .includes(name.toLowerCase())
-          ) {
-            // if that address is of the current importedContractName, we add it to the migration arguments
-            const index = constructorParams.indexOf(name);
-            constructorParams[index] = `${importedContractName}.address`;
-          }
-        });
+        if (
+          importedContractName === 'ERC20' ||
+          importedContractName === 'ERC721' || importedContractName === 'ERC1155'
+        ) {
+          // for each address in the shield contract constructor...
+          constructorAddrParams.forEach(name => {
+            if (
+              name
+                .toLowerCase()
+                .includes(importedContractName.substring(1).toLowerCase()) ||
+              importedContractName
+                .substring(1)
+                .toLowerCase()
+                .includes(name.toLowerCase())
+            ) {
+              // if that address is of the current importedContractName, we add it to the migration arguments
+              const index = constructorParams.indexOf(name);
+              constructorParams[index] = `${name.replace('_', '')}Address`;
+            }
+          });
+        } else {
+            // for each address in the shield contract constructor...
+          constructorAddrParams.forEach(name => {
+            if (
+              name
+                .toLowerCase()
+                .includes(importedContractName.substring(1).toLowerCase()) ||
+              importedContractName
+                .substring(1)
+                .toLowerCase()
+                .includes(name.toLowerCase())
+            ) {
+              // if that address is of the current importedContractName, we add it to the migration arguments
+              const index = constructorParams.indexOf(name);
+              constructorParams[index] = `${importedContractName}.address`;
+            }
+          });
+        }
       }
     });
   } else if(constructorParamsIncludesAddr) {
