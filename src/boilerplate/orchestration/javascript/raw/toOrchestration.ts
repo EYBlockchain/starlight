@@ -518,8 +518,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         return {
           signature: [
             `\n export default async function ${node.name}(${params} ${states}) {`,
-            `\n return  {};
-            \n}`,
+            `\nprocess.exit(0);
+          \n}`,
           ],
           statements: lines,
         };
