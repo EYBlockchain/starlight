@@ -534,9 +534,11 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   }
   if (node.isConstructor) {
     // we have a constructor which requires a proof
-    customProofImport += `const constructorInput = JSON.parse(
-      fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
-    );`
+    if (node.functionNames.includes('cnstrctr') || iwsConstructorParams.length > 0) {
+      customProofImport += `const constructorInput = JSON.parse(
+        fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
+      );`
+    }
 
     node.functionNames.includes('cnstrctr') ? customProofImport += `\nconst { proofInput } = constructorInput;` : ``;
     iwsConstructorParams?.forEach((param: any) => {
