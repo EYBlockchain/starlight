@@ -28,7 +28,7 @@ function getFiles(dir) {
 
 files = getFiles('./test/contracts')
   .flat(Infinity)
-  .filter(file => !file.includes('test/contracts/action-tests/Escrow-imports'));
+  .filter(file => !file.includes('test/contracts/action-tests/Escrow-imports') && !file.includes('test/contracts/user-friendly-tests/Escrow-imports'));
 let options = {}
 
 describe("AST testing", function () {
