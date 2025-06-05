@@ -532,7 +532,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
       );
     });
   }
-  if (node.isConstructor) {
+  if (node.functionNames.includes('cnstrctr')) {
     // we have a constructor which requires a proof
     customProofImport += `const constructorInput = JSON.parse(
       fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
