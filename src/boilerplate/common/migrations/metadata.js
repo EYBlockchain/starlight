@@ -3,6 +3,7 @@ const fs = require('fs')
 function saveMetadata (
   contractDeployedAddress,
   contractName,
+  contractPath,
   networkId,
   blockNumber,
   transactionHash
@@ -39,7 +40,7 @@ function saveMetadata (
   const hardhatArtifactContractPath = './artifacts/contracts'
   // console.log("hardhatArtifactContractPath: ", hardhatArtifactContractPath);
   const hardhatArtifactPath =
-    hardhatArtifactContractPath +
+    hardhatArtifactContractPath + contractPath +
     '/' + contractName + '.sol' +
     '/' +
     contractName +

@@ -16,15 +16,29 @@ contract CharityPot {
     }
 
     function donate(uint256 donation) public {
-        bool hasBalance = erc20.transferFrom(msg.sender, address(this), donation);
-        require(hasBalance == true);
+        require(erc20.transferFrom(msg.sender, address(this), donation), "ERC20 transfer failed");
         unknown pot += donation;
     }
 
     function withdraw(uint256 withdrawal) public {
         require(msg.sender == admin);
         pot -= withdrawal;
-        bool success = erc20.transfer(msg.sender, withdrawal);
-        require(success, "ERC20 transfer failed");
+        require(erc20.transfer(msg.sender, withdrawal),"ERC20 transfer failed");
     }
+
+
+    /*
+
+    Copy this into donate.mjs in order to mint NUM erc20 tokens: 
+    
+    const erc20 = await getContractInstance("ERC20");
+        // mint tokens to the contract
+		console.log("address minting to", config.web3.options.defaultAccount);
+        await erc20.methods
+            .mint(config.web3.options.defaultAccount, NUM)
+            .send({ from: config.web3.options.defaultAccount });
+
+			await erc20.methods
+            .approve(this.contractAddr, NUM)
+            .send({ from: config.web3.options.defaultAccount });*/
 }
