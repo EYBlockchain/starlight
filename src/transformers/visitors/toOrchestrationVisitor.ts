@@ -858,7 +858,6 @@ const visitor = {
               indicator: stateVarIndicator,
             });
           }
-
           if (stateVarIndicator.newCommitmentsRequired) {
             let contrNode = path.getContractDefinition().node._newASTPointer;
             for (const file of contrNode) {

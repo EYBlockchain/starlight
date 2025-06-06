@@ -916,15 +916,34 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       (params[0][4][0]) ? params[0][4] = `[${params[0][4]}],` : params[0][4] = ` [], `; // cipherText - array of arrays
       (params[0][5][0]) ? params[0][5] = `[${params[0][5]}],`: params[0][5] = ` [], `;// cipherText - array of arrays
 
-      if (node.functionName === 'cnstrctr') return {
-        statements: [
-          `\n\n// Save transaction for the constructor:
-          \nBackupData.forEach((element) => {
-            element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
+      if (node.functionName === 'cnstrctr'){
+        const publicInputs: any[] = [];
+        if (node.publicInputs[0]) {
+          node.publicInputs.forEach((input: any) => {
+            if (input.properties) {
+              publicInputs.push(`${input.name}: [${input.properties.map(p => p.type === 'bool' ? `(${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer === "1")` : `${input.name}${input.isConstantArray ? '.all' : ''}.${p.name}.integer`).join(',')}]`);
+            } else if (input.isConstantArray) {
+              publicInputs.push(`${input.name}: ${input.name}.all.integer`);
+            } else if(input.isBool) {
+              publicInputs.push(`${input.name}: parseInt(${input.name}.integer, 10)`);
+            } else if(input.isAddress) {
+              publicInputs.push(`${input.name}: ${input.name}.hex(20)`);
+            }
+            else {
+              publicInputs.push(`${input.name}: ${input}.integer`);
+            }           
           });
-          \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
-        ]
-      }
+        }
+        return {
+          statements: [
+            `\n\n// Save transaction for the constructor:
+            \nBackupData.forEach((element) => {
+              element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
+            });
+            \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} ${publicInputs}};`
+          ]
+        }
+      } 
       
       return {
         statements: [
