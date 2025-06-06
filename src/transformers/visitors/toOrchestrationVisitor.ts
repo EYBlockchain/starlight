@@ -1866,7 +1866,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { value: node.value });
-      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
+      path.inList && Array.isArray(parent._newASTPointer[path.containerName]) ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
   },
 
