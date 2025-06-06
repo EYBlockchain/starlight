@@ -497,7 +497,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
             ) {
               // if that address is of the current importedContractName, we add it to the migration arguments
               const index = constructorParams.indexOf(name);
-              constructorParams[index] = `${name.replace('_', '')}Address`;
+              constructorParams[index] = `${importedContractName.toLowerCase()}Address`;
             }
           });
         } else {

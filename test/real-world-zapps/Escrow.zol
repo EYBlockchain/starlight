@@ -18,7 +18,6 @@ contract Escrow {
 
     function deposit(uint256 amount) public {
         bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
-
         require(hasBalance == true);
         balances[msg.sender] += amount;
         encrypt tokens += amount;
