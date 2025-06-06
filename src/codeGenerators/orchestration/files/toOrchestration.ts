@@ -458,7 +458,10 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
               break;
               case 'ERC721':
                 customDeployments += `const ERC721 = await hre.ethers.getContractFactory('ERC721') \n
-                                      const erc721 = await ERC721.deploy() \n
+                                      const erc721 = await ERC721.deploy(
+                                        'MyCoin',
+                                        'MC'
+                                      ) \n
                                       await erc721.waitForDeployment() \n
                                       const erc721Address = await erc721.getAddress() \n
                                       console.log('ERC721 deployed to:', erc721Address) \n
