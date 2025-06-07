@@ -97,9 +97,20 @@ function codeGenerator(node: any, state: any) {
                   returnStatement.push( `${returnName[index]}_newCommitment_commitment`);
               });
           }
-        });
+      });
       }
-      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters, state)}\\\n) -> `;
+
+      const functionName = node.parameters.functionName;
+      const isInternalCall = (state.internalFunctions && state.internalFunctions.has(node.parameters.functionName));
+      const wrapperFunctionArguments = codeGenerator(node.parameters, state);
+      let innerFunctionArguments = wrapperFunctionArguments;
+       // if node.functionName has an entry in state.internalFunctions, do not include public/private keywords
+       if (isInternalCall) {
+        innerFunctionArguments = innerFunctionArguments.replace(/public /g, '').replace(/private /g, '');
+      }
+      const functionArguments = isInternalCall ? innerFunctionArguments : wrapperFunctionArguments;
+      const fnName = isInternalCall ? functionName : "main";
+      functionSignature = `def main(\\\n\t${functionArguments}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true && node.typeName.name != 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
@@ -110,10 +121,53 @@ function codeGenerator(node: any, state: any) {
         returnStatement.push('true');
         returnType.push('bool') ;
       }
+
+      let args = innerFunctionArguments.split(',').map(arg => arg.split(' ').pop()?.trim()).join(', ');
+      if (!state.wrapperFunctions) {
+        state.wrapperFunctions = new Map();
+      }
+      if (isInternalCall) {
+
+        // TODO what about type aliases?
+        let structImports: string[] = [];
+        wrapperFunctionArguments.split(',\\').forEach(arg => {
+            let type = arg.trim().split(/\s+/)[1];
+            if (type[0] === type[0].toUpperCase()) {
+              if (type.endsWith('>')) {
+                type = type.replace(/<\d+>$/, '');
+              }
+            const structImport = `from "./${functionName}_internal.zok" import ${type} as ${type};`;
+            if (!structImports.includes(structImport)) {
+              structImports.push(structImport);
+            }
+          
+          }
+        });
+        returnType.forEach((type: string) => {
+          if (type[0] === type[0].toUpperCase()) {
+            if (type.endsWith('>')) {
+              type = type.replace(/<\d+>$/, '');
+            }
+            const structImport = `from "./${functionName}_internal.zok" import ${type} as ${type};`;
+            if (!structImports.includes(structImport)) {
+              structImports.push(structImport);
+            }
+          }
+        });
+        const wrapperFunction = `${structImports.join('\n')}\nfrom "./${functionName}_internal.zok" import main as ${functionName}_internal;
+        
+def main(\\\n\t${wrapperFunctionArguments}\\\n) -> ${returnType.length > 1 ? `(${returnType})` : returnType} {
+          ${returnType.length > 1 ? `(${returnType})` : returnType} res = ${functionName}_internal(${args});
+          return res;
+}`;
+        
+        state.wrapperFunctions.set(functionName, wrapperFunction);
+      }
+
       
       return `${functionSignature}${returnType.length > 1 ? `(${returnType})` : returnType} {
 
-        ${body}
+      ${body}
 
          return ${returnStatement.length > 1 ? `(${returnStatement})` : returnStatement};
     }`;
@@ -152,6 +206,19 @@ function codeGenerator(node: any, state: any) {
         // remove duplicate params
         paramList.splice(paramList.indexOf(linesToDelete[i]), 1);
       }
+
+      const uniqueParams = new Map<string, string>();
+
+      paramList.forEach(param => {
+        const paramName = param.split(' ').pop();
+        if (paramName) {
+          if (!uniqueParams.has(paramName) || param.includes('mut')) {
+        uniqueParams.set(paramName, param);
+          }
+        }
+      });
+
+      paramList = Array.from(uniqueParams.values());
 
       return paramList.join(',\\\n\t');
     }
@@ -210,10 +277,10 @@ function codeGenerator(node: any, state: any) {
         if(para.typeName.name == 'EncryptedMsgs<3>')
          returnPara = `  EncryptedMsgs<3> ${para.name}_0_cipherText = `;
        })
-       return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')});`
+       return `${returnPara} ${node.name}_internal(${(node.CircuitArguments).join(',\\\n \t')});`
       }
       else if(node.CircuitArguments.length)
-       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')}));` ;
+       return `assert(${node.name}_internal(${(node.CircuitArguments).join(',\\\n \t')}));` ;
       else
        return `//`;
       }

@@ -10,9 +10,11 @@ import { transformation1 } from './visitors/common.js';
 // A transformer function which will accept an ast.
 export default function toCircuit(ast: any, options: any) {
   // transpile to a circuit AST:
-    const state = {
+    let state = {
     stopTraversal: false,
     skipSubNodes: false,
+    internalFunctions: new Map(),
+    wrapperFunctions: new Map(),
   };
   logger.verbose('Transforming the .zol AST to a contract AST...');
   const newAST = transformation1('circuit' ,ast , state , visitor);
@@ -25,12 +27,39 @@ export default function toCircuit(ast: any, options: any) {
 
  //generate the circuit files from the newly created circuit AST:
   logger.verbose('Generating files from the .zok AST...');
-  const circuitFileData = codeGenerator(newAST, state);
+  let circuitFileData = codeGenerator(newAST, state);
+
+  if (state.internalFunctions && state.internalFunctions instanceof Map) {
+    circuitFileData = circuitFileData.map(fileObj => {
+        for (let func of state.internalFunctions.keys()) {
+            if (fileObj.filepath.includes(func)) {
+                if (!fileObj.filepath.startsWith('circuits/common/')) {
+                  return {
+                  ...fileObj,
+                  filepath: fileObj.filepath.replace(/\.zok$/, '_internal.zok')
+                  };
+                }
+                return fileObj;
+            }
+        }
+        return fileObj;
+    });
+  }
+
+  if (state.wrapperFunctions && state.wrapperFunctions instanceof Map) {
+    for (let [key, value] of state.wrapperFunctions.entries()) {
+      circuitFileData.push({
+        filepath: `circuits/${key}.zok`,
+        file: value,
+      });
+    }
+  }
 
   // save the circuit files to the output dir:
   logger.verbose(
     `Saving .zok files to the zApp output directory ${options.circuitsDirPath}...`,
   );
+
   for (let fileObj of circuitFileData) {
     let filepath = pathjs.join(options.outputDirPath, fileObj.filepath);
     const dir = pathjs.dirname(filepath);
