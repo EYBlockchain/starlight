@@ -271,7 +271,7 @@ const publicInputsVisitor = (thisPath: NodePath, thisState: any) => {
     //if (thisPath.containerName === 'indexExpression'){
     //  name = binding.getMappingKeyName(thisPath);
     //}
-    const parameterNode = buildNode('VariableDeclaration', { name, type: nodeTypeString, isSecret: false, declarationType: 'parameter'});
+    const parameterNode = buildNode('VariableDeclaration', { name, type: nodeTypeString, isSecret: false, declarationType: 'parameter' });
     parameterNode.id = thisPath.isMapping() || thisPath.isArray() ? binding.id + thisPath.getAncestorOfType('IndexAccess')?.node.indexExpression.referencedDeclaration : binding.id;
     const fnDefNode = thisPath.getAncestorOfType('FunctionDefinition')?.node;
     const params = fnDefNode._newASTPointer.parameters.parameters;
@@ -578,7 +578,7 @@ const visitor = {
       let returnName : string[] =[];
       if(!!path.getAncestorOfType('EventDefinition')) return;
        if(path.key === 'parameters'){
-      const newNode = buildNode('ParameterList');
+      const newNode = buildNode('ParameterList', {functionName: parent.name});
       node._newASTPointer = newNode.parameters;
       parent._newASTPointer[path.containerName] = newNode;
     } else if(path.key === 'returnParameters'){
@@ -1589,7 +1589,13 @@ const visitor = {
         name: returnPara,
         internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
       });
-        if(parent._newASTPointer.declarations.length > 0){
+      
+      state.internalFunctions ??= new Map();
+      state.internalFunctions.set(newNode.name, {
+        internalFunctionInteractsWithSecret: newNode.internalFunctionInteractsWithSecret,
+      });
+      
+      if(parent._newASTPointer.declarations.length > 0){
         const functionParams = callingfnDefPath.node._newASTPointer.parameters.parameters.map(param => param.name);
         if(!functionParams.includes(returnPara)){
           callingfnDefPath.node._newASTPointer.parameters.parameters.push(functionReferncedNode.node.returnParameters.parameters[0]._newASTPointer);
@@ -1623,6 +1629,12 @@ const visitor = {
               name: returnPara,
               internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
             });
+            
+            state.internalFunctions ??= new Map();
+            state.internalFunctions.set(newNode.name, {
+              internalFunctionInteractsWithSecret: newNode.internalFunctionInteractsWithSecret,
+            });
+
             if(includeExpressionNode) { 
               state.initNode ??= [];
               state.initNode[ returnPara ] = initNode;
@@ -1638,6 +1650,12 @@ const visitor = {
         CircuitArguments: [],
         CircuitReturn:[],
       });
+      state.internalFunctions ??= new Map();
+      state.internalFunctions.set(newNode.name, {
+        internalFunctionInteractsWithSecret: newNode.internalFunctionInteractsWithSecret,
+      });
+
+      
       }
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,

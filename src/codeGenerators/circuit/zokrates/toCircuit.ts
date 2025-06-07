@@ -46,14 +46,14 @@ function poseidonLibraryChooser(fileObj: string) {
  }
  
 
-function codeGenerator(node: any) {
+function codeGenerator(node: any, state: any) {
   switch (node.nodeType) {
     case 'Folder':
-      return CircuitBP.uniqueify(node.files.flatMap(codeGenerator));
+      return CircuitBP.uniqueify(node.files.flatMap(e => codeGenerator(e, state)));
 
     case 'File': {
       const filepath = path.join('./circuits', `${node.fileName}${node.fileExtension}`);
-      const file = node.nodes.map(codeGenerator).join('\n\n');
+      const file = node.nodes.map(e => codeGenerator(e, state)).join('\n\n');
       const thisFile = {
         filepath,
         file: poseidonLibraryChooser(file),
@@ -74,7 +74,7 @@ function codeGenerator(node: any) {
     case 'FunctionDefinition': {
       let functionSignature : any;
       let returnType : any[] = [];
-      let body = codeGenerator(node.body);
+      let body = codeGenerator(node.body, state);
       let returnStatement : string[] = [];
       let returnName : string[] = [];
       let nullifierRoot : string[] = [];
@@ -99,7 +99,7 @@ function codeGenerator(node: any) {
           }
         });
       }
-      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters)}\\\n) -> `;
+      functionSignature  = `def main(\\\n\t${codeGenerator(node.parameters, state)}\\\n) -> `;
       node.returnParameters.parameters.forEach((node) => {
         if((node.isPrivate === true && node.typeName.name != 'bool') || node.typeName.name.includes('EncryptedMsgs'))
           returnType.push(node.typeName.name);
@@ -123,10 +123,10 @@ function codeGenerator(node: any) {
       return `struct ${node.name} {
         ${node.members.map((mem: any) => mem.type + ' ' + mem.name + ';').join(`\n`)}
       }`;
-    }
+    };
 
     case 'ParameterList': {
-      const paramList = CircuitBP.uniqueify(node.parameters.flatMap(codeGenerator));
+      let paramList = CircuitBP.uniqueify(node.parameters.flatMap(codeGenerator));
       // we also need to identify and remove duplicate params prefixed with conflicting 'public'/'private' keywords (prioritising 'public')
       const slicedParamList = paramList.map(p =>
         p.replace('public ', '').replace('private ', ''),
@@ -163,7 +163,7 @@ function codeGenerator(node: any) {
             ? 'private '
             : 'public '
           : '\t\t';
-      return `${visibility}${codeGenerator(node.typeName)} mut ${node.name}`;
+      return `${visibility}${codeGenerator(node.typeName, state)} mut ${node.name}`;
     }
 
     case 'VariableDeclarationStatement': {
@@ -172,10 +172,10 @@ function codeGenerator(node: any) {
       if(node.initialValue?.nodeType === 'InternalFunctionCall'){
         if(!declarations) return ;
         if(node.initialValue?.expression?.nodeType === 'BinaryOperation')
-        return `${declarations} = ${codeGenerator(node.initialValue.expression)};`;
+        return `${declarations} = ${codeGenerator(node.initialValue.expression, state)};`;
         return `${declarations} = ${node.initialValue.name};`;
       } 
-      const initialValue = codeGenerator(node.initialValue);
+      const initialValue = codeGenerator(node.initialValue, state);
 
       return `${declarations} = ${initialValue};`;
     }
@@ -195,12 +195,12 @@ function codeGenerator(node: any) {
       if (node.isVarDec) {
         if (node.expression?.leftHandSide?.typeName === 'bool'){
           return `
-          bool mut ${codeGenerator(node.expression)}`;
+          bool mut ${codeGenerator(node.expression, state)}`;
         }
         return `
-        field mut ${codeGenerator(node.expression)}`;
+        field mut ${codeGenerator(node.expression, state)}`;
       }
-      return codeGenerator(node.expression);
+      return `${codeGenerator(node.expression, state)}`;
     }
     case 'InternalFunctionCall': {
      if(node.internalFunctionInteractsWithSecret) {
@@ -226,17 +226,17 @@ function codeGenerator(node: any) {
       return  ` ` ;
 
     case 'Assignment':
-      return `${codeGenerator(node.leftHandSide)} ${node.operator} ${codeGenerator(node.rightHandSide)}`;
+      return `${codeGenerator(node.leftHandSide, state)} ${node.operator} ${codeGenerator(node.rightHandSide, state)};`;
 
     case 'UnaryOperation':
       if (node.subExpression?.typeName?.name === 'bool' && node.operator === '!'){
         return `${node.operator}${node.subExpression.name};`;
       }
-      return `${codeGenerator(node.initialValue)} = ${codeGenerator(node.subExpression)} ${node.operator[0]} 1;`;
+      return `${codeGenerator(node.initialValue, state)} = ${codeGenerator(node.subExpression, state)} ${node.operator[0]} 1;`;
 
     case 'BinaryOperation':
-      return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
-        node.rightExpression,
+      return `${codeGenerator(node.leftExpression, state)} ${node.operator} ${codeGenerator(
+        node.rightExpression, state,
       )}`;
 
     case 'Identifier':
@@ -246,15 +246,15 @@ function codeGenerator(node: any) {
       return node.value;
 
     case 'IndexAccess':
-      if (node.isConstantArray) return `${codeGenerator(node.baseExpression)}[${codeGenerator(node.indexExpression).replace('.', 'dot')}]`;
-      return `${codeGenerator(node.baseExpression)}_${codeGenerator(node.indexExpression).replace('.', 'dot')}`;
+      if (node.isConstantArray) return `${codeGenerator(node.baseExpression, state)}[${codeGenerator(node.indexExpression, state).replace('.', 'dot')}]`;
+      return `${codeGenerator(node.baseExpression, state)}_${codeGenerator(node.indexExpression, state).replace('.', 'dot')}`;
 
     case 'MemberAccess':
-      if (node.isStruct) return `${codeGenerator(node.expression)}.${node.memberName}`;
-      return `${codeGenerator(node.expression)}_${node.memberName}`;
+      if (node.isStruct) return `${codeGenerator(node.expression, state)}.${node.memberName}`;
+      return `${codeGenerator(node.expression, state)}_${node.memberName}`;
 
     case 'TupleExpression':
-      return `(${node.components.map(codeGenerator).join(` `)})`;
+      return `(${node.components.map((comp) => codeGenerator(comp, state)).join(` `)})`;
 
     case 'IfStatement':
       let trueStatements: any = ``;
@@ -266,7 +266,7 @@ function codeGenerator(node: any) {
         if(node.condition.leftExpression.nodeType == 'Identifier')
         node.condition.leftExpression.name = node.condition.leftExpression.name.replace('_temp','');
       initialStatements+= `
-      assert(!(${codeGenerator(node.condition)}));`;
+      assert(!(${codeGenerator(node.condition, state)}));`;
       return initialStatements;
       }
       // we use our list of condition vars to init temp variables. 
@@ -275,50 +275,50 @@ function codeGenerator(node: any) {
           let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
           if (elt.isVarDec === false) varDec = '';
           initialStatements += `
-        ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)};`;
+        ${varDec} ${codeGenerator(elt, state)}_temp = ${codeGenerator(elt, state)};`;
         }
       });
       for (let i =0; i<node.trueBody.length; i++) {
         // We may have a statement that is not within the If statement but included due to the ordering (e.g. b_1 =b)
         if (node.trueBody[i].outsideIf) {
-          trueStatements += `${codeGenerator(node.trueBody[i])}`;
+          trueStatements += `${codeGenerator(node.trueBody[i], state)}`;
         } else {
           if (node.trueBody[i].expression.nodeType === 'UnaryOperation'){
             trueStatements+= `
-            ${codeGenerator(node.trueBody[i].expression.subExpression)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression))} ${node.trueBody[i].expression.operator[0]} 1 } else { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression))} };`
+            ${codeGenerator(node.trueBody[i].expression.subExpression, state)} = if (${removeTrailingSemicolon(codeGenerator(node.condition, state))}) { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression, state))} ${node.trueBody[i].expression.operator[0]} 1 } else { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression, state))} };`
           } else {
             trueStatements+= `
-            ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.rightHandSide))} } else { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.leftHandSide))} };`
+            ${codeGenerator(node.trueBody[i].expression.leftHandSide, state)} = if (${removeTrailingSemicolon(codeGenerator(node.condition, state))}) { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.rightHandSide, state))} } else { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.leftHandSide, state))} };`
           }
         }
       }
       for (let j =0; j<node.falseBody.length; j++) {
         if (node.falseBody[j].outsideIf) {
-          falseStatements += `${codeGenerator(node.falseBody[j])}`;
+          falseStatements += `${codeGenerator(node.falseBody[j], state)}`;
         } else {
           if (node.falseBody[j].expression.nodeType === 'UnaryOperation'){
             falseStatements+= `
-            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.subExpression))} }  else  { ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 };`;
+            ${codeGenerator(node.falseBody[j].expression.subExpression, state)} = if (${removeTrailingSemicolon(codeGenerator(node.condition, state))}) { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.subExpression, state))} }  else  { ${codeGenerator(node.falseBody[j].expression.subExpression, state)} ${node.falseBody[j].expression.operator[0]} 1 };`;
           } else {
             falseStatements+= `
-            ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.leftHandSide))} } else { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.rightHandSide))} };`;
+            ${codeGenerator(node.falseBody[j].expression.leftHandSide, state)} = if (${removeTrailingSemicolon(codeGenerator(node.condition, state))}) { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.leftHandSide, state))} } else { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.rightHandSide, state))} };`;
           }
         }
       }
-      return initialStatements + trueStatements + falseStatements;
+      return initialStatements + trueStatements + falseStatements + ``;
 
       case 'Conditional':
-        return `(${codeGenerator(node.condition)}) ? ${codeGenerator(node.trueExpression[0])} : ${codeGenerator(node.falseExpression[0])}`
+        return `(${codeGenerator(node.condition, state)}) ? ${codeGenerator(node.trueExpression[0], state)} : ${codeGenerator(node.falseExpression[0], state)}`
 
       case 'ForStatement':
         switch (node.initializationExpression.nodeType) {
           case 'ExpressionStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} {
-            ${keepOneTrailingSemicolon(codeGenerator(node.body))}
+            return `for u32 ${codeGenerator(node.condition.leftExpression, state)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide, state)}..${node.condition.rightExpression.value} {
+            ${keepOneTrailingSemicolon(codeGenerator(node.body, state))}
             }`;
           case 'VariableDeclarationStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.initialValue)}..${node.condition.rightExpression.value} {
-            ${keepOneTrailingSemicolon(codeGenerator(node.body))}
+            return `for u32 ${codeGenerator(node.condition.leftExpression, state)} in ${codeGenerator(node.initializationExpression.initialValue, state)}..${node.condition.rightExpression.value} {
+            ${keepOneTrailingSemicolon(codeGenerator(node.body, state))}
             }`;
           default:
             break;
@@ -326,7 +326,7 @@ function codeGenerator(node: any) {
 
 
     case 'TypeConversion':
-      return `${codeGenerator(node.arguments)}`;
+      return `${codeGenerator(node.arguments, state)}`;
 
     case 'MsgSender':
       return node.name || 'msgSender';
@@ -343,12 +343,12 @@ function codeGenerator(node: any) {
         assert(${node.arguments.flatMap(codeGenerator)});`;
 
     case 'Boilerplate':
-      return Circuitbp.generateBoilerplate(node);
+      return Circuitbp.generateBoilerplate(node) ;
 
     case 'BoilerplateStatement': {
       let newComValue = '';
-      if (node.bpType === 'incrementation') newComValue  = codeGenerator(node.addend);
-      if (node.bpType === 'decrementation') newComValue  = codeGenerator(node.subtrahend);
+      if (node.bpType === 'incrementation') newComValue  = codeGenerator(node.addend, state);
+      if (node.bpType === 'decrementation') newComValue  = codeGenerator(node.subtrahend, state);
       node.newCommitmentValue = newComValue;
       return Circuitbp.generateBoilerplate(node);
     }

@@ -25,7 +25,7 @@ export default function toCircuit(ast: any, options: any) {
 
  //generate the circuit files from the newly created circuit AST:
   logger.verbose('Generating files from the .zok AST...');
-  const circuitFileData = codeGenerator(newAST);
+  const circuitFileData = codeGenerator(newAST, state);
 
   // save the circuit files to the output dir:
   logger.verbose(
