@@ -8,6 +8,14 @@ import NodePath from '../../../traverse/NodePath.js'
 import {traversePathsFast} from '../../../traverse/traverse.js'
 const Circuitbp = new CircuitBP();
 
+const removeTrailingSemicolon = (code: string) => {
+  return code.endsWith(';') ? code.slice(0, -1) : code;
+};
+
+const keepOneTrailingSemicolon = (code: string) => {
+  return code.endsWith('}') ? code : code.replace(/;+$/, '') + ';';
+};
+
 function poseidonLibraryChooser(fileObj: string) {
   if (!fileObj.includes('poseidon')) return fileObj;
   let poseidonFieldCount = 0;
@@ -29,7 +37,7 @@ function poseidonLibraryChooser(fileObj: string) {
      var lines = fileObj.split('\n');
      for(var line = 0; line < lines.length; line++) {
        if(lines[line].includes('./common/hashes/poseidon/poseidon.zok')) {
-         lines[line] = 'from "hashes/poseidon/poseidon.zok" import main as poseidon';
+         lines[line] = 'from "hashes/poseidon/poseidon.zok" import main as poseidon;';
        }
      }
      fileObj = lines.join('\n');
@@ -61,7 +69,7 @@ function codeGenerator(node: any) {
     }
 
     case 'ImportStatementList':
-      return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join('\n')}`;
+      return `${CircuitBP.uniqueify(node.imports.flatMap(codeGenerator)).join(';\n')};`;
 
     case 'FunctionDefinition': {
       let functionSignature : any;
@@ -103,16 +111,17 @@ function codeGenerator(node: any) {
         returnType.push('bool') ;
       }
       
-      return `${functionSignature}(${returnType}):
+      return `${functionSignature}${returnType.length > 1 ? `(${returnType})` : returnType} {
 
         ${body}
 
-         return ${returnStatement}`;
+         return ${returnStatement.length > 1 ? `(${returnStatement})` : returnStatement};
+    }`;
     }
 
     case 'StructDefinition': {
       return `struct ${node.name} {
-        ${node.members.map((mem: any) => mem.type + ' ' + mem.name).join(`\n`)}
+        ${node.members.map((mem: any) => mem.type + ' ' + mem.name + ';').join(`\n`)}
       }`;
     }
 
@@ -154,21 +163,21 @@ function codeGenerator(node: any) {
             ? 'private '
             : 'public '
           : '\t\t';
-      return `${visibility}${codeGenerator(node.typeName)} ${node.name}`;
+      return `${visibility}${codeGenerator(node.typeName)} mut ${node.name}`;
     }
 
     case 'VariableDeclarationStatement': {
       const declarations = node.declarations.map(codeGenerator).join(', ');
-      if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)}`;
+      if (!node.initialValue) return `${declarations} = ${node.declarations.map(n => n.typeName.name === 'bool' ? 'false' : 0)};`;
       if(node.initialValue?.nodeType === 'InternalFunctionCall'){
         if(!declarations) return ;
         if(node.initialValue?.expression?.nodeType === 'BinaryOperation')
-        return `${declarations} = ${codeGenerator(node.initialValue.expression)}`;
-        return `${declarations} = ${node.initialValue.name}`;
+        return `${declarations} = ${codeGenerator(node.initialValue.expression)};`;
+        return `${declarations} = ${node.initialValue.name};`;
       } 
       const initialValue = codeGenerator(node.initialValue);
 
-      return `${declarations} = ${initialValue}`;
+      return `${declarations} = ${initialValue};`;
     }
 
     case 'ElementaryTypeName':
@@ -186,10 +195,10 @@ function codeGenerator(node: any) {
       if (node.isVarDec) {
         if (node.expression?.leftHandSide?.typeName === 'bool'){
           return `
-          bool ${codeGenerator(node.expression)}`;
+          bool mut ${codeGenerator(node.expression)}`;
         }
         return `
-        field ${codeGenerator(node.expression)}`;
+        field mut ${codeGenerator(node.expression)}`;
       }
       return codeGenerator(node.expression);
     }
@@ -201,12 +210,12 @@ function codeGenerator(node: any) {
         if(para.typeName.name == 'EncryptedMsgs<3>')
          returnPara = `  EncryptedMsgs<3> ${para.name}_0_cipherText = `;
        })
-       return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')})`
+       return `${returnPara} ${node.name}(${(node.CircuitArguments).join(',\\\n \t')});`
       }
       else if(node.CircuitArguments.length)
-       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')})) ` ;
+       return `assert(${node.name}(${(node.CircuitArguments).join(',\\\n \t')}));` ;
       else
-       return ``;
+       return `//`;
       }
     }
     case 'JoinCommitmentFunctionDefinition' :
@@ -221,9 +230,9 @@ function codeGenerator(node: any) {
 
     case 'UnaryOperation':
       if (node.subExpression?.typeName?.name === 'bool' && node.operator === '!'){
-        return `${node.operator}${node.subExpression.name}`;
+        return `${node.operator}${node.subExpression.name};`;
       }
-      return `${codeGenerator(node.initialValue)} = ${codeGenerator(node.subExpression)} ${node.operator[0]} 1`
+      return `${codeGenerator(node.initialValue)} = ${codeGenerator(node.subExpression)} ${node.operator[0]} 1;`;
 
     case 'BinaryOperation':
       return `${codeGenerator(node.leftExpression)} ${node.operator} ${codeGenerator(
@@ -257,7 +266,7 @@ function codeGenerator(node: any) {
         if(node.condition.leftExpression.nodeType == 'Identifier')
         node.condition.leftExpression.name = node.condition.leftExpression.name.replace('_temp','');
       initialStatements+= `
-      assert(!(${codeGenerator(node.condition)}))`;
+      assert(!(${codeGenerator(node.condition)}));`;
       return initialStatements;
       }
       // we use our list of condition vars to init temp variables. 
@@ -266,7 +275,7 @@ function codeGenerator(node: any) {
           let varDec = elt.typeName?.name && (!elt.typeName.name.includes('=> uint256') && elt.typeName.name !== 'uint256') ? elt.typeName.name : 'field';
           if (elt.isVarDec === false) varDec = '';
           initialStatements += `
-        ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)}`;
+        ${varDec} ${codeGenerator(elt)}_temp = ${codeGenerator(elt)};`;
         }
       });
       for (let i =0; i<node.trueBody.length; i++) {
@@ -276,10 +285,10 @@ function codeGenerator(node: any) {
         } else {
           if (node.trueBody[i].expression.nodeType === 'UnaryOperation'){
             trueStatements+= `
-            ${codeGenerator(node.trueBody[i].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.subExpression)} ${node.trueBody[i].expression.operator[0]} 1 else ${codeGenerator(node.trueBody[i].expression.subExpression)} fi`
+            ${codeGenerator(node.trueBody[i].expression.subExpression)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression))} ${node.trueBody[i].expression.operator[0]} 1 } else { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression))} };`
           } else {
             trueStatements+= `
-            ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.trueBody[i].expression.rightHandSide)} else ${codeGenerator(node.trueBody[i].expression.leftHandSide)} fi`
+            ${codeGenerator(node.trueBody[i].expression.leftHandSide)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.rightHandSide))} } else { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.leftHandSide))} };`
           }
         }
       }
@@ -289,10 +298,10 @@ function codeGenerator(node: any) {
         } else {
           if (node.falseBody[j].expression.nodeType === 'UnaryOperation'){
             falseStatements+= `
-            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.subExpression)}  else  ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 fi`
+            ${codeGenerator(node.falseBody[j].expression.subExpression)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.subExpression))} }  else  { ${codeGenerator(node.falseBody[j].expression.subExpression)} ${node.falseBody[j].expression.operator[0]} 1 };`;
           } else {
             falseStatements+= `
-            ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if ${codeGenerator(node.condition)} then ${codeGenerator(node.falseBody[j].expression.leftHandSide)} else ${codeGenerator(node.falseBody[j].expression.rightHandSide)} fi`
+            ${codeGenerator(node.falseBody[j].expression.leftHandSide)} = if (${removeTrailingSemicolon(codeGenerator(node.condition))}) { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.leftHandSide))} } else { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.rightHandSide))} };`;
           }
         }
       }
@@ -304,13 +313,13 @@ function codeGenerator(node: any) {
       case 'ForStatement':
         switch (node.initializationExpression.nodeType) {
           case 'ExpressionStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} do
-            ${codeGenerator(node.body)}
-            endfor`;
+            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide)}..${node.condition.rightExpression.value} {
+            ${keepOneTrailingSemicolon(codeGenerator(node.body))}
+            }`;
           case 'VariableDeclarationStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.initialValue)}..${node.condition.rightExpression.value} do
-            ${codeGenerator(node.body)}
-            endfor`;
+            return `for u32 ${codeGenerator(node.condition.leftExpression)} in ${codeGenerator(node.initializationExpression.initialValue)}..${node.condition.rightExpression.value} {
+            ${keepOneTrailingSemicolon(codeGenerator(node.body))}
+            }`;
           default:
             break;
         }
@@ -329,9 +338,9 @@ function codeGenerator(node: any) {
       // only happens if we have a single bool identifier which is a struct property
       // these get converted to fields so we need to assert == 1 rather than true
       if (node.arguments[0].isStruct && node.arguments[0].nodeType === "MemberAccess") return `
-        assert(${node.arguments.flatMap(codeGenerator)} == 1)`;
+        assert(${node.arguments.flatMap(codeGenerator)} == 1);`;
       return `
-        assert(${node.arguments.flatMap(codeGenerator)})`;
+        assert(${node.arguments.flatMap(codeGenerator)});`;
 
     case 'Boilerplate':
       return Circuitbp.generateBoilerplate(node);
