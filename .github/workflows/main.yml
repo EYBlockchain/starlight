@@ -59,6 +59,7 @@ jobs:
           zappify -i test/contracts/user-friendly-tests/Return.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/SimpleStruct.zol -o temp-zapps
           zappify -i test/contracts/action-tests/internalFunctionCallTest1.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/Swap.zol -o temp-zapps
 
       - name: replace zokrates image for actions test
         uses: jacobtomlinson/gha-find-replace@v2

@@ -46,23 +46,35 @@ This code is not owned by EY and EY provides no warranty and disclaims any and a
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Quick User Guide](#quick-user-guide)
-- [Install via npm](#install-via-npm)
-  - [Troubleshooting](#troubleshooting)
-- [Install via clone](#install-via-clone)
-- [Run](#run)
-  - [CLI options](#cli-options)
-- [Troubleshooting](#troubleshooting-1)
-  - [Installation](#installation)
-  - [Compilation](#compilation)
-- [Developer](#developer)
-  - [Testing](#testing)
-    - [full zapp](#full-zapp)
-    - [circuit](#circuit)
-  - [Zokrates worker](#zokrates-worker)
-  - [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
+- [starlight :stars:](#starlight-stars)
+  - [Introduction](#introduction)
+  - [Warnings](#warnings)
+  - [Requirements](#requirements)
+  - [Quick User Guide](#quick-user-guide)
+  - [Install via npm](#install-via-npm)
+    - [Troubleshooting](#troubleshooting)
+  - [Install via clone](#install-via-clone)
+  - [Run](#run)
+    - [CLI options](#cli-options)
+  - [Troubleshooting](#troubleshooting-1)
+    - [Installation](#installation)
+    - [Compilation](#compilation)
+  - [Developer](#developer)
+    - [Testing](#testing)
+      - [full zapp](#full-zapp)
+      - [Private Swap Contract](#private-swap-contract)
+        - [Deposit Tokens](#deposit-tokens)
+        - [Initiate Swap](#initiate-swap)
+        - [Complete Swap](#complete-swap)
+        - [Cancel Swap](#cancel-swap)
+      - [Using secret states in the constructor](#using-secret-states-in-the-constructor)
+      - [Deploy on public testnets](#deploy-on-public-testnets)
+        - [CLI options](#cli-options-1)
+      - [circuit](#circuit)
+    - [Zokrates Worker](#zokrates-worker)
+    - [Contributing](#contributing)
+  - [License](#license)
+  - [Acknowledgements](#acknowledgements)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -336,6 +348,128 @@ If the commitment database that stores commitment preimages is lost you can rest
 }
 ```
 as a POST request to `http://localhost:3000/backupVariable`.
+
+#### Private Swap Contract
+
+The Swap contract enables private atomic swaps of tokens between two parties using shared secrets and zk-based confidentiality. Here's how it works:
+- Secret State: Uses secret annotations for private values (e.g. balances, token ownership, and swap data).
+- Shared Secret: A unique identifier derived from the private keys of both parties (through Diffie-Hellman). This is used to securely index swap proposals.
+- Swap Flow:
+  - Both users deposit tokens into the contract.
+  - One user initiates a swap proposal using a shared address.
+  - The counterparty accepts (completes) or cancels (quits) the swap.
+
+
+Compile and Prepare Circuits:
+
+```bash
+$ zappify -i test/contracts/user-friendly-tests/Swap.zol
+$ cd zapps/Swap
+$ npm install
+$ sh bin/setup         # May take a while to compile circuits
+$ sh bin/startup-double
+```
+
+This starts two orchestration servers running the Swap contract that can be reached on ports 3000 and 3001 respectively. Let's say user A runs its server on port 3001 and user B on 3000.
+
+For user A to initiate a swap with B, it needs a shared secret key derived from its public key (`recipientPubKey`) and the private key from user B. This is how B would compute the shared secret using the public key from A:
+
+```bash
+curl --location 'http://localhost:3001/getSharedKeys' \
+--header 'Content-Type: application/json' \
+--data '{
+  "recipientPubKey": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+}'
+```
+
+Response:
+
+```json
+{
+  "SharedKeys": {
+    "_hex": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6"
+  }
+}
+```
+
+Use this shared key as the `sharedAddress` in swap interactions.
+
+
+##### Deposit Tokens
+Each party deposits tokens they intend to trade.
+
+User A:
+
+```bash
+curl --location 'http://localhost:3001/deposit' \
+--header 'Content-Type: application/json' \
+--data '{
+  "tokenId": 1,
+  "amount": 100
+}'
+```
+User B:
+
+```bash
+curl --location 'http://localhost:3000/deposit' \
+--header 'Content-Type: application/json' \
+--data '{
+  "tokenId": 2,
+  "amount": 100
+}'
+```
+
+##### Initiate Swap
+User A proposes a swap to the shared address:
+
+```bash
+curl --location 'http://localhost:3001/startSwap' \
+--header 'Content-Type: application/json' \
+--data '{
+  "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
+  "amountSent": 30,
+  "tokenIdSent": 1,
+  "tokenIdRecieved": 2,
+  "amountRecieved": 0
+}'
+```
+This deducts 30 tokens from User A and locks token 1 for the proposed swap.
+
+##### Complete Swap
+User B accepts the swap with a matching offer:
+
+```bash
+curl --location 'http://localhost:3000/completeSwap' \
+--header 'Content-Type: application/json' \
+--data '{
+  "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
+  "counterParty": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  "amountSent": 0,
+  "tokenIdSent": 2,
+  "tokenIdRecieved": 1,
+  "amountRecieved": 30
+}'
+```
+
+The contract validates the match and executes the atomic swap:
+- Transfers token ownership.
+- Updates balances.
+- Clears swap state.
+
+##### Cancel Swap
+If the second party doesn’t agree, User A can cancel the proposal:
+
+```bash
+curl --location 'http://localhost:3001/quitSwap' \
+--header 'Content-Type: application/json' \
+--data '{
+  "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
+  "amountSent": 30,
+  "tokenIdSent": 1
+}'
+```
+
+This reverts the proposal and refunds locked assets to the proposer.
 
 
 #### Using secret states in the constructor
