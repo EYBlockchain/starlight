@@ -930,7 +930,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               publicInputs.push(`${input.name}: ${input.name}.hex(20)`);
             }
             else {
-              publicInputs.push(`${input.name}: ${input}.integer`);
+              publicInputs.push(`${input}: ${input}.integer`);
             }           
           });
         }
@@ -940,7 +940,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \nBackupData.forEach((element) => {
               element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
             });
-            \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} ${publicInputs}};`
+            \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]} cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData], nullifiers: ${params[0][1]} ${publicInputs}};`
           ]
         }
       } 
@@ -1001,7 +1001,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               lines.push(`${input.name}: ${input.name}.hex(20)`);
             }
             else {
-              lines.push(`${input.name}: ${input}.integer`);
+              lines.push(`${input}: ${input}.integer`);
             }           
           });
         }
