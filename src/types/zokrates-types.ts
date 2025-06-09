@@ -58,10 +58,11 @@ export function buildNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'ParameterList': {
-      const { parameters = [] } = fields;
+      const { parameters = [], functionName } = fields;
       return {
         nodeType,
         parameters,
+        functionName,
       };
     }
     case 'ReturnParameterList': {

@@ -3,7 +3,8 @@
 // If order = 0: input1 is on the left.
 // If order = 1: input1 is on the right.
 
-def main(bool order, field input1, field input2) -> (field[2]):
-	field left = if order == false then input1 else input2 fi
-	field right = if order == false then input2 else input1 fi
-	return [left, right]
+def main(bool order, field input1, field input2) -> field[2] {
+	field left = if order == false { input1 } else { input2 };
+	field right = if order == false { input2 } else { input1 };
+	return [left, right];
+}
