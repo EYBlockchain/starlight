@@ -26,7 +26,7 @@ const getUserFriendlyTestNames = async (folderPath) => {
   }
 };
 
-const callZAppAPIs = async (zappName , apiRequests, errorMessage) => {
+const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook) => {
   testedZapps.push(zappName);
   if (shell.exec(`./apiactions -z ${zappName}`).code !== 0) {
     shell.echo(`${zappName} failed`);
@@ -34,6 +34,12 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage) => {
   }
   // wait for above shell command to execute
   await new Promise(resolve => setTimeout(resolve, 5000));
+
+  // run pre-hook to modify requests if needed
+  if (preHook) {
+    await preHook(apiRequests);
+  }
+
   let apiResponses = [];
   for (let i = 0; i < apiRequests.length; i++) {
     if (apiRequests[i].method === 'get') {
@@ -46,6 +52,10 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage) => {
         .request('localhost:3000')
         .post(apiRequests[i].endpoint)
         .send(apiRequests[i].data);
+      // Check if the response is successful
+      if (apiResponses[i].status !== 200) {
+        throw new Error(`API request failed for ${apiRequests[i].endpoint} with status ${apiResponses[i].status}`);
+      }
     }
   }
   if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
@@ -195,6 +205,59 @@ const apiRequests_internalFunctionCallTest1 = [
 ];
 
 res.InternalFunctionCallTest1 = await callZAppAPIs('internalFunctionCallTest1', apiRequests_internalFunctionCallTest1, 'internalFunctionCallTest1 Zapp failed');
+
+// --- Swap Zapp ---
+const counterParty = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
+
+const apiRequests_Swap = [
+  { method: 'post', endpoint: '/deposit', data: { tokenId: 1, amount: 100 } },
+  { method: 'post', endpoint: '/deposit', data: { tokenId: 2, amount: 100 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  {
+    method: 'post',
+    endpoint: '/startSwap',
+    data: {
+      sharedAddress: '', // to be filled in preHook
+      amountSent: 30,
+      tokenIdSent: 1,
+      tokenIdRecieved: 2,
+      amountRecieved: 0
+    }
+  },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  {
+    method: 'post',
+    endpoint: '/completeSwap',
+    data: {
+      sharedAddress: '', // to be filled in preHook
+      counterParty: counterParty,
+      amountSent: 0,
+      tokenIdSent: 2,
+      tokenIdRecieved: 1,
+      amountRecieved: 30
+    }
+  },
+  { method: 'get', endpoint: '/getAllCommitments' }
+];
+
+const preHook = async (requests) => {
+  const sharedAddress = await chai
+    .request('localhost:3000')
+    .post('/getSharedKeys')
+    .send({ recipientPubKey: counterParty })
+    .then(res => res.body?.SharedKeys?._hex);
+
+  if (!sharedAddress) throw new Error('Failed to retrieve shared address');
+
+  for (const req of requests) {
+    if (req.data && 'sharedAddress' in req.data) {
+      req.data.sharedAddress = sharedAddress;
+    }
+  }
+};
+
+res.Swap = await callZAppAPIs('Swap', apiRequests_Swap, 'Swap Zapp failed', preHook);
+
 
 const userFriendlyTestsPath = 'test/contracts/user-friendly-tests';
 const userFriendlyTests = await getUserFriendlyTestNames(userFriendlyTestsPath);
@@ -515,5 +578,80 @@ describe('InternalFunctionCallTest1 Zapp', () => {
     expect(res.InternalFunctionCallTest1[5].body.commitments[3].isNullified).to.equal(false);
     expect(parseInt(res.InternalFunctionCallTest1[5].body.commitments[2].preimage.value)).to.equal(251);
     expect(parseInt(res.InternalFunctionCallTest1[5].body.commitments[3].preimage.value)).to.equal(306);
+  });
+});
+
+describe('Swap Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.Swap[0].body.tx.event).to.equal('NewLeaves'); // deposit 1
+    expect(res.Swap[1].body.tx.event).to.equal('NewLeaves'); // deposit 2
+    expect(res.Swap[3].body.tx.event).to.equal('NewLeaves'); // startSwap
+    expect(res.Swap[5].body.tx.event).to.equal('NewLeaves'); // completeSwap
+  });
+
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.Swap[0].body.tx.returnValues.minLeafIndex)).to.equal(0); // deposit 1
+    expect(parseInt(res.Swap[1].body.tx.returnValues.minLeafIndex)).to.equal(2); // deposit 2
+    expect(parseInt(res.Swap[3].body.tx.returnValues.minLeafIndex)).to.equal(4); // startSwap
+    expect(parseInt(res.Swap[5].body.tx.returnValues.minLeafIndex)).to.equal(8); // completeSwap
+  });
+
+  it('Check number of commitments', async () => {
+    expect(res.Swap[2].body.commitments.length).to.equal(4);
+    expect(res.Swap[4].body.commitments.length).to.equal(8);
+    expect(res.Swap[6].body.commitments.length).to.equal(14);
+  });
+
+  it('Check nullified commitments', async () => {
+    expect(res.Swap[2].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Swap[2].body.commitments[1].isNullified).to.equal(false);
+    expect(res.Swap[2].body.commitments[2].isNullified).to.equal(false);
+    expect(res.Swap[2].body.commitments[3].isNullified).to.equal(false);
+
+    expect(res.Swap[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Swap[4].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Swap[4].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Swap[4].body.commitments[3].isNullified).to.equal(false);
+    expect(res.Swap[4].body.commitments[4].isNullified).to.equal(false);
+    expect(res.Swap[4].body.commitments[5].isNullified).to.equal(false);
+    expect(res.Swap[4].body.commitments[6].isNullified).to.equal(false);
+    expect(res.Swap[4].body.commitments[7].isNullified).to.equal(false);
+
+    expect(res.Swap[6].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[3].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[4].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[5].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[6].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[7].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[8].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[9].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[10].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[11].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[12].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[13].isNullified).to.equal(false);
+  });
+
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.Swap[6].body.commitments[0].preimage.value)).to.equal(100); // deposit 1
+    expect(parseInt(res.Swap[6].body.commitments[2].preimage.value)).to.equal(100); // deposit 2
+    expect(res.Swap[6].body.commitments[4].name).to.equal("balances");
+    expect(parseInt(res.Swap[6].body.commitments[4].preimage.value)).to.equal(170); // startSwap balance: 200-30
+    expect(parseInt(res.Swap[6].body.commitments[6].preimage.value)).to.equal(1); // pendingStatus
+    expect(res.Swap[6].body.commitments[7].name).to.equal("swapProposals");
+    expect(res.Swap[6].body.commitments[7].preimage.value).to.deep.equal({
+      swapAmountSent: '30',
+      swapAmountRecieved: '0',
+      swapTokenSent: '1',
+      swapTokenRecieved: '2'
+    });
+    expect(res.Swap[6].body.commitments[13].name).to.equal("swapProposals");
+    expect(res.Swap[6].body.commitments[13].preimage.value).to.deep.equal({
+      swapAmountSent: '0',
+      swapAmountRecieved: '0',
+      swapTokenSent: '1',
+      swapTokenRecieved: '2'
+    });
   });
 });
