@@ -529,7 +529,10 @@ export async function joinCommitments(
 
   const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
-  let tx = await instance.getPastEvents('allEvents');
+  let tx = await instance.getPastEvents('allEvents', {
+    fromBlock: sendTxn?.blockNumber || 0,
+    toBlock: sendTxn?.blockNumber || 'latest',
+  });
 
   tx = tx[0];
 
@@ -695,7 +698,10 @@ export async function splitCommitments(
 
   const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
-  let tx = await instance.getPastEvents('allEvents');
+  let tx = await instance.getPastEvents('allEvents', {
+    fromBlock: sendTxn?.blockNumber || 0,
+    toBlock: sendTxn?.blockNumber || 'latest',
+  });
 
   tx = tx[0];
 
