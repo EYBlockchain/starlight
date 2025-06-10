@@ -26,9 +26,9 @@ const getUserFriendlyTestNames = async (folderPath) => {
   }
 };
 
-const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook) => {
+const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstrctrInputs) => {
   testedZapps.push(zappName);
-  if (shell.exec(`./apiactions -z ${zappName}`).code !== 0) {
+  if (shell.exec(`./apiactions -z ${zappName} -c ${cnstrctrInputs}`).code !== 0) {
     shell.echo(`${zappName} failed`);
     shell.exit(1);
   }
@@ -119,6 +119,22 @@ const apiRequests_BucketsOfBalls = [
 ];
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
+
+const apiRequests_Constructor = [
+  { method: 'post', endpoint: '/add', data: { value: 9 } },
+  { method: 'post', endpoint: '/add', data: { value: 17 } },
+  { method: 'get', endpoint: '/getBalance' },
+  { method: 'post', endpoint: '/remove', data: { value: 12 } },
+  { method: 'get', endpoint: '/getBalance' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
+  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'post', endpoint: '/remove', data: { value: 2 } },
+
+];
+
+res.Constructor = await callZAppAPIs('Constructor', apiRequests_Constructor, 'Constructor Zapp failed', undefined, "5");
 
 const apiRequests_Encrypt = [
   { method: 'post', endpoint: '/add', data: { value: 6 } },

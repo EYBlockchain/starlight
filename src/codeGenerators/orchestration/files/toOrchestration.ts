@@ -574,7 +574,22 @@ const prepareStartupScript = (file: localFile, node: any) => {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
     return;
   }
-  constructorCall += `read -p "Please enter your constructor parameters separated by commas (for imported contract addresses, input "NA" if it has not already been deployed):" inputs
+  constructorCall += `# Check if input is provided as a command-line argument
+  if [ -n "$1" ]; then
+    inputs="$1"  # Use the first argument as input
+  else
+    # Prompt the user for input interactively
+    read -p "Please enter your constructor parameters separated by commas (for imported contract addresses, input 'NA' if it has not already been deployed): " inputs
+  fi
+  
+  # Validate that inputs are not empty
+  if [ -z "$inputs" ]; then
+    echo "Error: No input provided."
+    exit 1
+  fi
+  
+  # Use the inputs variable in the rest of the script
+  echo "Constructor parameters: $inputs"
 
   docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
 

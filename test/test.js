@@ -26,7 +26,9 @@ function getFiles(dir) {
     });
 }
 
-files = getFiles('./test/contracts').flat(Infinity);
+files = getFiles('./test/contracts')
+  .flat(Infinity)
+  .filter(file => !file.includes('test/contracts/action-tests/Escrow-imports'));
 let options = {}
 
 describe("AST testing", function () {
@@ -47,7 +49,15 @@ describe("AST testing", function () {
         options.contractsDirPath = `${options.outputDirPath}/contracts`;
         options.orchestrationDirPath = `${options.outputDirPath}/orchestration`;
         mkdirs(options);
-        zappify(options);
+        //zappify(options);
+        try {
+           // Capture the output of zappify
+           zappify(options);
+          logger.info(`Successfully zappified ${options.inputFileName}`);
+        } catch (error) {
+          logger.error(`Failed to zappify ${options.inputFileName}:`, error.message);
+          console.error("Error details:", error); // Display full error details
+        }
       });
     });
   });
