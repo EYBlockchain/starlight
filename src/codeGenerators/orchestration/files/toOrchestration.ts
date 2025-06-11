@@ -591,7 +591,7 @@ const prepareStartupScript = (file: localFile, node: any) => {
   # Use the inputs variable in the rest of the script
   echo "Constructor parameters: $inputs"
 
-  docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
+  docker compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
 
   file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
 }
