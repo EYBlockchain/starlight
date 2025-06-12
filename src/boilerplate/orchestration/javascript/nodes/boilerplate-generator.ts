@@ -461,6 +461,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters = buildNode('ParameterList', fields),
         returnParameters =  buildNode('ParameterList', fields),
         isConstructor = false,
+        stateMutability,
       } = fields;
       return {
         nodeType,
@@ -468,6 +469,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
         returnParameters,
         isConstructor,
+        stateMutability,
       };
     }
     case 'IntegrationApiRoutesFunction': {
