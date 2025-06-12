@@ -37,6 +37,7 @@ describe("AST testing", function () {
     it("zappifies each contract", function () {
       this.timeout(100000);
       files.forEach((file) => {
+        options = {};
         options.inputFilePath = file;
         options.inputFileName = path.parse(options.inputFilePath).name;
         logger.info('zappifying', options.inputFileName);
@@ -52,7 +53,7 @@ describe("AST testing", function () {
         //zappify(options);
         try {
            // Capture the output of zappify
-           zappify(options);
+          zappify(options);
           logger.info(`Successfully zappified ${options.inputFileName}`);
         } catch (error) {
           logger.error(`Failed to zappify ${options.inputFileName}:`, error.message);
