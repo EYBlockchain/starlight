@@ -500,7 +500,7 @@ const visitor = {
           fileExtension: '.mjs',
           nodes: [
             buildNode('Imports'),
-            buildNode('FunctionDefinition', { name: node.name, contractName }),
+            buildNode('FunctionDefinition', { name: node.name, contractName, stateMutability: node.stateMutability}),
           ],
         });
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
@@ -560,6 +560,7 @@ const visitor = {
                 name: fnName,
                 parameters: [],
                 returnParameters: [],
+                stateMutability: node.stateMutability,
               }),
             );
           }
