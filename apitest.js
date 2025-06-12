@@ -6,6 +6,10 @@ import shell from 'shelljs'
 import logger from "./built/utils/logger.js";
 
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -120,10 +124,36 @@ const apiRequests_BucketsOfBalls = [
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
 
+// In order to test Charity Pot we first need to mint ERC tokens. 
+const donateFilePath = path.join(__dirname, 'temp-zapps/CharityPot/orchestration/donate.mjs');
+let mintingText = `const erc20 = await getContractInstance("ERC20");
+// mint tokens to the contract 
+console.log("address minting to", config.web3.options.defaultAccount);  
+await erc20.methods
+    .mint(config.web3.options.defaultAccount, 500)
+    .send({ from: config.web3.options.defaultAccount });
+
+await erc20.methods
+    .approve(this.contractAddr, 500)
+    .send({ from: config.web3.options.defaultAccount });`;
+let donateContent = fs.readFileSync(donateFilePath, 'utf8');
+const keyword = "const web3 = this.web3;";
+let position = donateContent.indexOf(keyword);
+if (position !== -1) {
+  const before = donateContent.slice(0, position + keyword.length); // Include the keyword
+  const after = donateContent.slice(position + keyword.length); // Everything after the keyword
+  donateContent = before + mintingText + after;
+} else {
+  console.error(`Keyword "${keyword}"  not found in the file.`);
+}
+fs.writeFileSync(donateFilePath, donateContent, 'utf8');
+
+console.log('donate.mjs in CharityPot modified successfully to mint ERC tokens. Proceeding with the test...');
+
 const apiRequests_CharityPot = [
   { method: 'post', endpoint: '/donate', data: { donation: 4 } },
   { method: 'post', endpoint: '/donate', data: { donation: 16 } },
-  { method: 'post', endpoint: '/remove', data: { withdrawal: 7 } },
+  { method: 'post', endpoint: '/withdraw', data: { withdrawal: 7 } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'pot' } },
   { method: 'get', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
@@ -157,6 +187,21 @@ const apiRequests_Encrypt = [
 ];
 
 res.Encrypt = await callZAppAPIs('Encrypt', apiRequests_Encrypt, 'Encrypt Zapp failed');
+
+// In order to test Escrow we first need to mint ERC tokens. 
+const depositFilePath = path.join(__dirname, 'temp-zapps/Escrow/orchestration/deposit.mjs');
+let depositContent = fs.readFileSync(depositFilePath, 'utf8');
+position = depositContent.indexOf(keyword);
+if (position !== -1) {
+  const before = depositContent.slice(0, position + keyword.length); // Include the keyword
+  const after = depositContent.slice(position + keyword.length); // Everything after the keyword
+  depositContent = before + mintingText + after;
+} else {
+  console.error(`Keyword "${keyword}"  not found in the file.`);
+}
+fs.writeFileSync(depositFilePath, depositContent, 'utf8');
+
+console.log('deposit.mjs in Escrow modified successfully to mint ERC tokens. Proceeding with the test...');
 
 const apiRequests_Escrow = [
   { method: 'post', endpoint: '/deposit', data: { amount: 25 } },
