@@ -387,8 +387,8 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     `'${node.functionNames.join(`', '`)}'`,
   );
   // collect any extra constructor parameters
-  const constructorParams = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
-  const iwsConstructorParams = node.constructorParams;
+  const constructorParamNames = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
+  const publicConstructorParams = node.constructorParams?.filter((obj: any) => !obj.isSecret);
   // initialise variables
   let customImports = ``;
   let customDeployments = ``;
@@ -499,8 +499,8 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                 .includes(name.toLowerCase())
             ) {
               // if that address is of the current importedContractName, we add it to the migration arguments
-              const index = constructorParams.indexOf(name);
-              constructorParams[index] = `${importedContractName.toLowerCase()}Address`;
+              const index = constructorParamNames.indexOf(name);
+              constructorParamNames[index] = `${importedContractName.toLowerCase()}Address`;
             }
           });
         } else {
@@ -516,8 +516,8 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                 .includes(name.toLowerCase())
             ) {
               // if that address is of the current importedContractName, we add it to the migration arguments
-              const index = constructorParams.indexOf(name);
-              constructorParams[index] = `${importedContractName}.address`;
+              const index = constructorParamNames.indexOf(name);
+              constructorParamNames[index] = `${importedContractName}.address`;
             }
           });
         }
@@ -537,24 +537,24 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   }
   if (node.isConstructor) {
     // we have a constructor which requires a proof
-    if (node.functionNames.includes('cnstrctr') || iwsConstructorParams.length > 0) {
+    if (node.functionNames.includes('cnstrctr') || publicConstructorParams.length > 0) {
       customProofImport += `const constructorInput = JSON.parse(
         fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
       );`
     }
 
     node.functionNames.includes('cnstrctr') ? customProofImport += `\nconst { proofInput } = constructorInput;` : ``;
-    iwsConstructorParams?.forEach((param: any) => {
+    publicConstructorParams?.forEach((param: any) => {
       customProofImport += `\nconst { ${param.name} } = constructorInput;`
     });
     node.functionNames.includes('cnstrctr') ? customProofInputs += `, ...proofInput` : "";
   }
   // we need to add a comma if we have 1+ constructor param
-  if (constructorParams?.length >= 1) constructorParams[constructorParams.length - 1] += `,`;
+  if (constructorParamNames?.length >= 1) constructorParamNames[constructorParamNames.length - 1] += `,`;
   // finally, import all above findings to the migrationsfile
   file.file = file.file.replace(/CUSTOM_CONTRACTS/g, customDeployments);
   file.file = file.file.replace(/CUSTOM_CONTRACT_IMPORT/g, customImports);
-  file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParams);
+  file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParamNames);
   file.file = file.file.replace(/CUSTOM_PROOF_IMPORT/g, customProofImport);
   file.file = file.file.replace(/CUSTOM_PROOF/g, customProofInputs);
 };
