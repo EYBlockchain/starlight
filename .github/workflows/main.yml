@@ -71,7 +71,7 @@ jobs:
           replace: "ghcr.io/eyblockchain/zokrates-worker-m1:v0.1"
           include: "**docker-compose.zapp.yml"
        
-      - name: run zapp npm apitest
+      - name: run zapp apitest
         run: npx mocha --exit --timeout 50000 --require @babel/register apitest.js
         
       - name: disp logs on failure

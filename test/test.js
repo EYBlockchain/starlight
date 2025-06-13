@@ -50,7 +50,6 @@ describe("AST testing", function () {
         options.contractsDirPath = `${options.outputDirPath}/contracts`;
         options.orchestrationDirPath = `${options.outputDirPath}/orchestration`;
         mkdirs(options);
-        //zappify(options);
         try {
            // Capture the output of zappify
           zappify(options);
