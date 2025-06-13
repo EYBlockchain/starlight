@@ -6,6 +6,10 @@ import shell from 'shelljs'
 import logger from "./built/utils/logger.js";
 
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -26,9 +30,9 @@ const getUserFriendlyTestNames = async (folderPath) => {
   }
 };
 
-const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook) => {
+const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstrctrInputs) => {
   testedZapps.push(zappName);
-  if (shell.exec(`./apiactions -z ${zappName}`).code !== 0) {
+  if (shell.exec(`./apiactions -z ${zappName} -c '${cnstrctrInputs}'`).code !== 0) {
     shell.echo(`${zappName} failed`);
     shell.exit(1);
   }
@@ -120,6 +124,60 @@ const apiRequests_BucketsOfBalls = [
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
 
+// In order to test Charity Pot we first need to mint ERC tokens. 
+const donateFilePath = path.join(__dirname, 'temp-zapps/CharityPot/orchestration/donate.mjs');
+let mintingText = `const erc20 = await getContractInstance("ERC20");
+// mint tokens to the contract 
+console.log("address minting to", config.web3.options.defaultAccount);  
+await erc20.methods
+    .mint(config.web3.options.defaultAccount, 500)
+    .send({ from: config.web3.options.defaultAccount });
+
+await erc20.methods
+    .approve(this.contractAddr, 500)
+    .send({ from: config.web3.options.defaultAccount });`;
+let donateContent = fs.readFileSync(donateFilePath, 'utf8');
+const keyword = "const web3 = this.web3;";
+let position = donateContent.indexOf(keyword);
+if (position !== -1) {
+  const before = donateContent.slice(0, position + keyword.length); // Include the keyword
+  const after = donateContent.slice(position + keyword.length); // Everything after the keyword
+  donateContent = before + mintingText + after;
+} else {
+  console.error(`Keyword "${keyword}"  not found in the file.`);
+}
+fs.writeFileSync(donateFilePath, donateContent, 'utf8');
+
+console.log('donate.mjs in CharityPot modified successfully to mint ERC tokens. Proceeding with the test...');
+
+const apiRequests_CharityPot = [
+  { method: 'post', endpoint: '/donate', data: { donation: 4 } },
+  { method: 'post', endpoint: '/donate', data: { donation: 16 } },
+  { method: 'post', endpoint: '/withdraw', data: { withdrawal: 7 } },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'pot' } },
+  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'post', endpoint: '/withdraw', data: { withdrawal: 3 } },
+];
+
+res.CharityPot = await callZAppAPIs('CharityPot', apiRequests_CharityPot, 'CharityPot Zapp failed', undefined, "\"1390849295786071768276380950238675083608645509734\",\"NA\"");
+
+const apiRequests_Constructor = [
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'post', endpoint: '/add', data: { value: 9 } },
+  { method: 'post', endpoint: '/add', data: { value: 17 } },
+  { method: 'get', endpoint: '/getBalance' },
+  { method: 'post', endpoint: '/remove', data: { value: 12 } },
+  { method: 'get', endpoint: '/getBalance' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
+  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'post', endpoint: '/remove', data: { value: 2 } },
+
+];
+
+res.Constructor = await callZAppAPIs('Constructor', apiRequests_Constructor, 'Constructor Zapp failed', undefined, "5");
+
 const apiRequests_Encrypt = [
   { method: 'post', endpoint: '/add', data: { value: 6 } },
   { method: 'post', endpoint: '/remove', data: { value: 5 } },
@@ -129,6 +187,40 @@ const apiRequests_Encrypt = [
 ];
 
 res.Encrypt = await callZAppAPIs('Encrypt', apiRequests_Encrypt, 'Encrypt Zapp failed');
+
+// In order to test Escrow we first need to mint ERC tokens. 
+const depositFilePath = path.join(__dirname, 'temp-zapps/Escrow/orchestration/deposit.mjs');
+let depositContent = fs.readFileSync(depositFilePath, 'utf8');
+position = depositContent.indexOf(keyword);
+if (position !== -1) {
+  const before = depositContent.slice(0, position + keyword.length); // Include the keyword
+  const after = depositContent.slice(position + keyword.length); // Everything after the keyword
+  depositContent = before + mintingText + after;
+} else {
+  console.error(`Keyword "${keyword}"  not found in the file.`);
+}
+fs.writeFileSync(depositFilePath, depositContent, 'utf8');
+
+console.log('deposit.mjs in Escrow modified successfully to mint ERC tokens. Proceeding with the test...');
+
+const apiRequests_Escrow = [
+  { method: 'post', endpoint: '/deposit', data: { amount: 25 } },
+  { method: 'post', endpoint: '/deposit', data: { amount: 19 } },
+  { method: 'post', endpoint: '/transfer', data: { recipient: 235, amount: 13 } },
+  { method: 'post', endpoint: '/withdraw', data: { amount: 3 } },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '1390849295786071768276380950238675083608645509734'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '235'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokens' } },
+  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '1390849295786071768276380950238675083608645509734'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '235'} },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokens' } },
+  { method: 'post', endpoint: '/withdraw', data: { amount: 7 } },
+];
+
+res.Escrow = await callZAppAPIs('Escrow', apiRequests_Escrow, 'Escrow Zapp failed', undefined, "\"NA\"");
 
 const apiRequests_forloop = [
   { method: 'post', endpoint: '/add', data: { j: 8 } },
@@ -342,7 +434,7 @@ describe('Assign Zapp', () => {
     expect(res.Assign[8].body.commitments[0].isNullified).to.equal(true);
     expect(res.Assign[8].body.commitments[1].isNullified).to.equal(true);
     expect(res.Assign[8].body.commitments[2].isNullified).to.equal(false);
-    expect(res.Arrays[9].body.tx.event).to.equal('NewLeaves');
+    expect(res.Assign[9].body.tx.event).to.equal('NewLeaves');
   });
 });
 
@@ -381,6 +473,78 @@ describe('BucketsOfBalls Zapp', () => {
   });
 });
 
+describe('CharityPot Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.CharityPot[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.CharityPot[1].body.tx.event).to.equal('NewLeaves');
+    expect(res.CharityPot[2].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.CharityPot[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.CharityPot[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expect(parseInt(res.CharityPot[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.CharityPot[3].body.commitments.length).to.equal(3);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.CharityPot[3].body.commitments[0].isNullified).to.equal(true);
+    expect(res.CharityPot[3].body.commitments[1].isNullified).to.equal(true);
+    expect(res.CharityPot[3].body.commitments[2].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.CharityPot[3].body.commitments[2].preimage.value)).to.equal(13);
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.CharityPot[5].body.commitments.length).to.equal(3);
+    expect(res.CharityPot[5].body.commitments[0].isNullified).to.equal(true);
+    expect(res.CharityPot[5].body.commitments[1].isNullified).to.equal(true);
+    expect(res.CharityPot[5].body.commitments[2].isNullified).to.equal(false);
+    expect(res.CharityPot[6].body.tx.event).to.equal('NewLeaves');
+  });
+});
+
+describe('Constructor Zapp', () => {
+  it('test constructor is working', async () => {
+    expect(res.Constructor[0].body.commitments[0].isNullified).to.equal(false);
+    expect(parseInt(res.Constructor[0].body.commitments[0].preimage.value)).to.equal(5);
+  });
+  it('tests APIs are working', async () => {
+    expect(res.Constructor[1].body.tx.event).to.equal('NewLeaves');
+    expect(res.Constructor[2].body.tx.event).to.equal('NewLeaves');
+    expect(res.Constructor[4].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.Constructor[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expect(parseInt(res.Constructor[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(parseInt(res.Constructor[4].body.tx.returnValues.minLeafIndex)).to.equal(3);
+  });
+  it('test getBalance', async () => {
+    expect(parseInt(res.Constructor[3].body.totalBalance)).to.equal(31);
+    expect(parseInt(res.Constructor[5].body.totalBalance)).to.equal(19);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.Constructor[6].body.commitments.length).to.equal(4);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.Constructor[6].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Constructor[6].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Constructor[6].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Constructor[6].body.commitments[3].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.Constructor[6].body.commitments[3].preimage.value)).to.equal(19);
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.Constructor[8].body.commitments.length).to.equal(4);
+    expect(res.Constructor[8].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Constructor[8].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Constructor[8].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Constructor[8].body.commitments[3].isNullified).to.equal(false);
+    expect(res.Constructor[9].body.tx.event).to.equal('NewLeaves');
+  });
+});
+
 describe('Encrypt Zapp', () => {
   it('tests APIs are working', async () => {
     expect(res.Encrypt[0].body.tx.event).to.equal('NewLeaves');
@@ -402,6 +566,54 @@ describe('Encrypt Zapp', () => {
     expect(parseInt(res.Encrypt[3].body.commitments[0].preimage.value)).to.equal(5);
     expect(parseInt(res.Encrypt[4].body.commitments[0].preimage.value)).to.equal(12);
     expect(parseInt(res.Encrypt[4].body.commitments[1].preimage.value)).to.equal(10);
+  });
+});
+
+describe('Escrow Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.Escrow[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.Escrow[1].body.tx.event).to.equal('NewLeaves');
+    expect(res.Escrow[2].body.tx.event).to.equal('NewLeaves');
+    expect(res.Escrow[3].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.Escrow[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.Escrow[1].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(parseInt(res.Escrow[2].body.tx.returnValues.minLeafIndex)).to.equal(4);
+    expect(parseInt(res.Escrow[3].body.tx.returnValues.minLeafIndex)).to.equal(8);
+  });
+  it('Check number of commitments', async () => {
+    expect(res.Escrow[4].body.commitments.length).to.equal(9);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.Escrow[5].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Escrow[5].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Escrow[5].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Escrow[5].body.commitments[3].isNullified).to.equal(true);
+    expect(res.Escrow[5].body.commitments[4].isNullified).to.equal(true);
+    expect(res.Escrow[5].body.commitments[5].isNullified).to.equal(false);
+    expect(res.Escrow[6].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Escrow[7].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[1].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.Escrow[5].body.commitments[5].preimage.value)).to.equal(28);
+    expect(parseInt(res.Escrow[6].body.commitments[0].preimage.value)).to.equal(13);
+    expect(parseInt(res.Escrow[7].body.commitments[0].preimage.value)).to.equal(25);
+    expect(parseInt(res.Escrow[7].body.commitments[1].preimage.value)).to.equal(44);
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.Escrow[9].body.commitments.length).to.equal(9);
+    expect(res.Escrow[10].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Escrow[10].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Escrow[10].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Escrow[10].body.commitments[3].isNullified).to.equal(true);
+    expect(res.Escrow[10].body.commitments[4].isNullified).to.equal(true);
+    expect(res.Escrow[10].body.commitments[5].isNullified).to.equal(false);
+    expect(res.Escrow[11].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Escrow[12].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(false);
+    expect(res.Escrow[13].body.tx.event).to.equal('NewLeaves');
   });
 });
 

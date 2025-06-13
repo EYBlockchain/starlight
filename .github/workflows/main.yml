@@ -52,7 +52,10 @@ jobs:
           zappify -i test/contracts/user-friendly-tests/Arrays.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/Assign.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/BucketsOfBalls.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/CharityPot.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/Constructor.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/Encrypt.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/Escrow.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/for-loop.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/If-Statement.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/MappingtoStruct.zol -o temp-zapps
@@ -68,7 +71,7 @@ jobs:
           replace: "ghcr.io/eyblockchain/zokrates-worker-m1:v0.1"
           include: "**docker-compose.zapp.yml"
        
-      - name: run zapp npm apitest
+      - name: run zapp apitest
         run: npx mocha --exit --timeout 50000 --require @babel/register apitest.js
         
       - name: disp logs on failure

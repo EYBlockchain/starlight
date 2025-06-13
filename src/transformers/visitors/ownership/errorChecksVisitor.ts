@@ -160,7 +160,7 @@ export default {
       state.isContractPublic ??= true;
       state.isContractPublic = state.isContractPublic && isFunctionPublic;
 
-      if (path.node.containsSecret && path.node.kind === 'constructor') path.node.name = 'cnstrctr';
+      if (path.node.kind === 'constructor') path.node.name = 'cnstrctr';
       if (path.node.containsSecret && (path.node.kind === 'fallback' || path.node.kind === 'receive'))
       throw new TODOError(`Secret states on fallback / receive functions is currently not supported`, path.node);
       for (const [, indicator] of Object.entries(scope.indicators)) {

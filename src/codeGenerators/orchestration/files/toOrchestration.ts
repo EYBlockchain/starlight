@@ -152,7 +152,6 @@ const prepareIntegrationApiServices = (node: any) => {
   let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
   genericApiServiceFile.postStatements()[0]
     .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/CONSTRUCTOR_INPUTS/g, node.functionNames.includes('cnstrctr') ? `await addConstructorNullifiers();` : ``)
     .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
     .replace(/CONTRACT_NAME/g, node.contractName)
     .replace(/FUNCTION_NAME/g, fn.name) ;
@@ -388,8 +387,8 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     `'${node.functionNames.join(`', '`)}'`,
   );
   // collect any extra constructor parameters
-  const constructorParams = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
-  const iwsConstructorParams = node.constructorParams?.filter((param: any) => param.interactsWithSecret === true);
+  const constructorParamNames = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
+  const publicConstructorParams = node.constructorParams?.filter((obj: any) => !obj.isSecret);
   // initialise variables
   let customImports = ``;
   let customDeployments = ``;
@@ -445,7 +444,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
               `It looks like you're using an ERC contract - please make sure you increase the allowance of the shield contract before testing!`,
             );
             switch (importedContractName) {
-              case 'ERC20': customDeployments += `const ERC20 = await hre.ethers.getContractFactory('contracts/ERC20.sol:ERC20') \n
+              case 'ERC20': customDeployments += `const ERC20 = await hre.ethers.getContractFactory('ERC20') \n
                                       const erc20 = await ERC20.deploy(
                                         'MyCoin',
                                         'MC'
@@ -453,47 +452,75 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                                       await erc20.waitForDeployment() \n
                                       const erc20Address = await erc20.getAddress() \n
                                       console.log('ERC20 deployed to:', erc20Address) \n
+                                      blockNumber = await hre.ethers.provider.getBlockNumber(); \n
                                       deployTx = await erc20.deploymentTransaction().wait() \n
-                                      saveMetadata(erc20Address, 'ERC20', chainId, blockNumber, deployTx.hash) \n`;
+                                      saveMetadata(erc20Address, 'ERC20', "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n`;
               break;
               case 'ERC721':
-                customDeployments += `const ERC721 = await hre.ethers.getContractFactory('contracts/ERC721.sol:ERC721') \n
-                                      const erc721 = await ERC721.deploy() \n
+                customDeployments += `const ERC721 = await hre.ethers.getContractFactory('ERC721') \n
+                                      const erc721 = await ERC721.deploy(
+                                        'MyCoin',
+                                        'MC'
+                                      ) \n
                                       await erc721.waitForDeployment() \n
                                       const erc721Address = await erc721.getAddress() \n
                                       console.log('ERC721 deployed to:', erc721Address) \n
+                                      blockNumber = await hre.ethers.provider.getBlockNumber(); \n
                                       deployTx = await erc721.deploymentTransaction().wait() \n
-                                      saveMetadata(erc721Address, 'ERC721', chainId, blockNumber, deployTx.hash) \n \n`;
+                                      saveMetadata(erc721Address, 'ERC721',  "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n \n`;
                 break;
               case 'ERC1155':
-                customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('contracts/ERC1155Token.sol:ERC1155Token') \n
+                customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('ERC1155Token') \n
                                       const erc1155 = await ERC1155.deploy() \n
                                       await erc1155.waitForDeployment() \n
                                       erc1155Address = await erc1155.getAddress() \n
                                       console.log('ERC1155 deployed to:', erc1155Address) \n 
+                                      blockNumber = await hre.ethers.provider.getBlockNumber(); \n
                                       deployTx = await erc1155.deploymentTransaction().wait() \n
-                                      saveMetadata(erc1155Address, 'ERC1155Token', chainId, blockNumber, deployTx.hash) \n
+                                      saveMetadata(erc1155Address, 'ERC1155Token', "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n
                                     \n`;
                 break; 
             }
           } 
         }
-        // for each address in the shield contract constructor...
-        constructorAddrParams.forEach(name => {
-          if (
-            name
-              .toLowerCase()
-              .includes(importedContractName.substring(1).toLowerCase()) ||
-            importedContractName
-              .substring(1)
-              .toLowerCase()
-              .includes(name.toLowerCase())
-          ) {
-            // if that address is of the current importedContractName, we add it to the migration arguments
-            const index = constructorParams.indexOf(name);
-            constructorParams[index] = `${importedContractName}.address`;
-          }
-        });
+        if (
+          importedContractName === 'ERC20' ||
+          importedContractName === 'ERC721' || importedContractName === 'ERC1155'
+        ) {
+          // for each address in the shield contract constructor...
+          constructorAddrParams.forEach(name => {
+            if (
+              name
+                .toLowerCase()
+                .includes(importedContractName.substring(1).toLowerCase()) ||
+              importedContractName
+                .substring(1)
+                .toLowerCase()
+                .includes(name.toLowerCase())
+            ) {
+              // if that address is of the current importedContractName, we add it to the migration arguments
+              const index = constructorParamNames.indexOf(name);
+              constructorParamNames[index] = `${importedContractName.toLowerCase()}Address`;
+            }
+          });
+        } else {
+            // for each address in the shield contract constructor...
+          constructorAddrParams.forEach(name => {
+            if (
+              name
+                .toLowerCase()
+                .includes(importedContractName.substring(1).toLowerCase()) ||
+              importedContractName
+                .substring(1)
+                .toLowerCase()
+                .includes(name.toLowerCase())
+            ) {
+              // if that address is of the current importedContractName, we add it to the migration arguments
+              const index = constructorParamNames.indexOf(name);
+              constructorParamNames[index] = `${importedContractName}.address`;
+            }
+          });
+        }
       }
     });
   } else if(constructorParamsIncludesAddr) {
@@ -508,23 +535,26 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
       );
     });
   }
-  if (node.functionNames.includes('cnstrctr')) {
+  if (node.isConstructor) {
     // we have a constructor which requires a proof
-    customProofImport += `const constructorInput = JSON.parse(
-      fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
-    );
+    if (node.functionNames.includes('cnstrctr') || publicConstructorParams.length > 0) {
+      customProofImport += `const constructorInput = JSON.parse(
+        fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
+      );`
+    }
 
-    \nconst { proofInput } = constructorInput;`;
-    iwsConstructorParams?.forEach((param: any) => {
+    node.functionNames.includes('cnstrctr') ? customProofImport += `\nconst { proofInput } = constructorInput;` : ``;
+    publicConstructorParams?.forEach((param: any) => {
       customProofImport += `\nconst { ${param.name} } = constructorInput;`
     });
-    customProofInputs += `, ...proofInput`
+    node.functionNames.includes('cnstrctr') ? customProofInputs += `, ...proofInput` : "";
   }
   // we need to add a comma if we have 1+ constructor param
-  if (constructorParams?.length >= 1) constructorParams[constructorParams.length - 1] += `,`;
+  if (constructorParamNames?.length >= 1) constructorParamNames[constructorParamNames.length - 1] += `,`;
   // finally, import all above findings to the migrationsfile
   file.file = file.file.replace(/CUSTOM_CONTRACTS/g, customDeployments);
-  file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParams);
+  file.file = file.file.replace(/CUSTOM_CONTRACT_IMPORT/g, customImports);
+  file.file = file.file.replace(/CUSTOM_INPUTS/g, constructorParamNames);
   file.file = file.file.replace(/CUSTOM_PROOF_IMPORT/g, customProofImport);
   file.file = file.file.replace(/CUSTOM_PROOF/g, customProofInputs);
 };
@@ -536,7 +566,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
 
 const prepareStartupScript = (file: localFile, node: any) => {
   let constructorCall = ``;
-  if (!node.functionNames.includes('cnstrctr')) {
+  if (!node.isConstructor) {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, ``);
     return;
   } else if (!node.constructorParams[0]) {
@@ -544,9 +574,24 @@ const prepareStartupScript = (file: localFile, node: any) => {
     file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
     return;
   }
-  constructorCall += `read -p "Please enter your constructor parameters separated by commas:" inputs
+  constructorCall += `# Check if input is provided as a command-line argument
+  if [ -n "$1" ]; then
+    inputs="$1"  # Use the first argument as input
+  else
+    # Prompt the user for input interactively
+    read -p "Please enter your constructor parameters separated by commas (for imported contract addresses, input 'NA' if it has not already been deployed): " inputs
+  fi
+  
+  # Validate that inputs are not empty
+  if [ -z "$inputs" ]; then
+    echo "Error: No input provided."
+    exit 1
+  fi
+  
+  # Use the inputs variable in the rest of the script
+  echo "Constructor parameters: $inputs"
 
-  docker-compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
+  docker compose -f docker-compose.zapp.yml run --rm zapp node --experimental-repl-await -e "import('/app/orchestration/cnstrctr.mjs').then(async file => await Promise.resolve(file.default(\${inputs})))"`
 
   file.file = file.file.replace(/CONSTRUCTOR_CALL/g, constructorCall);
 }
@@ -985,7 +1030,7 @@ export default function fileGenerator(node: any) {
         obj.filepath.includes(`deploy`),
       )[0];
 
-      if (node.functionNames.includes('cnstrctr')) {
+      if (node.isConstructor) {
         const redeployPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/redeploy');
         const redeployFile = { filepath: 'bin/redeploy', file: fs.readFileSync(redeployPath, 'utf8') };
         prepareStartupScript(redeployFile, node);

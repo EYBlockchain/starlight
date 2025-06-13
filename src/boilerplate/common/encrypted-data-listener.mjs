@@ -36,7 +36,7 @@ export default class EncryptedDataEventListener {
         contractAddr,
       );
 
-      await registerKey(utils.randomHex(31), 'CONTRACT_NAME', true);
+      if (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), 'CONTRACT_NAME', true);
 
       const { secretKey, publicKey } = JSON.parse(fs.readFileSync(keyDb));
 
