@@ -179,8 +179,10 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams: string[] = [];
-      let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
-      if(returnParamsName.length > 0){
+    let returnParamsName = fn.returnParameters.parameters
+      .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
+        .map(paramnode => (paramnode.name)) || []; // Adapt
+    if(returnParamsName.length > 0){
       returnParamsName.forEach(param => {
         if(param !== 'true') 
          returnParams.push(param+'_newCommitmentValue');
@@ -188,6 +190,13 @@ const prepareIntegrationApiServices = (node: any) => {
          returnParams.push('bool');
       });
     }
+
+    let publicReturns = "";
+    fn.returnParameters.parameters.forEach((paramnode: any) => {
+      if (!paramnode.isSecret){
+        publicReturns = returnParams.length > 0 ? ", publicReturns" : "publicReturns";
+      }
+    });
    
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
@@ -197,7 +206,7 @@ const prepareIntegrationApiServices = (node: any) => {
       paramName,
     );
 
-    fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
+    fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams + publicReturns);
 
     // replace function imports at top of file
     const fnimport = ` import { ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager } from './${fn.name}.mjs' ;`

@@ -1008,7 +1008,8 @@ const visitor = {
         }
         // this adds the return parameters which are marked as secret in the tx 
         
-        let returnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+        let circuitReturnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+        let publicReturns = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (!paramnode.isSecret));
         let returnIsSecret: string[] = [];
           const decStates = node._newASTPointer.decrementedSecretStates;
           if( node._newASTPointer.returnParameters.parameters) {
@@ -1016,15 +1017,17 @@ const visitor = {
             returnIsSecret.push(node.isSecret);
           })
         }
-        returnPara.forEach( (param, index) => {
+        circuitReturnPara.forEach( (param, index) => {
           if(decStates) {
            if(decStates?.includes(param)){
-            returnPara[index] = returnPara[index]+'_2_newCommitment';
+            circuitReturnPara[index] = circuitReturnPara[index]+'_2_newCommitment';
           }
         } else if(returnIsSecret[index])
-        returnPara[index] = returnPara[index] +'_newCommitment';
+        circuitReturnPara[index] = circuitReturnPara[index] +'_newCommitment';
         })
-        newNodes.sendTransactionNode.returnInputs = returnPara;
+  
+        newNodes.sendTransactionNode.returnInputs = circuitReturnPara;
+        newNodes.sendTransactionNode.isPublicReturns = publicReturns.length > 0 ? true : false;
        
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         // UNLESS they are public accessed states...
@@ -1237,16 +1240,18 @@ const visitor = {
               break;
             default : 
             if(node.expression.name)
-             returnName?.push(node.expression.name);
-           else
+              returnName?.push(node.expression.name);
+            else
              returnName?.push(node.expression.value); 
             break;   
           }
           }
         });
-        node.parameters.forEach((node, index) => {
-          if(node.nodeType === 'VariableDeclaration')
-          node.name = returnName[index];
+        node.parameters.forEach((paramNode, index) => {
+          if(paramNode.nodeType === 'VariableDeclaration'){
+            paramNode.name = returnName[index];
+          }
+          
         });
     }
     const newNode = buildNode('ParameterList');

@@ -520,7 +520,24 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
-      node.returnParameters.forEach( (param, index) => {
+      let publicReturns = "";
+      node.returnParameters.parameters.forEach((paramnode: any) => {
+        if (!paramnode.isSecret){
+          publicReturns = ", publicReturns";
+        }
+      });
+      const decStates = node.decrementedSecretStates;
+      let returnParameterNames = node.returnParameters.parameters
+        .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
+          .map(paramnode => (paramnode.name)) || [];
+      returnParameterNames.forEach( (param, index) => {
+        if(decStates) {
+          if(decStates?.includes(param)){
+            returnParameterNames[index] = returnParameterNames[index]+'_change';
+          }
+        } 
+      });
+      returnParameterNames.forEach( (param, index) => {
        if(param === 'true')
         rtnparams?.push('bool: bool');
        else 
@@ -536,24 +553,24 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
           statements: lines,
         };
-        if(rtnparams.length == 0) {
-          return {
-            signature: [
-              `${functionSig}
-              \n async  ${node.name}(${params} ${states}) {`,
-              `\n return  { tx, encEvent, encBackupEvent };
-              \n}
-            \n}`,
-            ],
-            statements: lines,
-          };
-        }
+      if(rtnparams.length == 0) {
+        return {
+          signature: [
+            `${functionSig}
+            \n async  ${node.name}(${params} ${states}) {`,
+            `\n return  { tx, encEvent, encBackupEvent ${publicReturns}};
+            \n}
+          \n}`,
+          ],
+          statements: lines,
+        };
+      }
       if(rtnparams.includes('bool: bool')) {
         return {
           signature: [
             `
             \n async  ${node.name}(${params} ${states}) {`,
-            `\n const bool = true; \n return  { tx, encEvent, encBackupEvent, ${rtnparams} };
+            `\n const bool = true; \n return  { tx, encEvent, encBackupEvent, ${rtnparams} ${publicReturns} };
             \n}
           \n}`,
           ],
@@ -564,7 +581,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         signature: [
           ` ${functionSig}
           \n async ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx, encEvent, encBackupEvent, ${rtnparams} };
+          `\nreturn  { tx, encEvent, encBackupEvent, ${rtnparams} ${publicReturns}};
           \n}
         \n}`,
         ],
@@ -938,10 +955,17 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]}}, proof, BackupData], nullifiers: ${params[0][1]} isNullfiersAdded: false, ${node.publicInputs?.map(input => `${input}: ${input}.integer,`)}};`
         ]
       }
+      let returnsCall = "";
+      if (node.isPublicReturns){
+        returnsCall = `\n\n// Get returns:
+        \nconst publicReturns = await instance.methods
+        .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).call();`;
+      } 
       
       return {
         statements: [
-          `\n\n// Send transaction to the blockchain:
+          `${returnsCall}
+          \n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
           .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).encodeABI();
           \n	let txParams = {

@@ -323,6 +323,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         publicInputs = [],
         returnInputs = [],
         privateStates = {},
+        publicReturns,
       } = fields;
       return {
         nodeType,
@@ -331,6 +332,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractName,
         publicInputs,
         returnInputs,
+        publicReturns,
       };
     }
     case 'SendPublicTransaction': {
