@@ -12,6 +12,8 @@ while docker compose -f docker-compose.zapp.yml ps | grep -q 'Up'; do
   sleep 1
 done
 
+rm -f ./orchestration/common/db/key.json
+
 docker compose -f docker-compose.zapp.yml up -d ganache
 docker compose -f docker-compose.zapp.yml up -d zokrates
 
