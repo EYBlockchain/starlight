@@ -2,6 +2,7 @@
 const hre = require('hardhat')
 const fs = require('fs');
 const c = require('config');
+CUSTOM_CONTRACT_IMPORT
 CUSTOM_PROOF_IMPORT
 const saveMetadata = require('./metadata').saveMetadata
 
@@ -44,7 +45,7 @@ async function main () {
     console.log('CONTRACT_NAME deployed to:', contractAddress);
     deployTx = await contractShield.deploymentTransaction().wait()
     console.log('CONTRACT_NAME deployed to:', contractAddress, 'tx hash:', deployTx.hash);
-   saveMetadata(contractAddress, 'CONTRACT_NAME', chainId, blockNumber, deployTx.hash);
+   saveMetadata(contractAddress, 'CONTRACT_NAME', "", chainId, blockNumber, deployTx.hash);
    console.log("Deployment successful! Exiting...");
         
    // Ensure all pending tasks are completed before exit

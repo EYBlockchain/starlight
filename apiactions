@@ -1,15 +1,23 @@
 #!/bin/sh
-while getopts "z:" arg; do
+while getopts "z:c:" arg; do
   case $arg in
     z)
       zapp=$OPTARG
       ;;
+    c)
+      cnstrctrInput=$OPTARG
+      ;;
+    *)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
   esac
 done
+echo "Constructor Input: $cnstrctrInput"
 cd temp-zapps/$zapp
 npm install
-chmod +x ./bin/setup && chmod +x ./bin/startup
-npm run apitest
+chmod +x ./bin/setup && chmod +x ./bin/startup 
+./bin/setup && ./bin/startup "$cnstrctrInput"
 sleep 20
 
 

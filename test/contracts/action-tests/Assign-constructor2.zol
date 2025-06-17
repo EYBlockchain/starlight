@@ -11,17 +11,20 @@ contract Escrow {
     secret mapping(address => uint256) public balances;
     secret uint256 public tokens;
     IERC20 public erc20;
+    uint256 public numDeposits;
 
-    constructor(address erc20Address) {
+    constructor(address erc20Address, secret uint256 initValue, uint256 initPubValue) {
         erc20 = IERC20(erc20Address);
+        tokens = initValue;
+        numDeposits = initPubValue;
     }
 
     function deposit(uint256 amount) public {
         bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
-
         require(hasBalance == true);
         balances[msg.sender] += amount;
-        encrypt tokens += amount;
+        tokens += amount;
+        numDeposits++;
     }
 
     function transfer(secret address recipient, secret uint256 amount) public {
