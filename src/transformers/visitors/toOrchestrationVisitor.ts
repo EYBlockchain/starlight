@@ -608,9 +608,12 @@ const visitor = {
           isBool?: boolean;
           isAddress?: boolean;
         }
+        let publicReturns = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (!paramnode.isSecret));
+        let isPublicReturns = publicReturns.length > 0 ? true : false;
         const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
           functionName: node.fileName,
           publicInputs: [],
+          isPublicReturns,
         });
         node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
           if (!para.isSecret) {
@@ -702,8 +705,8 @@ const visitor = {
       thisIntegrationApiServiceFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
       thisIntegrationApiServiceFunction.encryptionRequired = functionIndicator.encryptionRequired;
-    // Adding Return ParameterList to api_services file
-    thisIntegrationApiServiceFunction.returnParameters = node._newASTPointer.returnParameters;
+      // Adding Return ParameterList to api_services file
+      thisIntegrationApiServiceFunction.returnParameters = node._newASTPointer.returnParameters;
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&

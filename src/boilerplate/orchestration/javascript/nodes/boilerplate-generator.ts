@@ -340,12 +340,14 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functionName,
         contractName,
         publicInputs = [],
+        isPublicReturns,
       } = fields;
       return {
         nodeType,
         functionName,
         contractName,
         publicInputs,
+        isPublicReturns,
       };
     }
     case 'SetupCommonFilesBoilerplate': {

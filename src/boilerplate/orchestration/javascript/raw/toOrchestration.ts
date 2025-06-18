@@ -1022,10 +1022,16 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           }           
         });
       }
-      
+      let returnsCallPublic = "";
+      if (node.isPublicReturns){
+        returnsCallPublic = `\n\n// Get returns:
+        \nconst publicReturns = await instance.methods.${node.functionName}(${lines}).call();`;
+      } 
+
       return {
         statements: [
-          `\n\n// Send transaction to the blockchain:
+          `${returnsCallPublic}
+          \n\n// Send transaction to the blockchain:
            \nconst txData = await instance.methods.${node.functionName}(${lines}).encodeABI();
           \nlet txParams = {
             from: config.web3.options.defaultAccount,
