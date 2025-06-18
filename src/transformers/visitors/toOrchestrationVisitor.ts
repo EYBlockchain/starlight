@@ -577,7 +577,6 @@ const visitor = {
       } else {
         state.skipSubNodes = true;
       }  
-  
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
@@ -591,6 +590,7 @@ const visitor = {
           );
         }
       }
+  
     },
 
     exit(path: NodePath, state: any) {
@@ -692,6 +692,9 @@ const visitor = {
         if (file.nodeType === 'SetupCommonFilesBoilerplate') {
           if(scope.modifiesSecretState()){
             file.functionNames.push(node.fileName);
+          }
+          if (node.fileName === 'cnstrctr'){
+            file.isConstructor = true;
           }
         }
       }
@@ -859,7 +862,6 @@ const visitor = {
               indicator: stateVarIndicator,
             });
           }
-
           if (stateVarIndicator.newCommitmentsRequired) {
             let contrNode = path.getContractDefinition().node._newASTPointer;
             for (const file of contrNode) {
@@ -1872,7 +1874,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType, { value: node.value });
-      path.inList ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
+      path.inList && Array.isArray(parent._newASTPointer[path.containerName]) ? parent._newASTPointer.push(newNode) : parent._newASTPointer[path.containerName] = newNode;
     },
   },
 

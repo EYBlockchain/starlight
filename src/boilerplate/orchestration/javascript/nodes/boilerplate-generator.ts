@@ -356,6 +356,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functionNames = [],
         constructorParams = [],
         contractImports = [],
+        isConstructor = false,
       } = fields;
       return {
         nodeType,
@@ -363,6 +364,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functionNames,
         constructorParams,
         contractImports,
+        isConstructor,
       };
     }
     case 'EditableCommitmentCommonFilesBoilerplate': {
