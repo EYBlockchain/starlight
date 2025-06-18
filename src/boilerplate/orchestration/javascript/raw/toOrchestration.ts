@@ -980,6 +980,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         \nconst publicReturns = await instance.methods
         .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).call();`;
       }  
+
+      if (node.isReadOnly){
+        return {
+          statements: [
+            `${returnsCall}`,
+          ],
+        };
+      }
       
       return {
         statements: [
@@ -1072,6 +1080,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         returnsCallPublic = `\n\n// Get returns:
         \nconst publicReturns = await instance.methods.${node.functionName}(${lines}).call();`;
       } 
+
+      if (node.isReadOnly){
+        return {
+          statements: [
+            `${returnsCallPublic}`,
+          ],
+        };
+      }
 
       return {
         statements: [

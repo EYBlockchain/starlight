@@ -608,12 +608,17 @@ const visitor = {
           isBool?: boolean;
           isAddress?: boolean;
         }
+        let isReadOnly = false;
+        if (node.stateMutability === 'view'){
+          isReadOnly = true;
+        }
         let publicReturns = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (!paramnode.isSecret));
         let isPublicReturns = publicReturns.length > 0 ? true : false;
         const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
           functionName: node.fileName,
           publicInputs: [],
           isPublicReturns,
+          isReadOnly,
         });
         node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
           if (!para.isSecret) {
@@ -887,7 +892,6 @@ const visitor = {
               }
             }
           }
-
           if (secretModified || accessedOnly) {
             newNodes.sendTransactionNode.privateStates[
               name
@@ -1033,6 +1037,11 @@ const visitor = {
   
         newNodes.sendTransactionNode.returnInputs = circuitReturnPara;
         newNodes.sendTransactionNode.isPublicReturns = publicReturns.length > 0 ? true : false;
+        let isReadOnly = false;
+        if (node.stateMutability === 'view'){
+          isReadOnly = true;
+        }
+        newNodes.sendTransactionNode.isReadOnly = isReadOnly;
        
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         // UNLESS they are public accessed states...

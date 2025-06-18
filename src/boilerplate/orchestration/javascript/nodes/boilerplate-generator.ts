@@ -324,6 +324,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         returnInputs = [],
         privateStates = {},
         publicReturns,
+        isReadOnly,
       } = fields;
       return {
         nodeType,
@@ -333,6 +334,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         publicInputs,
         returnInputs,
         publicReturns,
+        isReadOnly,
       };
     }
     case 'SendPublicTransaction': {
@@ -341,6 +343,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractName,
         publicInputs = [],
         isPublicReturns,
+        isReadOnly,
       } = fields;
       return {
         nodeType,
@@ -348,6 +351,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractName,
         publicInputs,
         isPublicReturns,
+        isReadOnly,
       };
     }
     case 'SetupCommonFilesBoilerplate': {
