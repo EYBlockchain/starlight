@@ -520,6 +520,7 @@ const visitor = {
               name: fnName,
               parameters: [],
               returnParameters:[],
+              stateMutability: node.stateMutability,
             }),
           );
         }
@@ -540,13 +541,12 @@ const visitor = {
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
-  
         const newNode = buildNode('File', {
           fileName: fnName,
           fileExtension: '.mjs',
           nodes: [
             buildNode('Imports'),
-            buildNode('FunctionDefinition', { name: node.name, contractName }),
+            buildNode('FunctionDefinition', { name: node.name, contractName, stateMutability: node.stateMutability }),
           ],
         });
   

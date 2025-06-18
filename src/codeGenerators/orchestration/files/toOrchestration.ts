@@ -149,16 +149,21 @@ const prepareIntegrationApiServices = (node: any) => {
 
 
   relevantFunctions.forEach((fn: any) => {
-  let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
-  genericApiServiceFile.postStatements()[0]
-    .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
-    .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name) ;
-   
-  
-  let fnParam: string[] = [];
-  let structparams;
+    let fnboilerplate = 
+    fn.stateMutability === 'view' ? 
+    genericApiServiceFile.postStatements()[2]
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name) :
+    fn.nodeType === 'IntegrationApiServiceFunction'?
+    genericApiServiceFile.postStatements()[0]
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name) : 
+    genericApiServiceFile.postStatements()[1]
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name) ;
+    
+    let fnParam: string[] = [];
+    let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
     fn.parameters.parameters.forEach(p => {
       if (p.typeName.isStruct) {

@@ -455,6 +455,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         returnParameters =  buildNode('ParameterList', fields),
         decrementsSecretState = [],
         isConstructor = false,
+        stateMutability,
       } = fields;
       return {
         nodeType,
@@ -462,7 +463,8 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
         returnParameters,
         decrementsSecretState,
-        isConstructor
+        isConstructor,
+        stateMutability,
       };
     }
     case 'IntegrationPublicApiServiceFunction': {

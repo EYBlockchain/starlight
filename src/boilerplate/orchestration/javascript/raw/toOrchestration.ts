@@ -523,7 +523,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       let publicReturns = "";
       node.returnParameters.parameters.forEach((paramnode: any) => {
         if (!paramnode.isSecret){
-          publicReturns = ", publicReturns";
+          publicReturns = "publicReturns";
         }
       });
       const decStates = node.decrementedSecretStates;
@@ -544,6 +544,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
        rtnparams?.push( ` ${param.replace('_change', '')}_newCommitmentValue : ${param}.integer  `);
      });
       if (params) params[params.length - 1] += `,`;
+      let txReturns = "tx, encEvent, encBackupEvent,";
+      if (node.stateMutability === 'view'){
+        txReturns = "";
+      }
       if (node.name === 'cnstrctr')
         return {
           signature: [
@@ -558,7 +562,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           signature: [
             `${functionSig}
             \n async  ${node.name}(${params} ${states}) {`,
-            `\n return  { tx, encEvent, encBackupEvent ${publicReturns}};
+            `\n return  { ${txReturns} ${publicReturns}};
             \n}
           \n}`,
           ],
@@ -570,7 +574,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           signature: [
             `
             \n async  ${node.name}(${params} ${states}) {`,
-            `\n const bool = true; \n return  { tx, encEvent, encBackupEvent, ${rtnparams} ${publicReturns} };
+            `\n const bool = true; \n return  { ${txReturns} ${rtnparams}, ${publicReturns} };
             \n}
           \n}`,
           ],
@@ -581,7 +585,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         signature: [
           ` ${functionSig}
           \n async ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx, encEvent, encBackupEvent, ${rtnparams} ${publicReturns}};
+          `\nreturn  { ${txReturns} ${rtnparams}, ${publicReturns}};
           \n}
         \n}`,
         ],
