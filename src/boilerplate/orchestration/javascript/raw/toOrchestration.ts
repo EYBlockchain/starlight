@@ -520,13 +520,34 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           states.push(` _${decrementedState}_1_oldCommitment = 0`);
         });
       }
-      node.returnParameters.forEach( (param, index) => {
+      let publicReturns = "";
+      node.returnParameters.parameters.forEach((paramnode: any) => {
+        if (!paramnode.isSecret){
+          publicReturns = "publicReturns";
+        }
+      });
+      const decStates = node.decrementedSecretStates;
+      let returnParameterNames = node.returnParameters.parameters
+        .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
+          .map(paramnode => (paramnode.name)) || [];
+      returnParameterNames.forEach( (param, index) => {
+        if(decStates) {
+          if(decStates?.includes(param)){
+            returnParameterNames[index] = returnParameterNames[index]+'_change';
+          }
+        } 
+      });
+      returnParameterNames.forEach( (param, index) => {
        if(param === 'true')
         rtnparams?.push('bool: bool');
        else 
        rtnparams?.push( ` ${param.replace('_change', '')}_newCommitmentValue : ${param}.integer  `);
      });
       if (params) params[params.length - 1] += `,`;
+      let txReturns = "tx, encEvent, encBackupEvent,";
+      if (node.stateMutability === 'view'){
+        txReturns = "";
+      }
       if (node.name === 'cnstrctr')
         return {
           signature: [
@@ -536,24 +557,24 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
           statements: lines,
         };
-        if(rtnparams.length == 0) {
-          return {
-            signature: [
-              `${functionSig}
-              \n async  ${node.name}(${params} ${states}) {`,
-              `\n return  { tx, encEvent, encBackupEvent };
-              \n}
-            \n}`,
-            ],
-            statements: lines,
-          };
-        }
+      if(rtnparams.length == 0) {
+        return {
+          signature: [
+            `${functionSig}
+            \n async  ${node.name}(${params} ${states}) {`,
+            `\n return  { ${txReturns} ${publicReturns}};
+            \n}
+          \n}`,
+          ],
+          statements: lines,
+        };
+      }
       if(rtnparams.includes('bool: bool')) {
         return {
           signature: [
             `
             \n async  ${node.name}(${params} ${states}) {`,
-            `\n const bool = true; \n return  { tx, encEvent, encBackupEvent, ${rtnparams} };
+            `\n const bool = true; \n return  { ${txReturns} ${rtnparams}, ${publicReturns} };
             \n}
           \n}`,
           ],
@@ -564,7 +585,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         signature: [
           ` ${functionSig}
           \n async ${node.name}(${params} ${states}) {`,
-          `\nreturn  { tx, encEvent, encBackupEvent, ${rtnparams} };
+          `\nreturn  { ${txReturns} ${rtnparams}, ${publicReturns}};
           \n}
         \n}`,
         ],
@@ -956,11 +977,26 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]} cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData], nullifiers: ${params[0][1]} ${publicInputs}};`
           ]
         }
-      } 
+      }
+      let returnsCall = "";
+      if (node.isPublicReturns){
+        returnsCall = `\n\n// Get returns:
+        \nconst publicReturns = await instance.methods
+        .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).call();`;
+      }  
+
+      if (node.isReadOnly){
+        return {
+          statements: [
+            `${returnsCall}`,
+          ],
+        };
+      }
       
       return {
         statements: [
-          `\n\n// Send transaction to the blockchain:
+          `${returnsCall}
+          \n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
           .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).encodeABI();
           \n	let txParams = {
@@ -1043,10 +1079,24 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           }           
         });
       }
-      
+      let returnsCallPublic = "";
+      if (node.isPublicReturns){
+        returnsCallPublic = `\n\n// Get returns:
+        \nconst publicReturns = await instance.methods.${node.functionName}(${lines}).call();`;
+      } 
+
+      if (node.isReadOnly){
+        return {
+          statements: [
+            `${returnsCallPublic}`,
+          ],
+        };
+      }
+
       return {
         statements: [
-          `\n\n// Send transaction to the blockchain:
+          `${returnsCallPublic}
+          \n\n// Send transaction to the blockchain:
            \nconst txData = await instance.methods.${node.functionName}(${lines}).encodeABI();
           \nlet txParams = {
             from: config.web3.options.defaultAccount,

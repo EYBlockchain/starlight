@@ -44,27 +44,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'FunctionDefinition': {
       node.inputParameters = node.parameters.parameters.map(codeGenerator);
       node.inputParameters = node.inputParameters.filter(para => para !== undefined);
-      let returnIsSecret: string[] = [];
       const decStates = node.decrementedSecretStates;
-      if(node.returnParameters.parameters) {
-      node.returnParameters.parameters.forEach( node => {
-         returnIsSecret.push(node.isSecret);
-       })
-     }
-        node.returnParameters = node.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
-        node.returnParameters.forEach( (param, index) => {
-          if(decStates) {
-           if(decStates?.includes(param)){
-            node.returnParameters[index] = node.returnParameters[index]+'_change';
-          }
-        } else if(returnIsSecret[index])
-            node.returnParameters[index] = node.returnParameters[index];
-        })
-        const fn = OrchestrationCodeBoilerPlate(node);
-        const statements = codeGenerator(node.body);
-        fn.statements.push(statements);
-        return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
-          fn.signature[1]
+      const fn = OrchestrationCodeBoilerPlate(node);
+      const statements = codeGenerator(node.body);
+      fn.statements.push(statements);
+      return `${fn.signature[0]}\n\t${fn.statements.join('')}\n${
+        fn.signature[1]
       }`;
     }
 
