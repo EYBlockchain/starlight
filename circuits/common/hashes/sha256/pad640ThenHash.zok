@@ -1,9 +1,8 @@
-from "./hash1024" import main as sha256
+from "./hash1024" import main as sha256;
 
 // Add padding to a 640-bit message, then hash it.
-def main(u32[20] a)->(u32[8]):
-
-	u32[12] padding = [ \
+def main(u32[20] a) -> u32[8] {
+    u32[12] padding = [ 
         0x80000000,
         0x00000000,
         0x00000000,
@@ -11,11 +10,12 @@ def main(u32[20] a)->(u32[8]):
         0x00000000,
         0x00000000,
         0x00000000,
-		0x00000000,
-		0x00000000,
-		0x00000000,
-		0x00000000,
+        0x00000000,
+        0x00000000,
+        0x00000000,
+        0x00000000,
         0x00000280
-    ]
+    ];
 
-	return sha256([...a, ...padding])
+    return sha256([...a, ...padding]);
+}
