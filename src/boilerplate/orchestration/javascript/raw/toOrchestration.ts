@@ -981,8 +981,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       let returnsCall = "";
       if (node.isPublicReturns){
         returnsCall = `\n\n// Get returns:
-        \nconst publicReturns = await instance.methods
-        .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).call();`;
+        \nlet publicReturns = await instance.methods
+        .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).call();
+        publicReturns = JSON.parse(
+          JSON.stringify(publicReturns, (key, value) =>
+            typeof value === "bigint" ? value.toString() : value
+          )
+        );`;
       }  
 
       if (node.isReadOnly){
@@ -1082,7 +1087,12 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       let returnsCallPublic = "";
       if (node.isPublicReturns){
         returnsCallPublic = `\n\n// Get returns:
-        \nconst publicReturns = await instance.methods.${node.functionName}(${lines}).call();`;
+        \nlet publicReturns = await instance.methods.${node.functionName}(${lines}).call();
+        publicReturns = JSON.parse(
+          JSON.stringify(publicReturns, (key, value) =>
+            typeof value === "bigint" ? value.toString() : value
+          )
+        );`;
       } 
 
       if (node.isReadOnly){
