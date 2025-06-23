@@ -51,6 +51,7 @@ jobs:
           npm ci && ./bin/start
           zappify -i test/contracts/user-friendly-tests/Arrays.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/Assign.zol -o temp-zapps
+          zappify -i test/contracts/user-friendly-tests/Assign-api.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/BucketsOfBalls.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/CharityPot.zol -o temp-zapps
           zappify -i test/contracts/user-friendly-tests/Constructor.zol -o temp-zapps
