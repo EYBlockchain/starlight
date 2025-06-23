@@ -487,10 +487,12 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
     case 'IntegrationApiRoutesFunction': {
       const {
         name,
+        stateMutability,
       } = fields;
       return {
         nodeType,
         name,
+        stateMutability,
       };
     }
 

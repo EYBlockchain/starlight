@@ -238,8 +238,9 @@ const prepareIntegrationApiRoutes = (node: any) => {
   relevantFunctions.forEach((fn: any) => {
     let fnboilerplate = genericApiRoutesFile.postStatements()
       .replace(/FUNCTION_NAME/g, fn.name);
-
-    
+    if (fn.stateMutability === 'view') {
+      fnboilerplate = fnboilerplate.replace(/router.post/g, `router.get`);
+    }
     outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
   });
   // add getters for commitments

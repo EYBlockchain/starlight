@@ -529,6 +529,7 @@ const visitor = {
             buildNode('IntegrationApiRoutesFunction', {
               name: fnName,
               parameters: [],
+              stateMutability: node.stateMutability,
             }),
           );
         }
@@ -569,6 +570,7 @@ const visitor = {
               buildNode('IntegrationApiRoutesFunction', {
                 name: fnName,
                 parameters: [],
+                stateMutability: node.stateMutability,
               }),
             );
           }
