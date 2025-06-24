@@ -43,7 +43,6 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstr
   if (preHook) {
     await preHook(apiRequests);
   }
-
   let apiResponses = [];
   for (let i = 0; i < apiRequests.length; i++) {
     if (apiRequests[i].method === 'get') {
@@ -62,10 +61,12 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstr
       }
     }
   }
-  if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+  shell.cd(`./temp-zapps/${zappName}`);
+  if (shell.exec('docker compose -f docker-compose.zapp.yml down -v').code !== 0) {
     shell.echo('docker stop failed');
     shell.exit(1);
   }
+  shell.cd('../..');
   await new Promise(resolve => setTimeout(resolve, 5000));
   return apiResponses;
 };
