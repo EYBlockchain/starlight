@@ -527,6 +527,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         }
       });
       const decStates = node.decrementedSecretStates;
+      const incStates = node.incrementedSecretStates;
       let returnParameterNames = node.returnParameters.parameters
         .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
           .map(paramnode => (paramnode.name)) || [];
@@ -535,13 +536,17 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           if(decStates?.includes(param)){
             returnParameterNames[index] = returnParameterNames[index]+'_change';
           }
-        } 
+        } else if(incStates) {
+          if(incStates?.includes(param)){
+            returnParameterNames[index] = returnParameterNames[index]+'_newCommitmentValue';
+          }
+        }
       });
       returnParameterNames.forEach( (param, index) => {
        if(param === 'true')
         rtnparams?.push('bool: bool');
        else 
-       rtnparams?.push( ` ${param.replace('_change', '')}_newCommitmentValue : ${param}.integer  `);
+       rtnparams?.push( ` ${param.replace('_change', '').replace('_newCommitmentValue', '')}_newCommitmentValue : ${param}.integer  `);
      });
       if (params) params[params.length - 1] += `,`;
       let txReturns = "tx, encEvent, encBackupEvent,";

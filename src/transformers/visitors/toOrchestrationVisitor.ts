@@ -910,13 +910,17 @@ const visitor = {
           }
           if (secretModified && !accessedOnly) {
             // accessedOnly should be false, but just in case...
-            if (stateVarIndicator.isDecremented) {
+            if (stateVarIndicator.isDecremented && stateVarIndicator.isPartitioned) {
               // TODO refactor
               node._newASTPointer.decrementedSecretStates ??= [];
               node._newASTPointer.decrementedSecretStates.push(name);
               node._newASTPointer.decrementsSecretState = true;
               thisIntegrationTestFunction.decrementsSecretState = true;
               thisIntegrationApiServiceFunction.decrementsSecretState.push(name);
+            } else if (stateVarIndicator.isIncremented && stateVarIndicator.isPartitioned){
+              node._newASTPointer.incrementedSecretStates ??= []; 
+              node._newASTPointer.incrementedSecretStates.push(name);
+              node._newASTPointer.incrementsSecretState = true;
             }
 
             const modifiedStateVariableNode = buildNode('VariableDeclaration', {
