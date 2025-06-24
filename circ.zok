@@ -1,0 +1,52 @@
+/*def main(private field x) -> field {
+    field mut result = 0;
+
+    //result = x + x + x
+
+    result = if (x / 3 == 0) { x } else { x + 2*x };
+// modulo on two fields not valid
+    //result = if x % 3 == 1 then 3*x else x + 3*x fi // fails
+
+    return result;
+}*/
+
+
+/*def main(private u32 x) -> u32 {
+    //field result = 0
+
+    //u32 result = x+x+x;
+    //field result = 1 - 7 * x +9*x
+
+   // u32 result = if (x % 3 == 0) { 3*x } else { -1 + 4*x };
+
+   u32 result = if (x % 3 == 1) {- 7 * x + 1  +9*x} else{ 1};
+    //field result = if x % 3 == 1 then 3*x else 1 - 7 * x +9*x fi // fails
+
+    return result;
+}*/
+
+def main(private field x) -> field {
+    //field result = 0
+
+    //field result = 1 - 7 * x +9*x
+    field result = 1 - 7 * x +9*x;
+    //field result = -x+4*x
+
+    //field result = if x % 3 == 0 then 3*x else -1 + 4*x fi
+    //field result = if x % 3 == 1 then 3*x else 1 - 7 * x +9*x fi
+    //field result = if x % 3 == 1 then 3*x else 1 - 7 * x +9*x fi // fails
+
+    return result;
+}
+
+// 53 R1CS:
+/*def main(private u8 x) -> u8 {
+    u8 mut result = 0;
+
+    //result = x + x + x
+
+    result = if (x % 3 == 0) { x } else { x + 2*x };
+    //result = if x % 3 == 1 then 3*x else x + 3*x fi // fails
+
+    return result;
+}*/

@@ -23,7 +23,7 @@ export const generateProof = async (functionName, inputs) => {
       data: {
         folderpath,
         inputs,
-        backend: 'ark',
+        backend: 'bellman',
         provingScheme: 'g16',
       },
       timeout: 3600000, // 1 hour
@@ -61,7 +61,7 @@ export const generateKeys = async circuitFileName => {
         filepath,
         curve: 'bn128',
         provingScheme: 'g16',
-        backend: 'ark',
+        backend: 'bellman',
       },
       timeout: 3600000, // 1 hour
     };
