@@ -7,6 +7,7 @@ contract Assign {
   secret uint256 private a;
    uint256 public b;
    bool public isTerminated;
+
   function add(secret uint256 value) public {
     require(isTerminated == false );
     unknown a += value;
@@ -15,12 +16,17 @@ contract Assign {
   function remove(secret uint256 value) public {
      a -= value;
   }
-function addPublic( uint256 value) public {
-  b = 2 * value;
-}
+
+  function addPublic( uint256 value) public {
+    b = 2 * value;
+  }
+
+  function readB() public view returns (uint256) {
+    return b;
+  }
  
-function terminateContract() public {
-  isTerminated = true;
-}
+  function terminateContract() public {
+    isTerminated = true;
+  }
  
 }

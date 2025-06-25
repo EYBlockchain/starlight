@@ -30,7 +30,8 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         name,
         parameters = buildNode('ParameterList'),
         body = buildNode('Block'),
-        contractName
+        contractName,
+        stateMutability
       } = fields;
       return {
         nodeType,
@@ -38,6 +39,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
         contractName,
         parameters,
         body,
+        stateMutability,
 
         // Notice no return parameters. We always return the transaction rct.
       };

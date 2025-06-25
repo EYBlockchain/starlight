@@ -323,6 +323,8 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         publicInputs = [],
         returnInputs = [],
         privateStates = {},
+        publicReturns,
+        isReadOnly,
       } = fields;
       return {
         nodeType,
@@ -331,6 +333,8 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         contractName,
         publicInputs,
         returnInputs,
+        publicReturns,
+        isReadOnly,
       };
     }
     case 'SendPublicTransaction': {
@@ -338,12 +342,16 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functionName,
         contractName,
         publicInputs = [],
+        isPublicReturns,
+        isReadOnly,
       } = fields;
       return {
         nodeType,
         functionName,
         contractName,
         publicInputs,
+        isPublicReturns,
+        isReadOnly,
       };
     }
     case 'SetupCommonFilesBoilerplate': {
@@ -447,6 +455,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         returnParameters =  buildNode('ParameterList', fields),
         decrementsSecretState = [],
         isConstructor = false,
+        stateMutability,
       } = fields;
       return {
         nodeType,
@@ -454,7 +463,8 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
         returnParameters,
         decrementsSecretState,
-        isConstructor
+        isConstructor,
+        stateMutability,
       };
     }
     case 'IntegrationPublicApiServiceFunction': {
@@ -463,6 +473,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters = buildNode('ParameterList', fields),
         returnParameters =  buildNode('ParameterList', fields),
         isConstructor = false,
+        stateMutability,
       } = fields;
       return {
         nodeType,
@@ -470,15 +481,18 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         parameters,
         returnParameters,
         isConstructor,
+        stateMutability,
       };
     }
     case 'IntegrationApiRoutesFunction': {
       const {
         name,
+        stateMutability,
       } = fields;
       return {
         nodeType,
         name,
+        stateMutability,
       };
     }
 
