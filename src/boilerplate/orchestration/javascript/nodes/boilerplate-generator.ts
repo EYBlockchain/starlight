@@ -1,4 +1,6 @@
 /* eslint-disable consistent-return */
+import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
+import MappingKey from '../../../../traverse/MappingKey.js';
 import buildNode from '../../../../types/orchestration-types.js';
 
 /**
@@ -49,6 +51,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
           ? indicator.owner.isSecret || indicator.owner.node?.isSecret
           : null,
         ownerIsParam: indicator.isOwned ? indicator.owner.isParam : null,
+        reinitialisable: (indicator instanceof MappingKey) ? indicator.container.binding.reinitialisable : (indicator instanceof StateVariableIndicator) ? indicator.binding.reinitialisable: null,
       };
     }
     case 'WritePreimage': {

@@ -349,14 +349,18 @@ export const preimageBoilerPlate = (node: any) => {
           // the stateVarId[1] is the mapping key
           newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
         } else if (stateNode.mappingOwnershipType === 'value') {
-          // TODO test below
-          // if the private state is an address (as here) its still in eth form - we need to convert
-          newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
-          \nif (${privateStateName}_newOwnerPublicKey === 0) {
-            console.log('WARNING: Public key for given eth address not found - reverting to your public key');
-            ${privateStateName}_newOwnerPublicKey = publicKey;
+          if (stateNode.reinitialisable){
+            newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+          } else {
+            // TODO test below
+            // if the private state is an address (as here) its still in eth form - we need to convert
+            newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
+            \nif (${privateStateName}_newOwnerPublicKey === 0) {
+              console.log('WARNING: Public key for given eth address not found - reverting to your public key');
+              ${privateStateName}_newOwnerPublicKey = publicKey;
+            }
+            \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
           }
-          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
           if(stateNode.isSharedSecret)
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
