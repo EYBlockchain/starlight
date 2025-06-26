@@ -10,7 +10,7 @@ const testReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../.
 const pathPrefix = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/');
 const apiServiceReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/services/generic-api_services.mjs');
 const apiPublicServiceReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/services/genericpublic-api_services.mjs');
-const apiRoutesReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/routes/generic-api_routes.mjs');
+const apiReadOnlyServiceReadPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../../src/boilerplate/common/services/generic-read-only-api_services.mjs');
 class BoilerplateGenerator {
   generateBoilerplate(node: any, fields: any = {}) {
     const { bpSection, bpType, ...otherParams } = node;
@@ -802,7 +802,10 @@ integrationApiServicesBoilerplate = {
       return [`// eslint-disable-next-line func-names \n ${
           (fs.readFileSync(apiServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`,
           `// eslint-disable-next-line func-names \n ${
-          (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`];
+          (fs.readFileSync(apiPublicServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`
+          ,
+          `// eslint-disable-next-line func-names \n ${
+          (fs.readFileSync(apiReadOnlyServiceReadPath, 'utf8').match(/async service_FUNCTION_NAME?[\s\S]*/g)|| [])[0]}`];
     },
   commitments(): string {
     return `

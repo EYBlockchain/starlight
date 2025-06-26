@@ -43,7 +43,6 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstr
   if (preHook) {
     await preHook(apiRequests);
   }
-
   let apiResponses = [];
   for (let i = 0; i < apiRequests.length; i++) {
     if (apiRequests[i].method === 'get') {
@@ -62,10 +61,12 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstr
       }
     }
   }
-  if (shell.exec('docker stop $(docker ps -q)').code !== 0) {
+  shell.cd(`./temp-zapps/${zappName}`);
+  if (shell.exec('docker compose -f docker-compose.zapp.yml down -v').code !== 0) {
     shell.echo('docker stop failed');
     shell.exit(1);
   }
+  shell.cd('../..');
   await new Promise(resolve => setTimeout(resolve, 5000));
   return apiResponses;
 };
@@ -106,6 +107,19 @@ const apiRequests_Assign = [
 ];
 
 res.Assign = await callZAppAPIs('Assign', apiRequests_Assign, 'Assign Zapp failed');
+
+const apiRequests_Assign_api = [
+  { method: 'post', endpoint: '/add', data: { value: 11 } },
+  { method: 'post', endpoint: '/remove', data: { value: 6 } },
+  { method: 'post', endpoint: '/addPublic', data: { value: 25 } },
+  { method: 'get', endpoint: '/readB' },
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
+  { method: 'post', endpoint: '/terminateContract', data: { } },
+  { method: 'post', endpoint: '/add', data: { value: 11 } },
+];
+
+res.Assign_api = await callZAppAPIs('Assign-api', apiRequests_Assign_api, 'Assign-api Zapp failed');
 
 const apiRequests_BucketsOfBalls = [
   { method: 'post', endpoint: '/deposit', data: { amountDeposit: 6 } },
@@ -435,6 +449,32 @@ describe('Assign Zapp', () => {
     expect(res.Assign[8].body.commitments[1].isNullified).to.equal(true);
     expect(res.Assign[8].body.commitments[2].isNullified).to.equal(false);
     expect(res.Assign[9].body.tx.event).to.equal('NewLeaves');
+  });
+});
+
+describe('Assign-api Zapp', () => {
+  it('tests APIs are working', async () => {
+    expect(res.Assign_api[0].body.tx.event).to.equal('NewLeaves');
+    expect(res.Assign_api[1].body.tx.event).to.equal('NewLeaves');
+  });
+  it('MinLeaf Index check', async () => {
+    expect(parseInt(res.Assign_api[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
+    expect(parseInt(res.Assign_api[1].body.tx.returnValues.minLeafIndex)).to.equal(3);
+  });
+  it('test public read only function', async () => {
+    expect(parseInt(res.Assign_api[3].body.publicReturns)).to.equal(50);
+  })
+  it('Check number of commitments', async () => {
+    expect(res.Assign_api[4].body.commitments.length).to.equal(4);
+  });
+  it('Check nullified commitments', async () => {
+    expect(res.Assign_api[5].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Assign_api[5].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Assign_api[5].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Assign_api[5].body.commitments[3].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(parseInt(res.Assign_api[5].body.commitments[3].preimage.value)).to.equal(5);
   });
 });
 

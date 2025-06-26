@@ -500,7 +500,7 @@ const visitor = {
           fileExtension: '.mjs',
           nodes: [
             buildNode('Imports'),
-            buildNode('FunctionDefinition', { name: node.name, contractName }),
+            buildNode('FunctionDefinition', { name: node.name, contractName, stateMutability: node.stateMutability}),
           ],
         });
         node._newASTPointer = newNode.nodes[1]; // eslint-disable-line prefer-destructuring
@@ -520,6 +520,7 @@ const visitor = {
               name: fnName,
               parameters: [],
               returnParameters:[],
+              stateMutability: node.stateMutability,
             }),
           );
         }
@@ -528,6 +529,7 @@ const visitor = {
             buildNode('IntegrationApiRoutesFunction', {
               name: fnName,
               parameters: [],
+              stateMutability: node.stateMutability,
             }),
           );
         }
@@ -540,13 +542,12 @@ const visitor = {
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
-  
         const newNode = buildNode('File', {
           fileName: fnName,
           fileExtension: '.mjs',
           nodes: [
             buildNode('Imports'),
-            buildNode('FunctionDefinition', { name: node.name, contractName }),
+            buildNode('FunctionDefinition', { name: node.name, contractName, stateMutability: node.stateMutability }),
           ],
         });
   
@@ -560,6 +561,7 @@ const visitor = {
                 name: fnName,
                 parameters: [],
                 returnParameters: [],
+                stateMutability: node.stateMutability,
               }),
             );
           }
@@ -568,6 +570,7 @@ const visitor = {
               buildNode('IntegrationApiRoutesFunction', {
                 name: fnName,
                 parameters: [],
+                stateMutability: node.stateMutability,
               }),
             );
           }
@@ -607,9 +610,17 @@ const visitor = {
           isBool?: boolean;
           isAddress?: boolean;
         }
+        let isReadOnly = false;
+        if (node.stateMutability === 'view'){
+          isReadOnly = true;
+        }
+        let publicReturns = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (!paramnode.isSecret));
+        let isPublicReturns = publicReturns.length > 0 ? true : false;
         const sendPublicTransactionNode = buildNode('SendPublicTransaction', {
           functionName: node.fileName,
           publicInputs: [],
+          isPublicReturns,
+          isReadOnly,
         });
         node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
           if (!para.isSecret) {
@@ -704,8 +715,8 @@ const visitor = {
       thisIntegrationApiServiceFunction.newCommitmentsRequired =
         functionIndicator.newCommitmentsRequired;
       thisIntegrationApiServiceFunction.encryptionRequired = functionIndicator.encryptionRequired;
-    // Adding Return ParameterList to api_services file
-    thisIntegrationApiServiceFunction.returnParameters = node._newASTPointer.returnParameters;
+      // Adding Return ParameterList to api_services file
+      thisIntegrationApiServiceFunction.returnParameters = node._newASTPointer.returnParameters;
       if (
         ((functionIndicator.newCommitmentsRequired ||
           functionIndicator.nullifiersRequired) &&
@@ -883,7 +894,6 @@ const visitor = {
               }
             }
           }
-
           if (secretModified || accessedOnly) {
             newNodes.sendTransactionNode.privateStates[
               name
@@ -900,13 +910,17 @@ const visitor = {
           }
           if (secretModified && !accessedOnly) {
             // accessedOnly should be false, but just in case...
-            if (stateVarIndicator.isDecremented) {
+            if (stateVarIndicator.isDecremented && stateVarIndicator.isPartitioned) {
               // TODO refactor
               node._newASTPointer.decrementedSecretStates ??= [];
               node._newASTPointer.decrementedSecretStates.push(name);
               node._newASTPointer.decrementsSecretState = true;
               thisIntegrationTestFunction.decrementsSecretState = true;
               thisIntegrationApiServiceFunction.decrementsSecretState.push(name);
+            } else if (stateVarIndicator.isIncremented && stateVarIndicator.isPartitioned){
+              node._newASTPointer.incrementedSecretStates ??= []; 
+              node._newASTPointer.incrementedSecretStates.push(name);
+              node._newASTPointer.incrementsSecretState = true;
             }
 
             const modifiedStateVariableNode = buildNode('VariableDeclaration', {
@@ -1009,7 +1023,8 @@ const visitor = {
         }
         // this adds the return parameters which are marked as secret in the tx 
         
-        let returnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+        let circuitReturnPara = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || [];
+        let publicReturns = node._newASTPointer.returnParameters.parameters.filter((paramnode: any) => (!paramnode.isSecret));
         let returnIsSecret: string[] = [];
           const decStates = node._newASTPointer.decrementedSecretStates;
           if( node._newASTPointer.returnParameters.parameters) {
@@ -1017,15 +1032,22 @@ const visitor = {
             returnIsSecret.push(node.isSecret);
           })
         }
-        returnPara.forEach( (param, index) => {
+        circuitReturnPara.forEach( (param, index) => {
           if(decStates) {
            if(decStates?.includes(param)){
-            returnPara[index] = returnPara[index]+'_2_newCommitment';
+            circuitReturnPara[index] = circuitReturnPara[index]+'_2_newCommitment';
           }
         } else if(returnIsSecret[index])
-        returnPara[index] = returnPara[index] +'_newCommitment';
+        circuitReturnPara[index] = circuitReturnPara[index] +'_newCommitment';
         })
-        newNodes.sendTransactionNode.returnInputs = returnPara;
+  
+        newNodes.sendTransactionNode.returnInputs = circuitReturnPara;
+        newNodes.sendTransactionNode.isPublicReturns = publicReturns.length > 0 ? true : false;
+        let isReadOnly = false;
+        if (node.stateMutability === 'view'){
+          isReadOnly = true;
+        }
+        newNodes.sendTransactionNode.isReadOnly = isReadOnly;
        
         // the newNodes array is already ordered, however we need the initialisePreimageNode & InitialiseKeysNode before any copied over statements
         // UNLESS they are public accessed states...
@@ -1238,16 +1260,18 @@ const visitor = {
               break;
             default : 
             if(node.expression.name)
-             returnName?.push(node.expression.name);
-           else
+              returnName?.push(node.expression.name);
+            else
              returnName?.push(node.expression.value); 
             break;   
           }
           }
         });
-        node.parameters.forEach((node, index) => {
-          if(node.nodeType === 'VariableDeclaration')
-          node.name = returnName[index];
+        node.parameters.forEach((paramNode, index) => {
+          if(paramNode.nodeType === 'VariableDeclaration'){
+            paramNode.name = returnName[index];
+          }
+          
         });
     }
     const newNode = buildNode('ParameterList');

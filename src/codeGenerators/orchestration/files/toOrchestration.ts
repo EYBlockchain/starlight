@@ -149,16 +149,21 @@ const prepareIntegrationApiServices = (node: any) => {
 
 
   relevantFunctions.forEach((fn: any) => {
-  let fnboilerplate = fn.nodeType === 'IntegrationApiServiceFunction'?
-  genericApiServiceFile.postStatements()[0]
-    .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name): genericApiServiceFile.postStatements()[1]
-    .replace(/CONTRACT_NAME/g, node.contractName)
-    .replace(/FUNCTION_NAME/g, fn.name) ;
-   
-  
-  let fnParam: string[] = [];
-  let structparams;
+    let fnboilerplate = 
+    fn.stateMutability === 'view' ? 
+    genericApiServiceFile.postStatements()[2]
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name) :
+    fn.nodeType === 'IntegrationApiServiceFunction'?
+    genericApiServiceFile.postStatements()[0]
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name) : 
+    genericApiServiceFile.postStatements()[1]
+      .replace(/CONTRACT_NAME/g, node.contractName)
+      .replace(/FUNCTION_NAME/g, fn.name) ;
+    
+    let fnParam: string[] = [];
+    let structparams;
     const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
     fn.parameters.parameters.forEach(p => {
       if (p.typeName.isStruct) {
@@ -178,8 +183,10 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams: string[] = [];
-      let returnParamsName = fn.returnParameters.parameters.filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool')).map(paramnode => (paramnode.name)) || []; // Adapt
-      if(returnParamsName.length > 0){
+    let returnParamsName = fn.returnParameters.parameters
+      .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
+        .map(paramnode => (paramnode.name)) || []; // Adapt
+    if(returnParamsName.length > 0){
       returnParamsName.forEach(param => {
         if(param !== 'true') 
          returnParams.push(param+'_newCommitmentValue');
@@ -187,6 +194,13 @@ const prepareIntegrationApiServices = (node: any) => {
          returnParams.push('bool');
       });
     }
+
+    let publicReturns = "";
+    fn.returnParameters.parameters.forEach((paramnode: any) => {
+      if (!paramnode.isSecret){
+        publicReturns = returnParams.length > 0 ? ", publicReturns" : "publicReturns";
+      }
+    });
    
     // replace the signature with test inputs
     fnboilerplate = fnboilerplate.replace(/const FUNCTION_SIG/g, fnParam);
@@ -196,7 +210,7 @@ const prepareIntegrationApiServices = (node: any) => {
       paramName,
     );
 
-    fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams);
+    fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams + publicReturns);
 
     // replace function imports at top of file
     const fnimport = ` import { ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager } from './${fn.name}.mjs' ;`
@@ -224,8 +238,9 @@ const prepareIntegrationApiRoutes = (node: any) => {
   relevantFunctions.forEach((fn: any) => {
     let fnboilerplate = genericApiRoutesFile.postStatements()
       .replace(/FUNCTION_NAME/g, fn.name);
-
-    
+    if (fn.stateMutability === 'view') {
+      fnboilerplate = fnboilerplate.replace(/router.post/g, `router.get`);
+    }
     outputApiRoutesboilerplate = `${outputApiRoutesboilerplate}\n${fnboilerplate}\n`
   });
   // add getters for commitments
