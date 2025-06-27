@@ -560,9 +560,9 @@ class BoilerplateGenerator {
     importStatements( { name: x , circuitImport, structImport, structName: structName, isEncrypted} ): string[] {
       let internalFncImports = [];
       if(circuitImport)
-      internalFncImports.push(`from "./${x}.zok" import main as ${x} `);
+      internalFncImports.push(`from "./${x}_internal.zok" import main as ${x}_internal`);
       if( structImport)
-      internalFncImports.push(`from "./${x}.zok" import ${structName} as ${structName} `);
+      internalFncImports.push(`from "./${x}_internal.zok" import ${structName} as ${structName} `);
       if(isEncrypted)
       internalFncImports.push(`from "./common/encryption/kem-dem.zok" import EncryptedMsgs as EncryptedMsgs `);
       return internalFncImports;

@@ -1589,6 +1589,11 @@ const visitor = {
         name: returnPara,
         internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
       });
+      let fnDefNode = path.getContractDefinition().getFunctionByName(node.expression.name);
+      fnDefNode._newASTPointer.isInternalFunctionCall = true;
+      fnDefNode._newASTPointer.interactsWithSecret = internalFunctionInteractsWithSecret;
+
+      
       if(parent._newASTPointer.declarations.length > 0){
         const functionParams = callingfnDefPath.node._newASTPointer.parameters.parameters.map(param => param.name);
         if(!functionParams.includes(returnPara)){
@@ -1623,6 +1628,11 @@ const visitor = {
               name: returnPara,
               internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
             });
+            
+            let fnDefNode = path.getContractDefinition().getFunctionByName(node.expression.name);
+            fnDefNode._newASTPointer.isInternalFunctionCall = true;
+            fnDefNode._newASTPointer.interactsWithSecret = internalFunctionInteractsWithSecret;
+
             if(includeExpressionNode) { 
               state.initNode ??= [];
               state.initNode[ returnPara ] = initNode;
@@ -1638,6 +1648,11 @@ const visitor = {
         CircuitArguments: [],
         CircuitReturn:[],
       });
+      let fnDefNode = path.getContractDefinition().getFunctionByName(node.expression.name);
+      fnDefNode._newASTPointer.isInternalFunctionCall = true;
+      fnDefNode._newASTPointer.interactsWithSecret = internalFunctionInteractsWithSecret;
+
+      
       }
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,

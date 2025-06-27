@@ -374,6 +374,24 @@ export default class NodePath {
   }
 
   /**
+   * Callable from a ContractDefinition node only
+   * @returns {Array[String] || null} the parameters of the function.
+   */
+    getFunctionByName(functionName: string): any | null {
+      const contractDefinitionNode = this.node;
+      if (contractDefinitionNode.nodeType !== 'ContractDefinition') return null;
+      const entryVisitor = (node: any, state: any) => {
+        if (node.nodeType !== 'FunctionDefinition') return;
+        if (node.name == functionName) {
+          state.node = node;
+        }
+        state.skipSubNodes = true;
+    };
+      const state = { node : null, skipSubNodes: false };
+      traverseNodesFast(contractDefinitionNode, entryVisitor, state);
+      return state.node;
+    }
+  /**
    * Callable from any nodeType below (or equal to) a 'FunctionDefinition' node.
    * @returns {Array[Node] || null} the parameters of the function.
    */
