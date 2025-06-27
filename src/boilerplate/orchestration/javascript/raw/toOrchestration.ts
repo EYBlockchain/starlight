@@ -498,6 +498,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       const contractAddr = this.contractAddr;
       const web3 =  this.web3;`)
     }
+      if (node.stateMutability !== 'view') {
+        lines.push(`let BackupData = [];`);
+      } 
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
@@ -895,7 +898,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'EncryptBackupPreimage':
-        lines.push(`let BackupData = [];\n`)
         for ([stateName, stateNode] of Object.entries(node.privateStates)) {
           let stateType;
           if (stateNode.isWhole) {
@@ -1006,7 +1008,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
         };
       }
-      
+      let checkLeaves = 
+        `\n tx = tx[0];\n
+        \n if (!tx) {
+          throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
+        } \n`;
+      if (!node.newCommitmentsRequired){
+        checkLeaves = '';
+      }
       return {
         statements: [
           `${returnsCall}
@@ -1025,10 +1034,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
             \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
             \n  let tx = await instance.getPastEvents("NewLeaves", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
-            \n tx = tx[0];\n
-            \n if (!tx) {
-              throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
-            } \n
+            ${checkLeaves}
             let encEvent = '';
             \n try {
             \n  encEvent = await instance.getPastEvents("EncryptedData", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});

@@ -328,6 +328,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         privateStates = {},
         publicReturns,
         isReadOnly,
+        newCommitmentsRequired,
       } = fields;
       return {
         nodeType,
@@ -338,6 +339,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         returnInputs,
         publicReturns,
         isReadOnly,
+        newCommitmentsRequired,
       };
     }
     case 'SendPublicTransaction': {
