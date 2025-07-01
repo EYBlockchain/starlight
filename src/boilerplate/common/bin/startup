@@ -50,6 +50,9 @@ if [ "$exit_code" -eq 1 ]; then
   exit 1
 fi
 
+docker compose -f docker-compose.zapp.yml build timber-mongo
+
+docker compose -f docker-compose.zapp.yml build zapp-mongo
 
 docker compose -f docker-compose.zapp.yml up -d timber
 
