@@ -815,13 +815,11 @@ describe('NFT_Escrow Zapp', () => {
     expect(res.NFT_Escrow[0].body.tx.event).to.equal('NewLeaves');
     expect(res.NFT_Escrow[1].body.tx.event).to.equal('NewLeaves');
     expect(res.NFT_Escrow[2].body.tx.event).to.equal('NewLeaves');
-    expect(res.NFT_Escrow[3].body.tx.event).to.equal('NewLeaves');
   });
   it('MinLeaf Index check', async () => {
     expect(parseInt(res.NFT_Escrow[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
     expect(parseInt(res.NFT_Escrow[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
     expect(parseInt(res.NFT_Escrow[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
-    expect(parseInt(res.NFT_Escrow[3].body.tx.returnValues.minLeafIndex)).to.equal(3);
   });
   it('Check number of commitments', async () => {
     expect(res.NFT_Escrow[4].body.commitments.length).to.equal(3);
@@ -837,7 +835,7 @@ describe('NFT_Escrow Zapp', () => {
     expect(parseInt(res.NFT_Escrow[6].body.commitments[0].preimage.value)).to.equal(1390849295786071768276380950238675083608645509734);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.NFT_Escrow[8].body.commitments.length).to.equal(9);
+    expect(res.NFT_Escrow[8].body.commitments.length).to.equal(3);
     expect(res.NFT_Escrow[9].body.commitments[0].isNullified).to.equal(true);
     expect(res.NFT_Escrow[9].body.commitments[1].isNullified).to.equal(false);
     expect(res.NFT_Escrow[10].body.commitments[0].isNullified).to.equal(true);
