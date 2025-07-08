@@ -517,10 +517,7 @@ impl<F: PrimeField> SimpleGeneralPlonkifier<F> {
         }
     }
 
-    fn process_constraint(
-        &mut self,
-        constraint: &SparsePolynomial<F, SparseTerm>,
-    ) {
+    fn process_constraint(&mut self, constraint: &SparsePolynomial<F, SparseTerm>) {
         let mut constant = F::zero();
         let mut terms = constraint
             .terms

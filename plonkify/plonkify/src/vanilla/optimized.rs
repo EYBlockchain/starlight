@@ -122,7 +122,7 @@ impl<F: PrimeField> OptimizedPlonkifier<F> {
             let mut additions = 0;
             loop {
                 let mask = !((1 << k) - 1);
-                let mut last_index : Option<usize> = None;
+                let mut last_index: Option<usize> = None;
                 for i in 0..variables.len() {
                     if variables[i].1.is_zero() {
                         continue;

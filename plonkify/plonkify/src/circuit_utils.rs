@@ -1,6 +1,6 @@
+use crate::selectors::SelectorColumn as PlonkSel;
 use ark_ff::PrimeField;
 use ark_std::{iter, Zero};
-use crate::selectors::SelectorColumn as PlonkSel;
 use hyperplonk::prelude::SelectorColumn;
 
 /// Pads `permutation` into blocks of `num_rows` with `padding`, up to `expected_length`.
@@ -40,14 +40,14 @@ pub fn pad_permutation_field<F: PrimeField>(
 }
 
 /// Validates that `perm` over `witnesses` forms disjoint cycles covering all indices.
-pub fn check_permutation<F: PrimeField>(
-    witnesses: &[F],
-    perm: &[F],
-    _num_rows: usize,
-) -> bool {
+pub fn check_permutation<F: PrimeField>(witnesses: &[F], perm: &[F], _num_rows: usize) -> bool {
     let len = witnesses.len();
     if perm.len() != len {
-        eprintln!("Permutation length mismatch: expected {}, got {}", len, perm.len());
+        eprintln!(
+            "Permutation length mismatch: expected {}, got {}",
+            len,
+            perm.len()
+        );
         return false;
     }
     for &p in perm {
@@ -59,7 +59,9 @@ pub fn check_permutation<F: PrimeField>(
     }
     let mut seen = vec![false; len];
     for start in 0..len {
-        if seen[start] { continue; }
+        if seen[start] {
+            continue;
+        }
         let mut cur = start;
         let mut cycle_len = 0;
         loop {
@@ -70,7 +72,9 @@ pub fn check_permutation<F: PrimeField>(
             seen[cur] = true;
             cycle_len += 1;
             let next = perm[cur].into_bigint().as_ref()[0] as usize;
-            if next == start { break; }
+            if next == start {
+                break;
+            }
             cur = next;
         }
         if cycle_len == 0 {
@@ -82,9 +86,7 @@ pub fn check_permutation<F: PrimeField>(
 }
 
 /// Converts plonkify selectors into hyperplonk selectors with power-of-two padding.
-pub fn convert_selectors(
-    sels: Vec<PlonkSel<ark_bn254::Fr>>,
-) -> Vec<SelectorColumn<ark_bn254::Fr>> {
+pub fn convert_selectors(sels: Vec<PlonkSel<ark_bn254::Fr>>) -> Vec<SelectorColumn<ark_bn254::Fr>> {
     sels.into_iter()
         .map(|mut s| {
             let targ = s.0.len().next_power_of_two();
@@ -101,7 +103,9 @@ pub fn convert_params(
     hyperplonk::structs::HyperPlonkParams {
         num_constraints: params.num_constraints,
         num_pub_input: params.num_pub_input,
-        gate_func: hyperplonk::custom_gate::CustomizedGates { gates: params.gate_func.gates },
+        gate_func: hyperplonk::custom_gate::CustomizedGates {
+            gates: params.gate_func.gates,
+        },
     }
 }
 

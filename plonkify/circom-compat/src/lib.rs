@@ -500,9 +500,7 @@ pub fn read_binary_wtns<F: PrimeField>(mut reader: impl Read + Seek) -> IoResult
 
     let mut vec = Vec::with_capacity(header.n_witness as usize);
     for _ in 0..header.n_witness {
-        vec.push(
-            F::deserialize_uncompressed(&mut reader)?
-        );
+        vec.push(F::deserialize_uncompressed(&mut reader)?);
     }
     Ok(vec)
 }
@@ -691,7 +689,7 @@ mod tests {
     #[test]
     fn wtns_bin_file() {
         let data = hex_literal::hex!(
-           "77 74 6E 73 02 00 00 00 02 00 00 00 01 00 00 00
+            "77 74 6E 73 02 00 00 00 02 00 00 00 01 00 00 00
             28 00 00 00 00 00 00 00 20 00 00 00 01 00 00 F0
             93 F5 E1 43 91 70 B9 79 48 E8 33 28 5D 58 81 81
             B6 45 50 B8 29 A0 31 E1 72 4E 64 30 01 00 00 00

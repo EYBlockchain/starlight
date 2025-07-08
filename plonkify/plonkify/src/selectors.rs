@@ -28,13 +28,9 @@ impl<F: PrimeField> SelectorColumn<F> {
     }
 
     /// Build selector columns from rows
-    pub fn from_selector_rows(
-        selector_rows: &[SelectorRow<F>],
-    ) -> Result<Vec<Self>, String> {
+    pub fn from_selector_rows(selector_rows: &[SelectorRow<F>]) -> Result<Vec<Self>, String> {
         if selector_rows.is_empty() {
-            return Err(
-                "empty witness rows".to_string(),
-            );
+            return Err("empty witness rows".to_string());
         }
 
         let mut res = Vec::with_capacity(selector_rows.len());

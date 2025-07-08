@@ -1,33 +1,26 @@
-use clap::Parser;
-use circom_compat::{read_witness, R1CSFile};
-use std::{fs::File, io::BufReader, time::Instant};
 use ark_bn254::Fr;
+use ark_std::test_rng;
+use ark_std::Zero;
+use circom_compat::{read_witness, R1CSFile};
+use clap::Parser;
+use hyperplonk::structs::HyperPlonkIndex;
 use hyperplonk::witness::WitnessColumn;
-use plonkify::{Plonkifier, GeneralPlonkifer};
-use subroutines::PolynomialCommitmentScheme;
+use hyperplonk::HyperPlonkSNARK;
+use plonkify::circuit_utils::{
+    check_permutation, convert_params, convert_selectors, flatten_witness_matrix,
+    pad_permutation_field, split_flat_witness,
+};
 use plonkify::{
-    CustomizedGates,
     general::{
-        NaiveLinearOnlyGeneralPlonkifier, LinearOnlyGeneralPlonkifier, SimpleGeneralPlonkifier,
+        LinearOnlyGeneralPlonkifier, NaiveLinearOnlyGeneralPlonkifier, SimpleGeneralPlonkifier,
     },
     vanilla::{GreedyBruteForcePlonkifier, OptimizedPlonkifier, SimplePlonkifer},
+    CustomizedGates,
 };
-use subroutines::{
-    pcs::prelude::{MultilinearKzgPCS},
-    poly_iop::PolyIOP,
-};
-use ark_std::test_rng;
-use hyperplonk::structs::HyperPlonkIndex;
-use hyperplonk::HyperPlonkSNARK;
-use ark_std::Zero;
-use plonkify::circuit_utils::{
-    pad_permutation_field,
-    check_permutation,
-    convert_selectors,
-    convert_params,
-    split_flat_witness,
-    flatten_witness_matrix,
-};
+use plonkify::{GeneralPlonkifer, Plonkifier};
+use std::{fs::File, io::BufReader, time::Instant};
+use subroutines::PolynomialCommitmentScheme;
+use subroutines::{pcs::prelude::MultilinearKzgPCS, poly_iop::PolyIOP};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -45,11 +38,17 @@ struct Cli {
 }
 
 fn main() {
-    let Cli { optimize, general, circuit, witness } = Cli::parse();
+    let Cli {
+        optimize,
+        general,
+        circuit,
+        witness,
+    } = Cli::parse();
     let mut file = R1CSFile::<Fr>::new(BufReader::new(File::open(circuit).unwrap())).unwrap();
     file.witness = read_witness::<Fr>(BufReader::new(File::open(witness).unwrap()));
 
-    println!("R1CS: constraints={}, public={}, private={}, witness_len={} ",
+    println!(
+        "R1CS: constraints={}, public={}, private={}, witness_len={} ",
         file.header.n_constraints,
         file.header.n_pub_in,
         file.header.n_prv_in,
@@ -95,7 +94,10 @@ fn main() {
             .map(WitnessColumn::new)
             .collect();
         let flat_witness = flatten_witness_matrix(
-            &witness_cols.iter().map(|w| w.coeff_ref().to_vec()).collect::<Vec<_>>(),
+            &witness_cols
+                .iter()
+                .map(|w| w.coeff_ref().to_vec())
+                .collect::<Vec<_>>(),
         );
 
         // Pad constraints and public inputs to power-of-two
@@ -110,8 +112,16 @@ fn main() {
             num_cols * plonk_circ.params.num_constraints,
         );
 
-        assert!(check_permutation(&plonk_wit, &plonk_circ.permutation, num_rows));
-        assert!(check_permutation(&flat_witness, &new_perm, plonk_circ.params.num_constraints));
+        assert!(check_permutation(
+            &plonk_wit,
+            &plonk_circ.permutation,
+            num_rows
+        ));
+        assert!(check_permutation(
+            &flat_witness,
+            &new_perm,
+            plonk_circ.params.num_constraints
+        ));
 
         let selectors = convert_selectors(plonk_circ.selectors.clone());
         let circuit = HyperPlonkIndex {
@@ -126,21 +136,27 @@ fn main() {
         let mut pub_inputs = plonk_wit[..num_pub].to_vec();
         pub_inputs.resize(num_pub.next_power_of_two(), Fr::zero());
 
-        let (pk, vk) = <PolyIOP<Fr> as HyperPlonkSNARK<ark_bn254::Bn254,
-            MultilinearKzgPCS<ark_bn254::Bn254>>>::preprocess(&circuit, &srs)
-            .unwrap();
+        let (pk, vk) = <PolyIOP<Fr> as HyperPlonkSNARK<
+            ark_bn254::Bn254,
+            MultilinearKzgPCS<ark_bn254::Bn254>,
+        >>::preprocess(&circuit, &srs)
+        .unwrap();
         println!("Key extraction: {:?}", overall_start.elapsed());
 
         let prove_start = Instant::now();
-        let proof = <PolyIOP<Fr> as HyperPlonkSNARK<ark_bn254::Bn254,
-            MultilinearKzgPCS<ark_bn254::Bn254>>>::prove(&pk, &pub_inputs, &witness_cols)
-            .unwrap();
+        let proof = <PolyIOP<Fr> as HyperPlonkSNARK<
+            ark_bn254::Bn254,
+            MultilinearKzgPCS<ark_bn254::Bn254>,
+        >>::prove(&pk, &pub_inputs, &witness_cols)
+        .unwrap();
         println!("Proving: {:?}", prove_start.elapsed());
 
         let verify_start = Instant::now();
-        assert!(<PolyIOP<Fr> as HyperPlonkSNARK<ark_bn254::Bn254,
-            MultilinearKzgPCS<ark_bn254::Bn254>>>::verify(&vk, &pub_inputs, &proof)
-            .unwrap());
+        assert!(<PolyIOP<Fr> as HyperPlonkSNARK<
+            ark_bn254::Bn254,
+            MultilinearKzgPCS<ark_bn254::Bn254>,
+        >>::verify(&vk, &pub_inputs, &proof)
+        .unwrap());
         println!("Verifying: {:?}", verify_start.elapsed());
     }
 
