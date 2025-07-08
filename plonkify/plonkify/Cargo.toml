@@ -1,0 +1,41 @@
+[package]
+name = "plonkify"
+version = "0.1.0"
+description = "R1CS-to-Plonk transpiler"
+authors = ["Pengfei Zhu <zhupf321@gmail.com>"]
+edition = "2021"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ark-ff = { version = "^0.4.0", default-features = false, features = ["asm"] }
+ark-poly = { version = "^0.4.0", default-features = false }
+ark-std = { version = "^0.4.0", default-features = false }
+rayon = { version = "1.5.2", default-features = false, optional = true }
+circom-compat = { path = "../circom-compat" }
+ark-bn254 = { version = "0.4.0", features = [ "curve" ], optional = true }
+clap = { version = "4.5.31", features = [ "derive" ], optional = true }
+
+[dev-dependencies]
+ark-bn254 = { version = "0.4.0", features = [ "curve" ] }
+hex-literal = "0.4.1"
+
+[features]
+# default = [ ]
+# default = [ "parallel" ]
+# default = [ "parallel", "print-trace" ]
+default = ["parallel"]
+bench = ["parallel"]
+parallel = [ 
+    "rayon",
+    "ark-std/parallel",
+    "ark-ff/parallel",
+    ]
+print-trace = [ 
+    "ark-std/print-trace",
+    ] 
+test = ["ark-bn254"]
+bin = ["clap", "ark-bn254"]
+
+[[bin]]
+name = "plonkify"
+required-features = ["bin"]
