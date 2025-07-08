@@ -1,4 +1,5 @@
 mod circuit;
+pub mod circuit_utils;
 mod custom_gate;
 pub use custom_gate::CustomizedGates;
 mod plonkify;

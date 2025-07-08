@@ -12,7 +12,7 @@ ark-poly = { version = "^0.4.0", default-features = false }
 ark-std = { version = "^0.4.0", default-features = false }
 rayon = { version = "1.5.2", default-features = false, optional = true }
 circom-compat = { path = "../circom-compat" }
-ark-bn254 = { version = "0.4.0", features = [ "curve" ], optional = true }
+ark-bn254 = { version = "0.4.0", features = ["curve"], optional = true }
 clap = { version = "4.5.31", features = [ "derive" ], optional = true }
 hyperplonk = { git = "https://github.com/jtcoolen/hyperplonk" }
 subroutines = { git = "https://github.com/jtcoolen/hyperplonk" }
@@ -25,7 +25,7 @@ hex-literal = "0.4.1"
 # default = [ ]
 # default = [ "parallel" ]
 # default = [ "parallel", "print-trace" ]
-default = ["parallel"]
+default = ["parallel", "ark-bn254"]
 bench = ["parallel"]
 parallel = [ 
     "rayon",
@@ -37,6 +37,7 @@ print-trace = [
     ] 
 test = ["ark-bn254"]
 bin = ["clap", "ark-bn254"]
+ark-bn254 = ["dep:ark-bn254"]
 
 [[bin]]
 name = "plonkify"

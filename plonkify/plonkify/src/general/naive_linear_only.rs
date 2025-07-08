@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     circuit::{PlonkishCircuit, PlonkishCircuitParams},
     custom_gate::GateInfo,
