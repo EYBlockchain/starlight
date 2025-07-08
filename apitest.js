@@ -282,19 +282,24 @@ res.MappingtoStruct = await callZAppAPIs('MappingtoStruct', apiRequests_Mappingt
 
 // In order to test NFT_Escrow we first need to mint a token. 
 let NFTmintingText = `const erc721 = await getContractInstance("ERC721");
+let mintBalance = await erc721.methods
+		.balanceOf(config.web3.options.defaultAccount, this.contractAddr)
+		.call({ from: config.web3.options.defaultAccount });
 // mint tokens to the contract  
-await erc721.methods
-    .mint(config.web3.options.defaultAccount, 12345678)
-    .send({ from: config.web3.options.defaultAccount });
-await erc721.methods
-    .approve(this.contractAddr, 12345678)
-    .send({ from: config.web3.options.defaultAccount });
-await erc721.methods
-    .mint(config.web3.options.defaultAccount, 87654321)
-    .send({ from: config.web3.options.defaultAccount });
-await erc721.methods
-    .approve(this.contractAddr, 87654321)
-    .send({ from: config.web3.options.defaultAccount });`;
+if (mintBalance === BigInt(0)) {
+  await erc721.methods
+      .mint(config.web3.options.defaultAccount, 12345678)
+      .send({ from: config.web3.options.defaultAccount });
+  await erc721.methods
+      .approve(this.contractAddr, 12345678)
+      .send({ from: config.web3.options.defaultAccount });
+  await erc721.methods
+      .mint(config.web3.options.defaultAccount, 87654321)
+      .send({ from: config.web3.options.defaultAccount });
+  await erc721.methods
+      .approve(this.contractAddr, 87654321)
+      .send({ from: config.web3.options.defaultAccount });
+}`;
 const depositNFTFilePath = path.join(__dirname, 'temp-zapps/NFT_Escrow/orchestration/deposit.mjs');
 let depositNFTContent = fs.readFileSync(depositNFTFilePath, 'utf8');
 position = depositNFTContent.indexOf(keyword);
