@@ -8,3 +8,6 @@ zapps/
 test-zapps/
 temp-zapps/
 truezapps/
+**/target
+**/*.rs.bk
+Cargo.lock
