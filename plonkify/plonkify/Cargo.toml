@@ -14,6 +14,8 @@ rayon = { version = "1.5.2", default-features = false, optional = true }
 circom-compat = { path = "../circom-compat" }
 ark-bn254 = { version = "0.4.0", features = [ "curve" ], optional = true }
 clap = { version = "4.5.31", features = [ "derive" ], optional = true }
+hyperplonk = { git = "https://github.com/jtcoolen/hyperplonk" }
+subroutines = { git = "https://github.com/jtcoolen/hyperplonk" }
 
 [dev-dependencies]
 ark-bn254 = { version = "0.4.0", features = [ "curve" ] }
