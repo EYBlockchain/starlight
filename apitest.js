@@ -336,7 +336,7 @@ const apiRequests_Swap = [
     endpoint: '/completeSwap',
     data: {
       sharedAddress: '', // to be filled in preHook
-      counterParty: counterParty,
+      counterParty: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
       amountSent: 0,
       tokenIdSent: 2,
       tokenIdRecieved: 1,
@@ -896,14 +896,16 @@ describe('Swap Zapp', () => {
       swapAmountSent: '30',
       swapAmountRecieved: '0',
       swapTokenSent: '1',
-      swapTokenRecieved: '2'
+      swapTokenRecieved: '2',
+      swapInitiator: '1390849295786071768276380950238675083608645509734'
     });
     expect(res.Swap[6].body.commitments[13].name).to.equal("swapProposals");
     expect(res.Swap[6].body.commitments[13].preimage.value).to.deep.equal({
       swapAmountSent: '0',
       swapAmountRecieved: '0',
       swapTokenSent: '1',
-      swapTokenRecieved: '2'
+      swapTokenRecieved: '2',
+      swapInitiator: '1390849295786071768276380950238675083608645509734'
     });
   });
 });
