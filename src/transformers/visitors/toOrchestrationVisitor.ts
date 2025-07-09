@@ -1123,10 +1123,13 @@ const visitor = {
                   // we need to splice this local var dec between two initialisePreimage nodes
                   // so here we find the place to split
                   if (
+                    ((Array.isArray(stateNode.stateVarId) &&
                     stateNode.stateVarId[0] === varDecComesAfterSVID[0] &&
-                    stateNode.stateVarId[1] === varDecComesAfterSVID[1] &&
+                    stateNode.stateVarId[1] === varDecComesAfterSVID[1]) ||
+                    (!Array.isArray(stateNode.stateVarId) && stateNode.stateVarId === varDecComesAfterSVID[0])) &&
                     sortPreimage === 1
-                  ) {
+                  )
+                  {
                     correctlyComesAfter = true;
                   }
 
