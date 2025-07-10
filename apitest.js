@@ -845,13 +845,13 @@ describe('Swap Zapp', () => {
     expect(parseInt(res.Swap[0].body.tx.returnValues.minLeafIndex)).to.equal(0); // deposit 1
     expect(parseInt(res.Swap[1].body.tx.returnValues.minLeafIndex)).to.equal(2); // deposit 2
     expect(parseInt(res.Swap[3].body.tx.returnValues.minLeafIndex)).to.equal(4); // startSwap
-    expect(parseInt(res.Swap[5].body.tx.returnValues.minLeafIndex)).to.equal(8); // completeSwap
+    expect(parseInt(res.Swap[5].body.tx.returnValues.minLeafIndex)).to.equal(7); // completeSwap
   });
 
   it('Check number of commitments', async () => {
     expect(res.Swap[2].body.commitments.length).to.equal(4);
-    expect(res.Swap[4].body.commitments.length).to.equal(8);
-    expect(res.Swap[6].body.commitments.length).to.equal(14);
+    expect(res.Swap[4].body.commitments.length).to.equal(7);
+    expect(res.Swap[6].body.commitments.length).to.equal(12);
   });
 
   it('Check nullified commitments', async () => {
@@ -867,7 +867,6 @@ describe('Swap Zapp', () => {
     expect(res.Swap[4].body.commitments[4].isNullified).to.equal(false);
     expect(res.Swap[4].body.commitments[5].isNullified).to.equal(false);
     expect(res.Swap[4].body.commitments[6].isNullified).to.equal(false);
-    expect(res.Swap[4].body.commitments[7].isNullified).to.equal(false);
 
     expect(res.Swap[6].body.commitments[0].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[1].isNullified).to.equal(true);
@@ -876,13 +875,11 @@ describe('Swap Zapp', () => {
     expect(res.Swap[6].body.commitments[4].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[5].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[6].isNullified).to.equal(true);
-    expect(res.Swap[6].body.commitments[7].isNullified).to.equal(true);
+    expect(res.Swap[6].body.commitments[7].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[8].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[9].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[10].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[11].isNullified).to.equal(false);
-    expect(res.Swap[6].body.commitments[12].isNullified).to.equal(false);
-    expect(res.Swap[6].body.commitments[13].isNullified).to.equal(false);
   });
 
   it('Check value of final commitment', async () => {
@@ -890,22 +887,23 @@ describe('Swap Zapp', () => {
     expect(parseInt(res.Swap[6].body.commitments[2].preimage.value)).to.equal(100); // deposit 2
     expect(res.Swap[6].body.commitments[4].name).to.equal("balances");
     expect(parseInt(res.Swap[6].body.commitments[4].preimage.value)).to.equal(170); // startSwap balance: 200-30
-    expect(parseInt(res.Swap[6].body.commitments[6].preimage.value)).to.equal(1); // pendingStatus
-    expect(res.Swap[6].body.commitments[7].name).to.equal("swapProposals");
-    expect(res.Swap[6].body.commitments[7].preimage.value).to.deep.equal({
+    expect(res.Swap[6].body.commitments[6].name).to.equal("swapProposals");
+    expect(res.Swap[6].body.commitments[6].preimage.value).to.deep.equal({
       swapAmountSent: '30',
       swapAmountRecieved: '0',
       swapTokenSent: '1',
       swapTokenRecieved: '2',
-      swapInitiator: '1390849295786071768276380950238675083608645509734'
+      swapInitiator: '1390849295786071768276380950238675083608645509734',
+      pendingStatus: '1'
     });
-    expect(res.Swap[6].body.commitments[13].name).to.equal("swapProposals");
-    expect(res.Swap[6].body.commitments[13].preimage.value).to.deep.equal({
+    expect(res.Swap[6].body.commitments[11].name).to.equal("swapProposals");
+    expect(res.Swap[6].body.commitments[11].preimage.value).to.deep.equal({
       swapAmountSent: '0',
       swapAmountRecieved: '0',
       swapTokenSent: '1',
       swapTokenRecieved: '2',
-      swapInitiator: '1390849295786071768276380950238675083608645509734'
+      swapInitiator: '1390849295786071768276380950238675083608645509734',
+      pendingStatus: '0'
     });
   });
 });
