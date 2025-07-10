@@ -349,14 +349,18 @@ export const preimageBoilerPlate = (node: any) => {
           // the stateVarId[1] is the mapping key
           newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
         } else if (stateNode.mappingOwnershipType === 'value') {
-          // TODO test below
-          // if the private state is an address (as here) its still in eth form - we need to convert
-          newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
-          \nif (${privateStateName}_newOwnerPublicKey === 0) {
-            console.log('WARNING: Public key for given eth address not found - reverting to your public key');
-            ${privateStateName}_newOwnerPublicKey = publicKey;
+          if (stateNode.reinitialisable){
+            newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+          } else {
+            // TODO test below
+            // if the private state is an address (as here) its still in eth form - we need to convert
+            newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
+            \nif (${privateStateName}_newOwnerPublicKey === 0) {
+              console.log('WARNING: Public key for given eth address not found - reverting to your public key');
+              ${privateStateName}_newOwnerPublicKey = publicKey;
+            }
+            \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
           }
-          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
           if(stateNode.isSharedSecret)
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
@@ -494,6 +498,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       const contractAddr = this.contractAddr;
       const web3 =  this.web3;`)
     }
+      if (node.stateMutability !== 'view') {
+        lines.push(`let BackupData = [];`);
+      } 
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
@@ -891,7 +898,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       };
 
     case 'EncryptBackupPreimage':
-        lines.push(`let BackupData = [];\n`)
         for ([stateName, stateNode] of Object.entries(node.privateStates)) {
           let stateType;
           if (stateNode.isWhole) {
@@ -1002,7 +1008,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
         };
       }
-      
+      let checkLeaves = 
+        `\n tx = tx[0];\n
+        \n if (!tx) {
+          throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
+        } \n`;
+      if (!node.newCommitmentsRequired){
+        checkLeaves = '';
+      }
       return {
         statements: [
           `${returnsCall}
@@ -1021,10 +1034,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
             \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
             \n  let tx = await instance.getPastEvents("NewLeaves", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
-            \n tx = tx[0];\n
-            \n if (!tx) {
-              throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
-            } \n
+            ${checkLeaves}
             let encEvent = '';
             \n try {
             \n  encEvent = await instance.getPastEvents("EncryptedData", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});

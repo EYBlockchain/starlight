@@ -44,6 +44,7 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
   newNodes.sendTransactionNode = buildNode('SendTransaction', {
     functionName: node.fileName,
     contractName,
+    newCommitmentsRequired: fnIndicator.newCommitmentsRequired,
   });
   newNodes.writePreimageNode = buildNode('WritePreimage', {
     contractName,
