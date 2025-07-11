@@ -673,10 +673,10 @@ describe('Escrow Zapp', () => {
     expect(parseInt(res.Escrow[1].body.tx.returnValues.minLeafIndex)).to.equal(2);
     expect(parseInt(res.Escrow[2].body.tx.returnValues.minLeafIndex)).to.equal(4);
     expect(parseInt(res.Escrow[3].body.tx.returnValues.minLeafIndex)).to.equal(8);
-    expect(parseInt(res.Escrow[4].body.tx.returnValues.minLeafIndex)).to.equal(9);
+    expect(parseInt(res.Escrow[4].body.tx.returnValues.minLeafIndex)).to.equal(11);
   });
   it('Check number of commitments', async () => {
-    expect(res.Escrow[5].body.commitments.length).to.equal(11);
+    expect(res.Escrow[5].body.commitments.length).to.equal(13);
   });
   it('Check nullified commitments', async () => {
     expect(res.Escrow[6].body.commitments[0].isNullified).to.equal(true);
@@ -685,27 +685,32 @@ describe('Escrow Zapp', () => {
     expect(res.Escrow[6].body.commitments[3].isNullified).to.equal(true);
     expect(res.Escrow[6].body.commitments[4].isNullified).to.equal(true);
     expect(res.Escrow[6].body.commitments[5].isNullified).to.equal(true);
-    expect(res.Escrow[6].body.commitments[6].isNullified).to.equal(false);
+    expect(res.Escrow[6].body.commitments[6].isNullified).to.equal(true);
+    expect(res.Escrow[6].body.commitments[7].isNullified).to.equal(true);
+    expect(res.Escrow[6].body.commitments[8].isNullified).to.equal(false);
     expect(res.Escrow[7].body.commitments[0].isNullified).to.equal(false);
     expect(res.Escrow[7].body.commitments[1].isNullified).to.equal(false);
     expect(res.Escrow[8].body.commitments[0].isNullified).to.equal(true);
     expect(res.Escrow[8].body.commitments[1].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
-    expect(parseInt(res.Escrow[6].body.commitments[5].preimage.value)).to.equal(27);
-    expect(parseInt(res.Escrow[7].body.commitments[0].preimage.value)).to.equal(14);
+    expect(parseInt(res.Escrow[6].body.commitments[8].preimage.value)).to.equal(27);
+    expect(parseInt(res.Escrow[7].body.commitments[0].preimage.value)).to.equal(13);
+    expect(parseInt(res.Escrow[7].body.commitments[1].preimage.value)).to.equal(1);
     expect(parseInt(res.Escrow[8].body.commitments[0].preimage.value)).to.equal(25);
     expect(parseInt(res.Escrow[8].body.commitments[1].preimage.value)).to.equal(44);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Escrow[10].body.commitments.length).to.equal(11);
+    expect(res.Escrow[10].body.commitments.length).to.equal(13);
     expect(res.Escrow[11].body.commitments[0].isNullified).to.equal(true);
     expect(res.Escrow[11].body.commitments[1].isNullified).to.equal(true);
     expect(res.Escrow[11].body.commitments[2].isNullified).to.equal(true);
     expect(res.Escrow[11].body.commitments[3].isNullified).to.equal(true);
     expect(res.Escrow[11].body.commitments[4].isNullified).to.equal(true);
     expect(res.Escrow[11].body.commitments[5].isNullified).to.equal(true);
-    expect(res.Escrow[11].body.commitments[6].isNullified).to.equal(false);
+    expect(res.Escrow[11].body.commitments[6].isNullified).to.equal(true);
+    expect(res.Escrow[11].body.commitments[7].isNullified).to.equal(true);
+    expect(res.Escrow[11].body.commitments[8].isNullified).to.equal(false);
     expect(res.Escrow[12].body.commitments[0].isNullified).to.equal(false);
     expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(false);
     expect(res.Escrow[13].body.commitments[0].isNullified).to.equal(true);
