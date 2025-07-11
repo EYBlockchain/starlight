@@ -14,6 +14,7 @@ import { sharedSecretKey } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
 import { SumType, reduceTree, toBinArray, poseidonConcatHash,} from './smt_utils.mjs';
 import { hlt } from './hash-lookup.mjs';
+import { registerKey } from './contract.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -821,6 +822,8 @@ export async function getSharedSecretskeys(
   _recipientAddress,
   _recipientPublicKey = 0,
 ) {
+  if (!fs.existsSync(keyDb))
+                    await registerKey(utils.randomHex(31), null, false);
   const keys = JSON.parse(
     fs.readFileSync(keyDb, 'utf-8', err => {
       console.log(err);
