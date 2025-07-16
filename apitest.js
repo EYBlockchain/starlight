@@ -409,7 +409,7 @@ const apiRequests_NFT_Escrow = [
     data: {
       sender: '1390849295786071768276380950238675083608645509734',
       recipient: 578,
-      amount: 23456789,
+      tokenId: 23456789,
     },
   },
   { method: 'get', endpoint: '/getAllCommitments' },
@@ -808,10 +808,10 @@ describe('Escrow Zapp', () => {
     ).to.equal(8);
     expect(
       parseInt(res.Escrow[4].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(11);
+    ).to.equal(9);
     expect(
       parseInt(res.Escrow[5].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(12);
+    ).to.equal(10);
   });
   it('Check number of commitments', async () => {
     expect(res.Escrow[6].body.commitments.length).to.equal(14);
@@ -849,7 +849,7 @@ describe('Escrow Zapp', () => {
     ).to.equal(44);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Escrow[11].body.commitments.length).to.equal(13);
+    expect(res.Escrow[11].body.commitments.length).to.equal(14);
     expect(res.Escrow[12].body.commitments[0].isNullified).to.equal(true);
     expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(true);
     expect(res.Escrow[12].body.commitments[2].isNullified).to.equal(true);
