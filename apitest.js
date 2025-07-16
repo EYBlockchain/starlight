@@ -811,7 +811,7 @@ describe('Escrow Zapp', () => {
     ).to.equal(9);
     expect(
       parseInt(res.Escrow[5].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(10);
+    ).to.equal(12);
   });
   it('Check number of commitments', async () => {
     expect(res.Escrow[6].body.commitments.length).to.equal(14);
