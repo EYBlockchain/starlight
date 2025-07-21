@@ -304,9 +304,36 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
       return `${codeGenerator(node.initialValue, codeGeneratorState)} = ${codeGenerator(node.subExpression, codeGeneratorState)} ${node.operator[0]} 1;`;
 
     case 'BinaryOperation':
-      return `${codeGenerator(node.leftExpression, codeGeneratorState)} ${node.operator} ${codeGenerator(
-        node.rightExpression, codeGeneratorState,
-      )}`;
+      if (node.operator === '/') {
+        let leftExpression: string;
+        let rightExpression: string;
+        if (node.leftExpression.nodeType === 'Literal') {
+          leftExpression = `${codeGenerator(
+            node.leftExpression,
+            codeGeneratorState,
+          )}u64`;
+        } else {
+          leftExpression = `field_to_u64(${codeGenerator(
+            node.leftExpression,
+            codeGeneratorState,
+          )})`;
+        }
+        if (node.rightExpression.nodeType === 'Literal') {
+          rightExpression = `${codeGenerator(
+            node.rightExpression,
+            codeGeneratorState,
+          )}u64`;
+        } else {
+          rightExpression = `field_to_u64(${codeGenerator(
+            node.rightExpression,
+            codeGeneratorState,
+          )})`;
+        }
+        return `u64_to_field(${leftExpression} ${node.operator} ${rightExpression})`;
+      }
+      return `${codeGenerator(node.leftExpression, codeGeneratorState)} ${
+        node.operator
+      } ${codeGenerator(node.rightExpression, codeGeneratorState)}`;
 
     case 'Identifier':
       return node.name;
