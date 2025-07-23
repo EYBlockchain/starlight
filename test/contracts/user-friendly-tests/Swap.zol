@@ -8,7 +8,6 @@ contract Swap {
     secret mapping(uint256 => address) public tokenOwners;
     struct swapStruct{
         uint256 swapAmountSent;
-        uint256 swapAmountRecieved;
         uint256 swapTokenSent;
         uint256 swapTokenRecieved;
         address swapInitiator;
@@ -23,30 +22,27 @@ contract Swap {
         reinitialisable tokenOwners[tokenId] = msg.sender;
     }
 
-    function startSwap(secret address sharedAddress,  secret uint256 amountSent, secret uint256 tokenIdSent, secret uint256 amountRecieved, secret uint256 tokenIdRecieved) public {
+    function startSwap(secret address sharedAddress,  secret uint256 amountSent, secret uint256 tokenIdSent, secret uint256 tokenIdRecieved) public {
         
            require(swapProposals[sharedAddress].pendingStatus == 0);
             swapProposals[sharedAddress].swapAmountSent += amountSent;
             balances[msg.sender] -= amountSent; 
             tokenOwners[tokenIdSent] = sharedAddress;
             swapProposals[sharedAddress].swapTokenSent = tokenIdSent;
-            swapProposals[sharedAddress].swapAmountRecieved += amountRecieved;
             swapProposals[sharedAddress].swapTokenRecieved = tokenIdRecieved;
             swapProposals[sharedAddress].swapInitiator = msg.sender;
             swapProposals[sharedAddress].pendingStatus = 1;
        
     }
 
-    function completeSwap(secret address counterParty, secret address sharedAddress,  secret uint256 amountSent, secret uint256 tokenIdSent, secret uint256 amountRecieved, secret uint256 tokenIdRecieved) public {
+    function completeSwap(secret address counterParty, secret address sharedAddress, secret uint256 tokenIdSent, secret uint256 amountRecieved, secret uint256 tokenIdRecieved) public {
            
-           require(swapProposals[sharedAddress].swapAmountRecieved == amountSent && swapProposals[sharedAddress].swapTokenRecieved == tokenIdSent);
+           require(swapProposals[sharedAddress].swapTokenRecieved == tokenIdSent);
            require(swapProposals[sharedAddress].swapAmountSent == amountRecieved && swapProposals[sharedAddress].swapTokenSent == tokenIdRecieved);
            require(swapProposals[sharedAddress].pendingStatus == 1);
            require(counterParty == swapProposals[sharedAddress].swapInitiator);
             swapProposals[sharedAddress].swapAmountSent -= amountRecieved;
-            swapProposals[sharedAddress].swapAmountRecieved -= amountSent;
-            balances[msg.sender] +=  amountRecieved - amountSent; 
-            unknown balances[counterParty] += amountSent; 
+            balances[msg.sender] +=  amountRecieved; 
             tokenOwners[tokenIdSent] = counterParty;
             
             tokenOwners[tokenIdRecieved] = msg.sender;
@@ -63,7 +59,6 @@ contract Swap {
             tokenOwners[tokenIdSent] = msg.sender;
             swapProposals[sharedAddress].swapTokenSent = 0;
             swapProposals[sharedAddress].swapTokenRecieved = 0;
-            swapProposals[sharedAddress].swapAmountRecieved = 0;
             swapProposals[sharedAddress].pendingStatus = 0;
          
     }
