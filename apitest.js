@@ -1150,7 +1150,7 @@ describe('Swap Zapp', () => {
     expect(res.Swap[6].body.commitments[1].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[2].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[3].isNullified).to.equal(true);
-    expect(res.Swap[6].body.commitments[4].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[4].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[5].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[6].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[7].isNullified).to.equal(false);
@@ -1172,8 +1172,8 @@ describe('Swap Zapp', () => {
       swapInitiator: '1390849295786071768276380950238675083608645509734',
       pendingStatus: '1'
     });
-    expect(res.Swap[6].body.commitments[11].name).to.equal("swapProposals");
-    expect(res.Swap[6].body.commitments[11].preimage.value).to.deep.equal({
+    expect(res.Swap[6].body.commitments[10].name).to.equal("swapProposals");
+    expect(res.Swap[6].body.commitments[10].preimage.value).to.deep.equal({
       swapAmountSent: '0',
       swapTokenSent: '1',
       swapTokenRecieved: '2',
