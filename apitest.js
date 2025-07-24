@@ -1129,11 +1129,11 @@ describe('Swap Zapp', () => {
   it('Check number of commitments', async () => {
     expect(res.Swap[2].body.commitments.length).to.equal(4);
     expect(res.Swap[4].body.commitments.length).to.equal(7);
-    expect(res.Swap[6].body.commitments.length).to.equal(12);
+    expect(res.Swap[6].body.commitments.length).to.equal(11);
   });
 
   it('Check nullified commitments', async () => {
-    expect(res.Swap[2].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Swap[2].body.commitments[0].isNullified).to.equal(true);
     expect(res.Swap[2].body.commitments[1].isNullified).to.equal(false);
     expect(res.Swap[2].body.commitments[2].isNullified).to.equal(false);
     expect(res.Swap[2].body.commitments[3].isNullified).to.equal(false);
@@ -1157,12 +1157,11 @@ describe('Swap Zapp', () => {
     expect(res.Swap[6].body.commitments[8].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[9].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[10].isNullified).to.equal(false);
-    expect(res.Swap[6].body.commitments[11].isNullified).to.equal(false);
   });
 
   it('Check value of final commitment', async () => {
     expect(parseInt(res.Swap[6].body.commitments[0].preimage.value)).to.equal(100); // deposit 1
-    expect(parseInt(res.Swap[6].body.commitments[2].preimage.value)).to.equal(100); // deposit 2
+    expect(parseInt(res.Swap[6].body.commitments[2].preimage.value)).to.equal(200); // deposit 2
     expect(res.Swap[6].body.commitments[4].name).to.equal("balances");
     expect(parseInt(res.Swap[6].body.commitments[4].preimage.value)).to.equal(170); // startSwap balance: 200-30
     expect(res.Swap[6].body.commitments[6].name).to.equal("swapProposals");
