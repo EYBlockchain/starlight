@@ -86,8 +86,7 @@ Starlight compiles your Solidity contract into a zApp written in JavaScript. Unl
 ## Requirements
 
 To run the `zappify` command:
-- Node.js v15 or higher - v16 recommended.  
-  (Known issues with v13 and v18).
+- Node.js v15 or higher (Known issues with v13 and v18).
 
 To run the resulting zApp:
 - Node.js v15 or higher.  
@@ -98,7 +97,17 @@ To run the resulting zApp:
 
 ## Quick User Guide
 
-Take a 'normal' smart contract, like this one:
+### 1. Creating a Zolidity (`.zol`) contract from a standard Solidity (`.sol`) contract
+
+#### Zolidity decorators: `secret`, `known`, and `unknown`
+
+In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update (nullify commitments for) that variable. Zolidity extends Solidity with three decorators:
+
+- `secret`: Marks a variable or parameter as private, so its value is hidden from other users and only accessible to its owner.
+- `known`: Indicates that only the variable owner can modify the variable. By default all variables are known. 
+- `unknown`: Allows any user to increment the variable, not just the owner. 
+
+Start with a standard Solidity contract, for example:
 
 ```solidity
 // SPDX-License-Identifier: CC0
@@ -106,7 +115,6 @@ Take a 'normal' smart contract, like this one:
 pragma solidity ^0.8.0;
 
 contract Assign {
-
   uint256 private a;
 
   function assign(uint256 value) public {
@@ -115,14 +123,14 @@ contract Assign {
 }
 ```
 
-Then add `secret` in front of each declaration you want to keep secret:
+To convert your Solidity contract to a Zolidity contract, insert the `secret` keyword in front of the declaration of any state variable, local variable, or function parameter you want to keep private:
+
 ```solidity
 // SPDX-License-Identifier: CC0
 
 pragma solidity ^0.8.0;
 
 contract Assign {
-
   secret uint256 private a; // <--- secret
 
   function assign(secret uint256 value) public { // <--- secret
@@ -131,10 +139,49 @@ contract Assign {
 }
 ```
 
-Save this decorated file with a `.zol` extension ('zolidity').
+---
+#### Example: Charity contract using `unknown` and `known`
 
-Run `zappify -i <./path/to/file>.zol` and get an entire standalone zApp in return!
+Here's a simple Zolidity contract for a charity, where anyone can donate but only the admin can withdraw:
 
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract CharityPot {
+  secret uint256 private balance;
+  address public admin;
+
+  constructor(address _admin) {
+    admin = _admin;
+  }
+
+  // Anyone can donate to the charity
+  function donate(secret uint256 amount) public {
+    unknown balance += amount; // <--- anyone can increment
+  }
+
+  // Only the admin can withdraw funds
+  function withdraw(secret uint256 amount) public {
+    require(msg.sender == admin, "Only admin can withdraw");
+    balance -= amount; // <--- only admin can decrement
+  }
+}
+```
+
+Save this decorated contract with a `.zol` extension (for example, `CharityPot.zol`). This file is now a Zolidity contract.
+
+---
+### 2. Using `zappify` to transpile Zolidity to a standalone zApp
+
+Once you have your Zolidity (`.zol`) contract, run the following command to generate a standalone zApp:
+
+```
+zappify -i <./path/to/Assign.zol>
+```
+
+This will transpile your contract into an entire standalone zApp, outputting it to the `./zapps/` directory by default. 
 
 ---
 ## Install via npm
@@ -475,11 +522,14 @@ curl --location 'http://localhost:3001/quitSwap' \
 This reverts the proposal and refunds locked assets to the proposer.
 
 
-#### Using secret states in the constructor
+#### Constructor inputs
 
-Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Any user supplied inputs will be prompted for in the command line when running `npm start`.
+- When running `npm start`, you will be prompted for any user-supplied constructor inputs.
+- For imported contract addresses:
+  - If you enter `"NA"`, Starlight will **deploy a fresh instance** of the contract and use its address as the constructor input.
+  - **Note:** This auto-deployment is only supported for a fixed set of contracts stored [here](https://github.com/EYBlockchain/starlight/tree/master/contracts/Escrow-imports).
 
-Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
+Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
 
 #### Deploy on public testnets
 
@@ -510,8 +560,8 @@ The configuration can be done during `./bin/setup` phase in the following way.
 
 ### Zokrates Worker
 
-Starlight uses containerised zokrates from [zokrates-worker-starlight](https://github.com/EYBlockchain/starlight/pkgs/container/zokrates-worker-starlight). 
-Here we have use two zokrates container, zokrates -version:0.7.12 to compile the circuits and zokrates -version:0.8.1 to do the setup and generate-proof to improve the key and proof generation time.
+Starlight uses containerised zokrates from [zokrates-worker-starlight](https://github.com/EYBlockchain/starlight/pkgs/container/zokrates-worker-starlight).
+Currently, all circuit compilation, setup, and proof generation use Zokrates version 0.8.8.
 
 ### Contributing
 
