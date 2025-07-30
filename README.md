@@ -142,7 +142,7 @@ contract Assign {
 ---
 #### Example: Charity contract using `unknown` and `known`
 
-Here's a simple Zolidity contract for a charity, where anyone can donate but only the admin can withdraw:
+Here's a simple Zolidity contract for a charity, where anyone can donate but only the admin can withdraw. The variable balance is marked with unknown before the incrementation in donate(), to mark that anyone can call donate and increment balance. Only the owner can decrement balance in the withdraw function.
 
 ```solidity
 // SPDX-License-Identifier: CC0
@@ -170,7 +170,7 @@ contract CharityPot {
 }
 ```
 
-Save this decorated contract with a `.zol` extension (for example, `CharityPot.zol`). This file is now a Zolidity contract.
+Save both these decorated contracts with a `.zol` extension (for example, `Assign.zol` and `CharityPot.zol`). These files are now Zolidity contracts.
 
 ---
 ### 2. Using `zappify` to transpile Zolidity to a standalone zApp
@@ -366,8 +366,6 @@ It's impossible for a transpiler to tell which order functions must be called in
 
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
 
-**NB: rerunning `npm test` will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down -v --remove-orphans` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
-
 For using APIs:
 
 `npm start` <-- this starts up the `express` app and exposes the APIs
@@ -528,8 +526,6 @@ This reverts the proposal and refunds locked assets to the proposer.
 - For imported contract addresses:
   - If you enter `"NA"`, Starlight will **deploy a fresh instance** of the contract and use its address as the constructor input.
   - **Note:** This auto-deployment is only supported for a fixed set of contracts stored [here](https://github.com/EYBlockchain/starlight/tree/master/contracts/Escrow-imports).
-
-Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
 
 #### Deploy on public testnets
 
