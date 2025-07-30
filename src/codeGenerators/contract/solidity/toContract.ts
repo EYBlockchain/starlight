@@ -1,7 +1,7 @@
 /* eslint-disable import/no-cycle */
 
 import path from 'path';
-import { collectImportFiles } from '../../common.js'
+import { collectImportFiles } from '../../common.js';
 import ContractBP from '../../../boilerplate/contract/solidity/raw/ContractBoilerplateGenerator.js';
 import FunctionBP from '../../../boilerplate/contract/solidity/raw/FunctionBoilerplateGenerator.js';
 
@@ -163,7 +163,13 @@ function codeGenerator(node: any) {
       return [...preStatements, ...postStatements, ...statements].join('\n');
     }
     case 'ExpressionStatement':{
-      return codeGenerator(node.expression);
+      let expr = codeGenerator(node.expression);
+      if (typeof expr === 'undefined' || expr === null) return '';
+      let semicolon = '';
+      if (node.expression.nodeType === 'FunctionCall') {
+        semicolon = ';';
+      }
+      return `${expr}${semicolon}`;
     }
 
     case 'Return':
@@ -206,14 +212,12 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.subExpression)} ${node.operator};`;
 
     case 'EmitStatement':
-        return `\t \t \t \temit ${codeGenerator(node.eventCall)};`;
+      return `\t \t \t \temit ${codeGenerator(node.eventCall)};`;
 
     case 'FunctionCall': {
       const expression = codeGenerator(node.expression);
       const args = node.arguments.map(codeGenerator);
-      const semicolon = expression === 'require' || expression === 'revert' || expression.includes(`push`) ? ';' : ''; // HACK. Semicolons get duplicated inserted sometimes, e.g. for nested functioncalls, we get `;,` or for VariableDeclarationStatements with a functioncall on the RHS, we get `;;`.
-      return `${expression}(${args.join(', ')})${semicolon}`;
-
+      return `${expression}(${args.join(', ')})`;
     }
     case 'InternalFunctionCall' :{
       if(node.parameters ){

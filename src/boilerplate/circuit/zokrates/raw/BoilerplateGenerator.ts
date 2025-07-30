@@ -16,11 +16,13 @@ class BoilerplateGenerator {
   PoKoSK = {
     importStatements(): string[] {
       return [
-      `from "ecc/babyjubjubParams" import main as curveParams`,
-      `from "ecc/edwardsScalarMult" import main as scalarMult`,
-      `from "ecc/edwardsCompress" import main as edwardsCompress`,
-      `from "utils/pack/bool/pack256.zok" import main as bool_256_to_field`,
-      `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
+        `from "ecc/babyjubjubParams" import main as curveParams`,
+        `from "ecc/edwardsScalarMult" import main as scalarMult`,
+        `from "ecc/edwardsCompress" import main as edwardsCompress`,
+        `from "utils/pack/bool/pack256.zok" import main as bool_256_to_field`,
+        `from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256`,
+        `from "utils/casts/u64_to_field.zok" import main as u64_to_field`,
+        `from "utils/casts/field_to_u64.zok" import main as field_to_u64`,
       ];
     },
 

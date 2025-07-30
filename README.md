@@ -41,6 +41,9 @@ This code is not owned by EY and EY provides no warranty and disclaims any and a
 
 **In the same way that Solidity does not protect against contract vulnerabilities, Starlight cannot protect against zApp vulnerabilities once they are written into the code. This compiler assumes knowledge of smart contract security.**
 
+**Note on integer limits:**
+Starlight compiles your Solidity contract into a zApp written in JavaScript. Unlike Solidity's `uint256` (which supports integers up to 2^256-1), JavaScript's standard `Number` type can only safely represent integers up to 9,007,199,254,740,991 (2^53 – 1), known as `Number.MAX_SAFE_INTEGER`.  This means that values above 2^53–1 are not fully supported in the JavaScript output, and large values will lose precision or behave unexpectedly. When designing your contracts, ensure that all values remain within the safe integer range for JavaScript.
+
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->

@@ -179,18 +179,25 @@ export default function codeGenerator(node: any, options: any = {}): any {
       }
 
     case 'BinaryOperation':
-      return `${codeGenerator(node.leftExpression, { lhs: options.condition })} ${
-        node.operator
-      } ${codeGenerator(node.rightExpression)}`;
+      if (node.operator === '/') {
+        return `Math.floor(${codeGenerator(node.leftExpression, {
+          lhs: options.condition,
+        })} ${node.operator} ${codeGenerator(node.rightExpression)})`;
+      }
+      return `${codeGenerator(node.leftExpression, {
+        lhs: options.condition,
+      })} ${node.operator} ${codeGenerator(node.rightExpression)}`;
 
     case 'TupleExpression':
-      if(node.components.length !== 0)
-      return `(${node.components.map(codeGenerator).join(` `)})`;
+      if (node.components.length !== 0)
+        return `(${node.components.map(codeGenerator).join(` `)})`;
       return ` `;
 
     case 'IfStatement': {
-        let comment = (node.inPreStatements)  ? "// some public statements of this if statement have been moved to pre-statements here, any other statements appear later" : '';
-        // We need to declare some variables before the if statement begins (because they are used outside the if statement). 
+      const comment = node.inPreStatements
+        ? '// some public statements of this if statement have been moved to pre-statements here, any other statements appear later'
+        : '';
+      // We need to declare some variables before the if statement begins (because they are used outside the if statement).
         let preIfStatements = node.trueBody.filter((node: any) => node.outsideIf).concat(node.falseBody.filter((node: any) => node.outsideIf));
         let newPreIfStatements = [];
         preIfStatements.forEach((node: any) => {

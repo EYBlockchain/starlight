@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0
 
-// TARGET CONTRACT FOR PHASE 2 OF DEVELOPMENT:
-
 pragma solidity ^0.8.0;
 
 import "./Escrow-imports/IERC721.sol";
@@ -9,6 +7,7 @@ import "./Escrow-imports/IERC721.sol";
 contract NFT_Escrow {
 
     secret mapping(uint256 => address) public tokenOwners; // mapped-to by a tokenId
+    secret mapping(address => address) public approvals;
     IERC721 public erc721;
 
     constructor(address _erc721) {
@@ -23,6 +22,19 @@ contract NFT_Escrow {
 
     function transfer(secret address recipient, secret uint256 tokenId) public {
         require(tokenOwners[tokenId] == msg.sender);
+        require(recipient != address(0), "NFT_Escrow: transfer to the zero address");
+        tokenOwners[tokenId] = recipient;
+    }
+
+    function approve(secret address approvedAddress) public {
+        require(approvedAddress != address(0), "Escrow: approve to the zero address");
+        approvals[msg.sender] = approvedAddress;
+    }
+
+    function transferFrom(secret address sender, secret address recipient, secret uint256 tokenId) public {
+        require(approvals[msg.sender] == sender);
+        require(recipient != address(0), "NFT_Escrow: transfer to the zero address");
+        require(sender != address(0), "NFT_Escrow: transfer from the zero address");
         tokenOwners[tokenId] = recipient;
     }
 

@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0
 
-// TARGET CONTRACT FOR PHASE 2 OF DEVELOPMENT:
-
 pragma solidity ^0.8.0;
 
 import "./Escrow-imports/IERC20.sol";
@@ -9,6 +7,7 @@ import "./Escrow-imports/IERC20.sol";
 contract Escrow {
 
     secret mapping(address => uint256) public balances;
+    secret mapping(address => address) public approvals;
     secret uint256 public tokens;
     IERC20 public erc20;
 
@@ -24,7 +23,21 @@ contract Escrow {
     }
 
     function transfer(secret address recipient, secret uint256 amount) public {
+        require(recipient != address(0), "Escrow: transfer to the zero address");
         balances[msg.sender] -= amount;
+        encrypt unknown balances[recipient] += amount;
+    }
+
+    function approve(secret address approvedAddress) public {
+        require(approvedAddress != address(0), "Escrow: approve to the zero address");
+        approvals[msg.sender] = approvedAddress;
+    }
+
+    function transferFrom(secret address sender, secret address recipient, secret uint256 amount) public {
+        require(approvals[msg.sender] == sender);
+        require(recipient != address(0), "Escrow: approve to the zero address");
+        require(sender != address(0), "Escrow: approve from the zero address");
+        balances[sender] -= amount;
         encrypt unknown balances[recipient] += amount;
     }
 

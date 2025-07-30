@@ -202,8 +202,11 @@ const apiRequests_Encrypt = [
 
 res.Encrypt = await callZAppAPIs('Encrypt', apiRequests_Encrypt, 'Encrypt Zapp failed');
 
-// In order to test Escrow we first need to mint ERC tokens. 
-const depositFilePath = path.join(__dirname, 'temp-zapps/Escrow/orchestration/deposit.mjs');
+// In order to test Escrow we first need to mint ERC tokens
+const depositFilePath = path.join(
+  __dirname,
+  'temp-zapps/Escrow/orchestration/deposit.mjs',
+);
 let depositContent = fs.readFileSync(depositFilePath, 'utf8');
 position = depositContent.indexOf(keyword);
 if (position !== -1) {
@@ -215,26 +218,84 @@ if (position !== -1) {
 }
 fs.writeFileSync(depositFilePath, depositContent, 'utf8');
 
-console.log('deposit.mjs in Escrow modified successfully to mint ERC tokens. Proceeding with the test...');
+console.log(
+  'deposit.mjs in Escrow modified successfully to mint ERC tokens. Proceeding with the test...',
+);
 
 const apiRequests_Escrow = [
   { method: 'post', endpoint: '/deposit', data: { amount: 25 } },
   { method: 'post', endpoint: '/deposit', data: { amount: 19 } },
-  { method: 'post', endpoint: '/transfer', data: { recipient: 235, amount: 13 } },
+  {
+    method: 'post',
+    endpoint: '/transfer',
+    data: { recipient: 235, amount: 13 },
+  },
   { method: 'post', endpoint: '/withdraw', data: { amount: 3 } },
+  {
+    method: 'post',
+    endpoint: '/approve',
+    data: {
+      approvedAddress: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'post',
+    endpoint: '/transferFrom',
+    data: {
+      sender: '1390849295786071768276380950238675083608645509734',
+      recipient: 235,
+      amount: 1,
+    },
+  },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '1390849295786071768276380950238675083608645509734'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '235'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokens' } },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: {
+      name: 'balances',
+      mappingKey: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'balances', mappingKey: '235' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokens' },
+  },
   { method: 'get', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '1390849295786071768276380950238675083608645509734'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'balances', mappingKey: '235'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokens' } },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: {
+      name: 'balances',
+      mappingKey: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'balances', mappingKey: '235' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokens' },
+  },
   { method: 'post', endpoint: '/withdraw', data: { amount: 7 } },
 ];
 
-res.Escrow = await callZAppAPIs('Escrow', apiRequests_Escrow, 'Escrow Zapp failed', undefined, "\"NA\"");
+res.Escrow = await callZAppAPIs(
+  'Escrow',
+  apiRequests_Escrow,
+  'Escrow Zapp failed',
+  undefined,
+  '"NA"',
+);
 
 const apiRequests_forloop = [
   { method: 'post', endpoint: '/add', data: { j: 8 } },
@@ -281,7 +342,7 @@ const apiRequests_MappingtoStruct = [
 res.MappingtoStruct = await callZAppAPIs('MappingtoStruct', apiRequests_MappingtoStruct, 'MappingtoStruct Zapp failed');
 
 // In order to test NFT_Escrow we first need to mint a token. 
-let NFTmintingText = `const erc721 = await getContractInstance("ERC721");
+const NFTmintingText = `const erc721 = await getContractInstance("ERC721");
 let mintBalance = await erc721.methods
 		.balanceOf(config.web3.options.defaultAccount, this.contractAddr)
 		.call({ from: config.web3.options.defaultAccount });
@@ -299,8 +360,17 @@ if (mintBalance === BigInt(0)) {
   await erc721.methods
       .approve(this.contractAddr, 87654321)
       .send({ from: config.web3.options.defaultAccount });
+  await erc721.methods
+      .mint(config.web3.options.defaultAccount, 23456789)
+      .send({ from: config.web3.options.defaultAccount });
+  await erc721.methods
+      .approve(this.contractAddr, 23456789)
+      .send({ from: config.web3.options.defaultAccount });
 }`;
-const depositNFTFilePath = path.join(__dirname, 'temp-zapps/NFT_Escrow/orchestration/deposit.mjs');
+const depositNFTFilePath = path.join(
+  __dirname,
+  'temp-zapps/NFT_Escrow/orchestration/deposit.mjs',
+);
 let depositNFTContent = fs.readFileSync(depositNFTFilePath, 'utf8');
 position = depositNFTContent.indexOf(keyword);
 if (position !== -1) {
@@ -312,23 +382,78 @@ if (position !== -1) {
 }
 fs.writeFileSync(depositNFTFilePath, depositNFTContent, 'utf8');
 
-console.log('deposit.mjs in NFT_Escrow modified successfully to mint an ERC721 token. Proceeding with the test...');
+console.log(
+  'deposit.mjs in NFT_Escrow modified successfully to mint an ERC721 token. Proceeding with the test...',
+);
 
 const apiRequests_NFT_Escrow = [
   { method: 'post', endpoint: '/deposit', data: { tokenId: 12345678 } },
   { method: 'post', endpoint: '/deposit', data: { tokenId: 87654321 } },
-  { method: 'post', endpoint: '/transfer', data: { recipient: 235, tokenId: 12345678 } },
+  { method: 'post', endpoint: '/deposit', data: { tokenId: 23456789 } },
+  {
+    method: 'post',
+    endpoint: '/transfer',
+    data: { recipient: 235, tokenId: 12345678 },
+  },
   { method: 'post', endpoint: '/withdraw', data: { tokenId: 87654321 } },
+  {
+    method: 'post',
+    endpoint: '/approve',
+    data: {
+      approvedAddress: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'post',
+    endpoint: '/transferFrom',
+    data: {
+      sender: '1390849295786071768276380950238675083608645509734',
+      recipient: 578,
+      tokenId: 23456789,
+    },
+  },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokenOwners', mappingKey: '12345678'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokenOwners', mappingKey: '87654321'} },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokenOwners', mappingKey: '12345678' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokenOwners', mappingKey: '87654321' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokenOwners', mappingKey: '23456789' },
+  },
   { method: 'get', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokenOwners', mappingKey: '12345678'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'tokenOwners', mappingKey: '87654321'} },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokenOwners', mappingKey: '12345678' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokenOwners', mappingKey: '87654321' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'tokenOwners', mappingKey: '23456789' },
+  }
 ];
 
-res.NFT_Escrow = await callZAppAPIs('NFT_Escrow', apiRequests_NFT_Escrow, 'NFT_Escrow Zapp failed', undefined, "\"NA\"");
+res.NFT_Escrow = await callZAppAPIs(
+  'NFT_Escrow',
+  apiRequests_NFT_Escrow,
+  'NFT_Escrow Zapp failed',
+  undefined,
+  '"NA"',
+);
 
 const apiRequests_Return = [
   { method: 'post', endpoint: '/add', data: { value: 21 } },
@@ -376,8 +501,7 @@ const apiRequests_Swap = [
       sharedAddress: '', // to be filled in preHook
       amountSent: 30,
       tokenIdSent: 1,
-      tokenIdRecieved: 2,
-      amountRecieved: 0
+      tokenIdRecieved: 2
     }
   },
   { method: 'get', endpoint: '/getAllCommitments' },
@@ -387,7 +511,6 @@ const apiRequests_Swap = [
     data: {
       sharedAddress: '', // to be filled in preHook
       counterParty: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-      amountSent: 0,
       tokenIdSent: 2,
       tokenIdRecieved: 1,
       amountRecieved: 30
@@ -412,8 +535,12 @@ const preHook = async (requests) => {
   }
 };
 
-res.Swap = await callZAppAPIs('Swap', apiRequests_Swap, 'Swap Zapp failed', preHook);
-
+res.Swap = await callZAppAPIs(
+  'Swap',
+  apiRequests_Swap,
+  'Swap Zapp failed',
+  preHook,
+);
 
 const userFriendlyTestsPath = 'test/contracts/user-friendly-tests';
 const userFriendlyTests = await getUserFriendlyTestNames(userFriendlyTestsPath);
@@ -665,45 +792,80 @@ describe('Escrow Zapp', () => {
     expect(res.Escrow[1].body.tx.event).to.equal('NewLeaves');
     expect(res.Escrow[2].body.tx.event).to.equal('NewLeaves');
     expect(res.Escrow[3].body.tx.event).to.equal('NewLeaves');
+    expect(res.Escrow[4].body.tx.event).to.equal('NewLeaves');
+    expect(res.Escrow[5].body.tx.event).to.equal('NewLeaves');
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Escrow[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Escrow[1].body.tx.returnValues.minLeafIndex)).to.equal(2);
-    expect(parseInt(res.Escrow[2].body.tx.returnValues.minLeafIndex)).to.equal(4);
-    expect(parseInt(res.Escrow[3].body.tx.returnValues.minLeafIndex)).to.equal(8);
+    expect(
+      parseInt(res.Escrow[0].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(0);
+    expect(
+      parseInt(res.Escrow[1].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(2);
+    expect(
+      parseInt(res.Escrow[2].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(4);
+    expect(
+      parseInt(res.Escrow[3].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(8);
+    expect(
+      parseInt(res.Escrow[4].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(9);
+    expect(
+      parseInt(res.Escrow[5].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(12);
   });
   it('Check number of commitments', async () => {
-    expect(res.Escrow[4].body.commitments.length).to.equal(9);
+    expect(res.Escrow[6].body.commitments.length).to.equal(14);
   });
   it('Check nullified commitments', async () => {
-    expect(res.Escrow[5].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Escrow[5].body.commitments[1].isNullified).to.equal(true);
-    expect(res.Escrow[5].body.commitments[2].isNullified).to.equal(true);
-    expect(res.Escrow[5].body.commitments[3].isNullified).to.equal(true);
-    expect(res.Escrow[5].body.commitments[4].isNullified).to.equal(true);
-    expect(res.Escrow[5].body.commitments[5].isNullified).to.equal(false);
-    expect(res.Escrow[6].body.commitments[0].isNullified).to.equal(false);
     expect(res.Escrow[7].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Escrow[7].body.commitments[1].isNullified).to.equal(false);
+    expect(res.Escrow[7].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[3].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[4].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[5].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[6].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[7].isNullified).to.equal(true);
+    expect(res.Escrow[7].body.commitments[8].isNullified).to.equal(false);
+    expect(res.Escrow[8].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Escrow[8].body.commitments[1].isNullified).to.equal(false);
+    expect(res.Escrow[9].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Escrow[9].body.commitments[1].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
-    expect(parseInt(res.Escrow[5].body.commitments[5].preimage.value)).to.equal(28);
-    expect(parseInt(res.Escrow[6].body.commitments[0].preimage.value)).to.equal(13);
-    expect(parseInt(res.Escrow[7].body.commitments[0].preimage.value)).to.equal(25);
-    expect(parseInt(res.Escrow[7].body.commitments[1].preimage.value)).to.equal(44);
+    expect(
+      parseInt(res.Escrow[7].body.commitments[8].preimage.value, 10),
+    ).to.equal(27);
+    expect(
+      parseInt(res.Escrow[8].body.commitments[0].preimage.value, 10),
+    ).to.equal(13);
+    expect(
+      parseInt(res.Escrow[8].body.commitments[1].preimage.value, 10),
+    ).to.equal(1);
+    expect(
+      parseInt(res.Escrow[9].body.commitments[0].preimage.value, 10),
+    ).to.equal(25);
+    expect(
+      parseInt(res.Escrow[9].body.commitments[1].preimage.value, 10),
+    ).to.equal(44);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Escrow[9].body.commitments.length).to.equal(9);
-    expect(res.Escrow[10].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Escrow[10].body.commitments[1].isNullified).to.equal(true);
-    expect(res.Escrow[10].body.commitments[2].isNullified).to.equal(true);
-    expect(res.Escrow[10].body.commitments[3].isNullified).to.equal(true);
-    expect(res.Escrow[10].body.commitments[4].isNullified).to.equal(true);
-    expect(res.Escrow[10].body.commitments[5].isNullified).to.equal(false);
-    expect(res.Escrow[11].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Escrow[11].body.commitments.length).to.equal(14);
     expect(res.Escrow[12].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(false);
-    expect(res.Escrow[13].body.tx.event).to.equal('NewLeaves');
+    expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[3].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[4].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[5].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[6].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[7].isNullified).to.equal(true);
+    expect(res.Escrow[12].body.commitments[8].isNullified).to.equal(false);
+    expect(res.Escrow[13].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Escrow[13].body.commitments[1].isNullified).to.equal(false);
+    expect(res.Escrow[14].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Escrow[14].body.commitments[1].isNullified).to.equal(false);
+    expect(res.Escrow[15].body.tx.event).to.equal('NewLeaves');
   });
 });
 
@@ -815,30 +977,64 @@ describe('NFT_Escrow Zapp', () => {
     expect(res.NFT_Escrow[0].body.tx.event).to.equal('NewLeaves');
     expect(res.NFT_Escrow[1].body.tx.event).to.equal('NewLeaves');
     expect(res.NFT_Escrow[2].body.tx.event).to.equal('NewLeaves');
+    expect(res.NFT_Escrow[3].body.tx.event).to.equal('NewLeaves');
+    expect(res.NFT_Escrow[5].body.tx.event).to.equal('NewLeaves');
+    expect(res.NFT_Escrow[6].body.tx.event).to.equal('NewLeaves');
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.NFT_Escrow[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.NFT_Escrow[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.NFT_Escrow[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(
+      parseInt(res.NFT_Escrow[0].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(0);
+    expect(
+      parseInt(res.NFT_Escrow[1].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(1);
+    expect(
+      parseInt(res.NFT_Escrow[2].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(2);
+    expect(
+      parseInt(res.NFT_Escrow[3].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(3);
+    expect(
+      parseInt(res.NFT_Escrow[5].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(4);
+    expect(
+      parseInt(res.NFT_Escrow[6].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(5);
   });
   it('Check number of commitments', async () => {
-    expect(res.NFT_Escrow[4].body.commitments.length).to.equal(3);
+    expect(res.NFT_Escrow[7].body.commitments.length).to.equal(6);
   });
   it('Check nullified commitments', async () => {
-    expect(res.NFT_Escrow[5].body.commitments[0].isNullified).to.equal(true);
-    expect(res.NFT_Escrow[5].body.commitments[1].isNullified).to.equal(false);
-    expect(res.NFT_Escrow[6].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[8].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[8].body.commitments[1].isNullified).to.equal(false);
+    expect(res.NFT_Escrow[9].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[10].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[10].body.commitments[1].isNullified).to.equal(false);
   });
   it('Check values of commitment', async () => {
-    expect(parseInt(res.NFT_Escrow[5].body.commitments[0].preimage.value)).to.equal(1390849295786071768276380950238675083608645509734);
-    expect(parseInt(res.NFT_Escrow[5].body.commitments[1].preimage.value)).to.equal(235);
-    expect(parseInt(res.NFT_Escrow[6].body.commitments[0].preimage.value)).to.equal(1390849295786071768276380950238675083608645509734);
+    expect(
+      parseInt(res.NFT_Escrow[8].body.commitments[0].preimage.value, 10),
+    ).to.equal(1390849295786071768276380950238675083608645509734);
+    expect(
+      parseInt(res.NFT_Escrow[8].body.commitments[1].preimage.value, 10),
+    ).to.equal(235);
+    expect(
+      parseInt(res.NFT_Escrow[9].body.commitments[0].preimage.value, 10),
+    ).to.equal(1390849295786071768276380950238675083608645509734);
+    expect(
+      parseInt(res.NFT_Escrow[10].body.commitments[0].preimage.value, 10),
+    ).to.equal(1390849295786071768276380950238675083608645509734);
+    expect(
+      parseInt(res.NFT_Escrow[10].body.commitments[1].preimage.value, 10),
+    ).to.equal(578);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.NFT_Escrow[8].body.commitments.length).to.equal(3);
-    expect(res.NFT_Escrow[9].body.commitments[0].isNullified).to.equal(true);
-    expect(res.NFT_Escrow[9].body.commitments[1].isNullified).to.equal(false);
-    expect(res.NFT_Escrow[10].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[12].body.commitments.length).to.equal(6);
+    expect(res.NFT_Escrow[13].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[13].body.commitments[1].isNullified).to.equal(false);
+    expect(res.NFT_Escrow[14].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[15].body.commitments[0].isNullified).to.equal(true);
+    expect(res.NFT_Escrow[15].body.commitments[1].isNullified).to.equal(false);
   });
 });
 
@@ -933,11 +1129,11 @@ describe('Swap Zapp', () => {
   it('Check number of commitments', async () => {
     expect(res.Swap[2].body.commitments.length).to.equal(4);
     expect(res.Swap[4].body.commitments.length).to.equal(7);
-    expect(res.Swap[6].body.commitments.length).to.equal(12);
+    expect(res.Swap[6].body.commitments.length).to.equal(11);
   });
 
   it('Check nullified commitments', async () => {
-    expect(res.Swap[2].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Swap[2].body.commitments[0].isNullified).to.equal(true);
     expect(res.Swap[2].body.commitments[1].isNullified).to.equal(false);
     expect(res.Swap[2].body.commitments[2].isNullified).to.equal(false);
     expect(res.Swap[2].body.commitments[3].isNullified).to.equal(false);
@@ -954,34 +1150,31 @@ describe('Swap Zapp', () => {
     expect(res.Swap[6].body.commitments[1].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[2].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[3].isNullified).to.equal(true);
-    expect(res.Swap[6].body.commitments[4].isNullified).to.equal(false);
+    expect(res.Swap[6].body.commitments[4].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[5].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[6].isNullified).to.equal(true);
     expect(res.Swap[6].body.commitments[7].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[8].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[9].isNullified).to.equal(false);
     expect(res.Swap[6].body.commitments[10].isNullified).to.equal(false);
-    expect(res.Swap[6].body.commitments[11].isNullified).to.equal(false);
   });
 
   it('Check value of final commitment', async () => {
     expect(parseInt(res.Swap[6].body.commitments[0].preimage.value)).to.equal(100); // deposit 1
-    expect(parseInt(res.Swap[6].body.commitments[2].preimage.value)).to.equal(100); // deposit 2
+    expect(parseInt(res.Swap[6].body.commitments[2].preimage.value)).to.equal(200); // deposit 2
     expect(res.Swap[6].body.commitments[4].name).to.equal("balances");
     expect(parseInt(res.Swap[6].body.commitments[4].preimage.value)).to.equal(170); // startSwap balance: 200-30
     expect(res.Swap[6].body.commitments[6].name).to.equal("swapProposals");
     expect(res.Swap[6].body.commitments[6].preimage.value).to.deep.equal({
       swapAmountSent: '30',
-      swapAmountRecieved: '0',
       swapTokenSent: '1',
       swapTokenRecieved: '2',
       swapInitiator: '1390849295786071768276380950238675083608645509734',
       pendingStatus: '1'
     });
-    expect(res.Swap[6].body.commitments[11].name).to.equal("swapProposals");
-    expect(res.Swap[6].body.commitments[11].preimage.value).to.deep.equal({
+    expect(res.Swap[6].body.commitments[10].name).to.equal("swapProposals");
+    expect(res.Swap[6].body.commitments[10].preimage.value).to.deep.equal({
       swapAmountSent: '0',
-      swapAmountRecieved: '0',
       swapTokenSent: '1',
       swapTokenRecieved: '2',
       swapInitiator: '1390849295786071768276380950238675083608645509734',
