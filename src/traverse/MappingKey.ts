@@ -190,7 +190,7 @@ export default class MappingKey {
       if (p.getAncestorOfType('ExpressionStatement')?.node.forceEncrypt) encThisState = true;
     })
     // whole state only if opted in
-    if ((!options?.encAllStates && !encThisState)  && (!this.isPartitioned || !this.isOwned)) return;
+    if (!encThisState && (!this.isPartitioned || !this.isOwned)) return;
     switch (this.mappingOwnershipType) {
       case 'key':
         // owner here is the keypath

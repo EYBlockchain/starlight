@@ -776,7 +776,7 @@ export class StateVariableIndicator extends FunctionDefinitionIndicator {
       if (p.getAncestorOfType('ExpressionStatement')?.node.forceEncrypt) encThisState = true;
     })
     // whole state only if opted in
-    if ((!options?.encAllStates && !encThisState) && (!this.isPartitioned || !this.isOwned)) return;
+    if (!encThisState && (!this.isPartitioned || !this.isOwned)) return;
     if (this.isMapping) {
       const mappingKeys: [string, MappingKey][] = Object.entries(this.mappingKeys ? this.mappingKeys : {});
       for (const [, mappingKey] of mappingKeys) {

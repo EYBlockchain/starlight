@@ -41,10 +41,6 @@ program
     'Specify a name for the output zapp. Defaults to the name of the --input file.',
   )
   .option(
-    '-e, --enc',
-    'Specify whether you want encryption of commitment details to the state owner everywhere - this can be a (gas) costly operation',
-  )
-  .option(
     '-m, --modify <modify>',
     'Ovewrite the file from truezapps folder',
   );
@@ -66,7 +62,6 @@ const parseDirPath = `${outputDirPath}/parse`;
 const circuitsDirPath = `${outputDirPath}/circuits`;
 const contractsDirPath = `${outputDirPath}/contracts`;
 const orchestrationDirPath = `${outputDirPath}/orchestration`;
-const encAllStates = opts.enc;
 
 const options = {
   zappName,
@@ -77,7 +72,6 @@ const options = {
   circuitsDirPath,
   contractsDirPath,
   orchestrationDirPath,
-  encAllStates,
   modifyAST,
 };
 

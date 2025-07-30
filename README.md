@@ -101,11 +101,16 @@ To run the resulting zApp:
 
 #### Zolidity decorators: `secret`, `known`, and `unknown`
 
-In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update (nullify commitments for) that variable. Zolidity extends Solidity with three decorators:
+In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update that variable. Secret variables are stored on-chain via commitments, and the original data (preimage) is kept locally by the owner. 
+
+ Zolidity extends Solidity with three decorators:
 
 - `secret`: Marks a variable or parameter as private, so its value is hidden from other users and only accessible to its owner.
 - `known`: Indicates that only the variable owner can modify the variable. By default all variables are known. 
 - `unknown`: Allows any user to increment the variable, not just the owner. 
+-`encrypt`: Use when creating a commitment for another user (e.g., with `unknown`). Ensures, via zk-proofs, that a correct encryption of the commitment pre-image is broadcast and can be decrypted by the owner so that the commitment can be used in the future.
+
+---
 
 Start with a standard Solidity contract, for example:
 
@@ -170,7 +175,28 @@ contract CharityPot {
 }
 ```
 
-Save both these decorated contracts with a `.zol` extension (for example, `Assign.zol` and `CharityPot.zol`). These files are now Zolidity contracts.
+---
+#### Example: Using the `encrypt` decorator
+
+Sometimes, a commitment is created for a secret variable that is owned by another user. For example, when using the `unknown` tag (as explained above), or with address variables — where ownership is tied to the address and can change when the address changes. To use a commitment, the owner needs the commitment pre-image, but they may not have access to it if they did not create the commitment themselves. The `encrypt` tag solves this by encrypting and broadcasting the commitment pre-image, guaranteeing via the zk proofs that the ciphertext is correctly formed so the new owner can access and use the commitment.
+For example:
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+  secret uint256 private a; // <--- secret
+
+  function assign(secret uint256 value) public { // <--- secret
+    encrypt unknown a += value; // <--- guarantees the new owner can use the new commitment related to this state update
+  }
+}
+```
+---
+
+Save these decorated contracts with a `.zol` extension (for example, `Assign.zol` and `CharityPot.zol`). These files are now Zolidity contracts.
 
 ---
 ### 2. Using `zappify` to transpile Zolidity to a standalone zApp
@@ -239,25 +265,7 @@ This runs `tsc` and `npm i -g ./` which will create a symlink to your node.js bi
 | `--output <./custom/output/dir/>`  | `-o`  | Specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.  |
 | `--zapp-name <customZappName>` | `-z`  | Otherwise files get output to a folder with name matching that of the input file.  |
 | `--log-level <debug>`  | -  | Specify a Winston log level type.  |
-| `--enc`  | `-e`  | Add secret state encryption events for every new commitment*.  |
 | `--help`  | `-h`  | CLI help.  |
-
-*Note that encrypting and broadcasting secret state information to its owner is costly gas-wise, so switching it on with this option may give you `stack too deep` errors in the contract.
-
-An alternative is to use our `encrypt` syntax in front of the state edit you'd like to broadcast, like this:
-
-```solidity
-contract Assign {
-
-  secret uint256 private a; // <--- secret
-
-  function assign(secret uint256 value) public { // <--- secret
-    encrypt a = value; // <--- the new value of a will be encrypted and sent to a's owner
-  }
-}
-```
-
-Partitioned states which are incremented and have an owner which is clearly different from the function caller has encryption included by default.
 
 ---
 
