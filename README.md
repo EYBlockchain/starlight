@@ -479,8 +479,7 @@ User A proposes a swap to the shared address, they send:
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "amountSent": 30,
   "tokenIdSent": 1,
-  "tokenIdRecieved": 2,
-  "amountRecieved": 0
+  "tokenIdRecieved": 2
 }
 ```
 as a POST request to `http://localhost:3001/startSwap`.
@@ -493,7 +492,6 @@ User B accepts the swap with a matching offer, they send:
 {
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "counterParty": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-  "amountSent": 0,
   "tokenIdSent": 2,
   "tokenIdRecieved": 1,
   "amountRecieved": 30
