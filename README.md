@@ -108,7 +108,7 @@ In Starlight, each secret variable is assigned an owner. The owner holds a secre
 - `secret`: Marks a variable or parameter as private, so its value is hidden from other users and only accessible to its owner.
 - `known`: Indicates that only the variable owner can modify the variable. By default all variables are known. 
 - `unknown`: Allows any user to increment the variable, not just the owner. 
--`encrypt`: Use when creating a commitment for another user (e.g., with `unknown`). Ensures, via zk-proofs, that a correct encryption of the commitment pre-image is broadcast and can be decrypted by the owner so that the commitment can be used in the future.
+- `encrypt`: Use when creating a commitment for another user (e.g., with `unknown`). Ensures, via zk-proofs, that a correct encryption of the commitment pre-image is broadcast and can be decrypted by the owner so that the commitment can be used in the future.
 
 ---
 
@@ -368,7 +368,7 @@ For the compiled test see below:
 
 `npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
 
-`npm run retest` <-- for any subsequent test runs (if you'd like to run the test from scratch, follow the below instructions)
+`npm run retest` <-- for any subsequent test runs 
 
 It's impossible for a transpiler to tell which order functions must be called in, or the range of inputs that will work. Don't worry - If you know how to test the input Zolidity contract, you'll know how to test the zApp. The signatures of the original functions are the same as the output nodejs functions. There are instructions in the output `test.mjs` on how to edit it.
 
@@ -428,19 +428,17 @@ $ sh bin/startup-double
 
 This starts two orchestration servers running the Swap contract that can be reached on ports 3000 and 3001 respectively. Let's say user A runs its server on port 3001 and user B on 3000.
 
-For user A to initiate a swap with B, it needs a shared secret key derived from its public key (`recipientPubKey`) and the private key from user B. This is how B would compute the shared secret using the public key from A:
+For user A to initiate a swap with B, it needs a shared secret key derived from its public key (`recipientPubKey`) and the private key from user B. This is how B would compute the shared secret using the public key from A, send:
 
-```bash
-curl --location 'http://localhost:3001/getSharedKeys' \
---header 'Content-Type: application/json' \
---data '{
-  "recipientPubKey": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-}'
 ```
+{
+  "recipientPubKey": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+}
+```
+as a POST request to `http://localhost:3001/getSharedKeys`.
 
 Response:
-
-```json
+```
 {
   "SharedKeys": {
     "_hex": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6"
@@ -454,76 +452,70 @@ Use this shared key as the `sharedAddress` in swap interactions.
 ##### Deposit Tokens
 Each party deposits tokens they intend to trade.
 
-User A:
-
-```bash
-curl --location 'http://localhost:3001/deposit' \
---header 'Content-Type: application/json' \
---data '{
+User A sends:
+```
+{
   "tokenId": 1,
   "amount": 100
-}'
+}
 ```
-User B:
+as a POST request to `http://localhost:3001/deposit`.
 
-```bash
-curl --location 'http://localhost:3000/deposit' \
---header 'Content-Type: application/json' \
---data '{
+
+User B sends:
+```
+{
   "tokenId": 2,
   "amount": 100
-}'
+}
 ```
+as a POST request to `http://localhost:3000/deposit`.
+
 
 ##### Initiate Swap
-User A proposes a swap to the shared address:
-
-```bash
-curl --location 'http://localhost:3001/startSwap' \
---header 'Content-Type: application/json' \
---data '{
+User A proposes a swap to the shared address, they send:
+```
+{
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "amountSent": 30,
   "tokenIdSent": 1,
   "tokenIdRecieved": 2,
   "amountRecieved": 0
-}'
+}
 ```
+as a POST request to `http://localhost:3001/startSwap`.
+
 This deducts 30 tokens from User A and locks token 1 for the proposed swap.
 
 ##### Complete Swap
-User B accepts the swap with a matching offer:
-
-```bash
-curl --location 'http://localhost:3000/completeSwap' \
---header 'Content-Type: application/json' \
---data '{
+User B accepts the swap with a matching offer, they send:
+```
+{
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "counterParty": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
   "amountSent": 0,
   "tokenIdSent": 2,
   "tokenIdRecieved": 1,
   "amountRecieved": 30
-}'
+}
 ```
+ as a POST request to `http://localhost:3000/completeSwap`. 
 
 The contract validates the match and executes the atomic swap:
-- Transfers token ownership.
-- Updates balances.
-- Clears swap state.
+  - Transfers token ownership.
+  - Updates balances.
+  - Clears swap state.
 
 ##### Cancel Swap
-If the second party doesn’t agree, User A can cancel the proposal:
-
-```bash
-curl --location 'http://localhost:3001/quitSwap' \
---header 'Content-Type: application/json' \
---data '{
+If the second party doesn’t agree, User A can cancel the proposal, they send:
+```
+{
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "amountSent": 30,
   "tokenIdSent": 1
-}'
+}
 ```
+as a POST request to `http://localhost:3001/quitSwap`.
 
 This reverts the proposal and refunds locked assets to the proposer.
 
@@ -554,13 +546,13 @@ The configuration can be done during `./bin/setup` phase in the following way.
 | `-r`  | API key or APPID of endpoint |
 | `-s`  | Zkp setup flag , Default to yes . If you had already created zkp keys before and just want to configure deployment infrastructure, pass `-s n`  |
 
-#### circuit
+#### Testing circuits
 
 `cd ./path/to/myCircuit.zok`
 
-`docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
+`docker run -v $PWD:/app/code -ti ghcr.io/eyblockchain/zokrates-worker-updated:latest /bin/bash`
 
-`./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
+`./zokrates compile -i code/circuits/myCircuit.zok` <-- it should compile
 
 ### Zokrates Worker
 
