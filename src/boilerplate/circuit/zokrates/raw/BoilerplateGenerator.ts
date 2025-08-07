@@ -27,7 +27,7 @@ class BoilerplateGenerator {
     },
 
     parameters({ name: x }): string[] {
-      return [`private field mut ${x}_oldCommitment_owner_secretKey`];
+      return [`private field ${x}_oldCommitment_owner_secretKey`];
     },
 
     postStatements({ name: x }): string[] {
@@ -60,11 +60,10 @@ class BoilerplateGenerator {
     },
 
     parameters({ name: x, isAccessed, isNullified }): string[] {
-      let para = [
-        `private field mut ${x}_oldCommitment_owner_secretKey`,
+      const para = [
+        `private field ${x}_oldCommitment_owner_secretKey`,
         `public field mut ${x}_oldCommitment_nullifier`,
-        
-      ]
+      ];
       return para;
     },
 
@@ -78,7 +77,16 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x , isAccessed, isNullified, initialisationRequired, isWhole, structProperties, structPropertiesTypes, typeName }): string[] {
+    postStatements({
+      name: x,
+      isAccessed,
+      isNullified,
+      initialisationRequired,
+      isWhole,
+      structProperties,
+      structPropertiesTypes,
+      typeName,
+    }): string[] {
       // default nullification lines (for partitioned & whole states)
       const lines: string[] = [];
       lines.push(
@@ -94,38 +102,51 @@ class BoilerplateGenerator {
         assert(\\
         field_to_bool_256(${x}_oldCommitment_nullifier)[8..256] == field_to_bool_256(${x}_oldCommitment_nullifier_check_field)[8..256]\\
         );
-        // ${x}_oldCommitment_nullifier : non-existence check`);
+        // ${x}_oldCommitment_nullifier : non-existence check`,
+      );
 
       if (initialisationRequired && isWhole) {
         // whole states also need to handle the case of a dummy nullifier
         lines.push(
           `
-          ${x}_oldCommitment_owner_secretKey = if (${x}_oldCommitment_isDummy) { 0 } else { ${x}_oldCommitment_owner_secretKey };
+          assert(\
+          !${x}_oldCommitment_isDummy || (${x}_oldCommitment_owner_secretKey == 0)\
+          );
 
-          ${x}_oldCommitment_salt = if (${x}_oldCommitment_isDummy) { 0 } else { ${x}_oldCommitment_salt };`
+          assert(\
+          !${x}_oldCommitment_isDummy || (${x}_oldCommitment_salt == 0)\
+          );`,
         );
         if (structProperties) {
           if (structPropertiesTypes) {
             structPropertiesTypes.forEach(property => {
-              if (property.typeName === 'bool'){
-                lines.push(`${x}_oldCommitment_value.${property.name} = if (${x}_oldCommitment_isDummy) { false } else { ${x}_oldCommitment_value.${property.name} };`);
-              } else{
+              if (property.typeName === 'bool') {
                 lines.push(
-                  `${x}_oldCommitment_value.${property.name} = if (${x}_oldCommitment_isDummy) { 0 } else { ${x}_oldCommitment_value.${property.name} };`
+                  `assert(\
+                   !${x}_oldCommitment_isDummy || (${x}_oldCommitment_value.${property.name} == false)\
+                   );`,
                 );
-                }
+              } else {
+                lines.push(
+                  `assert(\
+                   !${x}_oldCommitment_isDummy || (${x}_oldCommitment_value.${property.name} == 0)\
+                   );`,
+                );
+              }
             });
           }
+        } else if (typeName === 'bool') {
+          lines.push(
+            `assert(\
+            !${x}_oldCommitment_isDummy || (${x}_oldCommitment_value == false)\
+            );`,
+          );
         } else {
-          if (typeName === 'bool'){
-            lines.push(
-              `${x}_oldCommitment_value = if (${x}_oldCommitment_isDummy) { false } else { ${x}_oldCommitment_value };`
-            );
-          } else {
-            lines.push(
-              `${x}_oldCommitment_value = if (${x}_oldCommitment_isDummy) { 0 } else { ${x}_oldCommitment_value };`
-            );
-          }
+          lines.push(
+            `assert(\
+            !${x}_oldCommitment_isDummy || (${x}_oldCommitment_value == 0)\
+            );`,
+          );
         }
       }
       return lines;
@@ -143,8 +164,8 @@ class BoilerplateGenerator {
       // prettier-ignore
       if(!reinitialisable)
       return [
-        `private  ${typeName ? typeName : 'field'} mut ${x}_oldCommitment_value`,
-        `private field mut ${x}_oldCommitment_salt`,
+        `private  ${typeName ? typeName : 'field'} ${x}_oldCommitment_value`,
+        `private field ${x}_oldCommitment_salt`,
       ];
     },
 
