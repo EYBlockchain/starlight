@@ -736,35 +736,36 @@ describe('CharityPot Zapp', () => {
     ).to.equal(5);
   });
   it('Check number of commitments', async () => {
-    expect(res.CharityPot[4].body.commitments.length).to.equal(7);
+    expect(res.CharityPot[4].body.commitments.length).to.equal(3);
+    expect(res.CharityPot[5].body.commitments.length).to.equal(4);
   });
   it('Check nullified commitments', async () => {
+    expect(res.CharityPot[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res.CharityPot[4].body.commitments[1].isNullified).to.equal(true);
+    expect(res.CharityPot[4].body.commitments[2].isNullified).to.equal(false);
     expect(res.CharityPot[5].body.commitments[0].isNullified).to.equal(true);
     expect(res.CharityPot[5].body.commitments[1].isNullified).to.equal(true);
-    expect(res.CharityPot[5].body.commitments[2].isNullified).to.equal(false);
-    expect(res.CharityPot[6].body.commitments[0].isNullified).to.equal(true);
-    expect(res.CharityPot[6].body.commitments[1].isNullified).to.equal(true);
-    expect(res.CharityPot[6].body.commitments[2].isNullified).to.equal(true);
-    expect(res.CharityPot[6].body.commitments[3].isNullified).to.equal(false);
+    expect(res.CharityPot[5].body.commitments[2].isNullified).to.equal(true);
+    expect(res.CharityPot[5].body.commitments[3].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
     expect(
-      parseInt(res.CharityPot[5].body.commitments[2].preimage.value, 10),
+      parseInt(res.CharityPot[4].body.commitments[2].preimage.value, 10),
     ).to.equal(13);
     expect(
-      parseInt(res.CharityPot[6].body.commitments[3].preimage.value, 10),
+      parseInt(res.CharityPot[5].body.commitments[3].preimage.value, 10),
     ).to.equal(37);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.CharityPot[8].body.commitments.length).to.equal(7);
-    expect(res.CharityPot[8].body.commitments[0].isNullified).to.equal(true);
-    expect(res.CharityPot[8].body.commitments[1].isNullified).to.equal(true);
-    expect(res.CharityPot[8].body.commitments[2].isNullified).to.equal(true);
-    expect(res.CharityPot[8].body.commitments[3].isNullified).to.equal(true);
-    expect(res.CharityPot[8].body.commitments[4].isNullified).to.equal(true);
-    expect(res.CharityPot[8].body.commitments[5].isNullified).to.equal(false);
-    expect(res.CharityPot[8].body.commitments[6].isNullified).to.equal(false);
-    expect(res.CharityPot[9].body.tx.event).to.equal('NewLeaves');
+    expect(res.CharityPot[7].body.commitments.length).to.equal(7);
+    expect(res.CharityPot[7].body.commitments[0].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[1].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[2].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[3].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[4].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[5].isNullified).to.equal(false);
+    expect(res.CharityPot[7].body.commitments[6].isNullified).to.equal(false);
+    expect(res.CharityPot[8].body.tx.event).to.equal('NewLeaves');
   });
 });
 
