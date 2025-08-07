@@ -531,7 +531,7 @@ Apart from local ganache instance, Starlight output zapps can now be deployed in
 
 The configuration can be done during `./bin/setup` phase in the following way.
 
-`./bin/setup -n network -a account -k privatekey -m "12 letter mnemonic" -r APIKey`
+`./bin/setup -n network -a account -k privatekey -m "12-word mnemonic" -r APIKey`
 
 ##### CLI options
 
@@ -542,7 +542,7 @@ The configuration can be done during `./bin/setup` phase in the following way.
 | `-k`  | Private key of above ethereum address |
 | `-m` -  | 12 letter mnemonic passphrase  |
 | `-r`  | API key or APPID of endpoint |
-| `-s`  | Zkp setup flag , Default to yes . If you had already created zkp keys before and just want to configure deployment infrastructure, pass `-s n`  |
+| `-s`  | ZKP setup flag, defaults to yes. If you had already created zkp keys before and just want to configure deployment infrastructure, pass `-s n`  |
 
 #### Testing circuits
 
