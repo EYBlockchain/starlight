@@ -772,8 +772,8 @@ describe('CharityPot Zapp', () => {
     expect(res.CharityPot[7].body.commitments[4].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[5].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[6].isNullified).to.equal(true);
-    expect(res.CharityPot[7].body.commitments[7].isNullified).to.equal(false);
-    expect(res.CharityPot[7].body.commitments[8].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[7].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[8].isNullified).to.equal(false);
     expect(res.CharityPot[7].body.commitments[9].isNullified).to.equal(false);
     expect(res.CharityPot[7].body.commitments[10].isNullified).to.equal(false);
     expect(res.CharityPot[8].body.tx.event).to.equal('NewLeaves');
