@@ -1,7 +1,7 @@
 import FUNCTION_NAME from './FUNCTION_NAME.mjs';
 import { startEventFilter, getSiblingPath } from './common/timber.mjs';
 import logger from './common/logger.mjs';
-import web3 from './common/web3.mjs';
+import Web3 from './common/web3.mjs';
 
 
 // 'sleep' just creates a delay, ensuring the tests don't overlap
@@ -20,15 +20,10 @@ NOTE: if any non-secret functions need to be called first, the transpiler won't 
 NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
 */
 // eslint-disable-next-line func-names
-describe('FUNCTION_NAME', async function () {
+describe('FUNCTION_NAME', function () {
   this.timeout(3660000);
-  try {
-    await web3.connect();
-  } catch (err) {
-    throw new Error(err);
-  }
   // eslint-disable-next-line func-names
-  describe('First call', async function () {
+  describe('First call', function () {
     this.timeout(3660000);
     it('should call FUNCTION_NAME', async () => {
       try {
@@ -36,7 +31,7 @@ describe('FUNCTION_NAME', async function () {
         await startEventFilter('CONTRACT_NAME');
         // this calls your function! It returns the tx from the shield contract
         // you can replace the values below - numbers are randomly generated
-        const { tx , encEvent, encBackupEvent } = await FUNCTION_NAME(FUNCTION_SIG_1);
+        const { tx , encEvent, encBackupEvent } = await FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG_1);
         // prints the tx
         console.log(tx);
         // reassigns leafIndex to the index of the first commitment added by this function
@@ -46,7 +41,7 @@ describe('FUNCTION_NAME', async function () {
           console.log(`Merkle tree event returnValues:`);
           console.log(tx.returnValues[0]);
         }
-        if (encEvent[0].event) {
+        if (encEvent && encEvent[0].event) {
             encryption.msgs = encEvent[0].returnValues[0];
             encryption.key = encEvent[0].returnValues[1];
             console.log("EncryptedMsgs:");
@@ -71,12 +66,12 @@ describe('FUNCTION_NAME', async function () {
     });
   });
   // eslint-disable-next-line func-names
-  describe('Second Call', async function () {
+  describe('Second Call', function () {
     this.timeout(3660000);
     it('should call FUNCTION_NAME again', async () => {
       try {
         // this calls your function a second time for incremental cases
-        const { tx } = await FUNCTION_NAME(FUNCTION_SIG_2);
+        const { tx } = await FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG_2);
         if (tx.event) {
           console.log(`Merkle tree event returnValues:`);
           console.log(tx.returnValues[0]);

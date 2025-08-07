@@ -86,8 +86,7 @@ Starlight compiles your Solidity contract into a zApp written in JavaScript. Unl
 ## Requirements
 
 To run the `zappify` command:
-- Node.js v15 or higher - v16 recommended.  
-  (Known issues with v13 and v18).
+- Node.js v15 or higher (Known issues with v13 and v18).
 
 To run the resulting zApp:
 - Node.js v15 or higher.  
@@ -98,7 +97,22 @@ To run the resulting zApp:
 
 ## Quick User Guide
 
-Take a 'normal' smart contract, like this one:
+### 1. Creating a Zolidity (`.zol`) contract from a standard Solidity (`.sol`) contract
+
+#### Zolidity decorators: `secret`, `known`, and `unknown`
+
+In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update that variable. Secret variables are stored on-chain via commitments, and the original data (preimage) is kept locally by the owner. 
+
+ Zolidity extends Solidity with three decorators:
+
+- `secret`: Marks a variable or parameter as private, so its value is hidden from other users and only accessible to its owner.
+- `known`: Indicates that only the variable owner can modify the variable. By default all variables are known. 
+- `unknown`: Allows any user to increment the variable, not just the owner. 
+- `encrypt`: Use when creating a commitment for another user (e.g., with `unknown`). Ensures, via zk-proofs, that a correct encryption of the commitment pre-image is broadcast and can be decrypted by the owner so that the commitment can be used in the future.
+
+---
+
+Start with a standard Solidity contract, for example:
 
 ```solidity
 // SPDX-License-Identifier: CC0
@@ -106,7 +120,6 @@ Take a 'normal' smart contract, like this one:
 pragma solidity ^0.8.0;
 
 contract Assign {
-
   uint256 private a;
 
   function assign(uint256 value) public {
@@ -115,14 +128,14 @@ contract Assign {
 }
 ```
 
-Then add `secret` in front of each declaration you want to keep secret:
+To convert your Solidity contract to a Zolidity contract, insert the `secret` keyword in front of the declaration of any state variable, local variable, or function parameter you want to keep private:
+
 ```solidity
 // SPDX-License-Identifier: CC0
 
 pragma solidity ^0.8.0;
 
 contract Assign {
-
   secret uint256 private a; // <--- secret
 
   function assign(secret uint256 value) public { // <--- secret
@@ -131,10 +144,70 @@ contract Assign {
 }
 ```
 
-Save this decorated file with a `.zol` extension ('zolidity').
+---
+#### Example: Charity contract using `unknown` and `known`
 
-Run `zappify -i <./path/to/file>.zol` and get an entire standalone zApp in return!
+Here's a simple Zolidity contract for a charity, where anyone can donate but only the admin can withdraw. The variable balance is marked with unknown before the incrementation in donate(), to mark that anyone can call donate and increment balance. Only the owner can decrement balance in the withdraw function.
 
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract CharityPot {
+  secret uint256 private balance;
+  address public admin;
+
+  constructor(address _admin) {
+    admin = _admin;
+  }
+
+  // Anyone can donate to the charity
+  function donate(secret uint256 amount) public {
+    unknown balance += amount; // <--- anyone can increment
+  }
+
+  // Only the admin can withdraw funds
+  function withdraw(secret uint256 amount) public {
+    require(msg.sender == admin, "Only admin can withdraw");
+    balance -= amount; // <--- only admin can decrement
+  }
+}
+```
+
+---
+#### Example: Using the `encrypt` decorator
+
+Sometimes, a commitment is created for a secret variable that is owned by another user. For example, when using the `unknown` tag (as explained above), or with address variables — where ownership is tied to the address and can change when the address changes. To use a commitment, the owner needs the commitment pre-image, but they may not have access to it if they did not create the commitment themselves. The `encrypt` tag solves this by encrypting and broadcasting the commitment pre-image, guaranteeing via the zk proofs that the ciphertext is correctly formed so the new owner can access and use the commitment.
+For example:
+
+```solidity
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Assign {
+  secret uint256 private a; // <--- secret
+
+  function assign(secret uint256 value) public { // <--- secret
+    encrypt unknown a += value; // <--- guarantees the new owner can use the new commitment related to this state update
+  }
+}
+```
+---
+
+Save these decorated contracts with a `.zol` extension (for example, `Assign.zol` and `CharityPot.zol`). These files are now Zolidity contracts.
+
+---
+### 2. Using `zappify` to transpile Zolidity to a standalone zApp
+
+Once you have your Zolidity (`.zol`) contract, run the following command to generate a standalone zApp:
+
+```
+zappify -i <./path/to/Assign.zol>
+```
+
+This will transpile your contract into an entire standalone zApp, outputting it to the `./zapps/` directory by default. 
 
 ---
 ## Install via npm
@@ -192,25 +265,7 @@ This runs `tsc` and `npm i -g ./` which will create a symlink to your node.js bi
 | `--output <./custom/output/dir/>`  | `-o`  | Specify an output directory for the zApp. By default, the zApp is output to a `./zapps/` folder.  |
 | `--zapp-name <customZappName>` | `-z`  | Otherwise files get output to a folder with name matching that of the input file.  |
 | `--log-level <debug>`  | -  | Specify a Winston log level type.  |
-| `--enc`  | `-e`  | Add secret state encryption events for every new commitment*.  |
 | `--help`  | `-h`  | CLI help.  |
-
-*Note that encrypting and broadcasting secret state information to its owner is costly gas-wise, so switching it on with this option may give you `stack too deep` errors in the contract.
-
-An alternative is to use our `encrypt` syntax in front of the state edit you'd like to broadcast, like this:
-
-```solidity
-contract Assign {
-
-  secret uint256 private a; // <--- secret
-
-  function assign(secret uint256 value) public { // <--- secret
-    encrypt a = value; // <--- the new value of a will be encrypted and sent to a's owner
-  }
-}
-```
-
-Partitioned states which are incremented and have an owner which is clearly different from the function caller has encryption included by default.
 
 ---
 
@@ -313,13 +368,11 @@ For the compiled test see below:
 
 `npm test` <-- you may need to edit the test file (`zapps/MyContract/orchestration/test.mjs`) with appropriate parameters before running!
 
-`npm run retest` <-- for any subsequent test runs (if you'd like to run the test from scratch, follow the below instructions)
+`npm run retest` <-- for any subsequent test runs 
 
 It's impossible for a transpiler to tell which order functions must be called in, or the range of inputs that will work. Don't worry - If you know how to test the input Zolidity contract, you'll know how to test the zApp. The signatures of the original functions are the same as the output nodejs functions. There are instructions in the output `test.mjs` on how to edit it.
 
 All the above use Docker in the background. If you'd like to see the Docker logging, run `docker-compose -f docker-compose.zapp.yml up` in another window before running.
-
-**NB: rerunning `npm test` will not work**, as the test script restarts the containers to ensure it runs an initialisation, removing the relevant dbs. If you'd like to rerun it from scratch, down the containers with `docker-compose -f docker-compose.zapp.yml down -v --remove-orphans` and delete the file `zapps/myContract/orchestration/common/db/preimage.json` before rerunning `npm test`.
 
 For using APIs:
 
@@ -375,19 +428,17 @@ $ sh bin/startup-double
 
 This starts two orchestration servers running the Swap contract that can be reached on ports 3000 and 3001 respectively. Let's say user A runs its server on port 3001 and user B on 3000.
 
-For user A to initiate a swap with B, it needs a shared secret key derived from its public key (`recipientPubKey`) and the private key from user B. This is how B would compute the shared secret using the public key from A:
+For user A to initiate a swap with B, it needs a shared secret key derived from its public key (`recipientPubKey`) and the private key from user B. This is how B would compute the shared secret using the public key from A, send:
 
-```bash
-curl --location 'http://localhost:3001/getSharedKeys' \
---header 'Content-Type: application/json' \
---data '{
-  "recipientPubKey": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-}'
 ```
+{
+  "recipientPubKey": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+}
+```
+as a POST request to `http://localhost:3001/getSharedKeys`.
 
 Response:
-
-```json
+```
 {
   "SharedKeys": {
     "_hex": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6"
@@ -401,85 +452,78 @@ Use this shared key as the `sharedAddress` in swap interactions.
 ##### Deposit Tokens
 Each party deposits tokens they intend to trade.
 
-User A:
-
-```bash
-curl --location 'http://localhost:3001/deposit' \
---header 'Content-Type: application/json' \
---data '{
+User A sends:
+```
+{
   "tokenId": 1,
   "amount": 100
-}'
+}
 ```
-User B:
+as a POST request to `http://localhost:3001/deposit`.
 
-```bash
-curl --location 'http://localhost:3000/deposit' \
---header 'Content-Type: application/json' \
---data '{
+
+User B sends:
+```
+{
   "tokenId": 2,
   "amount": 100
-}'
+}
 ```
+as a POST request to `http://localhost:3000/deposit`.
+
 
 ##### Initiate Swap
-User A proposes a swap to the shared address:
-
-```bash
-curl --location 'http://localhost:3001/startSwap' \
---header 'Content-Type: application/json' \
---data '{
+User A proposes a swap to the shared address, they send:
+```
+{
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "amountSent": 30,
   "tokenIdSent": 1,
-  "tokenIdRecieved": 2,
-  "amountRecieved": 0
-}'
+  "tokenIdRecieved": 2
+}
 ```
+as a POST request to `http://localhost:3001/startSwap`.
+
 This deducts 30 tokens from User A and locks token 1 for the proposed swap.
 
 ##### Complete Swap
-User B accepts the swap with a matching offer:
-
-```bash
-curl --location 'http://localhost:3000/completeSwap' \
---header 'Content-Type: application/json' \
---data '{
+User B accepts the swap with a matching offer, they send:
+```
+{
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "counterParty": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-  "amountSent": 0,
   "tokenIdSent": 2,
   "tokenIdRecieved": 1,
   "amountRecieved": 30
-}'
+}
 ```
+ as a POST request to `http://localhost:3000/completeSwap`. 
 
 The contract validates the match and executes the atomic swap:
-- Transfers token ownership.
-- Updates balances.
-- Clears swap state.
+  - Transfers token ownership.
+  - Updates balances.
+  - Clears swap state.
 
 ##### Cancel Swap
-If the second party doesn’t agree, User A can cancel the proposal:
-
-```bash
-curl --location 'http://localhost:3001/quitSwap' \
---header 'Content-Type: application/json' \
---data '{
+If the second party doesn’t agree, User A can cancel the proposal, they send:
+```
+{
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "amountSent": 30,
   "tokenIdSent": 1
-}'
+}
 ```
+as a POST request to `http://localhost:3001/quitSwap`.
 
 This reverts the proposal and refunds locked assets to the proposer.
 
 
-#### Using secret states in the constructor
+#### Constructor inputs
 
-Starlight handles secret initiation in the constructor by creating a proof at the setup stage. Any user supplied inputs will be prompted for in the command line when running `npm start`.
-
-Since this inevitably creates a commitment to be sent your local db, simply restarting the zapp will **not** work. The blockchain will be aware of the constructor commitment, but your zapp will not.
+- When running `npm start`, you will be prompted for any user-supplied constructor inputs.
+- For imported contract addresses:
+  - If you enter `"NA"`, Starlight will **deploy a fresh instance** of the contract and use its address as the constructor input.
+  - **Note:** This auto-deployment is only supported for a fixed set of contracts stored [here](https://github.com/EYBlockchain/starlight/tree/master/contracts/Escrow-imports).
 
 #### Deploy on public testnets
 
@@ -487,7 +531,7 @@ Apart from local ganache instance, Starlight output zapps can now be deployed in
 
 The configuration can be done during `./bin/setup` phase in the following way.
 
-`./bin/setup -n network -a account -k privatekey -m "12 letter mnemonic" -r APIKey`
+`./bin/setup -n network -a account -k privatekey -m "12-word mnemonic" -r APIKey`
 
 ##### CLI options
 
@@ -498,20 +542,20 @@ The configuration can be done during `./bin/setup` phase in the following way.
 | `-k`  | Private key of above ethereum address |
 | `-m` -  | 12 letter mnemonic passphrase  |
 | `-r`  | API key or APPID of endpoint |
-| `-s`  | Zkp setup flag , Default to yes . If you had already created zkp keys before and just want to configure deployment infrastructure, pass `-s n`  |
+| `-s`  | ZKP setup flag, defaults to yes. If you had already created zkp keys before and just want to configure deployment infrastructure, pass `-s n`  |
 
-#### circuit
+#### Testing circuits
 
 `cd ./path/to/myCircuit.zok`
 
-`docker run -v $PWD:/app/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8 /bin/bash`
+`docker run -v $PWD:/app/code -ti ghcr.io/eyblockchain/zokrates-worker-updated:latest /bin/bash`
 
-`./zokrates compile --light -i code/myCircuit.zok` <-- it should compile
+`./zokrates compile -i code/circuits/myCircuit.zok` <-- it should compile
 
 ### Zokrates Worker
 
-Starlight uses containerised zokrates from [zokrates-worker-starlight](https://github.com/EYBlockchain/starlight/pkgs/container/zokrates-worker-starlight). 
-Here we have use two zokrates container, zokrates -version:0.7.12 to compile the circuits and zokrates -version:0.8.1 to do the setup and generate-proof to improve the key and proof generation time.
+Starlight uses containerised zokrates from [zokrates-worker-starlight](https://github.com/EYBlockchain/starlight/pkgs/container/zokrates-worker-starlight).
+Currently, all circuit compilation, setup, and proof generation use Zokrates version 0.8.8.
 
 ### Contributing
 

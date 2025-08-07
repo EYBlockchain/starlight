@@ -115,10 +115,11 @@ const prepareIntegrationTest = (node: any) => {
       fnboilerplate = fnboilerplate.replace(toRemove, `\n`);
     }
     // replace function imports at top of file
-    const fnimport = genericTestFile.import().replace(
-      /FUNCTION_NAME/g,
-      fn.name,
-    );
+    let capitalisedFnName = fn.name.charAt(0).toUpperCase() + fn.name.slice(1);
+    const fnimport = genericTestFile
+      .import()
+      .replace(/FUNCTION_NAME/g, fn.name)
+      .replace(/FUNCTION_CAP_NAME/g, capitalisedFnName);
     // for each function, add the new imports and boilerplate to existing test
     outputTestFile = `${fnimport}\n${outputTestFile}\n${fnboilerplate}`;
   });

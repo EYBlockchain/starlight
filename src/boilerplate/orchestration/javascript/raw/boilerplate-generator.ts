@@ -708,37 +708,37 @@ sendTransaction = {
     },
 };
 
-integrationTestBoilerplate = {
-  import(): string {
-    return  `import FUNCTION_NAME from './FUNCTION_NAME.mjs';\n
-    `
-  },
-  encryption(): string {
-    return `
-    it("should recieve and decrypt messages", async () => {
-      try {
-        const { secretKey } = JSON.parse(
-          fs.readFileSync("/app/orchestration/common/db/key.json", "utf-8", (err) => {
-            console.log(err);
-          })
-        );
-        const plainText = decrypt(encryption.msgs, secretKey, encryption.key);
-        console.log('Decrypted plainText:');
-        console.log(plainText);
-        const salt = plainText[plainText.length - 1];
-        const commitmentSet = await getAllCommitments();
-        const thisCommit = commitmentSet.find(c => generalise(c.preimage.salt).integer === generalise(salt).integer);
-        assert.equal(!!thisCommit, true);
+  integrationTestBoilerplate = {
+    import(): string {
+      return `import { FUNCTION_CAP_NAMEManager } from './FUNCTION_NAME.mjs';\n
+    `;
+    },
+    encryption(): string {
+      return `
+        it("should recieve and decrypt messages", async () => {
+          try {
+            const { secretKey } = JSON.parse(
+              fs.readFileSync("/app/orchestration/common/db/key.json", "utf-8", (err) => {
+                console.log(err);
+              })
+            );
+            const plainText = decrypt(encryption.msgs, secretKey, encryption.key);
+            console.log('Decrypted plainText:');
+            console.log(plainText);
+            const salt = plainText[plainText.length - 1];
+            const commitmentSet = await getAllCommitments();
+            const thisCommit = commitmentSet.find(c => generalise(c.preimage.salt).integer === generalise(salt).integer);
+            assert.equal(!!thisCommit, true);
 
-      } catch (err) {
-        logger.error(err);
-        process.exit(1);
-      }
-    });
-    `
-  },
-  preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport web3 from './common/web3.mjs';\n\n
+          } catch (err) {
+            logger.error(err);
+            process.exit(1);
+          }
+        });
+      `;
+    },
+    preStatements(): string {
+      return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\n import GN from "general-number";\nimport {getAllCommitments} from "./common/commitment-storage.mjs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport Web3 from './common/web3.mjs';\n\n
         /**
       Welcome to your zApp's integration test!
       Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
@@ -753,24 +753,27 @@ integrationTestBoilerplate = {
       let leafIndex;
       let encryption = {};
       // eslint-disable-next-line func-names
-       describe('CONTRACT_NAME', async function () {
-        this.timeout(3660000);
-        try {
-          await web3.connect();
-        } catch (err) {
-          throw new Error(err);
-        }`
+       describe('CONTRACT_NAME', function () {
+        let web3;
+        let add;
+        let remove;
+        before(async function () {
+          web3 = Web3.connection();
+          add = new AddManager(web3);
+          await add.init();
+          remove = new RemoveManager(web3);
+          await remove.init();
+          this.timeout(3660000);
+        });`;
+    },
+    postStatements(): string {
+      return `// eslint-disable-next-line func-names \n ${
+        (fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g) ||
+          [])[0]
+      }`;
+    },
+  };
 
-
-
-},
-postStatements(): string {
-  return `// eslint-disable-next-line func-names \n ${
-      (fs.readFileSync(testReadPath, 'utf8').match(/describe?[\s\S]*/g) || [])[0]
-    }`
-},
-
-};
 integrationApiServicesBoilerplate = {
   import(): string {
     return  `import { FUNCTION_NAME } from './FUNCTION_NAME.mjs';\n
