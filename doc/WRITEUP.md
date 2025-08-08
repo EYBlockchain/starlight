@@ -13,6 +13,7 @@ Please note this write-up may be out of date as more features are added and desi
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Introduction](#introduction)
 - [Overview](#overview)
 - [Compiler architecture](#compiler-architecture)
   - [Summary](#summary)
@@ -33,6 +34,7 @@ Please note this write-up may be out of date as more features are added and desi
     - [Summary](#summary-2)
     - [State variable IDs](#state-variable-ids)
     - [zApps' commitment structures](#zapps-commitment-structures)
+      - [Commitment structure for structs](#commitment-structure-for-structs)
     - [To PK or not to PK](#to-pk-or-not-to-pk)
   - [Whole vs Partitioned states](#whole-vs-partitioned-states)
     - [Summary](#summary-3)
@@ -45,10 +47,6 @@ Please note this write-up may be out of date as more features are added and desi
   - [Ownership](#ownership)
   - [Accessing private states](#accessing-private-states)
     - [Summary](#summary-4)
-  - [Sharing private data](#sharing-private-data)
-    - [Summary](#summary-5)
-    - [Details](#details)
-    - [Placeholders](#placeholders)
   - [Key management](#key-management)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
