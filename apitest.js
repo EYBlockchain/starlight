@@ -15,9 +15,9 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-let testedZapps = [];
+const testedZapps = [];
 
-const getUserFriendlyTestNames = async (folderPath) => {
+const getUserFriendlyTestNames = async folderPath => {
   try {
     const files = await fs.promises.readdir(folderPath, { withFileTypes: true });
     const fileNames = files
@@ -138,9 +138,12 @@ const apiRequests_BucketsOfBalls = [
 
 res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
 
-// In order to test Charity Pot we first need to mint ERC tokens. 
-const donateFilePath = path.join(__dirname, 'temp-zapps/CharityPot/orchestration/donate.mjs');
-let mintingText = `const erc20 = await getContractInstance("ERC20");
+// In order to test Charity Pot we first need to mint ERC tokens.
+let depositFilePath = path.join(
+  __dirname,
+  'temp-zapps/CharityPot/orchestration/deposit.mjs',
+);
+const mintingText = `const erc20 = await getContractInstance("ERC20");
 // mint tokens to the contract 
 console.log("address minting to", config.web3.options.defaultAccount);  
 await erc20.methods
@@ -150,31 +153,52 @@ await erc20.methods
 await erc20.methods
     .approve(this.contractAddr, 500)
     .send({ from: config.web3.options.defaultAccount });`;
-let donateContent = fs.readFileSync(donateFilePath, 'utf8');
-const keyword = "const web3 = this.web3;";
-let position = donateContent.indexOf(keyword);
+let depositContent = fs.readFileSync(depositFilePath, 'utf8');
+const keyword = 'const web3 = this.web3;';
+let position = depositContent.indexOf(keyword);
 if (position !== -1) {
-  const before = donateContent.slice(0, position + keyword.length); // Include the keyword
-  const after = donateContent.slice(position + keyword.length); // Everything after the keyword
-  donateContent = before + mintingText + after;
+  const before = depositContent.slice(0, position + keyword.length); // Include the keyword
+  const after = depositContent.slice(position + keyword.length); // Everything after the keyword
+  depositContent = before + mintingText + after;
 } else {
   console.error(`Keyword "${keyword}"  not found in the file.`);
 }
-fs.writeFileSync(donateFilePath, donateContent, 'utf8');
+fs.writeFileSync(depositFilePath, depositContent, 'utf8');
 
-console.log('donate.mjs in CharityPot modified successfully to mint ERC tokens. Proceeding with the test...');
+console.log(
+  'deposit.mjs in CharityPot modified successfully to mint ERC tokens. Proceeding with the test...',
+);
 
 const apiRequests_CharityPot = [
+  { method: 'post', endpoint: '/deposit', data: { amount: 50 } },
   { method: 'post', endpoint: '/donate', data: { donation: 4 } },
   { method: 'post', endpoint: '/donate', data: { donation: 16 } },
   { method: 'post', endpoint: '/withdraw', data: { withdrawal: 7 } },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'pot' } },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'pot' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: {
+      name: 'balances',
+      mappingKey: '1390849295786071768276380950238675083608645509734',
+    },
+  },
   { method: 'get', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/withdraw', data: { withdrawal: 3 } },
 ];
 
-res.CharityPot = await callZAppAPIs('CharityPot', apiRequests_CharityPot, 'CharityPot Zapp failed', undefined, "\"1390849295786071768276380950238675083608645509734\",\"NA\"");
+res.CharityPot = await callZAppAPIs(
+  'CharityPot',
+  apiRequests_CharityPot,
+  'CharityPot Zapp failed',
+  undefined,
+  "\"1390849295786071768276380950238675083608645509734\",\"NA\""
+);
 
 const apiRequests_Constructor = [
   { method: 'get', endpoint: '/getAllCommitments' },
@@ -203,11 +227,11 @@ const apiRequests_Encrypt = [
 res.Encrypt = await callZAppAPIs('Encrypt', apiRequests_Encrypt, 'Encrypt Zapp failed');
 
 // In order to test Escrow we first need to mint ERC tokens
-const depositFilePath = path.join(
+depositFilePath = path.join(
   __dirname,
   'temp-zapps/Escrow/orchestration/deposit.mjs',
 );
-let depositContent = fs.readFileSync(depositFilePath, 'utf8');
+depositContent = fs.readFileSync(depositFilePath, 'utf8');
 position = depositContent.indexOf(keyword);
 if (position !== -1) {
   const before = depositContent.slice(0, position + keyword.length); // Include the keyword
@@ -695,29 +719,64 @@ describe('CharityPot Zapp', () => {
     expect(res.CharityPot[0].body.tx.event).to.equal('NewLeaves');
     expect(res.CharityPot[1].body.tx.event).to.equal('NewLeaves');
     expect(res.CharityPot[2].body.tx.event).to.equal('NewLeaves');
+    expect(res.CharityPot[3].body.tx.event).to.equal('NewLeaves');
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.CharityPot[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.CharityPot[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.CharityPot[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(
+      parseInt(res.CharityPot[0].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(0);
+    expect(
+      parseInt(res.CharityPot[1].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(3);
+    expect(
+      parseInt(res.CharityPot[2].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(7);
+    expect(
+      parseInt(res.CharityPot[3].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(9);
   });
   it('Check number of commitments', async () => {
-    expect(res.CharityPot[3].body.commitments.length).to.equal(3);
+    expect(res.CharityPot[4].body.commitments.length).to.equal(3);
+    expect(res.CharityPot[5].body.commitments.length).to.equal(8);
   });
   it('Check nullified commitments', async () => {
-    expect(res.CharityPot[3].body.commitments[0].isNullified).to.equal(true);
-    expect(res.CharityPot[3].body.commitments[1].isNullified).to.equal(true);
-    expect(res.CharityPot[3].body.commitments[2].isNullified).to.equal(false);
-  });
-  it('Check value of final commitment', async () => {
-    expect(parseInt(res.CharityPot[3].body.commitments[2].preimage.value)).to.equal(13);
-  });
-  it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.CharityPot[5].body.commitments.length).to.equal(3);
+    expect(res.CharityPot[4].body.commitments[0].isNullified).to.equal(true);
+    expect(res.CharityPot[4].body.commitments[1].isNullified).to.equal(true);
+    expect(res.CharityPot[4].body.commitments[2].isNullified).to.equal(false);
     expect(res.CharityPot[5].body.commitments[0].isNullified).to.equal(true);
     expect(res.CharityPot[5].body.commitments[1].isNullified).to.equal(true);
-    expect(res.CharityPot[5].body.commitments[2].isNullified).to.equal(false);
-    expect(res.CharityPot[6].body.tx.event).to.equal('NewLeaves');
+    expect(res.CharityPot[5].body.commitments[2].isNullified).to.equal(true);
+    expect(res.CharityPot[5].body.commitments[3].isNullified).to.equal(true);
+    expect(res.CharityPot[5].body.commitments[4].isNullified).to.equal(true);
+    expect(res.CharityPot[5].body.commitments[5].isNullified).to.equal(true);
+    expect(res.CharityPot[5].body.commitments[6].isNullified).to.equal(false);
+    expect(res.CharityPot[5].body.commitments[7].isNullified).to.equal(false);
+  });
+  it('Check value of final commitment', async () => {
+    expect(
+      parseInt(res.CharityPot[4].body.commitments[2].preimage.value, 10),
+    ).to.equal(13);
+    expect(
+      parseInt(res.CharityPot[5].body.commitments[6].preimage.value, 10),
+    ).to.equal(30);
+    expect(
+      parseInt(res.CharityPot[5].body.commitments[7].preimage.value, 10),
+    ).to.equal(7);
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    expect(res.CharityPot[7].body.commitments.length).to.equal(11);
+    expect(res.CharityPot[7].body.commitments[0].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[1].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[2].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[3].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[4].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[5].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[6].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[7].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[8].isNullified).to.equal(false);
+    expect(res.CharityPot[7].body.commitments[9].isNullified).to.equal(false);
+    expect(res.CharityPot[7].body.commitments[10].isNullified).to.equal(false);
+    expect(res.CharityPot[8].body.tx.event).to.equal('NewLeaves');
   });
 });
 

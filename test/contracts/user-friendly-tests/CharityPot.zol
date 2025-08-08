@@ -6,6 +6,7 @@ import "./Escrow-imports/IERC20.sol";
 
 contract CharityPot {
 
+    secret mapping(address => uint256) public balances;
     secret uint256 private pot;
     IERC20 public erc20;
     address public admin;
@@ -15,14 +16,20 @@ contract CharityPot {
         admin = _admin;
     }
 
-    function donate(uint256 donation) public {
-        require(erc20.transferFrom(msg.sender, address(this), donation), "ERC20 transfer failed");
+    function deposit(uint256 amount) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances[msg.sender] += amount;
+    }
+
+    function donate(secret uint256 donation) public {
+        balances[msg.sender] -= donation;
         unknown pot += donation;
     }
 
-    function withdraw(uint256 withdrawal) public {
+    function withdraw(secret uint256 withdrawal) public {
         require(msg.sender == admin);
         pot -= withdrawal;
-        require(erc20.transfer(msg.sender, withdrawal),"ERC20 transfer failed");
+        unknown balances[msg.sender] += withdrawal;
     }
 }
