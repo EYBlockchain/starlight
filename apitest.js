@@ -82,7 +82,7 @@ const apiRequests_Arrays = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '0'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '1'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '2'} },
-  { method: 'get', endpoint: '/backupVariable', data: { name: 'b' } },
+  { method: 'post', endpoint: '/backupVariable', data: { name: 'b' } },
   { method: 'post', endpoint: '/add', data: { value: 7 } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '2'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '3'} },
@@ -100,7 +100,7 @@ const apiRequests_Assign = [
   { method: 'get', endpoint: '/getBalance' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/remove', data: { value: 2 } },
 
@@ -128,7 +128,7 @@ const apiRequests_BucketsOfBalls = [
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '5'} },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/transfer', data: { toBucketId: 3, numberOfBalls: 2 } },
   { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
@@ -187,7 +187,7 @@ const apiRequests_CharityPot = [
       mappingKey: '1390849295786071768276380950238675083608645509734',
     },
   },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/withdraw', data: { withdrawal: 3 } },
 ];
@@ -208,7 +208,7 @@ const apiRequests_Constructor = [
   { method: 'post', endpoint: '/remove', data: { value: 12 } },
   { method: 'get', endpoint: '/getBalance' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/remove', data: { value: 2 } },
 
@@ -290,7 +290,7 @@ const apiRequests_Escrow = [
     endpoint: '/getCommitmentsByVariableName',
     data: { name: 'tokens' },
   },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   {
     method: 'get',
@@ -335,7 +335,7 @@ const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 3 } },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
-  { method: 'get', endpoint: '/backupVariable', data: { name: 'z' } },
+  { method: 'post', endpoint: '/backupVariable', data: { name: 'z' } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
   { method: 'post', endpoint: '/add', data: { y: 6 } },
 ];
@@ -358,7 +358,7 @@ const apiRequests_MappingtoStruct = [
   { method: 'post', endpoint: '/add', data: { value: 15 } },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'd', mappingKey: '0'} },
-  { method: 'get', endpoint: '/backupVariable', data: { name: 'd' } },
+  { method: 'post', endpoint: '/backupVariable', data: { name: 'd' } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'd', mappingKey: '0'} },
   { method: 'post', endpoint: '/add', data: { value: 18 } },
 ];
@@ -452,7 +452,7 @@ const apiRequests_NFT_Escrow = [
     endpoint: '/getCommitmentsByVariableName',
     data: { name: 'tokenOwners', mappingKey: '23456789' },
   },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   {
     method: 'get',
