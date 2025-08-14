@@ -124,19 +124,57 @@ res.Assign_api = await callZAppAPIs('Assign-api', apiRequests_Assign_api, 'Assig
 const apiRequests_BucketsOfBalls = [
   { method: 'post', endpoint: '/deposit', data: { amountDeposit: 6 } },
   { method: 'post', endpoint: '/deposit', data: { amountDeposit: 7 } },
-  { method: 'post', endpoint: '/transfer', data: { toBucketId: 5, numberOfBalls: 8 } },
+  {
+    method: 'post',
+    endpoint: '/transfer',
+    data: { toBucketId: 5, numberOfBalls: 8 },
+  },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '5'} },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: {
+      name: 'buckets',
+      mappingKey: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'buckets', mappingKey: '5' },
+  },
   { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'post', endpoint: '/transfer', data: { toBucketId: 3, numberOfBalls: 2 } },
-  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
-  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '5'} },
-  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '3'} },
+  {
+    method: 'post',
+    endpoint: '/transfer',
+    data: { toBucketId: 3, numberOfBalls: 2 },
+  },
+  {
+    method: 'get',
+    endpoint: '/getBalanceByState',
+    data: {
+      name: 'buckets',
+      mappingKey: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'get',
+    endpoint: '/getBalanceByState',
+    data: { name: 'buckets', mappingKey: '5' },
+  },
+  {
+    method: 'get',
+    endpoint: '/getBalanceByState',
+    data: { name: 'buckets', mappingKey: '3' },
+  },
 ];
 
-res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
+res.BucketsOfBalls = await callZAppAPIs(
+  'BucketsOfBalls',
+  apiRequests_BucketsOfBalls,
+  'BucketsOfBalls Zapp failed',
+);
 
 // In order to test Charity Pot we first need to mint ERC tokens.
 let depositFilePath = path.join(
