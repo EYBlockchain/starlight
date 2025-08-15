@@ -13,6 +13,7 @@ Please note this write-up may be out of date as more features are added and desi
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Introduction](#introduction)
 - [Overview](#overview)
 - [Compiler architecture](#compiler-architecture)
   - [Summary](#summary)
@@ -33,6 +34,7 @@ Please note this write-up may be out of date as more features are added and desi
     - [Summary](#summary-2)
     - [State variable IDs](#state-variable-ids)
     - [zApps' commitment structures](#zapps-commitment-structures)
+      - [Commitment structure for structs](#commitment-structure-for-structs)
     - [To PK or not to PK](#to-pk-or-not-to-pk)
   - [Whole vs Partitioned states](#whole-vs-partitioned-states)
     - [Summary](#summary-3)
@@ -45,10 +47,6 @@ Please note this write-up may be out of date as more features are added and desi
   - [Ownership](#ownership)
   - [Accessing private states](#accessing-private-states)
     - [Summary](#summary-4)
-  - [Sharing private data](#sharing-private-data)
-    - [Summary](#summary-5)
-    - [Details](#details)
-    - [Placeholders](#placeholders)
   - [Key management](#key-management)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -521,7 +519,7 @@ myMapping[key] = value, is stored at storage slot `hash( key, id )`
 
 #### zApps' commitment structures
 
-For our current phase of work, we're only planning on supporting `uint256` and `address` basic types, and `mapping`. (So no arrays or structs yet, and certainly no dynamic arrays, because we're dealing with snarks).
+For our current phase of work, we support `uint256` and `address` basic types, `structs`, `arrays`, and `mapping` (including mappings to structs).
 
 Consider this incomplete `.zol` contract:
 
@@ -564,17 +562,34 @@ h(h( stateVarId, key ), value, ownerPublicKey, salt)
 //      id       key    <-- switched order from solidity storage layouts
 ```
 
-The `value` field refers to the value of the entire state if it is whole, or a part of the state owned by `ownerPublicKey` if it's partitioned (see [below](#whole-vs-partitioned-states)).
-The `salt` is a random integer chosen to prevent duplicates and to hide the contents of the commitment.
+The `value` field refers to the value of the entire state if it is whole, or a part of the state owned by `ownerPublicKey` if it's partitioned (see [below](#whole-vs-partitioned-states)). The `salt` is a random integer chosen to prevent duplicates and to hide the contents of the commitment.
+
 
 These commitments have nullifiers of structure:
 
 ```solidity
-h(ownerSecretKey, salt)
+h(stateVarId, ownerSecretKey, salt)
 ```
 
 _Why didn't we simply store the state's name in the commitment? Names may not be unique; a pesky developer might name a function and a variable `x`, or shadow-declare a variable. Such an approach is more complicated._
 
+##### Commitment structure for structs
+
+When a secret state is a struct, the commitment preimage includes each property of the struct as a separate input to the commitment. For example, for a struct:
+
+```solidity
+struct S {
+    uint256 a;
+    address b;
+    uint256 c;
+}
+```
+
+the commitment for a secret state `S s` would be:
+
+```solidity
+h(stateVarId, s.a, s.b, s.c, ownerPublicKey, salt)
+```
 
 #### To PK or not to PK
 
@@ -674,8 +689,7 @@ E.g. `a *= b` implies `a` must be whole.
 - A secret state which is only ever incremented/decremented may be a 'partitioned' state, but only if at least one of its state changes is preceded with the `unknown` decorator.
 - Only _incrementation_ statements (`a = a + b`, `a += b`, `a++`, `++a`) may be preceded with the `unknown` decorator.
 - A _decrementation_ statement (`a = a - b`, `a -= b`, `a--`, `--a`) _cannot_ be decorated as `unknown`, because to decrement a state is to nullify some/all of its 'part' commitments. And to nullify is to be the owner (who clearly must `know` the secret).
-- In 'strict' mode (the default), for every line where a partitioned state is _incrementated_, it must be preceded with a `known` or `unknown` decorator. Strict mode will encourage developers to think twice about whether their function is handling secrets in the way they intend.
-- If 'strict' mode is turned off (because the dev knows what they're doing), then superfluous `known` decorators can be omitted.
+- For partitioned states, the `known` decorator is optional for incrementing statements: you may omit `known` and the transpiler will treat the statement as if it were decorated with `known`. However, if you wish to use the `unknown` decorator, it must be specified explicitly. Incrementations without a decorator are treated as `known` by default.
 
 _If this summary didn't make much sense, or if you'd like some meaty explanation for how/why we derived these rules, please read the rest of this section._
 
@@ -822,8 +836,6 @@ In normal Solidity land, `a` is implicitly initialised as `0`. Anyone could come
 In zkp land, where `a` is secret, it's trickier. It wasn't immediately clear to us (as transpiler designers) whether `a` should get automatically initialised with an initial value, or even how that could be done. What should the initial value be? Who would the initial commitment be owned by? How would that initial commitment be submitted? How would the secret state be edited thereafter? Who would be allowed to edit it thereafter?
 
 ---
-
-Q: this section isn't really about initialisation; it's more about nullification of whole states which don't have a clear owner. It's a very important discussion, but it doesn't belong in "initialisation".
 
 The Solidity above suggests _anyone_ should be able to come along and edit `a`, because the function doesn't impose any restrictions on the caller. But it's trickier to 'allow' this kind of code (again, as transpiler designers) when dealing with secret states. A 'secret' is a concept that implies a secret _owner_. So once a (whole) secret state has been initialised (with an owner), it feels natural that only the owner of that state should ever be allowed to change it in future. And indeed, that's something we decided in the earlier section on [whole states](#whole-states). Surely, some other person shouldn't be able to overwrite `a`, because our earlier discussions on whole states (and experience in zk protocols) tell us that you must produce a nullifier to overwrite a whole state.
 
@@ -1443,160 +1455,6 @@ function fn2() {
 
 `b` must be known, and whole.
 `a` is `unknown`, and hence partitioned. But looking at `fn2`, `a` is being accessed. It's not possible to access a partitioned state; hence this contract must throw an error at transpilation.
-
----
-
-### Sharing private data
-
-#### Summary
-
-- To ensure secret data is shared with the correct counterparty(ies), we introduce new syntax for devs.
-- Use the syntax `share <secretStateName> with <address>` to ensure secret data is encrypted and shared on-chain with the owner of the `address`. (See the [key management](#key-management) section for more info on various public keys).
-- Use the syntax `share <secretStateName> with <placeholder>` for more abstract sharing. (Not being built yet).
-- Every incrementation of a partitioned state _must_ be followed by a `share` statement (somewhere later in the body of the function).
-  - Unless... the person being shared with is the `owner` of the 'part' commitment being created. Sharing with the `owner` of the newly created 'part' commitment is such a common-sense thing that'll be required in pretty-much all cases, so should be assumed by the compiler, for a good UX.
-
-_[Skip](#key-management) to the next big section. Or read on for detailed explanations._
-
-#### Details
-
-Most meaningful blockchain transactions require data to be transmitted to one or more people. 'Transfers' are a good example; a sender must transmit details of the amount they've paid to a particular recipient. Of course, the blockchain takes care of this data transmission for us, because it _stores_ such data publicly in the ledger for all to see (be it as proper 'storage' or as cheaper event logs). The recipient can just 'lookup' what they need.
-If we start to think about zApp transactions, we now don't want secret state variables or parameters to be revealed on-chain. How, then, does a transactor  transmit secret data to a counterparty (or counterparties)?
-
-We have two main options:
-1. Use an off-chain end-to-end encrypted messaging service.
-1. Encrypt the secret data and submit the encrypted message to the blockchain, for the counterparty to decrypt.
-
-Option 1 includes solutions like the now-deprecated Whisper and its descendants. The main problems with this approach are:
-- message delivery is not guaranteed (e.g. if a server crashes);
-- the transactor is not _forced_ to send the information (and so may never do so).
-
-Option 2 can be achieved by encrypting the data _within_ the transaction's snark circuit, thereby forcing the transactor to share an encrypted message containing the correct secret data. An often-claimed downside to this approach is that such messages might be decryptable long in the future, but the same is true for all encrypted messages, and they're still used everywhere.
-
-**Zappify will generate zApp code in line with data sharing Option 2; submission of encrypted secret data to the blockchain.**
-
-To this end, we find we need some new `zol` syntax...
-
-**NOTE: This new syntax has not yet been added to starlight**
-
-Consider the below examples:
-
-**Example 1**
-
-```Solidity
-secret mapping(address => uint) balances;
-
-function transfer(secret uint value, secret address recipient) {
-  balances[msg.sender] -= value;
-  unknown balances[recipient] += value;
-}
-```
-
-To a human brain, we can fairly quickly realise that the secret `value` and its associated `salt` should be transmitted to the owner of the `recipient` address. And, indeed, the compiler _will_ be able to realise this without any new syntax, through several complex traversals:
-- The mapping is secret;
-- The mapping maps from an address;
-- Seeing that whenever ths secret mapping is nullified, its key is `msg.sender`;
-- Inferring from this that the owner of a commitment to such a mapping's value must be the mapping's key. I.e. that `comm = h(h(0, key = addr), value, ownerPK = addr, salt)`
-
-Here, the compiler would generate zApp code to enforce the sharing of the secrets `value` and `salt` with the messaging public [key](#key-management) of the `recipient`.
-
-**Example 2**
-
-But in the below example, we see that a dev's intentions might not match the default inferences that the compiler would make:
-
-```Solidity
-secret mapping(address => uint) balances;
-address admin;
-
-function transfer(secret uint value, secret address recipient) {
-  balances[msg.sender] -= value;
-  unknown balances[recipient] += value;
-}
-```
-
-Here, the compiler would make the same inference as the first example; to share secret data with the `recipient`'s messaging public key. But suppose the developer _also_ wanted to share data with the `admin`'s messaging public key? There's no Solidity syntax which is analogous to this concept of sharing data, because _all_ data is _always_ shared with vanilla Solidity.
-
-We therefore introduce new syntax:
-
-`share <secret> with <address / placeholder>` (the 'placeholder' concept will be discussed later).
-
-So for the developer to convey their intentions (for the `value` and corresponding `salt` to be shared with the `admin`\*), they would add:
-
-`share value with admin;`:
-
-```Solidity
-secret mapping(address => uint) balances;
-address admin;
-
-function transfer(secret uint value, secret address recipient) {
-  balances[msg.sender] -= value;
-  unknown balances[recipient] += value;
-  share value with admin;
-}
-```
-
-\*Note: the compiler will still include code for the secret to be shared with the `recipient` address, due to the layout of this code snippet.
-
-Note, if the dev wrote something like `share balances[recipient] with admin`, an error must be thrown, because `balances[recipient]` is `unknown` to the transactor.
-
-
-#### Placeholders
-
-<!-- TODO: this section is pretty complicated, and it's so niche that it'll probably be on the backlog for ages. -->
-
-Consider this partial code snippet, which doesn't use a `mapping(address => ...)`:
-
-```solidity
-// balls in buckets, indexed by bucketId
-secret mapping(uint256 => uint256) numberOfBalls;
-
-function moveBallsToThreePlaces(
-    secret uint256 bucketId1,
-    secret uint256 bucketId2,
-    secret uint256 bucketId3,
-    secret uint256 bucketId4,
-    secret uint256 amount2,
-    secret uint256 amount3,
-    secret uint256 amount4
-) {
-    numberOfBalls[bucketId1] -= ( amount2 + amount3 + amount4 );
-    unknown numberOfBalls[bucketId2] += amount2;
-    unknown numberOfBalls[bucketId3] += amount3;
-    unknown numberOfBalls[bucketId4] += amount4;
-}
-```
-
-Here, instead of transferring money between addresses, we're transferring balls between buckets. Ignore the fact that this code doesn't include a function to initialise a bucket of balls; we're being lazy.
-
-Since we don't have the neat case of a mapping from an address (`mappng(address => ...)`) the compiler won't be able to infer who it should share secret data with without some syntactic help.
-The dev should therefore add `share <secret> with <address>` syntax. But since there are no addresses whatsoever in this contract, the dev can adopt 'placeholder' syntax instead:
-
-```solidity
-// balls in buckets, indexed by bucketId
-secret mapping(uint256 => uint256) numberOfBalls;
-
-function moveBallsToThreePlaces(
-    secret uint256 bucketId1,
-    secret uint256 bucketId2,
-    secret uint256 bucketId3,
-    secret uint256 bucketId4,
-    secret uint256 amount2,
-    secret uint256 amount3,
-    secret uint256 amount4
-) {
-    numberOfBalls[bucketId1] -= ( amount2 + amount3 + amount4 );
-    unknown numberOfBalls[bucketId2] += amount2;
-    unknown numberOfBalls[bucketId3] += amount3;
-    unknown numberOfBalls[bucketId4] += amount4;
-    share amount2 with 'a
-    share amount3 with 'b
-    share amount4 with 'b
-}
-```
-
-Here, the dev is saying "Permit the caller of this function to share `amount2` with anyone. Permit the caller of this function to share `amount3` with anyone, but force them to also share `amount4` with that same person."
-
-Pretty obscure example.
 
 ---
 

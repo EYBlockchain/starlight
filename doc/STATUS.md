@@ -13,7 +13,7 @@ This document explains what Solidity functionality you can input to `starlight`,
 
 You can find example `.zol` contracts ready to compile in the `./test/contracts/user-friendly-tests` directory [here](../test/contracts/user-friendly-tests). These are all simple and illustrative of what the compiler can do. Meanwhile, we have some more familiar looking real world contracts in `./test/real-world-zapps` [here](../test/real-world-zapps/).
 
-Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we are actively working on these!
+Do note that `LoanSimple.zol` don't currently compile - we are actively working on this!
 
 ## Current Functionality
 
@@ -23,8 +23,8 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
       - External function calls are supported, as long as secret states aren't involved.
       - Constructors are supported, but be aware that the output shield contract will contain a constructor combining the `.zol` constructor and some extra functionality.
       - Functions can have any number of secret or public parameters of the types below.
-    - Any number of states, secret or public:
-      - Secret states can have types `uint256`, `bool`, `address`, and `mapping`.
+      - Any number of states, secret or public:
+      - Secret states can have types `uint256`, `bool`, `address`, `mapping`, `array`, `struct`, or mappings to structs (e.g., `mapping(uint => MyStruct)`).
         - Keys of secret mappings can be `uint256` or `address`.
       - All other types (e.g. `u32`) can be used as long as they aren't secret or interact with secret states.
       - Public and secret states *can* interact within functions, but this may break the output zApp or render its privacy useless.
@@ -50,16 +50,25 @@ Do note that `NFT_Escrow.zol` and `LoanSimple.zol` don't currently compile - we 
 
 ## Unsupported Solidity
 
-  Here we summarise the as of yet unsupported Solidity syntax. Some of these can be integrated relatively easily ('simple implementation') or are intrinsically complex ('complex implementation').
+Here we summarise the as of yet unsupported Solidity syntax. 
 
-### Simple Implementation (Simplementation?)
-
-- Enums:
-  - Public enums would be easy to add - however, if these interact with secret states, we must have a robust system to convert them into something both nodejs and Zokrates understand.
-
-### Complex Implementation
-
-- Assembly:
+- **Enums:**
+  - Public enums would be easy to add; however, if these interact with secret states, we must have a robust system to convert them into something both nodejs and Zokrates understand.
+- **Nested Mapping calls, multidimensional arrays, and mappings to arrays:**
+  - These require complex naming and accessing logic we haven't completed. This includes multidimensional arrays (e.g., `uint[][]`) and mappings to arrays (e.g., `mapping(uint => uint[])`). Consider using local variables or simplifying mappings and array structures.
+- **Structs involving properties as mappings, arrays, or nested structs:**
+  - These create a very complex commitment structure. This includes structs with properties of type `mapping`, dynamic or fixed-size `array` (e.g., `uint[]`, `address[3]`), or other structs. We may work on this in future if there is high demand for this feature.
+- **Arrays of structs:**
+  - Consider using mappings to structs, which are supported. 
+- **While statements:**
+  - These are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.
+- **Assembly:**
   - Inline assembly is often used in Solidity to save gas and/or perform complex operations. Copying over entirely public assembly to the output contract wouldn't be too difficult, whereas compiling assembly to Zokrates and possibly nodejs would be.
-- Re-initialising whole secret states:
-  - See the [writeup](./WRITEUP.md) sections on these for more details.
+- **If statements with singular variable conditions:**
+  - Conditions like `if(a)` or `if(flag)` are not supported. Use explicit comparisons, e.g., `if(a == true)`.
+- **Logical expressions with mixed `&&` and `||` operators:**
+  - Nested logical operators without brackets (e.g., `if(a && b || c)`) are not supported. Use brackets to clarify logic, e.g., `if((a && b) || c)`.
+- **Secret variables named `key` or starting with `_`:**
+  - Zokrates does not support secret variables named `key` or starting with an underscore (e.g., `_value`).
+- **Other limitations:**
+  - The compiler will throw errors for unsupported patterns, often with suggestions for workarounds.
