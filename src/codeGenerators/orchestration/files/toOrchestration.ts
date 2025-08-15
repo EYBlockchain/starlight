@@ -638,6 +638,7 @@ const prepareBackupVariable = (node: any) => {
     poseidonHash,
     scalarMult,
   } from "./common/number-theory.mjs";
+  import { getLeafIndex} from "./common/timber.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -766,6 +767,18 @@ const prepareBackupVariable = (node: any) => {
             }
           }
         }
+        let index = await getLeafIndex(
+					"CONTRACT_NAME",
+					newCommitment.integer,
+					undefined,
+					1
+				);
+        if (index === undefined) {
+          console.log(index, "index");
+          console.warn("Could not find leaf index for", newCommitment.integer,
+           ", Possibly this commitment has a different public key and so decryption failed.");
+          continue;
+        }
         await storeCommitment({
           hash: newCommitment,
           name: name,
@@ -820,6 +833,7 @@ const prepareBackupDataRetriever = (node: any) => {
     poseidonHash,
     scalarMult,
   } from "./common/number-theory.mjs";
+  import { getLeafIndex} from "./common/timber.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -956,6 +970,18 @@ const prepareBackupDataRetriever = (node: any) => {
             storedCommitments.splice(index, 1);
             }
           }
+        }
+        let index = await getLeafIndex(
+					"CONTRACT_NAME",
+					newCommitment.integer,
+					undefined,
+					1
+				);
+        if (index === undefined) {
+          console.log(index, "index");
+          console.warn("Could not find leaf index for", newCommitment.integer,
+           ", Possibly this commitment has a different public key and so decryption failed.");
+          continue;
         }
         await storeCommitment({
           hash: newCommitment,

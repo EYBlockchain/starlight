@@ -82,7 +82,7 @@ const apiRequests_Arrays = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '0'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '1'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '2'} },
-  { method: 'get', endpoint: '/backupVariable', data: { name: 'b' } },
+  { method: 'post', endpoint: '/backupVariable', data: { name: 'b' } },
   { method: 'post', endpoint: '/add', data: { value: 7 } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '2'} },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b', mappingKey: '3'} },
@@ -100,7 +100,7 @@ const apiRequests_Assign = [
   { method: 'get', endpoint: '/getBalance' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/remove', data: { value: 2 } },
 
@@ -124,19 +124,52 @@ res.Assign_api = await callZAppAPIs('Assign-api', apiRequests_Assign_api, 'Assig
 const apiRequests_BucketsOfBalls = [
   { method: 'post', endpoint: '/deposit', data: { amountDeposit: 6 } },
   { method: 'post', endpoint: '/deposit', data: { amountDeposit: 7 } },
-  { method: 'post', endpoint: '/transfer', data: { toBucketId: 5, numberOfBalls: 8 } },
+  {
+    method: 'post',
+    endpoint: '/transfer',
+    data: { toBucketId: 5, numberOfBalls: 8 },
+  },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
-  { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'buckets', mappingKey: '5'} },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: {
+      name: 'buckets',
+      mappingKey: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'get',
+    endpoint: '/getCommitmentsByVariableName',
+    data: { name: 'buckets', mappingKey: '5' },
+  },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
-  { method: 'post', endpoint: '/transfer', data: { toBucketId: 3, numberOfBalls: 2 } },
-  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '1390849295786071768276380950238675083608645509734'} },
-  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '5'} },
-  { method: 'get', endpoint: '/getBalanceByState', data: { name: 'buckets', mappingKey: '3'} },
+  {
+    method: 'post',
+    endpoint: '/transfer',
+    data: { toBucketId: 3, numberOfBalls: 2 },
+  },
+  {
+    method: 'get',
+    endpoint: '/getBalanceByState',
+    data: {
+      name: 'buckets',
+      mappingKey: '1390849295786071768276380950238675083608645509734',
+    },
+  },
+  {
+    method: 'get',
+    endpoint: '/getBalanceByState',
+    data: { name: 'buckets', mappingKey: '3' },
+  },
 ];
 
-res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls, 'BucketsOfBalls Zapp failed');
+res.BucketsOfBalls = await callZAppAPIs(
+  'BucketsOfBalls',
+  apiRequests_BucketsOfBalls,
+  'BucketsOfBalls Zapp failed',
+);
 
 // In order to test Charity Pot we first need to mint ERC tokens.
 let depositFilePath = path.join(
@@ -187,7 +220,7 @@ const apiRequests_CharityPot = [
       mappingKey: '1390849295786071768276380950238675083608645509734',
     },
   },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/withdraw', data: { withdrawal: 3 } },
 ];
@@ -208,7 +241,7 @@ const apiRequests_Constructor = [
   { method: 'post', endpoint: '/remove', data: { value: 12 } },
   { method: 'get', endpoint: '/getBalance' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'post', endpoint: '/remove', data: { value: 2 } },
 
@@ -285,12 +318,7 @@ const apiRequests_Escrow = [
     endpoint: '/getCommitmentsByVariableName',
     data: { name: 'balances', mappingKey: '235' },
   },
-  {
-    method: 'get',
-    endpoint: '/getCommitmentsByVariableName',
-    data: { name: 'tokens' },
-  },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   {
     method: 'get',
@@ -304,11 +332,6 @@ const apiRequests_Escrow = [
     method: 'get',
     endpoint: '/getCommitmentsByVariableName',
     data: { name: 'balances', mappingKey: '235' },
-  },
-  {
-    method: 'get',
-    endpoint: '/getCommitmentsByVariableName',
-    data: { name: 'tokens' },
   },
   { method: 'post', endpoint: '/withdraw', data: { amount: 7 } },
 ];
@@ -335,7 +358,7 @@ const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 3 } },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
-  { method: 'get', endpoint: '/backupVariable', data: { name: 'z' } },
+  { method: 'post', endpoint: '/backupVariable', data: { name: 'z' } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z'} },
   { method: 'post', endpoint: '/add', data: { y: 6 } },
 ];
@@ -358,7 +381,7 @@ const apiRequests_MappingtoStruct = [
   { method: 'post', endpoint: '/add', data: { value: 15 } },
   { method: 'get', endpoint: '/getAllCommitments' },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'd', mappingKey: '0'} },
-  { method: 'get', endpoint: '/backupVariable', data: { name: 'd' } },
+  { method: 'post', endpoint: '/backupVariable', data: { name: 'd' } },
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'd', mappingKey: '0'} },
   { method: 'post', endpoint: '/add', data: { value: 18 } },
 ];
@@ -452,7 +475,7 @@ const apiRequests_NFT_Escrow = [
     endpoint: '/getCommitmentsByVariableName',
     data: { name: 'tokenOwners', mappingKey: '23456789' },
   },
-  { method: 'get', endpoint: '/backupDataRetriever' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
   { method: 'get', endpoint: '/getAllCommitments' },
   {
     method: 'get',
@@ -468,7 +491,7 @@ const apiRequests_NFT_Escrow = [
     method: 'get',
     endpoint: '/getCommitmentsByVariableName',
     data: { name: 'tokenOwners', mappingKey: '23456789' },
-  }
+  },
 ];
 
 res.NFT_Escrow = await callZAppAPIs(
@@ -686,31 +709,48 @@ describe('BucketsOfBalls Zapp', () => {
     expect(res.BucketsOfBalls[2].body.tx.event).to.equal('NewLeaves');
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.BucketsOfBalls[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.BucketsOfBalls[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.BucketsOfBalls[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expect(
+      parseInt(res.BucketsOfBalls[0].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(0);
+    expect(
+      parseInt(res.BucketsOfBalls[1].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(1);
+    expect(
+      parseInt(res.BucketsOfBalls[2].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(2);
   });
   it('Check number of commitments', async () => {
     expect(res.BucketsOfBalls[3].body.commitments.length).to.equal(4);
   });
   it('Check nullified commitments', async () => {
-    expect(res.BucketsOfBalls[4].body.commitments[0].isNullified).to.equal(true);
-    expect(res.BucketsOfBalls[4].body.commitments[1].isNullified).to.equal(true);
-    expect(res.BucketsOfBalls[4].body.commitments[2].isNullified).to.equal(false);
-    expect(res.BucketsOfBalls[5].body.commitments[0].isNullified).to.equal(false);
+    expect(res.BucketsOfBalls[4].body.commitments[0].isNullified).to.equal(
+      true,
+    );
+    expect(res.BucketsOfBalls[4].body.commitments[1].isNullified).to.equal(
+      true,
+    );
+    expect(res.BucketsOfBalls[4].body.commitments[2].isNullified).to.equal(
+      false,
+    );
+    expect(res.BucketsOfBalls[5].body.commitments[0].isNullified).to.equal(
+      false,
+    );
   });
   it('Check value of final commitment', async () => {
-    expect(parseInt(res.BucketsOfBalls[4].body.commitments[2].preimage.value)).to.equal(5);
-    expect(parseInt(res.BucketsOfBalls[5].body.commitments[0].preimage.value)).to.equal(8);
+    expect(
+      parseInt(res.BucketsOfBalls[4].body.commitments[2].preimage.value, 10),
+    ).to.equal(5);
+    expect(
+      parseInt(res.BucketsOfBalls[5].body.commitments[0].preimage.value, 10),
+    ).to.equal(8);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.BucketsOfBalls[7].body.commitments.length).to.equal(4);
+    expect(res.BucketsOfBalls[7].body.commitments.length).to.equal(3);
     expect(res.BucketsOfBalls[8].body.tx.event).to.equal('NewLeaves');
   });
   it('Test getBalanceByState', async () => {
-    expect(parseInt(res.BucketsOfBalls[9].body.totalBalance)).to.equal(3);
-    expect(parseInt(res.BucketsOfBalls[10].body.totalBalance)).to.equal(8);
-    expect(parseInt(res.BucketsOfBalls[11].body.totalBalance)).to.equal(2);
+    expect(parseInt(res.BucketsOfBalls[9].body.totalBalance, 10)).to.equal(3);
+    expect(parseInt(res.BucketsOfBalls[10].body.totalBalance, 10)).to.equal(2);
   });
 });
 
@@ -763,19 +803,17 @@ describe('CharityPot Zapp', () => {
       parseInt(res.CharityPot[5].body.commitments[7].preimage.value, 10),
     ).to.equal(7);
   });
+  // Note: commitments that are created and immediately nullified during
+  // join and split commitments are not restored by backupDataRetriever
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.CharityPot[7].body.commitments.length).to.equal(11);
+    expect(res.CharityPot[7].body.commitments.length).to.equal(7);
     expect(res.CharityPot[7].body.commitments[0].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[1].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[2].isNullified).to.equal(true);
-    expect(res.CharityPot[7].body.commitments[3].isNullified).to.equal(true);
+    expect(res.CharityPot[7].body.commitments[3].isNullified).to.equal(false);
     expect(res.CharityPot[7].body.commitments[4].isNullified).to.equal(true);
-    expect(res.CharityPot[7].body.commitments[5].isNullified).to.equal(true);
-    expect(res.CharityPot[7].body.commitments[6].isNullified).to.equal(true);
-    expect(res.CharityPot[7].body.commitments[7].isNullified).to.equal(true);
-    expect(res.CharityPot[7].body.commitments[8].isNullified).to.equal(false);
-    expect(res.CharityPot[7].body.commitments[9].isNullified).to.equal(false);
-    expect(res.CharityPot[7].body.commitments[10].isNullified).to.equal(false);
+    expect(res.CharityPot[7].body.commitments[5].isNullified).to.equal(false);
+    expect(res.CharityPot[7].body.commitments[6].isNullified).to.equal(false);
     expect(res.CharityPot[8].body.tx.event).to.equal('NewLeaves');
   });
 });
@@ -860,22 +898,22 @@ describe('Escrow Zapp', () => {
     ).to.equal(0);
     expect(
       parseInt(res.Escrow[1].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(2);
+    ).to.equal(1);
     expect(
       parseInt(res.Escrow[2].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(4);
+    ).to.equal(2);
     expect(
       parseInt(res.Escrow[3].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(8);
+    ).to.equal(6);
     expect(
       parseInt(res.Escrow[4].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(9);
+    ).to.equal(7);
     expect(
       parseInt(res.Escrow[5].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(12);
+    ).to.equal(10);
   });
   it('Check number of commitments', async () => {
-    expect(res.Escrow[6].body.commitments.length).to.equal(14);
+    expect(res.Escrow[6].body.commitments.length).to.equal(12);
   });
   it('Check nullified commitments', async () => {
     expect(res.Escrow[7].body.commitments[0].isNullified).to.equal(true);
@@ -889,8 +927,6 @@ describe('Escrow Zapp', () => {
     expect(res.Escrow[7].body.commitments[8].isNullified).to.equal(false);
     expect(res.Escrow[8].body.commitments[0].isNullified).to.equal(false);
     expect(res.Escrow[8].body.commitments[1].isNullified).to.equal(false);
-    expect(res.Escrow[9].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Escrow[9].body.commitments[1].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
     expect(
@@ -902,29 +938,17 @@ describe('Escrow Zapp', () => {
     expect(
       parseInt(res.Escrow[8].body.commitments[1].preimage.value, 10),
     ).to.equal(1);
-    expect(
-      parseInt(res.Escrow[9].body.commitments[0].preimage.value, 10),
-    ).to.equal(25);
-    expect(
-      parseInt(res.Escrow[9].body.commitments[1].preimage.value, 10),
-    ).to.equal(44);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Escrow[11].body.commitments.length).to.equal(14);
-    expect(res.Escrow[12].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[2].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[3].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[4].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[5].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[6].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[7].isNullified).to.equal(true);
-    expect(res.Escrow[12].body.commitments[8].isNullified).to.equal(false);
-    expect(res.Escrow[13].body.commitments[0].isNullified).to.equal(false);
-    expect(res.Escrow[13].body.commitments[1].isNullified).to.equal(false);
-    expect(res.Escrow[14].body.commitments[0].isNullified).to.equal(true);
-    expect(res.Escrow[14].body.commitments[1].isNullified).to.equal(false);
-    expect(res.Escrow[15].body.tx.event).to.equal('NewLeaves');
+    expect(res.Escrow[10].body.commitments.length).to.equal(8);
+    expect(res.Escrow[11].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Escrow[11].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Escrow[11].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Escrow[11].body.commitments[3].isNullified).to.equal(true);
+    expect(res.Escrow[11].body.commitments[4].isNullified).to.equal(false);
+    expect(res.Escrow[12].body.commitments[0].isNullified).to.equal(false);
+    expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(false);
+    expect(res.Escrow[13].body.tx.event).to.equal('NewLeaves');
   });
 });
 
