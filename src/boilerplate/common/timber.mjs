@@ -31,7 +31,12 @@ export const startEventFilter = async (contractName, address) => {
     throw new Error(error);
   }
 };
-export const getLeafIndex = async (contractName, leafValue, address) => {
+export const getLeafIndex = async (
+  contractName,
+  leafValue,
+  address,
+  maxTries,
+) => {
   logger.http(
     `\nCalling /leaf/value for leafValue ${leafValue} of ${contractName} tree`,
   );
@@ -44,8 +49,11 @@ export const getLeafIndex = async (contractName, leafValue, address) => {
   const contractAddress = address;
   let leafIndex;
   let errorCount = 0;
-  while (errorCount < 20) {
+  const limit =
+    typeof maxTries === 'number' && !isNaN(maxTries) ? maxTries : 20;
+  while (errorCount < limit) {
     try {
+      // eslint-disable-next-line no-await-in-loop
       const response = await axios.get(
         `${url}/leaf/value`,
         {
@@ -71,7 +79,10 @@ export const getLeafIndex = async (contractName, leafValue, address) => {
     } catch (err) {
       errorCount++;
       logger.warn('Unable to get leaf - will try again in 3 seconds');
-      await new Promise(resolve => setTimeout(() => resolve(), 3000));
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => {
+        setTimeout(() => resolve(), 3000);
+      });
     }
   }
   return leafIndex;
