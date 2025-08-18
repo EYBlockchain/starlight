@@ -667,7 +667,6 @@ const prepareBackupVariable = (node: any) => {
 	const publicKey = generalise(keys.publicKey);
         const sharedPublicKey = generalise(keys.sharedPublicKey);
         const sharedSecretKey = generalise(keys.sharedSecretKey);
-	let storedCommitments = [];
     for (const log of backDataEvent) {
       for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
         let cipherText = log.returnValues.encPreimages[i].cipherText;
@@ -753,20 +752,6 @@ const prepareBackupVariable = (node: any) => {
             BigInt(salt.hex(32)),
           ]));
         }
-        if (!varName.includes(" u")){
-          let oldCommitments = storedCommitments.filter(
-            (element) =>
-              element.stateVarId.integer === stateVarId.integer &&
-              (!mappingKey || element.mappingKey === mappingKey?.integer)
-            );
-          for (const oldCommitment of oldCommitments){
-            await markNullified(oldCommitment.hash, secretKey.hex(32));
-            let index = storedCommitments.findIndex(element => element === oldCommitment);
-            if (index !== -1) {
-            storedCommitments.splice(index, 1);
-            }
-          }
-        }
         let index = await getLeafIndex(
 					"CONTRACT_NAME",
 					newCommitment.integer,
@@ -779,6 +764,21 @@ const prepareBackupVariable = (node: any) => {
            ", Possibly this commitment has a different public key and so decryption failed.");
           continue;
         }
+        let nullifier = poseidonHash([
+          BigInt(stateVarId.hex(32)),
+          BigInt(secretKey.hex(32)),
+          BigInt(salt.hex(32))
+        ]);
+        let nullification = await instance.methods.nullifiers(nullifier.integer).call();
+        let isNullified = false;
+        if (nullification === 0n) {
+          isNullified = false;
+        } else if (nullification === BigInt(nullifier.integer)) {
+          isNullified = true;
+        } else {
+          throw new Error("The nullifier value: " + nullifier.integer +
+            " does not match the on-chain nullifier: " + nullification);
+        }
         await storeCommitment({
           hash: newCommitment,
           name: name,
@@ -790,9 +790,8 @@ const prepareBackupVariable = (node: any) => {
             publicKey: publicKey,
           },
           secretKey: secretKey,
-          isNullified: false,
+          isNullified: isNullified,
         });
-        storedCommitments.push({stateVarId: stateVarId, hash: newCommitment, mappingKey: mappingKey?.integer});
       }
     };
   }`;
@@ -874,7 +873,6 @@ const prepareBackupDataRetriever = (node: any) => {
     const publicKey = generalise(keys.publicKey);
     const sharedPublicKey = generalise(keys.sharedPublicKey);
     const sharedSecretKey = generalise(keys.sharedSecretKey);
-    let storedCommitments = [];
     for (const log of backDataEvent) {
       for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
         let cipherText = log.returnValues.encPreimages[i].cipherText;
@@ -957,20 +955,6 @@ const prepareBackupDataRetriever = (node: any) => {
             BigInt(salt.hex(32)),
           ]));
         }
-        if (!varName.includes(" u")){
-          let oldCommitments = storedCommitments.filter(
-            (element) =>
-              element.stateVarId.integer === stateVarId.integer &&
-              (!mappingKey || element.mappingKey === mappingKey?.integer)
-            );
-          for (const oldCommitment of oldCommitments){
-            await markNullified(oldCommitment.hash, secretKey.hex(32));
-            let index = storedCommitments.findIndex(element => element === oldCommitment);
-            if (index !== -1) {
-            storedCommitments.splice(index, 1);
-            }
-          }
-        }
         let index = await getLeafIndex(
 					"CONTRACT_NAME",
 					newCommitment.integer,
@@ -983,6 +967,21 @@ const prepareBackupDataRetriever = (node: any) => {
            ", Possibly this commitment has a different public key and so decryption failed.");
           continue;
         }
+        let nullifier = poseidonHash([
+          BigInt(stateVarId.hex(32)),
+          BigInt(secretKey.hex(32)),
+          BigInt(salt.hex(32))
+        ])
+        let nullification = await instance.methods.nullifiers(nullifier.integer).call();
+        let isNullified = false;
+        if (nullification === 0n) {
+          isNullified = false;
+        } else if (nullification === BigInt(nullifier.integer)) {
+          isNullified = true;
+        } else {
+          throw new Error("The nullifier value: " + nullifier.integer +
+            " does not match the on-chain nullifier: " + nullification);
+        }
         await storeCommitment({
           hash: newCommitment,
           name: name,
@@ -994,9 +993,8 @@ const prepareBackupDataRetriever = (node: any) => {
             publicKey: publicKey,
           },
           secretKey: secretKey,
-          isNullified: false,
+          isNullified: isNullified,
         });
-        storedCommitments.push({stateVarId: stateVarId, hash: newCommitment, mappingKey: mappingKey?.integer});
       }
     };
   }`;
