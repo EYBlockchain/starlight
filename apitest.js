@@ -548,8 +548,8 @@ const apiRequests_Swap = [
       sharedAddress: '', // to be filled in preHook
       amountSent: 30,
       tokenIdSent: 1,
-      tokenIdRecieved: 2
-    }
+      tokenIdRecieved: 2,
+    },
   },
   { method: 'get', endpoint: '/getAllCommitments' },
   {
@@ -560,13 +560,15 @@ const apiRequests_Swap = [
       counterParty: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
       tokenIdSent: 2,
       tokenIdRecieved: 1,
-      amountRecieved: 30
-    }
+      amountRecieved: 30,
+    },
   },
-  { method: 'get', endpoint: '/getAllCommitments' }
+  { method: 'get', endpoint: '/getAllCommitments' },
+  { method: 'post', endpoint: '/backupDataRetriever' },
+  { method: 'get', endpoint: '/getAllCommitments' },
 ];
 
-const preHook = async (requests) => {
+const preHook = async requests => {
   const sharedAddress = await chai
     .request('localhost:3000')
     .post('/getSharedKeys')
@@ -1203,10 +1205,18 @@ describe('Swap Zapp', () => {
   });
 
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Swap[0].body.tx.returnValues.minLeafIndex)).to.equal(0); // deposit 1
-    expect(parseInt(res.Swap[1].body.tx.returnValues.minLeafIndex)).to.equal(2); // deposit 2
-    expect(parseInt(res.Swap[3].body.tx.returnValues.minLeafIndex)).to.equal(4); // startSwap
-    expect(parseInt(res.Swap[5].body.tx.returnValues.minLeafIndex)).to.equal(7); // completeSwap
+    expect(
+      parseInt(res.Swap[0].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(0); // deposit 1
+    expect(
+      parseInt(res.Swap[1].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(2); // deposit 2
+    expect(
+      parseInt(res.Swap[3].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(4); // startSwap
+    expect(
+      parseInt(res.Swap[5].body.tx.returnValues.minLeafIndex, 10),
+    ).to.equal(7); // completeSwap
   });
 
   it('Check number of commitments', async () => {
@@ -1243,10 +1253,16 @@ describe('Swap Zapp', () => {
   });
 
   it('Check value of final commitment', async () => {
-    expect(parseInt(res.Swap[6].body.commitments[0].preimage.value)).to.equal(100); // deposit 1
-    expect(parseInt(res.Swap[6].body.commitments[2].preimage.value)).to.equal(200); // deposit 2
+    expect(
+      parseInt(res.Swap[6].body.commitments[0].preimage.value, 10),
+    ).to.equal(100); // deposit 1
+    expect(
+      parseInt(res.Swap[6].body.commitments[2].preimage.value, 10),
+    ).to.equal(200); // deposit 2
     expect(res.Swap[6].body.commitments[4].name).to.equal("balances");
-    expect(parseInt(res.Swap[6].body.commitments[4].preimage.value)).to.equal(170); // startSwap balance: 200-30
+    expect(
+      parseInt(res.Swap[6].body.commitments[4].preimage.value, 10),
+    ).to.equal(170); // startSwap balance: 200-30
     expect(res.Swap[6].body.commitments[6].name).to.equal("swapProposals");
     expect(res.Swap[6].body.commitments[6].preimage.value).to.deep.equal({
       swapAmountSent: '30',
@@ -1262,6 +1278,47 @@ describe('Swap Zapp', () => {
       swapTokenRecieved: '2',
       swapInitiator: '1390849295786071768276380950238675083608645509734',
       pendingStatus: '0'
+    });
+  });
+  it('Check commitments are correct after deleting and restoring from backup', async () => {
+    // Note the order of the commitments has changed because some are decrypted with the shared secret key
+    expect(res.Swap[8].body.commitments.length).to.equal(11);
+    expect(res.Swap[8].body.commitments[0].isNullified).to.equal(true);
+    expect(res.Swap[8].body.commitments[1].isNullified).to.equal(true);
+    expect(res.Swap[8].body.commitments[2].isNullified).to.equal(true);
+    expect(res.Swap[8].body.commitments[3].isNullified).to.equal(true);
+    expect(res.Swap[8].body.commitments[4].isNullified).to.equal(true);
+    expect(res.Swap[8].body.commitments[5].isNullified).to.equal(true);
+    expect(res.Swap[8].body.commitments[6].isNullified).to.equal(false);
+    expect(res.Swap[8].body.commitments[7].isNullified).to.equal(false);
+    expect(res.Swap[8].body.commitments[8].isNullified).to.equal(false);
+    expect(res.Swap[8].body.commitments[9].isNullified).to.equal(true);
+    expect(res.Swap[8].body.commitments[10].isNullified).to.equal(false);
+    expect(
+      parseInt(res.Swap[8].body.commitments[0].preimage.value, 10),
+    ).to.equal(100); // deposit 1
+    expect(
+      parseInt(res.Swap[8].body.commitments[2].preimage.value, 10),
+    ).to.equal(200); // deposit 2
+    expect(res.Swap[8].body.commitments[4].name).to.equal("balances");
+    expect(
+      parseInt(res.Swap[8].body.commitments[4].preimage.value, 10),
+    ).to.equal(170); // startSwap balance: 200-30
+    expect(res.Swap[8].body.commitments[9].name).to.equal("swapProposals");
+    expect(res.Swap[8].body.commitments[9].preimage.value).to.deep.equal({
+      swapAmountSent: '30',
+      swapTokenSent: '1',
+      swapTokenRecieved: '2',
+      swapInitiator: '1390849295786071768276380950238675083608645509734',
+      pendingStatus: '1',
+    });
+    expect(res.Swap[8].body.commitments[10].name).to.equal("swapProposals");
+    expect(res.Swap[8].body.commitments[10].preimage.value).to.deep.equal({
+      swapAmountSent: '0',
+      swapTokenSent: '1',
+      swapTokenRecieved: '2',
+      swapInitiator: '1390849295786071768276380950238675083608645509734',
+      pendingStatus: '0',
     });
   });
 });
