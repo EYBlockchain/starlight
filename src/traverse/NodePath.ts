@@ -1004,11 +1004,18 @@ export default class NodePath {
     let arrLen;
     switch (node.nodeType) {
       case 'IndexAccess':
-        arrLen = node.baseExpression.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        arrLen =
+          node.baseExpression.typeDescriptions.typeString.match(
+            /(?<=\[)(\d+)(?=\])/,
+          );
         break;
       case 'Identifier':
       default:
-        arrLen = node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        arrLen = node.typeDescriptions
+          ? node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/)
+          : node.declarations[0].typeDescriptions?.typeString.match(
+              /(?<=\[)(\d+)(?=\])/,
+            );
         break;
     }
     if (!arrLen) return false;

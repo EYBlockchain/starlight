@@ -73,6 +73,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'Continue':
     case 'MsgSender':
     case 'EnumDefinition':
+    case 'NewExpression':
       return [];
 
     // And again, if we haven't recognized the nodeType then we'll throw an

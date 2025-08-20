@@ -289,6 +289,7 @@ export class Scope {
       case 'WhileStatement':
       case 'DoWhileStatement':
       case 'EnumDefinition':
+      case 'NewExpression':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an

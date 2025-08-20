@@ -1770,10 +1770,10 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent } = path;
       const newNode = buildNode('ElementaryTypeName', {
-        name: `[${node.length.value || node.length.name}]`
+        name: `[${node.length?.value || node.length?.name}]`
       });
       const dec = path.getAncestorOfType('VariableDeclaration').node;
-      if (node.length.value && (path.isLocalStackVariable(dec) || path.isFunctionParameter(dec))) newNode.isConstantArray = true;
+      if (node.length?.value && (path.isLocalStackVariable(dec) || path.isFunctionParameter(dec))) newNode.isConstantArray = true;
       node._newASTPointer = newNode;
       if (Array.isArray(parent._newASTPointer)) {
         parent._newASTPointer.push(newNode);
