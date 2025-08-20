@@ -24,7 +24,7 @@ Do note that `LoanSimple.zol` don't currently compile - we are actively working 
       - Constructors are supported, but be aware that the output shield contract will contain a constructor combining the `.zol` constructor and some extra functionality.
       - Functions can have any number of secret or public parameters of the types below.
       - Any number of states, secret or public:
-      - Secret states can have types `uint256`, `bool`, `address`, `mapping`, `array`, `struct`, or mappings to structs (e.g., `mapping(uint256 => MyStruct)`).
+      - Secret states can have types `uint256`, `bool`, `address`, `mapping`, `array` (one dimensional only), `struct`, or mappings to structs (e.g., `mapping(uint256 => MyStruct)`).
         - Keys of secret mappings can be `uint256` or `address`.
         - Arrays are only supported with element types `address` or `uint256`.
       - All other types (e.g. `u32`), except for Enums, can be used as long as they aren't secret or interact with secret states. Enums are not supported, even if they are public and don't interact with secret states.

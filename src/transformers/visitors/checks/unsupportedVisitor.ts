@@ -113,9 +113,21 @@ export default {
         );
       }
       if (node.typeName.nodeType === 'ArrayTypeName' && node.isSecret) {
+        if (node.typeName.baseType?.nodeType === 'ArrayTypeName') {
+          throw new TODOError(
+            `Multi-dimensional arrays. See the Status documentation for more details`,
+            node,
+          );
+        }
         if (node.typeName.baseType?.name === 'bool') {
           throw new TODOError(
             `Arrays with 'bool' element types. Please create an issue.`,
+            node,
+          );
+        }
+        if (node.typeName.baseType?.nodeType === 'UserDefinedTypeName') {
+          throw new TODOError(
+            `Arrays with user-defined element types, e.g. structs. See the Status documentation for more details`,
             node,
           );
         }
