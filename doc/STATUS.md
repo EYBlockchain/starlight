@@ -26,7 +26,7 @@ Do note that `LoanSimple.zol` don't currently compile - we are actively working 
       - Any number of states, secret or public:
       - Secret states can have types `uint256`, `bool`, `address`, `mapping`, `array`, `struct`, or mappings to structs (e.g., `mapping(uint256 => MyStruct)`).
         - Keys of secret mappings can be `uint256` or `address`.
-      - All other types (e.g. `u32`) can be used as long as they aren't secret or interact with secret states.
+      - All other types (e.g. `u32`), except for Enums, can be used as long as they aren't secret or interact with secret states. Enums are not supported, even if they are public and don't interact with secret states.
       - Public and secret states *can* interact within functions, but this may break the output zApp or render its privacy useless.
       - Secret states can be *overwritten* on each edit (i.e. they are whole) or *incremented* on each edit (i.e. they are partitioned) - the compiler will work this out for you based on what states are known or unknown to the caller.
         - Don't worry if you're unsure where/what to mark - if you've missed something the compiler will let you know!

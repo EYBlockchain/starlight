@@ -61,6 +61,7 @@ export class Binding {
       case 'Conditional':
       case 'WhileStatement':
       case 'DoWhileStatement':
+      case 'EnumDefinition':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);

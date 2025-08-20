@@ -288,6 +288,7 @@ export class Scope {
       case 'Conditional':
       case 'WhileStatement':
       case 'DoWhileStatement':
+      case 'EnumDefinition':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an
