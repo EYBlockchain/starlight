@@ -24,7 +24,7 @@ Do note that `LoanSimple.zol` don't currently compile - we are actively working 
       - Constructors are supported, but be aware that the output shield contract will contain a constructor combining the `.zol` constructor and some extra functionality.
       - Functions can have any number of secret or public parameters of the types below.
       - Any number of states, secret or public:
-      - Secret states can have types `uint256`, `bool`, `address`, `mapping`, `array`, `struct`, or mappings to structs (e.g., `mapping(uint => MyStruct)`).
+      - Secret states can have types `uint256`, `bool`, `address`, `mapping`, `array`, `struct`, or mappings to structs (e.g., `mapping(uint256 => MyStruct)`).
         - Keys of secret mappings can be `uint256` or `address`.
       - All other types (e.g. `u32`) can be used as long as they aren't secret or interact with secret states.
       - Public and secret states *can* interact within functions, but this may break the output zApp or render its privacy useless.
@@ -55,9 +55,9 @@ Here we summarise the as of yet unsupported Solidity syntax.
 - **Enums:**
   - Public enums would be easy to add; however, if these interact with secret states, we must have a robust system to convert them into something both nodejs and Zokrates understand.
 - **Nested Mapping calls, multidimensional arrays, and mappings to arrays:**
-  - These require complex naming and accessing logic we haven't completed. This includes multidimensional arrays (e.g., `uint[][]`) and mappings to arrays (e.g., `mapping(uint => uint[])`). Consider using local variables or simplifying mappings and array structures.
+  - These require complex naming and accessing logic we haven't completed. This includes multidimensional arrays (e.g., `uint256[][]`) and mappings to arrays (e.g., `mapping(uint256 => uint256[])`). Consider using local variables or simplifying mappings and array structures.
 - **Structs involving properties as mappings, arrays, or nested structs:**
-  - These create a very complex commitment structure. This includes structs with properties of type `mapping`, dynamic or fixed-size `array` (e.g., `uint[]`, `address[3]`), or other structs. We may work on this in future if there is high demand for this feature.
+  - These create a very complex commitment structure. This includes structs with properties of type `mapping`, dynamic or fixed-size `array` (e.g., `uint256[]`, `address[3]`), or other structs. We may work on this in future if there is high demand for this feature.
 - **Arrays of structs:**
   - Consider using mappings to structs, which are supported. 
 - **While statements:**
