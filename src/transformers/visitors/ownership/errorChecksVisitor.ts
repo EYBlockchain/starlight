@@ -29,7 +29,11 @@ export default {
       }
       const varBinding = scope.getReferencedBinding(node);
       if (varBinding.isStruct && varBinding.isSecret) {
-        const structDecl = path.getStructDeclaration();
+        const binding = path.getReferencedBinding();
+        // The first case covers structs and the second case covers mappings to structs
+        const structDecl =
+          path.getStructDeclaration() ||
+          binding.referencingPaths[0].getStructDeclaration();
         if (structDecl) {
           structDecl.members.forEach((member: any) => {
             const typeStr =
