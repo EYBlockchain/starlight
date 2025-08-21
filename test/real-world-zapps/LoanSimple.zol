@@ -22,14 +22,14 @@ contract Loan {
     }
 
     // works - non-secret
-    function registerAsLender(uint fee, uint pot) public {
+    function registerAsLender(uint256 fee, uint256 pot) public {
         lenderFees[msg.sender] = fee;
         bool success = erc20.transferFrom(msg.sender, address(this), pot);
         require(success);
 
     }
     // works
-    function requestBorrow(secret address lender, secret uint amount) public {
+    function requestBorrow(secret address lender, secret uint256 amount) public {
       // why a request, and not instant borrow? because we need to access the lender's secret balance to ensure they have enough
       // require(lenderFees[lender] != 0); // commenting out to avoid secret/non-secret lookup clash
       borrowRequests[msg.sender] = lender;
@@ -58,7 +58,7 @@ contract Loan {
     }
 
     // works
-    function deposit(uint amount) public {
+    function deposit(uint256 amount) public {
         bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
         require(hasBalance == true);
         balances[msg.sender] += amount;

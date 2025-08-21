@@ -1185,7 +1185,7 @@ const visitor = {
     enter(path: NodePath) {
       const { node, parent } = path;
       if(!!path.getAncestorOfType('EventDefinition')) return;
-      const supportedTypes = ['uint', 'uint256', 'address', 'bool'];
+      const supportedTypes = ['uint256', 'address', 'bool'];
       if (!supportedTypes.includes(node.name))
         throw new Error(
           `Currently, only transpilation of types "${supportedTypes}" is supported. Got ${node.name} type.`,

@@ -641,20 +641,19 @@ DoWhileStatement: {
 },
 
   VariableDeclaration: {
-    enter(path: NodePath, state : any) {
+    enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      
-      if(node.typeName.name === 'uint')
-      logger.warn(
-        `VariableDeclarations is uint, please specify the size (from 8 to 256 bits, in steps of 8) of declared variable ${node.name}.`,
-      );
-//
+
+      if (node.typeName.name === 'uint')
+        logger.warn(
+          `VariableDeclarations is uint, please specify the size (from 8 to 256 bits, in steps of 8) of declared variable ${node.name}.`,
+        );
       if (path.isFunctionReturnParameterDeclaration())
         throw new Error(
           `TODO: VariableDeclarations of return parameters are tricky to initialise because we might rearrange things so they become _input_ parameters to the circuit. Future enhancement.`,
         );
 
-      let declarationType: string = ``;
+      let declarationType = ``;
       // TODO: `memery` declarations and `returnParameter` declarations
       if (node.stateVariable) {
         declarationType = 'state'; // not really needed, since we already have 'stateVariable'
@@ -662,7 +661,10 @@ DoWhileStatement: {
         state.variableName.push(node.name);
       } else if (path.isLocalStackVariableDeclaration()) {
         declarationType = 'localStack';
-      } else if (path.isFunctionParameterDeclaration() || path.isEventParameterDeclaration()) {
+      } else if (
+        path.isFunctionParameterDeclaration() ||
+        path.isEventParameterDeclaration()
+      ) {
         declarationType = 'parameter';
       }
       scope.bindings[node.id].referencingPaths.forEach(refPath => {
@@ -674,7 +676,7 @@ DoWhileStatement: {
         interactsWithSecret ||= newState.interactsWithSecret || refPath.node.interactsWithSecret;
 
         // check for internal function call if the parameter passed in the function call interacts with secret or not
-        if(refPath.parentPath.isInternalFunctionCall()){
+        if (refPath.parentPath.isInternalFunctionCall()) {
           refPath.parentPath.node.arguments?.forEach((element, index) => {
             if(node.id === element.referencedDeclaration) {
               let key = (Object.keys(refPath.parentPath.getReferencedPath(refPath.parentPath.node?.expression)?.scope.bindings || {})[index]);

@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 contract Assign {
 
   secret uint256 private a;
-   mapping(address => uint) balance; 
+   mapping(address => uint256) balance; 
   function add(secret uint256 value) public {
     unknown a += value;
   }

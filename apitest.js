@@ -1229,7 +1229,7 @@ describe('Swap Zapp', () => {
       swapTokenSent: '1',
       swapTokenRecieved: '2',
       swapInitiator: '1390849295786071768276380950238675083608645509734',
-      pendingStatus: '1'
+      pendingStatus: '1',
     });
     expect(res.Swap[6].body.commitments[10].name).to.equal("swapProposals");
     expect(res.Swap[6].body.commitments[10].preimage.value).to.deep.equal({
@@ -1237,7 +1237,7 @@ describe('Swap Zapp', () => {
       swapTokenSent: '1',
       swapTokenRecieved: '2',
       swapInitiator: '1390849295786071768276380950238675083608645509734',
-      pendingStatus: '0'
+      pendingStatus: '0',
     });
   });
 });

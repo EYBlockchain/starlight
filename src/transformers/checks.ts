@@ -70,7 +70,7 @@ function transformation1(oldAST: any) {
   path.traverse(explode(localDeclarationsVisitor), state);
   logger.verbose('Checked for unsupported local variable declarations');
   path.traverse(explode(msgSenderParam), state);
-  path.traverse(explode(msgValueParam),state);
+  path.traverse(explode(msgValueParam), state);
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
