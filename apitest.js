@@ -61,12 +61,12 @@ const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstr
       }
     }
   }
-  shell.cd(`./temp-zapps/${zappName}`);
+  /*shell.cd(`./temp-zapps/${zappName}`);
   if (shell.exec('docker compose -f docker-compose.zapp.yml down -v').code !== 0) {
     shell.echo('docker stop failed');
     shell.exit(1);
   }
-  shell.cd('../..');
+  shell.cd('../..');*/
   await new Promise(resolve => setTimeout(resolve, 5000));
   return apiResponses;
 };
