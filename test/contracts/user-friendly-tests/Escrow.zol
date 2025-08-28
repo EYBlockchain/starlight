@@ -8,7 +8,6 @@ contract Escrow {
 
     secret mapping(address => uint256) public balances;
     secret mapping(address => address) public approvals;
-    secret uint256 public tokens;
     IERC20 public erc20;
 
     constructor(address erc20Address) {
@@ -19,7 +18,6 @@ contract Escrow {
         bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
         require(hasBalance == true);
         balances[msg.sender] += amount;
-        encrypt tokens += amount;
     }
 
     function transfer(secret address recipient, secret uint256 amount) public {
