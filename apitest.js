@@ -34,14 +34,37 @@ const getUserFriendlyTestNames = async folderPath => {
 const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
   console.log(`Starting tests for: ${zappName}`);
   testedZapps.push(zappName);
-  if (
-    shell.exec(`./apiactions -z ${zappName} -c '${cnstrctrInputs}'`).code !== 0
-  ) {
+  // Execute apiactions with error handling
+  const apiactionsResult = shell.exec(
+    `./apiactions -z ${zappName} -c '${cnstrctrInputs}'`,
+  );
+  if (apiactionsResult.code !== 0) {
+    // Try to capture and display Docker logs before failing
+    try {
+      shell.cd(`./temp-zapps/${zappName}`);
+      const logResult = shell.exec(
+        'docker compose -f docker-compose.zapp.yml logs',
+        { silent: true },
+      );
+      if (logResult.code === 0 && logResult.stdout) {
+        console.log(`\n=== ${zappName} APIACTIONS FAILED - Docker logs ===`);
+        console.log(logResult.stdout);
+        if (logResult.stderr) {
+          console.log(`Docker stderr for ${zappName}:`);
+          console.log(logResult.stderr);
+        }
+      }
+      shell.cd('../..');
+    } catch (dockerLogError) {
+      console.log(`Could not retrieve Docker logs: ${dockerLogError.message}`);
+    }
     shell.echo(`${zappName} failed`);
     shell.exit(1);
   }
   // wait for above shell command to execute
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  await new Promise(resolve => {
+    setTimeout(resolve, 5000);
+  });
 
   // run pre-hook to modify requests if needed
   if (preHook) {
@@ -111,7 +134,9 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
     shell.exit(1);
   }
   shell.cd('../..');
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  await new Promise(resolve => {
+    setTimeout(resolve, 5000);
+  });
   return apiResponses;
 };
 
