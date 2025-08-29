@@ -6,7 +6,7 @@ contract Bank {
 
     secret mapping(uint256 => uint256) public account;
 
-    function deposit(secret uint256 accountId, secret uint amountDeposit) public {
+    function deposit(secret uint256 accountId, secret uint256 amountDeposit) public {
       unknown   account[accountId] += amountDeposit;
 
     }

@@ -99,6 +99,8 @@ To run the resulting zApp:
 
 ### 1. Creating a Zolidity (`.zol`) contract from a standard Solidity (`.sol`) contract
 
+When writing zolidity contracts note that not all Solidity syntax is currently supported. [Here](./doc/STATUS.md) is a guide to current functionality.
+
 
 #### Zolidity decorators: `secret`, `known`, `unknown`, `encrypt`, and `re-initialisable`
 

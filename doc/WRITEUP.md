@@ -525,11 +525,11 @@ Consider this incomplete `.zol` contract:
 
 ```solidity
 contract MyContract {
-  secret uint x; // <-- AST id 2 (for example)
-  secret uint y; // <-- AST id 3
+  secret uint256 x; // <-- AST id 2 (for example)
+  secret uint256 y; // <-- AST id 3
   secret address myAddress; // <-- AST id 4
-  secret mapping(uint => uint) myMapping1; // <-- AST id 5
-  secret mapping(uint => uint) myMapping2; // <-- AST id 6
+  secret mapping(uint256 => uint256) myMapping1; // <-- AST id 5
+  secret mapping(uint256 => uint256) myMapping2; // <-- AST id 6
   ...
 }
 ```
@@ -730,14 +730,14 @@ A 'partitioned' state, on the other hand, can be edited (incremented*) by a user
 An example of this is lots of users contributing to a charity pot, where nobody needs to know how much money is in the pot to add to it.
 
 ```solidity
-secret uint pot;
+secret uint256 pot;
 address admin;
 
-function add(secret uint value) {
+function add(secret uint256 value) {
   unknown pot = pot + value; // don't worry about 'unknown', for now.
 }
 
-function withdraw(secret uint value) {
+function withdraw(secret uint256 value) {
   require(msg.sender === admin);
   pot = pot - value;
 }
@@ -779,9 +779,9 @@ The new decorators introduced here are `known` and `unknown`. While we wanted th
 
 Consider this example:
 ```solidity
-secret uint a;
+secret uint256 a;
 
-function fn1(secret uint value) {
+function fn1(secret uint256 value) {
   a = a + value;
 }
 ```
@@ -972,7 +972,7 @@ If we apply one of their examples to our nomenclature, if we're happy for a mapp
 
 Again, the Zexe approach works great for mappings indexed by keys which may be random, but less great for non-mappings or keys with real world meaning. There are cases where we can't just pick a random ID (address, national insurance number, email address) so the method doesn't apply.
 
-Meanwhile, a non-mapping state (such as a `uint`) would still have the same problem of "rival first commitments". If we allowed the stateVarId for a `uint` to be randomly generatabl in this 'zexe way', then anyone could create a random stateVarId, and you'd end up with 'infinite' commitments, all claiming to represent just one state variable of the original contract. That's why we follow a [deterministic method](#state-variable-ids) for deriving stateVarId's; to ensure only one can exist at a time.
+Meanwhile, a non-mapping state (such as a `uint256`) would still have the same problem of "rival first commitments". If we allowed the stateVarId for a `uint256` to be randomly generatabl in this 'zexe way', then anyone could create a random stateVarId, and you'd end up with 'infinite' commitments, all claiming to represent just one state variable of the original contract. That's why we follow a [deterministic method](#state-variable-ids) for deriving stateVarId's; to ensure only one can exist at a time.
 
 **3)**
 
@@ -1003,7 +1003,7 @@ constructor(address _erc721) {
    erc721 = IERC721(_erc721);
 }
 
-function deposit(uint tokenId) public {
+function deposit(uint256 tokenId) public {
     bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
     require(success == true);
     tokenOwners[tokenId] = msg.sender;
@@ -1090,7 +1090,7 @@ constructor(address _erc721) {
    erc721 = IERC721(_erc721);
 }
 
-function deposit(uint tokenId) public {
+function deposit(uint256 tokenId) public {
     bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
     require(success == true);
     reinitialisable tokenOwners[tokenId] = msg.sender;
@@ -1126,9 +1126,9 @@ Hooray, examples! The below are snippets of functions, and won't necessarily wor
 ---
 
 ```solidity
-secret uint a;
+secret uint256 a;
 
-function fn1(uint value) {
+function fn1(uint256 value) {
     known a = a + value;
 }
 ```
@@ -1137,9 +1137,9 @@ This example makes use of our known/unknown decorators. Since the dev has marked
 ---
 
 ```solidity
-secret uint a;
+secret uint256 a;
 
-function fn1(uint value) {
+function fn1(uint256 value) {
     unknown a = a + value;
 }
 ```
@@ -1149,7 +1149,7 @@ Here, `a` is a partitioned state. Anyone can call `fn1` and so anyone can increm
 ---
 
 ```solidity
-secret mapping(address -> uint) myMapping;
+secret mapping(address -> uint256) myMapping;
 address admin;
 
 constructor() {
@@ -1187,7 +1187,7 @@ Notice that all states mapped to by `myMapping` are owned by the `admin`. Althou
 ---
 
 ```solidity
-secret mapping(address -> uint) myMapping;
+secret mapping(address -> uint256) myMapping;
 address admin;
 
 constructor() {
@@ -1219,7 +1219,7 @@ It's a sort of nonsense example which doesn't seem very useful in practice, but 
 ---
 
 ```solidity
-secret mapping(address -> uint) customerInfo;
+secret mapping(address -> uint256) customerInfo;
 address admin;
 
 constructor() {
@@ -1281,7 +1281,7 @@ For each secret state, we traverse the contract for nullifications and associate
 
 **1. i.**
 ```solidity
-secret mapping(address -> uint) pot;
+secret mapping(address -> uint256) pot;
 address admin;
 
 constructor() {
@@ -1308,7 +1308,7 @@ Returning to our favourite 'charity pot' example. Anyone can top up their pot; o
 
 **1. ii.**
 ```solidity
-secret mapping(address -> uint) pot;
+secret mapping(address -> uint256) pot;
 secret address admin;
 
 constructor() {
@@ -1338,7 +1338,7 @@ This is the same as the above example, except `admin` is decorated as `secret`.
 ```solidity
 secret mapping(address => uint256) balances;
 
-function deposit(uint amount) {
+function deposit(uint256 amount) {
    bool hasBalance = erc20.transferFrom(msg.sender, this.address, amount);
    require(hasBalance);
    balances[msg.sender] += amount;
@@ -1399,8 +1399,8 @@ _[Skip](#sharing-private-data) to the next big section. Or read on for detailed 
 Consider an example:
 
 ```solidity
-secret uint a;
-secret uint b;
+secret uint256 a;
+secret uint256 b;
 
 function fn1() {
     a = b ** 2;
@@ -1441,8 +1441,8 @@ In the future we'll need to consider an **accumulator** which supports a zero-kn
 Another example, to finish this section:
 
 ```solidity
-secret uint a;
-secret uint b;
+secret uint256 a;
+secret uint256 b;
 
 function fn1() {
     unknown a += b;
@@ -1475,22 +1475,22 @@ Consider the following `zol` code snippet, which isn't a sensible contract, but 
 
 ```Solidity
 contract WierdEscrow {
-  secret mapping(address => uint) balances;
-  secret mapping(address => uint) creditRatings;
+  secret mapping(address => uint256) balances;
+  secret mapping(address => uint256) creditRatings;
   address admin;
 
-  function transfer(secret uint value, secret address recipient) {
+  function transfer(secret uint256 value, secret address recipient) {
     balances[msg.sender] -= value;
     unknown balances[recipient] += value;
     share value with admin;
   }
 
-  function printMoney(secret uint value) {
+  function printMoney(secret uint256 value) {
     require(msg.sender === admin);
     balances[admin] += value;
   }
 
-  function updateRating(secret address user, secret uint rating) {
+  function updateRating(secret address user, secret uint256 rating) {
     require(msg.sender === admin);
     creditRatings[user] = rating;
   }
@@ -1499,11 +1499,11 @@ contract WierdEscrow {
 
 Let's go through some lines:
 
-- `secret mapping(address => uint) balances;`:
+- `secret mapping(address => uint256) balances;`:
 `balances` is secret. The mapping's key is an `address`. Every time the state is nullified (throughout the contract), the key is `msg.sender`. Therefore both the mapping's key and the ownerPK (within the commitment) will be the same:
 `commitment = h(h(0, key = addr), value, ownerPK = addr, salt)` always.
 
-- `secret mapping(address => uint) creditRatings;`:
+- `secret mapping(address => uint256) creditRatings;`:
 `creditRatings` is secret. The mapping's key is an `address`. But only one address (`admin`) has permission to edit this state (in the `updateRating` function), and during that update the mapping's key is a parameter `user`. Therefore the mapping's key and the ownerPK (within the commitment) will not be the same:
 `comm = h(h(0, key), value, admin, salt)` always.
 

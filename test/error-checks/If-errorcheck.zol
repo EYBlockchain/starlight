@@ -4,22 +4,22 @@ pragma solidity ^0.8.0;
 
 contract Test {
 
-secret mapping (address => uint) private x;
-secret uint private z;
-uint public a;
-uint public b;
+secret mapping (address => uint256) private x;
+secret uint256 private z;
+uint256 public a;
+uint256 public b;
 
-function add( uint y) public {
+function add( uint256 y) public {
     if (x[msg.sender] > 5) {
       z = y + 3;
-      uint q;
+      uint256 q;
       q = q+2;
     } else {
       x[msg.sender] = y + 1;
     }
   }
 
-function donw(uint p) public {
+function donw(uint256 p) public {
     if (a > 5) {
        b += p;
     } else {
