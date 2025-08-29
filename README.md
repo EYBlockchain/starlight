@@ -101,16 +101,18 @@ To run the resulting zApp:
 
 When writing zolidity contracts note that not all Solidity syntax is currently supported. [Here](./doc/STATUS.md) is a guide to current functionality.
 
-#### Zolidity decorators: `secret`, `known`, and `unknown`
 
-In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update that variable. Secret variables are stored on-chain via commitments, and the original data (preimage) is kept locally by the owner. 
+#### Zolidity decorators: `secret`, `known`, `unknown`, `encrypt`, and `re-initialisable`
 
- Zolidity extends Solidity with three decorators:
+In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update that variable. Secret variables are stored on-chain via commitments, and the original data (preimage) is kept locally by the owner.
+
+Zolidity extends Solidity with the following decorators:
 
 - `secret`: Marks a variable or parameter as private, so its value is hidden from other users and only accessible to its owner.
-- `known`: Indicates that only the variable owner can modify the variable. By default all variables are known. 
-- `unknown`: Allows any user to increment the variable, not just the owner. 
+- `known`: Indicates that only the variable owner can modify the variable. By default all variables are known.
+- `unknown`: Allows any user to increment the variable, not just the owner.
 - `encrypt`: Use when creating a commitment for another user (e.g., with `unknown`). Ensures, via zk-proofs, that a correct encryption of the commitment pre-image is broadcast and can be decrypted by the owner so that the commitment can be used in the future.
+- `re-initialisable`: Allows a secret variable to be re-initialised, if later in the contract it is burned. 
 
 ---
 
@@ -194,6 +196,38 @@ contract Assign {
   function assign(secret uint256 value) public { // <--- secret
     encrypt unknown a += value; // <--- guarantees the new owner can use the new commitment related to this state update
   }
+}
+```
+
+---
+#### Example: Using the `re-initisalisable` decorator
+
+In the contract below, the owner of `tokenOwners[tokenId]` is the address stored as its mapping value. When `withdraw` is called, the commitment is nullified and the new value is `address(0)`, so no new commitment is created. This creates a problem if deposit is called again: how can a new owner provide a nullifier if the token was previously owned? The `re-initialisable` decorator solves this by allowing the variable to be re-initialised in `deposit`.
+
+```solidity
+secret mapping(uint256 => address) public tokenOwners;
+IERC721 public erc721;
+
+constructor(address _erc721) {
+   erc721 = IERC721(_erc721);
+}
+
+function deposit(uint tokenId) public {
+    bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
+    require(success == true);
+    reinitialisable tokenOwners[tokenId] = msg.sender;
+}
+
+function transfer(secret address recipient, secret uint256 tokenId) public {
+    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+    tokenOwners[tokenId] = recipient;
+}
+
+function withdraw(uint256 tokenId) public {
+    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+    tokenOwners[tokenId] = address(0);
+    bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
+    require(success == true);
 }
 ```
 ---

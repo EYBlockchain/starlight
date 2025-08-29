@@ -638,6 +638,7 @@ const prepareBackupVariable = (node: any) => {
     poseidonHash,
     scalarMult,
   } from "./common/number-theory.mjs";
+  import { getLeafIndex} from "./common/timber.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -664,9 +665,13 @@ const prepareBackupVariable = (node: any) => {
 	);
 	const secretKey = generalise(keys.secretKey);
 	const publicKey = generalise(keys.publicKey);
-        const sharedPublicKey = generalise(keys.sharedPublicKey);
-        const sharedSecretKey = generalise(keys.sharedSecretKey);
-	let storedCommitments = [];
+  const sharedPublicKey = generalise(keys.sharedPublicKey);
+  const sharedSecretKey = generalise(keys.sharedSecretKey);
+  const keyPairs = [
+		{ secretKey: secretKey, publicKey: publicKey },
+		{ secretKey: sharedSecretKey, publicKey: sharedPublicKey }
+	];
+  for (const kp of keyPairs) {
     for (const log of backDataEvent) {
       for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
         let cipherText = log.returnValues.encPreimages[i].cipherText;
@@ -688,7 +693,7 @@ const prepareBackupVariable = (node: any) => {
         }
         const plainText = decrypt(
           cipherText,
-          secretKey.hex(32),
+          kp.secretKey.hex(32),
           [
             decompressStarlightKey(generalise(ephPublicKey))[0].hex(32),
             decompressStarlightKey(generalise(ephPublicKey))[1].hex(32),
@@ -741,30 +746,43 @@ const prepareBackupVariable = (node: any) => {
           for (let i = start; i < plainText.length; i++) {
             hashInput.push(BigInt(generalise(plainText[i]).hex(32)));
           }
-          hashInput.push(BigInt(publicKey.hex(32)));
+          hashInput.push(BigInt(kp.publicKey.hex(32)));
           hashInput.push(BigInt(salt.hex(32)));
           newCommitment = generalise(poseidonHash(hashInput));
         } else {
           newCommitment = generalise(poseidonHash([
             BigInt(stateVarId.hex(32)),
             BigInt(value.hex(32)),
-            BigInt(publicKey.hex(32)),
+            BigInt(kp.publicKey.hex(32)),
             BigInt(salt.hex(32)),
           ]));
         }
-        if (!varName.includes(" u")){
-          let oldCommitments = storedCommitments.filter(
-            (element) =>
-              element.stateVarId.integer === stateVarId.integer &&
-              (!mappingKey || element.mappingKey === mappingKey?.integer)
-            );
-          for (const oldCommitment of oldCommitments){
-            await markNullified(oldCommitment.hash, secretKey.hex(32));
-            let index = storedCommitments.findIndex(element => element === oldCommitment);
-            if (index !== -1) {
-            storedCommitments.splice(index, 1);
-            }
-          }
+        let index = await getLeafIndex(
+					"CONTRACT_NAME",
+					newCommitment.integer,
+					undefined,
+					1
+				);
+        if (index === undefined) {
+          console.log(index, "index");
+          console.warn("Could not find leaf index for", newCommitment.integer,
+           ", Possibly this commitment has a different public key and so decryption failed.");
+          continue;
+        }
+        let nullifier = poseidonHash([
+          BigInt(stateVarId.hex(32)),
+          BigInt(kp.secretKey.hex(32)),
+          BigInt(salt.hex(32))
+        ]);
+        let nullification = await instance.methods.nullifiers(nullifier.integer).call();
+        let isNullified = false;
+        if (nullification === 0n) {
+          isNullified = false;
+        } else if (nullification === BigInt(nullifier.integer)) {
+          isNullified = true;
+        } else {
+          throw new Error("The nullifier value: " + nullifier.integer +
+            " does not match the on-chain nullifier: " + nullification);
         }
         await storeCommitment({
           hash: newCommitment,
@@ -774,16 +792,16 @@ const prepareBackupVariable = (node: any) => {
             stateVarId: stateVarId,
             value: value,
             salt: salt,
-            publicKey: publicKey,
+            publicKey: kp.publicKey,
           },
-          secretKey: secretKey,
-          isNullified: false,
+          secretKey: kp.secretKey,
+          isNullified: isNullified,
         });
-        storedCommitments.push({stateVarId: stateVarId, hash: newCommitment, mappingKey: mappingKey?.integer});
       }
     };
+  };
   }`;
-  
+
   // replace references to contract and functions with ours
   let outputApiServiceFile = genericApiServiceFile.replace(
     /CONTRACT_NAME/g,
@@ -820,6 +838,7 @@ const prepareBackupDataRetriever = (node: any) => {
     poseidonHash,
     scalarMult,
   } from "./common/number-theory.mjs";
+  import { getLeafIndex} from "./common/timber.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -860,121 +879,138 @@ const prepareBackupDataRetriever = (node: any) => {
     const publicKey = generalise(keys.publicKey);
     const sharedPublicKey = generalise(keys.sharedPublicKey);
     const sharedSecretKey = generalise(keys.sharedSecretKey);
-    let storedCommitments = [];
-    for (const log of backDataEvent) {
-      for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
-        let cipherText = log.returnValues.encPreimages[i].cipherText;
-        let ephPublicKey = log.returnValues.encPreimages[i].ephPublicKey;
-        let varName = log.returnValues.encPreimages[i].varName;
-        let name = varName.split(" ")[0];
-        const structProperties = varName.split("props:")[1]?.trim();
-        varName = varName.split("props:")[0]?.trim();
-        let isArray = false;
-        let isStruct = false;
-        if (varName.includes(" a")) {
-          isArray = true;
-        } 
-        if (varName.includes(" s")) {
-          isStruct = true;
-        }
-        const plainText = decrypt(
-          cipherText,
-          secretKey.hex(32),
-          [
-            decompressStarlightKey(generalise(ephPublicKey))[0].hex(32),
-            decompressStarlightKey(generalise(ephPublicKey))[1].hex(32),
-          ]
-        );	
-        let mappingKey = null;
-        let stateVarId;
-        let value;
-        console.log("Decrypted pre-image of commitment for variable name: " + name + ": ");
-        let salt = generalise(plainText[0]);
-        console.log(\`\\tSalt: \${salt.integer}\`);
-        let count;
-        if (isArray){
-          console.log(\`\\tState variable StateVarId: \${plainText[2]}\`);
-          mappingKey = generalise(plainText[1]);
-          console.log(\`\\tMapping Key: \${mappingKey.integer}\`);
-          let reGenStateVarId = generalise(
-            utils.mimcHash(
-              [
-                generalise(plainText[2]).bigInt,
-                generalise(plainText[1]).bigInt,
-              ],
-              "ALT_BN_254"
-            )
-          );
-          stateVarId = reGenStateVarId;
-          console.log(\`Regenerated StateVarId: \${reGenStateVarId.bigInt}\`);
-          count = 3;
-        } else {
-          stateVarId = generalise(plainText[1]);
-          console.log(\`\\tStateVarId: \${plainText[1]}\`);
-          count = 2;
-        }
-        if (isStruct){
-          value = {};
-          let count = isArray ? 3 : 2;
-          for (const prop of structProperties.split(" ")) {
-            value[prop] = plainText[count];
-            count++;
+    const keyPairs = [
+      { secretKey: secretKey, publicKey: publicKey },
+      { secretKey: sharedSecretKey, publicKey: sharedPublicKey }
+    ];
+    for (const kp of keyPairs) {
+      for (const log of backDataEvent) {
+        for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
+          let cipherText = log.returnValues.encPreimages[i].cipherText;
+          let ephPublicKey = log.returnValues.encPreimages[i].ephPublicKey;
+          let varName = log.returnValues.encPreimages[i].varName;
+          let name = varName.split(" ")[0];
+          const structProperties = varName.split("props:")[1]?.trim();
+          varName = varName.split("props:")[0]?.trim();
+          let isArray = false;
+          let isStruct = false;
+          if (varName.includes(" a")) {
+            isArray = true;
+          } 
+          if (varName.includes(" s")) {
+            isStruct = true;
           }
-          console.log(\`\\tValue: \${value}\`);
-        } else {
-          value = generalise(plainText[count]);
-          console.log(\`\\tValue: \${value.integer}\`);
-        }
-        let newCommitment;
-        if (isStruct){
-          let hashInput = [BigInt(stateVarId.hex(32))];
-          let start = isArray ? 3 : 2;
-          for (let i = start; i < plainText.length; i++) {
-            hashInput.push(BigInt(generalise(plainText[i]).hex(32)));
-          }
-          hashInput.push(BigInt(publicKey.hex(32)));
-          hashInput.push(BigInt(salt.hex(32)));
-          newCommitment = generalise(poseidonHash(hashInput));
-        } else {
-          newCommitment = generalise(poseidonHash([
-            BigInt(stateVarId.hex(32)),
-            BigInt(value.hex(32)),
-            BigInt(publicKey.hex(32)),
-            BigInt(salt.hex(32)),
-          ]));
-        }
-        if (!varName.includes(" u")){
-          let oldCommitments = storedCommitments.filter(
-            (element) =>
-              element.stateVarId.integer === stateVarId.integer &&
-              (!mappingKey || element.mappingKey === mappingKey?.integer)
+          const plainText = decrypt(
+            cipherText,
+            kp.secretKey.hex(32),
+            [
+              decompressStarlightKey(generalise(ephPublicKey))[0].hex(32),
+              decompressStarlightKey(generalise(ephPublicKey))[1].hex(32),
+            ]
+          );	
+          let mappingKey = null;
+          let stateVarId;
+          let value;
+          console.log("Decrypted pre-image of commitment for variable name: " + name + ": ");
+          let salt = generalise(plainText[0]);
+          console.log(\`\\tSalt: \${salt.integer}\`);
+          let count;
+          if (isArray){
+            console.log(\`\\tState variable StateVarId: \${plainText[2]}\`);
+            mappingKey = generalise(plainText[1]);
+            console.log(\`\\tMapping Key: \${mappingKey.integer}\`);
+            let reGenStateVarId = generalise(
+              utils.mimcHash(
+                [
+                  generalise(plainText[2]).bigInt,
+                  generalise(plainText[1]).bigInt,
+                ],
+                "ALT_BN_254"
+              )
             );
-          for (const oldCommitment of oldCommitments){
-            await markNullified(oldCommitment.hash, secretKey.hex(32));
-            let index = storedCommitments.findIndex(element => element === oldCommitment);
-            if (index !== -1) {
-            storedCommitments.splice(index, 1);
-            }
+            stateVarId = reGenStateVarId;
+            console.log(\`Regenerated StateVarId: \${reGenStateVarId.bigInt}\`);
+            count = 3;
+          } else {
+            stateVarId = generalise(plainText[1]);
+            console.log(\`\\tStateVarId: \${plainText[1]}\`);
+            count = 2;
           }
+          if (isStruct){
+            value = {};
+            let count = isArray ? 3 : 2;
+            for (const prop of structProperties.split(" ")) {
+              value[prop] = plainText[count];
+              count++;
+            }
+            console.log(\`\\tValue: \${value}\`);
+          } else {
+            value = generalise(plainText[count]);
+            console.log(\`\\tValue: \${value.integer}\`);
+          }
+          let newCommitment;
+          if (isStruct){
+            let hashInput = [BigInt(stateVarId.hex(32))];
+            let start = isArray ? 3 : 2;
+            for (let i = start; i < plainText.length; i++) {
+              hashInput.push(BigInt(generalise(plainText[i]).hex(32)));
+            }
+            hashInput.push(BigInt(kp.publicKey.hex(32)));
+            hashInput.push(BigInt(salt.hex(32)));
+            newCommitment = generalise(poseidonHash(hashInput));
+          } else {
+            newCommitment = generalise(poseidonHash([
+              BigInt(stateVarId.hex(32)),
+              BigInt(value.hex(32)),
+              BigInt(kp.publicKey.hex(32)),
+              BigInt(salt.hex(32)),
+            ]));
+          }
+          let index = await getLeafIndex(
+            "CONTRACT_NAME",
+            newCommitment.integer,
+            undefined,
+            1
+          );
+          if (index === undefined) {
+            console.log(index, "index");
+            console.warn("Could not find leaf index for", newCommitment.integer,
+            ", Possibly this commitment has a different public key and so decryption failed.");
+            continue;
+          }
+          let nullifier = poseidonHash([
+            BigInt(stateVarId.hex(32)),
+            BigInt(kp.secretKey.hex(32)),
+            BigInt(salt.hex(32))
+          ])
+          let nullification = await instance.methods.nullifiers(nullifier.integer).call();
+          let isNullified = false;
+          if (nullification === 0n) {
+            isNullified = false;
+          } else if (nullification === BigInt(nullifier.integer)) {
+            isNullified = true;
+          } else {
+            throw new Error("The nullifier value: " + nullifier.integer +
+              " does not match the on-chain nullifier: " + nullification);
+          }
+          await storeCommitment({
+            hash: newCommitment,
+            name: name,
+            mappingKey: mappingKey?.integer,
+            preimage: {
+              stateVarId: stateVarId,
+              value: value,
+              salt: salt,
+              publicKey: kp.publicKey,
+            },
+            secretKey: kp.secretKey,
+            isNullified: isNullified,
+          });
         }
-        await storeCommitment({
-          hash: newCommitment,
-          name: name,
-          mappingKey: mappingKey?.integer,
-          preimage: {
-            stateVarId: stateVarId,
-            value: value,
-            salt: salt,
-            publicKey: publicKey,
-          },
-          secretKey: secretKey,
-          isNullified: false,
-        });
-        storedCommitments.push({stateVarId: stateVarId, hash: newCommitment, mappingKey: mappingKey?.integer});
-      }
+      };
     };
   }`;
-  
+
   // replace references to contract and functions with ours
   let outputApiServiceFile = genericApiServiceFile.replace(
     /CONTRACT_NAME/g,
