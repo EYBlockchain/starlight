@@ -99,6 +99,8 @@ To run the resulting zApp:
 
 ### 1. Creating a Zolidity (`.zol`) contract from a standard Solidity (`.sol`) contract
 
+When writing zolidity contracts note that not all Solidity syntax is currently supported. [Here](./doc/STATUS.md) is a guide to current functionality.
+
 #### Zolidity decorators: `secret`, `known`, and `unknown`
 
 In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update that variable. Secret variables are stored on-chain via commitments, and the original data (preimage) is kept locally by the owner. 
