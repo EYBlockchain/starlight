@@ -17,6 +17,7 @@ chai.use(chaiAsPromised);
 
 const testedZapps = [];
 const zappLogs = new Map(); // Store logs for each zapp
+const displayedZapps = new Set(); // Track which ZApps have already had logs displayed
 
 const getUserFriendlyTestNames = async folderPath => {
   try {
@@ -53,6 +54,12 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
           console.log(`Docker stderr for ${zappName}:`);
           console.log(logResult.stderr);
         }
+        // Store logs and mark as displayed to prevent duplicate display in afterEach
+        zappLogs.set(zappName, {
+          stdout: logResult.stdout,
+          stderr: logResult.stderr,
+        });
+        displayedZapps.add(zappName);
       }
       shell.cd('../..');
     } catch (dockerLogError) {
@@ -109,6 +116,12 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
         console.log(`Stderr for ${zappName}:`);
         console.log(logResult.stderr);
       }
+      // Store logs and mark as displayed to prevent duplicate display in afterEach
+      zappLogs.set(zappName, {
+        stdout: logResult.stdout,
+        stderr: logResult.stderr,
+      });
+      displayedZapps.add(zappName);
     }
     // Clean up and re-throw
     shell.exec('docker compose -f docker-compose.zapp.yml down -v');
@@ -664,8 +677,12 @@ const allTestsCovered = userFriendlyTests.every(test =>
   testedZapps.includes(test),
 );
 
-// Helper function to display logs for a specific zapp
+// Helper function to display logs for a specific zapp (only once)
 function displayLogsForZapp(zappName) {
+  // Check if we've already displayed logs for this ZApp
+  if (displayedZapps.has(zappName)) {
+    return; // Skip - already displayed
+  }
   const logs = zappLogs.get(zappName);
   if (logs) {
     console.log(`\n=== Logs for ${zappName} ===`);
@@ -674,6 +691,8 @@ function displayLogsForZapp(zappName) {
       console.log(`Stderr for ${zappName}:`);
       console.log(logs.stderr);
     }
+    // Mark this ZApp as having logs displayed
+    displayedZapps.add(zappName);
   } else {
     console.log(`\n=== No logs found for ${zappName} ===`);
   }
