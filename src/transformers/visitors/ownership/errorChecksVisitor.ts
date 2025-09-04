@@ -6,10 +6,9 @@ import { StateVariableIndicator } from '../../../traverse/Indicator.js';
 import NodePath from '../../../traverse/NodePath.js';
 import { traverseNodesFast } from '../../../traverse/traverse.js';
 import { ZKPError, TODOError, SyntaxError } from '../../../error/errors.js';
-import { KeyObject } from 'crypto';
 import logger from '../../../utils/logger.js';
-export let structWarnings = [];
 
+export let structWarnings = [];
 
 /**
  * @desc:
@@ -25,18 +24,44 @@ export default {
       if (path.isConstantArray() && node.stateVariable && node.isSecret) {
         throw new TODOError(
           `We can't currently handle secret arrays of constant length. If you want one editable state, try a struct, otherwise use a mapping or dynamic array.`,
-          node
+          node,
         );
       }
-      if (node.value && scope.scopeType === 'ContractDefinition') {
-        if (!path.getSiblingNodes().some((sib: any) => sib.kind === 'constructor'))
-          throw new SyntaxError(`Your variable ${node.name} is being initialised without any constructor - we can't create a commitment for this value without a circuit present. Consider moving this initial value to the constructor.`);
-
-        if (node.value.nodeType === 'Identifier') {
-          throw new SyntaxError(`Your variable ${node.name} is being initialised to ${node.value.name} outside of a function. Consider moving it to the constructor or another function.`);
+      const varBinding = scope.getReferencedBinding(node);
+      if (varBinding.isStruct && varBinding.isSecret) {
+        const binding = path.getReferencedBinding();
+        // The first case covers structs and the second case covers mappings to structs
+        const structDecl =
+          path.getStructDeclaration() ||
+          binding.referencingPaths[0].getStructDeclaration();
+        if (structDecl) {
+          structDecl.members.forEach((member: any) => {
+            const typeStr =
+              member.typeName?.name || member.typeDescriptions?.typeString;
+            if (!typeStr || !['bool', 'uint256', 'address'].includes(typeStr)) {
+              throw new TODOError(
+                `Secret struct with a property ${typeStr} that is not a supported type. See the Status documentation for more details`,
+                node,
+              );
+            }
+          });
         }
       }
-    }
+      if (node.value && scope.scopeType === 'ContractDefinition') {
+        if (
+          !path.getSiblingNodes().some((sib: any) => sib.kind === 'constructor')
+        )
+          throw new SyntaxError(
+            `Your variable ${node.name} is being initialised without any constructor - we can't create a commitment for this value without a circuit present. Consider moving this initial value to the constructor.`,
+          );
+
+        if (node.value.nodeType === 'Identifier') {
+          throw new SyntaxError(
+            `Your variable ${node.name} is being initialised to ${node.value.name} outside of a function. Consider moving it to the constructor or another function.`,
+          );
+        }
+      }
+    },
   },
 
   IfStatement: {
@@ -198,7 +223,7 @@ export default {
       if (state.isContractPublic) {
         throw new Error(
           'The contract is fully public and does not use secret variables, making it incompatible with the transpiler. ' +
-          'Ensure your contract manipulates secret variables to generate a valid ZApp.'
+            'Ensure your contract manipulates secret variables to generate a valid ZApp.',
         );
       }
 
@@ -206,8 +231,11 @@ export default {
         if (!(binding instanceof VariableBinding)) continue;
         binding.prelimTraversalErrorChecks();
       }
-      if(structWarnings.length>0) {
-      logger.warn( ' The following struct properties may cause unconstrained variable errors in the circuit ' , Array.from(new Set(structWarnings)));
+      if (structWarnings.length > 0) {
+        logger.warn(
+          ' The following struct properties may cause unconstrained variable errors in the circuit ',
+          Array.from(new Set(structWarnings)),
+        );
       }
       structWarnings = [];
       // if no errors, we then check everything is nullifiable

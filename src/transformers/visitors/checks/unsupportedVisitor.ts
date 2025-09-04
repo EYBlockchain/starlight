@@ -56,7 +56,6 @@ export default {
           );
         }
       });
-
     },
   },
 
@@ -99,19 +98,39 @@ export default {
       }
     },
   },
-    
+
   VariableDeclaration: {
     enter(node: any) {
       if (node.name.startsWith('_') && node.isSecret)
         throw new ZKPError(
           `Zokrates does not support variables that begin with an underscore such as as _value.`,
-          node
+          node,
         );
       if (node.name === 'key'){
         throw new ZKPError(
           `Zokrates does not support variables with the name key, please choose a different name.`,
-          node
+          node,
         );
+      }
+      if (node.typeName.nodeType === 'ArrayTypeName' && node.isSecret) {
+        if (node.typeName.baseType?.nodeType === 'ArrayTypeName') {
+          throw new TODOError(
+            `Multi-dimensional arrays. See the Status documentation for more details`,
+            node,
+          );
+        }
+        if (node.typeName.baseType?.name === 'bool') {
+          throw new TODOError(
+            `Arrays with 'bool' element types. Please create an issue.`,
+            node,
+          );
+        }
+        if (node.typeName.baseType?.nodeType === 'UserDefinedTypeName') {
+          throw new TODOError(
+            `Arrays with user-defined element types, e.g. structs. See the Status documentation for more details`,
+            node,
+          );
+        }
       }
     },
   },

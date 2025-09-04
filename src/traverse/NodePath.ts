@@ -956,26 +956,46 @@ export default class NodePath {
   }
 
   getStructDeclaration(node: any = this.node): any {
-    if (!this.isStruct(node) && !node.typeDescriptions?.typeString.includes('struct ')) return null;
+    if (
+      !this.isStruct(node) &&
+      !node.typeDescriptions?.typeString.includes('struct ')
+    )
+      return null;
     if (this.getAncestorOfType('StructDefinition')) return this.getAncestorOfType('StructDefinition');
     // if this is at the contract level, the StructDefinition will be a sibling
     const fnDef = this.getAncestorOfType('FunctionDefinition') || this;
-    let parent = node.typeName?.pathNode || node.typeDescriptions?.typeString.includes('struct ') ? node : null;
+    let parent =
+      node.typeName?.pathNode ||
+      node.typeDescriptions?.typeString.includes('struct ')
+        ? node
+        : null;
     parent ??= (NodePath.getPath(node) || this).queryAncestors(p => {
-      if (p.node.typeName?.pathNode ||
-      p.node.typeDescriptions?.typeString.includes('struct ') ||
-      p.node.expression?.typeDescriptions?.typeString.includes('struct ')) return p;
-    }
-    ).node;
+      if (
+        p.node.typeName?.pathNode ||
+        p.node.typeDescriptions?.typeString.includes('struct ') ||
+        p.node.expression?.typeDescriptions?.typeString.includes('struct ')
+      )
+        return p;
+    }).node;
     if (parent.typeName?.pathNode) {
-      const typeId = parent.typeName.pathNode ? parent.typeName.pathNode.referencedDeclaration : parent.typeName.valueType.referencedDeclaration;
-      const structNode = fnDef.getAllPrevSiblingNodes()?.concat(fnDef.getAllNextSiblingNodes()).find(n => `${n.id}` === `${typeId}`);
+      const typeId = parent.typeName.pathNode
+        ? parent.typeName.pathNode.referencedDeclaration
+        : parent.typeName.valueType.referencedDeclaration;
+      const structNode = fnDef
+        .getAllPrevSiblingNodes()
+        ?.concat(fnDef.getAllNextSiblingNodes())
+        .find(n => `${n.id}` === `${typeId}`);
       return structNode;
-    } else if (parent.typeDescriptions?.typeString.includes('struct ')) {
+    }
+    else if (parent.typeDescriptions?.typeString.includes('struct ')) {
       // matches number between $ and _ in typeIdentifier (this is where id is stored)
       // e.g. 8 in "t_struct$_MyStruct_$8_storage_ptr"
-      const structID = parent.typeDescriptions?.typeIdentifier.match(/(?<=\$)(\d+)(?=\_)/)[0];
-      const structNode = fnDef.getAllPrevSiblingNodes()?.concat(fnDef.getAllNextSiblingNodes()).find(n => `${n.id}` === `${structID}`);
+      const structID =
+        parent.typeDescriptions?.typeIdentifier.match(/(?<=\$)(\d+)(?=\_)/)[0];
+      const structNode = fnDef
+        .getAllPrevSiblingNodes()
+        ?.concat(fnDef.getAllNextSiblingNodes())
+        .find(n => `${n.id}` === `${structID}`);
       return structNode;
     } else {
       const structNode = this.getReferencedNode(parent) || this.scope.getReferencedBinding(parent)?.node;
@@ -1004,11 +1024,18 @@ export default class NodePath {
     let arrLen;
     switch (node.nodeType) {
       case 'IndexAccess':
-        arrLen = node.baseExpression.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        arrLen =
+          node.baseExpression.typeDescriptions.typeString.match(
+            /(?<=\[)(\d+)(?=\])/,
+          );
         break;
       case 'Identifier':
       default:
-        arrLen = node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/);
+        arrLen = node.typeDescriptions
+          ? node.typeDescriptions.typeString.match(/(?<=\[)(\d+)(?=\])/)
+          : node.declarations[0].typeDescriptions?.typeString.match(
+              /(?<=\[)(\d+)(?=\])/,
+            );
         break;
     }
     if (!arrLen) return false;

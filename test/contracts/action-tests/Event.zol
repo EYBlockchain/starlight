@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 
 contract Assign {
   secret uint256 private a;
-   event eventFunction(uint id);
-   function deposit(uint fid) public payable {     
+   event eventFunction(256 id);
+   function deposit(uint256 fid) public payable {     
      known a +=2; 
       emit eventFunction(fid);
    }
