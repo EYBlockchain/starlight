@@ -102,7 +102,7 @@ To run the resulting zApp:
 When writing zolidity contracts note that not all Solidity syntax is currently supported. [Here](./doc/STATUS.md) is a guide to current functionality.
 
 
-#### Zolidity decorators: `secret`, `known`, `unknown`, `encrypt`, and `re-initialisable`
+#### Zolidity decorators: `secret`, `known`, `unknown`, `encrypt`, `sharedSecret` and `re-initialisable`
 
 In Starlight, each secret variable is assigned an owner. The owner holds a secret key that allows them to access the private value and update that variable. Secret variables are stored on-chain via commitments, and the original data (preimage) is kept locally by the owner.
 
@@ -112,6 +112,7 @@ Zolidity extends Solidity with the following decorators:
 - `known`: Indicates that only the variable owner can modify the variable. By default all variables are known.
 - `unknown`: Allows any user to increment the variable, not just the owner.
 - `encrypt`: Use when creating a commitment for another user (e.g., with `unknown`). Ensures, via zk-proofs, that a correct encryption of the commitment pre-image is broadcast and can be decrypted by the owner so that the commitment can be used in the future.
+- `sharedSecret`: Marks a secret variable that is shared between two owners, for applications such as Swaps.
 - `re-initialisable`: Allows a secret variable to be re-initialised, if later in the contract it is burned. 
 
 ---
@@ -198,36 +199,89 @@ contract Assign {
   }
 }
 ```
+---
+#### Example: Using the `sharedSecret` decorator
 
+In the contract below, swapProposals is a secret variable that is created by the user who starts the Swap and modified by a different user who completes the Swap. It therefore needs two different owners and so is marked with the `sharedSecret` decorator. For more details on how to test Swaps see the [Private Swap Contract](#private-swap-contract) section.
+
+```solidity
+contract Swap {
+
+    secret mapping(address => uint256) public balances;
+    secret mapping(uint256 => address) public tokenOwners;
+    struct swapStruct{
+        uint256 swapAmountSent;
+        uint256 swapTokenRecieved;
+        address swapInitiator;
+        uint256 pendingStatus;
+    }
+    sharedSecret mapping(address => swapStruct) swapProposals;  
+
+    function startSwap(
+      secret address sharedAddress, secret uint256 amountSent, secret uint256 tokenIdRecieved
+    ) public {
+        require(swapProposals[sharedAddress].pendingStatus == 0);
+        swapProposals[sharedAddress].swapAmountSent += amountSent;
+        balances[msg.sender] -= amountSent; 
+        swapProposals[sharedAddress].swapTokenRecieved = tokenIdRecieved;
+        swapProposals[sharedAddress].swapInitiator = msg.sender;
+        swapProposals[sharedAddress].pendingStatus = 1;
+    }
+
+    function completeSwap(
+      secret address counterParty,
+      secret address sharedAddress,
+      secret uint256 tokenIdSent,
+      secret uint256 amountRecieved
+    ) public {
+        require(swapProposals[sharedAddress].swapTokenRecieved == tokenIdSent);
+        require(swapProposals[sharedAddress].swapAmountSent == amountRecieved);
+        require(swapProposals[sharedAddress].pendingStatus == 1);
+        require(counterParty == swapProposals[sharedAddress].swapInitiator);
+        swapProposals[sharedAddress].swapAmountSent -= amountRecieved;
+        balances[msg.sender] +=  amountRecieved; 
+        tokenOwners[tokenIdSent] = counterParty;   
+        swapProposals[sharedAddress].pendingStatus = 0;
+    }
+
+    function deposit(secret uint256 amount, secret uint256 tokenId) public {
+        balances[msg.sender] += amount;
+        reinitialisable tokenOwners[tokenId] = msg.sender;
+    }
+}
+
+```
 ---
 #### Example: Using the `re-initisalisable` decorator
 
 In the contract below, the owner of `tokenOwners[tokenId]` is the address stored as its mapping value. When `withdraw` is called, the commitment is nullified and the new value is `address(0)`, so no new commitment is created. This creates a problem if deposit is called again: how can a new owner provide a nullifier if the token was previously owned? The `re-initialisable` decorator solves this by allowing the variable to be re-initialised in `deposit`.
 
 ```solidity
-secret mapping(uint256 => address) public tokenOwners;
-IERC721 public erc721;
+contract NFT_Escrow {
+  secret mapping(uint256 => address) public tokenOwners;
+  IERC721 public erc721;
 
-constructor(address _erc721) {
-   erc721 = IERC721(_erc721);
-}
+  constructor(address _erc721) {
+    erc721 = IERC721(_erc721);
+  }
 
-function deposit(uint tokenId) public {
-    bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
-    require(success == true);
-    reinitialisable tokenOwners[tokenId] = msg.sender;
-}
+  function deposit(uint tokenId) public {
+      bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
+      require(success == true);
+      reinitialisable tokenOwners[tokenId] = msg.sender;
+  }
 
-function transfer(secret address recipient, secret uint256 tokenId) public {
-    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
-    tokenOwners[tokenId] = recipient;
-}
+  function transfer(secret address recipient, secret uint256 tokenId) public {
+      require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+      tokenOwners[tokenId] = recipient;
+  }
 
-function withdraw(uint256 tokenId) public {
-    require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
-    tokenOwners[tokenId] = address(0);
-    bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
-    require(success == true);
+  function withdraw(uint256 tokenId) public {
+      require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+      tokenOwners[tokenId] = address(0);
+      bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
+      require(success == true);
+  }
 }
 ```
 ---
