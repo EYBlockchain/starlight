@@ -1,4 +1,6 @@
 #!/bin/sh
+set -e  # Exit immediately if a command exits with a non-zero status
+
 while getopts "z:c:" arg; do
   case $arg in
     z)
@@ -13,12 +15,50 @@ while getopts "z:c:" arg; do
       ;;
   esac
 done
+
 echo "Constructor Input: $cnstrctrInput"
+echo "Setting up ZApp: $zapp"
+
+# Check if temp-zapps directory exists
+if [ ! -d "temp-zapps/$zapp" ]; then
+  echo "Error: ZApp directory temp-zapps/$zapp does not exist"
+  exit 1
+fi
+
 cd temp-zapps/$zapp
-npm install
-chmod +x ./bin/setup && chmod +x ./bin/startup 
-./bin/setup && ./bin/startup "$cnstrctrInput"
+
+# Run npm install with error checking
+echo "Running npm install..."
+if ! npm install; then
+  echo "Error: npm install failed for $zapp"
+  exit 1
+fi
+
+# Set execute permissions
+echo "Setting execute permissions..."
+if ! (chmod +x ./bin/setup && chmod +x ./bin/startup); then
+  echo "Error: Failed to set execute permissions for $zapp"
+  exit 1
+fi
+
+# Run setup
+echo "Running setup..."
+if ! ./bin/setup; then
+  echo "Error: Setup failed for $zapp"
+  exit 1
+fi
+
+# Run startup
+echo "Running startup with constructor input: $cnstrctrInput"
+if ! ./bin/startup "$cnstrctrInput"; then
+  echo "Error: Startup failed for $zapp"
+  exit 1
+fi
+
+echo "Waiting 20 seconds for services to be ready..."
 sleep 20
+
+echo "ZApp $zapp setup completed successfully"
 
 
 

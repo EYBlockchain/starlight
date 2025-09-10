@@ -16,6 +16,8 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const testedZapps = [];
+const zappLogs = new Map(); // Store logs for each zapp
+const displayedZapps = new Set(); // Track which ZApps have already had logs displayed
 
 const getUserFriendlyTestNames = async folderPath => {
   try {
@@ -30,44 +32,124 @@ const getUserFriendlyTestNames = async folderPath => {
   }
 };
 
-const callZAppAPIs = async (zappName , apiRequests, errorMessage, preHook, cnstrctrInputs) => {
+const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
+  console.log(`Starting tests for: ${zappName}`);
   testedZapps.push(zappName);
-  if (shell.exec(`./apiactions -z ${zappName} -c '${cnstrctrInputs}'`).code !== 0) {
+  // Execute apiactions with error handling
+  const apiactionsResult = shell.exec(
+    `./apiactions -z ${zappName} -c '${cnstrctrInputs}'`,
+  );
+  if (apiactionsResult.code !== 0) {
+    // Try to capture and display Docker logs before failing
+    try {
+      shell.cd(`./temp-zapps/${zappName}`);
+      const logResult = shell.exec(
+        'docker compose -f docker-compose.zapp.yml logs',
+        { silent: true },
+      );
+      if (logResult.code === 0 && logResult.stdout) {
+        console.log(`\n=== ${zappName} APIACTIONS FAILED - Docker logs ===`);
+        console.log(logResult.stdout);
+        if (logResult.stderr) {
+          console.log(`Docker stderr for ${zappName}:`);
+          console.log(logResult.stderr);
+        }
+        // Store logs and mark as displayed to prevent duplicate display in afterEach
+        zappLogs.set(zappName, {
+          stdout: logResult.stdout,
+          stderr: logResult.stderr,
+        });
+        displayedZapps.add(zappName);
+      }
+      shell.cd('../..');
+    } catch (dockerLogError) {
+      console.log(`Could not retrieve Docker logs: ${dockerLogError.message}`);
+    }
     shell.echo(`${zappName} failed`);
     shell.exit(1);
   }
   // wait for above shell command to execute
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  await new Promise(resolve => {
+    setTimeout(resolve, 5000);
+  });
 
   // run pre-hook to modify requests if needed
   if (preHook) {
     await preHook(apiRequests);
   }
-  let apiResponses = [];
-  for (let i = 0; i < apiRequests.length; i++) {
-    if (apiRequests[i].method === 'get') {
-      apiResponses[i] = await chai
-        .request('localhost:3000')
-        .get(apiRequests[i].endpoint)
-        .send(apiRequests[i].data);
-    } else if (apiRequests[i].method === 'post') {
-      apiResponses[i] = await chai
-        .request('localhost:3000')
-        .post(apiRequests[i].endpoint)
-        .send(apiRequests[i].data);
-      // Check if the response is successful
-      if (apiResponses[i].status !== 200) {
-        throw new Error(`API request failed for ${apiRequests[i].endpoint} with status ${apiResponses[i].status}`);
+  const apiResponses = [];
+  try {
+    // Sequential execution is intentional - API requests depend on state changes from previous requests
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < apiRequests.length; i++) {
+      if (apiRequests[i].method === 'get') {
+        apiResponses[i] = await chai
+          .request('localhost:3000')
+          .get(apiRequests[i].endpoint)
+          .send(apiRequests[i].data);
+      } else if (apiRequests[i].method === 'post') {
+        apiResponses[i] = await chai
+          .request('localhost:3000')
+          .post(apiRequests[i].endpoint)
+          .send(apiRequests[i].data);
+        // Check if the response is successful
+        if (apiResponses[i].status !== 200) {
+          throw new Error(
+            `API request failed for ${apiRequests[i].endpoint} with status ${apiResponses[i].status}`,
+          );
+        }
       }
     }
+    /* eslint-enable no-await-in-loop */
+  } catch (error) {
+    // Capture and display logs immediately on API failure
+    shell.cd(`./temp-zapps/${zappName}`);
+    console.log(`\n=== ${zappName} FAILED - Displaying logs ===`);
+    const logResult = shell.exec(
+      'docker compose -f docker-compose.zapp.yml logs',
+      { silent: true },
+    );
+    if (logResult.code === 0) {
+      console.log(`Logs for ${zappName}:`);
+      console.log(logResult.stdout);
+      if (logResult.stderr) {
+        console.log(`Stderr for ${zappName}:`);
+        console.log(logResult.stderr);
+      }
+      // Store logs and mark as displayed to prevent duplicate display in afterEach
+      zappLogs.set(zappName, {
+        stdout: logResult.stdout,
+        stderr: logResult.stderr,
+      });
+      displayedZapps.add(zappName);
+    }
+    // Clean up and re-throw
+    shell.exec('docker compose -f docker-compose.zapp.yml down -v');
+    shell.cd('../..');
+    throw error;
   }
   shell.cd(`./temp-zapps/${zappName}`);
-  if (shell.exec('docker compose -f docker-compose.zapp.yml down -v').code !== 0) {
+  // Capture logs silently and store them
+  const logResult = shell.exec(
+    'docker compose -f docker-compose.zapp.yml logs',
+    { silent: true },
+  );
+  if (logResult.code === 0) {
+    zappLogs.set(zappName, {
+      stdout: logResult.stdout,
+      stderr: logResult.stderr,
+    });
+  }
+  if (
+    shell.exec('docker compose -f docker-compose.zapp.yml down -v').code !== 0
+  ) {
     shell.echo('docker stop failed');
     shell.exit(1);
   }
   shell.cd('../..');
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  await new Promise(resolve => {
+    setTimeout(resolve, 5000);
+  });
   return apiResponses;
 };
 
@@ -90,7 +172,7 @@ const apiRequests_Arrays = [
   { method: 'get', endpoint: '/getBalanceByState', data: { name: 'a'} },
 ];
 
-res.Arrays = await callZAppAPIs('Arrays', apiRequests_Arrays, 'Arrays Zapp failed');
+res.Arrays = await callZAppAPIs('Arrays', apiRequests_Arrays);
 
 const apiRequests_Assign = [
   { method: 'post', endpoint: '/add', data: { value: 11 } },
@@ -106,7 +188,7 @@ const apiRequests_Assign = [
 
 ];
 
-res.Assign = await callZAppAPIs('Assign', apiRequests_Assign, 'Assign Zapp failed');
+res.Assign = await callZAppAPIs('Assign', apiRequests_Assign);
 
 const apiRequests_Assign_api = [
   { method: 'post', endpoint: '/add', data: { value: 11 } },
@@ -119,7 +201,7 @@ const apiRequests_Assign_api = [
   { method: 'post', endpoint: '/add', data: { value: 11 } },
 ];
 
-res.Assign_api = await callZAppAPIs('Assign-api', apiRequests_Assign_api, 'Assign-api Zapp failed');
+res.Assign_api = await callZAppAPIs('Assign-api', apiRequests_Assign_api);
 
 const apiRequests_BucketsOfBalls = [
   { method: 'post', endpoint: '/deposit', data: { amountDeposit: 6 } },
@@ -165,11 +247,7 @@ const apiRequests_BucketsOfBalls = [
   },
 ];
 
-res.BucketsOfBalls = await callZAppAPIs(
-  'BucketsOfBalls',
-  apiRequests_BucketsOfBalls,
-  'BucketsOfBalls Zapp failed',
-);
+res.BucketsOfBalls = await callZAppAPIs('BucketsOfBalls', apiRequests_BucketsOfBalls);
 
 // In order to test Charity Pot we first need to mint ERC tokens.
 let depositFilePath = path.join(
@@ -228,7 +306,6 @@ const apiRequests_CharityPot = [
 res.CharityPot = await callZAppAPIs(
   'CharityPot',
   apiRequests_CharityPot,
-  'CharityPot Zapp failed',
   undefined,
   "\"1390849295786071768276380950238675083608645509734\",\"NA\""
 );
@@ -247,7 +324,12 @@ const apiRequests_Constructor = [
 
 ];
 
-res.Constructor = await callZAppAPIs('Constructor', apiRequests_Constructor, 'Constructor Zapp failed', undefined, "5");
+res.Constructor = await callZAppAPIs(
+  'Constructor',
+  apiRequests_Constructor,
+  undefined,
+  '5',
+);
 
 const apiRequests_Encrypt = [
   { method: 'post', endpoint: '/add', data: { value: 6 } },
@@ -257,7 +339,7 @@ const apiRequests_Encrypt = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b' } },
 ];
 
-res.Encrypt = await callZAppAPIs('Encrypt', apiRequests_Encrypt, 'Encrypt Zapp failed');
+res.Encrypt = await callZAppAPIs('Encrypt', apiRequests_Encrypt);
 
 // In order to test Escrow we first need to mint ERC tokens
 depositFilePath = path.join(
@@ -339,7 +421,6 @@ const apiRequests_Escrow = [
 res.Escrow = await callZAppAPIs(
   'Escrow',
   apiRequests_Escrow,
-  'Escrow Zapp failed',
   undefined,
   '"NA"',
 );
@@ -351,7 +432,7 @@ const apiRequests_forloop = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'z' } },
 ];
 
-res.forloop = await callZAppAPIs('for-loop', apiRequests_forloop, 'for-loop Zapp failed');
+res.forloop = await callZAppAPIs('for-loop', apiRequests_forloop);
 
 const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 14 } },
@@ -363,7 +444,7 @@ const apiRequests_IfStatement = [
   { method: 'post', endpoint: '/add', data: { y: 6 } },
 ];
 
-res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement, 'If-Statement Zapp failed');
+res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement);
 
 /*const apiRequests_InternalFunctionCall = [
   { method: 'post', endpoint: '/deposit', data: { accountId: 1, amountDeposit: 16 } },
@@ -374,7 +455,7 @@ res.IfStatement = await callZAppAPIs('If-Statement', apiRequests_IfStatement, 'I
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'account', mappingKey: '3'} },
 ];
 
-res.InternalFunctionCall = await callZAppAPIs('InternalFunctionCall', apiRequests_InternalFunctionCall, 'InternalFunctionCall Zapp failed');*/
+res.InternalFunctionCall = await callZAppAPIs('InternalFunctionCall', apiRequests_InternalFunctionCall);*/
 
 const apiRequests_MappingtoStruct = [
   { method: 'post', endpoint: '/add', data: { value: 34 } },
@@ -386,7 +467,10 @@ const apiRequests_MappingtoStruct = [
   { method: 'post', endpoint: '/add', data: { value: 18 } },
 ];
 
-res.MappingtoStruct = await callZAppAPIs('MappingtoStruct', apiRequests_MappingtoStruct, 'MappingtoStruct Zapp failed');
+res.MappingtoStruct = await callZAppAPIs(
+  'MappingtoStruct',
+  apiRequests_MappingtoStruct,
+);
 
 // In order to test NFT_Escrow we first need to mint a token. 
 const NFTmintingText = `const erc721 = await getContractInstance("ERC721");
@@ -497,7 +581,6 @@ const apiRequests_NFT_Escrow = [
 res.NFT_Escrow = await callZAppAPIs(
   'NFT_Escrow',
   apiRequests_NFT_Escrow,
-  'NFT_Escrow Zapp failed',
   undefined,
   '"NA"',
 );
@@ -509,7 +592,7 @@ const apiRequests_Return = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'a' } },
 ];
 
-res.Return = await callZAppAPIs('Return', apiRequests_Return, 'Return Zapp failed');
+res.Return = await callZAppAPIs('Return', apiRequests_Return);
 
 const apiRequests_SimpleStruct = [
   { method: 'post', endpoint: '/add', data: { value: {"prop1": 14, "prop2": true} } },
@@ -520,8 +603,7 @@ const apiRequests_SimpleStruct = [
   { method: 'get', endpoint: '/getCommitmentsByVariableName', data: { name: 'b' } },
 ];
 
-res.SimpleStruct = await callZAppAPIs('SimpleStruct', apiRequests_SimpleStruct, 'SimpleStruct Zapp failed');
-
+res.SimpleStruct = await callZAppAPIs('SimpleStruct', apiRequests_SimpleStruct);
 
 const apiRequests_internalFunctionCallTest1 = [
   { method: 'post', endpoint: '/add', data: { value: 46 } },
@@ -532,7 +614,10 @@ const apiRequests_internalFunctionCallTest1 = [
   { method: 'get', endpoint: '/getAllCommitments' },
 ];
 
-res.InternalFunctionCallTest1 = await callZAppAPIs('internalFunctionCallTest1', apiRequests_internalFunctionCallTest1, 'internalFunctionCallTest1 Zapp failed');
+res.InternalFunctionCallTest1 = await callZAppAPIs(
+  'internalFunctionCallTest1',
+  apiRequests_internalFunctionCallTest1,
+);
 
 // --- Swap Zapp ---
 const counterParty = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
@@ -584,16 +669,34 @@ const preHook = async requests => {
   }
 };
 
-res.Swap = await callZAppAPIs(
-  'Swap',
-  apiRequests_Swap,
-  'Swap Zapp failed',
-  preHook,
-);
+res.Swap = await callZAppAPIs('Swap', apiRequests_Swap, preHook);
 
 const userFriendlyTestsPath = 'test/contracts/user-friendly-tests';
 const userFriendlyTests = await getUserFriendlyTestNames(userFriendlyTestsPath);
-const allTestsCovered = userFriendlyTests.every(test => testedZapps.includes(test));
+const allTestsCovered = userFriendlyTests.every(test =>
+  testedZapps.includes(test),
+);
+
+// Helper function to display logs for a specific zapp (only once)
+function displayLogsForZapp(zappName) {
+  // Check if we've already displayed logs for this ZApp
+  if (displayedZapps.has(zappName)) {
+    return; // Skip - already displayed
+  }
+  const logs = zappLogs.get(zappName);
+  if (logs) {
+    console.log(`\n=== Logs for ${zappName} ===`);
+    console.log(logs.stdout);
+    if (logs.stderr) {
+      console.log(`Stderr for ${zappName}:`);
+      console.log(logs.stderr);
+    }
+    // Mark this ZApp as having logs displayed
+    displayedZapps.add(zappName);
+  } else {
+    console.log(`\n=== No logs found for ${zappName} ===`);
+  }
+}
 
 describe('Check all contracts in user-friendly-tests are tested', () => {
   it('should ensure all user-friendly-tests are in testedZapps', () => {
@@ -602,6 +705,11 @@ describe('Check all contracts in user-friendly-tests are tested', () => {
 });
 
 describe('Arrays Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Arrays');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.Arrays[0].body.tx.event).to.equal('NewLeaves');
     expect(res.Arrays[1].body.tx.event).to.equal('NewLeaves');
@@ -644,6 +752,11 @@ describe('Arrays Zapp', () => {
 });
 
 describe('Assign Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Assign');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.Assign[0].body.tx.event).to.equal('NewLeaves');
     expect(res.Assign[1].body.tx.event).to.equal('NewLeaves');
@@ -679,6 +792,11 @@ describe('Assign Zapp', () => {
 });
 
 describe('Assign-api Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Assign-api');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.Assign_api[0].body.tx.event).to.equal('NewLeaves');
     expect(res.Assign_api[1].body.tx.event).to.equal('NewLeaves');
@@ -705,6 +823,11 @@ describe('Assign-api Zapp', () => {
 });
 
 describe('BucketsOfBalls Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('BucketsOfBalls');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.BucketsOfBalls[0].body.tx.event).to.equal('NewLeaves');
     expect(res.BucketsOfBalls[1].body.tx.event).to.equal('NewLeaves');
@@ -757,6 +880,11 @@ describe('BucketsOfBalls Zapp', () => {
 });
 
 describe('CharityPot Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('CharityPot');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.CharityPot[0].body.tx.event).to.equal('NewLeaves');
     expect(res.CharityPot[1].body.tx.event).to.equal('NewLeaves');
@@ -821,6 +949,11 @@ describe('CharityPot Zapp', () => {
 });
 
 describe('Constructor Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Constructor');
+    }
+  });
   it('test constructor is working', async () => {
     expect(res.Constructor[0].body.commitments[0].isNullified).to.equal(false);
     expect(parseInt(res.Constructor[0].body.commitments[0].preimage.value)).to.equal(5);
@@ -862,6 +995,11 @@ describe('Constructor Zapp', () => {
 });
 
 describe('Encrypt Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Encrypt');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.Encrypt[0].body.tx.event).to.equal('NewLeaves');
     expect(res.Encrypt[1].body.tx.event).to.equal('NewLeaves');
@@ -886,6 +1024,11 @@ describe('Encrypt Zapp', () => {
 });
 
 describe('Escrow Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Escrow');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.Escrow[0].body.tx.event).to.equal('NewLeaves');
     expect(res.Escrow[1].body.tx.event).to.equal('NewLeaves');
@@ -955,6 +1098,11 @@ describe('Escrow Zapp', () => {
 });
 
 describe('for-loop Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('for-loop');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.forloop[0].body.tx.event).to.equal('NewLeaves');
     expect(res.forloop[1].body.tx.event).to.equal('NewLeaves');
@@ -976,6 +1124,11 @@ describe('for-loop Zapp', () => {
 });
 
 describe('If-Statement Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('If-Statement');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.IfStatement[0].body.tx.event).to.equal('NewLeaves');
     expect(res.IfStatement[1].body.tx.event).to.equal('NewLeaves');
@@ -1031,6 +1184,11 @@ describe('If-Statement Zapp', () => {
 });*/
 
 describe('MappingtoStruct Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('MappingtoStruct');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.MappingtoStruct[0].body.tx.event).to.equal('NewLeaves');
     expect(res.MappingtoStruct[1].body.tx.event).to.equal('NewLeaves');
@@ -1058,6 +1216,11 @@ describe('MappingtoStruct Zapp', () => {
 });
 
 describe('NFT_Escrow Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('NFT_Escrow');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.NFT_Escrow[0].body.tx.event).to.equal('NewLeaves');
     expect(res.NFT_Escrow[1].body.tx.event).to.equal('NewLeaves');
@@ -1124,6 +1287,11 @@ describe('NFT_Escrow Zapp', () => {
 });
 
 describe('Return Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Return');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.Return[0].body.tx.event).to.equal('NewLeaves');
     expect(res.Return[1].body.tx.event).to.equal('NewLeaves');
@@ -1147,6 +1315,11 @@ describe('Return Zapp', () => {
 });
 
 describe('SimpleStruct Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('SimpleStruct');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.SimpleStruct[0].body.tx.event).to.equal('NewLeaves');
     expect(res.SimpleStruct[1].body.tx.event).to.equal('NewLeaves');
@@ -1174,6 +1347,11 @@ describe('SimpleStruct Zapp', () => {
 
 
 describe('InternalFunctionCallTest1 Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('InternalFunctionCallTest1');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.InternalFunctionCallTest1[0].body.tx.event).to.equal('NewLeaves');
     expect(res.InternalFunctionCallTest1[1].body.tx.event).to.equal('NewLeaves');
@@ -1197,6 +1375,11 @@ describe('InternalFunctionCallTest1 Zapp', () => {
 });
 
 describe('Swap Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('Swap');
+    }
+  });
   it('tests APIs are working', async () => {
     expect(res.Swap[0].body.tx.event).to.equal('NewLeaves'); // deposit 1
     expect(res.Swap[1].body.tx.event).to.equal('NewLeaves'); // deposit 2
