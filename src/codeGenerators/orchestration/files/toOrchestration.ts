@@ -853,7 +853,7 @@ const prepareBackupDataRetriever = (node: any) => {
 
     try {
       // Get the list of all collections in the database
-      const collections = await db.listCollections().toArray();
+      const collections = await db.listCollections({ name: COMMITMENTS_COLLECTION }).toArray();
 
       // Drop each collection
       for (let collection of collections) {
