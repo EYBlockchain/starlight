@@ -75,11 +75,4 @@ jobs:
        
       - name: run zapp apitest
         run: npx mocha --exit --timeout 50000 --require @babel/register apitest.js
-        
-      - name: disp logs on failure
-        if: failure()
-        run: | 
-          docker logs assign_zokrates_1
-          docker logs if-statement_zokrates_1
-          docker logs internalFunctionCallTest1_zokrates_1
 

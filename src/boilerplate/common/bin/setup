@@ -114,6 +114,9 @@ if [[ ! $setup == 'n' ]]
 then
 printf "\n${GREEN}*** Starting the zokrates container ***${NC}\n"
 
+mkdir -p ./proving-files
+sudo chown -R 10001:10001 ./proving-files
+
 docker compose -f docker-compose.zapp.yml up -d zokrates
 
 sleep 5
