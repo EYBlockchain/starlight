@@ -374,6 +374,8 @@ const visitor = {
         const newFunctionDefinitionNode = buildNode('FunctionDefinition', {
           name: 'main',
         });
+        newFunctionDefinitionNode.isInternalFunctionCall =
+          node.isInternalFunctionCall;
         const newImportStatementListNode = buildNode('ImportStatementList');
 
         const { indicators } = scope;
@@ -385,11 +387,9 @@ const visitor = {
           }),
         );
 
-
         // before creating a function node we check for functions with same name
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
-
 
         // After getting an appropriate Name , we build the node
         const newNode = buildNode('File', {
@@ -1590,8 +1590,10 @@ const visitor = {
         internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret, // return
       });
       let fnDefNode = path.getContractDefinition().getFunctionByName(node.expression.name);
-      fnDefNode._newASTPointer.isInternalFunctionCall = true;
-      fnDefNode._newASTPointer.interactsWithSecret = internalFunctionInteractsWithSecret;
+      fnDefNode.isInternalFunctionCall = true;
+      if (fnDefNode._newASTPointer){
+        fnDefNode._newASTPointer.isInternalFunctionCall = true;
+      } 
 
       
       if(parent._newASTPointer.declarations.length > 0){
@@ -1630,8 +1632,10 @@ const visitor = {
             });
             
             let fnDefNode = path.getContractDefinition().getFunctionByName(node.expression.name);
-            fnDefNode._newASTPointer.isInternalFunctionCall = true;
-            fnDefNode._newASTPointer.interactsWithSecret = internalFunctionInteractsWithSecret;
+            fnDefNode.isInternalFunctionCall = true;
+            if (fnDefNode._newASTPointer){
+              fnDefNode._newASTPointer.isInternalFunctionCall = true;
+            } 
 
             if(includeExpressionNode) { 
               state.initNode ??= [];
@@ -1640,19 +1644,18 @@ const visitor = {
           }
                 
         })
-      } else
-      { 
+      } else{ 
         newNode = buildNode('InternalFunctionCall', {
         name: node.expression.name,
         internalFunctionInteractsWithSecret: internalFunctionInteractsWithSecret,
         CircuitArguments: [],
         CircuitReturn:[],
-      });
-      let fnDefNode = path.getContractDefinition().getFunctionByName(node.expression.name);
-      fnDefNode._newASTPointer.isInternalFunctionCall = true;
-      fnDefNode._newASTPointer.interactsWithSecret = internalFunctionInteractsWithSecret;
-
-      
+        });
+        let fnDefNode = path.getContractDefinition().getFunctionByName(node.expression.name);
+        fnDefNode.isInternalFunctionCall = true;
+        if (fnDefNode._newASTPointer){
+          fnDefNode._newASTPointer.isInternalFunctionCall = true;
+        } 
       }
      const fnNode = buildNode('InternalFunctionBoilerplate', {
        name: node.expression.name,
