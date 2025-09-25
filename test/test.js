@@ -57,6 +57,7 @@ describe("AST testing", function () {
         } catch (error) {
           logger.error(`Failed to zappify ${options.inputFileName}:`, error.message);
           console.error("Error details:", error); // Display full error details
+          throw error;
         }
       });
     });
