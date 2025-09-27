@@ -84,6 +84,7 @@ class BoilerplateGenerator {
                 const publicKey = generalise(keys.publicKey);
                 const sharedPublicKey = generalise(keys.sharedPublicKey);
                 const sharedSecretKey = generalise(keys.sharedSecretKey);
+                console.log("sharedPublicKey",sharedPublicKey);
                `
       ];
     },
