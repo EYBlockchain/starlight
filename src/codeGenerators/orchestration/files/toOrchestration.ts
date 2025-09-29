@@ -672,6 +672,7 @@ const prepareBackupVariable = (node: any) => {
 		{ secretKey: sharedSecretKey, publicKey: sharedPublicKey }
 	];
   for (const kp of keyPairs) {
+    if (!kp.secretKey) continue;
     for (const log of backDataEvent) {
       for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
         let cipherText = log.returnValues.encPreimages[i].cipherText;
@@ -884,6 +885,7 @@ const prepareBackupDataRetriever = (node: any) => {
       { secretKey: sharedSecretKey, publicKey: sharedPublicKey }
     ];
     for (const kp of keyPairs) {
+      if (!kp.secretKey) continue;
       for (const log of backDataEvent) {
         for (let i = 0; i < log.returnValues.encPreimages.length; i++) {
           let cipherText = log.returnValues.encPreimages[i].cipherText;
