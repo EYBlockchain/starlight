@@ -666,6 +666,7 @@ const prepareBackupVariable = (node: any) => {
 	const secretKey = generalise(keys.secretKey);
 	const publicKey = generalise(keys.publicKey);
   const sharedPublicKey = generalise(keys.sharedPublicKey);
+  console.log("sharedPublicKey",sharedPublicKey);
   const sharedSecretKey = generalise(keys.sharedSecretKey);
   const keyPairs = [
 		{ secretKey: secretKey, publicKey: publicKey },
@@ -878,6 +879,7 @@ const prepareBackupDataRetriever = (node: any) => {
     const secretKey = generalise(keys.secretKey);
     const publicKey = generalise(keys.publicKey);
     const sharedPublicKey = generalise(keys.sharedPublicKey);
+    console.log("sharedPublicKey",sharedPublicKey);
     const sharedSecretKey = generalise(keys.sharedSecretKey);
     const keyPairs = [
       { secretKey: secretKey, publicKey: publicKey },
