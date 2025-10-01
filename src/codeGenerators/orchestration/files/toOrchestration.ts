@@ -733,6 +733,7 @@ const prepareBackupVariable = (node: any) => {
           let count = isArray ? 3 : 2;
           for (const prop of structProperties.split(" ")) {
             value[prop] = plainText[count];
+            console.log(\`\\tdebug struct property: \${plainText[count]}\`);
             count++;
           }
           console.log(\`\\tValue: \${value}\`);
@@ -943,6 +944,7 @@ const prepareBackupDataRetriever = (node: any) => {
             let count = isArray ? 3 : 2;
             for (const prop of structProperties.split(" ")) {
               value[prop] = plainText[count];
+              console.log(\`\\tdebug struct property: \${plainText[count]}\`);
               count++;
             }
             console.log(\`\\tValue: \${value}\`);
