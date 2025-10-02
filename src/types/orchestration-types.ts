@@ -279,6 +279,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'InitialiseKeys':
     case 'ReadPreimage':
     case 'WritePreimage':
+    case 'GetInputCommitments':
     case 'MembershipWitness':
     case 'CalculateNullifier':
     case 'CalculateCommitment':
