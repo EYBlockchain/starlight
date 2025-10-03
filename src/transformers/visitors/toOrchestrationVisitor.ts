@@ -811,20 +811,25 @@ const visitor = {
             );
 
           if (stateVarIndicator.isNullified || accessedOnly) {
-            newNodes.membershipWitnessNode.privateStates[
-              name
-            ] = buildPrivateStateNode('MembershipWitness', {
-              id,
-              privateStateName: name,
-              indicator: stateVarIndicator,
-              accessedOnly,
-            });
-            newNodes.calculateNullifierNode.privateStates[
-              name
-            ] = buildPrivateStateNode('CalculateNullifier', {
-              accessedOnly,
-              indicator: stateVarIndicator,
-            });
+            newNodes.getInputCommitmentsNode.privateStates[name] =
+              buildPrivateStateNode('GetInputCommitments', {
+                id,
+                privateStateName: name,
+                indicator: stateVarIndicator,
+                accessedOnly,
+              });
+            newNodes.membershipWitnessNode.privateStates[name] =
+              buildPrivateStateNode('MembershipWitness', {
+                id,
+                privateStateName: name,
+                indicator: stateVarIndicator,
+                accessedOnly,
+              });
+            newNodes.calculateNullifierNode.privateStates[name] =
+              buildPrivateStateNode('CalculateNullifier', {
+                accessedOnly,
+                indicator: stateVarIndicator,
+              });
           }
 
           if (stateVarIndicator.newCommitmentsRequired) {
@@ -948,6 +953,7 @@ const visitor = {
         if (node.kind === 'constructor') {
           newNodes.writePreimageNode.isConstructor = true;
           newNodes.membershipWitnessNode.isConstructor = true;
+          newNodes.getInputCommitmentsNode.isConstructor = true;
         }
         const newFunctionDefinitionNode = node._newASTPointer;
 
@@ -1167,18 +1173,24 @@ const visitor = {
 
         // 1 - InitialisePreimage - whole states - per state
         // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
-        // 3 - MembershipWitness - nullifiersRequired - per state
-        // 4 - CalculateNullifier - nullifiersRequired - per state
-        // 5 - CalculateCommitment - newCommitmentsRequired - per state
-        // 6 - GenerateProof - all - per function
-        // 7 - EncryptBackupPreimage -newCommitmentsRequired - per state
-        // 8 - SendTransaction - all - per function
-        // 9 - WritePreimage - all - per state
+        // 3 - GetInputCommitments - nullifiersRequired - per state
+        // 4 - MembershipWitness - nullifiersRequired - per state
+        // 5 - CalculateNullifier - nullifiersRequired - per state
+        // 6 - CalculateCommitment - newCommitmentsRequired - per state
+        // 7 - GenerateProof - all - per function
+        // 8 - EncryptBackupPreimage -newCommitmentsRequired - per state
+        // 9 - SendTransaction - all - per function
+        // 10 - WritePreimage - all - per state
         if (newNodes.readPreimageNode)
         newFunctionDefinitionNode.body.preStatements.push(newNodes.readPreimageNode);
       
         if(newNodes.VariableDeclarationStatement)
         newFunctionDefinitionNode.body.preStatements.push(newNodes.VariableDeclarationStatement);
+
+        if (newNodes.getInputCommitmentsNode)
+        newFunctionDefinitionNode.body.postStatements.push(
+          newNodes.getInputCommitmentsNode,
+        );
 
         if (newNodes.membershipWitnessNode)
         newFunctionDefinitionNode.body.postStatements.push(

@@ -4,16 +4,16 @@ import explode from './explode.js';
 import buildNode from '../../types/orchestration-types.js';
 import { traversePathsFast } from '../../traverse/traverse.js';
 
-
 // 1 - InitialisePreimage - whole states - per state
 // 2 - ReadPreimage - oldCommitmentAccessRequired - per state
-// 3 - MembershipWitness - nullifiersRequired - per state
-// 4 - CalculateNullifier - nullifiersRequired - per state
-// 5 - CalculateCommitment - newCommitmentsRequired - per state
-// 6 - GenerateProof - all - per function
-// 7 - EncryptBackupPreimage -newCommitmentsRequired - per state
-// 8 - SendTransaction - all - per function
-// 9 - WritePreimage - all - per state
+// 3 - GetInputCommitments - partitioned - per state
+// 4 - MembershipWitness - nullifiersRequired - per state
+// 5 - CalculateNullifier - nullifiersRequired - per state
+// 6 - CalculateCommitment - newCommitmentsRequired - per state
+// 7 - GenerateProof - all - per function
+// 8 - EncryptBackupPreimage - newCommitmentsRequired - per state
+// 9 - SendTransaction - all - per function
+// 10 - WritePreimage - all - per state
 
 export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDefinitionIndicator, path: NodePath) => {
   const { node, parent } = path;
@@ -29,6 +29,9 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
     contractName,
   });
   if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret) {
+    newNodes.getInputCommitmentsNode = buildNode('GetInputCommitments', {
+      contractName,
+    });
     newNodes.membershipWitnessNode = buildNode('MembershipWitness', {
       contractName,
     });

@@ -897,17 +897,17 @@ describe('CharityPot Zapp', () => {
     ).to.equal(0);
     expect(
       parseInt(res.CharityPot[1].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(3);
+    ).to.equal(1);
     expect(
       parseInt(res.CharityPot[2].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(7);
+    ).to.equal(3);
     expect(
       parseInt(res.CharityPot[3].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(9);
+    ).to.equal(5);
   });
   it('Check number of commitments', async () => {
     expect(res.CharityPot[4].body.commitments.length).to.equal(3);
-    expect(res.CharityPot[5].body.commitments.length).to.equal(8);
+    expect(res.CharityPot[5].body.commitments.length).to.equal(4);
   });
   it('Check nullified commitments', async () => {
     expect(res.CharityPot[4].body.commitments[0].isNullified).to.equal(true);
@@ -916,31 +916,22 @@ describe('CharityPot Zapp', () => {
     expect(res.CharityPot[5].body.commitments[0].isNullified).to.equal(true);
     expect(res.CharityPot[5].body.commitments[1].isNullified).to.equal(true);
     expect(res.CharityPot[5].body.commitments[2].isNullified).to.equal(true);
-    expect(res.CharityPot[5].body.commitments[3].isNullified).to.equal(true);
-    expect(res.CharityPot[5].body.commitments[4].isNullified).to.equal(true);
-    expect(res.CharityPot[5].body.commitments[5].isNullified).to.equal(true);
-    expect(res.CharityPot[5].body.commitments[6].isNullified).to.equal(false);
-    expect(res.CharityPot[5].body.commitments[7].isNullified).to.equal(false);
+    expect(res.CharityPot[5].body.commitments[3].isNullified).to.equal(false);
   });
   it('Check value of final commitment', async () => {
     expect(
       parseInt(res.CharityPot[4].body.commitments[2].preimage.value, 10),
     ).to.equal(13);
     expect(
-      parseInt(res.CharityPot[5].body.commitments[6].preimage.value, 10),
-    ).to.equal(30);
-    expect(
-      parseInt(res.CharityPot[5].body.commitments[7].preimage.value, 10),
-    ).to.equal(7);
+      parseInt(res.CharityPot[5].body.commitments[3].preimage.value, 10),
+    ).to.equal(37);
   });
-  // Note: commitments that are created and immediately nullified during
-  // join and split commitments are not restored by backupDataRetriever
   it('Check commitments are correct after deleting and restoring from backup', async () => {
     expect(res.CharityPot[7].body.commitments.length).to.equal(7);
     expect(res.CharityPot[7].body.commitments[0].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[1].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[2].isNullified).to.equal(true);
-    expect(res.CharityPot[7].body.commitments[3].isNullified).to.equal(false);
+    expect(res.CharityPot[7].body.commitments[3].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[4].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[5].isNullified).to.equal(false);
     expect(res.CharityPot[7].body.commitments[6].isNullified).to.equal(false);

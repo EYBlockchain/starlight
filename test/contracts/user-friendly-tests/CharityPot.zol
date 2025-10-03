@@ -30,6 +30,6 @@ contract CharityPot {
     function withdraw(secret uint256 withdrawal) public {
         require(msg.sender == admin);
         pot -= withdrawal;
-        unknown balances[msg.sender] += withdrawal;
+        balances[msg.sender] += withdrawal;
     }
 }
