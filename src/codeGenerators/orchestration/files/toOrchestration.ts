@@ -486,14 +486,16 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                                       saveMetadata(erc721Address, 'ERC721',  "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n \n`;
                 break;
               case 'ERC1155':
-                customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('ERC1155Token') \n
-                                      const erc1155 = await ERC1155.deploy() \n
+                customDeployments += `const ERC1155 = await hre.ethers.getContractFactory('ERC1155') \n
+                                      const erc1155 = await ERC1155.deploy(
+                                        'MyCoinUrl'
+                                      ) \n
                                       await erc1155.waitForDeployment() \n
                                       erc1155Address = await erc1155.getAddress() \n
                                       console.log('ERC1155 deployed to:', erc1155Address) \n 
                                       blockNumber = await hre.ethers.provider.getBlockNumber(); \n
                                       deployTx = await erc1155.deploymentTransaction().wait() \n
-                                      saveMetadata(erc1155Address, 'ERC1155Token', "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n
+                                      saveMetadata(erc1155Address, 'ERC1155', "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n
                                     \n`;
                 break; 
             }
