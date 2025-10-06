@@ -282,11 +282,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
 
     case 'RequireStatement':
       if (!node.message[0]){
-        if (tokenIdSent && swapProposals_sharedAddress){
+        return `if (tokenIdSent && swapProposals_sharedAddress){
           console.log("swapProposals_sharedAddress.swapTokenRecieved.integer", swapProposals_sharedAddress.swapTokenRecieved.integer);
           console.log("tokenIdSent.integer", tokenIdSent.integer);
         }
-        return `if(!(${codeGenerator(node.condition[0])})){
+        if(!(${codeGenerator(node.condition[0])})){
           throw new Error(
           "Require statement not satisfied."
         );}\n`;
