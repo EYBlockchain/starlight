@@ -374,6 +374,10 @@ function sharedSecretKey(secretKey, recipientPublicKey) {
 
 	let sharedPublicKey = new GN(sign + yBits.padStart(253, "0"), "binary");
 
+  if (yBits.length >= 253 || sharedPublicKey.bigInt >= Fp){
+		console.log("we should be resetting the shared public key here - we have found the bug");
+	}
+
 
 	return [key, sharedPublicKey];
 }
