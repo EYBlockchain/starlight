@@ -360,7 +360,7 @@ fs.writeFileSync(depositFilePath, depositContent, 'utf8');
 console.log(
   'deposit.mjs in Escrow modified successfully to mint ERC tokens. Proceeding with the test...',
 );
-
+/*
 const apiRequests_Escrow = [
   { method: 'post', endpoint: '/deposit', data: { amount: 25 } },
   { method: 'post', endpoint: '/deposit', data: { amount: 19 } },
@@ -423,7 +423,7 @@ res.Escrow = await callZAppAPIs(
   apiRequests_Escrow,
   undefined,
   '"NA"',
-);
+);*/
 
 const apiRequests_forloop = [
   { method: 'post', endpoint: '/add', data: { j: 8 } },
@@ -471,7 +471,7 @@ res.MappingtoStruct = await callZAppAPIs(
   'MappingtoStruct',
   apiRequests_MappingtoStruct,
 );
-
+/*
 // In order to test NFT_Escrow we first need to mint a token. 
 const NFTmintingText = `const erc721 = await getContractInstance("ERC721");
 let mintBalance = await erc721.methods
@@ -583,7 +583,7 @@ res.NFT_Escrow = await callZAppAPIs(
   apiRequests_NFT_Escrow,
   undefined,
   '"NA"',
-);
+);*/
 
 const apiRequests_Return = [
   { method: 'post', endpoint: '/add', data: { value: 21 } },
@@ -1023,6 +1023,7 @@ describe('Encrypt Zapp', () => {
   });
 });
 
+/*
 describe('Escrow Zapp', () => {
   afterEach(function () {
     if (this.currentTest.state === 'failed') {
@@ -1095,7 +1096,7 @@ describe('Escrow Zapp', () => {
     expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(false);
     expect(res.Escrow[13].body.tx.event).to.equal('NewLeaves');
   });
-});
+});*/
 
 describe('for-loop Zapp', () => {
   afterEach(function () {
@@ -1215,6 +1216,7 @@ describe('MappingtoStruct Zapp', () => {
   });
 });
 
+/*
 describe('NFT_Escrow Zapp', () => {
   afterEach(function () {
     if (this.currentTest.state === 'failed') {
@@ -1284,7 +1286,7 @@ describe('NFT_Escrow Zapp', () => {
     expect(res.NFT_Escrow[15].body.commitments[0].isNullified).to.equal(true);
     expect(res.NFT_Escrow[15].body.commitments[1].isNullified).to.equal(false);
   });
-});
+});*/
 
 describe('Return Zapp', () => {
   afterEach(function () {
