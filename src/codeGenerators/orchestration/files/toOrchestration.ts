@@ -666,6 +666,7 @@ const prepareBackupVariable = (node: any) => {
 	const secretKey = generalise(keys.secretKey);
 	const publicKey = generalise(keys.publicKey);
   const sharedPublicKey = generalise(keys.sharedPublicKey);
+  console.log("sharedPublicKey",sharedPublicKey);
   const sharedSecretKey = generalise(keys.sharedSecretKey);
   const keyPairs = [
 		{ secretKey: secretKey, publicKey: publicKey },
@@ -733,6 +734,7 @@ const prepareBackupVariable = (node: any) => {
           let count = isArray ? 3 : 2;
           for (const prop of structProperties.split(" ")) {
             value[prop] = plainText[count];
+            console.log(\`\\tdebug struct property: \${plainText[count]}\`);
             count++;
           }
           console.log(\`\\tValue: \${value}\`);
@@ -879,6 +881,7 @@ const prepareBackupDataRetriever = (node: any) => {
     const secretKey = generalise(keys.secretKey);
     const publicKey = generalise(keys.publicKey);
     const sharedPublicKey = generalise(keys.sharedPublicKey);
+    console.log("sharedPublicKey",sharedPublicKey);
     const sharedSecretKey = generalise(keys.sharedSecretKey);
     const keyPairs = [
       { secretKey: secretKey, publicKey: publicKey },
@@ -943,6 +946,7 @@ const prepareBackupDataRetriever = (node: any) => {
             let count = isArray ? 3 : 2;
             for (const prop of structProperties.split(" ")) {
               value[prop] = plainText[count];
+              console.log(\`\\tdebug struct property: \${plainText[count]}\`);
               count++;
             }
             console.log(\`\\tValue: \${value}\`);
