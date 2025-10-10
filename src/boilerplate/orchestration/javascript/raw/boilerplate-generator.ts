@@ -1022,6 +1022,11 @@ zappFilesBoilerplate = () => {
       writePath: './orchestration/common/commitment-storage.mjs',
       generic: false,
     },
+    {
+      readPath: pathPrefix + '/backup-encrypted-data-listener.mjs',
+      writePath: './orchestration/common/backup-encrypted-data-listener.mjs',
+      generic: false,
+    },
 ];
 }
 
