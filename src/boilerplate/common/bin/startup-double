@@ -7,6 +7,14 @@ set +e
 docker kill $(docker ps -a -q)
 docker network rm zapp_network
 
+# Wait for all containers from the docker-compose.zapp-double.yml configuration to be removed
+while docker compose -f docker-compose.zapp-double.yml ps | grep -q 'Up'; do
+  sleep 1
+done
+
+rm -f ./orchestration/common/db/key1.json
+rm -f ./orchestration/common/db/key2.json
+
 echo "Starting ganache..."
 
 docker compose -f docker-compose.zapp-double.yml up -d ganache $BUILD_ARG

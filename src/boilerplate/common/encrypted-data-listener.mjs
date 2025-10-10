@@ -6,8 +6,8 @@ import { getContractAddress, getContractInstance, registerKey } from './common/c
 import { storeCommitment, formatCommitment, persistCommitment } from './common/commitment-storage.mjs';
 import { decrypt, poseidonHash, } from './common/number-theory.mjs';
 
-const keyDb = '/app/orchestration/common/db/key.json';
-
+const keyDb =
+  process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';
 
 function decodeCommitmentData(decrypted){
   const stateVarId = generalise(decrypted[0]);

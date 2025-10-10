@@ -427,7 +427,8 @@ class BoilerplateGenerator {
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
-        `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
+        `\nconst keyDb =
+              process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
 

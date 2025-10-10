@@ -24,6 +24,8 @@ services:
       MONGO_NAME: zapp_db
       MONGO_USERNAME: admin
       MONGO_PASSWORD: admin
+      MONGO_URL: 'mongodb://admin:admin@zapp-mongo:27017'
+      KEY_DB_PATH: /app/orchestration/common/db/key1.json
     networks:
       - zapp_network
 
@@ -34,7 +36,7 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - zapp-mongo
+      - zapp-mongo2
     volumes:
       - ./build:/app/build
       - ./orchestration/:/app/orchestration:delegated
@@ -47,11 +49,13 @@ services:
       DEFAULT_ACCOUNT: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
       KEY: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
       LOG_LEVEL: info
-      MONGO_HOST: mongodb://zapp-mongo
+      MONGO_HOST: mongodb://zapp-mongo2
       MONGO_PORT: 27019
       MONGO_NAME: zapp_db
       MONGO_USERNAME: admin
       MONGO_PASSWORD: admin
+      MONGO_URL: 'mongodb://admin:admin@zapp-mongo2:27017'
+      KEY_DB_PATH: /app/orchestration/common/db/key2.json
     networks:
       - zapp_network    
 
