@@ -4,6 +4,7 @@ import { ServiceManager } from './api_services.mjs';
 import { Router } from './api_routes.mjs'; 
 import Web3 from './common/web3.mjs';
 ENCRYPTEDLISTENER_IMPORT
+import BackupEncryptedDataEventListener from './common/backup-encrypted-data-listener.mjs';
 
 function gracefulshutdown() {
   console.log('Shutting down');
@@ -23,7 +24,8 @@ const web3 = Web3.connection();
 const serviceMgr = new ServiceManager(web3);
 serviceMgr.init().then(async () => {
   ENCRYPTEDLISTENER_CALL
-
+  const backupEventListener = new BackupEncryptedDataEventListener(web3);
+  await backupEventListener.startBackupRecovery();
   const router = new Router(serviceMgr);
   const r = router.addRoutes();
   app.use('/', r);

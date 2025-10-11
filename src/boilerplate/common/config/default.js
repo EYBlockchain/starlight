@@ -78,7 +78,7 @@ module.exports = {
     admin: 'admin',
     adminPassword: 'admin',
   },
-  MONGO_URL: 'mongodb://admin:admin@zapp-mongo:27017',
+  MONGO_URL: process.env.MONGO_URL || 'mongodb://admin:admin@zapp-mongo:27017',
   COMMITMENTS_DB: process.env.MONGO_NAME,
   COMMITMENTS_COLLECTION: 'commitments',
   isLoggerEnabled: true,

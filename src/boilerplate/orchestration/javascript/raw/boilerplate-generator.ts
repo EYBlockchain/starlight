@@ -427,7 +427,8 @@ class BoilerplateGenerator {
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
-        `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
+        `\nconst keyDb =
+              process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
 
@@ -635,8 +636,6 @@ sendTransaction = {
       } catch (e) {
         if (e.toString().includes("E11000 duplicate key")) {
           console.log(
-            "encrypted-data-listener -",
-            "receiving EncryptedData event with balances.",
             'This commitment for ${stateName} already exists. Ignore it.',
           );
         }
@@ -1019,6 +1018,11 @@ zappFilesBoilerplate = () => {
     {
       readPath: pathPrefix + '/commitment-storage.mjs',
       writePath: './orchestration/common/commitment-storage.mjs',
+      generic: false,
+    },
+    {
+      readPath: pathPrefix + '/backup-encrypted-data-listener.mjs',
+      writePath: './orchestration/common/backup-encrypted-data-listener.mjs',
       generic: false,
     },
 ];
