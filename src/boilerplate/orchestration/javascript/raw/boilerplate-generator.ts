@@ -636,8 +636,6 @@ sendTransaction = {
       } catch (e) {
         if (e.toString().includes("E11000 duplicate key")) {
           console.log(
-            "encrypted-data-listener -",
-            "receiving EncryptedData event with balances.",
             'This commitment for ${stateName} already exists. Ignore it.',
           );
         }
