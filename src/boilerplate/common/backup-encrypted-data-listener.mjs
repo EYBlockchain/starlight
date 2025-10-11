@@ -201,22 +201,28 @@ export default class BackupEncryptedDataEventListener {
           BigInt(kp.secretKey.hex(32)),
           BigInt(salt.hex(32)),
         ]);
-        const nullification = await this.instance.methods
-					.nullifiers(nullifier.integer)
-          .call();
         let isNullified = false;
-        if (nullification === 0n) {
-          isNullified = false;
-        } else if (nullification === BigInt(nullifier.integer)) {
-          isNullified = true;
+        // Check if nullifiers method exists on the contract
+        if (this.instance.methods.nullifiers) {
+          let nullification = await this.instance.methods
+            .nullifiers(nullifier.integer)
+            .call();
+          if (nullification === 0n) {
+            isNullified = false;
+          } else if (nullification === BigInt(nullifier.integer)) {
+            isNullified = true;
+          } else {
+            throw new Error("The nullifier value: " + nullifier.integer +
+                ' does not match the on-chain nullifier: ' +
+                nullification,
+            );
+          }
         } else {
-          throw new Error(
-            'The nullifier value: ' +
-							nullifier.integer +
-							" does not match the on-chain nullifier: " +
-              nullification,
+          console.log(
+            'Contract does not have nullifiers method, assuming not nullified',
           );
-				}
+          isNullified = false;
+        }
         try {
           await storeCommitment({
 						hash: newCommitment,
