@@ -1,0 +1,107 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+import "./Escrow-imports/IERC20.sol";
+import "./Escrow-imports/IERC721.sol";
+
+contract Swap {
+    secret mapping(address => uint256) public balances;
+    IERC20 public erc20;
+
+    secret mapping(uint256 => address) public tokenOwners; 
+    IERC721 public erc721;
+
+    struct swapStruct{
+        uint256 swapAmountSent;
+        uint256 swapTokenSent;
+        uint256 swapTokenRecieved;
+        address swapInitiator;
+        uint256 pendingStatus;
+    }
+    
+    sharedSecret mapping(address => swapStruct) swapProposals;  
+
+    constructor(address erc20Address, address _erc721) {
+        erc20 = IERC20(erc20Address);
+        erc721 = IERC721(_erc721);
+    }
+
+    function depositERC20(uint256 amount) public {
+        bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
+        require(hasBalance == true);
+        balances[msg.sender] += amount;
+    }
+
+    function transferERC20(secret address recipient, secret uint256 amount) public {
+        require(recipient != address(0), "Escrow: transfer to the zero address");
+        balances[msg.sender] -= amount;
+        encrypt unknown balances[recipient] += amount;
+    }
+
+    function withdrawERC20(uint256 amount) public {
+        bool success = erc20.transfer(msg.sender, amount);
+        require(success, "ERC20 transfer failed");
+        balances[msg.sender] -= amount;
+    }
+
+    function depositERC721(uint256 tokenId) public {
+        bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
+        require(success == true);
+        reinitialisable tokenOwners[tokenId] = msg.sender;
+    }
+
+    function transferERC721(secret address recipient, secret uint256 tokenId) public {
+        require(tokenOwners[tokenId] == msg.sender);
+        require(recipient != address(0), "NFT_Escrow: transfer to the zero address");
+        tokenOwners[tokenId] = recipient;
+    }
+
+    function withdrawERC721(uint256 tokenId) public {
+        require(tokenOwners[tokenId] == msg.sender);
+        bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
+        require(success, "ERC721 transfer failed");
+        tokenOwners[tokenId] = address(0);
+    }
+
+    function startSwap(secret address sharedAddress,  secret uint256 amountSent, secret uint256 tokenIdSent, secret uint256 tokenIdRecieved) public {
+        
+           require(swapProposals[sharedAddress].pendingStatus == 0);
+            swapProposals[sharedAddress].swapAmountSent += amountSent;
+            balances[msg.sender] -= amountSent; 
+            tokenOwners[tokenIdSent] = sharedAddress;
+            swapProposals[sharedAddress].swapTokenSent = tokenIdSent;
+            swapProposals[sharedAddress].swapTokenRecieved = tokenIdRecieved;
+            swapProposals[sharedAddress].swapInitiator = msg.sender;
+            swapProposals[sharedAddress].pendingStatus = 1;
+       
+    }
+
+    function completeSwap(secret address counterParty, secret address sharedAddress, secret uint256 tokenIdSent, secret uint256 amountRecieved, secret uint256 tokenIdRecieved) public {
+           
+           require(swapProposals[sharedAddress].swapTokenRecieved == tokenIdSent);
+           require(swapProposals[sharedAddress].swapAmountSent == amountRecieved && swapProposals[sharedAddress].swapTokenSent == tokenIdRecieved);
+           require(swapProposals[sharedAddress].pendingStatus == 1);
+           require(counterParty == swapProposals[sharedAddress].swapInitiator);
+            swapProposals[sharedAddress].swapAmountSent -= amountRecieved;
+            balances[msg.sender] +=  amountRecieved; 
+            tokenOwners[tokenIdSent] = counterParty;
+            
+            tokenOwners[tokenIdRecieved] = msg.sender;
+            swapProposals[sharedAddress].pendingStatus = 0;
+         
+    }
+
+    function quitSwap(secret address sharedAddress,  secret uint256 amountSent, secret uint256 tokenIdSent) public {
+           
+           require(swapProposals[sharedAddress].swapAmountSent == amountSent && swapProposals[sharedAddress].swapTokenSent == tokenIdSent);
+           require(swapProposals[sharedAddress].pendingStatus == 1);
+            swapProposals[sharedAddress].swapAmountSent -= amountSent;
+            balances[msg.sender] += amountSent; 
+            tokenOwners[tokenIdSent] = msg.sender;
+            swapProposals[sharedAddress].swapTokenSent = 0;
+            swapProposals[sharedAddress].swapTokenRecieved = 0;
+            swapProposals[sharedAddress].pendingStatus = 0;
+         
+    }
+}
