@@ -28,18 +28,21 @@ contract Swap {
     }
 
     function depositERC20(uint256 amount) public {
+        require(amount > 0, "amount=0");
         bool hasBalance = erc20.transferFrom(msg.sender, address(this), amount);
         require(hasBalance == true);
         balances[msg.sender] += amount;
     }
 
     function transferERC20(secret address recipient, secret uint256 amount) public {
+        require(amount > 0, "amount=0");
         require(recipient != address(0), "Escrow: transfer to the zero address");
         balances[msg.sender] -= amount;
         encrypt unknown balances[recipient] += amount;
     }
 
     function withdrawERC20(uint256 amount) public {
+        require(amount > 0, "amount=0");
         bool success = erc20.transfer(msg.sender, amount);
         require(success, "ERC20 transfer failed");
         balances[msg.sender] -= amount;
@@ -65,8 +68,8 @@ contract Swap {
     }
 
     function startSwap(secret address sharedAddress,  secret uint256 amountSent, secret uint256 tokenIdSent, secret uint256 tokenIdRecieved) public {
-        
-           require(swapProposals[sharedAddress].pendingStatus == 0);
+            require(tokenOwners[tokenIdSent] == msg.sender);
+            require(swapProposals[sharedAddress].pendingStatus == 0);
             swapProposals[sharedAddress].swapAmountSent += amountSent;
             balances[msg.sender] -= amountSent; 
             tokenOwners[tokenIdSent] = sharedAddress;
@@ -78,7 +81,7 @@ contract Swap {
     }
 
     function completeSwap(secret address counterParty, secret address sharedAddress, secret uint256 tokenIdSent, secret uint256 amountRecieved, secret uint256 tokenIdRecieved) public {
-           
+           require(tokenOwners[tokenIdSent] == msg.sender);
            require(swapProposals[sharedAddress].swapTokenRecieved == tokenIdSent);
            require(swapProposals[sharedAddress].swapAmountSent == amountRecieved && swapProposals[sharedAddress].swapTokenSent == tokenIdRecieved);
            require(swapProposals[sharedAddress].pendingStatus == 1);
