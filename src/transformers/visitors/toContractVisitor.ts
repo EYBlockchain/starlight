@@ -162,23 +162,30 @@ export default {
 
     },
     exit(path: NodePath, state: any) {
-          const { node, parent, scope } = path;
-          const sourceUnitNodes = parent._newASTPointer[0].nodes;
-          const contractNodes = node._newASTPointer;
-          let parameterList: any = {};
-          let functionName: string;
-          let returnParameterList: any = {};
-          let returnfunctionName: string;
-          for ([functionName, parameterList] of Object.entries(state.circuitParams)) {
-            if(state.returnpara){
-             for ([returnfunctionName, returnParameterList] of Object.entries(state.returnpara)){
-               if(functionName === returnfunctionName ){
-                 parameterList = parameterList && returnParameterList ? {... parameterList, ... returnParameterList} : parameterList;
-                 state.circuitParams[ functionName ] = parameterList;
-                }
-              }
+      const { node, parent, scope } = path;
+      const sourceUnitNodes = parent._newASTPointer[0].nodes;
+      const contractNodes = node._newASTPointer;
+      let parameterList: any = {};
+      let functionName: string;
+      let returnParameterList: any = {};
+      let returnfunctionName: string;
+      for ([functionName, parameterList] of Object.entries(
+        state.circuitParams,
+      )) {
+        if (state.returnpara) {
+          for ([returnfunctionName, returnParameterList] of Object.entries(
+            state.returnpara,
+          )) {
+            if (functionName === returnfunctionName) {
+              parameterList =
+                parameterList && returnParameterList
+                  ? { ...parameterList, ...returnParameterList }
+                  : parameterList;
+              state.circuitParams[functionName] = parameterList;
             }
           }
+        }
+      }
 
 
           const contractIndex = sourceUnitNodes.findIndex(
