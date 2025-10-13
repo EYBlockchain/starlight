@@ -220,13 +220,6 @@ export default {
       // bindings are contract scope level, so we track global states here
       const { scope } = path;
 
-      if (state.isContractPublic) {
-        throw new Error(
-          'The contract is fully public and does not use secret variables, making it incompatible with the transpiler. ' +
-            'Ensure your contract manipulates secret variables to generate a valid ZApp.',
-        );
-      }
-
       for (const [, binding] of Object.entries(scope.bindings)) {
         if (!(binding instanceof VariableBinding)) continue;
         binding.prelimTraversalErrorChecks();
