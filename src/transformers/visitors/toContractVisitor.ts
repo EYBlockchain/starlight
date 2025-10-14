@@ -169,19 +169,24 @@ export default {
       let functionName: string;
       let returnParameterList: any = {};
       let returnfunctionName: string;
-      for ([functionName, parameterList] of Object.entries(
-        state.circuitParams,
-      )) {
-        if (state.returnpara) {
-          for ([returnfunctionName, returnParameterList] of Object.entries(
-            state.returnpara,
-          )) {
-            if (functionName === returnfunctionName) {
-              parameterList =
-                parameterList && returnParameterList
-                  ? { ...parameterList, ...returnParameterList }
-                  : parameterList;
-              state.circuitParams[functionName] = parameterList;
+      if (
+        Object.entries(state.circuitParams) &&
+        Object.entries(state.circuitParams).length !== 0
+      ) {
+        for ([functionName, parameterList] of Object.entries(
+          state.circuitParams,
+        )) {
+          if (state.returnpara) {
+            for ([returnfunctionName, returnParameterList] of Object.entries(
+              state.returnpara,
+            )) {
+              if (functionName === returnfunctionName) {
+                parameterList =
+                  parameterList && returnParameterList
+                    ? { ...parameterList, ...returnParameterList }
+                    : parameterList;
+                state.circuitParams[functionName] = parameterList;
+              }
             }
           }
         }
