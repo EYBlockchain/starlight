@@ -84,6 +84,7 @@ class BoilerplateGenerator {
                 const publicKey = generalise(keys.publicKey);
                 const sharedPublicKey = generalise(keys.sharedPublicKey);
                 const sharedSecretKey = generalise(keys.sharedSecretKey);
+                console.log("sharedPublicKey",sharedPublicKey);
                `
       ];
     },
@@ -647,7 +648,8 @@ encryptBackupPreimage = {
         scalarMult(${stateName}_ephSecretKey.hex(32), config.BABYJUBJUB.GENERATOR)
       ); \n
       ${stateName}_ephPublicKey = compressStarlightKey(${stateName}_ephPublicKeyPoint);\n
-    } \n   
+    } \n
+    console.log("public key used to do the encryption", ${stateName}_ephPublicKey); \n
     const ${stateName}_bcipherText = encrypt(
       ${plainText},
       ${stateName}_ephSecretKey.hex(32), [
