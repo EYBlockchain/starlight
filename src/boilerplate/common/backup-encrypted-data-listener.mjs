@@ -250,4 +250,28 @@ export default class BackupEncryptedDataEventListener {
 		}
 	}
 
+  async reconnect() {
+    console.log(
+      'backup-encrypted-data-listener',
+      'reconnect',
+      'Attempting to reconnect...',
+    );
+    try {
+      await this.start();
+      console.log(
+        'backup-encrypted-data-listener',
+        'reconnect',
+        'Reconnected successfully',
+      );
+    } catch (error) {
+      console.error(
+        'backup-encrypted-data-listener',
+        'reconnect',
+        'Reconnection attempt failed:',
+        error,
+      );
+      setTimeout(() => this.reconnect(), 5000); // Retry after 5 seconds
+    }
+  }
+
 }
