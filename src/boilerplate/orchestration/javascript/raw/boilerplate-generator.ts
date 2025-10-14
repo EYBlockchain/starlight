@@ -181,22 +181,33 @@ class BoilerplateGenerator {
     },
   };
 
-  membershipWitness = {
-    postStatements({ stateName,
+  getInputCommitments = {
+    postStatements({
+      stateName,
       contractName,
-      stateType, mappingName, structProperties, isSharedSecret, stateVarIds   }): string[] {
+      stateType,
+      mappingName,
+      structProperties,
+      isSharedSecret,
+      stateVarIds,
+    }): string[] {
       const stateVarId: string[] = [];
-      if(stateVarIds.length > 1){
-        stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
+      if (stateVarIds.length > 1) {
+        stateVarId.push(stateVarIds[0].split(' = ')[1].split(';')[0]);
         stateVarId.push(`${stateName}_stateVarId_key`);
-      } else
-        stateVarId.push(`${stateName}_stateVarId`);
+      } else stateVarId.push(`${stateName}_stateVarId`);
       switch (stateType) {
         case 'partitioned':
           if (structProperties)
-          return [`
+            return [
+              `
           \n\n// First check if required commitments exist or not
-          \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(structProperties).map((sp) => `generalise(parseInt(${stateName}_${sp}_newCommitmentValue.integer, 10) - parseInt(${stateName}_${sp}_newCommitmentValue_inc.integer, 10))`)}]).all;
+          \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(
+                structProperties,
+              ).map(
+                sp =>
+                  `generalise(parseInt(${stateName}_${sp}_newCommitmentValue.integer, 10) - parseInt(${stateName}_${sp}_newCommitmentValue_inc.integer, 10))`,
+              )}]).all;
           \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
             publicKey.hex(32),
             ${stateName}_newCommitmentValue.integer,
@@ -207,19 +218,10 @@ class BoilerplateGenerator {
           \nlet ${stateName}_witness_0;
           \nlet ${stateName}_witness_1;
 
-          const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
-          const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
-          const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
-          const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
-            \n\n// generate witness for partitioned state
-            ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
-            ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
-            const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
-            const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
-            const ${stateName}_root = generalise(${stateName}_witness_0.root);
-            const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
-            const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
-          return [`
+          `,
+            ];
+          return [
+            `
           \n\n// First check if required commitments exist or not
           \n${stateName}_newCommitmentValue = generalise(parseInt(${stateName}_newCommitmentValue.integer, 10) - parseInt(${stateName}_newCommitmentValue_inc.integer, 10));
             \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
@@ -251,11 +253,52 @@ class BoilerplateGenerator {
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
                 [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
-                  ${isSharedSecret ? `sharedPublicKey.hex(32)` : `publicKey.hex(32)`},
+                  ${
+                    isSharedSecret
+                      ? `sharedPublicKey.hex(32)`
+                      : `publicKey.hex(32)`
+                  },
                   ${stateName}_newCommitmentValue.integer,
                   ${stateName}_preimage,
                 );
             }
+            `,
+          ];
+        default:
+          throw new TypeError(stateType);
+      }
+    },
+  };
+
+  membershipWitness = {
+    postStatements({
+      stateName,
+      contractName,
+      stateType,
+      mappingName,
+      structProperties,
+      isSharedSecret,
+      stateVarIds,
+    }): string[] {
+      switch (stateType) {
+        case 'partitioned':
+          if (structProperties)
+            return [
+              `
+          const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
+          const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
+          const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
+          const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
+            \n\n// generate witness for partitioned state
+            ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+            ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
+            const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
+            const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
+            const ${stateName}_root = generalise(${stateName}_witness_0.root);
+            const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
+            const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
+          return [
+            `
             const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
             const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
             const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
@@ -267,9 +310,11 @@ class BoilerplateGenerator {
           const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
           const ${stateName}_root = generalise(${stateName}_witness_0.root);
           const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
-          const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
+          const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`,
+          ];
         case 'whole':
-          return [`
+          return [
+            `
             \n\n// generate witness for whole state
             const ${stateName}_emptyPath = new Array(32).fill(0);
             const ${stateName}_witness = ${stateName}_witnessRequired
@@ -277,19 +322,22 @@ class BoilerplateGenerator {
             \t: { index: 0, path:  ${stateName}_emptyPath, root: await getRoot('${contractName}') || 0 };
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);
-            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`];
+            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`,
+          ];
         case 'accessedOnly':
-          return [`
+          return [
+            `
             \n\n// generate witness for whole accessed state
             const ${stateName}_witness = await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer);
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);
-            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`];
+            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`,
+          ];
         default:
           throw new TypeError(stateType);
       }
-  }
-};
+    },
+  };
 
   calculateNullifier = {
 
