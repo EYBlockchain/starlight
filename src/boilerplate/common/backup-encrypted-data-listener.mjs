@@ -30,15 +30,15 @@ export default class BackupEncryptedDataEventListener {
 
       if (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), 'CONTRACT_NAME', true);
 
-      const keys = JSON.parse(
-        fs.readFileSync(keyDb, "utf-8", (err) => {
-          console.log(err);
-        }),
-      );
+      const keys = JSON.parse(fs.readFileSync(keyDb, 'utf-8'));
       this.secretKey = generalise(keys.secretKey);
       this.publicKey = generalise(keys.publicKey);
       this.sharedPublicKey = generalise(keys.sharedPublicKey);
       this.sharedSecretKey = generalise(keys.sharedSecretKey);
+
+      if (!keys.secretKey || !keys.publicKey) {
+        throw new Error('Invalid key file: missing required keys');
+      }
     } catch (error) {
       console.error(
         'encrypted-data-listener',
