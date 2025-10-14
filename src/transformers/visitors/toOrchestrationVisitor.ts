@@ -397,6 +397,7 @@ const visitor = {
           buildNode('IntegrationApiServicesBoilerplate', {
             contractName,
             contractImports: state.contractImports,
+            multiTenant: state.multiTenant,
           }),
         ],
       });

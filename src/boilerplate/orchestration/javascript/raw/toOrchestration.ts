@@ -573,7 +573,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         return {
           signature: [
             `${functionSig}
-            \n async  ${node.name}(${params} ${states}) {`,
+            \n async  ${node.name}(${params} ${states}, context) {`,
             `\n return  { ${txReturns} ${publicReturns}};
             \n}
           \n}`,
@@ -585,7 +585,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         return {
           signature: [
             `
-            \n async  ${node.name}(${params} ${states}) {`,
+            \n async  ${node.name}(${params} ${states}, context) {`,
             `\n const bool = true; \n return  { ${txReturns} ${rtnparams}, ${publicReturns} };
             \n}
           \n}`,
@@ -596,7 +596,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         signature: [
           ` ${functionSig}
-          \n async ${node.name}(${params} ${states}) {`,
+          \n async ${node.name}(${params} ${states}, context) {`,
           `\nreturn  { ${txReturns} ${rtnparams}, ${publicReturns}};
           \n}
         \n}`,

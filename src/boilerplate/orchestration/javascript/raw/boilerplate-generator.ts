@@ -73,17 +73,18 @@ class BoilerplateGenerator {
     postStatements(contractName, onChainKeyRegistry): string[] {
       return [
         `
-        \n\n// Read dbs for keys and previous commitment values:
-        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry});
-        const keys = JSON.parse(
-                    fs.readFileSync(keyDb, 'utf-8', err => {
-                      console.log(err);
-                    }),
-                  );
-                const secretKey = generalise(keys.secretKey);
-                const publicKey = generalise(keys.publicKey);
-                const sharedPublicKey = generalise(keys.sharedPublicKey);
-                const sharedSecretKey = generalise(keys.sharedSecretKey);
+        \n\n// Read keys using KeyManager
+        \nconst keyManager = KeyManager.getInstance();
+        \nlet keys = await keyManager.getKeys(context);
+        \nif (!keys) {
+        \n  // No keys found, register new ones
+        \n  await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry}, context);
+        \n  keys = await keyManager.getKeys(context);
+        \n}
+        \nconst secretKey = generalise(keys.secretKey);
+        \nconst publicKey = generalise(keys.publicKey);
+        \nconst sharedPublicKey = keys.sharedPublicKey ? generalise(keys.sharedPublicKey) : null;
+        \nconst sharedSecretKey = keys.sharedSecretKey ? generalise(keys.sharedSecretKey) : null;
                `
       ];
     },
@@ -423,10 +424,12 @@ class BoilerplateGenerator {
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
-        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';
+        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';`,
+        `\nimport { KeyManager } from './common/key-management/KeyManager.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
+        `\n// Legacy keyDb path - keys now managed through KeyManager`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -860,7 +863,8 @@ integrationApiServicesBoilerplate = {
       
       export async function service_backupData(req, res, next) {
         try {
-            await backupDataRetriever();
+            SAAS_CONTEXT_HANDLING
+            await backupDataRetriever(SAAS_CONTEXT_DIRECT);
             res.send("Complete");
             await sleep(10);
         } catch (err) {
@@ -871,7 +875,8 @@ integrationApiServicesBoilerplate = {
       export async function service_backupVariable(req, res, next) {
         try {
           const { name } = req.body;
-          await backupVariable(name);
+          SAAS_CONTEXT_HANDLING
+          await backupVariable(name SAAS_CONTEXT_PARAM);
           res.send("Complete");
           await sleep(10);
         } catch (err) {
@@ -883,7 +888,8 @@ integrationApiServicesBoilerplate = {
         try {
           const { recipientAddress } = req.body;
           const recipientPubKey = req.body.recipientPubKey || 0
-          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey );
+          SAAS_CONTEXT_HANDLING
+          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey SAAS_CONTEXT_PARAM);
           res.send({ SharedKeys });
           await sleep(10);
         } catch (err) {
@@ -929,8 +935,8 @@ integrationApiRoutesBoilerplate = {
   }
 };
 
-zappFilesBoilerplate = () => {
-  return [
+zappFilesBoilerplate = (multiTenant = false) => {
+  const baseFiles = [
     {
       readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
@@ -1022,6 +1028,48 @@ zappFilesBoilerplate = () => {
       generic: false,
     },
 ];
+
+if (multiTenant) {
+      baseFiles.push(
+      {
+        readPath: pathPrefix + '/middleware/saas-context.mjs',
+        writePath: './orchestration/common/middleware/saas-context.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/IKeyStorage.mjs',
+        writePath: './orchestration/common/key-management/IKeyStorage.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/FileKeyStorage.mjs',
+        writePath: './orchestration/common/key-management/FileKeyStorage.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/DatabaseKeyStorage.mjs',
+        writePath: './orchestration/common/key-management/DatabaseKeyStorage.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/KeyManager.mjs',
+        writePath: './orchestration/common/key-management/KeyManager.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/encryption.mjs',
+        writePath: './orchestration/common/key-management/encryption.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/index.mjs',
+        writePath: './orchestration/common/key-management/index.mjs',
+        generic: false,
+      }
+    );
+  }
+
+  return baseFiles;
 }
 
 }

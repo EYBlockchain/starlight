@@ -10,15 +10,11 @@ import mongo from './mongo.mjs';
 import logger from './logger.mjs';
 import utils from 'zkp-utils';
 import { poseidonHash } from './number-theory.mjs';
-import { sharedSecretKey } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-import { hlt } from './hash-lookup.mjs';
-import { registerKey } from './contract.mjs';
+import { KeyManager } from './key-management/KeyManager.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
-
-const keyDb = '/app/orchestration/common/db/key.json';
 
 export function formatCommitment (commitment) {
   let data
@@ -671,39 +667,30 @@ export async function splitCommitments(
 export async function getSharedSecretskeys(
   _recipientAddress,
   _recipientPublicKey = 0,
+  context,
 ) {
-  if (!fs.existsSync(keyDb))
-                    await registerKey(utils.randomHex(31), null, false);
-  const keys = JSON.parse(
-    fs.readFileSync(keyDb, 'utf-8', err => {
-      console.log(err);
-    }),
-  );
-  const secretKey = generalise(keys.secretKey);
-  const publicKey = generalise(keys.publicKey);
-  let recipientPublicKey = generalise(_recipientPublicKey);
-  const recipientAddress = generalise(_recipientAddress);
-  if (_recipientPublicKey === 0) {
-    recipientPublicKey = await this.instance.methods
-      .zkpPublicKeys(recipientAddress.hex(20))
-      .call();
-    recipientPublicKey = generalise(recipientPublicKey);
+   try {
+    // Use KeyManager for shared secret key management
+    const keyManager = KeyManager.getInstance();
 
-    if (recipientPublicKey.length === 0) {
-      throw new Error('WARNING: Public key for given  eth address not found.');
-    }
+    logger.debug('Getting shared secret keys via KeyManager', {
+      recipientAddress: _recipientAddress,
+      multiTenant: !!context?.accountId
+    });
+
+    const sharedPublicKey = await keyManager.getSharedSecretKeys(
+      _recipientAddress,
+      _recipientPublicKey,
+      context
+    );
+
+    logger.info('Shared secret keys retrieved successfully', {
+      multiTenant: !!context?.accountId
+    });
+
+    return sharedPublicKey;
+  } catch (error) {
+    logger.error('Failed to get shared secret keys:', error);
+    throw error;
   }
-
-  const sharedKey = sharedSecretKey(secretKey, recipientPublicKey);
-  console.log('sharedKey:', sharedKey);
-  console.log('sharedKey:', sharedKey[1]);
-  const keyJson = {
-    secretKey: secretKey.integer,
-    publicKey: publicKey.integer,
-    sharedSecretKey: sharedKey[0].integer,
-    sharedPublicKey: sharedKey[1].integer, // not req
-  };
-  fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
-
-  return sharedKey[1];
 }

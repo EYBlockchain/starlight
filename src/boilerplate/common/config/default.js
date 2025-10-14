@@ -1,5 +1,6 @@
 module.exports = {
   log_level: 'info',
+  multiTenant: MULTI_TENANT_MODE,
   zokrates: {
     url: process.env.ZOKRATES_URL || 'http://zokrates:80',
   },

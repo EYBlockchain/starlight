@@ -24,7 +24,8 @@ export default function toOrchestration(ast: any, options: any) {
     snarkVerificationRequired: true,
     newCommitmentsRequired: true,
     nullifiersRequired: true,
-    circuitAST:options.circuitAST
+    circuitAST:options.circuitAST,
+    multiTenant: options.multiTenant
   };
  
   logger.debug('Transforming the .zol AST to a .mjs AST...');
@@ -71,7 +72,7 @@ export default function toOrchestration(ast: any, options: any) {
     `Saving backend files to the zApp output directory ${options.outputDirPath}...`,
   );
   // TODO merge this process with above
-  const zappFilesBP = Orchestrationbp.zappFilesBoilerplate();
+  const zappFilesBP = Orchestrationbp.zappFilesBoilerplate(options.multiTenant);
   if (!(zappFilesBP instanceof Array)) throw new Error('Boilerplate files not read correctly!');
   let fileObj: any;
   // we go through the below process in the codeGenerator for other files
@@ -98,6 +99,30 @@ export default function toOrchestration(ast: any, options: any) {
           ? ` const eventListener = new EncryptedDataEventListener(web3)
       await eventListener.start()`
           : ` `,
+      );
+           
+      // Handle SaaS middleware based on multi-tenant flag
+      file = file.replace(
+        /SAAS_MIDDLEWARE_IMPORT/g,
+        options.multiTenant
+          ? `import { saasContextMiddleware } from './common/middleware/saas-context.mjs';`
+          : ``,
+      );
+
+      file = file.replace(
+        /SAAS_MIDDLEWARE_USAGE/g,
+        options.multiTenant
+          ? `// Add SaaS context middleware for multi-tenant support
+// This middleware parses the x-saas-context header and attaches req.saasContext
+// If no header is present, the app operates in single-tenant mode (backward compatible)
+app.use(saasContextMiddleware);`
+          : ``,
+      );
+
+      // Replace multi-tenant mode configuration
+      file = file.replace(
+        /MULTI_TENANT_MODE/g,
+        options.multiTenant ? `true` : `false`,
       );
     }
     const dir = pathjs.dirname(filepath);

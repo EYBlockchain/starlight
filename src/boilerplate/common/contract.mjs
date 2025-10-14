@@ -4,16 +4,10 @@ import GN from 'general-number';
 import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
-
-import {
-	scalarMult,
-	compressStarlightKey,
-	poseidonHash,
-} from './number-theory.mjs';
+import { KeyManager } from './key-management/KeyManager.mjs';
 
 const web3 = Web3.connection();
 const { generalise } = GN;
-const keyDb = '/app/orchestration/common/db/key.json';
 
 export const contractPath = (contractName) => {
 	return `/app/build/contracts/${contractName}.json`;
@@ -118,41 +112,35 @@ export async function registerKey(
 	_secretKey,
 	contractName,
   registerWithContract,
+  context,
 ) {
-	let secretKey = generalise(_secretKey);
-	let publicKeyPoint = generalise(
-    scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
-	);
-	let publicKey = compressStarlightKey(publicKeyPoint);
-	while (publicKey === null) {
-		logger.warn(`your secret key created a large public key - resetting`);
-		secretKey = generalise(utils.randomHex(31));
-		publicKeyPoint = generalise(
-      scalarMult(secretKey.hex(32), config.BABYJUBJUB.GENERATOR),
-		);
-		publicKey = compressStarlightKey(publicKeyPoint);
-	}
-	if (registerWithContract) {
-		const instance = await getContractInstance(contractName);
-		const contractAddr = await getContractAddress(contractName); 
-		const txData = await instance.methods.registerZKPPublicKey(publicKey.integer).encodeABI();	
-		let txParams = {
-			from: config.web3.options.defaultAccount,
-			to: contractAddr,
-			gas: config.web3.options.defaultGas,
-			gasPrice: config.web3.options.defaultGasPrice,
-			data: txData,
-			chainId: await web3.eth.net.getId(),
-		};
-		const key = config.web3.key;
-		const signed = await web3.eth.accounts.signTransaction(txParams, key);
-		const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-	}
-	const keyJson = {
-		secretKey: secretKey.integer,
-		publicKey: publicKey.integer, // not req
-	};
-	fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
+	try {
+		// Use KeyManager for key registration
+		const keyManager = KeyManager.getInstance();
 
-	return publicKey;
+		logger.debug('Registering key via KeyManager', {
+			contractName,
+			registerWithContract,
+			multiTenant: !!context?.accountId
+		});
+
+		const publicKeyInteger = await keyManager.registerKey(
+			_secretKey,
+			contractName,
+			registerWithContract,
+			context
+		);
+		
+		const publicKey = generalise(publicKeyInteger);
+
+		logger.info('Key registered successfully', {
+			publicKey: publicKey.integer,
+			multiTenant: !!context?.accountId
+		});
+
+		return publicKey;
+	} catch (error) {
+		logger.error('Failed to register key:', error);
+		throw error;
+	}
 }

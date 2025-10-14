@@ -11,7 +11,8 @@ let encryption = {};
 // eslint-disable-next-line func-names
  async service_FUNCTION_NAME (req, res, next){
     const FUNCTION_SIG;
-    const { tx , _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
+    SAAS_CONTEXT_HANDLING
+    const { tx , _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG SAAS_CONTEXT_PARAM);
     // prints the tx
     console.log(tx);
     const txSerialized = serializeBigInt(tx);
