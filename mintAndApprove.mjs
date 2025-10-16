@@ -300,15 +300,6 @@ async function depositToShield() {
       console.error('Error data:', error.data);
     }
     
-    // Provide troubleshooting guidance for common API errors
-    console.log('\n--- Troubleshooting Tips ---');
-    console.log('1. Ensure the NFT Escrow Zapp API is running (on port 3000)');
-    console.log('2. Check that the token is properly minted and approved');
-    console.log('3. The correct API endpoint is /deposit based on the Zapp router configuration');
-    console.log('4. The API expects only tokenId in the request body');
-    console.log('5. For multi-tenant setups, make sure to include a valid accountId (accountId=uuid)');
-    console.log('6. You can also try using the Zapp UI at http://localhost:3000');
-    
     process.exit(1);
   }
 }
