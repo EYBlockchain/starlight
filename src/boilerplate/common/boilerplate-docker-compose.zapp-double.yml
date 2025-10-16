@@ -24,6 +24,8 @@ services:
       MONGO_PASSWORD: admin
       MONGO_URL: 'mongodb://admin:admin@zapp-mongo:27017'
       KEY_DB_PATH: /app/orchestration/common/db/key1.json
+      TIMBER_HOST: timber  # Added timber host configuration
+      TIMBER_PORT: 80
     networks:
       - zapp_network
 
@@ -52,6 +54,8 @@ services:
       MONGO_PASSWORD: admin
       MONGO_URL: 'mongodb://admin:admin@zapp-mongo2:27017'
       KEY_DB_PATH: /app/orchestration/common/db/key2.json
+      TIMBER_HOST: timber2  # Added timber2 host configuration
+      TIMBER_PORT: 80
     networks:
       - zapp_network    
 
@@ -120,7 +124,7 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     depends_on:
-      - timber-mongo
+      - timber-mongo2
     volumes:
       - ./config/:/app/config
       - ./build/:/app/build:consistent
@@ -172,6 +176,7 @@ services:
       - "2023:27017"   
     volumes:
       - timber-mongo-volume2:/data/db
+      - ./config:/app/config/
     networks:
       - zapp_network  
 
