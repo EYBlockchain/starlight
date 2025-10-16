@@ -660,7 +660,7 @@ sendTransaction = {
             },
             secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
             isNullified: false,
-          });` + errorCatch];
+          }SAAS_CONTEXT_PARAM);` + errorCatch];
         case 'decrement':
           value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
@@ -679,7 +679,7 @@ sendTransaction = {
               },
               secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
               isNullified: false,
-            });`+ errorCatch];
+            }SAAS_CONTEXT_PARAM);`+ errorCatch];
         case 'whole':
           switch (burnedOnly) {
             case true:
@@ -703,7 +703,7 @@ sendTransaction = {
                   },
                   secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
                   isNullified: false,
-                });` + errorCatch];
+                }SAAS_CONTEXT_PARAM);` + errorCatch];
           }
         default:
           throw new TypeError(stateType);
@@ -817,7 +817,8 @@ integrationApiServicesBoilerplate = {
     return `
       export async function service_allCommitments(req, res, next) {
         try {
-          const commitments = await getAllCommitments();
+          const accountId = req.saasContext?.accountId;
+          const commitments = await getAllCommitments(accountId);
           res.send({ commitments });
           await sleep(10);
         } catch (err) {

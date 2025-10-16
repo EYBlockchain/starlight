@@ -16,7 +16,7 @@ import { KeyManager } from './key-management/KeyManager.mjs';
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
 
-export function formatCommitment (commitment) {
+export function formatCommitment (commitment, context) {
   let data
   try {
     const nullifierHash = commitment.secretKey
@@ -38,9 +38,10 @@ export function formatCommitment (commitment) {
       secretKey: commitment.secretKey ? commitment.secretKey.hex(32) : null,
       preimage,
       isNullified: commitment.isNullified,
-      nullifier: commitment.secretKey ? nullifierHash.hex(32) : null
+      nullifier: commitment.secretKey ? nullifierHash.hex(32) : null,
+      accountId: context?.accountId || null,
     }
-    logger.debug(`Storing commitment ${data._id}`)
+    logger.debug(`Storing commitment ${data._id}${context?.accountId ? ` for accountId: ${context.accountId}` : ''}`)
   } catch (error) {
     console.error('Error --->', error)
   }
@@ -53,8 +54,8 @@ export async function persistCommitment (data) {
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data)
 }
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment (commitment) {
-  const data = formatCommitment(commitment)
+export async function storeCommitment (commitment, context) {
+  const data = formatCommitment(commitment, context)
   return persistCommitment(data)
 }
 
@@ -155,12 +156,13 @@ export async function getBalanceByState(name, mappingKey = null) {
 /**
  * @returns all the commitments existent in this database.
  */
-export async function getAllCommitments() {
+export async function getAllCommitments(accountId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
+  const query = accountId ? { accountId } : {};
   const allCommitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find()
+    .find(query)
     .toArray();
   return allCommitments;
 }
