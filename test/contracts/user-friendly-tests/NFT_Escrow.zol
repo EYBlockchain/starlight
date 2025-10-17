@@ -23,7 +23,7 @@ contract NFT_Escrow {
     function transfer(secret address recipient, secret uint256 tokenId) public {
         require(tokenOwners[tokenId] == msg.sender);
         require(recipient != address(0), "NFT_Escrow: transfer to the zero address");
-        tokenOwners[tokenId] = recipient;
+        encrypt tokenOwners[tokenId] = recipient;
     }
 
     function approve(secret address approvedAddress) public {

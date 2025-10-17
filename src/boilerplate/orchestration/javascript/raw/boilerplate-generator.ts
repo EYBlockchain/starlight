@@ -660,7 +660,7 @@ sendTransaction = {
             },
             secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
             isNullified: false,
-          }SAAS_CONTEXT_PARAM);` + errorCatch];
+          }, SAAS_CONTEXT_PARAM);` + errorCatch];
         case 'decrement':
           value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
@@ -679,7 +679,7 @@ sendTransaction = {
               },
               secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
               isNullified: false,
-            }SAAS_CONTEXT_PARAM);`+ errorCatch];
+            }, SAAS_CONTEXT_PARAM);`+ errorCatch];
         case 'whole':
           switch (burnedOnly) {
             case true:
@@ -703,7 +703,7 @@ sendTransaction = {
                   },
                   secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
                   isNullified: false,
-                }SAAS_CONTEXT_PARAM);` + errorCatch];
+                }, SAAS_CONTEXT_PARAM);` + errorCatch];
           }
         default:
           throw new TypeError(stateType);
@@ -877,7 +877,7 @@ integrationApiServicesBoilerplate = {
         try {
           const { name } = req.body;
           SAAS_CONTEXT_HANDLING
-          await backupVariable(name SAAS_CONTEXT_PARAM);
+          await backupVariable(name, SAAS_CONTEXT_PARAM);
           res.send("Complete");
           await sleep(10);
         } catch (err) {
@@ -890,7 +890,7 @@ integrationApiServicesBoilerplate = {
           const { recipientAddress } = req.body;
           const recipientPubKey = req.body.recipientPubKey || 0
           SAAS_CONTEXT_HANDLING
-          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey SAAS_CONTEXT_PARAM);
+          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey, SAAS_CONTEXT_PARAM);
           res.send({ SharedKeys });
           await sleep(10);
         } catch (err) {

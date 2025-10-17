@@ -224,7 +224,7 @@ const prepareIntegrationApiServices = (node: any) => {
 
     fnboilerplate = fnboilerplate.replace(
       /SAAS_CONTEXT_PARAM/g,
-      node.multiTenant ? `, context` : ``,
+      node.multiTenant ? `context` : ``,
     );
 
     // replace function imports at top of file
@@ -248,7 +248,7 @@ const prepareIntegrationApiServices = (node: any) => {
   );
   commitmentsCode = commitmentsCode.replace(
     /SAAS_CONTEXT_PARAM/g,
-    node.multiTenant ? `, context` : ``,
+    node.multiTenant ? `context` : ``,
   );
   commitmentsCode = commitmentsCode.replace(
     /SAAS_CONTEXT_DIRECT/g,

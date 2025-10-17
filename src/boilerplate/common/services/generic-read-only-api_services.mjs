@@ -39,7 +39,7 @@ export class ServiceManager{
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
     SAAS_CONTEXT_HANDLING
-    const { _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG SAAS_CONTEXT_PARAM);
+    const { _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG, SAAS_CONTEXT_PARAM);
     res.send({_RESPONSE_ });
     await sleep(10);
   } catch (err) {

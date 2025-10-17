@@ -39,7 +39,7 @@ export class ServiceManager{
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
     SAAS_CONTEXT_HANDLING
-    const { tx , encEvent, encBackupEvent, _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG SAAS_CONTEXT_PARAM);
+    const { tx , encEvent, encBackupEvent, _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG, SAAS_CONTEXT_PARAM);
     // prints the tx
     console.log(tx);
     const txSerialized = serializeBigInt(tx);
