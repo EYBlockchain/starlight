@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 // Parse arguments properly whether run directly or via npm run
 function parseArgs() {
   const args = process.argv.slice(2);
-  let tokenId = 3;
+  let tokenId = 2;
   let rpcUrl = 'http://localhost:8545';
   let action = 'mint';
   let accountId = null; // For multi-tenant setup
