@@ -224,7 +224,7 @@ const prepareIntegrationApiServices = (node: any) => {
 
     fnboilerplate = fnboilerplate.replace(
       /SAAS_CONTEXT_PARAM/g,
-      node.multiTenant ? `context` : ``,
+      node.multiTenant ? `context` : `undefined`,
     );
 
     // replace function imports at top of file
@@ -248,7 +248,7 @@ const prepareIntegrationApiServices = (node: any) => {
   );
   commitmentsCode = commitmentsCode.replace(
     /SAAS_CONTEXT_PARAM/g,
-    node.multiTenant ? `context` : ``,
+    node.multiTenant ? `context` : `undefined`,
   );
   commitmentsCode = commitmentsCode.replace(
     /SAAS_CONTEXT_DIRECT/g,
@@ -1074,13 +1074,19 @@ export default function fileGenerator(node: any) {
         .flatMap(fileGenerator));
 
     case 'File':
+      let fileContent = node.nodes.map(codeGenerator).join('');
+
+      fileContent = fileContent.replace(
+        /SAAS_CONTEXT_PARAM/g,
+        node.multiTenant ? `context` : `undefined`,
+      );
       return [
         {
           filepath: path.join(
             `./orchestration`,
             `${node.fileName}${node.fileExtension}`,
           ),
-          file: node.nodes.map(codeGenerator).join(''),
+          file: fileContent,
         },
       ];
       // case 'ImportStatementList':
