@@ -9,20 +9,7 @@
     "test-prelim": "mocha --inline-diffs --require @babel/register ./test/prelim-traversals/index.mjs",
     "test-prelim-lite": "mocha --require @babel/register ./test/prelim-traversals/index.mjs",
     "format": "prettier --write \"**/*.{json,css,scss,md}\"",
-    "lint": "eslint .",
-    "mint": "node mintAndApprove.mjs",
-    "deposit": "node mintAndApprove.mjs deposit",
-    "mint-and-deposit": "node mintAndApprove.mjs both",
-    "mint:tenant": "node mintAndApprove.mjs accountId=user-alice",
-    "deposit:tenant": "node mintAndApprove.mjs deposit accountId=user-alice",
-    "mint-and-deposit:tenant": "node mintAndApprove.mjs both accountId=user-alice",
-    "get-commitments": "node mintAndApprove.mjs commitments",
-    "get-commitments:tenant": "node mintAndApprove.mjs commitments accountId=user-alice",
-    "transfer": "node transferNft.mjs",
-    "transfer:direct": "node transferNft.mjs direct",
-    "transfer:tenant": "node transferNft.mjs accountId=user-alice",
-    "transfer:example": "node transferNft.mjs 3 to=0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199",
-    "get-receiver-commitments": "node transferNft.mjs commitments to=0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199"
+    "lint": "eslint ."
   },
   "bin": {
     "zappify": "bin/index.mjs"

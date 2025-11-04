@@ -30,9 +30,6 @@ export {
   isMultiTenant
 } from '../middleware/saas-context.mjs';
 
-// Migration utilities
-export { migrate as setupUserKeysCollection } from './migrations/setup-user-keys.mjs';
-
 /**
  * Convenience function to get a configured KeyManager instance.
  * This is the recommended way to access key management functionality.
@@ -72,8 +69,5 @@ export default {
   forbidSaasContext,
   getSaasContext,
   isMultiTenant,
-  
-  // Migration
-  setupUserKeysCollection
 };
 
