@@ -50,7 +50,16 @@ export const getLeafIndex = async (
   let leafIndex;
   let errorCount = 0;
   const limit =
-    typeof maxTries === 'number' && !isNaN(maxTries) ? maxTries : 20;
+    typeof maxTries === 'number' && !isNaN(maxTries)
+      ? maxTries
+      : (config.merkleTree.defaultMaxTries || 40);
+
+  // Track timing for performance monitoring
+  const startTime = Date.now();
+
+  let consecutiveNulls = 0;
+  const resyncThreshold = config.merkleTree?.resyncThreshold || 5;
+  
   while (errorCount < limit) {
     try {
       // eslint-disable-next-line no-await-in-loop
@@ -71,19 +80,45 @@ export const getLeafIndex = async (
       logger.http('Timber Response:', response.data.data);
       if (response.data.data !== null) {
         leafIndex = response.data.data.leafIndex;
-        if (leafIndex) break;
+        if (leafIndex) {
+          const elapsedMs = Date.now() - startTime;
+          const elapsedSec = (elapsedMs / 1000).toFixed(2);
+          if (errorCount === 0) {
+          logger.info(`Timber: Leaf already indexed for ${contractName} (leafIndex: ${leafIndex}, commitment: ${value.substring(0, 20)}...)`);
+          } else {
+          logger.info(`Timber: Leaf successfully indexed for ${contractName} after ${errorCount + 1} attempts in ${elapsedSec}s (leafIndex: ${leafIndex}, commitment: ${value.substring(0, 20)}...)`);
+          }
+          break;
+        }
         break;
       } else {
+        consecutiveNulls++;
+
+        if (consecutiveNulls === resyncThreshold) {
+          try {
+            await getRoot(contractName, contractAddress);
+            logger.info("Timber resynced successfully");
+          } catch (err) {
+            logger.warn(`Failed to trigger resync: ${err.message}`)
+          }
+        }
         throw new Error('leaf not found');
       }
     } catch (err) {
       errorCount++;
-      logger.warn('Unable to get leaf - will try again in 3 seconds');
+      const retryDelay = config.merkleTree.retryDelay || 3000;
+      logger.warn(`Unable to get leaf - will try again in ${retryDelay / 1000} seconds (attempt ${errorCount}/${limit})`);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => {
-        setTimeout(() => resolve(), 3000);
+        setTimeout(() => resolve(), retryDelay);
       });
     }
+  }
+
+  if (leafIndex === undefined) {
+    const elapsedMs = Date.now() - startTime;
+    const elapsedSec = (elapsedMs / 1000).toFixed(2);
+    logger.error(`Timber: Leaf NOT found for ${contractName} after ${errorCount} attempts in ${elapsedSec}s (commitment: ${value.substring(0, 20)}...)`);
   }
   return leafIndex;
 };
@@ -155,15 +190,25 @@ export const getSiblingPath = async (contractName, leafIndex, leafValue) => {
   }
   return siblingPath;
 };
-export const getMembershipWitness = async (contractName, leafValue) => {
+export const getMembershipWitness = async (contractName, leafValue, maxTries) => {
   logger.http(`\nCalling getMembershipWitness for ${contractName} tree`);
   try {
-    const leafIndex = await getLeafIndex(contractName, leafValue);
+    const tries = typeof maxTries === 'number' && !isNaN(maxTries)
+      ? maxTries
+      : config.merkleTree?.defaultMaxTries;
+    const leafIndex = await getLeafIndex(contractName, leafValue, undefined, tries);
+
+    if (undefined === leafIndex) {
+      const totalWaitTime = (tries * (config.merkleTree.retryDelay || 3000)) / 1000;
+      throw new Error(`Commitment not found in Timber after ${tries} attempts (${totalWaitTime}s total wait time)`)
+    }
+
     let path = await getSiblingPath(contractName, leafIndex);
     const root = path[0].value;
     path = path.map(node => node.value);
     path.splice(0, 1);
     const witness = { index: leafIndex, path, root };
+    logger.info("Membership witness generated successfully");
     return witness;
   } catch (error) {
     throw new Error(error);

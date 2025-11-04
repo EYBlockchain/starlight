@@ -11,8 +11,10 @@
 
 /**
  * @typedef {Object} UserKeys
- * @property {string} secretKey - User's secret key (as integer string)
- * @property {string} publicKey - User's public key (as integer string)
+ * @property {string} secretKey - User's ZKP secret key (as integer string)
+ * @property {string} publicKey - User's ZKP public key (as integer string)
+ * @property {string} ethSK - User's Ethereum private key
+ * @property {string} ethPK - User's Ethereum address
  * @property {string} [sharedSecretKey] - Optional shared secret key for encrypted communication
  * @property {string} [sharedPublicKey] - Optional shared public key
  */
@@ -103,6 +105,10 @@ export class IKeyStorage {
    */
   async deleteKeys(context) {
     throw new Error('deleteKeys() must be implemented by subclass');
+  }
+
+  async getAccountIdByEthAddress(ethAddress) {
+    throw new Error('getAccountIdByEthAddress() must be implemented by subclass');
   }
 }
 

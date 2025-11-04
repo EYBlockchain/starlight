@@ -80,6 +80,8 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
   internalFunctionModifiesSecretState?: boolean;
   internalFunctionoldCommitmentAccessRequired?: boolean;
   onChainKeyRegistry?: boolean;
+  msgSenderParam?: boolean;
+  msgValueParam?: boolean;
 
   constructor(scope: Scope) {
     super();

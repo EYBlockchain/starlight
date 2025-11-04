@@ -254,7 +254,10 @@ const prepareIntegrationApiServices = (node: any) => {
     /SAAS_CONTEXT_DIRECT/g,
     node.multiTenant ? `context` : `undefined`,
   );
-
+  commitmentsCode = commitmentsCode.replace(
+    /CONTRACT_NAME/g,
+    node.contractName,
+  );
   outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}}\n ${commitmentsCode}\n`;
   return outputApiServiceFile;
 };

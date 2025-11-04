@@ -20,7 +20,7 @@ function decodeCommitmentData(decrypted){
 export default class EncryptedDataEventListener {
   constructor(web3, context) {
     this.web3 = web3;
-    this.ethAddress = generalise(config.web3.options.defaultAccount);
+    this.ethAddress = null;
     this.contractMetadata = {};
     this.context = context;
   }
@@ -55,9 +55,11 @@ export default class EncryptedDataEventListener {
 
       this.secretKey = generalise(keys.secretKey);
       this.publicKey = generalise(keys.publicKey);
+      this.ethAddress = keys.ethPK ? generalise(keys.ethPK) : generalise(config.web3.options.defaultAccount);
 
       console.log('Keys loaded successfully', {
-        multiTenant: !!this.context?.accountId
+        multiTenant: !!this.context?.accountId,
+        ethAddress: this.ethAddress.hex(),
       });
     } catch (error) {
       console.error(

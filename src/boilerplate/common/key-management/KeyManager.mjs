@@ -197,6 +197,15 @@ export class KeyManager {
       accountId: context?.accountId || null,
     };
   }
+
+  async getAccountIdByEthAddress(ethAddress) {
+    try {
+      return await this.dbStorage.getAccountIdByEthAddress(ethAddress);
+    } catch (error) {
+      logger.error('KeyManager.getAccountIdByEthAddress failed:', error);
+      throw error;
+    }
+  }
 }
 
 /**

@@ -94,7 +94,8 @@ class ContractBoilerplateGenerator {
       ];
     },
 
-
+    // NOTE: zkpPublicKeys[msg.sender] gets oevrwritten when each user regisyters
+    // That means only the last user will have their key mapped properly
     registerZKPPublicKey(): string[] {
       return [
         `

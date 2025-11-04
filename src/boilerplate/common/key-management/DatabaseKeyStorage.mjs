@@ -105,6 +105,8 @@ export class DatabaseKeyStorage extends IKeyStorage {
       const keys = {
         secretKey: decryptIfEncrypted(doc.secretKey),
         publicKey: doc.publicKey, // Public key doesn't need decryption
+        ethSK: doc.ethSK ? decryptIfEncrypted(doc.ethSK) : null, // Ethereum private key (encrypted)
+        ethPK: doc.ethPK || null,
       };
 
       if (doc.sharedSecretKey) {
@@ -143,6 +145,14 @@ export class DatabaseKeyStorage extends IKeyStorage {
         publicKey: keys.publicKey, // Public key doesn't need encryption
         updatedAt: now,
       };
+
+      // Include Ethereum keys if present
+      if (keys.ethSK) {
+        doc.ethSK = encryptIfEnabled(keys.ethSK);
+      }
+      if (keys.ethPK) {
+        doc.ethPK = keys.ethPK;
+      }
 
       // Include optional shared keys if present
       if (keys.sharedSecretKey) {
@@ -208,11 +218,22 @@ export class DatabaseKeyStorage extends IKeyStorage {
         publicKey = compressStarlightKey(publicKeyPoint);
       }
 
+      const Web3 = await import('../web3.mjs');
+      const web3 = Web3.default.connection();
+      const ethAccount = web3.eth.accounts.create();
+      const ethSK = ethAccount.privateKey;
+      const ethPK = ethAccount.address;
+
+      logger.info(`Generated Ethereum address for tenant ${context.accountId}: ${ethPK}`);
+
+      // AUTO-FUND tenant address with gas
+      const { autoFundIfNeeded } = await import('../gas-funding.mjs');
+      await autoFundIfNeeded(ethPK, '0.1', '0.5');
+      logger.info(`Auto-funded tenant address ${ethPK} with gas. Ready to send transactions!`);
+
       // Register on-chain if requested
       if (registerWithContract) {
         const { getContractInstance, getContractAddress } = await import('../contract.mjs');
-        const Web3 = await import('../web3.mjs');
-        const web3 = Web3.default.connection();
 
         const instance = await getContractInstance(contractName);
         const contractAddr = await getContractAddress(contractName);
@@ -221,7 +242,7 @@ export class DatabaseKeyStorage extends IKeyStorage {
           .encodeABI();
 
         const txParams = {
-          from: config.web3.options.defaultAccount,
+          from: ethPK,
           to: contractAddr,
           gas: config.web3.options.defaultGas,
           gasPrice: config.web3.options.defaultGasPrice,
@@ -229,8 +250,7 @@ export class DatabaseKeyStorage extends IKeyStorage {
           chainId: await web3.eth.net.getId(),
         };
 
-        const key = config.web3.key;
-        const signed = await web3.eth.accounts.signTransaction(txParams, key);
+        const signed = await web3.eth.accounts.signTransaction(txParams, ethSK);
         await web3.eth.sendSignedTransaction(signed.rawTransaction);
         logger.info(`Key registered on-chain for accountId: ${context.accountId}`);
       }
@@ -239,6 +259,8 @@ export class DatabaseKeyStorage extends IKeyStorage {
       await this.saveKeys({
         secretKey: secretKey.integer,
         publicKey: publicKey.integer,
+        ethSK,
+        ethPK,
       }, context);
 
       // Update metadata
@@ -361,6 +383,27 @@ export class DatabaseKeyStorage extends IKeyStorage {
     } catch (error) {
       logger.error(`Error deleting keys for accountId ${context.accountId}:`, error);
       throw new Error(`Failed to delete keys: ${error.message}`);
+    }
+  }
+
+  async getAccountIdByEthAddress(ethAddress) {
+    try {
+      const collection = await this.getCollection();
+      const doc = await collection.findOne(
+        { ethPK: ethAddress },
+        { projection: { accountId: 1 } }
+      );
+
+      if (!doc) {
+        logger.debug(`No accountId found for Ethereum address: ${ethAddress}`);
+        return null;
+      }
+
+      logger.debug(`Found accountId ${doc.accountId} for Ethereum address ${ethAddress}`);
+      return doc.accountId;
+    } catch (error) {
+      logger.error(`Error looking up accountId for Ethereum address ${ethAddress}:`, error);
+      throw new Error(`Failed to lookup accountId: ${error.message}`);
     }
   }
 }

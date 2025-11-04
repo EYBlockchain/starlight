@@ -246,11 +246,12 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
 export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'InitialiseKeys': {
-      const { onChainKeyRegistry, contractName } = fields;
+      const { onChainKeyRegistry, contractName, msgSenderParam } = fields;
       return {
         nodeType,
         contractName,
         onChainKeyRegistry,
+        msgSenderParam,
       };
     }
     case 'InitialisePreimage': {

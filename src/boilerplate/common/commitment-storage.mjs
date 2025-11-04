@@ -71,13 +71,18 @@ export async function getCommitmentsById(id) {
 }
 
 // function to retrieve commitment with a specified stateVarId
-export async function getCurrentWholeCommitment(id) {
+export async function getCurrentWholeCommitment(id, accountId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne({
+  const query = {
     'preimage.stateVarId': generalise(id).hex(32),
     isNullified: false,
-  });
+  };
+
+  if (accountId) {
+    query.accountId = accountId;
+  }
+  const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne(query);
   return commitment;
 }
 
@@ -326,6 +331,7 @@ export async function joinCommitments(
   instance,
   contractAddr,
   web3,
+  context,
 ) {
   logger.warn(
     'Existing Commitments are not appropriate and we need to call Join Commitment Circuit. It will generate proof to join commitments, this will require an on-chain verification',
@@ -433,6 +439,13 @@ export async function joinCommitments(
     .flat(Infinity);
   // Send transaction to the blockchain:
 
+  // Get tenant-specific keys
+  const keyManager = KeyManager.getInstance();
+  const keys = await keyManager.getKeys(context);
+  if (!keys || !keys.ethPK || !keys.ethSK) {
+    throw new Error('Tenant Ethereum keys not found. Please register keys first.');
+  }
+
   const txData = await instance.methods
     .joinCommitments(
       [oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
@@ -443,7 +456,7 @@ export async function joinCommitments(
     .encodeABI();
 
   let txParams = {
-    from: config.web3.options.defaultAccount,
+    from: keys.ethPK,
     to: contractAddr,
     gas: config.web3.options.defaultGas,
     gasPrice: config.web3.options.defaultGasPrice,
@@ -451,7 +464,7 @@ export async function joinCommitments(
     chainId: await web3.eth.net.getId(),
   };
 
-  const key = config.web3.key;
+  const key = keys.ethSK;
 
   const signed = await web3.eth.accounts.signTransaction(txParams, key);
 

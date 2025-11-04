@@ -253,6 +253,11 @@ export class FileKeyStorage extends IKeyStorage {
       throw new Error(`Failed to delete key file: ${error.message}`);
     }
   }
+
+  async getAccountIdByEthAddress(ethAddress) {
+    logger.debug(`getAccountIdByEthAddress not supported in single-tenant mode (address: ${ethAddress})`);
+    return null;
+  }
 }
 
 export default FileKeyStorage;

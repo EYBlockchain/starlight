@@ -38,7 +38,7 @@ const stateVariableIds = (node: any) => {
       privateStateName.includes('msg')
     ) {
       stateVarIds.push(
-        `\nconst ${privateStateName}_stateVarId_key = generalise(config.web3.options.defaultAccount); // emulates msg.sender`,
+        `\nconst ${privateStateName}_stateVarId_key = generalise(keys.ethPK); // emulates msg.sender`,
       );
     }
     stateVarIds.push(
@@ -501,9 +501,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.stateMutability !== 'view') {
         lines.push(`let BackupData = [];`);
       } 
-      if (node.msgSenderParam)
-        lines.push(`
-              \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
       if (node.msgValueParam)
         lines.push(`
               \nconst msgValue = 1;`);
@@ -647,6 +644,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           `${Orchestrationbp.initialiseKeys.postStatements(
            node.contractName,
            states[0],
+           node.msgSenderParam,
           ) }`,
         ],
       };
@@ -1019,18 +1017,20 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         statements: [
           `${returnsCall}
+          \n\n// Ensure user has enough funds
+          \nawait autoFundIfNeeded(keys.ethPK, '0.5', '1');
           \n\n// Send transaction to the blockchain:
           \nconst txData = await instance.methods
           .${node.functionName}(${lines.length > 0 ? `${lines},`: ``} {customInputs: [${returnInputs}], newNullifiers: ${params[0][0]}  commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]}  newCommitments: ${params[0][2]}  cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData).encodeABI();
           \n	let txParams = {
-            from: config.web3.options.defaultAccount,
+            from: keys.ethPK,
             to: contractAddr,
             gas: config.web3.options.defaultGas,
             gasPrice: config.web3.options.defaultGasPrice,
             data: txData,
             chainId: await web3.eth.net.getId(),
             };
-            \n 	const key = config.web3.key;
+            \n 	const key = keys.ethSK;
             \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
             \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
             \n  let tx = await instance.getPastEvents("NewLeaves", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
@@ -1121,17 +1121,19 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       return {
         statements: [
           `${returnsCallPublic}
+          \n\n// Ensure user has enough funds
+          \nawait autoFundIfNeeded(keys.ethPK, '0.05', '0.5');
           \n\n// Send transaction to the blockchain:
            \nconst txData = await instance.methods.${node.functionName}(${lines}).encodeABI();
           \nlet txParams = {
-            from: config.web3.options.defaultAccount,
+            from: keys.ethPK,
             to: contractAddr,
             gas: config.web3.options.defaultGas,
             gasPrice: config.web3.options.defaultGasPrice,
             data: txData,
             chainId: await web3.eth.net.getId(),
           };
-          \nconst key = config.web3.key;
+          \nconst key = keys.ethSK;
           \nconst signed = await web3.eth.accounts.signTransaction(txParams, key);
           \nconst tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
           \nconst encEvent = {};
