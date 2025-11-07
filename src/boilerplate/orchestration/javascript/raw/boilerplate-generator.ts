@@ -846,8 +846,8 @@ integrationApiServicesBoilerplate = {
       }
       export async function service_getBalance(req, res, next) {
         try {
-      
-          const sum = await getBalance();
+          const accountId = req.saasContext?.accountId;
+          const sum = await getBalance(accountId);
           res.send( {"totalBalance": sum} );
         } catch (error) {
           console.error("Error in calculation :", error);
@@ -858,7 +858,8 @@ integrationApiServicesBoilerplate = {
       export async function service_getBalanceByState(req, res, next) {
         try {
           const { name, mappingKey } = req.body;
-          const balance = await getBalanceByState(name, mappingKey);
+          const accountId = req.saasContext?.accountId;
+          const balance = await getBalanceByState(name, mappingKey, accountId);
           res.send( {"totalBalance": balance} );
         } catch (error) {
           console.error("Error in calculation :", error);
@@ -870,7 +871,8 @@ integrationApiServicesBoilerplate = {
       export async function service_getCommitmentsByState(req, res, next) {
         try {
           const { name, mappingKey } = req.body;
-          const commitments = await getCommitmentsByState(name, mappingKey);
+          const accountId = req.saasContext?.accountId;
+          const commitments = await getCommitmentsByState(name, mappingKey, accountId);
           res.send({ commitments });
           await sleep(10);
         } catch (err) {

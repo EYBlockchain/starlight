@@ -87,10 +87,11 @@ export async function getCurrentWholeCommitment(id, accountId) {
 }
 
 // function to retrieve commitment with a specified stateName
-export async function getCommitmentsByState(name, mappingKey = null) {
+export async function getCommitmentsByState(name, mappingKey = null, accountId = null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
+  if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
@@ -125,12 +126,13 @@ export async function getNullifiedCommitments() {
 /**
  * @returns {Promise<number>} The sum of the values ​​of all non-nullified commitments
  */
-export async function getBalance() {
+export async function getBalance(accountId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
+  const query = accountId ? { accountId } : {};
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find({ isNullified: false }) //  no nullified
+    .find({ ...query, isNullified: false }) //  no nullified
     .toArray();
 
   let sumOfValues = 0;
@@ -140,10 +142,11 @@ export async function getBalance() {
   return sumOfValues;
 }
 
-export async function getBalanceByState(name, mappingKey = null) {
+export async function getBalanceByState(name, mappingKey = null, accountId=null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
+  if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
