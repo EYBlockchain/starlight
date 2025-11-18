@@ -495,26 +495,77 @@ class BoilerplateGenerator {
       ];
     },
 
-    parameters({ mappingKeyName: k, mappingKeyTypeName: t }): string[] {
-      if (t === 'local') return [];
-      return [
-        `private ${t ? t : 'field'} ${k}`, // must be a field, in case we need to do arithmetic on it.
-      ];
+    /**
+     * Generate circuit parameters for mapping
+     * Includes domain parameters if present
+     */
+    parameters({ mappingKeyName: k, mappingKeyTypeName: t, perParameters = [] }): string[] {
+      const params: string[] = [];
+
+      // Add domain parameters as private inputs
+      for (const domainParam of perParameters) {
+        params.push(`private field ${domainParam.name}`);
+      }
+
+      // Add mapping key parameter
+      if (t !== 'local') {
+        params.push(`private ${t ? t : 'field'} ${k}`);
+      }
+
+      return params;
     },
 
-    preStatements({ id: mappingId, mappingName: m }): string[] {
-      return [
+    /**
+     * Generate pre-statements for mapping
+     * Includes domain parameter hashing if present
+     */
+    preStatements({ id: mappingId, mappingName: m, perParameters = [] }): string[] {
+      const statements: string[] = [
         `
         // We need to hard-code the mappingId's of mappings into the circuit:
         field ${m}_mappingId = ${mappingId};`,
       ];
+
+      // Generate chained MiMC hashing for domain parameters
+      if (perParameters.length > 0) {
+        let currentHash = `${m}_mappingId`;
+
+        for (let i = 0; i < perParameters.length; i++) {
+          const domainParam = perParameters[i];
+          const nextHashVar = `${m}_perHash_${i}`;
+
+          statements.push(
+            `
+        // Chain domain parameter: ${domainParam.name}
+        field ${nextHashVar} = mimc2([${currentHash}, ${domainParam.name}]);`,
+          );
+
+          currentHash = nextHashVar;
+        }
+
+        statements.push(
+          `
+        // Final domain-chained hash
+        field ${m}_domainChainedId = ${currentHash};`,
+        );
+      }
+
+      return statements;
     },
 
-    postStatements({ name: x, mappingName: m, mappingKeyName: k }): string[] {
-      // const x = `${m}_${k}`;
+    /**
+     * Generate post-statements for mapping
+     * Calculates final stateVarId with domain parameter support
+     */
+    postStatements({ name: x, mappingName: m, mappingKeyName: k, perParameters = [] }): string[] {
+      // Use chained hash if domain parameters exist, otherwise use mappingId
+      const baseId = perParameters.length > 0
+        ? `${m}_domainChainedId`
+        : `${m}_mappingId`;
+
       return [
         `
-        field ${x}_stateVarId_field = mimc2([${m}_mappingId, ${k}]);`,
+        field ${x}_stateVarId_field = mimc2([${baseId}, ${k}]);`,
       ];
     },
   };

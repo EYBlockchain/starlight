@@ -174,8 +174,8 @@ export class VariableBinding extends Binding {
 
   blacklist?: any[];
 
-
-
+  // Domain parameters (per keyword)
+  perParameters?: Array<{type: string, name: string}>;
 
   isOwned?: boolean;
   owner: any = null; // object of objects, indexed by node id.
@@ -196,6 +196,8 @@ export class VariableBinding extends Binding {
     this.isSecret = node.isSecret ?? false;
     this.isSharedSecret = node.isSharedSecret ?? false;
 
+    // Initialize domain parameters (per keyword)
+    this.perParameters = node.perParameters ?? [];
 
     if (path.isMappingDeclaration() || path.isArrayDeclaration()) {
       this.isMapping = true;
@@ -278,6 +280,19 @@ export class VariableBinding extends Binding {
 
   updateOwnership(ownerNode: any, msgIsMappingKeyorMappingValue?: string | null) {
     if (this.isOwned && this.owner.mappingOwnershipType === 'key') return;
+
+    // For mapping states, ignore caller-restriction-based owners that clearly
+    // refer to a different mapping. This avoids spurious "two distinct owners"
+    // errors when a function both (a) restricts msg.sender via one mapping and
+    // (b) nullifies a different mapping.
+    if (this.isMapping && !msgIsMappingKeyorMappingValue && ownerNode.baseExpression) {
+      const referencedDeclaration = ownerNode.baseExpression.referencedDeclaration;
+      if (referencedDeclaration && referencedDeclaration !== this.id) {
+        // This restriction is not about this mapping; skip it for this binding.
+        return;
+      }
+    }
+
     if (
       ownerNode.expression?.name === 'msg' &&
       msgIsMappingKeyorMappingValue === 'value'
@@ -653,5 +668,68 @@ export class VariableBinding extends Binding {
       this.isBurned = true;
       // TODO more useful indicators here
     }
+  }
+
+  /**
+   * Validates that domain parameters are consistent with a given set of parameters
+   * @param {Array} otherPerParameters - The domain parameters to compare against
+   * @param {string} context - Context for error messages (e.g., "function parameter")
+   * @returns {boolean} - True if parameters match, throws error otherwise
+   */
+  validateDomainParameterConsistency(otherPerParameters: Array<{type: string, name: string}>, context: string = 'function'): boolean {
+    if (!this.perParameters || this.perParameters.length === 0) {
+      return true;
+    }
+
+    if (!otherPerParameters || otherPerParameters.length === 0) {
+      throw new SyntaxUsageError(
+        `Mapping '${this.name}' requires ${this.perParameters.length} domain parameter(s), ` +
+        `but the ${context} has none. ` +
+        `Add domain parameters: ${this.perParameters.map(p => `per ${p.type} ${p.name}`).join(', ')}`,
+        this.node,
+      );
+    }
+
+    if (this.perParameters.length !== otherPerParameters.length) {
+      throw new SyntaxUsageError(
+        `Mapping '${this.name}' requires ${this.perParameters.length} domain parameter(s), ` +
+        `but the ${context} has ${otherPerParameters.length}. ` +
+        `Expected: ${this.perParameters.map(p => `${p.type} ${p.name}`).join(', ')}`,
+        this.node,
+      );
+    }
+
+    for (let i = 0; i < this.perParameters.length; i++) {
+      const mappingParam = this.perParameters[i];
+      const otherParam = otherPerParameters[i];
+
+      if (mappingParam.type !== otherParam.type) {
+        throw new SyntaxUsageError(
+          `Domain parameter '${mappingParam.name}' at position ${i + 1} ` +
+          `has type '${mappingParam.type}' in mapping '${this.name}', ` +
+          `but type '${otherParam.type}' in the ${context}. ` +
+          `Domain parameter types must match exactly.`,
+          this.node,
+        );
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Gets the domain parameters required for this binding
+   * @returns {Array} - Array of domain parameter objects
+   */
+  getDomainParameters(): Array<{type: string, name: string}> {
+    return this.perParameters || [];
+  }
+
+  /**
+   * Checks if this binding has domain parameters
+   * @returns {boolean} - True if binding has domain parameters
+   */
+  hasDomainParameters(): boolean {
+    return this.perParameters && this.perParameters.length > 0;
   }
 }

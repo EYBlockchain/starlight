@@ -11,12 +11,15 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'InitialisePreimage': {
       const { privateStateName, id, accessedOnly = false, indicator = {} } = fields;
+      // For MappingKey indicators, access binding through container
+      const binding = indicator.binding || indicator.container?.binding;
       return {
         privateStateName,
         stateVarId: id,
         accessedOnly,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
+        perParameters: indicator.isMapping && binding?.node?.perParameters ? binding.node.perParameters : undefined,
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
       };
     }
@@ -29,6 +32,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         indicator = {},
       } = fields;
+      // For MappingKey indicators, access binding through container
+      const binding = indicator.binding || indicator.container?.binding;
       return {
         increment,
         stateVarId: id,
@@ -38,6 +43,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
+        perParameters: indicator.isMapping && binding?.node?.perParameters ? binding.node.perParameters : undefined,
         nullifierRequired: indicator.isNullified,
         reinitialisedOnly,
         accessedOnly,
@@ -56,6 +62,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
     }
     case 'WritePreimage': {
       const { id, increment, burnedOnly, reinitialisedOnly, indicator = {} } = fields
+      // For MappingKey indicators, access binding through container
+      const binding = indicator.binding || indicator.container?.binding;
       return {
         increment,
         stateVarId: id,
@@ -65,6 +73,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
+        perParameters: indicator.isMapping && binding?.node?.perParameters ? binding.node.perParameters : undefined,
         nullifierRequired: indicator.isNullified,
         burnedOnly,
         reinitialisedOnly,
@@ -110,6 +119,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
     }
     case 'CalculateCommitment': {
       const { id, increment, privateStateName, indicator = {} } = fields;
+      // For MappingKey indicators, access binding through container
+      const binding = indicator.binding || indicator.container?.binding;
       return {
         privateStateName,
         stateVarId: id,
@@ -119,6 +130,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
         structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        perParameters: indicator.isMapping && binding?.node?.perParameters ? binding.node.perParameters : undefined,
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -141,6 +153,8 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         localMappingKey,
       } = fields;
       const structProperties = !indicator.isStruct ? null : indicator.isAccessed ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : Object.keys(indicator.structProperties);
+      // For MappingKey indicators, access binding through container
+      const binding = indicator.binding || indicator.container?.binding;
       return {
         privateStateName,
         stateVarId: id,
@@ -152,6 +166,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         increment,
         structProperties,
         isMapping: indicator.isMapping,
+        perParameters: indicator.isMapping && binding?.node?.perParameters ? binding.node.perParameters : undefined,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         isOwned: indicator.isOwned,
@@ -170,12 +185,15 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
 
     case 'EncryptBackupPreimage': {
       const { id, increment, privateStateName, indicator = {} } = fields;
+      // For MappingKey indicators, access binding through container
+      const binding = indicator.binding || indicator.container?.binding;
       return {
         privateStateName,
         stateVarId: id,
         increment,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
+        perParameters: indicator.isMapping && binding?.node?.perParameters ? binding.node.perParameters : undefined,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
@@ -213,12 +231,15 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
 
     case 'buildBoilerplateReciever': {
       const { id, increment, privateStateName, indicator = {} } = fields;
+      // For MappingKey indicators, access binding through container
+      const binding = indicator.binding || indicator.container?.binding;
       return {
         privateStateName,
         stateVarId: id,
         increment,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
+        perParameters: indicator.isMapping && binding?.node?.perParameters ? binding.node.perParameters : undefined,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,

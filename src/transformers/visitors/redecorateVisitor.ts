@@ -40,10 +40,24 @@ export default {
     enter(node: any, state: any) {
       // for each decorator we have to re-add...
       for (const toRedecorate of state) {
-        // skip if the decorator is not secret or sharedSecret (can't be a variable dec) or if its already been added
-        if (toRedecorate.added || (toRedecorate.decorator !== 'secret' &&  toRedecorate.decorator !== 'sharedSecret')) continue;
+        // skip if already been added
+        if (toRedecorate.added) continue;
+
         // extract the char number
         const srcStart = node.src.split(':')[0];
+
+        // Handle per(...) domain parameters
+        if (toRedecorate.decorator === 'per') {
+          if (toRedecorate.charStart === Number(srcStart)) {
+            toRedecorate.added = true;
+            node.perParameters = toRedecorate.perParameters || [];
+            return;
+          }
+        }
+
+        // Handle secret/sharedSecret decorators
+        if (toRedecorate.decorator !== 'secret' && toRedecorate.decorator !== 'sharedSecret') continue;
+
         // if it matches the one we removed, add it back to the AST
         if (toRedecorate.charStart === Number(srcStart)) {
           toRedecorate.added = true;
@@ -91,9 +105,39 @@ export default {
             case 'reinitialisable':
               node.reinitialisable = true;
               return;
+            case 'per':
+              // Handle per function parameters
+              if (toRedecorate.perFunctionParam) {
+                node.isPer = true;
+              }
+              return;
             default:
               return;
           }
+        }
+      }
+    },
+  },
+
+  // Catch-all for any node type that might have per(...) domain parameters
+  '*': {
+    enter(node: any, state: any) {
+      // Only process nodes with src property
+      if (!node || !node.src) return;
+
+      // for each decorator we have to re-add...
+      for (const toRedecorate of state) {
+        // skip if already been added or not a per decorator
+        if (toRedecorate.added || toRedecorate.decorator !== 'per') continue;
+
+        // extract the char number
+        const srcStart = node.src.split(':')[0];
+
+        // Handle per(...) domain parameters
+        if (toRedecorate.charStart === Number(srcStart)) {
+          toRedecorate.added = true;
+          node.perParameters = toRedecorate.perParameters || [];
+          return;
         }
       }
     },

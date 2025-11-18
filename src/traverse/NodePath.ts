@@ -635,6 +635,7 @@ export default class NodePath {
   }
 
   isExternalContractInstanceDeclaration(node: any = this.node): boolean {
+    if (!node) return false;
     if (
       !['VariableDeclaration', 'VariableDeclarationStatement'].includes(
         node.nodeType,

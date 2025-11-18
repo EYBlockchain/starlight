@@ -1105,6 +1105,50 @@ integrationApiServicesBoilerplate = {
           logger.error('Failed to approve NFT:', err);
           res.send({ errors: [err.message] });
         }
+      }
+
+     export async function service_deployNFT(req, res, next) {
+        try {
+          const { name, symbol } = req.body;
+          SAAS_CONTEXT_HANDLING
+
+          const { getContractInterface } = await import('./common/contract.mjs');
+          const erc721Interface = await getContractInterface('ERC721');
+          const Web3 = await import('./common/web3.mjs');
+          const web3 = Web3.default.connection();
+
+          const accounts = await web3.eth.getAccounts();
+          const defaultAccount = accounts[0];
+
+          logger.info(\`Deploying new ERC721 contract: \${name} (\${symbol})\`);
+
+          const ERC721Contract = new web3.eth.Contract(erc721Interface.abi);
+          const deployTx = ERC721Contract.deploy({
+            data: erc721Interface.bytecode,
+            arguments: [name || 'TestNFT', symbol || 'TNFT']
+          });
+
+          const gas = await deployTx.estimateGas({ from: defaultAccount });
+          const deployedContract = await deployTx.send({
+            from: defaultAccount,
+            gas: Math.floor(gas * 1.2) // Add 20% buffer
+          });
+
+          const contractAddress = deployedContract.options.address;
+
+          logger.info(\`ERC721 deployed at: \${contractAddress}\`);
+
+          res.send({
+            success: true,
+            contractAddress: contractAddress,
+            name: name || 'TestNFT',
+            symbol: symbol || 'TNFT',
+            txHash: deployedContract._requestManager.provider.lastJsonRpcResponse?.result
+          });
+        } catch (err) {
+          logger.error('Failed to deploy NFT contract:', err);
+          res.send({ errors: [err.message] });
+        }
       }`
       
       
@@ -1128,7 +1172,7 @@ integrationApiRoutesBoilerplate = {
     return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, service_deployNFT, } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
@@ -1145,6 +1189,7 @@ integrationApiRoutesBoilerplate = {
     router.get("/getAddress", service_getAddress);
     router.post("/mintNFT", service_mintNFT);
     router.post("/approveNFT", service_approveNFT);
+    router.post("/deployNFT", service_deployNFT);
     `;
   }
 };

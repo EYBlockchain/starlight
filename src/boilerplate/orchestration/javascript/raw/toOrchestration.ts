@@ -3,9 +3,20 @@
 import OrchestrationBP from './boilerplate-generator.js';
 
 
+/**
+ * Generates stateVarId calculation code with support for domain parameters
+ *
+ * For mappings without domain parameters:
+ *   stateVarId = mimc2([mappingId, key])
+ *
+ * For mappings with domain parameters (chained MiMC hashing):
+ *   perHash = mimc2([mimc2([...mimc2([mappingId, domain1]), domain2...]), domainN])
+ *   stateVarId = mimc2([perHash, key])
+ */
 const stateVariableIds = (node: any) => {
   const {privateStateName, stateNode} = node;
   const stateVarIds: string[] = [];
+
   // state variable ids
   // if not a mapping, use singular unique id (if mapping, stateVarId is an array)
   if (!stateNode.stateVarId[1]) {
@@ -14,35 +25,76 @@ const stateVariableIds = (node: any) => {
     );
   } else {
     // if is a mapping...
+    const mappingId = stateNode.stateVarId[0];
+    const mappingKey = stateNode.stateVarId[1];
+    const domainParameters = stateNode.perParameters || [];
+
     stateVarIds.push(
-      `\nlet ${privateStateName}_stateVarIdInit = ${stateNode.stateVarId[0]};`,
+      `\nlet ${privateStateName}_stateVarIdInit = ${mappingId};`,
     );
+
+    // Handle domain parameters with chained MiMC hashing
+    if (domainParameters.length > 0) {
+      // Extract and hash each domain parameter in sequence
+      let currentHash = `generalise(${privateStateName}_stateVarIdInit).bigInt`;
+
+      for (let i = 0; i < domainParameters.length; i++) {
+        const domainParam = domainParameters[i];
+        const domainVarName = `${privateStateName}_domain_${domainParam.name}`;
+
+        // Generate code to extract domain parameter
+        stateVarIds.push(
+          `\nconst ${domainVarName} = ${domainParam.name};`,
+        );
+
+        // Chain the MiMC hash: mimc2([currentHash, domainParam])
+        const nextHashVar = `${privateStateName}_perHash_${i}`;
+        stateVarIds.push(
+          `\nconst ${nextHashVar} = generalise(utils.mimcHash([${currentHash}, ${domainVarName}.bigInt], 'ALT_BN_254')).bigInt;`,
+        );
+
+        currentHash = nextHashVar;
+      }
+
+      // Store the final chained hash for use in final stateVarId calculation
+      stateVarIds.push(
+        `\nlet ${privateStateName}_stateVarIdInit_chained = ${currentHash};`,
+      );
+    }
+
     // ... and the mapping key is not msg.sender, but is a parameter
     if (
-      privateStateName.includes(stateNode.stateVarId[1].replaceAll('.', 'dot')) &&
-      stateNode.stateVarId[1] !== 'msg'
+      privateStateName.includes(mappingKey.replaceAll('.', 'dot')) &&
+      mappingKey !== 'msg'
     ) {
-      if (+stateNode.stateVarId[1] || stateNode.stateVarId[1] === '0') {
+      if (+mappingKey || mappingKey === '0') {
         stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = generalise(${stateNode.stateVarId[1]});`,
+          `\nconst ${privateStateName}_stateVarId_key = generalise(${mappingKey});`,
         );
       } else {
         stateVarIds.push(
-          `\nconst ${privateStateName}_stateVarId_key = ${stateNode.stateVarId[1]};`,
+          `\nconst ${privateStateName}_stateVarId_key = ${mappingKey};`,
         );
       }
     }
     // ... and the mapping key is msg, and the caller of the fn has the msg key
     if (
-      stateNode.stateVarId[1] === 'msg' &&
+      mappingKey === 'msg' &&
       privateStateName.includes('msg')
     ) {
       stateVarIds.push(
         `\nconst ${privateStateName}_stateVarId_key = generalise(keys.ethPK); // emulates msg.sender`,
       );
     }
+
+    // Calculate final stateVarId
+    // If domain parameters exist, use the chained hash; otherwise use mappingId
+    const baseId = domainParameters.length > 0
+      ? `${privateStateName}_stateVarIdInit_chained`
+      : `generalise(${privateStateName}_stateVarIdInit).bigInt`;
+
     stateVarIds.push(
-      `\nlet ${privateStateName}_stateVarId = generalise(utils.mimcHash([generalise(${privateStateName}_stateVarIdInit).bigInt, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
+      `\nlet ${privateStateName}_stateVarId = generalise(utils.mimcHash([${baseId}, ${privateStateName}_stateVarId_key.bigInt], 'ALT_BN_254')).hex(32);`,
     );
   }
   return stateVarIds;
