@@ -377,10 +377,15 @@ class BoilerplateGenerator {
 
   encryption = () => ({});
 
-  mapping = (bpSection) => ({
-    mappingName: this.mappingName,
-    mappingKeyName: bpSection === 'postStatements' ? this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
-  });
+  mapping = (bpSection) => {
+    // Get perParameters from the binding's node
+    const perParameters = this.indicators?.binding?.node?.perParameters || this.indicators?.node?.perParameters || [];
+    return {
+      mappingName: this.mappingName,
+      mappingKeyName: bpSection === 'postStatements' ? this.mappingKeyName : bpSection === 'parameters' ? this.mappingKeyName.split('.')[0] : this.mappingKeyName.replace('.', 'dot'),
+      ...(perParameters.length > 0 && { perParameters }),
+    };
+  };
 
   /** Partitioned states need boilerplate for an incrementation/decrementation, because it's so weird and different from `a = a - b`. Whole states inherit directly from the AST, so don't need boilerplate here. */
   incrementation = (extraParams) => {

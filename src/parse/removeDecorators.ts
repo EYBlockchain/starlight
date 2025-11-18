@@ -14,7 +14,11 @@ import { boolean } from 'yargs';
 // regex: matches decorators when standalone words
 // eg: for {unknown knownknown known1 123lknown known secretvalue} finds only 1 match for decorator 'known'
  //const decorators = [/(?<![\w])known(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])unknown(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])secret(?![\w\@#\$%\^\&*\)\(+=._-])/g, /(?<![\w])reinitialisable(?![\w\@#\$%\^\&*\)\(+=._-])/g];
-const decorators = [/(?<![\w])known(?![\w])/g, /(?<![\w])unknown(?![\w])/g, /(?<![\w])secret(?![\w])/g, /(?<![\w])reinitialisable(?![\w])/g, /(?<![\w])encrypt(?![\w])/g, /(?<![\w])sharedSecret(?![\w])/g];
+const decorators = [/(?<![\w])known(?![\w])/g, /(?<![\w])unknown(?![\w])/g, /(?<![\w])secret(?![\w])/g, /(?<![\w])reinitialisable(?![\w])/g, /(?<![\w])encrypt(?![\w])/g, /(?<![\w])sharedSecret(?![\w])/g, /(?<![\w])per(?!\w|\()/g];
+
+// regex: matches per(...) domain parameter declarations
+// eg: per(uint256 tokenId) or per(address mfg, bytes32 batch)
+const perParameterPattern = /per\s*\(\s*([^)]+)\s*\)/g;
 
 // keywords - throws an error if function name/ variable name/ contracts etc is a decorator.
 // eg:  function secret (...) is not allowed , permits functions secret12(...)
@@ -55,6 +59,34 @@ function inComment(file: string, char: number): boolean {
     }
   }
   return aComment;
+}
+
+/**
+ * Parses domain parameter declarations from per(...) syntax
+ * @param perDeclaration - The full per(...) string, e.g., "per(uint256 tokenId, address mfg)"
+ * @returns Array of {type, name} objects
+ */
+function parsePerParameters(perDeclaration: string): Array<{type: string, name: string}> {
+  // Extract content between parentheses
+  const match = perDeclaration.match(/per\s*\(\s*([^)]+)\s*\)/);
+  if (!match || !match[1]) return [];
+
+  const paramString = match[1];
+  // Split by comma and parse each parameter
+  const params = paramString.split(',').map(param => {
+    const trimmed = param.trim();
+    // Split by whitespace to separate type and name
+    const parts = trimmed.split(/\s+/);
+    if (parts.length >= 2) {
+      return {
+        type: parts[0],
+        name: parts[1]
+      };
+    }
+    return null;
+  }).filter(p => p !== null);
+
+  return params;
 }
 
 /**
@@ -280,6 +312,20 @@ function removeDecorators(options: any): {
     matches.push(...deDecoratedFile.matchAll(decorator));
   }
 
+  // Process per(...) domain parameter declarations (in mapping declarations)
+  // These are different from standalone 'per' keywords in function parameters
+  const perMatches = [...deDecoratedFile.matchAll(perParameterPattern)];
+  for (const perMatch of perMatches) {
+    const perParameters = parsePerParameters(perMatch[0]);
+    matches.push({
+      index: perMatch.index,
+      0: perMatch[0],
+      length: perMatch[0].length,
+      isPer: true,
+      perParameters: perParameters
+    } as any);
+  }
+
   // number of chars to offset
   let offset = 0;
 
@@ -301,22 +347,134 @@ function removeDecorators(options: any): {
         process.exit(1);
     }
   }
+  // Track per(...) removals to adjust charStart values later
+  const perRemovals: Array<{index: number, length: number, declStart?: number, matchIndex?: number, currentOffset?: number}> = [];
+
   for (const match of matches) {
     // skip removal and offsetting if we're in a comment
     if (inComment(decoratedFile, match.index)) continue;
     // add this keyword length to offset, since we'll remove it (add one for the space we remove)
     const offsetSrcStart = match.index - offset;
-    // save the keyword and where the next word starts
-    toRedecorate.push({ decorator: match[0], charStart: offsetSrcStart });
-    // replace the dedecorated file with one w/o the keyword (and remove one space)
-    deDecoratedFile =
-      deDecoratedFile.substring(0, offsetSrcStart) +
-      deDecoratedFile.substring(offsetSrcStart + match[0].length + 1);
-    offset += match[0].length + 1;
+
+    // Handle per(...) domain parameters in mapping declarations
+    if ((match as any).isPer) {
+      // Find the start of the mapping declaration in the *de-decorated* file
+      // by looking backwards for 'mapping' from the current (offset-adjusted) index.
+      const beforePer = deDecoratedFile.substring(0, offsetSrcStart);
+      let mappingIndexInOriginal = beforePer.lastIndexOf('mapping');
+
+      // Also check for 'secret mapping' or other decorators before 'mapping'.
+      // We need to find the actual start of the variable declaration.
+      // Look backwards from 'mapping' to find the start (could be leading whitespace).
+      let declStart = mappingIndexInOriginal;
+      const beforeMapping = deDecoratedFile.substring(0, mappingIndexInOriginal);
+      const lastNewline = beforeMapping.lastIndexOf('\n');
+      const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
+
+      // Find the first non-whitespace character on this line in the de-decorated file
+      let i = lineStart;
+      while (i < mappingIndexInOriginal && /\s/.test(deDecoratedFile[i])) {
+        i++;
+      }
+      declStart = i;
+
+      toRedecorate.push({
+        decorator: 'per',
+        charStart: declStart,  // Position of the start of the declaration in the de-decorated file
+        perParameters: (match as any).perParameters
+      });
+
+      // Track this removal so we can adjust charStart values later
+      const removalLength = match[0].length + 1; // +1 for the space after per(...)
+      perRemovals.push({
+        index: offsetSrcStart,
+        length: removalLength,
+        declStart: declStart,  // For debugging
+        matchIndex: match.index,  // Original position in decorated file
+        currentOffset: offset  // Offset at time of processing
+      });
+
+      // Remove the entire per(...) declaration and the space after it
+      // The per(...) pattern always has a space after it in valid Solidity
+      deDecoratedFile =
+        deDecoratedFile.substring(0, offsetSrcStart) +
+        deDecoratedFile.substring(offsetSrcStart + match[0].length + 1);
+      offset += match[0].length + 1;
+    } else if (match[0] === 'per') {
+      // Handle standalone 'per' keyword in function parameters
+      // Find the parameter that follows this 'per' keyword
+      const afterPer = decoratedFile.substring(match.index + 3); // 3 = length of 'per'
+      // Match: optional whitespace, type, whitespace, name, and optional comma/closing paren
+      const paramMatch = afterPer.match(/^\s+(\w+)\s+(\w+)\s*[,)]/);
+
+      if (paramMatch) {
+        // Store the per parameter info for later use
+        const paramType = paramMatch[1];
+        const paramName = paramMatch[2];
+
+        toRedecorate.push({
+          decorator: 'per',
+          charStart: offsetSrcStart,
+          perFunctionParam: true,
+          paramType: paramType,
+          paramName: paramName,
+          added: true  // Mark as added since we'll handle it in redecorate
+        });
+      } else {
+        // Fallback: mark as added if we can't parse the parameter
+        toRedecorate.push({ decorator: 'per', charStart: offsetSrcStart, added: true });
+      }
+
+      // replace the dedecorated file with one w/o the keyword (and remove one space)
+      deDecoratedFile =
+        deDecoratedFile.substring(0, offsetSrcStart) +
+        deDecoratedFile.substring(offsetSrcStart + match[0].length + 1);
+      offset += match[0].length + 1;
+    } else {
+      // Handle regular decorators (secret, known, etc.)
+      toRedecorate.push({ decorator: match[0], charStart: offsetSrcStart });
+      // replace the dedecorated file with one w/o the keyword (and remove one space)
+      deDecoratedFile =
+        deDecoratedFile.substring(0, offsetSrcStart) +
+        deDecoratedFile.substring(offsetSrcStart + match[0].length + 1);
+      offset += match[0].length + 1;
+    }
   }
+
+  // NO ADJUSTMENT NEEDED!
+  // Each per(...) decorator's charStart (declStart) was calculated in the de-decorated file
+  // at the time of processing. Since we always look backwards from the per(...) position
+  // to find the mapping start, and the per(...) removal happens AFTER the mapping start,
+  // the declStart values are already correct for the final de-decorated file.
+  //
+  // Example:
+  // - First per(...): declStart=356 in file with some decorators removed
+  //   - We then remove per(...) at position 384 (AFTER 356)
+  //   - So the mapping still starts at 356 in the final file
+  //
+  // - Second per(...): declStart=466 in file with first per(...) already removed
+  //   - We then remove per(...) at position 494 (AFTER 466)
+  //   - So the mapping still starts at 466 in the final file
+  //
+  // The key insight: each declStart is calculated BEFORE its corresponding per(...) is removed,
+  // and the removal happens AFTER the mapping start, so no adjustment is needed.
 
   // const deDecoratedFile = deDecledLines.join('\r\n');
   backtrace.setSolContract(deDecoratedFile); // store for later backtracing 'src' locators to lines of original code.
+
+
+  // Debug: persist redecorate metadata for inspection
+  try {
+    const redecorateDebugPath = `${options.parseDirPath}/${options.inputFileName}_toRedecorate.json`;
+    const debugInfo = {
+      toRedecorate,
+      perRemovals,
+      perDecoratorsCount: toRedecorate.filter(d => d.decorator === 'per' && !d.perFunctionParam).length
+    };
+    fs.writeFileSync(redecorateDebugPath, JSON.stringify(debugInfo, null, 2));
+  } catch (e) {
+    // Non-fatal; best-effort debug output
+  }
 
   const deDecoratedFilePath = `${options.parseDirPath}/${options.inputFileName}_dedecorated.sol`;
   fs.writeFileSync(deDecoratedFilePath, deDecoratedFile); // TODO: consider adding a 'safe' cli option to prevent overwrites.

@@ -15,6 +15,9 @@ import localDeclarationsVisitor from './visitors/checks/localDeclarationsVisitor
 import msgSenderParam from './visitors/checks/msgSenderParam.js';
 import msgValueParam from './visitors/checks/msgValueParam.js';
 import interactsWithSecretVisitor from './visitors/checks/interactsWithSecretVisitor.js';
+import domainConsistencyVisitor from './visitors/checks/domainConsistencyVisitor.js';
+import functionParameterVisitor from './visitors/checks/functionParameterVisitor.js';
+import mappingAccessVisitor from './visitors/checks/mappingAccessVisitor.js';
 
 /**
  * Inspired by the Transformer
@@ -59,6 +62,12 @@ function transformation1(oldAST: any) {
   logger.verbose('Pass the Correct internal calls Parameters');
   path.traverse(explode(decoratorVisitor), state);
   logger.verbose('No conflicting known/unknown decorators');
+  path.traverse(explode(domainConsistencyVisitor), state);
+  logger.verbose('Domain parameters are consistent');
+  path.traverse(explode(functionParameterVisitor), state);
+  logger.verbose('Function parameters with per keyword are valid');
+  path.traverse(explode(mappingAccessVisitor), state);
+  logger.verbose('Mapping access with domain parameters is valid');
   path.traverse(explode(interactsWithSecretVisitor), state);
   logger.verbose('Secret interacts marked');
   path.traverse(explode(incrementedVisitor), state);
