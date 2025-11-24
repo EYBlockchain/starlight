@@ -993,19 +993,83 @@ const visitor = {
         }
 
         // this adds other values we need in the circuit
-        for (const param of node._newASTPointer.parameters.parameters) {
-          let oldParam : any ;
-          for(const para of node.parameters.parameters) { 
-            if ( para?.name === param?.name )
-            oldParam = para ;
-            break;
+        // Get the circuit AST function node to determine the correct parameter order
+        // The circuit AST has files named after the Solidity function (e.g., 'deposit'),
+        // and each file has a 'main' function
+        let circuitFunctionNode: any = null;
+        if (state.circuitAST) {
+          for (const file of state.circuitAST.files) {
+            if (file.fileName === node.name) {
+              // Find the main function in this file
+              for (const circuitNode of file.nodes) {
+                if (circuitNode.nodeType === 'FunctionDefinition' && circuitNode.name === 'main') {
+                  circuitFunctionNode = circuitNode;
+                  break;
+                }
+              }
+              break;
+            }
           }
-          if (param.isPrivate || param.isSecret || param.interactsWithSecret || scope.getReferencedIndicator(oldParam)?.interactsWithSecret) {
-            if (param.typeName.isStruct) {
+        }
+
+        // Use circuit AST parameters if available, otherwise fall back to Solidity AST
+        const circuitParams = circuitFunctionNode?.parameters?.parameters || node._newASTPointer.parameters.parameters;
+
+        // Track which parameters we've already added to avoid duplicates
+        const addedParams = new Set<string>();
+
+        for (const param of circuitParams) {
+          // Expand Boilerplate nodes to get domain parameters and mapping keys
+          if (param.nodeType === 'Boilerplate') {
+            // Handle different boilerplate types
+            if (param.bpType === 'mapping') {
+              // Add domain parameters first (from perParameters)
+              if (param.perParameters && Array.isArray(param.perParameters)) {
+                for (const domainParam of param.perParameters) {
+                  if (!addedParams.has(domainParam.name)) {
+                    newNodes.generateProofNode.parameters.push(domainParam.name);
+                    addedParams.add(domainParam.name);
+                  }
+                }
+              }
+
+              // Add mapping key parameter (if not 'local')
+              if (param.mappingKeyTypeName && param.mappingKeyTypeName !== 'local' && param.mappingKeyName) {
+                if (!addedParams.has(param.mappingKeyName)) {
+                  newNodes.generateProofNode.parameters.push(param.mappingKeyName);
+                  addedParams.add(param.mappingKeyName);
+                }
+              }
+            }
+            // Skip newCommitment and oldCommitmentPreimage boilerplate
+            // The commitment parameters are added by the orchestration boilerplate generator
+
+            continue;
+          }
+
+          // Skip if already added
+          if (addedParams.has(param.name)) {
+            continue;
+          }
+
+          let oldParam : any ;
+          for(const para of node.parameters.parameters) {
+            if ( para?.name === param?.name ) {
+              oldParam = para ;
+              break;
+            }
+          }
+
+          // Include per (domain) parameters, private parameters, secret parameters, and parameters that interact with secrets
+          if (oldParam?.isPer || param.isPrivate || param.isSecret || param.interactsWithSecret || scope.getReferencedIndicator(oldParam)?.interactsWithSecret) {
+            if (param.typeName?.isStruct) {
               param.typeName.properties.forEach((prop: any) => {
                 newNodes.generateProofNode.parameters.push(`${param.name}.${prop.name}${param.typeName.isConstantArray ? '.all' : ''}`);
               });
-            } else newNodes.generateProofNode.parameters.push(`${param.name}${param.typeName.isConstantArray ? '.all' : ''}`);
+            } else {
+              newNodes.generateProofNode.parameters.push(`${param.name}${param.typeName?.isConstantArray ? '.all' : ''}`);
+              addedParams.add(param.name);
+            }
           }
         }
         if (state.publicInputs) {

@@ -30,20 +30,34 @@ export function formatCommitment (commitment, context) {
     preimage.value = generalise(commitment.preimage.value).all
       ? generalise(commitment.preimage.value).all.integer
       : generalise(commitment.preimage.value).integer
+
+    // Format domain parameters if they exist
+    const domainParameters = commitment.domainParameters
+      ? Object.fromEntries(
+          Object.entries(commitment.domainParameters).map(([key, value]) => [
+            key,
+            generalise(value).integer
+          ])
+        )
+      : null;
+
     data = {
       _id: commitment.hash.hex(32),
       name: commitment.name,
       source: commitment.source,
       mappingKey: commitment.mappingKey ? commitment.mappingKey : null,
+      domainParameters,
       secretKey: commitment.secretKey ? commitment.secretKey.hex(32) : null,
       preimage,
       isNullified: commitment.isNullified,
       nullifier: commitment.secretKey ? nullifierHash.hex(32) : null,
       accountId: context?.accountId || null,
     }
-    logger.debug(`Storing commitment ${data._id}${context?.accountId ? ` for accountId: ${context.accountId}` : ''}`)
+    logger.debug(`Storing commitment ${data._id}${context?.accountId ? ` for accountId: ${context.accountId}` : ''}${domainParameters ? ` with domain parameters: ${JSON.stringify(domainParameters)}` : ''}`)
   } catch (error) {
-    console.error('Error --->', error)
+    console.error('Error formatting commitment --->', error)
+    console.error('Commitment object:', JSON.stringify(commitment, null, 2))
+    throw error
   }
   return data
 }
@@ -56,7 +70,18 @@ export async function persistCommitment (data) {
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment (commitment, context) {
   const data = formatCommitment(commitment, context)
-  return persistCommitment(data)
+  if (!data) {
+    console.error('formatCommitment returned undefined/null data')
+    throw new Error('Failed to format commitment')
+  }
+  try {
+    const result = await persistCommitment(data)
+    logger.debug(`Successfully persisted commitment ${data._id}`)
+    return result
+  } catch (error) {
+    console.error('Error persisting commitment:', error)
+    throw error
+  }
 }
 
 // function to retrieve commitment with a specified stateVarId
@@ -87,12 +112,20 @@ export async function getCurrentWholeCommitment(id, accountId) {
 }
 
 // function to retrieve commitment with a specified stateName
-export async function getCommitmentsByState(name, mappingKey = null, accountId = null) {
+export async function getCommitmentsByState(name, mappingKey = null, accountId = null, domainParameters = null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
   if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
+
+  // Add domain parameter filters if provided
+  if (domainParameters) {
+    for (const [key, value] of Object.entries(domainParameters)) {
+      query[`domainParameters.${key}`] = generalise(value).integer;
+    }
+  }
+
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
     .find(query)
@@ -142,12 +175,20 @@ export async function getBalance(accountId) {
   return sumOfValues;
 }
 
-export async function getBalanceByState(name, mappingKey = null, accountId=null) {
+export async function getBalanceByState(name, mappingKey = null, accountId=null, domainParameters = null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
   if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
+
+  // Add domain parameter filters if provided
+  if (domainParameters) {
+    for (const [key, value] of Object.entries(domainParameters)) {
+      query[`domainParameters.${key}`] = generalise(value).integer;
+    }
+  }
+
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
     .find(query)

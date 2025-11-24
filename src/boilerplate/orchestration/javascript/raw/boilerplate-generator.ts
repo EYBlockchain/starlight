@@ -634,7 +634,8 @@ sendTransaction = {
       burnedOnly,
       reinitialisedOnly,
       structProperties,
-      isConstructor
+      isConstructor,
+      perParameters,
     }): string[] {
       let value;
       const errorCatch = `\n console.log("Added commitment", newCommitment.hex(32));
@@ -647,6 +648,12 @@ sendTransaction = {
           );
         }
       }`;
+
+      // Generate domain parameters object if perParameters exist
+      const domainParamsCode = perParameters && perParameters.length > 0
+        ? `domainParameters: { ${perParameters.map(p => `${p.name}: ${p.name}_init`).join(', ')} },\n            `
+        : '';
+
       switch (stateType) {
         case 'increment':
           value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
@@ -655,7 +662,7 @@ sendTransaction = {
             hash: ${stateName}_newCommitment,
             name: '${mappingName}',
             mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
-            preimage: {
+            ${domainParamsCode}preimage: {
               \tstateVarId: generalise(${stateName}_stateVarId),
               \tvalue: ${value},
               \tsalt: ${stateName}_newSalt,
@@ -674,7 +681,7 @@ sendTransaction = {
               hash: ${stateName}_2_newCommitment,
               name: '${mappingName}',
               mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
-              preimage: {
+              ${domainParamsCode}preimage: {
                 \tstateVarId: generalise(${stateName}_stateVarId),
                 \tvalue: ${value},
                 \tsalt: ${stateName}_2_newSalt,
@@ -713,7 +720,7 @@ sendTransaction = {
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
                   mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
-                  preimage: {
+                  ${domainParamsCode}preimage: {
                     \tstateVarId: generalise(${stateName}_stateVarId),
                     \tvalue: ${value},
                     \tsalt: ${stateName}_newSalt,
@@ -857,22 +864,22 @@ integrationApiServicesBoilerplate = {
 
       export async function service_getBalanceByState(req, res, next) {
         try {
-          const { name, mappingKey } = req.body;
+          const { name, mappingKey, domainParameters } = req.body;
           const accountId = req.saasContext?.accountId;
-          const balance = await getBalanceByState(name, mappingKey, accountId);
+          const balance = await getBalanceByState(name, mappingKey, accountId, domainParameters);
           res.send( {"totalBalance": balance} );
         } catch (error) {
           console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });
         }
       }
-      
-      
+
+
       export async function service_getCommitmentsByState(req, res, next) {
         try {
-          const { name, mappingKey } = req.body;
+          const { name, mappingKey, domainParameters } = req.body;
           const accountId = req.saasContext?.accountId;
-          const commitments = await getCommitmentsByState(name, mappingKey, accountId);
+          const commitments = await getCommitmentsByState(name, mappingKey, accountId, domainParameters);
           res.send({ commitments });
           await sleep(10);
         } catch (err) {
@@ -987,7 +994,7 @@ integrationApiServicesBoilerplate = {
 
       export async function service_mintNFT(req, res, next) {
         try {
-          const { tokenId } = req.body;
+          const { tokenId, nftContract } = req.body;
           SAAS_CONTEXT_HANDLING
 
           const keyManager = KeyManager.getInstance();
@@ -1001,7 +1008,8 @@ integrationApiServicesBoilerplate = {
           }
 
           const { getContractAddress, getContractInterface } = await import('./common/contract.mjs');
-          const erc721Address = await getContractAddress('ERC721');
+          // Use provided nftContract address or fall back to default ERC721
+          const erc721Address = nftContract || await getContractAddress('ERC721');
           const erc721Interface = await getContractInterface('ERC721');
           const Web3 = await import('./common/web3.mjs');
           const web3 = Web3.default.connection();
@@ -1042,7 +1050,7 @@ integrationApiServicesBoilerplate = {
 
       export async function service_approveNFT(req, res, next) {
         try {
-          const { tokenId } = req.body;
+          const { tokenId, nftContract } = req.body;
           SAAS_CONTEXT_HANDLING
 
           const keyManager = KeyManager.getInstance();
@@ -1056,7 +1064,8 @@ integrationApiServicesBoilerplate = {
           }
 
           const { getContractAddress, getContractInterface } = await import('./common/contract.mjs');
-          const erc721Address = await getContractAddress('ERC721');
+          // Use provided nftContract address or fall back to default ERC721
+          const erc721Address = nftContract || await getContractAddress('ERC721');
           const erc721Interface = await getContractInterface('ERC721');
           const Web3 = await import('./common/web3.mjs');
           const web3 = Web3.default.connection();
@@ -1107,52 +1116,84 @@ integrationApiServicesBoilerplate = {
         }
       }
 
-     export async function service_deployNFT(req, res, next) {
+      export async function service_deployNFT(req, res, next) {
         try {
           const { name, symbol } = req.body;
           SAAS_CONTEXT_HANDLING
 
-          const { getContractInterface } = await import('./common/contract.mjs');
-          const erc721Interface = await getContractInterface('ERC721');
-          const Web3 = await import('./common/web3.mjs');
-          const web3 = Web3.default.connection();
+          const keyManager = KeyManager.getInstance();
+          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
 
-          const accounts = await web3.eth.getAccounts();
-          const defaultAccount = accounts[0];
+          if (!keys) {
+            return res.send({
+              success: false,
+              message: 'No keys found. Please call /registerKeys first.'
+            });
+          }
+
+          if (!name || !symbol) {
+            return res.send({
+              errors: ['name and symbol are required']
+            });
+          }
 
           logger.info(\`Deploying new ERC721 contract: \${name} (\${symbol})\`);
 
-          const ERC721Contract = new web3.eth.Contract(erc721Interface.abi);
-          const deployTx = ERC721Contract.deploy({
-            data: erc721Interface.bytecode,
-            arguments: [name || 'TestNFT', symbol || 'TNFT']
+          const { getContractInterface, getContractBytecode } = await import('./common/contract.mjs');
+          const Web3 = await import('./common/web3.mjs');
+          const web3 = Web3.default.connection();
+
+          // Get the ERC721 contract interface and bytecode
+          const erc721Interface = await getContractInterface('ERC721');
+          const erc721Bytecode = await getContractBytecode('ERC721');
+
+          // Create a new contract instance
+          const erc721Contract = new web3.eth.Contract(erc721Interface.abi);
+
+          // Deploy the contract
+          const deployTx = erc721Contract.deploy({
+            data: erc721Bytecode,
+            arguments: [name, symbol]
           });
 
-          const gas = await deployTx.estimateGas({ from: defaultAccount });
-          const deployedContract = await deployTx.send({
-            from: defaultAccount,
-            gas: Math.floor(gas * 1.2) // Add 20% buffer
-          });
+          const config = await import('config');
 
-          const contractAddress = deployedContract.options.address;
+          // Auto-fund tenant address if needed (same as other endpoints)
+          const { autoFundIfNeeded } = await import('./common/gas-funding.mjs');
+          await autoFundIfNeeded(keys.ethPK, '0.1', '0.5');
 
-          logger.info(\`ERC721 deployed at: \${contractAddress}\`);
+          // Estimate gas for deployment
+          const gas = await deployTx.estimateGas({ from: keys.ethPK });
+
+          // Send the deployment transaction using tenant's keys
+          const txParams = {
+            from: keys.ethPK,
+            data: deployTx.encodeABI(),
+            gas: Math.floor(Number(gas) * 1.2), // Add 20% buffer
+            gasPrice: config.default.web3.options.defaultGasPrice,
+            chainId: await web3.eth.net.getId()
+          };
+
+          const signed = await web3.eth.accounts.signTransaction(txParams, keys.ethSK);
+          const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+          const deployedAddress = receipt.contractAddress;
+
+          logger.info(\`ERC721 contract deployed at: \${deployedAddress}\`);
 
           res.send({
             success: true,
-            contractAddress: contractAddress,
-            name: name || 'TestNFT',
-            symbol: symbol || 'TNFT',
-            txHash: deployedContract._requestManager.provider.lastJsonRpcResponse?.result
+            contractAddress: deployedAddress,
+            name: name,
+            symbol: symbol,
+            txHash: receipt.transactionHash
           });
         } catch (err) {
           logger.error('Failed to deploy NFT contract:', err);
           res.send({ errors: [err.message] });
         }
-      }`
-      
-      
-      ;
+      }
+      `;
   }
 
 
@@ -1177,9 +1218,9 @@ integrationApiRoutesBoilerplate = {
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
-    router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    router.post("/getCommitmentsByVariableName", service_getCommitmentsByState);
     router.get("/getBalance", service_getBalance);
-    router.get("/getBalanceByState", service_getBalanceByState);
+    router.post("/getBalanceByState", service_getBalanceByState);
     router.post("/getSharedKeys", service_getSharedKeys);
     // backup route
     router.post("/backupDataRetriever", service_backupData);

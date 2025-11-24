@@ -218,8 +218,9 @@ export const generateProofBoilerplate = (node: any) => {
     const stateVarIdLines =
     !stateNode.localMappingKey && stateNode.isMapping && !(node.parameters.includes(stateNode.stateVarId[1])) && !(node.parameters.includes(stateNode.stateVarId[2])) && !msgSenderParamAndMappingKey && !msgValueParamAndMappingKey && !constantMappingKey
         ? [`\n\t\t\t\t\t\t\t\t${stateName}_stateVarId_key.integer,`]
-        : [];  
+        : [];
     // we add any extra params the circuit needs
+    // Preserve the order from node.parameters (which matches the circuit parameter order)
     node.parameters
     .filter((para: string) => {
       if (privateStateNames.includes(para)) return false;
@@ -228,15 +229,9 @@ export const generateProofBoilerplate = (node: any) => {
     })
     .forEach((para: string) => {
       const transformed = transformToIntegerAccess(para);
-      if (para === 'msgValue') {
-        parameters.unshift(`\t${transformed},`);
-      } else if (para === 'msgSender') {
-        parameters.unshift(`\t${transformed},`);
-      } else {
-        parameters.push(`\t${transformed},`);
-      }
+      parameters.push(`\t${transformed},`);
     });
-     
+
     // then we build boilerplate code per state
     switch (stateNode.isWhole) {
       case true:
@@ -385,14 +380,28 @@ export const preimageBoilerPlate = (node: any) => {
     preimageParams.push(`\t${privateStateName}: 0,`);
 
     // ownership (PK in commitment)
+    // For reinitialisable states (transfers), we need to use the assignment RHS as the new owner
+    // not the require statement owner (which is the old owner)
     const newOwner = stateNode.isOwned ? stateNode.owner : null;
     let newOwnerStatment: string;
     switch (newOwner) {
       case null:
-        if(stateNode.isSharedSecret)
-        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
-        else
-        newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+        // Check if there's a 'recipient' parameter in the function (including secret parameters)
+        const hasRecipientParam = node.inputParameters && node.inputParameters.includes('recipient');
+
+        if (hasRecipientParam && stateNode.reinitialisable) {
+          // For transfer functions with a recipient parameter, look up the recipient's public key
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(recipient.hex ? recipient.hex(20) : generalise(recipient).hex(20)).call()) : ${privateStateName}_newOwnerPublicKey;
+          \nif (_${privateStateName}_newOwnerPublicKey === 0 && ${privateStateName}_newOwnerPublicKey.integer === 0) {
+            \nconsole.log('WARNING: Public key for recipient address not found - using your public key');
+            \n${privateStateName}_newOwnerPublicKey = ${stateNode.isSharedSecret ? 'sharedPublicKey' : 'publicKey'};
+          \n}
+          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
+        } else if(stateNode.isSharedSecret) {
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+        } else {
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+        }
         break;
       case 'msg':
         if (privateStateName.includes('msg')) {
@@ -402,7 +411,19 @@ export const preimageBoilerPlate = (node: any) => {
           newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
         } else if (stateNode.mappingOwnershipType === 'value') {
           if (stateNode.reinitialisable){
-            newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
+            // For reinitialisable states (transfers), look up the new owner's public key from the contract
+            // Check if there's a parameter that could be the new owner (like 'recipient')
+            const hasRecipientParam = node.inputParameters && node.inputParameters.includes('recipient');
+            if (hasRecipientParam) {
+              newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(recipient.hex ? recipient.hex(20) : generalise(recipient).hex(20)).call()) : ${privateStateName}_newOwnerPublicKey;
+              \nif (_${privateStateName}_newOwnerPublicKey === 0 && ${privateStateName}_newOwnerPublicKey.integer === 0) {
+                \nconsole.log('WARNING: Public key for recipient address not found - using your public key');
+                \n${privateStateName}_newOwnerPublicKey = ${stateNode.isSharedSecret ? 'sharedPublicKey' : 'publicKey'};
+              \n}
+              \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
+            } else {
+              newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${stateNode.isSharedSecret ? 'sharedPublicKey' : 'publicKey'} : ${privateStateName}_newOwnerPublicKey;`;
+            }
           } else {
             // TODO test below
             // if the private state is an address (as here) its still in eth form - we need to convert
@@ -426,7 +447,14 @@ export const preimageBoilerPlate = (node: any) => {
         if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(await instance.methods.${newOwner}().call()).call()) : ${privateStateName}_newOwnerPublicKey;`;
         } else if (stateNode.ownerIsParam && newOwner) {
-          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
+          // Owner is a parameter - need to look up the public key from the contract
+          // The parameter could be an address (like 'recipient') or already a public key
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(${newOwner}.hex ? ${newOwner}.hex(20) : generalise(${newOwner}).hex(20)).call()) : ${privateStateName}_newOwnerPublicKey;
+          \nif (_${privateStateName}_newOwnerPublicKey === 0 && ${privateStateName}_newOwnerPublicKey.integer === 0) {
+            \nconsole.log('WARNING: Public key for ${newOwner} address not found - using your public key');
+            \n${privateStateName}_newOwnerPublicKey = ${stateNode.isSharedSecret ? 'sharedPublicKey' : 'publicKey'};
+          \n}
+          \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
         } else {
           // is secret - we just use the users to avoid revealing the secret owner
           if(stateNode.isSharedSecret)
@@ -727,6 +755,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     structProperties: stateNode.structProperties,
                     isConstructor: node.isConstructor,
                     reinitialisedOnly: false,
+                    perParameters: stateNode.perParameters,
                   }));
 
                 break;
@@ -745,6 +774,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     structProperties: stateNode.structProperties,
                     isConstructor: node.isConstructor,
                     reinitialisedOnly: stateNode.reinitialisedOnly,
+                    perParameters: stateNode.perParameters,
                   }));
 
                 break;
@@ -765,6 +795,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 reinitialisedOnly: stateNode.reinitialisedOnly,
                 structProperties: stateNode.structProperties,
                 isConstructor: node.isConstructor,
+                perParameters: stateNode.perParameters,
               }));
         }
       }

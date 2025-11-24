@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0
 // NFT Escrow with Domain Parameters (Phase 3 Test)
+// This contract supports multiple NFT contracts with proper domain isolation
 
 pragma solidity ^0.8.0;
 
@@ -9,25 +10,28 @@ contract NFT_Escrow_DomainParams {
 
     // Domain parameter: nftContract
     // This allows tracking tokens from multiple NFT contracts
+    // Each nftContract address creates a separate cryptographic namespace
     // stateVarId = mimc2([mimc2([mappingId, nftContract]), tokenId])
     secret mapping(uint256 => address) per(address nftContract) public tokenOwners;
 
     // Domain-scoped approvals: one namespace per nftContract
     secret mapping(address => address) per(address nftContract) public approvals;
-    IERC721 public erc721;
 
-    constructor(address _erc721) {
-       erc721 = IERC721(_erc721);
-    }
+    // No hardcoded ERC721 instance - we use the nftContract parameter directly
+    // This allows the escrow to work with any ERC721 contract
 
     // Function with domain parameter
-    // The per parameter must match the mapping's domain parameter
-    // Note: We use the stored erc721 instance for the actual transfer,
-    // but nftContract is used as the domain parameter for cryptographic separation
+    // The nftContract parameter is used for BOTH:
+    // 1. The actual NFT transfer (via IERC721 interface)
+    // 2. Cryptographic domain separation (state variable ID calculation)
     function deposit(per address nftContract, uint256 tokenId) public {
         require(nftContract != address(0), "NFT_Escrow: invalid nftContract");
-        bool success = erc721.transferFrom(msg.sender, address(this), tokenId);
+
+        // Use the nftContract parameter to instantiate the ERC721 interface
+        IERC721 nft = IERC721(nftContract);
+        bool success = nft.transferFrom(msg.sender, address(this), tokenId);
         require(success, "NFT_Escrow: ERC721 transfer failed");
+
         // stateVarId calculation includes nftContract domain parameter
         reinitialisable tokenOwners[tokenId] = msg.sender;
     }
@@ -62,8 +66,12 @@ contract NFT_Escrow_DomainParams {
     function withdraw(per address nftContract, uint256 tokenId) public {
         require(nftContract != address(0), "NFT_Escrow: invalid nftContract");
         require(tokenOwners[tokenId] == msg.sender);
-        bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
+
+        // Use the nftContract parameter to instantiate the ERC721 interface
+        IERC721 nft = IERC721(nftContract);
+        bool success = nft.transferFrom(address(this), msg.sender, tokenId);
         require(success, "ERC721 transfer failed");
+
         tokenOwners[tokenId] = address(0);
     }
 }

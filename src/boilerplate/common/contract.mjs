@@ -73,7 +73,13 @@ export async function getContractInstance(contractName, deployedAddress) {
 
 export async function getContractBytecode(contractName) {
 	const contractInterface = await getContractInterface(contractName);
-	return contractInterface.evm.bytecode.object;
+	// Support both Hardhat format (bytecode) and Truffle/Solc format (evm.bytecode.object)
+	if (contractInterface.bytecode) {
+		return contractInterface.bytecode;
+	} else if (contractInterface.evm?.bytecode?.object) {
+		return contractInterface.evm.bytecode.object;
+	}
+	throw new Error(`Bytecode not found for contract ${contractName}`);
 }
 
 export async function deploy(

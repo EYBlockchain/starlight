@@ -456,18 +456,18 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     }
   });
   // we collect any imported contracts which must be migrated
-  if (node.contractImports && constructorParamsIncludesAddr) {
+  if (node.contractImports) {
     node.contractImports.forEach((importObj: any) => {
       // read each imported contract
       if(!fs.existsSync(`./contracts/${importObj.absolutePath}`)){
         logger.warn(`Please Make Sure you Deploy all the imports before testing the zApp.`);
         return;
-      } 
+      }
       const importedContract = fs.readFileSync(
         `./contracts/${importObj.absolutePath}`,
         'utf8',
       );
-     
+
       let importedContractName = path.basename(
         importObj.absolutePath,
         path.extname(importObj.absolutePath),
@@ -526,56 +526,60 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
                                       const erc1155 = await ERC1155.deploy() \n
                                       await erc1155.waitForDeployment() \n
                                       erc1155Address = await erc1155.getAddress() \n
-                                      console.log('ERC1155 deployed to:', erc1155Address) \n 
+                                      console.log('ERC1155 deployed to:', erc1155Address) \n
                                       blockNumber = await hre.ethers.provider.getBlockNumber(); \n
                                       deployTx = await erc1155.deploymentTransaction().wait() \n
                                       saveMetadata(erc1155Address, 'ERC1155Token', "/Escrow-imports", chainId, blockNumber, deployTx.hash) \n
                                     \n`;
-                break; 
+                break;
             }
-          } 
+          }
         }
-        if (
-          importedContractName === 'ERC20' ||
-          importedContractName === 'ERC721' || importedContractName === 'ERC1155'
-        ) {
-          // for each address in the shield contract constructor...
-          constructorAddrParams.forEach(name => {
-            if (
-              name
-                .toLowerCase()
-                .includes(importedContractName.substring(1).toLowerCase()) ||
-              importedContractName
-                .substring(1)
-                .toLowerCase()
-                .includes(name.toLowerCase())
-            ) {
-              // if that address is of the current importedContractName, we add it to the migration arguments
-              const index = constructorParamNames.indexOf(name);
-              constructorParamNames[index] = `${importedContractName.toLowerCase()}Address`;
-            }
-          });
-        } else {
+        // Only update constructor params if we have address params in the constructor
+        if (constructorParamsIncludesAddr) {
+          if (
+            importedContractName === 'ERC20' ||
+            importedContractName === 'ERC721' || importedContractName === 'ERC1155'
+          ) {
             // for each address in the shield contract constructor...
-          constructorAddrParams.forEach(name => {
-            if (
-              name
-                .toLowerCase()
-                .includes(importedContractName.substring(1).toLowerCase()) ||
-              importedContractName
-                .substring(1)
-                .toLowerCase()
-                .includes(name.toLowerCase())
-            ) {
-              // if that address is of the current importedContractName, we add it to the migration arguments
-              const index = constructorParamNames.indexOf(name);
-              constructorParamNames[index] = `${importedContractName}.address`;
-            }
-          });
+            constructorAddrParams.forEach(name => {
+              if (
+                name
+                  .toLowerCase()
+                  .includes(importedContractName.substring(1).toLowerCase()) ||
+                importedContractName
+                  .substring(1)
+                  .toLowerCase()
+                  .includes(name.toLowerCase())
+              ) {
+                // if that address is of the current importedContractName, we add it to the migration arguments
+                const index = constructorParamNames.indexOf(name);
+                constructorParamNames[index] = `${importedContractName.toLowerCase()}Address`;
+              }
+            });
+          } else {
+              // for each address in the shield contract constructor...
+            constructorAddrParams.forEach(name => {
+              if (
+                name
+                  .toLowerCase()
+                  .includes(importedContractName.substring(1).toLowerCase()) ||
+                importedContractName
+                  .substring(1)
+                  .toLowerCase()
+                  .includes(name.toLowerCase())
+              ) {
+                // if that address is of the current importedContractName, we add it to the migration arguments
+                const index = constructorParamNames.indexOf(name);
+                constructorParamNames[index] = `${importedContractName}.address`;
+              }
+            });
+          }
         }
       }
     });
-  } else if(constructorParamsIncludesAddr) {
+  }
+  if(constructorParamsIncludesAddr) {
     // for each address in the shield contract constructor...
     constructorAddrParams.forEach(name => {
       // we have an address input which is likely not a another contract

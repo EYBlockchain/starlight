@@ -26,8 +26,11 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
   });
   if (fnIndicator.oldCommitmentAccessRequired || fnIndicator.internalFunctionoldCommitmentAccessRequired)
     newNodes.initialisePreimageNode = buildNode('InitialisePreimage');
+  // Extract function parameter names for use in boilerplate generation
+  const inputParameters = node.parameters?.parameters?.map((p: any) => p.name) || [];
   newNodes.readPreimageNode = buildNode('ReadPreimage', {
     contractName,
+    inputParameters,
   });
   if (fnIndicator.nullifiersRequired || fnIndicator.containsAccessedOnlyState || fnIndicator.internalFunctionInteractsWithSecret) {
     newNodes.membershipWitnessNode = buildNode('MembershipWitness', {

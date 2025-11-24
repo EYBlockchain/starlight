@@ -283,11 +283,12 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'ReadPreimage': {
-      const { contractName, privateStates = {} } = fields;
+      const { contractName, privateStates = {}, inputParameters = [] } = fields;
       return {
         nodeType,
         privateStates,
         contractName,
+        inputParameters,
       };
     }
     case 'WritePreimage': {

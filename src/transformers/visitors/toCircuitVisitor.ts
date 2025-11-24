@@ -506,12 +506,11 @@ const visitor = {
       if (node.kind === 'constructor' && state.constructorStatements && state.constructorStatements[0]) newFunctionDefinitionNode.body.statements.unshift(...state.constructorStatements);
 
       // We populate the boilerplate for the function
-      newFunctionDefinitionNode.parameters.parameters.push(
-        ...buildNode('Boilerplate', {
-          bpSection: 'parameters',
-          indicators,
-        }),
-      );
+      const boilerplateParams = buildNode('Boilerplate', {
+        bpSection: 'parameters',
+        indicators,
+      });
+      newFunctionDefinitionNode.parameters.parameters.push(...boilerplateParams);
 
       newFunctionDefinitionNode.body.preStatements.push(
         ...buildNode('Boilerplate', {
@@ -1133,6 +1132,19 @@ const visitor = {
         interactsWithSecret,
         declarationType,
       });
+
+      // Set isPrivate for function parameters
+      // Domain parameters (per parameters) should be private
+      // Secret parameters should be private
+      // Regular parameters should be public (even if they interact with secrets)
+      if (declarationType === 'parameter') {
+        if (node.isPer) {
+          newNode.isPrivate = true;
+        } else {
+          // Only mark as private if explicitly declared as secret
+          newNode.isPrivate = node.isSecret;
+        }
+      }
 
       if (path.isStruct(node)) {
         state.structNode = addStructDefinition(path);
