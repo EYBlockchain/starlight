@@ -48,11 +48,15 @@ function saveMetadata (
   // console.log("hardhatArtifactPath: ", hardhatArtifactPath);
 
   const compilationData = fs.readFileSync(hardhatArtifactPath, 'utf-8')
-  const abi = JSON.parse(compilationData).abi
-  const contractNameFromHardhat = JSON.parse(compilationData).contractName
+  const compiledContract = JSON.parse(compilationData)
+  const abi = compiledContract.abi
+  const contractNameFromHardhat = compiledContract.contractName
+  const bytecode = compiledContract.bytecode
 
   deployedMetadata.abi = abi
   deployedMetadata.contractName = contractNameFromHardhat
+  // Save bytecode for runtime deployment (needed for deployNFT endpoint)
+  deployedMetadata.bytecode = bytecode
   deployedPositionMetadata.address = contractDeployedAddress
   deployedPositionMetadata.blockNumber = blockNumber
   deployedPositionMetadata.transactionHash = transactionHash

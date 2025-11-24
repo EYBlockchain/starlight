@@ -677,7 +677,8 @@ sendTransaction = {
       burnedOnly,
       reinitialisedOnly,
       structProperties,
-      isConstructor
+      isConstructor,
+      perParameters,
     }): string[] {
       let value;
       const errorCatch = `\n console.log("Added commitment", newCommitment.hex(32));
@@ -688,6 +689,12 @@ sendTransaction = {
           );
         }
       }`;
+
+      // Generate domain parameters object if perParameters exist
+      const domainParamsCode = perParameters && perParameters.length > 0
+        ? `domainParameters: { ${perParameters.map(p => `${p.name}: ${p.name}_init`).join(', ')} },\n            `
+        : '';
+
       switch (stateType) {
         case 'increment':
           value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
@@ -696,7 +703,7 @@ sendTransaction = {
             hash: ${stateName}_newCommitment,
             name: '${mappingName}',
             mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
-            preimage: {
+            ${domainParamsCode}preimage: {
               \tstateVarId: generalise(${stateName}_stateVarId),
               \tvalue: ${value},
               \tsalt: ${stateName}_newSalt,
@@ -715,7 +722,7 @@ sendTransaction = {
               hash: ${stateName}_2_newCommitment,
               name: '${mappingName}',
               mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
-              preimage: {
+              ${domainParamsCode}preimage: {
                 \tstateVarId: generalise(${stateName}_stateVarId),
                 \tvalue: ${value},
                 \tsalt: ${stateName}_2_newSalt,
@@ -739,7 +746,7 @@ sendTransaction = {
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
                   mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
-                  preimage: {
+                  ${domainParamsCode}preimage: {
                     \tstateVarId: generalise(${stateName}_stateVarId),
                     \tvalue: ${value},
                     \tsalt: ${stateName}_newSalt,
@@ -882,20 +889,20 @@ integrationApiServicesBoilerplate = {
 
       export async function service_getBalanceByState(req, res, next) {
         try {
-          const { name, mappingKey } = req.body;
-          const balance = await getBalanceByState(name, mappingKey);
+          const { name, mappingKey, domainParameters } = req.body;
+          const balance = await getBalanceByState(name, mappingKey, domainParameters);
           res.send( {"totalBalance": balance} );
         } catch (error) {
           console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });
         }
       }
-      
-      
+
+
       export async function service_getCommitmentsByState(req, res, next) {
         try {
-          const { name, mappingKey } = req.body;
-          const commitments = await getCommitmentsByState(name, mappingKey);
+          const { name, mappingKey, domainParameters } = req.body;
+          const commitments = await getCommitmentsByState(name, mappingKey, domainParameters);
           res.send({ commitments });
           await sleep(10);
         } catch (err) {
@@ -965,9 +972,9 @@ integrationApiRoutesBoilerplate = {
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
-    router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    router.post("/getCommitmentsByVariableName", service_getCommitmentsByState);
     router.get("/getBalance", service_getBalance);
-    router.get("/getBalanceByState", service_getBalanceByState);
+    router.post("/getBalanceByState", service_getBalanceByState);
     router.post("/getSharedKeys", service_getSharedKeys);
     // backup route
     router.post("/backupDataRetriever", service_backupData);
