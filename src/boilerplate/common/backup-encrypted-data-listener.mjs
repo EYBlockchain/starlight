@@ -15,6 +15,10 @@ export default class BackupEncryptedDataEventListener {
     this.web3 = web3;
     this.ethAddress = generalise(config.web3.options.defaultAccount);
     this.contractMetadata = {};
+    this.eventSubscription = null; // Store as class property to prevent garbage collection
+    this.heartbeatInterval = null;
+    this.lastEventReceived = Date.now();
+    this.lastProcessedBlock = 0; // Track last block we processed
   }
 
   async init() {
@@ -59,37 +63,118 @@ export default class BackupEncryptedDataEventListener {
         o => o.name === eventName && o.type === 'event',
       );
 
-      const eventSubscription = await this.instance.events[eventName]({
-        fromBlock: this.contractMetadata.blockNumber || 1,
+      // Determine starting block: use metadata if set, otherwise last processed + 1, otherwise start from block 1
+      let startBlock;
+      if (this.contractMetadata.blockNumber) {
+        startBlock = this.contractMetadata.blockNumber;
+      } else if (this.lastProcessedBlock) {
+        startBlock = this.lastProcessedBlock + 1;
+      } else {
+        startBlock = 1;
+      }
+      
+      console.log(`[BACKUP] Starting backup event listener from block ${startBlock}`);
+
+      // Store as class property to prevent garbage collection
+      this.eventSubscription = this.instance.events[eventName]({
+        fromBlock: startBlock,
         topics: [eventJsonInterface.signature],
       });
 
-      console.log('Initializing backup event listener...', {
-        fromBlock: this.contractMetadata.blockNumber || 1,
-        topics: [eventJsonInterface.signature],
-      });
+      // Track last event received for health monitoring
+      this.lastEventReceived = Date.now();
 
-      eventSubscription.on('connected', subscriptionId => {
-        console.log(`New subscription: ${subscriptionId}`);
+      this.eventSubscription.on('connected', subscriptionId => {
+        console.log(`[BACKUP] Connected, ID: ${subscriptionId}`);
       });
-      eventSubscription.on('data', async eventData => {
+      
+      this.eventSubscription.on('data', async eventData => {
         try {
-          console.log('Received backup event data');
+          this.lastEventReceived = Date.now();
+          this.lastProcessedBlock = Number(eventData.blockNumber);
+          console.log(`[BACKUP] Event received, block ${eventData.blockNumber}`);
           await this.processBackupEventData(eventData);
         } catch (error) {
-          console.error('Error processing backup event data:', error);
+          console.error('[BACKUP] Error processing backup event data:', error);
         }
       });
-      eventSubscription.on('error', async error => {
-        console.error('Backup event subscription error:', error);
+      
+      this.eventSubscription.on('error', async error => {
+        console.error('[BACKUP] ❌ Subscription error:', error);
         await this.reconnect();
       });
-      eventSubscription.on('close', async () => {
-        console.log('Subscription closed');
+      
+      this.eventSubscription.on('close', async () => {
+        console.log('[BACKUP] Subscription closed, reconnecting...');
         await this.reconnect();
       });
+
+      // Clear any existing heartbeat
+      if (this.heartbeatInterval) {
+        clearInterval(this.heartbeatInterval);
+      }
+
+      // Heartbeat: Check subscription health every 30 seconds
+      this.heartbeatInterval = setInterval(async () => {
+        const now = Date.now();
+        const timeSinceLastEvent = now - this.lastEventReceived;
+        const minutesSinceLastEvent = Math.floor(timeSinceLastEvent / 60000);
+        
+        console.log('[BACKUP] ❤️ Heartbeat - Time since last event:', minutesSinceLastEvent, 'minutes');
+        
+        // Check if subscription object still exists and has an ID
+        if (!this.eventSubscription || !this.eventSubscription.id) {
+          console.warn('[BACKUP] ⚠️ WARNING: Event subscription is dead!');
+          console.log('[BACKUP] Subscription exists?', !!this.eventSubscription);
+          if (this.eventSubscription) {
+            console.log('[BACKUP] Subscription ID:', this.eventSubscription.id);
+          }
+          await this.reconnect();
+        } else {
+          console.log('[BACKUP] Subscription healthy, ID:', this.eventSubscription.id);
+          console.log('[BACKUP] Last processed block:', this.lastProcessedBlock);
+          
+          // Check for past events to see if we're missing any
+          try {
+            const currentBlock = Number(await this.web3.eth.getBlockNumber());
+            console.log('[BACKUP] Current block:', currentBlock);
+            
+            // Only check if we've processed at least one event
+            if (this.lastProcessedBlock > 0) {
+              const checkFromBlock = this.lastProcessedBlock + 1; // Start AFTER last processed
+              
+              // Only check if there are new blocks since last processed
+              if (checkFromBlock <= currentBlock) {
+                const pastEvents = await this.instance.getPastEvents('EncryptedBackupData', {
+                  fromBlock: checkFromBlock,
+                  toBlock: 'latest'
+                });
+                
+                if (pastEvents.length > 0) {
+                  console.log(`[BACKUP] ⚠️ Found ${pastEvents.length} past events from block ${checkFromBlock} to ${currentBlock} that subscription didn't receive!`);
+                  pastEvents.forEach(evt => {
+                    console.log(`[BACKUP]   - Event in block ${evt.blockNumber}, tx: ${evt.transactionHash}`);
+                  });
+                  console.log('[BACKUP] Subscription is broken. Forcing reconnect...');
+                  await this.reconnect();
+                } else {
+                  console.log(`[BACKUP] No new events from block ${checkFromBlock} to ${currentBlock} - subscription OK`);
+                }
+              } else {
+                console.log(`[BACKUP] No new blocks since last processed (${this.lastProcessedBlock})`);
+              }
+            } else {
+              console.log('[BACKUP] No events processed yet, skipping past event check');
+            }
+          } catch (e) {
+            console.log('[BACKUP] Error checking past events:', e.message);
+          }
+        }
+      }, 30000); // Every 30 seconds
+
+      console.log('[BACKUP] Event handlers and health monitor attached, waiting for events...');
     } catch (error) {
-      console.error('Listener startup failed:', error);
+      console.error('[BACKUP] ❌ Listener startup failed:', error);
     }
   }
 
@@ -251,25 +336,33 @@ export default class BackupEncryptedDataEventListener {
 	}
 
   async reconnect() {
-    console.log(
-      'backup-encrypted-data-listener',
-      'reconnect',
-      'Attempting to reconnect...',
-    );
+    console.log('[BACKUP] Reconnecting...');
+    
+    // Clear heartbeat interval
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    
+    // Clean up old subscription if it exists
+    if (this.eventSubscription) {
+      try {
+        console.log('[BACKUP] Unsubscribing from old subscription...');
+        await this.eventSubscription.unsubscribe();
+      } catch (e) {
+        console.log('[BACKUP] Error unsubscribing (may already be dead):', e.message);
+      }
+      this.eventSubscription = null;
+    }
+    
+    // Reset last event timestamp
+    this.lastEventReceived = Date.now();
+    
     try {
-      await this.start();
-      console.log(
-        'backup-encrypted-data-listener',
-        'reconnect',
-        'Reconnected successfully',
-      );
+      await this.startBackupRecovery();
+      console.log('[BACKUP] Reconnected successfully');
     } catch (error) {
-      console.error(
-        'backup-encrypted-data-listener',
-        'reconnect',
-        'Reconnection attempt failed:',
-        error,
-      );
+      console.error('[BACKUP] ❌ Reconnection attempt failed:', error);
       setTimeout(() => this.reconnect(), 5000); // Retry after 5 seconds
     }
   }
