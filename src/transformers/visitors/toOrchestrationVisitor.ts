@@ -372,6 +372,7 @@ const visitor = {
       const { node, parent, scope } = path;
       node._newASTPointer = parent._newASTPointer;
       const contractName = `${node.name}Shield`;
+      state.fullyPublicContract = true;
       if (scope.indicators.zkSnarkVerificationRequired) {
         const newNode = buildNode('File', {
           fileName: 'test',
@@ -468,6 +469,9 @@ const visitor = {
           file.nodes[0].constructorParams = state.constructorParams;
           file.nodes[0].contractImports = state.contractImports;
         }
+        if (file.nodeType === 'SetupCommonFilesBoilerplate') {
+          file.fullyPublicContract = state.fullyPublicContract;
+        }
       }
     // Internal Call Visitor
     path.traverse(explode(internalCallVisitor), state);
@@ -490,6 +494,7 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (scope.modifiesSecretState()) {
+        state.fullyPublicContract = false;
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
