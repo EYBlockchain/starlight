@@ -226,34 +226,31 @@ class ContractBoilerplateGenerator {
       ];
       const verifyInputs: string[] = [];
       const joinSplitCommitmentsInputs: string[] = [];
-      for (let [name, _params] of Object.entries(circuitParams)) {
-        if (_params) 
-          for (let [type, _inputs] of Object.entries(_params)) {
-            const counter = {
-              customInputs: 0,
-              newNullifiers: 0,
-              checkNullifiers: 0,
-              newCommitments: 0,
-              encryption: 0,
-            };
-            _inputs?.map(i => verifyInputsMap(type, i, counter));
-           
-
-           
-          }
-          
-          if(_params && !(Object.keys(_params).includes('returnParameters')) &&!(Object.keys(_params).includes('encryptionParameters'))) verifyInput.push(`
-            inputs[k++] = 1;`) 
-      
-        verifyInputs.push(`
-          if (functionId == uint(FunctionNames.${name})) {
-            uint k = 0;
-            ${verifyInput.join('')}
-            
-          }`)
-          verifyInput =[];
+      if (circuitParams) {
+        for (let [name, _params] of Object.entries(circuitParams)) {
+          if (_params) 
+            for (let [type, _inputs] of Object.entries(_params)) {
+              const counter = {
+                customInputs: 0,
+                newNullifiers: 0,
+                checkNullifiers: 0,
+                newCommitments: 0,
+                encryption: 0,
+              };
+              _inputs?.map(i => verifyInputsMap(type, i, counter));
+            }
+            if(_params && !(Object.keys(_params).includes('returnParameters')) &&!(Object.keys(_params).includes('encryptionParameters'))) verifyInput.push(`
+              inputs[k++] = 1;`) 
+        
+          verifyInputs.push(`
+            if (functionId == uint(FunctionNames.${name})) {
+              uint k = 0;
+              ${verifyInput.join('')}
+              
+            }`)
+            verifyInput =[];
+        }
       }
-
       const verification: string[] = [
         `
           bool result = verifier.verify(proof, inputs, vks[functionId]);`,

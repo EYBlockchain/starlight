@@ -170,6 +170,7 @@ export default {
       let returnParameterList: any = {};
       let returnfunctionName: string;
       if (
+        state.circuitParams &&
         Object.entries(state.circuitParams) &&
         Object.entries(state.circuitParams).length !== 0
       ) {
