@@ -1066,8 +1066,16 @@ export default function fileGenerator(node: any) {
         ].join('\n'),
         'orchestration',
       );
-
-      let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
+      const { fullyPublicContract } = node;
+      let readPath = fullyPublicContract
+        ? path.resolve(
+            fileURLToPath(import.meta.url),
+            '../../../../../src/boilerplate/common/bin/setup-public',
+          )
+        : path.resolve(
+            fileURLToPath(import.meta.url),
+            '../../../../../src/boilerplate/common/bin/setup',
+          );
       const setupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(setupScript);
       readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup');
