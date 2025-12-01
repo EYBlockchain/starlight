@@ -147,7 +147,7 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
       // if we have a indicator which is NOT burned, then we do need new commitments
       if (
         stateVarIndicator.isSecret &&
-        (!stateVarIndicator.isBurned || stateVarIndicator.newCommitmentsRequired)
+        (!stateVarIndicator.isBurned && stateVarIndicator.newCommitmentsRequired)
       ) {
         burnedOnly = false;
         break;
