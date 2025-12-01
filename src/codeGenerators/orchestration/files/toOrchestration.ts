@@ -213,6 +213,20 @@ const prepareIntegrationApiServices = (node: any) => {
 
     fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams + publicReturns);
 
+        // Handle SaaS context placeholders based on multi-tenant flag
+    fnboilerplate = fnboilerplate.replace(
+      /SAAS_CONTEXT_HANDLING/g,
+      node.multiTenant
+        ? `// Pass context for multi-tenant support (available via saasContextMiddleware)
+    const context = req.saasContext;`
+        : `// Single-tenant mode - no context needed`,
+    );
+
+    fnboilerplate = fnboilerplate.replace(
+      /SAAS_CONTEXT_PARAM/g,
+      node.multiTenant ? `context` : `undefined`,
+    );
+
     // replace function imports at top of file
     const fnimport = ` import { ${(fn.name).charAt(0).toUpperCase() + fn.name.slice(1)}Manager } from './${fn.name}.mjs' ;`
     
@@ -222,7 +236,29 @@ const prepareIntegrationApiServices = (node: any) => {
   });
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
-  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}}\n ${genericApiServiceFile.commitments()}\n`; 
+
+  // Handle SaaS context in commitments functions
+  let commitmentsCode = genericApiServiceFile.commitments();
+  commitmentsCode = commitmentsCode.replace(
+    /SAAS_CONTEXT_HANDLING/g,
+    node.multiTenant
+      ? `// Pass context for multi-tenant support
+          const context = req.saasContext;`
+      : `// Single-tenant mode - no context needed`,
+  );
+  commitmentsCode = commitmentsCode.replace(
+    /SAAS_CONTEXT_PARAM/g,
+    node.multiTenant ? `context` : `undefined`,
+  );
+  commitmentsCode = commitmentsCode.replace(
+    /SAAS_CONTEXT_DIRECT/g,
+    node.multiTenant ? `context` : `undefined`,
+  );
+  commitmentsCode = commitmentsCode.replace(
+    /CONTRACT_NAME/g,
+    node.contractName,
+  );
+  outputApiServiceFile = `${preprefix}\n${outputApiServiceFile}}\n ${commitmentsCode}\n`;
   return outputApiServiceFile;
 };
 const prepareIntegrationApiRoutes = (node: any) => {
@@ -831,6 +867,7 @@ const prepareBackupDataRetriever = (node: any) => {
     getContractInstance,
     getContractAddress,
   } from "./common/contract.mjs";
+    import { KeyManager } from "./common/key-management/KeyManager.mjs";
   
   import Web3 from "./common/web3.mjs";
   import {
@@ -849,7 +886,7 @@ const prepareBackupDataRetriever = (node: any) => {
   const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 
   
-  export async function backupDataRetriever() {
+  export async function backupDataRetriever(context) {
 
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(COMMITMENTS_DB);
@@ -873,11 +910,13 @@ const prepareBackupDataRetriever = (node: any) => {
   
     const backDataEvent =   await instance.getPastEvents('EncryptedBackupData',{fromBlock: 0, toBlock: 'latest'} );
   
-    const keys = JSON.parse(
-      fs.readFileSync(keyDb, "utf-8", (err) => {
-        console.log(err);
-      })
-    );
+      // Use KeyManager for key retrieval
+    const keyManager = KeyManager.getInstance();
+    const keys = await keyManager.getKeys(context);
+
+    if (!keys) {
+      throw new Error('No keys found. Please register keys first.');
+    }
     const secretKey = generalise(keys.secretKey);
     const publicKey = generalise(keys.publicKey);
     const sharedPublicKey = generalise(keys.sharedPublicKey);
@@ -1040,13 +1079,19 @@ export default function fileGenerator(node: any) {
         .flatMap(fileGenerator));
 
     case 'File':
+      let fileContent = node.nodes.map(codeGenerator).join('');
+
+      fileContent = fileContent.replace(
+        /SAAS_CONTEXT_PARAM/g,
+        node.multiTenant ? `context` : `undefined`,
+      );
       return [
         {
           filepath: path.join(
             `./orchestration`,
             `${node.fileName}${node.fileExtension}`,
           ),
-          file: node.nodes.map(codeGenerator).join(''),
+          file: fileContent,
         },
       ];
       // case 'ImportStatementList':

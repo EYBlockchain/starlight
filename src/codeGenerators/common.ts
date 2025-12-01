@@ -20,6 +20,7 @@ export const collectImportFiles = (
   context: string,
   contextDirPath?: string,
   fileName: string = '',
+  visited: any = new Set(),
 ) => {
   const lines = file.split('\n');
   let ImportStatementList: string[];
@@ -97,8 +98,16 @@ export const collectImportFiles = (
     }
     const absPath = path.resolve(contextDirPath, p);
     const relPath = path.relative('.', absPath);
+
+    if (visited.has(relPath)) {
+      continue;
+    }
+
     const exists = fs.existsSync(relPath);
     if (!exists) continue;
+
+    visited.add(relPath);
+
     const f = fs.readFileSync(relPath, 'utf8');
     const n = path.basename(absPath, path.extname(absPath));
     const shortRelPath = path.relative(path.resolve(fileURLToPath(import.meta.url), '../../../'), absPath);
@@ -129,12 +138,12 @@ export const collectImportFiles = (
       file: f,
     });
 
-    localFiles = localFiles.concat(collectImportFiles(f, context, path.dirname(relPath), context === 'contract' ? n : ''));
+    localFiles = localFiles.concat(collectImportFiles(f, context, path.dirname(relPath), context === 'contract' ? n : '', visited));
   }
 
   // remove duplicate files after recursion:
   const uniqueLocalFiles = localFiles.filter((obj, i, self) => {
-    return self.indexOf(obj) === i;
+    return self.findIndex(item => item.filepath === obj.filepath) === i;
   });
 
   return uniqueLocalFiles;

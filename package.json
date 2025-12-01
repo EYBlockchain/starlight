@@ -98,6 +98,7 @@
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.19",
     "@types/prettier": "^2.4.4",
+    "ethers": "^5.7.2",
     "chai-as-promised": "^7.1.1",
     "chai-http": "^4.3.0",
     "eslint": "^8.2.0",

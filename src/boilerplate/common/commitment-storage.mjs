@@ -10,17 +10,13 @@ import mongo from './mongo.mjs';
 import logger from './logger.mjs';
 import utils from 'zkp-utils';
 import { poseidonHash } from './number-theory.mjs';
-import { sharedSecretKey } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-import { hlt } from './hash-lookup.mjs';
-import { registerKey } from './contract.mjs';
+import { KeyManager } from './key-management/KeyManager.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
 
-const keyDb = '/app/orchestration/common/db/key.json';
-
-export function formatCommitment (commitment) {
+export function formatCommitment (commitment, context) {
   let data
   try {
     const nullifierHash = commitment.secretKey
@@ -42,9 +38,10 @@ export function formatCommitment (commitment) {
       secretKey: commitment.secretKey ? commitment.secretKey.hex(32) : null,
       preimage,
       isNullified: commitment.isNullified,
-      nullifier: commitment.secretKey ? nullifierHash.hex(32) : null
+      nullifier: commitment.secretKey ? nullifierHash.hex(32) : null,
+      accountId: context?.accountId || null,
     }
-    logger.debug(`Storing commitment ${data._id}`)
+    logger.debug(`Storing commitment ${data._id}${context?.accountId ? ` for accountId: ${context.accountId}` : ''}`)
   } catch (error) {
     console.error('Error --->', error)
   }
@@ -57,8 +54,8 @@ export async function persistCommitment (data) {
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data)
 }
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment (commitment) {
-  const data = formatCommitment(commitment)
+export async function storeCommitment (commitment, context) {
+  const data = formatCommitment(commitment, context)
   return persistCommitment(data)
 }
 
@@ -74,21 +71,27 @@ export async function getCommitmentsById(id) {
 }
 
 // function to retrieve commitment with a specified stateVarId
-export async function getCurrentWholeCommitment(id) {
+export async function getCurrentWholeCommitment(id, accountId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne({
+  const query = {
     'preimage.stateVarId': generalise(id).hex(32),
     isNullified: false,
-  });
+  };
+
+  if (accountId) {
+    query.accountId = accountId;
+  }
+  const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne(query);
   return commitment;
 }
 
 // function to retrieve commitment with a specified stateName
-export async function getCommitmentsByState(name, mappingKey = null) {
+export async function getCommitmentsByState(name, mappingKey = null, accountId = null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
+  if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
@@ -123,12 +126,13 @@ export async function getNullifiedCommitments() {
 /**
  * @returns {Promise<number>} The sum of the values ​​of all non-nullified commitments
  */
-export async function getBalance() {
+export async function getBalance(accountId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
+  const query = accountId ? { accountId } : {};
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find({ isNullified: false }) //  no nullified
+    .find({ ...query, isNullified: false }) //  no nullified
     .toArray();
 
   let sumOfValues = 0;
@@ -138,10 +142,11 @@ export async function getBalance() {
   return sumOfValues;
 }
 
-export async function getBalanceByState(name, mappingKey = null) {
+export async function getBalanceByState(name, mappingKey = null, accountId=null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
+  if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
@@ -159,12 +164,13 @@ export async function getBalanceByState(name, mappingKey = null) {
 /**
  * @returns all the commitments existent in this database.
  */
-export async function getAllCommitments() {
+export async function getAllCommitments(accountId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
+  const query = accountId ? { accountId } : {};
   const allCommitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find()
+    .find(query)
     .toArray();
   return allCommitments;
 }
@@ -328,6 +334,7 @@ export async function joinCommitments(
   instance,
   contractAddr,
   web3,
+  context,
 ) {
   logger.warn(
     'Existing Commitments are not appropriate and we need to call Join Commitment Circuit. It will generate proof to join commitments, this will require an on-chain verification',
@@ -435,6 +442,13 @@ export async function joinCommitments(
     .flat(Infinity);
   // Send transaction to the blockchain:
 
+  // Get tenant-specific keys
+  const keyManager = KeyManager.getInstance();
+  const keys = await keyManager.getKeys(context);
+  if (!keys || !keys.ethPK || !keys.ethSK) {
+    throw new Error('Tenant Ethereum keys not found. Please register keys first.');
+  }
+
   const txData = await instance.methods
     .joinCommitments(
       [oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
@@ -445,7 +459,7 @@ export async function joinCommitments(
     .encodeABI();
 
   let txParams = {
-    from: config.web3.options.defaultAccount,
+    from: keys.ethPK,
     to: contractAddr,
     gas: config.web3.options.defaultGas,
     gasPrice: config.web3.options.defaultGasPrice,
@@ -453,7 +467,7 @@ export async function joinCommitments(
     chainId: await web3.eth.net.getId(),
   };
 
-  const key = config.web3.key;
+  const key = keys.ethSK;
 
   const signed = await web3.eth.accounts.signTransaction(txParams, key);
 
@@ -671,39 +685,30 @@ export async function splitCommitments(
 export async function getSharedSecretskeys(
   _recipientAddress,
   _recipientPublicKey = 0,
+  context,
 ) {
-  if (!fs.existsSync(keyDb))
-                    await registerKey(utils.randomHex(31), null, false);
-  const keys = JSON.parse(
-    fs.readFileSync(keyDb, 'utf-8', err => {
-      console.log(err);
-    }),
-  );
-  const secretKey = generalise(keys.secretKey);
-  const publicKey = generalise(keys.publicKey);
-  let recipientPublicKey = generalise(_recipientPublicKey);
-  const recipientAddress = generalise(_recipientAddress);
-  if (_recipientPublicKey === 0) {
-    recipientPublicKey = await this.instance.methods
-      .zkpPublicKeys(recipientAddress.hex(20))
-      .call();
-    recipientPublicKey = generalise(recipientPublicKey);
+   try {
+    // Use KeyManager for shared secret key management
+    const keyManager = KeyManager.getInstance();
 
-    if (recipientPublicKey.length === 0) {
-      throw new Error('WARNING: Public key for given  eth address not found.');
-    }
+    logger.debug('Getting shared secret keys via KeyManager', {
+      recipientAddress: _recipientAddress,
+      multiTenant: !!context?.accountId
+    });
+
+    const sharedPublicKey = await keyManager.getSharedSecretKeys(
+      _recipientAddress,
+      _recipientPublicKey,
+      context
+    );
+
+    logger.info('Shared secret keys retrieved successfully', {
+      multiTenant: !!context?.accountId
+    });
+
+    return sharedPublicKey;
+  } catch (error) {
+    logger.error('Failed to get shared secret keys:', error);
+    throw error;
   }
-
-  const sharedKey = sharedSecretKey(secretKey, recipientPublicKey);
-  console.log('sharedKey:', sharedKey);
-  console.log('sharedKey:', sharedKey[1]);
-  const keyJson = {
-    secretKey: secretKey.integer,
-    publicKey: publicKey.integer,
-    sharedSecretKey: sharedKey[0].integer,
-    sharedPublicKey: sharedKey[1].integer, // not req
-  };
-  fs.writeFileSync(keyDb, JSON.stringify(keyJson, null, 4));
-
-  return sharedKey[1];
 }

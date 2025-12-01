@@ -268,11 +268,12 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
 export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'InitialiseKeys': {
-      const { onChainKeyRegistry, contractName } = fields;
+      const { onChainKeyRegistry, contractName, msgSenderParam } = fields;
       return {
         nodeType,
         contractName,
         onChainKeyRegistry,
+        msgSenderParam,
       };
     }
     case 'InitialisePreimage': {
@@ -434,6 +435,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functions = [],
         constructorParams = [],
         contractImports = [],
+        multiTenant = false,
       } = fields;
       return {
         nodeType,
@@ -442,6 +444,7 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functions,
         constructorParams,
         contractImports,
+        multiTenant,
       };
     }
     case 'IntegrationApiRoutesBoilerplate': {

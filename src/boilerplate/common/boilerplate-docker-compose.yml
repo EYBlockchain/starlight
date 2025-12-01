@@ -114,6 +114,8 @@ services:
       - zapp-commitment-volume:/data/db
     networks:
       - zapp_network
+    ports:
+      - '27017:27017'
 
   ganache:
     image: ethereumoptimism/hardhat-node

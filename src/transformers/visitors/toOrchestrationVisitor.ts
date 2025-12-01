@@ -376,6 +376,7 @@ const visitor = {
         const newNode = buildNode('File', {
           fileName: 'test',
           fileExtension: '.mjs',
+          multiTenant: state.multiTenant,
           nodes: [
             buildNode('IntegrationTestBoilerplate', {
               contractName,
@@ -393,10 +394,12 @@ const visitor = {
       newNode = buildNode('File', {
         fileName: 'api_services',
         fileExtension: '.mjs',
+        multiTenant: state.multiTenant,
         nodes: [
           buildNode('IntegrationApiServicesBoilerplate', {
             contractName,
             contractImports: state.contractImports,
+            multiTenant: state.multiTenant,
           }),
         ],
       });
@@ -404,6 +407,7 @@ const visitor = {
       newNode = buildNode('File', {
         fileName: 'api_routes',
         fileExtension: '.mjs',
+        multiTenant: state.multiTenant,
         nodes: [
           buildNode('IntegrationApiRoutesBoilerplate', {
             contractName,
@@ -415,6 +419,7 @@ const visitor = {
       newNode = buildNode('File', {
         fileName: 'BackupDataRetriever',
         fileExtension: '.mjs',
+        multiTenant: state.multiTenant,
         nodes: [
           buildNode('BackupDataRetrieverBoilerplate', {
             contractName,
@@ -426,6 +431,7 @@ const visitor = {
       newNode = buildNode('File', {
         fileName: 'BackupVariable',
         fileExtension: '.mjs',
+        multiTenant: state.multiTenant,
         nodes: [
           buildNode('BackupVariableBoilerplate', {
             contractName,
@@ -438,6 +444,7 @@ const visitor = {
         newNode = buildNode('File', {
           fileName: 'encrypted-data-listener',
           fileExtension: '.mjs',
+          multiTenant: state.multiTenant,
           nodes: [
             buildNode('IntegrationEncryptedListenerBoilerplate', {
               contractName,
@@ -498,6 +505,7 @@ const visitor = {
         const newNode = buildNode('File', {
           fileName: fnName, // the name of this function
           fileExtension: '.mjs',
+          multiTenant: state.multiTenant,
           nodes: [
             buildNode('Imports'),
             buildNode('FunctionDefinition', { name: node.name, contractName, stateMutability: node.stateMutability}),
@@ -545,6 +553,7 @@ const visitor = {
         const newNode = buildNode('File', {
           fileName: fnName,
           fileExtension: '.mjs',
+          multiTenant: state.multiTenant,
           nodes: [
             buildNode('Imports'),
             buildNode('FunctionDefinition', { name: node.name, contractName, stateMutability: node.stateMutability }),

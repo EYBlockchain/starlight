@@ -9,12 +9,13 @@ import { buildBoilerplateNode } from '../boilerplate/orchestration/javascript/no
 export default function buildNode(nodeType: string, fields: any = {}): any {
   switch (nodeType) {
     case 'File': {
-      const { fileName, fileExtension = '.mjs', nodes = [] } = fields;
+      const { fileName, fileExtension = '.mjs', nodes = [], multiTenant } = fields;
       return {
         nodeType,
         fileName,
         fileExtension,
         nodes,
+        multiTenant,
       };
     }
     case 'Imports': {

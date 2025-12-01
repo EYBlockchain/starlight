@@ -42,7 +42,7 @@ class BoilerplateGenerator {
           \n // Initialise commitment preimage of whole accessed state:
           ${stateVarIds.join('\n')}
           \nlet ${stateName}_commitmentExists = true;
-          \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId);
+          \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId, SAAS_CONTEXT_PARAM?.accountId);
           \nconst ${stateName}_preimage = ${stateName}_commitment.preimage;
           \nconst ${stateName} = generalise(${stateName}_preimage.value);`];
         default:
@@ -51,7 +51,7 @@ class BoilerplateGenerator {
               ${stateVarIds.join('\n')}
               \nlet ${stateName}_commitmentExists = true;
               let ${stateName}_witnessRequired = true;
-              \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId);
+              \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId, SAAS_CONTEXT_PARAM?.accountId);
               \nlet ${stateName}_preimage = {
               \tvalue: ${structProperties ? `{` + structProperties.map(p => `${p}: 0`) + `}` : `0`},
               \tsalt: 0,
@@ -70,20 +70,22 @@ class BoilerplateGenerator {
 
 
   initialiseKeys = {
-    postStatements(contractName, onChainKeyRegistry): string[] {
+    postStatements(contractName, onChainKeyRegistry, msgSenderParam): string[] {
+      const msgSenderLine = msgSenderParam ? `\nconst msgSender = generalise(keys.ethPK);` : '';
       return [
         `
-        \n\n// Read dbs for keys and previous commitment values:
-        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry});
-        const keys = JSON.parse(
-                    fs.readFileSync(keyDb, 'utf-8', err => {
-                      console.log(err);
-                    }),
-                  );
-                const secretKey = generalise(keys.secretKey);
-                const publicKey = generalise(keys.publicKey);
-                const sharedPublicKey = generalise(keys.sharedPublicKey);
-                const sharedSecretKey = generalise(keys.sharedSecretKey);
+        \n\n// Read keys using KeyManager
+        \nconst keyManager = KeyManager.getInstance();
+        \nlet keys = await keyManager.getKeys(context);
+        \nif (!keys) {
+        \n  // No keys found, register new ones
+        \n  await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry}, context);
+        \n  keys = await keyManager.getKeys(context);
+        \n}
+        \nconst secretKey = generalise(keys.secretKey);
+        \nconst publicKey = generalise(keys.publicKey);
+        \nconst sharedPublicKey = keys.sharedPublicKey ? generalise(keys.sharedPublicKey) : null;
+        \nconst sharedSecretKey = keys.sharedSecretKey ? generalise(keys.sharedSecretKey) : null;${msgSenderLine}
                `
       ];
     },
@@ -234,7 +236,7 @@ class BoilerplateGenerator {
 
             if(${stateName}_1_oldCommitment === null && ${stateName}_commitmentFlag){
               \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
-               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3);
+               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3, context);
                ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
                [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
@@ -248,7 +250,7 @@ class BoilerplateGenerator {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}', ${isSharedSecret? `sharedSecretKey, sharedPublicKey`: `secretKey, publicKey`}, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', ${isSharedSecret? `sharedSecretKey, sharedPublicKey`: `secretKey, publicKey`}, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3, context);
 
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
@@ -471,10 +473,14 @@ class BoilerplateGenerator {
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
-        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';
+        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';`,
+        `\nimport { KeyManager } from './common/key-management/KeyManager.mjs';`,
+        `\nimport { autoFundIfNeeded } from './common/gas-funding.mjs';`,
+        `\nimport logger from './common/logger.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
+        `\n// Legacy keyDb path - keys now managed through KeyManager`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -705,7 +711,7 @@ sendTransaction = {
             },
             secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
             isNullified: false,
-          });` + errorCatch];
+          }, SAAS_CONTEXT_PARAM);` + errorCatch];
         case 'decrement':
           value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
           return [`
@@ -724,7 +730,7 @@ sendTransaction = {
               },
               secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
               isNullified: false,
-            });`+ errorCatch];
+            }, SAAS_CONTEXT_PARAM);`+ errorCatch];
         case 'whole':
           switch (burnedOnly) {
             case true:
@@ -735,6 +741,21 @@ sendTransaction = {
               return [`
                 \n${reinitialisedOnly ? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32)); 
                `}
+               \n// Look up recipient's accountId for proper multi-tenant isolation
+                \nlet ${stateName}_recipientContext = SAAS_CONTEXT_PARAM;
+                \nif (SAAS_CONTEXT_PARAM && ${stateName}_newOwnerPublicKey.integer !== ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`}) {
+                  \n// Commitment is being transferred to a different user
+                  \nconst ${stateName}_recipientAddress = recipient.hex ? recipient.hex(20) : generalise(recipient).hex(20);
+                  \nconst keyManager = KeyManager.getInstance();
+                  \nconst ${stateName}_recipientAccountId = await keyManager.getAccountIdByEthAddress(${stateName}_recipientAddress);
+                  \nif (${stateName}_recipientAccountId) {
+                  \n${stateName}_recipientContext = { accountId: ${stateName}_recipientAccountId };
+                  \nlogger.debug(\`Storing commitment for recipient accountId: \${${stateName}_recipientAccountId}\`);
+                  \n} else {
+                  \nlogger.debug(\`Recipient \${${stateName}_recipientAddress} not registered, storing without accountId\`);
+                  \n${stateName}_recipientContext = undefined;
+                  \n}
+                \n}
                 \n try {
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
@@ -748,7 +769,7 @@ sendTransaction = {
                   },
                   secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
                   isNullified: false,
-                });` + errorCatch];
+                }, ${stateName}_recipientContext);` + errorCatch];
           }
         default:
           throw new TypeError(stateType);
@@ -828,7 +849,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\nimport { KeyManager } from './common/key-management/KeyManager.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -862,7 +883,8 @@ integrationApiServicesBoilerplate = {
     return `
       export async function service_allCommitments(req, res, next) {
         try {
-          const commitments = await getAllCommitments();
+          const accountId = req.saasContext?.accountId;
+          const commitments = await getAllCommitments(accountId);
           res.send({ commitments });
           await sleep(10);
         } catch (err) {
@@ -872,8 +894,8 @@ integrationApiServicesBoilerplate = {
       }
       export async function service_getBalance(req, res, next) {
         try {
-      
-          const sum = await getBalance();
+          const accountId = req.saasContext?.accountId;
+          const sum = await getBalance(accountId);
           res.send( {"totalBalance": sum} );
         } catch (error) {
           console.error("Error in calculation :", error);
@@ -884,7 +906,8 @@ integrationApiServicesBoilerplate = {
       export async function service_getBalanceByState(req, res, next) {
         try {
           const { name, mappingKey } = req.body;
-          const balance = await getBalanceByState(name, mappingKey);
+          const accountId = req.saasContext?.accountId;
+          const balance = await getBalanceByState(name, mappingKey, accountId);
           res.send( {"totalBalance": balance} );
         } catch (error) {
           console.error("Error in calculation :", error);
@@ -896,7 +919,8 @@ integrationApiServicesBoilerplate = {
       export async function service_getCommitmentsByState(req, res, next) {
         try {
           const { name, mappingKey } = req.body;
-          const commitments = await getCommitmentsByState(name, mappingKey);
+          const accountId = req.saasContext?.accountId;
+          const commitments = await getCommitmentsByState(name, mappingKey, accountId);
           res.send({ commitments });
           await sleep(10);
         } catch (err) {
@@ -908,7 +932,8 @@ integrationApiServicesBoilerplate = {
       
       export async function service_backupData(req, res, next) {
         try {
-            await backupDataRetriever();
+            SAAS_CONTEXT_HANDLING
+            await backupDataRetriever(SAAS_CONTEXT_DIRECT);
             res.send("Complete");
             await sleep(10);
         } catch (err) {
@@ -919,7 +944,8 @@ integrationApiServicesBoilerplate = {
       export async function service_backupVariable(req, res, next) {
         try {
           const { name } = req.body;
-          await backupVariable(name);
+          SAAS_CONTEXT_HANDLING
+          await backupVariable(name, SAAS_CONTEXT_PARAM);
           res.send("Complete");
           await sleep(10);
         } catch (err) {
@@ -931,11 +957,200 @@ integrationApiServicesBoilerplate = {
         try {
           const { recipientAddress } = req.body;
           const recipientPubKey = req.body.recipientPubKey || 0
-          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey );
+          SAAS_CONTEXT_HANDLING
+          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey, SAAS_CONTEXT_PARAM);
           res.send({ SharedKeys });
           await sleep(10);
         } catch (err) {
           logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }
+      export async function service_registerKeys(req, res, next) {
+        try {
+          SAAS_CONTEXT_HANDLING
+
+          const keyManager = KeyManager.getInstance();
+          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
+
+          if (keys) {
+            return res.send({
+              success: true,
+              message: 'Keys already registered',
+              address: keys.ethPK,
+              publicKey: keys.publicKey
+            });
+          }
+
+          logger.info('Registering new keys', { accountId: SAAS_CONTEXT_PARAM?.accountId });
+
+          const utils = await import('zkp-utils');
+          const { registerKey } = await import('./common/contract.mjs');
+
+          const publicKey = await registerKey(
+            utils.default.randomHex(31),
+            'CONTRACT_NAME',
+            true,
+            SAAS_CONTEXT_PARAM
+          );
+
+          keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
+
+          res.send({
+            success: true,
+            message: 'Keys registered successfully',
+            address: keys.ethPK,
+            publicKey: keys.publicKey,
+            zkpPublicKey: publicKey.integer
+          });
+        } catch (err) {
+          logger.error('Failed to register keys:', err);
+          res.send({ errors: [err.message] });
+        }
+      }
+
+      export async function service_getAddress(req, res, next) {
+        try {
+          SAAS_CONTEXT_HANDLING
+
+          const keyManager = KeyManager.getInstance();
+          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
+
+          if (!keys) {
+            return res.send({
+              success: false,
+              message: 'No keys found. Please call /registerKeys first.'
+            });
+          }
+
+          res.send({
+            address: keys.ethPK,
+            publicKey: keys.publicKey
+          });
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }
+
+      export async function service_mintNFT(req, res, next) {
+        try {
+          const { tokenId } = req.body;
+          SAAS_CONTEXT_HANDLING
+
+          const keyManager = KeyManager.getInstance();
+          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
+
+          if (!keys) {
+            return res.send({
+              success: false,
+              message: 'No keys found. Please call /registerKeys first.'
+            });
+          }
+
+          const { getContractAddress, getContractInterface } = await import('./common/contract.mjs');
+          const erc721Address = await getContractAddress('ERC721');
+          const erc721Interface = await getContractInterface('ERC721');
+          const Web3 = await import('./common/web3.mjs');
+          const web3 = Web3.default.connection();
+          const erc721 = new web3.eth.Contract(erc721Interface.abi, erc721Address);
+
+          try {
+            const owner = await erc721.methods.ownerOf(tokenId).call();
+            if (owner && owner !== '0x0000000000000000000000000000000000000000') {
+              return res.send({
+                success: false,
+                message: \`Token \${tokenId} already exists (owner: \${owner})\`
+              });
+            }
+          } catch (error) {
+            // Token doesn't exist - expected
+          }
+
+          const accounts = await web3.eth.getAccounts();
+          const defaultAccount = accounts[0];
+
+          logger.info(\`Minting token \${tokenId} to \${keys.ethPK}\`);
+
+          const mintTx = await erc721.methods
+            .mint(keys.ethPK, tokenId)
+            .send({ from: defaultAccount, gas: 500000 });
+
+          res.send({
+            success: true,
+            tokenId: tokenId,
+            owner: keys.ethPK,
+            txHash: mintTx.transactionHash
+          });
+        } catch (err) {
+          logger.error('Failed to mint NFT:', err);
+          res.send({ errors: [err.message] });
+        }
+      }
+
+      export async function service_approveNFT(req, res, next) {
+        try {
+          const { tokenId } = req.body;
+          SAAS_CONTEXT_HANDLING
+
+          const keyManager = KeyManager.getInstance();
+          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
+
+          if (!keys) {
+            return res.send({
+              success: false,
+              message: 'No keys found. Please call /registerKeys first.'
+            });
+          }
+
+          const { getContractAddress, getContractInterface } = await import('./common/contract.mjs');
+          const erc721Address = await getContractAddress('ERC721');
+          const erc721Interface = await getContractInterface('ERC721');
+          const Web3 = await import('./common/web3.mjs');
+          const web3 = Web3.default.connection();
+          const erc721 = new web3.eth.Contract(erc721Interface.abi, erc721Address);
+
+          const escrowAddress = await getContractAddress('CONTRACT_NAME');
+
+          const currentApproval = await erc721.methods.getApproved(tokenId).call();
+
+          if (currentApproval.toLowerCase() === escrowAddress.toLowerCase()) {
+            return res.send({
+              success: true,
+              message: 'Token already approved',
+              tokenId: tokenId,
+              spender: escrowAddress
+            });
+          }
+
+          logger.info(\`Approving token \${tokenId} for escrow\`);
+
+          const txData = await erc721.methods
+            .approve(escrowAddress, tokenId)
+            .encodeABI();
+
+          const config = await import('config');
+
+          let txParams = {
+            from: keys.ethPK,
+            to: erc721Address,
+            gas: 500000,
+            gasPrice: config.default.web3.options.defaultGasPrice,
+            data: txData,
+            chainId: await web3.eth.net.getId(),
+          };
+
+          const signed = await web3.eth.accounts.signTransaction(txParams, keys.ethSK);
+          const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+          res.send({
+            success: true,
+            tokenId: tokenId,
+            spender: escrowAddress,
+            txHash: sendTxn.transactionHash
+          });
+        } catch (err) {
+          logger.error('Failed to approve NFT:', err);
           res.send({ errors: [err.message] });
         }
       }`
@@ -961,7 +1176,7 @@ integrationApiRoutesBoilerplate = {
     return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable,} from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
@@ -973,12 +1188,17 @@ integrationApiRoutesBoilerplate = {
     // backup route
     router.post("/backupDataRetriever", service_backupData);
     router.post("/backupVariable", service_backupVariable);
+    // key management routes
+    router.post("/registerKeys", service_registerKeys);
+    router.get("/getAddress", service_getAddress);
+    router.post("/mintNFT", service_mintNFT);
+    router.post("/approveNFT", service_approveNFT);
     `;
   }
 };
 
-zappFilesBoilerplate = () => {
-  return [
+zappFilesBoilerplate = (multiTenant = false) => {
+  const baseFiles = [
     {
       readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
@@ -1070,6 +1290,48 @@ zappFilesBoilerplate = () => {
       generic: false,
     },
 ];
+
+if (multiTenant) {
+      baseFiles.push(
+      {
+        readPath: pathPrefix + '/middleware/saas-context.mjs',
+        writePath: './orchestration/common/middleware/saas-context.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/IKeyStorage.mjs',
+        writePath: './orchestration/common/key-management/IKeyStorage.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/FileKeyStorage.mjs',
+        writePath: './orchestration/common/key-management/FileKeyStorage.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/DatabaseKeyStorage.mjs',
+        writePath: './orchestration/common/key-management/DatabaseKeyStorage.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/KeyManager.mjs',
+        writePath: './orchestration/common/key-management/KeyManager.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/encryption.mjs',
+        writePath: './orchestration/common/key-management/encryption.mjs',
+        generic: false,
+      },
+      {
+        readPath: pathPrefix + '/key-management/index.mjs',
+        writePath: './orchestration/common/key-management/index.mjs',
+        generic: false,
+      }
+    );
+  }
+
+  return baseFiles;
 }
 
 }

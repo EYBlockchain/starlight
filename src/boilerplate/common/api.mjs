@@ -4,6 +4,7 @@ import { ServiceManager } from './api_services.mjs';
 import { Router } from './api_routes.mjs'; 
 import Web3 from './common/web3.mjs';
 ENCRYPTEDLISTENER_IMPORT
+SAAS_MIDDLEWARE_IMPORT
 
 function gracefulshutdown() {
   console.log('Shutting down');
@@ -18,6 +19,8 @@ process.on('SIGINT', gracefulshutdown);
 
 const app = express();
 app.use(express.json());
+
+SAAS_MIDDLEWARE_USAGE
 
 const web3 = Web3.connection();
 const serviceMgr = new ServiceManager(web3);

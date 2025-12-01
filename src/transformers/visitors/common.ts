@@ -22,6 +22,7 @@ export const initialiseOrchestrationBoilerplateNodes = (fnIndicator: FunctionDef
   newNodes.InitialiseKeysNode = buildNode('InitialiseKeys', {
     contractName,
     onChainKeyRegistry: fnIndicator.onChainKeyRegistry,
+    msgSenderParam: fnIndicator.msgSenderParam,
   });
   if (fnIndicator.oldCommitmentAccessRequired || fnIndicator.internalFunctionoldCommitmentAccessRequired)
     newNodes.initialisePreimageNode = buildNode('InitialisePreimage');

@@ -1,10 +1,13 @@
 module.exports = {
   log_level: 'info',
+  multiTenant: MULTI_TENANT_MODE,
   zokrates: {
     url: process.env.ZOKRATES_URL || 'http://zokrates:80',
   },
   merkleTree: {
     url: process.env.TIMBER_URL || 'http://timber:80',
+    defaultMaxTries: parseInt(process.env.TIMBER_MAX_TRIES || '40', 10), // 40 tries × 3s = 2 minutes
+    retryDelay: parseInt(process.env.TIMBER_RETRY_DELAY || '3000', 10), // 3 seconds between retries
   },
   // merkle-tree stuff:
   ZERO: '0',

@@ -5,8 +5,7 @@ import { generalise } from 'general-number';
 import { getContractAddress, getContractInstance, registerKey } from './common/contract.mjs';
 import { storeCommitment, formatCommitment, persistCommitment } from './common/commitment-storage.mjs';
 import { decrypt, poseidonHash, } from './common/number-theory.mjs';
-
-const keyDb = '/app/orchestration/common/db/key.json';
+import { KeyManager } from './key-management/KeyManager.mjs';
 
 
 function decodeCommitmentData(decrypted){
@@ -19,10 +18,11 @@ function decodeCommitmentData(decrypted){
 }
 
 export default class EncryptedDataEventListener {
-  constructor(web3) {
+  constructor(web3, context) {
     this.web3 = web3;
-    this.ethAddress = generalise(config.web3.options.defaultAccount);
+    this.ethAddress = null;
     this.contractMetadata = {};
+    this.context = context;
   }
 
   async init() {
@@ -36,12 +36,31 @@ export default class EncryptedDataEventListener {
         contractAddr,
       );
 
-      if (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), 'CONTRACT_NAME', true);
+     // Use KeyManager for key retrieval
+      const keyManager = KeyManager.getInstance();
 
-      const { secretKey, publicKey } = JSON.parse(fs.readFileSync(keyDb));
+      // Check if keys exist, if not register new ones
+      const hasKeys = await keyManager.hasKeys(this.context);
+      if (!hasKeys) {
+        console.log('No keys found, registering new key pair...');
+        await registerKey(utils.randomHex(31), 'CONTRACT_NAME', true, this.context);
+      }
 
-      this.secretKey = generalise(secretKey);
-      this.publicKey = generalise(publicKey);
+      // Retrieve keys via KeyManager
+      const keys = await keyManager.getKeys(this.context);
+
+      if (!keys) {
+        throw new Error('Failed to retrieve keys after registration');
+      }
+
+      this.secretKey = generalise(keys.secretKey);
+      this.publicKey = generalise(keys.publicKey);
+      this.ethAddress = keys.ethPK ? generalise(keys.ethPK) : generalise(config.web3.options.defaultAccount);
+
+      console.log('Keys loaded successfully', {
+        multiTenant: !!this.context?.accountId,
+        ethAddress: this.ethAddress.hex(),
+      });
     } catch (error) {
       console.error(
         'encrypted-data-listener',
