@@ -193,102 +193,102 @@ export default {
         }
       }
 
+      const contractIndex = sourceUnitNodes.findIndex(
+        (n: any) => n.name === node.name,
+      );
+      if (scope.indicators.zkSnarkVerificationRequired) {
+        sourceUnitNodes[contractIndex].baseContracts.push(
+          buildNode('InheritanceSpecifier', {
+            nodeType: 'UserDefinedTypeName',
+            name: 'MerkleTree',
+          }),
+        );
+      }
+      sourceUnitNodes.splice(
+        1,
+        0,
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'importStatements',
+          scope,
+        }),
+      );
 
-          const contractIndex = sourceUnitNodes.findIndex(
-            (n: any) => n.name === node.name,
-          );
-          sourceUnitNodes[contractIndex].baseContracts.push(
-            buildNode('InheritanceSpecifier', {
-              nodeType: 'UserDefinedTypeName',
-              name: 'MerkleTree',
-            }),
-          );
+      // unshift in reverse order from how we want them to appear
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'verify',
+          scope,
+          circuitParams: state.circuitParams,
+        })
+      );
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'registerZKPPublicKey',
+          scope,
+        }),
+      );
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'constructor',
+          scope,
+        }),
+      );
+      contractNodes.unshift(
+        ...buildNode('ContractBoilerplate', {
+          bpSection: 'stateVariableDeclarations',
+          scope,
+        }),
+      );
+      if (state.mainPrivateFunctionName) {
+        parent._newASTPointer[0].mainPrivateFunctionName =
+          state.mainPrivateFunctionName; // TODO fix bodge
+        parent._newASTPointer[0].nodes.forEach((node: any) => {
+          if (node.nodeType === 'ContractDefinition')
+            node.mainPrivateFunctionName = state.mainPrivateFunctionName;
+        });
+      }
 
-          sourceUnitNodes.splice(
-            1,
-            0,
-            ...buildNode('ContractBoilerplate', {
-              bpSection: 'importStatements',
-              scope,
-            }),
-          );
+      node._newASTPointer.forEach(node => {
 
-          // unshift in reverse order from how we want them to appear
-          contractNodes.unshift(
-            ...buildNode('ContractBoilerplate', {
-              bpSection: 'verify',
-              scope,
-              circuitParams: state.circuitParams,
-            })
-          );
-          contractNodes.unshift(
-            ...buildNode('ContractBoilerplate', {
-              bpSection: 'registerZKPPublicKey',
-              scope,
-            }),
-          );
-          contractNodes.unshift(
-            ...buildNode('ContractBoilerplate', {
-              bpSection: 'constructor',
-              scope,
-            }),
-          );
-          contractNodes.unshift(
-            ...buildNode('ContractBoilerplate', {
-              bpSection: 'stateVariableDeclarations',
-              scope,
-            }),
-          );
-          if (state.mainPrivateFunctionName) {
-            parent._newASTPointer[0].mainPrivateFunctionName =
-              state.mainPrivateFunctionName; // TODO fix bodge
-            parent._newASTPointer[0].nodes.forEach((node: any) => {
-              if (node.nodeType === 'ContractDefinition')
-                node.mainPrivateFunctionName = state.mainPrivateFunctionName;
-            });
-          }
-
-          node._newASTPointer.forEach(node => {
-
-            if(node.nodeType === 'FunctionDefinition' && node.kind === 'function'){
-              state.internalFncName?.forEach( (name, index) => {
-                if(node.name === name) {
-                  node.msgSigRequired = true;
-                 state.postStatements ??= [];
-                 state.postStatements = cloneDeep(node.body.postStatements);
-                }
-                if(node.name === state.callingFncName[index]){
-                 node.body.postStatements.forEach( childNode => {
-                   state.postStatements?.forEach(node => {
-                     if(!childNode.nullifiersRequired && node.nullifiersRequired)
-                       childNode.nullifiersRequired = node.nullifiersRequired;
-                     if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
-                       childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
-                     if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
-                       childNode.newCommitmentsRequired = node.newCommitmentsRequired;
-                      if(!childNode.encryptionRequired && node.encryptionRequired)
-                      childNode.encryptionRequired = node.encryptionRequired; 
-                    })
-                  })
-                  node.parameters.parameters.forEach( childNode => {
-
-                    state.postStatements?.forEach(node => {
-                      if(!childNode.nullifiersRequired && node.nullifiersRequired)
-                       childNode.nullifiersRequired = node.nullifiersRequired;
-                      if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
-                       childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
-                      if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
-                      childNode.newCommitmentsRequired = node.newCommitmentsRequired;
-                      if(!childNode.encryptionRequired && node.encryptionRequired)
-                      childNode.encryptionRequired = node.encryptionRequired; 
-                    })
-                  })
-                }
-              });
+        if(node.nodeType === 'FunctionDefinition' && node.kind === 'function'){
+          state.internalFncName?.forEach( (name, index) => {
+            if(node.name === name) {
+              node.msgSigRequired = true;
+              state.postStatements ??= [];
+              state.postStatements = cloneDeep(node.body.postStatements);
             }
-          })
-        },
-      },
+            if(node.name === state.callingFncName[index]){
+              node.body.postStatements.forEach( childNode => {
+                state.postStatements?.forEach(node => {
+                  if(!childNode.nullifiersRequired && node.nullifiersRequired)
+                    childNode.nullifiersRequired = node.nullifiersRequired;
+                  if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
+                    childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
+                  if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
+                    childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                  if(!childNode.encryptionRequired && node.encryptionRequired)
+                  childNode.encryptionRequired = node.encryptionRequired; 
+                })
+              })
+              node.parameters.parameters.forEach( childNode => {
+
+                state.postStatements?.forEach(node => {
+                  if(!childNode.nullifiersRequired && node.nullifiersRequired)
+                    childNode.nullifiersRequired = node.nullifiersRequired;
+                  if(!childNode.oldCommitmentAccessRequired && node.oldCommitmentAccessRequired)
+                    childNode.oldCommitmentAccessRequired = node.oldCommitmentAccessRequired;
+                  if(!childNode.newCommitmentsRequired && node.newCommitmentsRequired)
+                  childNode.newCommitmentsRequired = node.newCommitmentsRequired;
+                  if(!childNode.encryptionRequired && node.encryptionRequired)
+                  childNode.encryptionRequired = node.encryptionRequired; 
+                })
+              })
+            }
+          });
+        }
+      })
+    },
+  },
 
   FunctionDefinition: {
     enter(path: NodePath, state: any) {

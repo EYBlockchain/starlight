@@ -25,10 +25,16 @@ class ContractBoilerplateGenerator {
       containsAccessedOnlyState,
       newCommitmentsRequired,
       encryptionRequired,
+      fullyPublicContract,
       //isInternalFunctionCall add it
     }): string[] {
       // prettier-ignore
       // Ignoring prettier because it's easier to read this if the strings we're inserting are at the beginning of a line.
+      if (fullyPublicContract) {
+        return [`
+          mapping(address => uint256) public zkpPublicKeys;`,
+        ];
+      }
       return [
         `
           enum FunctionNames { ${functionNames.join(', ')} }`,
@@ -78,7 +84,10 @@ class ContractBoilerplateGenerator {
       ];
     },
 
-    constructor(): string[] {
+    constructor({ fullyPublicContract }): string[] {
+      if (fullyPublicContract) {
+        return [``];
+      }
       // This boilerplate will only be used if the .zol developer didn't write their own constructor. If they already wrote a constructor, we add this boilerplate in the FunctionBoilerplate generator.
       return [
         `
@@ -114,7 +123,11 @@ class ContractBoilerplateGenerator {
       circuitParams,
       constructorContainsSecret,
       isjoinSplitCommitmentsFunction,
+      fullyPublicContract,
     }): string[] {
+      if (fullyPublicContract) {
+        return [``];
+      }
       const verifyFunctionSignature = `
         function verify(
       		uint256[] ${constructorContainsSecret ? `memory` : `calldata`} proof,

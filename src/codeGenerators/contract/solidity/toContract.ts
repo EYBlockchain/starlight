@@ -50,16 +50,17 @@ function codeGenerator(node: any) {
       const name = `${node.name}Shield`;
       const contractDeclaration = `contract ${name}`;
       // TODO: an InheritanceSpecifier is a nodeType in itself, so should be recursed into as its own 'case' in this 'switch' statement.
-      const inheritanceSpecifiers = node.baseContracts
-        ? ` is ${node.baseContracts
-            .reduce((acc: string[], cur: any) => {
-              if (cur.nodeType === 'InheritanceSpecifier') {
-                acc.push(cur.baseName.name);
-              }
-              return acc;
-            }, [])
-            .join(', ')}`
-        : '';
+      const inheritanceSpecifiers =
+        node.baseContracts && node.baseContracts.length
+          ? ` is ${node.baseContracts
+              .reduce((acc: string[], cur: any) => {
+                if (cur.nodeType === 'InheritanceSpecifier') {
+                  acc.push(cur.baseName.name);
+                }
+                return acc;
+              }, [])
+              .join(', ')}`
+          : '';
       const nodes = node.nodes.map(codeGenerator).join('\n\n');
       return `${contractDeclaration}${inheritanceSpecifiers} {\n\n${nodes}\n}`;
     }

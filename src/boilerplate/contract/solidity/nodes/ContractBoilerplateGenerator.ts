@@ -92,18 +92,30 @@ class ContractBoilerplateGenerator {
         oldCommitmentAccessRequired,
         newCommitmentsRequired,
         containsAccessedOnlyState,
-        encryptionRequired
+        encryptionRequired,
+        fullyPublicContract: !scope.indicators.zkSnarkVerificationRequired,
       };
     },
 
     constructor() {
+      const { scope } = this;
+      return {
+        fullyPublicContract: !scope.indicators.zkSnarkVerificationRequired,
+      };
     },
 
     registerZKPPublicKey() {},
 
     verify(circuitParams: Object ) {
-      let {
-        indicators: { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired },
+      const {
+        indicators: {
+          nullifiersRequired,
+          oldCommitmentAccessRequired,
+          newCommitmentsRequired,
+          containsAccessedOnlyState,
+          encryptionRequired,
+          zkSnarkVerificationRequired,
+        },
       } = this.scope;
       let isjoinSplitCommitmentsFunction : string[]=[];
       for(const [, binding ] of Object.entries(this.scope.bindings)){
@@ -177,7 +189,17 @@ class ContractBoilerplateGenerator {
         }
       }
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor');
-      return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinSplitCommitmentsFunction};
+      return {
+        nullifiersRequired,
+        oldCommitmentAccessRequired,
+        newCommitmentsRequired,
+        containsAccessedOnlyState,
+        encryptionRequired,
+        constructorContainsSecret,
+        circuitParams,
+        isjoinSplitCommitmentsFunction,
+        fullyPublicContract: !zkSnarkVerificationRequired,
+      };
     },
 
   };
