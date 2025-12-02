@@ -400,7 +400,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
   file.file = file.file.replace(
     /FUNCTION_NAMES/g,
-    `'${node.functionNames.join(`', '`)}'`,
+    node.functionNames.length ? `'${node.functionNames.join(`', '`)}'` : ``,
   );
   // collect any extra constructor parameters
   const constructorParamNames = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
@@ -1058,6 +1058,7 @@ export default function fileGenerator(node: any) {
 
     case 'SetupCommonFilesBoilerplate': {
       // complex setup files which require some setting up:
+      const { fullyPublicContract } = node;
       const files = collectImportFiles(
         [
           `import './common/write-vk.mjs'`,
@@ -1065,8 +1066,8 @@ export default function fileGenerator(node: any) {
           `import './common/migrations/deploy.js'`,
         ].join('\n'),
         'orchestration',
+        fullyPublicContract,
       );
-      const { fullyPublicContract } = node;
       let readPath = fullyPublicContract
         ? path.resolve(
             fileURLToPath(import.meta.url),
