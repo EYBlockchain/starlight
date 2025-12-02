@@ -18,8 +18,9 @@ export interface localFile {
 export const collectImportFiles = (
   file: string,
   context: string,
+  fullyPublicContract?: boolean,
   contextDirPath?: string,
-  fileName: string = '',
+  fileName = '',
 ) => {
   const lines = file.split('\n');
   let ImportStatementList: string[];
@@ -99,7 +100,12 @@ export const collectImportFiles = (
     const relPath = path.relative('.', absPath);
     const exists = fs.existsSync(relPath);
     if (!exists) continue;
-    const f = fs.readFileSync(relPath, 'utf8');
+    let readPath = relPath;
+    // When the contract is fully public, we use deploy-public.js instead of deploy.js
+    if (fullyPublicContract && readPath.includes('deploy.js')) {
+      readPath = relPath.replace('deploy.js', 'deploy-public.js');
+    }
+    const f = fs.readFileSync(readPath, 'utf8');
     const n = path.basename(absPath, path.extname(absPath));
     const shortRelPath = path.relative(path.resolve(fileURLToPath(import.meta.url), '../../../'), absPath);
     const writePath = context === 'orchestration' ? path.join(
@@ -129,7 +135,15 @@ export const collectImportFiles = (
       file: f,
     });
 
-    localFiles = localFiles.concat(collectImportFiles(f, context, path.dirname(relPath), context === 'contract' ? n : ''));
+    localFiles = localFiles.concat(
+      collectImportFiles(
+        f,
+        context,
+        fullyPublicContract,
+        path.dirname(relPath),
+        context === 'contract' ? n : '',
+      ),
+    );
   }
 
   // remove duplicate files after recursion:
