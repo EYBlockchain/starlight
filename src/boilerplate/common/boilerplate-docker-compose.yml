@@ -55,9 +55,7 @@ services:
       - zapp_network
 
   timber:
-    build: 
-      context: https://github.com/EYBlockchain/timber.git#starlight/zscaler:merkle-tree
-      dockerfile: Dockerfile
+    image: ghcr.io/eyblockchain/timber-multicontract:latest
     restart: on-failure
     depends_on:
       - timber-mongo
