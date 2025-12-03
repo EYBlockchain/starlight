@@ -2,7 +2,7 @@ _This code is not owned by EY and EY provides no warranty and disclaims any and 
 
 # starlight :stars:
 
-Generate a zApp from a Solidity contract.
+Generate a zApp from a Solidity contract
 
 ---
 
