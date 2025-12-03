@@ -18,7 +18,8 @@ import { registerKey } from './contract.mjs';
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
 
-const keyDb = '/app/orchestration/common/db/key.json';
+const keyDb =
+  process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';
 
 export function formatCommitment (commitment) {
   let data
