@@ -27,9 +27,9 @@ fi
 
 cd temp-zapps/$zapp
 
-# Run npm install with error checking
+# Run npm install with error checking and increased memory
 echo "Running npm install..."
-if ! npm install; then
+if ! NODE_OPTIONS="--max-old-space-size=4096" npm install; then
   echo "Error: npm install failed for $zapp"
   exit 1
 fi
