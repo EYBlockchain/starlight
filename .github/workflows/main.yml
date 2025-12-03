@@ -42,6 +42,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/share/boost
+      
       - uses: actions/setup-node@v1
         with:
           node-version: '16.17.0'
