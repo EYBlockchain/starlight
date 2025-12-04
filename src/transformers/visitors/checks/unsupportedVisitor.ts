@@ -59,14 +59,15 @@ export default {
     },
   },
 
-  WhileStatement: {
+  /*WhileStatement: {
     enter(node: any) {
+      console.log("while statement node", node);
       throw new ZKPError(
         'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
         node,
       );
     },
-  },
+  },*/
 
   IfStatement: {
     enter(node: any) {

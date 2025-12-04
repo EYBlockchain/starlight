@@ -636,6 +636,7 @@ export default class NodePath {
 
   isExternalContractInstanceDeclaration(node: any = this.node): boolean {
     if (
+      node.nodeType &&
       !['VariableDeclaration', 'VariableDeclarationStatement'].includes(
         node.nodeType,
       )
@@ -654,6 +655,8 @@ export default class NodePath {
   }
 
   isExternalContractInstance(node: any = this.node): boolean {
+    console.log("this", this);
+    console.log("node", node);
     const varDecNode = this.getReferencedNode(node);
     return this.isExternalContractInstanceDeclaration(varDecNode);
   }
