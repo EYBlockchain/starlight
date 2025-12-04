@@ -21,10 +21,9 @@
   "author": "starlight",
   "license": "CC0-1.0",
   "dependencies": {
-    "@babel/register": "^7.23.7",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@openzeppelin/contracts": "4.9.6",
-    "axios": "1.8.3",
+    "axios": "1.9.0",
     "config": "^3.3.1",
     "express":"4.21.2",
     "enquirer": "^2.3.6",
@@ -32,8 +31,8 @@
     "lodash.clonedeep": "^4.5.0",
     "mongodb": "^4.7.0",
     "solc": "0.8.0",
-    "web3": "4.16.0",
-    "typescript": "^4.9.5",
+    "web3": "^4.16.0",
+    "typescript": "^5.9.3",
     "winston": "^3.3.3",
     "yargs": "17.7.2",
     "zkp-utils": "^1.0.8"
@@ -45,15 +44,8 @@
     "eslint": "^8.2.0",
     "husky": "9.0.11",
     "mocha": "10.8.2",
-    "prettier": "^2.2.1",
-    "prettier-plugin-solidity": "^1.0.0-alpha.54"
-  },
-  "overrides": {
-    "fast-glob": {
-      "micromatch": "~4.0.8"
-    },
-    "@sentry/node": {
-      "cookie": "~0.7.0"
-    }
+    "prettier": "^2.3.2",
+    "prettier-plugin-solidity": "^1.0.0-alpha.54",
+    "globals": "^16.0.0"
   }
 }
