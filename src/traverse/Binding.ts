@@ -63,6 +63,8 @@ export class Binding {
       case 'DoWhileStatement':
       case 'EnumDefinition':
       case 'NewExpression':
+      case 'InheritanceSpecifier':
+      case 'IdentifierPath':
         return false;
       default:
         logger.error(`Hitherto unknown nodeType '${nodeType}'`);
