@@ -1,5 +1,5 @@
 module.exports = {
-  log_level: 'info',
+  LOG_LEVEL: process.env.LOG_LEVEL,
   multiTenant: MULTI_TENANT_MODE,
   zokrates: {
     url: process.env.ZOKRATES_URL || 'http://zokrates:80',
@@ -57,7 +57,7 @@ module.exports = {
   // contracts to filter:
   contracts: {
     // contract name:
-    CONTRACT_NAME: {
+    default: {
       treeHeight: 32,
       events: {
         // filter for the following event names:
@@ -80,6 +80,7 @@ module.exports = {
     databaseName: 'merkle_tree',
     admin: 'admin',
     adminPassword: 'admin',
+    dbUrl: process.env.DB_URL || 'mongodb://admin:admin@timber-mongo:27017',
   },
   MONGO_URL: 'mongodb://admin:admin@zapp-mongo:27017',
   COMMITMENTS_DB: process.env.MONGO_NAME,
