@@ -58,7 +58,7 @@ services:
 
   timber:
     build: 
-      context: https://ghcr.io/eyblockchain/timber-multicontract:latest
+      context: https://github.com/EYBlockchain/timber.git#starlight/zscaler:merkle-tree
       dockerfile: Dockerfile
     restart: on-failure
     depends_on:

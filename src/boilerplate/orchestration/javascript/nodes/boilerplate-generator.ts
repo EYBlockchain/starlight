@@ -87,6 +87,28 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
           : null,
       };
     }
+    case 'GetInputCommitments': {
+      const {
+        id,
+        increment,
+        privateStateName,
+        accessedOnly,
+        indicator = {},
+      } = fields;
+      return {
+        increment,
+        stateVarId: id,
+        isSharedSecret: indicator.isSharedSecret,
+        privateStateName,
+        accessedOnly,
+        isWhole: indicator.isWhole,
+        isPartitioned: indicator.isPartitioned,
+        structProperties: indicator.isStruct
+          ? Object.keys(indicator.structProperties)
+          : null,
+        mappingName: indicator.isMapping ? indicator.node?.name : null,
+      };
+    }
     case 'MembershipWitness': {
       const {
         id,
@@ -305,6 +327,14 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
       };
     }
     case 'MembershipWitness': {
+      const { contractName, privateStates = {} } = fields;
+      return {
+        nodeType,
+        privateStates,
+        contractName,
+      };
+    }
+    case 'GetInputCommitments': {
       const { contractName, privateStates = {} } = fields;
       return {
         nodeType,
