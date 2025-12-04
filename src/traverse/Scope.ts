@@ -237,7 +237,6 @@ export class Scope {
           referencedIndicator.update(path);
         }
 
-
         if (!referencedNode.stateVariable && referencedNode.nodeType !== 'FunctionDefinition') {
           functionDefScope.indicators[referencedId].update(path);
         }
@@ -290,6 +289,8 @@ export class Scope {
       case 'DoWhileStatement':
       case 'EnumDefinition':
       case 'NewExpression':
+      case 'InheritanceSpecifier':
+      case 'IdentifierPath':
         break;
 
       // And again, if we haven't recognized the nodeType then we'll throw an
