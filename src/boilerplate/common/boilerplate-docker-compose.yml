@@ -58,7 +58,7 @@ services:
 
   timber:
     build: 
-      context: https://github.com/EYBlockchain/timber.git#starlight/zscaler:merkle-tree
+      context: https://github.com/EYBlockchain/timber.git#multiple-contracts:merkle-tree
       dockerfile: Dockerfile
     restart: on-failure
     depends_on:
@@ -71,7 +71,7 @@ services:
     environment:
       NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/ZscalerRootCertificate-2048-SHA256.crt
       HASH_TYPE: 'mimc'
-      LOG_LEVEL: 'silly'
+      LOG_LEVEL: 'debug'
       UNIQUE_LEAVES: 'true'
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
