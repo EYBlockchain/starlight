@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+import "./Escrow-imports/IERC721.sol";
+
+contract SupplyChainPoC {
+
+    // Domain parameter: nftContract
+    // This allows tracking tokens from multiple NFT contracts
+    // Each nftContract address creates a separate cryptographic namespace
+    secret mapping(uint256 => address) per(address nftContract) public tokenOwners;
+    secret mapping(uint256 => address) per(address nftContract) public isActivated;
+    secret mapping(address => address) per(address nftContract) public approvals;
+
+    // No hardcoded ERC721 instance for operations that involve the tokenized asset - we use the nftContract parameter directly
+    // This allows the escrow to work dynamically with any ERC721 contract
+
+    // Below functions contain a domain parameter - The nftContract parameter is used for BOTH:
+    // 1. The actual NFT transfer (via IERC721 interface)
+    // 2. Cryptographic domain separation (state variable ID calculation)
+
+    function deposit(per address nftContract, uint256 tokenId) public {
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+
+        // Use the nftContract parameter to instantiate the ERC721 interface
+        IERC721 nft = IERC721(nftContract);
+
+        bool success = nft.transferFrom(msg.sender, address(this), tokenId);
+        require(success, "SupplyChainPoC: ERC721 transfer failed");
+
+        reinitialisable tokenOwners[tokenId] = msg.sender;
+    }
+
+    function transfer(per address nftContract, secret address recipient, secret uint256 tokenId) public {
+        require(isActivated[tokenId] == msg.sender, "SupplyChainPoC: token should be activated");
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+        require(tokenOwners[tokenId] == msg.sender);
+        require(recipient != address(0), "SupplyChainPoC: transfer to the zero address");
+        
+        tokenOwners[tokenId] = recipient;
+        isActivated[tokenId] =  recipient;
+    }
+
+    function approve(per address nftContract, secret address approvedAddress) public {
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+        require(approvedAddress != address(0), "Escrow: approve to the zero address");
+        
+        approvals[msg.sender] = approvedAddress;
+    }
+
+    function transferFrom(per address nftContract, secret address sender, secret address recipient, secret uint256 tokenId) public {
+        require(isActivated[tokenId] == msg.sender, "SupplyChainPoC: token should be activated");
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+        require(recipient != address(0), "SupplyChainPoC: transfer to the zero address");
+        require(sender != address(0), "SupplyChainPoC: transfer from the zero address");
+
+        // Approval: sender (owner) has approved msg.sender in this nftContract domain
+        require(approvals[sender] == msg.sender, "SupplyChainPoC: not approved");
+
+        // Ownership: sender actually owns tokenId in this nftContract's domain
+        require(tokenOwners[tokenId] == sender, "SupplyChainPoC: sender does not own token");
+        tokenOwners[tokenId] = recipient;
+        isActivated[tokenId] =  recipient;
+    }
+
+    function withdraw(per address nftContract, uint256 tokenId) public {
+        require(isActivated[tokenId] == msg.sender, "SupplyChainPoC: token should be activated");
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+        require(tokenOwners[tokenId] == msg.sender);
+
+        // Use the nftContract parameter to instantiate the ERC721 interface
+        IERC721 nft = IERC721(nftContract);
+
+        bool success = nft.transferFrom(address(this), msg.sender, tokenId);
+        require(success, "ERC721 transfer failed");
+
+        tokenOwners[tokenId] = address(0);
+    }
+
+    function activate(per address nftContract, uint256 tokenId) public {
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+        require(tokenOwners[tokenId] == msg.sender, "SupplyChainPoC: Sender doesn't have access");
+
+        reinitialisable isActivated[tokenId] =  msg.sender;
+    }
+
+    function deactivate(per address nftContract, uint256 tokenId) public {
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+        require(tokenOwners[tokenId] == msg.sender, "SupplyChainPoC: Sender doesn't have access");
+        require(isActivated[tokenId] != address(0), "Token is not activated");
+
+        isActivated[tokenId] = address(0);
+    }
+}
