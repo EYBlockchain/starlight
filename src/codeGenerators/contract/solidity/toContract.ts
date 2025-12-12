@@ -166,7 +166,7 @@ function codeGenerator(node: any) {
       let expr = codeGenerator(node.expression);
       if (typeof expr === 'undefined' || expr === null) return '';
       let semicolon = '';
-      if (node.expression.nodeType === 'FunctionCall') {
+      if (node.expression.nodeType === 'FunctionCall' || node.expression.nodeType === 'UnaryOperation') {
         semicolon = ';';
       }
       return `${expr}${semicolon}`;
@@ -204,11 +204,11 @@ function codeGenerator(node: any) {
       return `${codeGenerator(node.expression)}(${codeGenerator(node.arguments)})`;
 
     case 'UnaryOperation':
-      if (node.operator === '!'){
+      if (node.operator === '!') {
         return `${node.operator}${codeGenerator(node.subExpression)}`;
       }
-      if (node.prefix === true) return `${node.operator}${codeGenerator(node.subExpression)};`;
-      return `${codeGenerator(node.subExpression)} ${node.operator};`;
+      if (node.prefix === true) return `${node.operator}${codeGenerator(node.subExpression)}`;
+      return `${codeGenerator(node.subExpression)}${node.operator}`;
 
     case 'EmitStatement':
       return `\t \t \t \temit ${codeGenerator(node.eventCall)};`;
