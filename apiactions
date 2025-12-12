@@ -36,6 +36,8 @@ if ! npm install; then
   exit 1
 fi
 
+echo "npm version..."
+
 npm --version
 
 # Set execute permissions
