@@ -46,6 +46,11 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Check Node and npm versions
+        run: |
+          node --version
+          npm --version
+
       - name: run zappify
         run: |
           npm ci && ./bin/start
