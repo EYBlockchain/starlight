@@ -481,7 +481,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'FunctionDefinition':
       // the main function class
-      if (node.name !== 'cnstrctr') {functionSig.push(
+      if (node.name !== 'cnstrctr') {
+        functionSig.push(
         `export class ${(node.name).charAt(0).toUpperCase() + node.name.slice(1)}Manager {
           constructor(web3) {
             this.web3 = web3;
@@ -528,14 +529,14 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         });
       }
       let publicReturns = "";
-      node.returnParameters.parameters.forEach((paramnode: any) => {
+      node.returnParameters?.parameters.forEach((paramnode: any) => {
         if (!paramnode.isSecret){
           publicReturns = "publicReturns";
         }
       });
       const decStates = node.decrementedSecretStates;
       const incStates = node.incrementedSecretStates;
-      let returnParameterNames = node.returnParameters.parameters
+      let returnParameterNames = node.returnParameters?.parameters
         .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
           .map(paramnode => (paramnode.name)) || [];
       returnParameterNames.forEach( (param, index) => {
@@ -584,7 +585,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if(rtnparams.includes('bool: bool')) {
         return {
           signature: [
-            `
+            `${functionSig}
             \n async  ${node.name}(${params} ${states}) {`,
             `\n const bool = true; \n return  { ${txReturns} ${rtnparams}, ${publicReturns} };
             \n}
@@ -1117,7 +1118,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
         };
       }
-
       return {
         statements: [
           `${returnsCallPublic}

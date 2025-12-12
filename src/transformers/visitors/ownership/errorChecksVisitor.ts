@@ -180,9 +180,9 @@ export default {
   FunctionDefinition: {
     exit(path: NodePath, state: any) {
       const { scope } = path;
-      if (path.node.stateMutability === 'pure'){
+      /*if (path.node.stateMutability === 'pure'){
         throw new TODOError(`We currently do not support pure functions.`, path.node);
-      }
+      }*/
       if (path.node.stateMutability === 'view' && path.node.body.containsSecret){
         throw new TODOError(`We currently do not support view functions that involve secret variables.`, path.node);
       }

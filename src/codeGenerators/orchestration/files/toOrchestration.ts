@@ -165,8 +165,8 @@ const prepareIntegrationApiServices = (node: any) => {
     
     let fnParam: string[] = [];
     let structparams;
-    const paramName = fn.parameters.parameters.map((obj: any) => obj.name);
-    fn.parameters.parameters.forEach(p => {
+    const paramName = fn.parameters.parameters?.map((obj: any) => obj.name);
+    fn.parameters.parameters?.forEach(p => {
       if (p.typeName.isStruct) {
         structparams = `{ ${p.typeName.properties.map(prop => `${prop.name}: req.body.${p.name}.${prop.name}`)}}`;
         fnParam.push( `const ${p.name} = ${structparams} ;\n`);
@@ -175,7 +175,7 @@ const prepareIntegrationApiServices = (node: any) => {
       }
     });
 
-    fn.parameters.modifiedStateVariables.forEach(m => {
+    fn.parameters.modifiedStateVariables?.forEach(m => {
       fnParam.push(`const ${m.name}_newOwnerPublicKey = req.body.${m.name}_newOwnerPublicKey || 0;\n`);
       paramName.push(`${m.name}_newOwnerPublicKey`);
     });
@@ -184,10 +184,15 @@ const prepareIntegrationApiServices = (node: any) => {
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
     let returnParams: string[] = [];
-    let returnParamsName = fn.returnParameters.parameters
-      .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
-        .map(paramnode => (paramnode.name)) || []; // Adapt
-    if(returnParamsName.length > 0){
+    const returnParamsName = fn.returnParameters.parameters
+      ? fn.returnParameters.parameters
+          .filter(
+            (paramnode: any) =>
+              paramnode.isSecret || paramnode.typeName.name === 'bool',
+          )
+          .map(paramnode => paramnode.name) || []
+      : null; // Adapt
+    if(returnParamsName?.length > 0){
       returnParamsName.forEach(param => {
         if(param !== 'true') 
          returnParams.push(param+'_newCommitmentValue');
@@ -197,7 +202,7 @@ const prepareIntegrationApiServices = (node: any) => {
     }
 
     let publicReturns = "";
-    fn.returnParameters.parameters.forEach((paramnode: any) => {
+    fn.returnParameters.parameters?.forEach((paramnode: any) => {
       if (!paramnode.isSecret){
         publicReturns = returnParams.length > 0 ? ", publicReturns" : "publicReturns";
       }

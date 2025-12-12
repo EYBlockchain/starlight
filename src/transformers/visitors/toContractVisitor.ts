@@ -9,6 +9,7 @@ import { VariableBinding } from '../../traverse/Binding.js';
 import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, parentnewASTPointer, internalFunctionCallVisitor } from './common.js';
 import { param } from 'express/lib/request.js';
+import { exit } from 'process';
 
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
@@ -487,13 +488,18 @@ export default {
         state.skipSubNodes=true;
         return;
       }
-      const newNode = buildNode(node.nodeType, {
-        condition: node.condition,
-        trueBody: node.trueBody,
-        falseBody: node.falseBody
-      });
+      const newNode = buildNode(node.nodeType, {});
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+    },
+
+    exit(path: NodePath) {
+      const { node, parent } = path;
+      node._newASTPointer.condition = node.condition._newASTPointer;
+      node._newASTPointer.trueBody = node.trueBody._newASTPointer;
+      node._newASTPointer.falseBody = node.falseBody
+        ? node.falseBody._newASTPointer
+        : {};
     },
   },
 
@@ -560,6 +566,15 @@ export default {
       const { operator } = node;
 
       const newNode = buildNode('BinaryOperation', { operator });
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+    },
+  },
+
+  Conditional: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('Conditional', {});
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
     },
@@ -888,11 +903,11 @@ DoWhileStatement: {
       // Like External function calls ,it's easiest (from the pov of writing this transpiler) if Event calls appear at the very start or very end of a function.
       // TODO: need a warning message to this effect ^^^
       if (parent.nodeType === 'EmitStatement') {
-      newNode = buildNode('FunctionCall');
-      node._newASTPointer = newNode;
-      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
-      return;
-    }
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+        return;
+      }
 
       if (path.isExternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
@@ -906,14 +921,14 @@ DoWhileStatement: {
        // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
        // TODO: need a warning message to this effect ^^^
       const functionReferncedNode = scope.getReferencedNode(node.expression);
-      const params = functionReferncedNode.parameters.parameters;
+      const params = functionReferncedNode.parameters?.parameters;
       state.pubparams = [];
-      if((params.length !== 0) && (params.some(node => node.isSecret || node._newASTPointer?.interactsWithSecret )))
+      if(params && (params.length !== 0) && (params.some(node => node.isSecret || node._newASTPointer?.interactsWithSecret )))
       {
         state.internalFunctionInteractsWithSecret = true;
     } else
       state.internalFunctionInteractsWithSecret = false;
-    if((params.length !== 0)) {
+    if(params && (params.length !== 0)) {
       params.forEach((node, index) => {
         if (!(node.isSecret)){
           state.pubparams ??= [];
@@ -970,18 +985,19 @@ DoWhileStatement: {
        node._newASTPointer = newNode;
        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
      }
-      if (node.kind !== 'typeConversion') {
-        newNode = buildNode('FunctionCall');
+      if (node.kind === 'typeConversion') {
+        newNode = buildNode('TypeConversion', {
+          type: node.typeDescriptions.typeString,
+        });
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
-        state.skipSubNodes = true;
         return;
       }
-      newNode = buildNode('TypeConversion', {
-        type: node.typeDescriptions.typeString,
-      });
-     node._newASTPointer = newNode;
-     parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      // add in new bytes(length)
+      newNode = buildNode('FunctionCall');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      state.skipSubNodes = true;
     },
   },
 }

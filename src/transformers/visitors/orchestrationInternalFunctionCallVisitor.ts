@@ -500,6 +500,14 @@ const internalCallVisitor = {
     })
   },
 },
+FunctionDefinition: {
+  enter(path: NodePath, state: any) {
+    const { node, parent, scope } = path;
+    if (!scope.modifiesSecretState()) {
+      state.skipSubNodes = true;
+    } 
+  },
+},
 FunctionCall: {
   enter(path: NodePath, state: any) {
     const { node, parent, scope } = path;

@@ -63,7 +63,7 @@ export default {
     exit(path: NodePath) {
       const expressionPath =
         path.getAncestorOfType('ExpressionStatement') || path.parentPath;
-      if (path.isExternalFunctionCall()) {
+      if (path.isExternalFunctionCall() || path.isInternalFunctionCall()) {
         path.markContainsPublic();
         expressionPath.traversePathsFast(markSubtreeInteractsWithPublic, {
           publicPath: path,

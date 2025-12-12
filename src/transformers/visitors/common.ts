@@ -62,7 +62,8 @@ export const interactsWithSecretVisitor = (thisPath: NodePath, thisState: any) =
 export const getIndexAccessName = (node: any) => {
   if (node.nodeType == 'MemberAccess') return `${node.expression.name}.${node.memberName}`;
   if (node.nodeType == 'IndexAccess') {
-    const mappingKeyName = NodePath.getPath(node).scope.getMappingKeyName(node);
+    const mappingKeyName =
+      NodePath.getPath(node)?.scope.getMappingKeyName(node);
     if(mappingKeyName == 'msg')
       return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}${node.indexExpression.memberName.replace('sender','Sender').replace('value','Value')}`;
     return `${node.baseExpression.name}_${(mappingKeyName).replaceAll('.', 'dot').replace('[', '_').replace(']', '')}`;

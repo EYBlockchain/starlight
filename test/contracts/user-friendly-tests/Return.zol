@@ -8,6 +8,9 @@ contract Assign {
     uint256 private b;
 
   function add( uint256 value) public  returns (uint256, uint256) {
+    if (value < 5) {
+      return (2,3);
+    }
     encrypt unknown a += value;
     return (1, 5);
   }

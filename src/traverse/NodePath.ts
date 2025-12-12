@@ -655,8 +655,6 @@ export default class NodePath {
   }
 
   isExternalContractInstance(node: any = this.node): boolean {
-    console.log("this", this);
-    console.log("node", node);
     const varDecNode = this.getReferencedNode(node);
     return this.isExternalContractInstanceDeclaration(varDecNode);
   }
@@ -664,6 +662,9 @@ export default class NodePath {
   isExternalFunctionCall(): boolean {
     if (this.nodeType !== 'FunctionCall') return false;
     const { expression: functionNode } = this.node; // the function being called
+    if (functionNode.memberName === 'encodePacked') {
+      return false;
+    }
     // The `expression` for an external function call will be a MemberAccess nodeType. myExternalContract.functionName
     if (functionNode.nodeType !== 'MemberAccess') return false;
     return this.isExternalContractInstance(functionNode.expression);
