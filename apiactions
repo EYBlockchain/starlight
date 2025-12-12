@@ -27,12 +27,16 @@ fi
 
 cd temp-zapps/$zapp
 
+
+
 # Run npm install with error checking
 echo "Running npm install..."
 if ! npm install; then
   echo "Error: npm install failed for $zapp"
   exit 1
 fi
+
+npm --version
 
 # Set execute permissions
 echo "Setting execute permissions..."
