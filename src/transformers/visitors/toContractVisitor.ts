@@ -993,7 +993,17 @@ DoWhileStatement: {
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         return;
       }
-      // add in new bytes(length)
+      if (node.expression.nodeType === 'NewExpression') {
+        newNode = buildNode('NewExpression', {
+          typeName: node.expression.typeName.name,
+          arguments: node.arguments,
+          argumentTypes: node.expression.argumentTypes,
+        });
+        node._newASTPointer = newNode;
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+        state.skipSubNodes = true;
+        return;
+      }
       newNode = buildNode('FunctionCall');
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);

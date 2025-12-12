@@ -296,6 +296,12 @@ function codeGenerator(node: any) {
       return `${expression}.${node.memberName}`;
     }
 
+    case 'NewExpression': {
+      return `new ${node.typeName}(${node.arguments
+        .map(codeGenerator)
+        .join(', ')})`;
+    }
+
     case 'IndexAccess': {
       const baseExpression = codeGenerator(node.baseExpression);
       const indexExpression = codeGenerator(node.indexExpression);
