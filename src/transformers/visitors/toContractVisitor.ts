@@ -385,42 +385,44 @@ export default {
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      let returnName : string[] =[];
-       if(path.key === 'parameters'){
-      const newNode = buildNode('ParameterList');
-      node._newASTPointer = newNode.parameters;
-      parent._newASTPointer[path.containerName] = newNode;
-    } else if(path.key === 'returnParameters'){
-       parent.body.statements.forEach(node => {
-        if(node.nodeType === 'Return'){
-          if(node.expression.nodeType === 'TupleExpression'){
-           node.expression.components.forEach(component => {
-             if(component.name){
-              returnName?.push(component.name);
+      const returnName: string[] = [];
+      if (path.key === 'parameters') {
+        const newNode = buildNode('ParameterList');
+        node._newASTPointer = newNode.parameters;
+        parent._newASTPointer[path.containerName] = newNode;
+      } else if (path.key === 'returnParameters') {
+        parent.body.statements.forEach(node => {
+          if (node.nodeType === 'Return') {
+            if (node.expression.nodeType === 'TupleExpression') {
+              node.expression.components.forEach(component => {
+                if (component.name) {
+                  returnName?.push(component.name);
+                } else returnName?.push(component.value);
+              });
+            } else if (node.expression.nodeType === 'IndexAccess') {
+              returnName?.push(
+                `${node.expression.baseExpression.name}[${node.expression.indexExpression.name}]`,
+              );
+            } else if (node.expression.name) {
+              returnName?.push(node.expression.name);
+            } else {
+              returnName?.push(node.expression.value);
             }
-             else
-             returnName?.push(component.value);
-           });
-         } else{
-           if(node.expression.name)
-            returnName?.push(node.expression.name);
-           else
-           returnName?.push(node.expression.value);
-        }
-        }
-      });
+          }
+        });
+        node.parameters.forEach((node, index) => {
+          if (node.nodeType === 'VariableDeclaration') {
+            node.name = returnName[index];
+          }
+        });
 
-    node.parameters.forEach((node, index) => {
-      if(node.nodeType === 'VariableDeclaration'){
-        node.name = returnName[index];
+        const newNode = buildNode('ParameterList');
+        node._newASTPointer = newNode.parameters;
+        parent._newASTPointer[path.containerName] = newNode;
       }
-    });
+      const fnDefNode = path.getAncestorOfType('FunctionDefinition');
+    },
 
-    const newNode = buildNode('ParameterList');
-    node._newASTPointer = newNode.parameters;
-    parent._newASTPointer[path.containerName] = newNode;
-    }
-  },
   exit(path: NodePath, state: any){
     const { node, parent, scope } = path;
     if(path.key === 'returnParameters'){
