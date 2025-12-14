@@ -148,7 +148,7 @@ function codeGenerator(node: any) {
       if(node.initialValue.nodeType === 'InternalFunctionCall'){
         if(node.interactsWithSecret) return ;
         return `
-        ${declarations} = ${initialValue.replace(/\s+/g,' ').trim()}`;
+        ${declarations} = ${initialValue.replace(/\s+/g,' ').trim()};`;
       } 
       return `
           ${declarations} = ${initialValue};`;
@@ -165,7 +165,11 @@ function codeGenerator(node: any) {
       let expr = codeGenerator(node.expression);
       if (typeof expr === 'undefined' || expr === null) return '';
       let semicolon = '';
-      if (node.expression.nodeType === 'FunctionCall' || node.expression.nodeType === 'UnaryOperation') {
+      if (
+        node.expression.nodeType === 'FunctionCall' ||
+        node.expression.nodeType === 'UnaryOperation' ||
+        node.expression.nodeType === 'InternalFunctionCall'
+      ) {
         semicolon = ';';
       }
       return `${expr}${semicolon}`;
@@ -217,15 +221,16 @@ function codeGenerator(node: any) {
       const args = node.arguments.map(codeGenerator);
       return `${expression}(${args.join(', ')})`;
     }
-    case 'InternalFunctionCall' :{
-      if(node.parameters ){
-        if(node.internalFunctionInteractsWithSecret)
-         return `\t \t \t \t ${node.name} (${node.parameters});`
-        return  `\t \t \t \t ${node.name} (${node.parameters.map(codeGenerator)});`
-      } else {
-         const args = node.arguments.map(codeGenerator);
-         return `\t \t \t \t${node.name} (${args.join(', ')});`
+    case 'InternalFunctionCall': {
+      if (node.parameters) {
+        if (node.internalFunctionInteractsWithSecret)
+          return `\t \t \t \t ${node.name} (${node.parameters})`;
+        return `\t \t \t \t ${node.name} (${node.parameters.map(
+          codeGenerator,
+        )})`;
       }
+      const args = node.arguments.map(codeGenerator);
+      return `\t \t \t \t${node.name} (${args.join(', ')})`;
     }
 
     case 'IfStatement': {
