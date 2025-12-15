@@ -219,7 +219,12 @@ function codeGenerator(node: any) {
       if (node.operator === '!') {
         return `${node.operator}${codeGenerator(node.subExpression)}`;
       }
-      if (node.prefix === true) return `${node.operator}${codeGenerator(node.subExpression)}`;
+      if (node.prefix === true) {
+        if (node.operator === 'delete') {
+          return `${node.operator} ${codeGenerator(node.subExpression)}`;
+        }
+        return `${node.operator}${codeGenerator(node.subExpression)}`;
+      }
       return `${codeGenerator(node.subExpression)}${node.operator}`;
 
     case 'EmitStatement':
