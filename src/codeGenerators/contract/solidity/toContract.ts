@@ -182,6 +182,15 @@ function codeGenerator(node: any) {
     case 'Break':
       return `break;`;
 
+    case 'Conditional': {
+      const condition = codeGenerator(node.condition);
+      const trueBody = codeGenerator(node.trueExpression);
+      const falseBody = codeGenerator(node.falseExpression);
+      return `${condition} ?
+        ${trueBody}
+      : ${falseBody}`;
+    }
+
     case 'Continue':
       return 'continue;';
 
