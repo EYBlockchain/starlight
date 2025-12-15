@@ -861,7 +861,7 @@ DoWhileStatement: {
       const { node, parent, scope } = path;
       let newNode: any;
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
-      if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
+      if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push') || node.expression.nodeType === 'MemberAccess') {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
         const subState = { interactsWithSecret: false };
         path.traversePathsFast(interactsWithSecretVisitor, subState);
