@@ -24,6 +24,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
+      - name: Check Docker version
+        run: docker --version
+
       # Runs a single command using the runners shell
       - name: compile and test
         run: |
@@ -45,6 +48,9 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '16.17.0'
+
+      - name: Check Docker version
+        run: docker --version
 
       - name: run zappify
         run: |
