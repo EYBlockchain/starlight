@@ -54,7 +54,7 @@ module.exports = {
   // contracts to filter:
   contracts: {
     // contract name:
-    CONTRACT_NAME: {
+    default: {
       treeHeight: 32,
       events: {
         // filter for the following event names:

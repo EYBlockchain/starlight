@@ -132,12 +132,10 @@ export default class BackupEncryptedDataEventListener {
           await this.reconnect();
         } else {
           console.log('[BACKUP] Subscription healthy, ID:', this.eventSubscription.id);
-          console.log('[BACKUP] Last processed block:', this.lastProcessedBlock);
           
           // Check for past events to see if we're missing any
           try {
             const currentBlock = Number(await this.web3.eth.getBlockNumber());
-            console.log('[BACKUP] Current block:', currentBlock);
             
             // Only check if we've processed at least one event
             if (this.lastProcessedBlock > 0) {
