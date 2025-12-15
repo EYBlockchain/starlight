@@ -570,7 +570,7 @@ export default {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
-      node._newASTPointer = newNode.components;
+      node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
   },
