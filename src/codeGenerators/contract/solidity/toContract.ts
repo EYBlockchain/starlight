@@ -90,7 +90,8 @@ function codeGenerator(node: any) {
         // We check that params.name is defined because otherwise this is a commitment 
         if(!params.isSecret && params.name != undefined && params.typeDescriptions.typeString != 'bool') {
           returnType.push(params.typeDescriptions.typeString);
-          returnParams.push(params.name);
+          if (params.name === "") returnParams.push("\"\"");
+          else returnParams.push(params.name);
         }
       })
       const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} ${returnType.length > 0 ? `returns (${returnType})`: ``}{`;
