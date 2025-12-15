@@ -296,7 +296,10 @@ function codeGenerator(node: any) {
       return codeGenerator(node.typeName);
 
     case 'ElementaryTypeName':
-      return node.typeDescriptions.typeString;
+      if (node.typeDescriptions.typeString) {
+        return node.typeDescriptions.typeString;
+      }
+      return node.name;
 
     case 'MsgSender':
       return 'msg.sender';

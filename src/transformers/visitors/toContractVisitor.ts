@@ -964,6 +964,7 @@ DoWhileStatement: {
        });
        node._newASTPointer = newNode;
        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+       state.skipSubNodes = true;
        return;
       }
 
