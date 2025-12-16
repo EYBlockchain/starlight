@@ -582,10 +582,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           statements: lines,
         };
       }
-      if(rtnparams.includes('bool: bool')) {
+      if (rtnparams.includes('bool: bool')) {
         return {
           signature: [
-            `
+            `${functionSig}
             \n async  ${node.name}(${params} ${states}) {`,
             `\n const bool = true; \n return  { ${txReturns} ${rtnparams}, ${publicReturns} };
             \n}
