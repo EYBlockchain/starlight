@@ -572,6 +572,15 @@ export default {
     },
   },
 
+  Conditional: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('Conditional', {});
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+    },
+  },
+
   TupleExpression: {
     enter(path: NodePath) {
       const { node, parent } = path;
