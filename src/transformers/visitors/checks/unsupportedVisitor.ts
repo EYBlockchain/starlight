@@ -59,15 +59,6 @@ export default {
     },
   },
 
-  WhileStatement: {
-    enter(node: any) {
-      throw new ZKPError(
-        'While statements are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.',
-        node,
-      );
-    },
-  },
-
   IfStatement: {
     enter(node: any) {
       if (['Identifier', 'Literal'].includes(node.condition.nodeType))
