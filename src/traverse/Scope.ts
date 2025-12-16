@@ -237,7 +237,11 @@ export class Scope {
           referencedIndicator.update(path);
         }
 
-        if (!referencedNode.stateVariable && referencedNode.nodeType !== 'FunctionDefinition') {
+        if (
+          !referencedNode.stateVariable &&
+          referencedNode.nodeType !== 'FunctionDefinition' &&
+          functionDefScope.indicators[referencedId]
+        ) {
           functionDefScope.indicators[referencedId].update(path);
         }
 
