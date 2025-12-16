@@ -220,6 +220,8 @@ export default {
       // bindings are contract scope level, so we track global states here
       const { scope } = path;
 
+      state.contractName = path.node.name;
+
       for (const [, binding] of Object.entries(scope.bindings)) {
         if (!(binding instanceof VariableBinding)) continue;
         binding.prelimTraversalErrorChecks();

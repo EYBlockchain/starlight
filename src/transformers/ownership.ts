@@ -13,6 +13,8 @@ function transformation1(ast: any, options?: any) {
     stopTraversal: false,
     skipSubNodes: false,
     options,
+    isContractPublic: undefined,
+    contractName: undefined,
   };
 
   // We'll start by calling the traverser function with our ast and a visitor.
@@ -20,16 +22,21 @@ function transformation1(ast: any, options?: any) {
   ast.traverse(explode(ownershipVisitor), state);
   logger.verbose('Performing final error checks on the zol AST...');
   ast.traverse(explode(errorChecksVisitor), state);
+  const { isContractPublic, contractName } = state;
 
   // At the end of our transformer function we'll return the new ast that we
   // just created.
-  return ast;
+  return { ast, isContractPublic, contractName };
 }
 
 // A transformer function which will accept an ast.
 export default function ownership(astPath: any, options?: any) {
   logger.verbose('Performing ownership checks on the zol AST...');
-  const updatedASTPath = transformation1(astPath, options);
+  const {
+    ast: updatedASTPath,
+    isContractPublic,
+    contractName,
+  } = transformation1(astPath, options);
   logger.verbose('Owners assigned.');
-  return updatedASTPath;
+  return { updatedASTPath, isContractPublic, contractName };
 }

@@ -8,7 +8,28 @@ import codeGenerator from '../codeGenerators/contract/solidity/toContract.js';
 import { transformation1 } from './visitors/common.js';
 
 // A transformer function which will accept an ast.
-export default function toContract(ast: object, options: any) {
+export default function toContract(
+  ast: object,
+  options: any,
+  isContractPublic: boolean,
+  contractName: string,
+) {
+  if (isContractPublic) {
+    // If the contract is fully public, we copy the original contract into the shield contract
+    const shieldFileName = `${contractName}Shield.sol`;
+    const shieldContractFilePath = `${options.contractsDirPath}/${shieldFileName}`;
+    fs.copyFileSync(options.inputFilePath, shieldContractFilePath);
+    
+    // Replace all instances of the contract name with contractNameShield
+    let fileContent = fs.readFileSync(shieldContractFilePath, 'utf8');
+    // Use word boundaries to replace the contract name everywhere it appears
+    const contractNameRegex = new RegExp(`\\b${contractName}\\b`, 'g');
+    fileContent = fileContent.replace(contractNameRegex, `${contractName}Shield`);
+    fs.writeFileSync(shieldContractFilePath, fileContent);
+    
+    return;
+  }
+
   // transpile to a contract AST:
     const state = {
     stopTraversal: false,
