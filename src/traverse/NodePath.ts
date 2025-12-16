@@ -655,7 +655,8 @@ export default class NodePath {
 
   isExternalContractInstance(node: any = this.node): boolean {
     const varDecNode = this.getReferencedNode(node);
-    return this.isExternalContractInstanceDeclaration(varDecNode);
+    if (varDecNode) return this.isExternalContractInstanceDeclaration(varDecNode);
+    return this.isExternalContractInstanceDeclaration();
   }
 
   isExternalFunctionCall(): boolean {
