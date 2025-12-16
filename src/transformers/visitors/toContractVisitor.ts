@@ -795,8 +795,16 @@ DoWhileStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
       const { name } = node;
-
-      const newNode = buildNode('Identifier', { name });
+      const contractName =
+        path.getAncestorOfType('ContractDefinition')?.node.name;
+      let newNode;
+      if (
+        node.typeDescriptions.typeString === `type(contract ${contractName})`
+      ) {
+        newNode = buildNode('Identifier', { name: `${name}Shield` });
+      } else {
+        newNode = buildNode('Identifier', { name });
+      }
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
