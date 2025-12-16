@@ -9,6 +9,7 @@ import { VariableBinding } from '../../traverse/Binding.js';
 import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, parentnewASTPointer, internalFunctionCallVisitor } from './common.js';
 import { param } from 'express/lib/request.js';
+import { exit } from 'process';
 
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
@@ -488,13 +489,18 @@ export default {
         state.skipSubNodes=true;
         return;
       }
-      const newNode = buildNode(node.nodeType, {
-        condition: node.condition,
-        trueBody: node.trueBody,
-        falseBody: node.falseBody
-      });
+      const newNode = buildNode(node.nodeType, {});
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+    },
+
+    exit(path: NodePath) {
+      const { node, parent } = path;
+      node._newASTPointer.condition = node.condition._newASTPointer;
+      node._newASTPointer.trueBody = node.trueBody._newASTPointer;
+      node._newASTPointer.falseBody = node.falseBody
+        ? node.falseBody._newASTPointer
+        : {};
     },
   },
 
