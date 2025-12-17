@@ -882,11 +882,11 @@ DoWhileStatement: {
       // Like External function calls ,it's easiest (from the pov of writing this transpiler) if Event calls appear at the very start or very end of a function.
       // TODO: need a warning message to this effect ^^^
       if (parent.nodeType === 'EmitStatement') {
-      newNode = buildNode('FunctionCall');
-      node._newASTPointer = newNode;
-      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
-      return;
-    }
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+        return;
+      }
 
       if (path.isExternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
@@ -964,18 +964,29 @@ DoWhileStatement: {
        node._newASTPointer = newNode;
        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
      }
-      if (node.kind !== 'typeConversion') {
-        newNode = buildNode('FunctionCall');
+      if (node.kind === 'typeConversion') {
+        newNode = buildNode('TypeConversion', {
+          type: node.typeDescriptions.typeString,
+        });
+        node._newASTPointer = newNode;
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+        return;
+      }
+      if (node.expression.nodeType === 'NewExpression') {
+        newNode = buildNode('NewExpression', {
+          typeName: node.expression.typeName.name,
+          arguments: node.arguments,
+          argumentTypes: node.expression.argumentTypes,
+        });
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         state.skipSubNodes = true;
         return;
       }
-      newNode = buildNode('TypeConversion', {
-        type: node.typeDescriptions.typeString,
-      });
-     node._newASTPointer = newNode;
-     parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      newNode = buildNode('FunctionCall');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      state.skipSubNodes = true;
     },
   },
 }
