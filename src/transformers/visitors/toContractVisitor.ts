@@ -393,9 +393,15 @@ export default {
                 } else returnName?.push(component.value);
               });
             } else if (node.expression.nodeType === 'IndexAccess') {
-              returnName?.push(
-                `${node.expression.baseExpression.name}[${node.expression.indexExpression.name}]`,
-              );
+              if (node.expression.baseExpression.nodeType === 'IndexAccess') {
+                returnName?.push(
+                  `${node.expression.baseExpression.baseExpression.name}[${node.expression.baseExpression.indexExpression.name}][${node.expression.indexExpression.name}]`,
+                );
+              } else {
+                returnName?.push(
+                  `${node.expression.baseExpression.name}[${node.expression.indexExpression.name}]`,
+                );
+              }
             } else if (node.expression.name) {
               returnName?.push(node.expression.name);
             } else {
