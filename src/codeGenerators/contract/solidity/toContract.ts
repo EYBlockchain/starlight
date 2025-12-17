@@ -95,9 +95,8 @@ function codeGenerator(node: any) {
       const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} ${returnType.length > 0 ? `returns (${returnType})`: ``}{`;
       let body = codeGenerator(node.body);
       let msgSigCheck = body.slice(body.indexOf('bytes4 sig'), body.indexOf('verify') )
-      if(!node.msgSigRequired)
-        body = body.replace(msgSigCheck, ' ');
-    return `
+      if (!node.msgSigRequired) body = body.replace(msgSigCheck, ' ');
+      return `
       ${functionSignature}
 
         ${body}
@@ -173,10 +172,9 @@ function codeGenerator(node: any) {
     }
 
     case 'Return':
-
       return ` `;
 
-    case 'Break': 
+    case 'Break':
       return `break;`;
 
     case 'Continue':
@@ -230,37 +228,35 @@ function codeGenerator(node: any) {
       }
     }
 
-
-    case 'IfStatement':
-      {
-        let trueStatements: any = ``;
-        let falseStatements: any= ``;
-        let initialStatements: any= codeGenerator(node.condition);
-        for (let i =0; i<node.trueBody.statements.length; i++) {
-          trueStatements+= `
-          ${codeGenerator(node.trueBody.statements[i])}`
+    case 'IfStatement': {
+      let trueStatements: any = ``;
+      let falseStatements: any = ``;
+      const initialStatements: any = codeGenerator(node.condition);
+      for (let i = 0; i < node.trueBody.statements.length; i++) {
+        trueStatements += `
+          ${codeGenerator(node.trueBody.statements[i])}`;
+      }
+      if (node.falseBody.statements) {
+        for (let j = 0; j < node.falseBody.statements.length; j++) {
+          falseStatements += `
+          ${codeGenerator(node.falseBody.statements[j])}`;
         }
-        if(node.falseBody.statements) {
-        for (let j =0; j<node.falseBody.statements.length; j++) {
-          falseStatements+= `
-          ${codeGenerator(node.falseBody.statements[j])}`
-          }
-        }
-        if(node.falseBody.condition) {
-          falseStatements+= `${codeGenerator(node.falseBody)}`;
-        }
-        if(falseStatements!==``)
+      }
+      if (node.falseBody.condition) {
+        falseStatements += `${codeGenerator(node.falseBody)}`;
+      }
+      if (falseStatements !== ``)
         return `if (${initialStatements}) {
           ${trueStatements}
         }
           else {
           ${falseStatements} 
           }`;
-          else
-          return `if (${initialStatements}) {
+      return `if (${initialStatements}) {
           ${trueStatements} 
         }`;
-      }
+    }
+
     case 'ForStatement': {
       const initializationExpression = codeGenerator(node.initializationExpression);
       const condition = codeGenerator(node.condition);

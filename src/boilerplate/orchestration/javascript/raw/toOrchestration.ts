@@ -481,7 +481,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
 
     case 'FunctionDefinition':
       // the main function class
-      if (node.name !== 'cnstrctr') {functionSig.push(
+      if (node.name !== 'cnstrctr') {
+        functionSig.push(
         `export class ${(node.name).charAt(0).toUpperCase() + node.name.slice(1)}Manager {
           constructor(web3) {
             this.web3 = web3;
@@ -1117,7 +1118,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           ],
         };
       }
-
       return {
         statements: [
           `${returnsCallPublic}
