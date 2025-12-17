@@ -859,7 +859,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\nimport { KeyManager } from './common/key-management/KeyManager.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { generalise } from "general-number";\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAccessDataCommitments, getAllCommitments, getCommitmentsByState, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\nimport { KeyManager } from './common/key-management/KeyManager.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -925,6 +925,149 @@ integrationApiServicesBoilerplate = {
         }
       }
 
+      export async function service_viewData(req, res, next) {
+        try {
+          const {
+            name,
+            mappingKey,
+            domainParameters,
+            fieldName,
+            accessId,
+            history, //todo: should be picked from accessData commitment
+          } = req.body;
+          console.log({ name, mappingKey, fieldName, accessId, 
+            history 
+            });
+          // if user has direct access to data get the commitment
+          let ownDataCommitment = await getCommitmentsByState(
+            name,
+            mappingKey,
+            req.saasContext?.accountId,
+            domainParameters
+          );
+          console.log(ownDataCommitment.length);
+          // if (!history) {
+          // 	ownDataCommitment = ownDataCommitment.filter(
+          // 		(c) => c.isNullified === false
+          // 	);
+          // }
+          ownDataCommitment = ownDataCommitment.map((c) => ({
+            ...c,
+            // name: c.name,
+            // mappingKey: c.mappingKey,
+            // domainParameters: c.domainParameters,
+            // isNullified: c.isNullified,
+            preimage: {
+              value: fieldName
+                ? { [fieldName]: generalise(c.preimage.value[fieldName]) }
+                : generalise(c.preimage.value),
+            },
+          }));
+
+          const authorizedCommitments = ownDataCommitment;
+          // check if accessData commitment exists for this user
+          const keyManager = KeyManager.getInstance();
+          let keys = await keyManager.getKeys(req.saasContext);
+          console.log("keys:", keys);
+          const viewer = keys?.ethPK;
+          console.log({ viewer });
+
+          let accessDataCommitment = await getAccessDataCommitments(
+            viewer,
+            name,
+            mappingKey,
+            fieldName,
+            domainParameters
+          );
+
+          console.log({ accessDataCommitmentLength: accessDataCommitment.length });
+          if (accessDataCommitment.length > 0) {
+            // fetch data commitments for each accessData commitment
+            const query = {
+              domainParameters: accessDataCommitment[0].domainParameters,
+              name: generalise(accessDataCommitment[0].preimage.value.stateVarName)
+                .utf8,
+              mappingKey: accessDataCommitment[0].preimage.value.mappingKey,
+              fieldName : generalise(accessDataCommitment[0].preimage.value.fieldName).utf8,
+              history : accessDataCommitment[0].preimage.value.history === '1',
+            };
+            
+            console.log(query);
+
+            // accessData commitment found, now return the authorized data
+            let dataCommitment = await getCommitmentsByState(
+              query.name,
+              query.mappingKey,
+              null,
+              query.domainParameters
+            );
+            // remove nullified commitments if history access not granted
+            if (!query.history) {
+              dataCommitment = dataCommitment.filter((c) => c.isNullified === false);
+            }
+            dataCommitment = dataCommitment.map((c) => ({
+              ...c,
+              // name: c.name,
+              // mappingKey: c.mappingKey,
+              // domainParameters: c.domainParameters,
+              // isNullified: c.isNullified,
+              preimage: {
+                value: query.fieldName // share only field name if specified in accessData
+                  ? {[query.fieldName]: generalise(c.preimage.value[query.fieldName]),}
+                  : generalise(c.preimage.value),
+              },
+            }));
+            authorizedCommitments.push(...dataCommitment);
+          }
+          console.log( authorizedCommitments.length);
+          if(authorizedCommitments.length === 0){
+            throw new Error('No access or No data found for the provided parameters.');
+          }
+          
+          // remove history if not requested for
+          const filteredCommitments = [];
+          authorizedCommitments.forEach((commitment) => {
+            console.log("Processing commitment with _id:", commitment._id);
+            console.log("filteredCommitments.length", filteredCommitments.length);
+            if(filteredCommitments.some((c) => c.hash === commitment._id)){
+              console.log("Duplicate commitment found, skipping:", commitment._id);
+              return; // skip duplicates
+            }
+            
+            if (history || !commitment.isNullified) {
+              filteredCommitments.push({
+                // include only data fields and requested field in preimage
+                hash:commitment._id,
+                name:commitment.name, 
+                mappingKey:commitment.mappingKey,
+                domainParameters:commitment.domainParameters, 
+                isNullified:commitment.isNullified,
+                preimage:{
+                  value: (fieldName? 
+                    {[fieldName]: commitment.preimage.value[fieldName]} : 
+                    commitment.preimage.value)
+                },
+                // other fields if any like timestamp, blockNumber etc.
+              });
+            }
+          });
+          res.send({
+            success: true,
+            // query: {
+            // 	name,
+            // 	mappingKey,
+            // 	domainParameters,
+            // 	fieldName,
+            // 	accessId,
+            // 	history,
+            // },
+            data: filteredCommitments,
+          });
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }
 
       export async function service_getCommitmentsByState(req, res, next) {
         try {
@@ -1264,11 +1407,12 @@ integrationApiRoutesBoilerplate = {
     return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, service_deployNFT, } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_viewData, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, service_deployNFT, } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
+    router.post("/viewData", service_viewData);
     router.post("/getCommitmentsByVariableName", service_getCommitmentsByState);
     router.get("/getBalance", service_getBalance);
     router.post("/getBalanceByState", service_getBalanceByState);

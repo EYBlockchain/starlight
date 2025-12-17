@@ -113,6 +113,44 @@ export async function getCurrentWholeCommitment(id, accountId) {
   return commitment;
 }
 
+export async function getAccessDataCommitments(
+  viewer,
+  stateVarName,
+  mappingKey = null,
+  fieldName = null,
+  domainParameters = null,
+) {
+  const query = {
+    name: 'accessData',
+    isNullified: false,
+    'preimage.value.viewer': generalise(viewer).integer,
+    'preimage.value.stateVarName': generalise(stateVarName).integer,
+    ...(!!mappingKey && {
+      'preimage.value.mappingKey': generalise(mappingKey).integer,
+    }),
+    ...(!!fieldName && {
+      'preimage.value.fieldName': generalise(fieldName).integer,
+    }),
+    // todo: add check for who granted the access.
+  };
+  console.log({ query });
+  // Add domain parameter filters if provided
+  if (domainParameters) {
+    for (const [key, value] of Object.entries(domainParameters)) {
+      query[`domainParameters.${key}`] = generalise(value).integer;
+    }
+  }
+  console.log({ query });
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+
+  const commitments = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find(query)
+    .toArray();
+  return commitments;
+}
+
 // function to retrieve commitment with a specified stateName
 export async function getCommitmentsByState(name, mappingKey = null, accountId = null, domainParameters = null) {
   const connection = await mongo.connection(MONGO_URL);
