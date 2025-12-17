@@ -302,6 +302,19 @@ export function buildNode(nodeType: string, fields: any = {}): any {
         }),
       });
     }
+    case 'NewExpression': {
+      const {
+        typeName = {},
+        arguments: args = {},
+        argumentTypes = {},
+      } = fields;
+      return {
+        nodeType,
+        typeName,
+        arguments: args,
+        argumentTypes,
+      };
+    }
     case 'VariableDeclarationStatement': {
       const { declarations = [], initialValue = {} } = fields;
       return {
