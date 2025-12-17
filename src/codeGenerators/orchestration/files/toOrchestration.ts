@@ -351,6 +351,7 @@ node.stateVariables?.forEach(
             publicKey: self.publicKey,
           },
           secretKey: self.secretKey,
+          blockNumber: Number(tx.blockNumber),
           isNullified: false,
         });
         console.log('Added commitment', newCommitment.hex(32));
@@ -400,6 +401,7 @@ node.stateVariables?.forEach(
             publicKey: self.publicKey,
           },
           secretKey: self.secretKey,
+          blockNumber: Number(tx.blockNumber),
           isNullified: false,
         });
         console.log('Added commitment', newCommitment.hex(32));
@@ -838,6 +840,7 @@ const prepareBackupVariable = (node: any) => {
             publicKey: kp.publicKey,
           },
           secretKey: kp.secretKey,
+          blockNumber: Number(tx.blockNumber),
           isNullified: isNullified,
         });
       }
@@ -1051,6 +1054,7 @@ const prepareBackupDataRetriever = (node: any) => {
               publicKey: kp.publicKey,
             },
             secretKey: kp.secretKey,
+            blockNumber: Number(tx.blockNumber),
             isNullified: isNullified,
           });
         }

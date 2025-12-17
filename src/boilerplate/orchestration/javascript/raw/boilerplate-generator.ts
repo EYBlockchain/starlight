@@ -717,6 +717,7 @@ sendTransaction = {
               \tpublicKey: ${stateName}_newOwnerPublicKey,
             },
             secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
+            blockNumber: Number(tx.blockNumber),
             isNullified: false,
           }, SAAS_CONTEXT_PARAM);` + errorCatch];
         case 'decrement':
@@ -736,6 +737,7 @@ sendTransaction = {
                 \tpublicKey: ${stateName}_newOwnerPublicKey,
               },
               secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
+              blockNumber: Number(tx.blockNumber),
               isNullified: false,
             }, SAAS_CONTEXT_PARAM);`+ errorCatch];
         case 'whole':
@@ -775,6 +777,7 @@ sendTransaction = {
                     \tpublicKey: ${stateName}_newOwnerPublicKey,
                   },
                   secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
+                  blockNumber: Number(tx.blockNumber),
                   isNullified: false,
                 }, ${stateName}_recipientContext);` + errorCatch];
           }

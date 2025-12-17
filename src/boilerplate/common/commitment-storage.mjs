@@ -52,6 +52,7 @@ export function formatCommitment (commitment, context) {
       isNullified: commitment.isNullified,
       nullifier: commitment.secretKey ? nullifierHash.hex(32) : null,
       accountId: context?.accountId || null,
+      blockNumber: commitment.blockNumber || null,
     }
     logger.debug(`Storing commitment ${data._id}${context?.accountId ? ` for accountId: ${context.accountId}` : ''}${domainParameters ? ` with domain parameters: ${JSON.stringify(domainParameters)}` : ''}`)
   } catch (error) {
@@ -65,7 +66,8 @@ export function formatCommitment (commitment, context) {
 export async function persistCommitment (data) {
   const connection = await mongo.connection(MONGO_URL)
   const db = connection.db(COMMITMENTS_DB)
-  return db.collection(COMMITMENTS_COLLECTION).insertOne(data)
+  const doc = { ...data, createdAt: new Date() };
+  return db.collection(COMMITMENTS_COLLECTION).insertOne(doc);
 }
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment (commitment, context) {
@@ -221,7 +223,7 @@ export async function updateCommitment(commitment, updates) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { _id: commitment._id };
-  const update = { $set: updates };
+  const update = { $set: { ...updates, updatedAt: new Date() } };
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
@@ -240,6 +242,7 @@ export async function markNullified(commitmentHash, secretKey = null) {
     $set: {
       isNullified: true,
       nullifier: generalise(nullifier).hex(32),
+      updatedAt: new Date(),
     },
   };
   // updating the original tree

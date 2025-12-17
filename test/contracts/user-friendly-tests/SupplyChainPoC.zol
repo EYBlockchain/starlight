@@ -6,12 +6,19 @@ import "./Escrow-imports/IERC721.sol";
 
 contract SupplyChainPoC {
 
+    struct AccessData{
+        uint256 tokenId;
+        uint256 role;
+        address viewer;
+    }
     // Domain parameter: nftContract
     // This allows tracking tokens from multiple NFT contracts
     // Each nftContract address creates a separate cryptographic namespace
     secret mapping(uint256 => address) per(address nftContract) public tokenOwners;
+    secret mapping(uint256 => address) per(address nftContract) public minter;
     secret mapping(uint256 => address) per(address nftContract) public isActivated;
     secret mapping(address => address) per(address nftContract) public approvals;
+    secret mapping(uint256 => AccessData) per(address nftContract) public accessData;
 
     // No hardcoded ERC721 instance for operations that involve the tokenized asset - we use the nftContract parameter directly
     // This allows the escrow to work dynamically with any ERC721 contract
@@ -28,7 +35,7 @@ contract SupplyChainPoC {
 
         bool success = nft.transferFrom(msg.sender, address(this), tokenId);
         require(success, "SupplyChainPoC: ERC721 transfer failed");
-
+        minter[tokenId] = msg.sender;
         reinitialisable tokenOwners[tokenId] = msg.sender;
     }
 
@@ -37,7 +44,7 @@ contract SupplyChainPoC {
         require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
         require(tokenOwners[tokenId] == msg.sender);
         require(recipient != address(0), "SupplyChainPoC: transfer to the zero address");
-        
+        minter[tokenId] = minter[tokenId];
         tokenOwners[tokenId] = recipient;
         isActivated[tokenId] =  recipient;
     }
@@ -91,5 +98,21 @@ contract SupplyChainPoC {
         require(isActivated[tokenId] != address(0), "Token is not activated");
 
         isActivated[tokenId] = address(0);
+    }
+
+    function grantAccess(per address nftContract, secret uint256 accessId,  secret address accessAddress, secret uint256 tokenId,  secret uint256 role) public {
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+
+        accessData[accessId].tokenId=tokenId;
+        accessData[accessId].role=role;
+        accessData[accessId].viewer=accessAddress;
+    }
+ 
+    function revokeAccess(per address nftContract,secret uint256 accessId) public {
+        require(nftContract != address(0), "SupplyChainPoC: invalid nftContract");
+       
+        accessData[accessId].tokenId=0;
+        accessData[accessId].role=0;
+        accessData[accessId].viewer=address(0);
     }
 }
