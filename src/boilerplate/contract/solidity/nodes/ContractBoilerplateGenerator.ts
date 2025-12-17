@@ -114,68 +114,69 @@ class ContractBoilerplateGenerator {
       let paramtype: string;
       let params : any[];
       let functionName: string;
-
-      for ([functionName, parameterList] of Object.entries(circuitParams)) {
-        for ([paramtype, params] of Object.entries(parameterList)){
-        const returnpara = {};
-        if(paramtype  === 'returnParameters'){
-          returnpara[ paramtype ] = params;
-          delete parameterList[ paramtype ];
-        }
-        const newList: string[] = [];
-        
-        params?.forEach(circuitParamNode => {
-          switch (circuitParamNode.bpType) {
-            case 'nullification':
-              if (circuitParamNode.isNullified) {
-                newList.push('nullifier');
-              } else {
-                // we use a nullification node for accessed, not nullified, states
-                newList.push('checkNullifier')
-              }
-              break;
-            case 'newCommitment':
-              newList.push(circuitParamNode.bpType);
-              break;
-            case 'oldCommitmentExistence':
-              if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
-              break;
-            case 'encryption':
-              
-              returnpara['encryptionParameters'] ??= [];
-              returnpara['encryptionParameters'].push(circuitParamNode.bpType);
-              break;
-            case undefined: {
-              if (
-                circuitParamNode.nodeType === 'VariableDeclaration' &&
-                !circuitParamNode.isPrivate &&
-                !newList.some(str => str === circuitParamNode.name)
-              ){
-                if (circuitParamNode.typeName?.members) {
-                  newList.push(...circuitParamNode.typeName.members.map(m => `${circuitParamNode.name}.${m.name}`));
-                  break;
-                } else if (circuitParamNode.typeName?.name.includes(`[`)) {
-                  // TODO arrays of structs/structs of arrays/more robust soln
-                  const arrayLen = circuitParamNode.typeName?.name.match(/(?<=\[)(\d+)(?=\])/);
-                  for (let index = 0; index < +arrayLen[0]; index++) {
-                    newList.push(`${circuitParamNode.name}[${index}]`);
+      if (circuitParams) {
+        for ([functionName, parameterList] of Object.entries(circuitParams)) {
+          for ([paramtype, params] of Object.entries(parameterList)) {
+            const returnpara = {};
+            if(paramtype  === 'returnParameters'){
+              returnpara[ paramtype ] = params;
+              delete parameterList[ paramtype ];
+            }
+            const newList: string[] = [];
+            
+            params?.forEach(circuitParamNode => {
+              switch (circuitParamNode.bpType) {
+                case 'nullification':
+                  if (circuitParamNode.isNullified) {
+                    newList.push('nullifier');
+                  } else {
+                    // we use a nullification node for accessed, not nullified, states
+                    newList.push('checkNullifier')
                   }
                   break;
-                } else newList.push(circuitParamNode.name);
-              }
-            }
-            break;
+                case 'newCommitment':
+                  newList.push(circuitParamNode.bpType);
+                  break;
+                case 'oldCommitmentExistence':
+                  if (!newList.includes(circuitParamNode.bpType)) newList.push(circuitParamNode.bpType);
+                  break;
+                case 'encryption':
+                  
+                  returnpara['encryptionParameters'] ??= [];
+                  returnpara['encryptionParameters'].push(circuitParamNode.bpType);
+                  break;
+                case undefined: {
+                  if (
+                    circuitParamNode.nodeType === 'VariableDeclaration' &&
+                    !circuitParamNode.isPrivate &&
+                    !newList.some(str => str === circuitParamNode.name)
+                  ){
+                    if (circuitParamNode.typeName?.members) {
+                      newList.push(...circuitParamNode.typeName.members.map(m => `${circuitParamNode.name}.${m.name}`));
+                      break;
+                    } else if (circuitParamNode.typeName?.name.includes(`[`)) {
+                      // TODO arrays of structs/structs of arrays/more robust soln
+                      const arrayLen = circuitParamNode.typeName?.name.match(/(?<=\[)(\d+)(?=\])/);
+                      for (let index = 0; index < +arrayLen[0]; index++) {
+                        newList.push(`${circuitParamNode.name}[${index}]`);
+                      }
+                      break;
+                    } else newList.push(circuitParamNode.name);
+                  }
+                }
+                break;
 
-            default:
-              break;
+                default:
+                  break;
+              }
+            });
+            parameterList[ paramtype ] = newList;
+            parameterList = {...parameterList, ...returnpara};    
           }
-        });
-        parameterList[ paramtype ] = newList;
-        parameterList = {...parameterList, ...returnpara};    
+          circuitParams[ functionName ] = parameterList;
+        }
       }
-     circuitParams[ functionName ] = parameterList;
-     
-    }
+      
       const constructorContainsSecret = Object.values(this.scope.bindings).some((binding: any) => binding.node.kind === 'constructor');
       return { nullifiersRequired, oldCommitmentAccessRequired, newCommitmentsRequired, containsAccessedOnlyState, encryptionRequired, constructorContainsSecret, circuitParams, isjoinSplitCommitmentsFunction};
     },
