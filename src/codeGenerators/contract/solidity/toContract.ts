@@ -83,16 +83,15 @@ function codeGenerator(node: any) {
           break;
 
       }
-
       // add any public return here,
       node.returnParameters.parameters.forEach(params => {
         // We check that params.name is defined because otherwise this is a commitment 
-        if(!params.isSecret && params.name != undefined && params.typeDescriptions.typeString != 'bool') {
+        if(!params.isSecret && params.name != undefined) {
           returnType.push(params.typeDescriptions.typeString);
           if (params.name === "") returnParams.push("\"\"");
           else returnParams.push(params.name);
         }
-      })
+      });
       const functionSignature = `${functionType} (${codeGenerator(node.parameters)}) ${node.visibility} ${node.stateMutability} ${returnType.length > 0 ? `returns (${returnType})`: ``}{`;
       let body = codeGenerator(node.body);
       let msgSigCheck = body.slice(body.indexOf('bytes4 sig'), body.indexOf('verify') )
