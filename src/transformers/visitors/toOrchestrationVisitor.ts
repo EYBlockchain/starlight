@@ -580,10 +580,9 @@ const visitor = {
             );
           }
         }
-
       } else {
         state.skipSubNodes = true;
-      }  
+      } 
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
@@ -597,7 +596,6 @@ const visitor = {
           );
         }
       }
-  
     },
 
     exit(path: NodePath, state: any) {
@@ -1350,9 +1348,13 @@ const visitor = {
   },
 
   Block: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
-
+      const fnDefPath = path.getAncestorOfType('FunctionDefinition');
+      if (fnDefPath && !fnDefPath.scope.modifiesSecretState()) {
+        state.skipSubNodes = true;
+        return;
+      }
       // ts complains if I don't include a number in this list
       if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
         node._newASTPointer = parent._newASTPointer[path.containerName];
@@ -1518,7 +1520,7 @@ const visitor = {
       if (node.expression.nodeType === 'Assignment' || node.expression.nodeType === 'UnaryOperation') {
         let { leftHandSide: lhs } = node.expression;
         if (!lhs) lhs = node.expression.subExpression;
-       indicator = scope.getReferencedIndicator(lhs, true);
+        indicator = scope.getReferencedIndicator(lhs, true);
 
         let name = indicator.isMapping
           ? indicator.name
