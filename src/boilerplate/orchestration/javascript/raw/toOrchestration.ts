@@ -719,7 +719,10 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               }));
         }
       }
-      if (node.isConstructor) lines.push(`\nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`)
+      if (node.isConstructor)
+        lines.push(
+          `\nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`,
+        );
       return {
         statements: [
           `\n// Write new commitment preimage to db: \n`,
@@ -1079,10 +1082,13 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           statements: [
             `\n\n// Save transaction for the constructor:
             \nconst tx = { ${lines}};
+            \n if (!fs.existsSync("/app/orchestration/common/db")) {
+		        \n    fs.mkdirSync("/app/orchestration/common/db", { recursive: true });
+	          \n }
             \nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`
-          ]
-        }
-      } 
+          ],
+        };
+      }
 
       if (node.publicInputs[0]) {
         node.publicInputs.forEach((input: any) => {
