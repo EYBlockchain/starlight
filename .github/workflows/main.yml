@@ -39,12 +39,24 @@ jobs:
 
   test-zapp:
     runs-on: ubuntu-latest
+    
+    env:
+      NODE_OPTIONS: "--max-old-space-size=3072"
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
         with:
           node-version: '16.17.0'
+
+      - name: Check system resources
+        run: |
+          echo "=== Memory Info ==="
+          free -h
+          echo "=== Disk Space ==="
+          df -h
+          echo "=== CPU Info ==="
+          nproc
 
       - name: run zappify
         run: |

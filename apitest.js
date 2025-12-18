@@ -121,6 +121,8 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
     }
     // Clean up and re-throw
     shell.exec('docker compose -f docker-compose.zapp.yml down -v');
+    // Also clean node_modules on failure
+    shell.exec('rm -rf node_modules', { silent: true });
     shell.cd('../..');
     throw error;
   }
@@ -141,7 +143,19 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
     shell.echo('docker stop failed');
     shell.exit(1);
   }
+  
+  // Clean up node_modules to free memory for next ZApp
+  console.log(`Cleaning up node_modules for ${zappName}...`);
+  shell.exec('rm -rf node_modules', { silent: true });
+  
   shell.cd('../..');
+  
+  // Force garbage collection if available
+  if (global.gc) {
+    console.log('Running garbage collection...');
+    global.gc();
+  }
+  
   await new Promise(resolve => {
     setTimeout(resolve, 5000);
   });
