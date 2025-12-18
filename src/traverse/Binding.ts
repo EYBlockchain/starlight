@@ -599,17 +599,7 @@ export class VariableBinding extends Binding {
         }
       }
     }
-    // mapping[key] = msg.sender is owned by msg.sender => look for mapping[key] = 0
-    // OR owner is some value (admin = address) => look for admin = 0
-    if (
-      ownerNode.name === 'msg' &&
-      ownerNode.mappingOwnershipType === 'value'
-    ) {
-      // the owner is represented by the mapping value - we look through the modifyingPaths for 0
-      this.searchModifyingPathsForZero();
-    } else if (ownerBinding && ownerBinding instanceof VariableBinding) {
-      ownerBinding.searchModifyingPathsForZero();
-    }
+    this.searchModifyingPathsForZero();
     if (this.reinitialisable && !this.isBurned)
       throw new SyntaxUsageError(
         `The state ${this.name} has been marked as reinitialisable but we can't find anywhere to burn a commitment ready for reinitialisation.`,
