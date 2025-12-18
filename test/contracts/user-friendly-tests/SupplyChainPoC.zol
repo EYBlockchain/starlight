@@ -38,7 +38,7 @@ contract SupplyChainPoC {
 
         bool success = nft.transferFrom(msg.sender, address(this), tokenId);
         require(success, "SupplyChainPoC: ERC721 transfer failed");
-        minter[tokenId] = msg.sender;
+        reinitialisable minter[tokenId] = msg.sender;
         reinitialisable tokenOwners[tokenId] = msg.sender;
     }
 

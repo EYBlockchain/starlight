@@ -932,12 +932,8 @@ integrationApiServicesBoilerplate = {
             mappingKey,
             domainParameters,
             fieldName,
-            accessId,
-            history, //todo: should be picked from accessData commitment
+            history, 
           } = req.body;
-          console.log({ name, mappingKey, fieldName, accessId, 
-            history 
-            });
           // if user has direct access to data get the commitment
           let ownDataCommitment = await getCommitmentsByState(
             name,
@@ -945,18 +941,8 @@ integrationApiServicesBoilerplate = {
             req.saasContext?.accountId,
             domainParameters
           );
-          console.log(ownDataCommitment.length);
-          // if (!history) {
-          // 	ownDataCommitment = ownDataCommitment.filter(
-          // 		(c) => c.isNullified === false
-          // 	);
-          // }
           ownDataCommitment = ownDataCommitment.map((c) => ({
             ...c,
-            // name: c.name,
-            // mappingKey: c.mappingKey,
-            // domainParameters: c.domainParameters,
-            // isNullified: c.isNullified,
             preimage: {
               value: fieldName
                 ? { [fieldName]: generalise(c.preimage.value[fieldName]) }
@@ -968,31 +954,23 @@ integrationApiServicesBoilerplate = {
           // check if accessData commitment exists for this user
           const keyManager = KeyManager.getInstance();
           let keys = await keyManager.getKeys(req.saasContext);
-          console.log("keys:", keys);
           const viewer = keys?.ethPK;
-          console.log({ viewer });
 
           let accessDataCommitment = await getAccessDataCommitments(
-            viewer,
-            name,
-            mappingKey,
-            fieldName,
-            domainParameters
+            viewer, name, mappingKey, fieldName, domainParameters
           );
 
-          console.log({ accessDataCommitmentLength: accessDataCommitment.length });
           if (accessDataCommitment.length > 0) {
-            // fetch data commitments for each accessData commitment
+            // todo: fetch data commitments for each accessData commitment
             const query = {
               domainParameters: accessDataCommitment[0].domainParameters,
               name: generalise(accessDataCommitment[0].preimage.value.stateVarName)
                 .utf8,
               mappingKey: accessDataCommitment[0].preimage.value.mappingKey,
-              fieldName : generalise(accessDataCommitment[0].preimage.value.fieldName).utf8,
-              history : accessDataCommitment[0].preimage.value.history === '1',
+              fieldName: generalise(accessDataCommitment[0].preimage.value.fieldName)
+                .utf8,
+              history: accessDataCommitment[0].preimage.value.history === "1",
             };
-            
-            console.log(query);
 
             // accessData commitment found, now return the authorized data
             let dataCommitment = await getCommitmentsByState(
@@ -1007,81 +985,58 @@ integrationApiServicesBoilerplate = {
             }
             dataCommitment = dataCommitment.map((c) => ({
               ...c,
-              // name: c.name,
-              // mappingKey: c.mappingKey,
-              // domainParameters: c.domainParameters,
-              // isNullified: c.isNullified,
               preimage: {
                 value: query.fieldName // share only field name if specified in accessData
-                  ? {[query.fieldName]: generalise(c.preimage.value[query.fieldName]),}
+                  ? {
+                      [query.fieldName]: generalise(
+                        c.preimage.value[query.fieldName]
+                      ),
+                    }
                   : generalise(c.preimage.value),
               },
             }));
             authorizedCommitments.push(...dataCommitment);
           }
-          console.log( authorizedCommitments.length);
-          if(authorizedCommitments.length === 0){
-            throw new Error('No access or No data found for the provided parameters.');
+          if (authorizedCommitments.length === 0) {
+            throw new Error(
+              "No access or No data found for the provided parameters."
+            );
           }
-          
+
           // remove history if not requested for
           const filteredCommitments = [];
           authorizedCommitments.forEach((commitment) => {
-            console.log("Processing commitment with _id:", commitment._id);
-            console.log("filteredCommitments.length", filteredCommitments.length);
-            if(filteredCommitments.some((c) => c.hash === commitment._id)){
-              console.log("Duplicate commitment found, skipping:", commitment._id);
+            if (filteredCommitments.some((c) => c.hash === commitment._id)) {
               return; // skip duplicates
             }
-            
+
             if (history || !commitment.isNullified) {
               filteredCommitments.push({
                 // include only data fields and requested field in preimage
-                hash:commitment._id,
-                name:commitment.name, 
-                mappingKey:commitment.mappingKey,
-                domainParameters:commitment.domainParameters, 
-                isNullified:commitment.isNullified,
-                preimage:{
-                  value: (fieldName? 
-                    {[fieldName]: commitment.preimage.value[fieldName]} : 
-                    commitment.preimage.value)
+                name: commitment.name,
+                mappingKey: commitment.mappingKey,
+                domainParameters: commitment.domainParameters,
+                preimage: {
+                  value: fieldName
+                    ? { [fieldName]: commitment.preimage.value[fieldName] }
+                    : commitment.preimage.value,
                 },
-                // other fields if any like timestamp, blockNumber etc.
+                isNullified: commitment.isNullified,
+                hash: commitment._id,
+                blockNumber: commitment.blockNumber,
+                createdAt: commitment.createdAt,
               });
             }
           });
           res.send({
             success: true,
-            // query: {
-            // 	name,
-            // 	mappingKey,
-            // 	domainParameters,
-            // 	fieldName,
-            // 	accessId,
-            // 	history,
-            // },
-            data: filteredCommitments,
+            data: filteredCommitments.sort((a,b)=>(b.blockNumber-a.blockNumber)),
           });
         } catch (err) {
           logger.error(err);
           res.send({ errors: [err.message] });
         }
       }
-
-      export async function service_getCommitmentsByState(req, res, next) {
-        try {
-          const { name, mappingKey, domainParameters } = req.body;
-          const accountId = req.saasContext?.accountId;
-          const commitments = await getCommitmentsByState(name, mappingKey, accountId, domainParameters);
-          res.send({ commitments });
-          await sleep(10);
-        } catch (err) {
-          logger.error(err);
-          res.send({ errors: [err.message] });
-        }
-      }
-      
       
       export async function service_backupData(req, res, next) {
         try {
