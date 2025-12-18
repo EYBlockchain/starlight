@@ -9,6 +9,7 @@ import { VariableBinding } from '../../traverse/Binding.js';
 import { ContractDefinitionIndicator,FunctionDefinitionIndicator } from '../../traverse/Indicator.js';
 import { interactsWithSecretVisitor, parentnewASTPointer, internalFunctionCallVisitor } from './common.js';
 import { param } from 'express/lib/request.js';
+import { exit } from 'process';
 
 // here we find any public state variables which interact with secret states
 // and hence need to be included in the verification calculation
@@ -162,23 +163,32 @@ export default {
 
     },
     exit(path: NodePath, state: any) {
-          const { node, parent, scope } = path;
-          const sourceUnitNodes = parent._newASTPointer[0].nodes;
-          const contractNodes = node._newASTPointer;
-          let parameterList: any = {};
-          let functionName: string;
-          let returnParameterList: any = {};
-          let returnfunctionName: string;
-          for ([functionName, parameterList] of Object.entries(state.circuitParams)) {
-            if(state.returnpara){
-             for ([returnfunctionName, returnParameterList] of Object.entries(state.returnpara)){
-               if(functionName === returnfunctionName ){
-                 parameterList = parameterList && returnParameterList ? {... parameterList, ... returnParameterList} : parameterList;
-                 state.circuitParams[ functionName ] = parameterList;
-                }
+      const { node, parent, scope } = path;
+      const sourceUnitNodes = parent._newASTPointer[0].nodes;
+      const contractNodes = node._newASTPointer;
+      let parameterList: any = {};
+      let functionName: string;
+      let returnParameterList: any = {};
+      let returnfunctionName: string;
+      if (state.circuitParams) {
+        for ([functionName, parameterList] of Object.entries(
+          state.circuitParams,
+        )) {
+          if (state.returnpara) {
+            for ([returnfunctionName, returnParameterList] of Object.entries(
+              state.returnpara,
+            )) {
+              if (functionName === returnfunctionName) {
+                parameterList =
+                  parameterList && returnParameterList
+                    ? { ...parameterList, ...returnParameterList }
+                    : parameterList;
+                state.circuitParams[functionName] = parameterList;
               }
             }
           }
+        }
+      }
 
 
           const contractIndex = sourceUnitNodes.findIndex(
@@ -371,42 +381,49 @@ export default {
   ParameterList: {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
-      let returnName : string[] =[];
-       if(path.key === 'parameters'){
-      const newNode = buildNode('ParameterList');
-      node._newASTPointer = newNode.parameters;
-      parent._newASTPointer[path.containerName] = newNode;
-    } else if(path.key === 'returnParameters'){
-       parent.body.statements.forEach(node => {
-        if(node.nodeType === 'Return'){
-          if(node.expression.nodeType === 'TupleExpression'){
-           node.expression.components.forEach(component => {
-             if(component.name){
-              returnName?.push(component.name);
+      const returnName: string[] = [];
+      if (path.key === 'parameters') {
+        const newNode = buildNode('ParameterList');
+        node._newASTPointer = newNode.parameters;
+        parent._newASTPointer[path.containerName] = newNode;
+      } else if (path.key === 'returnParameters') {
+        parent.body.statements.forEach(node => {
+          if (node.nodeType === 'Return') {
+            if (node.expression.nodeType === 'TupleExpression') {
+              node.expression.components.forEach(component => {
+                if (component.name) {
+                  returnName?.push(component.name);
+                } else returnName?.push(component.value);
+              });
+            } else if (node.expression.nodeType === 'IndexAccess') {
+              if (node.expression.baseExpression.nodeType === 'IndexAccess') {
+                returnName?.push(
+                  `${node.expression.baseExpression.baseExpression.name}[${node.expression.baseExpression.indexExpression.name}][${node.expression.indexExpression.name}]`,
+                );
+              } else {
+                returnName?.push(
+                  `${node.expression.baseExpression.name}[${node.expression.indexExpression.name}]`,
+                );
+              }
+            } else if (node.expression.name) {
+              returnName?.push(node.expression.name);
+            } else {
+              returnName?.push(node.expression.value);
             }
-             else
-             returnName?.push(component.value);
-           });
-         } else{
-           if(node.expression.name)
-            returnName?.push(node.expression.name);
-           else
-           returnName?.push(node.expression.value);
-        }
-        }
-      });
+          }
+        });
+        node.parameters.forEach((node, index) => {
+          if (node.nodeType === 'VariableDeclaration') {
+            node.name = returnName[index];
+          }
+        });
 
-    node.parameters.forEach((node, index) => {
-      if(node.nodeType === 'VariableDeclaration'){
-        node.name = returnName[index];
+        const newNode = buildNode('ParameterList');
+        node._newASTPointer = newNode.parameters;
+        parent._newASTPointer[path.containerName] = newNode;
       }
-    });
+    },
 
-    const newNode = buildNode('ParameterList');
-    node._newASTPointer = newNode.parameters;
-    parent._newASTPointer[path.containerName] = newNode;
-    }
-  },
   exit(path: NodePath, state: any){
     const { node, parent, scope } = path;
     if(path.key === 'returnParameters'){
@@ -474,13 +491,18 @@ export default {
         state.skipSubNodes=true;
         return;
       }
-      const newNode = buildNode(node.nodeType, {
-        condition: node.condition,
-        trueBody: node.trueBody,
-        falseBody: node.falseBody
-      });
+      const newNode = buildNode(node.nodeType, {});
       node._newASTPointer = newNode;
       parentnewASTPointer(parent, path, newNode, parent._newASTPointer[path.containerName]);
+    },
+
+    exit(path: NodePath) {
+      const { node, parent } = path;
+      node._newASTPointer.condition = node.condition._newASTPointer;
+      node._newASTPointer.trueBody = node.trueBody._newASTPointer;
+      node._newASTPointer.falseBody = node.falseBody
+        ? node.falseBody._newASTPointer
+        : {};
     },
   },
 
@@ -552,11 +574,20 @@ export default {
     },
   },
 
+  Conditional: {
+    enter(path: NodePath) {
+      const { node, parent } = path;
+      const newNode = buildNode('Conditional', {});
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+    },
+  },
+
   TupleExpression: {
     enter(path: NodePath) {
       const { node, parent } = path;
       const newNode = buildNode(node.nodeType);
-      node._newASTPointer = newNode.components;
+      node._newASTPointer = newNode;
       parent._newASTPointer[path.containerName] = newNode;
     },
   },
@@ -781,8 +812,16 @@ DoWhileStatement: {
     enter(path: NodePath) {
       const { node, parent } = path;
       const { name } = node;
-
-      const newNode = buildNode('Identifier', { name });
+      const contractName =
+        path.getAncestorOfType('ContractDefinition')?.node.name;
+      let newNode;
+      if (
+        node.typeDescriptions.typeString === `type(contract ${contractName})`
+      ) {
+        newNode = buildNode('Identifier', { name: `${name}Shield` });
+      } else {
+        newNode = buildNode('Identifier', { name });
+      }
 
       // node._newASTPointer = // no pointer needed, because this is a leaf, so we won't be recursing any further.
       parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
@@ -853,7 +892,7 @@ DoWhileStatement: {
       const { node, parent, scope } = path;
       let newNode: any;
       // If this node is a require statement, it might include arguments which themselves are expressions which need to be traversed. So rather than build a corresponding 'assert' node upon entry, we'll first traverse into the arguments, build their nodes, and then upon _exit_ build the assert node.
-      if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push')) {
+      if (path.isRequireStatement() || path.isRevertStatement() || (node.expression.memberName && node.expression.memberName === 'push') || node.expression.nodeType === 'MemberAccess') {
         // If the 'require' statement contains secret state variables, we'll presume the circuit will perform that logic, so we'll do nothing in the contract.
         const subState = { interactsWithSecret: false };
         path.traversePathsFast(interactsWithSecretVisitor, subState);
@@ -875,11 +914,11 @@ DoWhileStatement: {
       // Like External function calls ,it's easiest (from the pov of writing this transpiler) if Event calls appear at the very start or very end of a function.
       // TODO: need a warning message to this effect ^^^
       if (parent.nodeType === 'EmitStatement') {
-      newNode = buildNode('FunctionCall');
-      node._newASTPointer = newNode;
-      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
-      return;
-    }
+        newNode = buildNode('FunctionCall');
+        node._newASTPointer = newNode;
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+        return;
+      }
 
       if (path.isExternalFunctionCall()) {
         // External function calls are the fiddliest of things, because they must be retained in the Solidity contract, rather than brought into the circuit. With this in mind, it's easiest (from the pov of writing this transpiler) if External function calls appear at the very start or very end of a function. If they appear interspersed around the middle, we'd either need multiple circuits per Zolidity function, or we'd need a set of circuit parameters (non-secret params / return-params) per external function call, and both options are too painful for now.
@@ -950,6 +989,7 @@ DoWhileStatement: {
        });
        node._newASTPointer = newNode;
        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+       state.skipSubNodes = true;
        return;
       }
 
@@ -957,18 +997,29 @@ DoWhileStatement: {
        node._newASTPointer = newNode;
        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
      }
-      if (node.kind !== 'typeConversion') {
-        newNode = buildNode('FunctionCall');
+      if (node.kind === 'typeConversion') {
+        newNode = buildNode('TypeConversion', {
+          type: node.typeDescriptions.typeString,
+        });
+        node._newASTPointer = newNode;
+        parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+        return;
+      }
+      if (node.expression.nodeType === 'NewExpression') {
+        newNode = buildNode('NewExpression', {
+          typeName: node.expression.typeName.name,
+          arguments: node.arguments,
+          argumentTypes: node.expression.argumentTypes,
+        });
         node._newASTPointer = newNode;
         parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
         state.skipSubNodes = true;
         return;
       }
-      newNode = buildNode('TypeConversion', {
-        type: node.typeDescriptions.typeString,
-      });
-     node._newASTPointer = newNode;
-     parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      newNode = buildNode('FunctionCall');
+      node._newASTPointer = newNode;
+      parentnewASTPointer(parent, path, newNode , parent._newASTPointer[path.containerName]);
+      state.skipSubNodes = true;
     },
   },
 }

@@ -372,6 +372,7 @@ const visitor = {
       const { node, parent, scope } = path;
       node._newASTPointer = parent._newASTPointer;
       const contractName = `${node.name}Shield`;
+      state.fullyPublicContract = true;
       if (scope.indicators.zkSnarkVerificationRequired) {
         const newNode = buildNode('File', {
           fileName: 'test',
@@ -468,6 +469,9 @@ const visitor = {
           file.nodes[0].constructorParams = state.constructorParams;
           file.nodes[0].contractImports = state.contractImports;
         }
+        if (file.nodeType === 'SetupCommonFilesBoilerplate') {
+          file.fullyPublicContract = state.fullyPublicContract;
+        }
       }
     // Internal Call Visitor
     path.traverse(explode(internalCallVisitor), state);
@@ -490,6 +494,7 @@ const visitor = {
     enter(path: NodePath, state: any) {
       const { node, parent, scope } = path;
       if (scope.modifiesSecretState()) {
+        state.fullyPublicContract = false;
         const contractName = `${parent.name}Shield`;
         const fnName = path.getUniqueFunctionName();
         node.fileName = fnName;
@@ -575,10 +580,9 @@ const visitor = {
             );
           }
         }
-
       } else {
         state.skipSubNodes = true;
-      }  
+      } 
       if (node.kind === 'constructor') {
         state.constructorParams ??= [];
         for (const param of node.parameters.parameters) {
@@ -592,7 +596,6 @@ const visitor = {
           );
         }
       }
-  
     },
 
     exit(path: NodePath, state: any) {
@@ -1345,9 +1348,13 @@ const visitor = {
   },
 
   Block: {
-    enter(path: NodePath) {
+    enter(path: NodePath, state: any) {
       const { node, parent } = path;
-
+      const fnDefPath = path.getAncestorOfType('FunctionDefinition');
+      if (fnDefPath && !fnDefPath.scope.modifiesSecretState()) {
+        state.skipSubNodes = true;
+        return;
+      }
       // ts complains if I don't include a number in this list
       if (['trueBody', 'falseBody', 99999999].includes(path.containerName)) {
         node._newASTPointer = parent._newASTPointer[path.containerName];
@@ -1513,7 +1520,7 @@ const visitor = {
       if (node.expression.nodeType === 'Assignment' || node.expression.nodeType === 'UnaryOperation') {
         let { leftHandSide: lhs } = node.expression;
         if (!lhs) lhs = node.expression.subExpression;
-       indicator = scope.getReferencedIndicator(lhs, true);
+        indicator = scope.getReferencedIndicator(lhs, true);
 
         let name = indicator.isMapping
           ? indicator.name

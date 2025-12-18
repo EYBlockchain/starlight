@@ -183,16 +183,18 @@ const prepareIntegrationApiServices = (node: any) => {
     // remove any duplicates from fnction parameters
     fnParam = [...new Set(fnParam)];
     // Adding Return parameters
-    let returnParams: string[] = [];
-    let returnParamsName = fn.returnParameters.parameters
-      .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
-        .map(paramnode => (paramnode.name)) || []; // Adapt
-    if(returnParamsName.length > 0){
+    const returnParams: string[] = [];
+    const returnParamsName =
+      fn.returnParameters.parameters
+        .filter(
+          (paramnode: any) =>
+            paramnode.isSecret || paramnode.typeName.name === 'bool',
+        )
+        .map(paramnode => paramnode.name) || []; // Adapt
+    if (returnParamsName?.length > 0) {
       returnParamsName.forEach(param => {
-        if(param !== 'true') 
-         returnParams.push(param+'_newCommitmentValue');
-         else 
-         returnParams.push('bool');
+        if (param !== 'true') returnParams.push(param + '_newCommitmentValue');
+        else returnParams.push('bool');
       });
     }
 
@@ -400,7 +402,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
   file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
   file.file = file.file.replace(
     /FUNCTION_NAMES/g,
-    `'${node.functionNames.join(`', '`)}'`,
+    node.functionNames.length ? `'${node.functionNames.join(`', '`)}'` : ``,
   );
   // collect any extra constructor parameters
   const constructorParamNames = node.constructorParams?.filter((obj: any) => !obj.isSecret).map((obj: any) => obj.name) || ``;
@@ -1074,16 +1076,31 @@ export default function fileGenerator(node: any) {
 
     case 'SetupCommonFilesBoilerplate': {
       // complex setup files which require some setting up:
+      const { fullyPublicContract } = node;
       const files = collectImportFiles(
         [
           `import './common/write-vk.mjs'`,
           `import './common/zkp-setup.mjs'`,
           `import './common/migrations/deploy.js'`,
+          `import './common/web3.mjs'`,
+          `import './common/contract.mjs'`,
+          `import './common/timber.mjs'`,
+          `import './common/number-theory.mjs'`,
+          `import './common/mongo.mjs'`,
+          `import './common/hash-lookup.mjs'`,
         ].join('\n'),
         'orchestration',
+        fullyPublicContract,
       );
-
-      let readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/setup');
+      let readPath = fullyPublicContract
+        ? path.resolve(
+            fileURLToPath(import.meta.url),
+            '../../../../../src/boilerplate/common/bin/setup-public',
+          )
+        : path.resolve(
+            fileURLToPath(import.meta.url),
+            '../../../../../src/boilerplate/common/bin/setup',
+          );
       const setupScript = { filepath: 'bin/setup', file: fs.readFileSync(readPath, 'utf8') };
       files.push(setupScript);
       readPath = path.resolve(fileURLToPath(import.meta.url), '../../../../../src/boilerplate/common/bin/startup');

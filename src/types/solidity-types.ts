@@ -74,6 +74,7 @@ export function getVisitableKeys(nodeType: string): string[] {
     case 'MsgSender':
     case 'EnumDefinition':
     case 'NewExpression':
+    case 'IdentifierPath':
       return [];
 
     // And again, if we haven't recognized the nodeType then we'll throw an
@@ -300,6 +301,19 @@ export function buildNode(nodeType: string, fields: any = {}): any {
           },
         }),
       });
+    }
+    case 'NewExpression': {
+      const {
+        typeName = {},
+        arguments: args = {},
+        argumentTypes = {},
+      } = fields;
+      return {
+        nodeType,
+        typeName,
+        arguments: args,
+        argumentTypes,
+      };
     }
     case 'VariableDeclarationStatement': {
       const { declarations = [], initialValue = {} } = fields;

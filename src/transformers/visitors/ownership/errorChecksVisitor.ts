@@ -181,7 +181,7 @@ export default {
     exit(path: NodePath, state: any) {
       const { scope } = path;
       if (path.node.stateMutability === 'pure'){
-        throw new TODOError(`We currently do not support pure functions.`, path.node);
+        state.containsPureFunction = true;
       }
       if (path.node.stateMutability === 'view' && path.node.body.containsSecret){
         throw new TODOError(`We currently do not support view functions that involve secret variables.`, path.node);
@@ -220,12 +220,11 @@ export default {
       // bindings are contract scope level, so we track global states here
       const { scope } = path;
 
-      if (state.isContractPublic) {
-        throw new Error(
-          'The contract is fully public and does not use secret variables, making it incompatible with the transpiler. ' +
-            'Ensure your contract manipulates secret variables to generate a valid ZApp.',
-        );
+      if (!state.isContractPublic && state.containsPureFunction) {
+        throw new TODOError(`We currently do not support pure functions.`, path.node);
       }
+
+      state.contractName = path.node.name;
 
       for (const [, binding] of Object.entries(scope.bindings)) {
         if (!(binding instanceof VariableBinding)) continue;

@@ -23,13 +23,15 @@ const zappify = (options: any) => {
 
   let path = checks(zolAST);
 
-  path = ownership(path, options);
+  const result = ownership(path, options);
+  path = result.updatedASTPath;
+  const { isContractPublic, contractName } = result;
 
   options.circuitAST = toCircuit(zolAST, options);
 
   toOrchestration(path, options);
 
-  toContract(zolAST, options);
+  toContract(zolAST, options, isContractPublic, contractName);
 
   return zolAST;
 };
