@@ -125,6 +125,7 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
     }
     // Clean up and re-throw
     shell.exec('docker compose -f docker-compose.zapp.yml down -v');
+    shell.exec('rm -rf node_modules', { silent: true });
     shell.cd('../..');
     throw error;
   }
@@ -146,6 +147,7 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
     shell.echo('docker stop failed');
     shell.exit(1);
   }
+  shell.exec('rm -rf node_modules', { silent: true });
   shell.cd('../..');
   await new Promise(resolve => {
     setTimeout(resolve, 5000);
