@@ -1,4 +1,3 @@
-
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -16,7 +15,6 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const testedZapps = [];
-const zappLogs = new Map(); // Store logs for each zapp
 const displayedZapps = new Set(); // Track which ZApps have already had logs displayed
 
 const getUserFriendlyTestNames = async folderPath => {
@@ -55,10 +53,9 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
           console.log(logResult.stderr);
         }
         // Store logs and mark as displayed to prevent duplicate display in afterEach
-        zappLogs.set(zappName, {
-          stdout: logResult.stdout,
-          stderr: logResult.stderr,
-        });
+        const logFilePath = `./test-logs/${zappName}-failed.log`;
+        fs.mkdirSync('./test-logs', { recursive: true });
+        fs.writeFileSync(logFilePath, `=== ${zappName} APIACTIONS FAILED ===\n${logResult.stdout}\n${logResult.stderr || ''}`);
         displayedZapps.add(zappName);
       }
       shell.cd('../..');
@@ -117,10 +114,9 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
         console.log(logResult.stderr);
       }
       // Store logs and mark as displayed to prevent duplicate display in afterEach
-      zappLogs.set(zappName, {
-        stdout: logResult.stdout,
-        stderr: logResult.stderr,
-      });
+      const logFilePath = `../../test-logs/${zappName}-api-failed.log`;
+      fs.mkdirSync('../../test-logs', { recursive: true });
+      fs.writeFileSync(logFilePath, `=== ${zappName} API FAILED ===\n${logResult.stdout}\n${logResult.stderr || ''}`);
       displayedZapps.add(zappName);
     }
     // Clean up and re-throw
@@ -129,16 +125,15 @@ const callZAppAPIs = async (zappName, apiRequests, preHook, cnstrctrInputs) => {
     throw error;
   }
   shell.cd(`./temp-zapps/${zappName}`);
-  // Capture logs silently and store them
+  // Capture logs silently and write to file 
   const logResult = shell.exec(
     'docker compose -f docker-compose.zapp.yml logs',
     { silent: true },
   );
   if (logResult.code === 0) {
-    zappLogs.set(zappName, {
-      stdout: logResult.stdout,
-      stderr: logResult.stderr,
-    });
+    const logFilePath = `../../test-logs/${zappName}.log`;
+    fs.mkdirSync('../../test-logs', { recursive: true });
+    fs.writeFileSync(logFilePath, `=== ${zappName} logs ===\n${logResult.stdout}\n${logResult.stderr || ''}`);
   }
   if (
     shell.exec('docker compose -f docker-compose.zapp.yml down -v').code !== 0
@@ -683,14 +678,26 @@ function displayLogsForZapp(zappName) {
   if (displayedZapps.has(zappName)) {
     return; // Skip - already displayed
   }
-  const logs = zappLogs.get(zappName);
-  if (logs) {
+
+  // Try to read logs from file instead of memory
+  const logFilePath = `./test-logs/${zappName}.log`;
+  const failedLogPath = `./test-logs/${zappName}-failed.log`;
+  const apiFailedLogPath = `./test-logs/${zappName}-api-failed.log`;
+
+  let logContent = null;
+
+  // Check which log file exists
+  if (fs.existsSync(apiFailedLogPath)) {
+    logContent = fs.readFileSync(apiFailedLogPath, 'utf8');
+  } else if (fs.existsSync(failedLogPath)) {
+    logContent = fs.readFileSync(failedLogPath, 'utf8');
+  } else if (fs.existsSync(logFilePath)) {
+    logContent = fs.readFileSync(logFilePath, 'utf8');
+  }
+
+  if (logContent) {
     console.log(`\n=== Logs for ${zappName} ===`);
-    console.log(logs.stdout);
-    if (logs.stderr) {
-      console.log(`Stderr for ${zappName}:`);
-      console.log(logs.stderr);
-    }
+    console.log(logContent);
     // Mark this ZApp as having logs displayed
     displayedZapps.add(zappName);
   } else {
