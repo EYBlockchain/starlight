@@ -730,16 +730,51 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         ],
       };
 
+    case 'GetInputCommitments':
+      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
+        const stateVarIds = stateVariableIds({
+          privateStateName: stateName,
+          stateNode,
+        });
+        if (node.isConstructor) {
+          continue;
+        }
+        if (stateNode.isPartitioned) {
+          lines.push(
+            Orchestrationbp.getInputCommitments.postStatements({
+              stateName,
+              contractName: node.contractName,
+              stateType: 'partitioned',
+              mappingName: stateNode.mappingName || stateName,
+              structProperties: stateNode.structProperties,
+              isSharedSecret: stateNode.isSharedSecret,
+              stateVarIds,
+            }),
+          );
+        }
+      }
+      return {
+        statements: [
+          `\n// Get input commitments for partitioned states: \n\n`,
+          ...lines,
+        ],
+      };
+
     case 'MembershipWitness':
       for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        const stateVarIds = stateVariableIds({ privateStateName: stateName, stateNode });
+        const stateVarIds = stateVariableIds({
+          privateStateName: stateName,
+          stateNode,
+        });
         if (node.isConstructor) {
-          lines.push([`
+          lines.push([
+            `
             const ${stateName}_index = generalise(0);
             const ${stateName}_root = generalise(0);
             const ${stateName}_path = generalise(new Array(32).fill(0)).all;\n
-            `]);
-            continue;
+            `,
+          ]);
+          continue;
         }
         if (stateNode.isPartitioned) {
           lines.push(
@@ -750,9 +785,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               mappingName: stateNode.mappingName || stateName,
               structProperties: stateNode.structProperties,
               isSharedSecret: stateNode.isSharedSecret,
-              stateVarIds
-            }));
-
+              stateVarIds,
+            }),
+          );
         }
         if (stateNode.accessedOnly) {
           lines.push(
@@ -763,9 +798,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               mappingName: stateNode.mappingName || stateName,
               structProperties: stateNode.structProperties,
               isSharedSecret: stateNode.isSharedSecret,
-              stateVarIds
-            }));
-
+              stateVarIds,
+            }),
+          );
         } else if (stateNode.isWhole) {
           lines.push(
             Orchestrationbp.membershipWitness.postStatements({
@@ -775,9 +810,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               mappingName: stateNode.mappingName || stateName,
               structProperties: stateNode.structProperties,
               isSharedSecret: stateNode.isSharedSecret,
-              stateVarIds
-            }));
-
+              stateVarIds,
+            }),
+          );
         }
       }
       return {

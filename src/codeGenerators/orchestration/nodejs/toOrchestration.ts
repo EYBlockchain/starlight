@@ -327,6 +327,7 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'InitialiseKeys':
     case 'ReadPreimage':
     case 'WritePreimage':
+    case 'GetInputCommitments':
     case 'MembershipWitness':
     case 'CalculateNullifier':
     case 'CalculateCommitment':

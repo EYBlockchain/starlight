@@ -13,7 +13,8 @@ import {
 
 const web3 = Web3.connection();
 const { generalise } = GN;
-const keyDb = '/app/orchestration/common/db/key.json';
+const keyDb =
+  process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';
 
 export const contractPath = (contractName) => {
 	return `/app/build/contracts/${contractName}.json`;

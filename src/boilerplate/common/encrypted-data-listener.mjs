@@ -6,8 +6,8 @@ import { getContractAddress, getContractInstance, registerKey } from './common/c
 import { storeCommitment, formatCommitment, persistCommitment } from './common/commitment-storage.mjs';
 import { decrypt, poseidonHash, } from './common/number-theory.mjs';
 
-const keyDb = '/app/orchestration/common/db/key.json';
-
+const keyDb =
+  process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';
 
 function decodeCommitmentData(decrypted){
   const stateVarId = generalise(decrypted[0]);
@@ -38,10 +38,15 @@ export default class EncryptedDataEventListener {
 
       if (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), 'CONTRACT_NAME', true);
 
-      const { secretKey, publicKey } = JSON.parse(fs.readFileSync(keyDb));
-
-      this.secretKey = generalise(secretKey);
-      this.publicKey = generalise(publicKey);
+      const keys = JSON.parse(
+        fs.readFileSync(keyDb, "utf-8", (err) => {
+          console.log(err);
+        }),
+      );
+      this.secretKey = generalise(keys.secretKey);
+      this.publicKey = generalise(keys.publicKey);
+      this.sharedPublicKey = generalise(keys.sharedPublicKey);
+      this.sharedSecretKey = generalise(keys.sharedSecretKey);
     } catch (error) {
       console.error(
         'encrypted-data-listener',
@@ -114,28 +119,24 @@ export default class EncryptedDataEventListener {
         topics: [eventJsonInterface.signature],
       });
 
-      eventSubscription
-        .on('connected', subscriptionId => {
-          console.log(`New subscription: ${subscriptionId}`);
-        });
-      eventSubscription
-        .on('data', async eventData => {
-          try {
-            await this.processEventData(eventData);
-          } catch (error) {
-            console.error('Error processing event data:', error);
-          }
-        });
-      eventSubscription
-        .on('error', async error => {
-          console.error('Event subscription error:', error);
-          await this.reconnect();
-        });
-      eventSubscription
-        .on('close', async () => {
-          console.log('Subscription closed');
-          await this.reconnect();
-        });
+      eventSubscription.on('connected', subscriptionId => {
+        console.log(`New subscription: ${subscriptionId}`);
+      });
+      eventSubscription.on('data', async eventData => {
+        try {
+          await this.processEventData(eventData);
+        } catch (error) {
+          console.error('Error processing event data:', error);
+        }
+      });
+      eventSubscription.on('error', async error => {
+        console.error('Event subscription error:', error);
+        await this.reconnect();
+      });
+      eventSubscription.on('close', async () => {
+        console.log('Subscription closed');
+        await this.reconnect();
+      });
     } catch (error) {
       console.error('Listener startup failed:', error);
     }

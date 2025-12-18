@@ -33,8 +33,6 @@ services:
       DEFAULT_ACCOUNT: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
       KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
       LOG_LEVEL: info
-      MONGO_HOST: mongodb://zapp-mongo
-      MONGO_PORT: 27019
       MONGO_NAME: zapp_db
       MONGO_USERNAME: admin
       MONGO_PASSWORD: admin
@@ -57,9 +55,7 @@ services:
       - zapp_network
 
   timber:
-    build: 
-      context: https://github.com/EYBlockchain/timber.git#starlight/zscaler:merkle-tree
-      dockerfile: Dockerfile
+    image: ghcr.io/eyblockchain/timber-multicontract:latest
     restart: on-failure
     depends_on:
       - timber-mongo
@@ -67,7 +63,7 @@ services:
       - ./config/:/app/config
       - ./build/:/app/build:consistent
     ports:
-      - '9000:80'
+      - '8090:80'
     environment:
       NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/ZscalerRootCertificate-2048-SHA256.crt
       HASH_TYPE: 'mimc'
@@ -79,8 +75,6 @@ services:
       DEFAULT_ACCOUNT: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
       KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
       CONTRACT_LOCATION: 'default'
-      MONGO_HOST: mongodb://timber-mongo
-      MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       MONGO_USERNAME: admin
       MONGO_PASSWORD: admin

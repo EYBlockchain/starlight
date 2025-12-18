@@ -54,7 +54,7 @@ module.exports = {
   // contracts to filter:
   contracts: {
     // contract name:
-    CONTRACT_NAME: {
+    default: {
       treeHeight: 32,
       events: {
         // filter for the following event names:
@@ -78,7 +78,7 @@ module.exports = {
     admin: 'admin',
     adminPassword: 'admin',
   },
-  MONGO_URL: 'mongodb://admin:admin@zapp-mongo:27017',
+  MONGO_URL: process.env.MONGO_URL || 'mongodb://admin:admin@zapp-mongo:27017',
   COMMITMENTS_DB: process.env.MONGO_NAME,
   COMMITMENTS_COLLECTION: 'commitments',
   isLoggerEnabled: true,
