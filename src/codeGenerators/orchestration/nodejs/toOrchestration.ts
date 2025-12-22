@@ -265,9 +265,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
       switch (node.subType) {
         default:
         case 'uint256':
-          return `parseInt(${node.name}.integer, 10)`;
+          return `${node.name}.bigInt`;
         case 'bool':
-          //return `parseInt(${node.name}.integer, 10) === 0 ? false : true`;
           return `!(parseInt(${node.name}.integer, 10) === 0)`;
         case 'address':
           if (options?.contractCall) return `${node.name}.hex(20)`

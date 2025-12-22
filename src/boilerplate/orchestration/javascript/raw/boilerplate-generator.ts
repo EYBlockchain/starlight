@@ -902,6 +902,18 @@ integrationApiServicesBoilerplate = {
           res.send({ errors: [err.message] });
         }
       }
+      export async function service_getCommitmentsByState(req, res, next) {
+        try {
+          const { name, mappingKey, domainParameters } = req.body;
+          const accountId = req.saasContext?.accountId;
+          const commitments = await getCommitmentsByState(name, mappingKey, accountId, domainParameters);
+          res.send({ commitments });
+          await sleep(10);
+        } catch (err) {
+          logger.error(err);
+          res.send({ errors: [err.message] });
+        }
+      }
       export async function service_getBalance(req, res, next) {
         try {
           const accountId = req.saasContext?.accountId;
@@ -1362,13 +1374,13 @@ integrationApiRoutesBoilerplate = {
     return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_viewData, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, service_deployNFT, } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_viewData, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, service_deployNFT, } from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
-    router.post("/viewData", service_viewData);
     router.post("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    router.post("/viewData", service_viewData);
     router.get("/getBalance", service_getBalance);
     router.post("/getBalanceByState", service_getBalanceByState);
     router.post("/getSharedKeys", service_getSharedKeys);
