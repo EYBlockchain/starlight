@@ -134,7 +134,7 @@ export default class BackupEncryptedDataEventListener {
       });
 
       this.eventSubscription.on('error', async error => {
-        console.error('[BACKUP] ❌ Subscription error:', error);
+        console.error('[BACKUP] Subscription error:', error);
         await this.reconnect();
       });
 
@@ -155,14 +155,14 @@ export default class BackupEncryptedDataEventListener {
         const minutesSinceLastEvent = Math.floor(timeSinceLastEvent / 60000);
 
         console.log(
-          '[BACKUP] ❤️ Heartbeat - Time since last event:',
+          '[BACKUP] Heartbeat - Time since last event:',
           minutesSinceLastEvent,
           'minutes',
         );
 
         // Check if subscription object still exists and has an ID
         if (!this.eventSubscription || !this.eventSubscription.id) {
-          console.warn('[BACKUP] ⚠️ WARNING: Event subscription is dead!');
+          console.warn('[BACKUP] WARNING: Event subscription is dead!');
           console.log(
             '[BACKUP] Subscription exists?',
             !!this.eventSubscription,
@@ -197,7 +197,7 @@ export default class BackupEncryptedDataEventListener {
 
                 if (pastEvents.length > 0) {
                   console.log(
-                    `[BACKUP] ⚠️ Found ${pastEvents.length} past events from block ${checkFromBlock} to ${currentBlock} that subscription didn't receive!`,
+                    `[BACKUP] Found ${pastEvents.length} past events from block ${checkFromBlock} to ${currentBlock} that subscription didn't receive!`,
                   );
                   pastEvents.forEach(evt => {
                     console.log(
@@ -233,7 +233,7 @@ export default class BackupEncryptedDataEventListener {
         '[BACKUP] Event handlers and health monitor attached, waiting for events...',
       );
     } catch (error) {
-      console.error('[BACKUP] ❌ Listener startup failed:', error);
+      console.error('[BACKUP] Listener startup failed:', error);
     }
   }
 
@@ -432,7 +432,7 @@ export default class BackupEncryptedDataEventListener {
       await this.startBackupRecovery();
       console.log('[BACKUP] Reconnected successfully');
     } catch (error) {
-      console.error('[BACKUP] ❌ Reconnection attempt failed:', error);
+      console.error('[BACKUP] Reconnection attempt failed:', error);
       setTimeout(() => this.reconnect(), 5000); // Retry after 5 seconds
     }
   }
