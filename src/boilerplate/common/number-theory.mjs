@@ -348,34 +348,40 @@ function decrypt(encryptedMessages, secretKey, encPublicKey) {
 @return {string} key - int string
 */
 function sharedSecretKey(secretKey, recipientPublicKey) {
-	const publickKeyPoint = decompressStarlightKey(recipientPublicKey);
-	const sharedSecret = scalarMult(secretKey.hex(32), [
-		BigInt(generalise(publickKeyPoint[0]).hex(32)),
-		BigInt(generalise(publickKeyPoint[1]).hex(32)),
-	]);
-	const key = poseidonHash([
-		sharedSecret[0],
-		sharedSecret[1],
-		BigInt(DOMAIN_KEM),
-	]);
+  const publickKeyPoint = decompressStarlightKey(recipientPublicKey);
+  const sharedSecret = scalarMult(secretKey.hex(32), [
+    BigInt(generalise(publickKeyPoint[0]).hex(32)),
+    BigInt(generalise(publickKeyPoint[1]).hex(32)),
+  ]);
+  let key = poseidonHash([
+    sharedSecret[0],
+    sharedSecret[1],
+    BigInt(DOMAIN_KEM),
+    BigInt(0),
+  ]);
 
-	let sharePublicKeyPoint = generalise(
-		scalarMult(key.hex(32), config.BABYJUBJUB.GENERATOR)
-	);
+  let sharePublicKeyPoint = generalise(
+    scalarMult(key.hex(32), config.BABYJUBJUB.GENERATOR),
+  );
 
-	let yBits = sharePublicKeyPoint[1].binary;
-	if (yBits.length > 253) 
-	{   
-		yBits = yBits.slice(yBits.length - 253);
-	}
+  let sharedPublicKey = compressStarlightKey(sharePublicKeyPoint);
 
-	const xBits = sharePublicKeyPoint[0].binary;
-	const sign = xBits[xBits.length - 1];
+  let i = 0;
+  while (sharedPublicKey === null) {
+    i++;
+    key = poseidonHash([
+      sharedSecret[0],
+      sharedSecret[1],
+      BigInt(DOMAIN_KEM),
+      BigInt(i),
+    ]);
 
-	let sharedPublicKey = new GN(sign + yBits.padStart(253, "0"), "binary");
-
-
-	return [key, sharedPublicKey];
+    sharePublicKeyPoint = generalise(
+      scalarMult(key.hex(32), config.BABYJUBJUB.GENERATOR),
+    );
+    sharedPublicKey = compressStarlightKey(sharePublicKeyPoint);
+  }
+  return [key, sharedPublicKey];
 }
 
 // Implements the Poseidon hash, drawing on the ZoKrates implementation

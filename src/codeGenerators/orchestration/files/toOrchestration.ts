@@ -643,6 +643,7 @@ const prepareBackupVariable = (node: any) => {
     scalarMult,
   } from "./common/number-theory.mjs";
   import { getLeafIndex} from "./common/timber.mjs";
+  import { waitForBackupListenerIdle } from "./common/backup-encrypted-data-listener.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -654,6 +655,8 @@ const prepareBackupVariable = (node: any) => {
 
   let requestedName = _name;
 
+  // wait for backup listener to be idle before deleting commitments
+	await waitForBackupListenerIdle();
 	deleteCommitmentsByState(requestedName, null);
 
 	const instance = await getContractInstance("CONTRACT_NAME");
@@ -809,6 +812,7 @@ const prepareBackupVariable = (node: any) => {
           secretKey: kp.secretKey,
           isNullified: isNullified,
         });
+        console.log("Added commitment", newCommitment.hex(32));
       }
     };
   };
@@ -851,6 +855,8 @@ const prepareBackupDataRetriever = (node: any) => {
     scalarMult,
   } from "./common/number-theory.mjs";
   import { getLeafIndex} from "./common/timber.mjs";
+
+  import { waitForBackupListenerIdle } from "./common/backup-encrypted-data-listener.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -863,6 +869,9 @@ const prepareBackupDataRetriever = (node: any) => {
 
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(COMMITMENTS_DB);
+
+    // wait for backup listener to be idle before deleting commitments
+	  await waitForBackupListenerIdle();
 
     try {
       // Get the list of all collections in the database
@@ -1026,6 +1035,7 @@ const prepareBackupDataRetriever = (node: any) => {
             secretKey: kp.secretKey,
             isNullified: isNullified,
           });
+          console.log("Added commitment", newCommitment.hex(32));
         }
       };
     };
