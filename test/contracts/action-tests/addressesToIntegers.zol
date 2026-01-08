@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract AddressesToIntegers {
+
+    secret address public lastAddress;
+    secret uint256 public lastUint;
+    address public lastAddressPub;
+    uint256 public lastUintPub;
+
+    function convertToInteger(secret address value, address pubValue) public returns (uint256) {
+        lastAddress = value;
+        lastUint = uint256(uint160(value));
+        lastAddressPub = pubValue;
+        lastUintPub = uint256(uint160(pubValue));
+        return lastUintPub;
+    }
+
+    function convertToAddress(secret uint256 value, uint256 pubValue) public returns (address) {
+        lastUint = value;
+        lastAddress = address(uint160(value));
+        lastUintPub = pubValue;
+        lastAddressPub = address(uint160(pubValue));
+        return lastAddressPub;
+    }
+
+}
