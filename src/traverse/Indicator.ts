@@ -142,10 +142,11 @@ export class FunctionDefinitionIndicator extends ContractDefinitionIndicator {
     let burnedOnly = true;
     for (const [, stateVarIndicator] of Object.entries(this)) {
       if (!(stateVarIndicator instanceof StateVariableIndicator)) continue; // eslint-disable-line no-continue, no-use-before-define
-      // if we have a indicator which is NOT burned, then we do need new commitments
+      // if we have a indicator which is NOT burned and requires new commitments, then we do need new commitments
       if (
         stateVarIndicator.isSecret &&
-        (!stateVarIndicator.isBurned || stateVarIndicator.newCommitmentsRequired)
+        !stateVarIndicator.isBurned &&
+        stateVarIndicator.newCommitmentsRequired
       ) {
         burnedOnly = false;
         break;

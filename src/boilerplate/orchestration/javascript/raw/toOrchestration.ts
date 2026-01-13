@@ -1052,7 +1052,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         \n if (!tx) {
           throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
         } \n`;
-      if (!node.newCommitmentsRequired){
+      if (!node.newCommitmentsRequired) {
         checkLeaves = '';
       }
       return {
